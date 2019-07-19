@@ -251,7 +251,7 @@ Done!
 
 NOTE The hashes of he original and new files are not actually guaranteed to be identical, it just so happens that in this case the AvatarFrames are read from the filesystem in the order they appeared in the original.
 
-At the moment, the Frames are written in there raw (decrypted) format, that is still packed in a protocol buffer. This will change in the future to make them human readable (and editable).
+At the moment, the Frames are written in their raw format, meaning still packed in a protocol buffer. This will change in the future to make them human readable (and editable).
 
 Other future plans
 - merging exisitng backups (succesfull tests have been done)
