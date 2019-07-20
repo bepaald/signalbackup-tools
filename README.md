@@ -293,4 +293,6 @@ If this tool was helpful to you or you appreciate my work and you can spare it, 
 
 BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
 
+[![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=U523FZFW3BQBQ&currency_code=USD&source=url)
+
 Donation will help development in that they will put food in my mouth, and I need food to write code :smile:
