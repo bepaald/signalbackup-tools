@@ -260,3 +260,10 @@ Other future plans
 - importing databases from the desktop app. I have no experience with that yet.
 
 Development will be slow at times.
+
+Donate
+
+If this tool was helpful to you or you appreciate my work and you can spare it, you might consider donating:
+BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
+
+Donation will help development in that they will put food in my mouth, and I need food to code :)
