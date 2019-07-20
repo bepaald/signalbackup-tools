@@ -8,7 +8,7 @@ Tool to work with Signal Backup files. The tool is provided as-is. It may crash 
 
 **Compiling**
 
-A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++17 */*.cc *.cc -lcryptopp -lsqlite3` should do the trick. If you have difficulty compling under your OS, I recommend downloading a Fedora Live image, booting of of that and run the following commands in a terminal (in the project directory):
+A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++17 */*.cc *.cc -lcryptopp -lsqlite3` should do the trick. If you have difficulty compling under your OS, I recommend downloading a Fedora Live image, booting of of that and running the following commands in a terminal (in the project directory):
 
 ```
  $ sudo dnf install gcc-g++ cryptopp-devel sqlite-devel
