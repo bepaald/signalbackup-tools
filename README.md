@@ -25,7 +25,7 @@ At the moment it has been used succesfully to fix backups that were corrupted fo
 
 `signalbackups-tools [backupfile] [password] [newbackupfile] [newpassword]`
 
-NOTE: if the corruption happens outside of attachment data, which is usually unlikely, chances of recovery are much lower.
+_NOTE_: if the corruption happens outside of attachment data, which is usually unlikely, chances of recovery are much lower.
 
 If the new password is omitted, the old one is used. If the new backup file is omitted only the scan is done, and the broken message is identified, given you the option to delete it from the phone. The corrupted attachment data is dumped to file.
 
@@ -275,7 +275,7 @@ _NOTE_ The hashes of he original and new files are not actually guaranteed to be
   </p>
 </details>
 
-At the moment, the Frames are written in their raw format, meaning still packed in a protocol buffer. This will change in the future to make them human readable (and editable).
+At the moment, the frames are written in their raw format, meaning still packed in a protocol buffer. This will change in the future to make them human readable (and editable).
 
 **Other future plans**
 
