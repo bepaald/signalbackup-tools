@@ -1,14 +1,25 @@
 # signalbackup-tools
 Tool to work with Signal Backup files. The tool is provided as-is. It may crash at times. It does little checking of file arguments and will overwrite any files without warning!
 
-Requires:
-- g++ (a somewhat recent version, tested with 9.1.0)
+**Requirements**
+- c++ compiler (a somewhat recent version, tested with gcc 9.1.0)
 - crypto++ (tested with 8.2.0, known to not compile with 5.6.4, which is currently in Ubuntu)
 - sqlite3 (tested with 3.29.0)
 
+**Compiling**
 
+A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++17 */*.cc *.cc -lcryptopp -lsqlite3` should do the trick. If you have difficulty compling under your OS, I recommend downloading a Fedora Live image, booting of of that and run the following commands in a terminal (in the project directory):
 
-A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++17 */*.cc *.cc -lcryptopp -lsqlite3` should do the trick.
+```
+ $ sudo dnf install gcc-g++ cryptopp-devel sqlite-devel
+ $ sh BUILDSCRIPT.sh
+```
+
+If you manage to compile it for Windows, please let me know. I have tried cross compiling, but (in spite of no errors) it has worked only once a long time ago.
+
+**Running**
+
+*Fixing broken backups*
 
 At the moment it has been used succesfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
 
@@ -18,8 +29,10 @@ NOTE: if the corruption happens outside of attachment data, which is usually unl
 
 If the new password is omitted, the old one is used. If the new backup file is omitted only the scan is done, and the broken message is identified, given you the option to delete it from the phone. The corrupted attachment data is dumped to file.
 
-Example:
-
+<details>
+  <summary>Example</summary>
+  <p>
+    
 ```
 [~/programming/signalbackup-tools] $ ./signalbackup-tools CORRUPTEDSIGNALBACKUPS/signal-2019-05-20-05-29-06.backup3 949543593573534240555368549437 NEWBACKUPFILE
 IV: (hex:) 12 16 72 95 7a 00 68 44 7e cf 7d 20 26 f9 d3 7d (size: 16)
@@ -192,9 +205,17 @@ Done!
 [~/programming/signalbackup-tools] $ 
 ```
 
+  </p>
+</details>
+
+*Dump unencrypted database to disk*
+
 The program can also dump the unencrypted backup components to a directory, or read the contents of a directory and pack and encrypt it back into a valid backup file. When dumping, make sure the directory to dump to is empty to start with. In theory, the decrypted files could be edited before reencrypting.
 
-Example:
+<details>
+  <summary>Example</summary>
+  <p>
+    
 ```
 [~/programming/signalbackup-tools] $ mkdir RAWBACKUP
 [~/programming/signalbackup-tools] $ ll RAWBACKUP/
@@ -249,22 +270,27 @@ Done!
 [~/programming/signalbackup-tools] $
 ```
 
-NOTE The hashes of he original and new files are not actually guaranteed to be identical, it just so happens that in this case the AvatarFrames are read from the filesystem in the order they appeared in the original.
+_NOTE_ The hashes of he original and new files are not actually guaranteed to be identical, it just so happens that in this case the AvatarFrames are read from the filesystem in the order they appeared in the original.
+
+  </p>
+</details>
 
 At the moment, the Frames are written in their raw format, meaning still packed in a protocol buffer. This will change in the future to make them human readable (and editable).
 
-Other future plans
+**Other future plans**
+
 - merging exisitng backups (succesfull tests have been done)
+- exporting to other formats (csv, xml, html)
 - cropping backup to certain conversations and time spans (succesfully done in testing)
 - replacing/deleting attachments without changing/deleting messages. For example, replacing with thumbnails or tiny placeholdersto save space.
 - importing databases from the desktop app. I have no experience with that yet.
 
 Development will be slow at times.
 
-Donate
+**Donate**
 
 If this tool was helpful to you or you appreciate my work and you can spare it, you might consider donating:
 
 BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
 
-Donation will help development in that they will put food in my mouth, and I need food to code :)
+Donation will help development in that they will put food in my mouth, and I need food to write code :)
