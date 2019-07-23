@@ -37,7 +37,8 @@ enum FRAMETYPE : unsigned int
   ATTACHMENT = 4,
   DATABASEVERSION = 5,
   END = 6, // bool
-  AVATAR = 7
+  AVATAR = 7,
+  STICKER = 8,
 };
 
 enum WIRETYPE : unsigned int
@@ -259,6 +260,10 @@ inline std::string BackupFrame::frameTypeString() const
   case 7:
   {
    return "AvatarFrame";
+  }
+  case 8:
+  {
+   return "StickerFrame";
   }
   }
   return "Unknown frame type";

@@ -17,13 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "sqlitedb.h"
+#include "stickerframe.ih"
 
-#include <sstream>
-#include <algorithm>
-#include <numeric>
-#include <iomanip>
-#include <locale>
-#include <codecvt>
-
-#include "../common_be.h"
+StickerFrame::Registrar StickerFrame::s_registrar(FRAMETYPE::STICKER, StickerFrame::create);

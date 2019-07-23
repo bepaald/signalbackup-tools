@@ -43,12 +43,13 @@ class AttachmentFrame : public FrameWithAttachment
   inline AttachmentFrame(AttachmentFrame const &other) = default;
   inline AttachmentFrame &operator=(AttachmentFrame const &other) = default;
   inline virtual ~AttachmentFrame() = default;
-  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
+  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t length() const;
   inline virtual uint32_t attachmentSize() const override;
   inline uint64_t rowId() const;
+  inline void setRowId(uint64_t rid);
   inline uint64_t attachmentId() const;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
@@ -138,6 +139,21 @@ inline uint64_t AttachmentFrame::rowId() const
     if (std::get<0>(p) == FIELD::ROWID)
       return bytesToUint64(std::get<1>(p), std::get<2>(p));
   return 0;
+}
+
+inline void AttachmentFrame::setRowId(uint64_t rid)
+{
+  for (auto &p : d_framedata)
+    if (std::get<0>(p) == FIELD::ROWID)
+    {
+      if (sizeof(rid) != std::get<2>(p))
+      {
+        //std::cout << "       ************        DAMN!        **********        " << std::endl;
+        return;
+      }
+      uint64_t val = bepaald::swap_endian(rid);
+      std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&val), sizeof(val));
+    }
 }
 
 inline uint64_t AttachmentFrame::attachmentId() const
