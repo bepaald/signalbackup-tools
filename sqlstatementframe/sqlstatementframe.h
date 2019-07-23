@@ -72,7 +72,7 @@ class SqlStatementFrame : public BackupFrame
   inline void printInfo(std::vector<std::string> const &paramternames) const;
 
   inline std::string const &statement();
-  inline std::pair<unsigned char *, uint64_t> getData() const;
+  inline std::pair<unsigned char *, uint64_t> getData() const override;
 
   inline void setStatementField(std::string const &val);
   inline void addStringParameter(std::string const &val);

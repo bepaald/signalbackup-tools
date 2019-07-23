@@ -24,24 +24,34 @@
 
 class DatabaseVersionFrame : public BackupFrame
 {
-  enum FIELD
+  enum FIELD: unsigned int
   {
-    VERSION = 1 // uint32
+   INVALID = 0,
+   VERSION = 1 // uint32
   };
 
   static Registrar s_registrar;
  public:
+  inline explicit DatabaseVersionFrame(uint64_t count = 0);
   inline DatabaseVersionFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~DatabaseVersionFrame() = default;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t version() const;
-  inline virtual void printInfo() const;
-  inline virtual std::pair<unsigned char *, uint64_t> getData() const;
+  inline virtual void printInfo() const override;
+  inline virtual std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
+  inline std::string getHumanData() const override;
+  //inline virtual bool setNewData(std::string const &field, std::string const &data) override;
+  inline unsigned int getField(std::string const &str) const;
  private:
   inline uint64_t dataSize() const;
 };
+
+inline DatabaseVersionFrame::DatabaseVersionFrame(uint64_t count)
+  :
+  BackupFrame(count)
+{}
 
 inline DatabaseVersionFrame::DatabaseVersionFrame(unsigned char *bytes, size_t length, uint64_t count)
   :
@@ -138,6 +148,32 @@ inline bool DatabaseVersionFrame::validate() const
       return false;
   }
   return true;
+}
+
+inline std::string DatabaseVersionFrame::getHumanData() const
+{
+  std::string data;
+  for (auto const &p : d_framedata)
+    if (std::get<0>(p) == FIELD::VERSION)
+      data += "VERSION:uint32:" + bepaald::toString(version()) + "\n";
+  return data;
+}
+/*
+inline bool DatabaseVersionFrame::setNewData(std::string const &field, std::string const &data)
+{
+  if (field != "VERSION")
+    return false;
+  std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoul(data)));
+  d_framedata.emplace_back(std::make_tuple(FIELD::VERSION, decdata.first, decdata.second));
+  return true;
+}
+*/
+
+inline unsigned int DatabaseVersionFrame::getField(std::string const &str) const
+{
+  if (str == "VERSION")
+    return FIELD::VERSION;
+  return FIELD::INVALID;
 }
 
 #endif

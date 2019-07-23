@@ -53,7 +53,7 @@ class  FileDecryptor : public BaseDecryptor, public CryptBase
   inline uint32_t getNextFrameBlockSize();
   inline bool getNextFrameBlock(unsigned char *data, size_t length);
   BackupFrame *initBackupFrame(unsigned char *data, size_t length, uint64_t count = 0) const;
-  virtual bool getAttachment(FrameWithAttachment *frame);
+  virtual bool getAttachment(FrameWithAttachment *frame) override;
 
   std::unique_ptr<BackupFrame> bruteForceFrom(uint32_t filepos);
   std::unique_ptr<BackupFrame> getFrame2(uint32_t offset);
@@ -102,12 +102,12 @@ inline bool FileDecryptor::getNextFrameBlock(unsigned char *data, size_t length)
 }
 
 /*
-inline void FileDecryptor::destroyPtr(unsigned char *p, size_t *psize)
+inline void FileDecryptor::destroyPtr(unsigned char **p, size_t *psize)
 {
-  if (p)
+  if (*p)
   {
-    delete p;
-    p = nullptr;
+    delete *p;
+    *p = nullptr;
     *psize = 0;
   }
 }

@@ -31,7 +31,7 @@ class FileEncryptor : public CryptBase
   std::string d_passphrase;
  public:
   FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size);
-  FileEncryptor(std::string const &passphrase);
+  explicit FileEncryptor(std::string const &passphrase);
   FileEncryptor();
   FileEncryptor(FileEncryptor const &other) = delete;
   FileEncryptor operator=(FileEncryptor const &other) = delete;

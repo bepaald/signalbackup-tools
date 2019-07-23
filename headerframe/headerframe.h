@@ -21,18 +21,21 @@
 #define HEADERFRAME_H_
 
 #include "../backupframe/backupframe.h"
+#include "../base64/base64.h"
 
 class HeaderFrame : public BackupFrame
 {
   enum FIELD : unsigned int
   {
-    IV = 1,   // byte[]
-    SALT = 2  // byte[]
+   INVALID = 0,
+   IV = 1,   // byte[]
+   SALT = 2  // byte[]
   };
 
   static Registrar s_registrar;
 
  public:
+  inline explicit HeaderFrame(uint64_t count = 0);
   inline HeaderFrame(unsigned char *data, size_t length, uint64_t count = 0);
   inline virtual ~HeaderFrame() = default;
   inline virtual FRAMETYPE frameType() const override;
@@ -41,12 +44,20 @@ class HeaderFrame : public BackupFrame
   inline unsigned char *salt() const;
   inline uint64_t salt_length() const;
   inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
-  inline virtual void printInfo() const;
-  inline std::pair<unsigned char *, uint64_t> getData() const;
+  //inline static BackupFrame *createFromHumanData(std::ifstream *datastream, uint64_t count = 0);
+  inline virtual void printInfo() const override;
+  inline std::pair<unsigned char *, uint64_t> getData() const override;
+  inline std::string getHumanData() const override;
   inline virtual bool validate() const override;
+  inline unsigned int getField(std::string const &str) const;
  private:
   inline uint64_t dataSize() const;
 };
+
+inline HeaderFrame::HeaderFrame(uint64_t count)
+  :
+  BackupFrame(count)
+{}
 
 inline HeaderFrame::HeaderFrame(unsigned char *data, size_t length, uint64_t count)
   :
@@ -97,6 +108,43 @@ inline BackupFrame *HeaderFrame::create(unsigned char *data, size_t length, uint
   return new HeaderFrame(data, length, count);
 }
 
+/*
+#include <fstream>
+inline BackupFrame *HeaderFrame::createFromHumanData(std::ifstream *datastream, uint64_t count) // static
+{
+  std::string line;
+  while (std::getline(*datastream, line))
+  {
+    uint pos = line.find(":", 0);
+    if (pos == std::string::npos)
+    {
+      std::cout << "Failed to read HeaderFrame from datafile" << std::endl;
+      return nullptr;
+    }
+    std::string field = line.substr(0, pos);
+
+    uint pos2 = line.find(":", pos);
+    if (pos2 == std::string::npos)
+    {
+      std::cout << "Failed to read HeaderFrame from datafile" << std::endl;
+      return nullptr;
+    }
+    std::string type = line.substr(pos, pos2 - pos);
+
+    std::string datastr = line.substr(pos2);
+
+    std::cout << field << std::endl;
+    std::cout << type << std::endl;
+    std::cout << datastr << std::endl;
+
+  }
+
+  unsigned char *data = nullptr;
+  uint64_t length = 0;
+  return new HeaderFrame(data, length, count);
+}
+*/
+
 inline void HeaderFrame::printInfo() const
 {
   //DEBUGOUT("TYPE: HEADERFRAME");
@@ -133,7 +181,20 @@ inline std::pair<unsigned char *, uint64_t> HeaderFrame::getData() const
   for (auto const &fd : d_framedata)
     datapos += putLengthDelimType(fd, data + datapos);
   return {data, size};
+}
 
+inline std::string HeaderFrame::getHumanData() const
+{
+  std::string data;
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::IV)
+      data += "IV:bytes:";
+    else if (std::get<0>(p) == FIELD::SALT)
+      data += "SALT:bytes:";
+    data += Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p));
+  }
+  return data;
 }
 
 inline bool HeaderFrame::validate() const
@@ -148,6 +209,15 @@ inline bool HeaderFrame::validate() const
       return false;
   }
   return true;
+}
+
+inline unsigned int HeaderFrame::getField(std::string const &str) const
+{
+  if (str == "IV")
+    return FIELD::IV;
+  if (str == "SALT")
+    return FIELD::SALT;
+  return FIELD::INVALID;
 }
 
 #endif
