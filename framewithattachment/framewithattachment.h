@@ -34,7 +34,8 @@ class FrameWithAttachment : public BackupFrame
   unsigned char *d_iv;
   BaseDecryptor *d_dec; // DON'T OWN THIS!
  public:
-  inline FrameWithAttachment(unsigned char *bytes, size_t length, uint64_t count);
+  inline explicit FrameWithAttachment(uint64_t count = 0);
+  inline FrameWithAttachment(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline FrameWithAttachment(FrameWithAttachment &&other);
   inline FrameWithAttachment &operator=(FrameWithAttachment &&other);
   inline FrameWithAttachment(FrameWithAttachment const &other);
@@ -50,6 +51,17 @@ class FrameWithAttachment : public BackupFrame
   inline unsigned char *attachmentData();
   inline void clearData();
 };
+
+inline FrameWithAttachment::FrameWithAttachment(uint64_t count)
+  :
+  BackupFrame(count),
+  d_attachmentdata(nullptr),
+  d_attachmentdata_size(0),
+  d_filepos(0),
+  d_iv_size(0),
+  d_iv(nullptr),
+  d_dec(nullptr)
+{}
 
 inline FrameWithAttachment::FrameWithAttachment(unsigned char *bytes, size_t length, uint64_t count)
   :
@@ -83,8 +95,8 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &
 {
   if (this != &other)
   {
-    bepaald::destroyPtr(d_attachmentdata, &d_attachmentdata_size);
-    bepaald::destroyPtr(d_iv, &d_iv_size);
+    bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
+    bepaald::destroyPtr(&d_iv, &d_iv_size);
 
     BackupFrame::operator=(std::move(other));
     d_attachmentdata = std::move(other.d_attachmentdata);
@@ -155,8 +167,8 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment c
 
 inline FrameWithAttachment::~FrameWithAttachment()
 {
-  bepaald::destroyPtr(d_attachmentdata, &d_attachmentdata_size);
-  bepaald::destroyPtr(d_iv, &d_iv_size);
+  bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
+  bepaald::destroyPtr(&d_iv, &d_iv_size);
 }
 
 inline bool FrameWithAttachment::setAttachmentData(unsigned char *data) // override
@@ -182,7 +194,7 @@ inline bool FrameWithAttachment::setAttachmentData(std::string const &filename) 
   if (!file.read(reinterpret_cast<char *>(d_attachmentdata), d_attachmentdata_size))
   {
     std::cout << "Failed to read data from '" << filename << "'" << std::endl;
-    bepaald::destroyPtr(d_attachmentdata, &d_attachmentdata_size);
+    bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
     return false;
   }
   return true;

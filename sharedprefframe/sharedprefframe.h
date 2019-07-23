@@ -26,23 +26,32 @@ class SharedPrefFrame : public BackupFrame
 {
   enum FIELD
   {
-    FILE = 1, // string
-    KEY = 2,  // string
-    VALUE = 3 // string
+   INVALID = 0,
+   FILE = 1, // string
+   KEY = 2,  // string
+   VALUE = 3 // string
   };
 
   static Registrar s_registrar;
  public:
+  inline explicit SharedPrefFrame(uint64_t count = 0);
   inline SharedPrefFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~SharedPrefFrame() = default;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
-  inline std::pair<unsigned char *, uint64_t> getData() const;
+  inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
+  inline std::string getHumanData() const override;
+  inline unsigned int getField(std::string const &str) const;
  private:
   inline uint64_t dataSize() const;
 };
+
+inline SharedPrefFrame::SharedPrefFrame(uint64_t count)
+  :
+  BackupFrame(count)
+{}
 
 inline SharedPrefFrame::SharedPrefFrame(unsigned char *bytes, size_t length, uint64_t count)
   :
@@ -120,6 +129,33 @@ inline bool SharedPrefFrame::validate() const
       return false;
   }
   return true;
+}
+
+inline std::string SharedPrefFrame::getHumanData() const
+{
+  std::string data;
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::FILE)
+      data += "FILE";
+    else if (std::get<0>(p) == FIELD::KEY)
+      data += "KEY";
+    else if (std::get<0>(p) == FIELD::VALUE)
+      data += "VALUE";
+    data += ":string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
+  }
+  return data;
+}
+
+inline unsigned int SharedPrefFrame::getField(std::string const &str) const
+{
+  if (str == "FILE")
+    return FIELD::FILE;
+  if (str == "KEY")
+    return FIELD::KEY;
+  if (str == "VALUE")
+    return FIELD::VALUE;
+  return FIELD::INVALID;
 }
 
 #endif

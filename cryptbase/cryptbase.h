@@ -70,11 +70,11 @@ inline CryptBase::CryptBase()
 
 inline CryptBase::~CryptBase()
 {
-  bepaald::destroyPtr(d_iv, &d_iv_size);
-  bepaald::destroyPtr(d_salt, &d_salt_size);
-  bepaald::destroyPtr(d_backupkey, &d_backupkey_size);
-  bepaald::destroyPtr(d_mackey, &d_mackey_size);
-  bepaald::destroyPtr(d_cipherkey, &d_cipherkey_size);
+  bepaald::destroyPtr(&d_iv, &d_iv_size);
+  bepaald::destroyPtr(&d_salt, &d_salt_size);
+  bepaald::destroyPtr(&d_backupkey, &d_backupkey_size);
+  bepaald::destroyPtr(&d_mackey, &d_mackey_size);
+  bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
 }
 
 inline bool CryptBase::ok() const

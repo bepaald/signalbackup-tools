@@ -28,13 +28,15 @@ class AvatarFrame : public FrameWithAttachment
 {
   enum FIELD
   {
-    NAME = 1, // string
-    LENGTH = 2 // uint32
+   INVALID = 0,
+   NAME = 1, // string
+   LENGTH = 2 // uint32
   };
 
   static Registrar s_registrar;
  public:
-  inline AvatarFrame(unsigned char *bytes, size_t length, uint64_t count);
+  inline explicit AvatarFrame(uint64_t count = 0);
+  inline AvatarFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   // inline AvatarFrame(AvatarFrame &&other);
   // inline AvatarFrame &operator=(AvatarFrame &&other);
   // inline AvatarFrame(AvatarFrame const &other) = delete;
@@ -46,11 +48,18 @@ class AvatarFrame : public FrameWithAttachment
   inline uint32_t length() const;
   inline virtual uint32_t attachmentSize() const override;
   inline std::string name() const;
-  inline std::pair<unsigned char *, uint64_t> getData() const;
+  inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
+  inline std::string getHumanData() const override;
+  inline unsigned int getField(std::string const &str) const;
  private:
   inline uint64_t dataSize() const;
 };
+
+inline AvatarFrame::AvatarFrame(uint64_t count)
+  :
+  FrameWithAttachment(count)
+{}
 
 inline AvatarFrame::AvatarFrame(unsigned char *bytes, size_t length, uint64_t count)
   :
@@ -193,6 +202,28 @@ inline bool AvatarFrame::validate() const
       return false;
   }
   return true;
+}
+
+inline std::string AvatarFrame::getHumanData() const
+{
+  std::string data;
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::NAME)
+      data += "NAME:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
+    else if (std::get<0>(p) == FIELD::LENGTH)
+      data += "LENGTH:uint32:" + bepaald::toString(bytesToUint32(std::get<1>(p), std::get<2>(p))) + "\n";
+  }
+  return data;
+}
+
+inline unsigned int AvatarFrame::getField(std::string const &str) const
+{
+  if (str == "NAME")
+    return FIELD::NAME;
+  if (str == "LENGTH")
+    return FIELD::LENGTH;
+  return FIELD::INVALID;
 }
 
 #endif

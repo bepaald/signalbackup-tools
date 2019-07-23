@@ -26,12 +26,12 @@ class EndFrame: public BackupFrame
 {
   static Registrar s_registrar;
  public:
-  inline EndFrame(unsigned char *bytes, size_t length, uint64_t count);
+  inline EndFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~EndFrame() = default;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
-  inline std::pair<unsigned char *, uint64_t> getData() const;
+  inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
  private:
   inline uint64_t dataSize() const;

@@ -87,6 +87,8 @@ class BackupFrame
   inline virtual uint32_t attachmentSize() const;
   inline virtual bool setAttachmentData(unsigned char *data);
   inline virtual std::pair<unsigned char *, uint64_t> getData() const;
+  inline virtual std::string getHumanData() const;
+  inline bool setNewData(unsigned int field, unsigned char *data, uint64_t size);
   inline virtual bool validate() const;
  protected:
   inline uint32_t bytesToUint32(unsigned char *data, size_t len) const;
@@ -359,6 +361,11 @@ inline std::pair<unsigned char *, uint64_t> BackupFrame::getData() const
   return {nullptr, 0};
 }
 
+inline std::string BackupFrame::getHumanData() const
+{
+  return std::string();
+}
+
 // taken from techoverflow
 inline uint64_t BackupFrame::putVarInt(uint64_t val, unsigned char *mem) const
 {
@@ -457,6 +464,12 @@ inline uint64_t BackupFrame::putFixed64Type(std::tuple<unsigned int, unsigned ch
   std::memcpy(mem + datapos, std::get<1>(data), std::get<2>(data));
   datapos += std::get<2>(data);
   return datapos;
+}
+
+inline bool BackupFrame::setNewData(unsigned int field, unsigned char *data, uint64_t size)
+{
+  d_framedata.emplace_back(std::make_tuple(field, data, size));
+  return true;
 }
 
 inline bool BackupFrame::validate() const

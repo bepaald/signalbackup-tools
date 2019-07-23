@@ -28,14 +28,16 @@ class AttachmentFrame : public FrameWithAttachment
 {
   enum FIELD
   {
-    ROWID = 1, // uint64
-    ATTACHMENTID = 2, // uint64
-    LENGTH = 3 // uint32
+   INVALID = 0,
+   ROWID = 1, // uint64
+   ATTACHMENTID = 2, // uint64
+   LENGTH = 3 // uint32
   };
 
   static Registrar s_registrar;
  public:
-  inline AttachmentFrame(unsigned char *bytes, size_t length, uint64_t count);
+  inline explicit AttachmentFrame(uint64_t count = 0);
+  inline AttachmentFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline AttachmentFrame(AttachmentFrame &&other) = default;
   inline AttachmentFrame &operator=(AttachmentFrame &&other) = default;
   inline AttachmentFrame(AttachmentFrame const &other) = default;
@@ -48,11 +50,18 @@ class AttachmentFrame : public FrameWithAttachment
   inline virtual uint32_t attachmentSize() const override;
   inline uint64_t rowId() const;
   inline uint64_t attachmentId() const;
-  inline std::pair<unsigned char *, uint64_t> getData() const;
+  inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
+  inline std::string getHumanData() const override;
+  inline unsigned int getField(std::string const &str) const;
  private:
   inline uint64_t dataSize() const;
 };
+
+inline AttachmentFrame::AttachmentFrame(uint64_t count)
+  :
+  FrameWithAttachment(count)
+{}
 
 inline AttachmentFrame::AttachmentFrame(unsigned char *bytes, size_t length, uint64_t count)
   :
@@ -189,6 +198,32 @@ inline bool AttachmentFrame::validate() const
       return false;
   }
   return true;
+}
+
+inline std::string AttachmentFrame::getHumanData() const
+{
+  std::string data;
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::ROWID)
+      data += "ROWID:uint64:" + bepaald::toString(bytesToUint64(std::get<1>(p), std::get<2>(p))) + "\n";
+    else if (std::get<0>(p) == FIELD::ATTACHMENTID)
+      data += "ATTACHMENTID:uint64:" + bepaald::toString(bytesToUint64(std::get<1>(p), std::get<2>(p))) + "\n";
+    else if (std::get<0>(p) == FIELD::LENGTH)
+      data += "LENGTH:uint32:" + bepaald::toString(bytesToUint32(std::get<1>(p), std::get<2>(p))) + "\n";
+  }
+  return data;
+}
+
+inline unsigned int AttachmentFrame::getField(std::string const &str) const
+{
+  if (str == "ROWID")
+    return FIELD::ROWID;
+  if (str == "ATTACHMENTID")
+    return FIELD::ATTACHMENTID;
+  if (str == "LENGTH")
+    return FIELD::LENGTH;
+  return FIELD::INVALID;
 }
 
 #endif

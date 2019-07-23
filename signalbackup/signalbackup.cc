@@ -19,8 +19,6 @@
 
 #include "signalbackup.ih"
 
-#include <ctime>
-
 SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, std::string const &outputdir)
   :
   d_database(outputdir.empty() ? ":memory:" : outputdir + "/database.sqlite"),
@@ -148,12 +146,14 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
       if (!outputdir.empty())
         writeRawFrameDataToFile(outputdir + "/Header.sbf", frame);
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
+      //d_headerframe->printInfo();
     }
     else if (frame->frameType() == FRAMETYPE::DATABASEVERSION)
     {
       if (!outputdir.empty())
         writeRawFrameDataToFile(outputdir + "/DatabaseVersion.sbf", frame);
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
+      //d_databaseversionframe->printInfo();
     }
     else if (frame->frameType() == FRAMETYPE::SQLSTATEMENT)
     {
@@ -213,8 +213,6 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
 
   d_ok = true;
 }
-
-#include <filesystem>
 
 SignalBackup::SignalBackup(std::string const &inputdir)
   :
@@ -300,8 +298,6 @@ SignalBackup::SignalBackup(std::string const &inputdir)
       return;
     temp->setAttachmentData(attbin.string());
 
-    //temp->printInfo();
-
     uint64_t rowid = temp->rowId();
     uint64_t attachmentid = temp->attachmentId();
     d_attachments.emplace(std::make_pair(rowid, attachmentid), temp.release());
@@ -313,10 +309,7 @@ SignalBackup::SignalBackup(std::string const &inputdir)
 
 void SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase)
 {
-
-
   std::cout << "Exporting backup to '" << filename << "'" << std::endl;
-
 
   std::string newpw = passphrase;
   if (newpw == std::string())
@@ -509,46 +502,6 @@ bool SignalBackup::dropBadFrames()
     d_database.exec("DELETE FROM part WHERE mid = " + bepaald::toString(mid));
     d_badattachments.erase(it);
   }
-
-  return true;
-}
-
-template <class T>
-bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet)
-{
-  std::ifstream rawframe(file, std::ios_base::binary);
-  if (!rawframe.is_open())
-  {
-    if (!quiet)
-      std::cout << "Failed to open '" << file << "' for reading" << std::endl;
-    return false;
-  }
-  rawframe.seekg(0, std::ios_base::end);
-  uint64_t framesize = rawframe.tellg();
-  rawframe.seekg(0);
-  unsigned char *framedata = new unsigned char[framesize];
-  if (!rawframe.read(reinterpret_cast<char *>(framedata), framesize))
-  {
-    std::cout << "Failed to read data from '" << file << "'" << std::endl;
-    delete[] framedata;
-    return false;
-  }
-  int fieldnum = BackupFrame::getFieldnumber(framedata[0]);
-  if (fieldnum < 0)
-  {
-    delete[] framedata;
-    return false;
-  }
-  unsigned int offset = 1;
-  int64_t framelength = BackupFrame::getLength(framedata, &offset, framesize);
-  if (framelength < 0)
-  {
-    delete[] framedata;
-    return false;
-  }
-  frame->reset(reinterpret_cast<T *>(BackupFrame::instantiate(static_cast<FRAMETYPE>(fieldnum), framedata + offset, framelength, 0)));
-
-  delete[] framedata;
 
   return true;
 }

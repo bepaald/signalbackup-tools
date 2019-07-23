@@ -52,20 +52,23 @@ class SignalBackup
   bool d_ok;
  public:
   SignalBackup(std::string const &filename, std::string const &passphrase, std::string const &outputdir = std::string());
-  SignalBackup(std::string const &inputdir);
+  explicit SignalBackup(std::string const &inputdir);
   void exportBackup(std::string const &filename, std::string const &passphrase = std::string());
   inline bool ok() const;
   bool dropBadFrames();
  private:
   inline bool checkFileExists(std::string const &filename) const;
-  inline void writeRawFrameDataToFile(std::string const &outputfile, BackupFrame *frame) const;
-  inline void writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<BackupFrame> const &frame) const;
+  template <class T>
+  inline void writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
+  template <class T>
+  inline void writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   inline void writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   inline void writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
   inline SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::pair<std::string, std::any>> const &result) const;
-
   template <class T>
-  bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false);
+  inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
+  template <typename T>
+  inline std::pair<unsigned char*, size_t> numToData(T num) const;
 };
 
 inline bool SignalBackup::ok() const
@@ -79,23 +82,30 @@ inline bool SignalBackup::checkFileExists(std::string const &) const
   return false;
 }
 
-inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, BackupFrame *frame) const
+template <class T>
+inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, T *frame) const
 {
-  std::unique_ptr<BackupFrame> temp(frame);
+  std::unique_ptr<T> temp(frame);
   writeRawFrameDataToFile(outputfile, temp);
   temp.release();
 }
 
-inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<BackupFrame> const &frame) const
+template <class T>
+inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const
 {
   std::ofstream rawframefile(outputfile, std::ios_base::binary);
   if (!rawframefile.is_open())
     std::cout << "Error opening file for writing: " << outputfile << std::endl;
   else
   {
-    std::pair<unsigned char *, uint64_t> framedata = frame->getData();
-    rawframefile.write(reinterpret_cast<char *>(framedata.first), framedata.second);
-    delete[] framedata.first;
+    if (frame->frameType() == FRAMETYPE::END)
+      rawframefile << "END" << std::endl;
+    else
+    {
+      T *t = reinterpret_cast<T *>(frame.get());
+      std::string d = t->getHumanData();
+      rawframefile << d;
+    }
   }
 }
 
@@ -163,6 +173,102 @@ inline SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const 
   //std::exit(0);
 
   return NEWFRAME;
+}
+
+template <typename T>
+inline std::pair<unsigned char*, size_t> SignalBackup::numToData(T num) const
+{
+  unsigned char *data = new unsigned char[sizeof(T)];
+  std::memcpy(data, reinterpret_cast<unsigned char *>(&num), sizeof(T));
+  return {data, sizeof(T)};
+}
+
+template <>
+inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std::string const &file, bool quiet) const
+{
+  std::ifstream datastream(file, std::ios_base::binary);
+  if (!datastream.is_open())
+  {
+    if (!quiet)
+      std::cout << "Failed to open '" << file << "' for reading" << std::endl;
+    return false;
+  }
+  frame->reset(new EndFrame(nullptr, 1ull));
+  return true;
+}
+
+template <class T>
+inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet) const
+{
+  std::ifstream datastream(file, std::ios_base::binary);
+  if (!datastream.is_open())
+  {
+    if (!quiet)
+      std::cout << "Failed to open '" << file << "' for reading" << std::endl;
+    return false;
+  }
+
+  std::unique_ptr<T> newframe(new T);
+
+  std::string line;
+  while (std::getline(datastream, line))
+  {
+    uint pos = line.find(":", 0);
+    if (pos == std::string::npos)
+    {
+      std::cout << "Failed to read frame data from '" << file << "'" << std::endl;
+      return false;
+    }
+    unsigned int field = newframe->getField(line.substr(0, pos));
+    if (!field)
+    {
+      std::cout << "Failed to get field number" << std::endl;
+      return false;
+    }
+
+    ++pos;
+    uint pos2 = line.find(":", pos);
+    if (pos2 == std::string::npos)
+    {
+      std::cout << "Failed to read HeaderFrame from datafile" << std::endl;
+      return false;
+    }
+    std::string type = line.substr(pos, pos2 - pos);
+    std::string datastr = line.substr(pos2 + 1);
+
+    if (type == "bytes")
+    {
+      std::pair<unsigned char *, size_t> decdata = Base64::base64StringToBytes(datastr);
+      if (!decdata.first)
+        return false;
+      newframe->setNewData(field, decdata.first, decdata.second);
+    }
+    else if (type == "uint32")
+    {
+      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoul(datastr)));
+      if (!decdata.first)
+        return false;
+      newframe->setNewData(field, decdata.first, decdata.second);
+    }
+    else if (type == "uint64")
+    {
+      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
+      if (!decdata.first)
+        return false;
+      newframe->setNewData(field, decdata.first, decdata.second);
+    }
+    else if (type == "string")
+    {
+      unsigned char *data = new unsigned char[datastr.size()];
+      std::memcpy(data, datastr.data(), datastr.size());
+      newframe->setNewData(field, data, datastr.size());
+    }
+    else
+      return false;
+  }
+  frame->reset(newframe.release());
+
+  return true;
 }
 
 #endif

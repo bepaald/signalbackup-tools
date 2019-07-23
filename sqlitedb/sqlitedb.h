@@ -32,7 +32,7 @@ class SqliteDB
   sqlite3 *d_db;
   bool d_ok;
  public:
-  inline SqliteDB(std::string const &name);
+  inline explicit SqliteDB(std::string const &name);
   inline SqliteDB(SqliteDB const &other) = delete;
   inline SqliteDB &operator=(SqliteDB const &other) = delete;
   inline ~SqliteDB();

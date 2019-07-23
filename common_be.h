@@ -49,7 +49,7 @@ namespace bepaald
   std::string bytesToString(unsigned char const *data, unsigned int length);
   std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
   template <typename T>
-  void destroyPtr(unsigned char *p, T *psize);
+  void destroyPtr(unsigned char **p, T *psize);
   template <typename T>
   inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
   inline std::string toString(double num);
@@ -128,12 +128,12 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
 }
 
 template <typename T>
-inline void bepaald::destroyPtr(unsigned char *p, T *psize)
+inline void bepaald::destroyPtr(unsigned char **p, T *psize)
 {
-  if (p)
+  if (*p)
   {
-    delete[] p;
-    p = nullptr;
+    delete[] *p;
+    *p = nullptr;
     *psize = 0;
   }
 }
