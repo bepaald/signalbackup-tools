@@ -29,6 +29,36 @@
 
 class SqliteDB
 {
+ public:
+  class QueryResults
+  {
+    std::vector<std::string> d_headers;
+    std::vector<std::vector<std::any>> d_values;
+   public:
+    inline void emplaceHeader(std::string &&h);
+    inline std::vector<std::string> const &headers() const;
+    inline std::string const &header(size_t idx) const;
+
+    inline void emplaceValue(size_t row, std::any &&a);
+    inline std::any value(size_t row, std::string const &header) const;
+    inline std::any const &value(size_t row, size_t idx) const;
+    inline std::vector<std::any> const &row(size_t row) const;
+    template <typename T>
+    inline bool valueHasType(size_t row, size_t idx) const;
+    template <typename T>
+    inline T getValueAs(size_t row, size_t idx) const;
+    inline size_t rows() const;
+    inline size_t columns() const;
+    inline void clear();
+    void prettyPrint() const;
+    template <typename T>
+    inline bool contains(T const &value) const;
+   private:
+    std::wstring wideString(std::string const &narrow) const;
+    inline int idxOfHeader(std::string const &header) const;
+  };
+
+ private:
   sqlite3 *d_db;
   bool d_ok;
  public:
@@ -37,9 +67,10 @@ class SqliteDB
   inline SqliteDB &operator=(SqliteDB const &other) = delete;
   inline ~SqliteDB();
   inline bool ok() const;
-  //inline void exec(std::string const &q);
-  inline void exec(std::string const &q, std::vector<std::vector<std::pair<std::string, std::any>>> *results = nullptr);
-  void exec(std::string const &q, std::vector<std::any> const &params, std::vector<std::vector<std::pair<std::string, std::any>>> *results = nullptr);
+  //inline void exec(std::string const &q, std::vector<std::vector<std::pair<std::string, std::any>>> *results = nullptr) const;
+  //void exec(std::string const &q, std::vector<std::any> const &params, std::vector<std::vector<std::pair<std::string, std::any>>> *results = nullptr) const;
+  inline void exec(std::string const &q, QueryResults *results = nullptr) const;
+  void exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
@@ -69,17 +100,12 @@ inline bool SqliteDB::ok() const
   return d_ok;
 }
 
-// inline void SqliteDB::exec(std::string const &q)
-// {
-//   char *errmsg;
-//   if (sqlite3_exec(d_db, q.c_str(), nullptr, nullptr, &errmsg) != SQLITE_OK)
-//   {
-//     std::cout << "SQL Error: " << errmsg << std::endl;
-//     sqlite3_free(errmsg);
-//   }
-// }
+//inline void SqliteDB::exec(std::string const &q, std::vector<std::vector<std::pair<std::string, std::any>>> *results) const
+//{
+//  exec(q, std::vector<std::any>(), results);
+//}
 
-inline void SqliteDB::exec(std::string const &q, std::vector<std::vector<std::pair<std::string, std::any>>> *results)
+inline void SqliteDB::exec(std::string const &q, QueryResults *results) const
 {
   exec(q, std::vector<std::any>(), results);
 }
@@ -118,6 +144,94 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, double param
 {
   //std::cout << "Binding DOUBLE at " << count << ": " << param << std::endl;
   return sqlite3_bind_double(stmt, count, param);
+}
+
+inline void SqliteDB::QueryResults::emplaceHeader(std::string &&h)
+{
+  d_headers.emplace_back(h);
+}
+
+inline std::string const &SqliteDB::QueryResults::header(size_t idx) const
+{
+  return d_headers[idx];
+}
+
+inline std::vector<std::string> const &SqliteDB::QueryResults::headers() const
+{
+  return d_headers;
+}
+
+inline void SqliteDB::QueryResults::emplaceValue(size_t row, std::any &&a)
+{
+  if (d_values.size() < row + 1)
+    d_values.resize(row + 1);
+
+  d_values[row].emplace_back(a);
+}
+
+inline std::any const &SqliteDB::QueryResults::value(size_t row, size_t idx) const
+{
+  return d_values[row][idx];
+}
+
+inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
+{
+  for (uint i = 0; i < d_headers.size(); ++i)
+    if (d_headers[i] == header)
+      return i;
+  return -1;
+}
+
+inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &header) const
+{
+  int i = idxOfHeader(header);
+  if (i > -1)
+    return d_values[row][i];
+  return std::any{nullptr};
+}
+
+template <typename T>
+inline bool SqliteDB::QueryResults::valueHasType(size_t row, size_t idx) const
+{
+  return (d_values[row][idx].type() == typeid(T));
+}
+
+template <typename T>
+inline T SqliteDB::QueryResults::getValueAs(size_t row, size_t idx) const
+{
+  return std::any_cast<T>(d_values[row][idx]);
+}
+
+inline size_t SqliteDB::QueryResults::rows() const
+{
+  return d_values.size();
+}
+
+inline size_t SqliteDB::QueryResults::columns() const
+{
+  return d_headers.size();
+}
+
+inline void SqliteDB::QueryResults::clear()
+{
+  d_headers.clear();
+  d_values.clear();
+}
+
+template <typename T>
+inline bool SqliteDB::QueryResults::contains(T const &value) const
+{
+  for (uint i = 0; i < d_values.size(); ++i)
+    for (uint j = 0; j < d_values[i].size(); ++j)
+      if (d_values[i][j].type() == typeid(T))
+        if (std::any_cast<T>(d_values[i][j]) == value)
+          return true;
+  return false;
+}
+
+inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) const
+{
+  return d_values[row];
 }
 
 #endif

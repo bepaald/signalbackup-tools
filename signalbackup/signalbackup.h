@@ -29,6 +29,7 @@
 #include "../attachmentframe/attachmentframe.h"
 #include "../avatarframe/avatarframe.h"
 #include "../sharedprefframe/sharedprefframe.h"
+#include "../stickerframe/stickerframe.h"
 #include "../endframe/endframe.h"
 #include "../sqlstatementframe/sqlstatementframe.h"
 
@@ -44,6 +45,7 @@ class SignalBackup
   std::string d_passphrase;
   std::map<std::string, std::unique_ptr<AvatarFrame>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
+  std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
   std::unique_ptr<HeaderFrame> d_headerframe;
   std::unique_ptr<DatabaseVersionFrame> d_databaseversionframe;
   std::vector<std::unique_ptr<SharedPrefFrame>> d_sharedpreferenceframes;
@@ -54,9 +56,20 @@ class SignalBackup
   SignalBackup(std::string const &filename, std::string const &passphrase, std::string const &outputdir = std::string());
   explicit SignalBackup(std::string const &inputdir);
   void exportBackup(std::string const &filename, std::string const &passphrase = std::string());
+  //void exportXml(std::string const &filename) const;
+  void listThreads() const;
+  void cropToThread(long long int threadid);
+  void cropToThread(std::vector<long long int> const &threadid);
+  void cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
+  void addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming);
+  void addSMSMessage(std::string const &body, std::string const &address, long long int timestamp, long long int thread, bool incoming);
+  void importThread(SignalBackup *source, long long int thread);
   inline bool ok() const;
   bool dropBadFrames();
+
  private:
+  inline void updateThreadsEntries(long long int thread = -1);
+  long long int getLastUsedId(std::string const &table);
   inline bool checkFileExists(std::string const &filename) const;
   template <class T>
   inline void writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
@@ -64,16 +77,82 @@ class SignalBackup
   inline void writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   inline void writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   inline void writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
-  inline SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::pair<std::string, std::any>> const &result) const;
+  inline SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers, std::vector<std::any> const &result) const;
+  inline SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
   template <class T>
   inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
   template <typename T>
   inline std::pair<unsigned char*, size_t> numToData(T num) const;
+  void setMinimumId(std::string const &table, long long int offset, std::string const &id = std::string("_id")) const;
+  void cleanDatabaseByMessages();
+  void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences, long long int groups, long long int identies, long long int group_receipts, long long int drafts);
+  long long int dateToMSecsSinceEpoch(std::string const &date) const;
+  void showQuery(std::string const &query) const;
 };
 
 inline bool SignalBackup::ok() const
 {
   return d_ok;
+}
+
+inline void SignalBackup::updateThreadsEntries(long long int thread)
+{
+  SqliteDB::QueryResults results;
+  std::string query = "SELECT DISTINCT _id FROM thread"; // gets all threads
+  if (thread > -1)
+    query += " WHERE _id = " + bepaald::toString(thread);
+  d_database.exec(query, &results);
+  for (uint i = 0; i < results.rows(); ++i)
+  {
+    if (results.valueHasType<long long int>(i, 0))
+    {
+      // set message count
+      std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, 0));
+      d_database.exec("UPDATE thread SET message_count = (SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
+                      ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
+
+
+      // not sure if i need mms.date(_received)...
+      SqliteDB::QueryResults results2;
+      d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = "
+                      + threadid
+                      + " UNION SELECT mms.date AS union_display_date, mms.msg_box AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
+                      + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
+      results2.prettyPrint();
+
+      std::any date = results2.value(0, "union_date");
+      if (date.type() == typeid(long long int))
+      {
+        long long int roundeddate = (std::any_cast<long long int>(date) / 1000) * 1000;
+        d_database.exec("UPDATE thread SET date = ?", {roundeddate});
+      }
+
+      std::any body = results2.value(0, "union_body");
+      if (body.type() == typeid(std::string))
+        d_database.exec("UPDATE thread SET snippet = ?", {std::any_cast<std::string>(body)});
+
+      std::any type = results2.value(0, "union_type");
+      if (type.type() == typeid(long long int))
+        d_database.exec("UPDATE thread SET snippet_type = ?", {std::any_cast<long long int>(type)});
+
+      std::any mid = results2.value(0, "mms._id");
+      if (mid.type() == typeid(long long int))
+      {
+        SqliteDB::QueryResults results3;
+        d_database.exec("SELECT unique_id, _id FROM part WHERE mid = ?", {mid}, &results3);
+
+        std::any uniqueid = results3.value(0, "unique_id");
+        std::any id = results3.value(0, "_id");
+
+        // snippet_uri = content://org.thoughtcrime.securesms/part/ + part.unique_id + '/' + part._id
+        if (id.type() == typeid(long long int) && uniqueid.type() == typeid(long long int))
+          d_database.exec("UPDATE thread SET snippet_uri = content://org.thoughtcrime.securesms/part/" +
+                          bepaald::toString(std::any_cast<long long int>(uniqueid)) + "/" +
+                          bepaald::toString(std::any_cast<long long int>(id)));
+      }
+
+    }
+  }
 }
 
 inline bool SignalBackup::checkFileExists(std::string const &) const
@@ -141,7 +220,52 @@ inline void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupF
   }
 }
 
-inline SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table, std::vector<std::pair<std::string, std::any>> const &result) const
+inline SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers, std::vector<std::any> const &result) const
+{
+  //std::cout << "Building new frame:" << std::endl;
+
+  SqlStatementFrame NEWFRAME;
+  std::string newstatement = "INSERT INTO " + table + " (";
+
+  for (uint i = 0; i < headers.size(); ++i)
+  {
+    newstatement.append(headers[i]);
+    if (i < headers.size() - 1)
+      newstatement.append(",");
+    else
+      newstatement.append(")");
+  }
+  newstatement += " VALUES (";
+
+  for (uint j = 0; j < result.size(); ++j)
+  {
+    if (j < result.size() - 1)
+      newstatement.append("?,");
+    else
+      newstatement.append("?)");
+    if (result[j].type() == typeid(nullptr))
+      NEWFRAME.addNullParameter();
+    else if (result[j].type() == typeid(long long int))
+      NEWFRAME.addIntParameter(std::any_cast<long long int>(result[j]));
+    else if (result[j].type() == typeid(std::string))
+      NEWFRAME.addStringParameter(std::any_cast<std::string>(result[j]));
+    else if (result[j].type() == typeid(std::pair<std::shared_ptr<unsigned char []>, size_t>))
+      NEWFRAME.addBlobParameter(std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(result[j]));
+    else if (result[j].type() == typeid(double))
+      NEWFRAME.addDoubleParameter(std::any_cast<double>(result[j]));
+    else
+      std::cout << "WARNING : UNHANDLED PARAMETER TYPE = " << result[j].type().name() << std::endl;
+  }
+  NEWFRAME.setStatementField(newstatement);
+
+  //NEWFRAME.printInfo();
+
+  //std::exit(0);
+
+  return NEWFRAME;
+}
+
+inline SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const
 {
   //std::cout << "Building new frame:" << std::endl;
 
@@ -153,18 +277,18 @@ inline SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const 
       newstatement.append("?,");
     else
       newstatement.append("?)");
-    if (result[j].second.type() == typeid(nullptr))
+    if (result[j].type() == typeid(nullptr))
       NEWFRAME.addNullParameter();
-    else if (result[j].second.type() == typeid(long long int))
-      NEWFRAME.addIntParameter(std::any_cast<long long int>(result[j].second));
-    else if (result[j].second.type() == typeid(std::string))
-      NEWFRAME.addStringParameter(std::any_cast<std::string>(result[j].second));
-    else if (result[j].second.type() == typeid(std::pair<std::shared_ptr<unsigned char []>, size_t>))
-      NEWFRAME.addBlobParameter(std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(result[j].second));
-    else if (result[j].second.type() == typeid(double))
-      NEWFRAME.addDoubleParameter(std::any_cast<double>(result[j].second));
+    else if (result[j].type() == typeid(long long int))
+      NEWFRAME.addIntParameter(std::any_cast<long long int>(result[j]));
+    else if (result[j].type() == typeid(std::string))
+      NEWFRAME.addStringParameter(std::any_cast<std::string>(result[j]));
+    else if (result[j].type() == typeid(std::pair<std::shared_ptr<unsigned char []>, size_t>))
+      NEWFRAME.addBlobParameter(std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(result[j]));
+    else if (result[j].type() == typeid(double))
+      NEWFRAME.addDoubleParameter(std::any_cast<double>(result[j]));
     else
-      std::cout << "WARNING : UNHANDLED PARAMETER TYPE = " << result[j].second.type().name() << std::endl;
+      std::cout << "WARNING : UNHANDLED PARAMETER TYPE = " << result[j].type().name() << std::endl;
   }
   NEWFRAME.setStatementField(newstatement);
 
