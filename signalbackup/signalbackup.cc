@@ -683,7 +683,7 @@ void SignalBackup::exportXml(std::string const &filename) const
 void SignalBackup::listThreads() const
 {
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
+  d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
 
   results.prettyPrint();
 
