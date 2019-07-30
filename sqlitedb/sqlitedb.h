@@ -67,8 +67,6 @@ class SqliteDB
   inline SqliteDB &operator=(SqliteDB const &other) = delete;
   inline ~SqliteDB();
   inline bool ok() const;
-  //inline void exec(std::string const &q, std::vector<std::vector<std::pair<std::string, std::any>>> *results = nullptr) const;
-  //void exec(std::string const &q, std::vector<std::any> const &params, std::vector<std::vector<std::pair<std::string, std::any>>> *results = nullptr) const;
   inline void exec(std::string const &q, QueryResults *results = nullptr) const;
   void exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
  private:
@@ -99,11 +97,6 @@ inline bool SqliteDB::ok() const
 {
   return d_ok;
 }
-
-//inline void SqliteDB::exec(std::string const &q, std::vector<std::vector<std::pair<std::string, std::any>>> *results) const
-//{
-//  exec(q, std::vector<std::any>(), results);
-//}
 
 inline void SqliteDB::exec(std::string const &q, QueryResults *results) const
 {
