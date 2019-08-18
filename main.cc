@@ -120,7 +120,13 @@ int main(int argc, char *argv[])
       sb->exportBackup(outfilename, newpassphrase);
   }
 
-  // sb->listThreads();
+  sb->listThreads();
+
+  sb->cropToThread({8, 10, 11});
+
+  sb->listThreads();
+
+  //sb->exportBackup("RAWOUTNEW");
 
   // std::cout << "Starting export!" << std::endl;
   // sb.exportBackup("NEWFILE");
