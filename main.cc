@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
   std::unique_ptr<SignalBackup> sb;
 
   if (!signalfile.empty())
-    sb.reset(new SignalBackup(signalfile, passphrase, rawoutdir));
+    sb.reset(new SignalBackup(signalfile, passphrase));
   else
     sb.reset(new SignalBackup(rawindir));
 
@@ -119,14 +119,14 @@ int main(int argc, char *argv[])
     if (sb->dropBadFrames())
       sb->exportBackup(outfilename, newpassphrase);
   }
+  else if (!rawoutdir.empty())
+    sb->exportBackup(rawoutdir);
 
-  sb->listThreads();
 
-  sb->cropToThread({8, 10, 11});
+  //sb->listThreads();
+  //sb->cropToThread({8, 10, 11});
+  //sb->listThreads();
 
-  sb->listThreads();
-
-  //sb->exportBackup("RAWOUTNEW");
 
   // std::cout << "Starting export!" << std::endl;
   // sb.exportBackup("NEWFILE");

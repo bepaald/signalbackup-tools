@@ -19,9 +19,9 @@
 
 #include "signalbackup.ih"
 
-SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, std::string const &outputdir)
+SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase)
   :
-  d_database(outputdir.empty() ? ":memory:" : outputdir + "/database.sqlite"),
+  d_database(":memory:"),
   d_fd(new FileDecryptor(filename, passphrase, false)),
   d_passphrase(passphrase),
   d_ok(false)
@@ -141,15 +141,11 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
 
     if (frame->frameType() == FRAMETYPE::HEADER)
     {
-      if (!outputdir.empty())
-        writeRawFrameDataToFile(outputdir + "/Header.sbf", frame);
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
       //d_headerframe->printInfo();
     }
     else if (frame->frameType() == FRAMETYPE::DATABASEVERSION)
     {
-      if (!outputdir.empty())
-        writeRawFrameDataToFile(outputdir + "/DatabaseVersion.sbf", frame);
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       //d_databaseversionframe->printInfo();
     }
@@ -162,54 +158,22 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     else if (frame->frameType() == FRAMETYPE::ATTACHMENT)
     {
       AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(frame.release());
-      if (!outputdir.empty())
-      {
-        writeRawFrameDataToFile(outputdir + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".sbf", a);
-        // write actual attachment:
-        std::ofstream attachmentstream(outputdir + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".bin", std::ios_base::binary);
-        if (!attachmentstream.is_open())
-          std::cout << "Failed to open file for writing: " << outputdir
-                    << "/Attachment_" << bepaald::toString(a->rowId()) << "_" << bepaald::toString(a->attachmentId()) << ".bin" << std::endl;
-        else
-          attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
-      }
       d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
     }
     else if (frame->frameType() == FRAMETYPE::AVATAR)
     {
       AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
-      if (!outputdir.empty())
-      {
-        writeRawFrameDataToFile(outputdir + "/Avatar_" + a->name() + ".sbf", a);
-        // write actual attachment:
-        std::ofstream attachmentstream(outputdir + "/Avatar_" + a->name() + ".bin", std::ios_base::binary);
-        if (!attachmentstream.is_open())
-          std::cout << "Failed to open file for writing: " << outputdir
-                    << "/Avatar_" << a->name() << ".bin" << std::endl;
-        else
-          attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
-      }
       d_avatars.emplace(std::move(std::string(a->name())), a);
     }
     else if (frame->frameType() == FRAMETYPE::SHAREDPREFERENCE)
-    {
-      if (!outputdir.empty())
-        writeRawFrameDataToFile(outputdir + "/SharedPreference_" + bepaald::toString(d_sharedpreferenceframes.size()) + ".sbf", frame);
       d_sharedpreferenceframes.emplace_back(reinterpret_cast<SharedPrefFrame *>(frame.release()));
-    }
     else if (frame->frameType() == FRAMETYPE::STICKER)
     {
-      if (!outputdir.empty())
-        writeRawFrameDataToFile(outputdir + "/Sticker_" + bepaald::toString(d_stickers.size()) + ".sbf", frame);
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
       d_stickers.emplace(s->rowId(), s);
     }
     else if (frame->frameType() == FRAMETYPE::END)
-    {
-      if (!outputdir.empty())
-        writeRawFrameDataToFile(outputdir + "/End.sbf", frame);
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
-    }
   }
 
   d_database.exec("COMMIT");

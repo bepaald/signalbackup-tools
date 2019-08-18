@@ -53,7 +53,7 @@ class SignalBackup
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
  public:
-  SignalBackup(std::string const &filename, std::string const &passphrase, std::string const &outputdir = std::string());
+  SignalBackup(std::string const &filename, std::string const &passphrase);
   explicit SignalBackup(std::string const &inputdir);
   void exportBackup(std::string const &filename, std::string const &passphrase);
   void exportBackup(std::string const &directory);
