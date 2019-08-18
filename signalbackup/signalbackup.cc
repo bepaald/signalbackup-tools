@@ -132,7 +132,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
         std::cout << "Error: Bad MAC in frame other than AttachmentFrame. Not sure what to do..." << std::endl;
         frame->printInfo();
       }
-    }
+    } // if (d_fd->badMac())
 
     std::cout << "\33[2K\rFRAME " << frame->frameNumber() << " ("
               << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
@@ -221,10 +221,14 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
 
 SignalBackup::SignalBackup(std::string const &inputdir)
   :
-  d_database(inputdir + "/database.sqlite"),
+  d_database(":memory:"),
   d_fe(),
   d_ok(false)
 {
+  SqliteDB database(inputdir + "/database.sqlite");
+  if (!SqliteDB::copyDb(database, d_database))
+    return;
+
   if (!setFrameFromFile(&d_headerframe, inputdir + "/Header.sbf"))
     return;
 
@@ -337,6 +341,73 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   d_ok = true;
 }
 
+void SignalBackup::exportBackup(std::string const &directory)
+{
+  // maybe check directory exists, and is empty or make it empty if overwrite was requested.
+
+  // export headerframe:
+  std::cout << "Writing HeaderFrame..." << std::endl;
+  writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe);
+
+  // export databaseversionframe
+  std::cout << "Writing DatabaseVersionFrame..." << std::endl;
+  writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe);
+
+  // export attachments
+  std::cout << "Writing Attachments..." << std::endl;
+  for (auto const &aframe : d_attachments)
+  {
+    AttachmentFrame *a = aframe.second.get();
+    writeRawFrameDataToFile(directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".sbf", a);
+    // write actual attachment:
+    std::ofstream attachmentstream(directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".bin", std::ios_base::binary);
+    if (!attachmentstream.is_open())
+      std::cout << "Failed to open file for writing: " << directory
+                << "/Attachment_" << bepaald::toString(a->rowId()) << "_" << bepaald::toString(a->attachmentId()) << ".bin" << std::endl;
+    else
+      attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+  }
+
+  // export avatars
+  std::cout << "Writing Avatars..." << std::endl;
+  for (auto const &aframe : d_avatars)
+  {
+    AvatarFrame *a = aframe.second.get();
+    writeRawFrameDataToFile(directory + "/Avatar_" + a->name() + ".sbf", a);
+    // write actual attachment:
+    std::ofstream attachmentstream(directory + "/Avatar_" + a->name() + ".bin", std::ios_base::binary);
+    if (!attachmentstream.is_open())
+      std::cout << "Failed to open file for writing: " << directory
+                << "/Avatar_" << a->name() << ".bin" << std::endl;
+    else
+      attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+  }
+
+  // export sharedpreferences
+  std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
+  int count = 0;
+  for (auto const &spframe : d_sharedpreferenceframes)
+    writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe);
+
+  // export stickers
+  std::cout << "Writing StickerFrames..." << std::endl;
+  count = 0;
+  for (auto const &sframe : d_stickers)
+  {
+    StickerFrame *s = sframe.second.get();
+    writeRawFrameDataToFile(directory + "/Sticker_" + bepaald::toString(count++) + ".sbf", s);
+  }
+
+  // export endframe
+  std::cout << "Writing EndFrame..." << std::endl;
+  writeRawFrameDataToFile(directory + "/End.sbf", d_endframe);
+
+  // export database
+  SqliteDB database(directory + "/database.sqlite", false /*readonly*/);
+  if (!SqliteDB::copyDb(d_database, database))
+    std::cout << "Error exporting sqlite database" << std::endl;
+}
+
 void SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase)
 {
   std::cout << "Exporting backup to '" << filename << "'" << std::endl;
@@ -345,7 +416,7 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
   if (newpw == std::string())
     newpw = d_passphrase;
 
-  if (checkFileExists(filename))
+  if (/*!overwrrite && */checkFileExists(filename))
   {
     std::cout << "File " << filename << " exists. Refusing to overwrite" << std::endl;
     return;
@@ -485,6 +556,13 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
   {
     //std::cout << "Writing AvatarFrame" << std::endl;
     writeEncryptedFrame(outputfile, a.second.get());
+  }
+
+  // STICKER + ATTACHMENTS
+  for (auto const &s : d_stickers)
+  {
+    //std::cout << "Writing StickerFrame" << std::endl;
+    writeEncryptedFrame(outputfile, s.second.get());
   }
 
   // END
@@ -815,9 +893,9 @@ void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
     return;
   }
 
-  std::cout << "Deleting messages not belonging to thread from 'sms'" << std::endl;
+  std::cout << "Deleting messages not belonging to requested thread(s) from 'sms'" << std::endl;
   d_database.exec(smsq, tids);
-  std::cout << "Deleting messages not belonging to thread from 'mms'" << std::endl;
+  std::cout << "Deleting messages not belonging to requested thread(s) from 'mms'" << std::endl;
   d_database.exec(mmsq, tids);
 
   cleanDatabaseByMessages();

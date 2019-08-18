@@ -62,13 +62,14 @@ class SqliteDB
   sqlite3 *d_db;
   bool d_ok;
  public:
-  inline explicit SqliteDB(std::string const &name);
+  inline explicit SqliteDB(std::string const &name, bool readonly = true);
   inline SqliteDB(SqliteDB const &other) = delete;
   inline SqliteDB &operator=(SqliteDB const &other) = delete;
   inline ~SqliteDB();
   inline bool ok() const;
   inline void exec(std::string const &q, QueryResults *results = nullptr) const;
   void exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
+  inline static bool copyDb(SqliteDB const &source, SqliteDB const &target);
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
@@ -79,12 +80,15 @@ class SqliteDB
   inline bool isType(std::any const &a) const;
 };
 
-inline SqliteDB::SqliteDB(std::string const &name)
+inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   :
   d_db(nullptr),
   d_ok(false)
 {
-  d_ok = (sqlite3_open(name.c_str(), &d_db) == 0);
+  if (name != ":memory:" && readonly)
+    d_ok = (sqlite3_open_v2(name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
+  else
+    d_ok = (sqlite3_open(name.c_str(), &d_db) == SQLITE_OK);
 }
 
 inline SqliteDB::~SqliteDB()
@@ -101,6 +105,25 @@ inline bool SqliteDB::ok() const
 inline void SqliteDB::exec(std::string const &q, QueryResults *results) const
 {
   exec(q, std::vector<std::any>(), results);
+}
+
+inline bool SqliteDB::copyDb(SqliteDB const &source, SqliteDB const &target) // static
+{
+  sqlite3_backup *backup = sqlite3_backup_init(target.d_db, "main", source.d_db, "main");
+  if (!backup)
+  {
+    std::cout << "SQL Error: " << sqlite3_errmsg(target.d_db) << std::endl;
+    return false;
+  }
+  int rc = 0;
+  if ((rc = sqlite3_backup_step(backup, -1)) != SQLITE_DONE)
+    std::cout << "SQL Error: " << sqlite3_errstr(rc) << std::endl;
+  if (sqlite3_backup_finish(backup) != SQLITE_OK)
+  {
+    std::cout << "SQL Error: Error finishing backup" << std::endl;
+    return false;
+  }
+  return true;
 }
 
 template <typename T>

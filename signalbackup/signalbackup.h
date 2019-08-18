@@ -55,7 +55,8 @@ class SignalBackup
  public:
   SignalBackup(std::string const &filename, std::string const &passphrase, std::string const &outputdir = std::string());
   explicit SignalBackup(std::string const &inputdir);
-  void exportBackup(std::string const &filename, std::string const &passphrase = std::string());
+  void exportBackup(std::string const &filename, std::string const &passphrase);
+  void exportBackup(std::string const &directory);
   //void exportXml(std::string const &filename) const;
   void listThreads() const;
   void cropToThread(long long int threadid);
@@ -108,6 +109,8 @@ inline void SignalBackup::updateThreadsEntries(long long int thread)
     {
       // set message count
       std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, 0));
+      std::cout << "Dealing with thread id: " << threadid << std::endl;
+      std::cout << "  Updating msgcount" << std::endl;
       d_database.exec("UPDATE thread SET message_count = (SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
                       ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
 
@@ -118,22 +121,29 @@ inline void SignalBackup::updateThreadsEntries(long long int thread)
                       + threadid
                       + " UNION SELECT mms.date AS union_display_date, mms.msg_box AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
                       + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
-      results2.prettyPrint();
+      //results2.prettyPrint();
 
       std::any date = results2.value(0, "union_date");
       if (date.type() == typeid(long long int))
       {
         long long int roundeddate = (std::any_cast<long long int>(date) / 1000) * 1000;
-        d_database.exec("UPDATE thread SET date = ?", {roundeddate});
+        std::cout << "  Setting last msg date" << std::endl;
+        d_database.exec("UPDATE thread SET date = ? WHERE _id = ?", {roundeddate, threadid});
       }
 
       std::any body = results2.value(0, "union_body");
       if (body.type() == typeid(std::string))
-        d_database.exec("UPDATE thread SET snippet = ?", {std::any_cast<std::string>(body)});
+      {
+        std::cout << "  Updating snippet" << std::endl;
+        d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {std::any_cast<std::string>(body), threadid});
+      }
 
       std::any type = results2.value(0, "union_type");
       if (type.type() == typeid(long long int))
-        d_database.exec("UPDATE thread SET snippet_type = ?", {std::any_cast<long long int>(type)});
+      {
+        std::cout << "  Updating snippet type" << std::endl;
+        d_database.exec("UPDATE thread SET snippet_type = ? WHERE _id = ?", {std::any_cast<long long int>(type), threadid});
+      }
 
       std::any mid = results2.value(0, "mms._id");
       if (mid.type() == typeid(long long int))
@@ -146,9 +156,12 @@ inline void SignalBackup::updateThreadsEntries(long long int thread)
 
         // snippet_uri = content://org.thoughtcrime.securesms/part/ + part.unique_id + '/' + part._id
         if (id.type() == typeid(long long int) && uniqueid.type() == typeid(long long int))
-          d_database.exec("UPDATE thread SET snippet_uri = content://org.thoughtcrime.securesms/part/" +
+        {
+          std::cout << "  Updating snippet_uri" << std::endl;
+          d_database.exec("UPDATE thread SET snippet_uri = 'content://org.thoughtcrime.securesms/part/" +
                           bepaald::toString(std::any_cast<long long int>(uniqueid)) + "/" +
-                          bepaald::toString(std::any_cast<long long int>(id)));
+                          bepaald::toString(std::any_cast<long long int>(id)) + "' WHERE _id = " + threadid);
+        }
       }
 
     }
