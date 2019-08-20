@@ -22,7 +22,7 @@
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy)
   :
   d_headerframe(nullptr),
-  d_file(filename, std::ios_base::binary),
+  d_file(filename, std::ios_base::binary | std::ios_base::in),
   d_filename(filename),
   d_framecount(0),
   d_filesize(0),

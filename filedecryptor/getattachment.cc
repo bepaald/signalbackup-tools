@@ -22,7 +22,12 @@
 // expects a allocated char *
 bool FileDecryptor::getAttachment(FrameWithAttachment *frame)
 {
-  std::ifstream file(d_filename, std::ios_base::binary);
+  std::ifstream file(d_filename, std::ios_base::binary | std::ios_base::in);
+  if (!file.is_open())
+  {
+    std::cout << "Failed to open backup file for reading attachment" << std::endl;
+    return false;
+  }
   file.seekg(frame->filepos(), std::ios_base::beg);
 
   //uintToFourBytes(d_iv, d_counter++); // done in getFrame

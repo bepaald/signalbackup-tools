@@ -70,7 +70,8 @@ class SignalBackup
 
  private:
   inline void updateThreadsEntries(long long int thread = -1);
-  long long int getLastUsedId(std::string const &table);
+  long long int getMaxUsedId(std::string const &table);
+  long long int getMinUsedId(std::string const &table);
   inline bool checkFileExists(std::string const &filename) const;
   template <class T>
   inline void writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
@@ -84,7 +85,7 @@ class SignalBackup
   inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
   template <typename T>
   inline std::pair<unsigned char*, size_t> numToData(T num) const;
-  void setMinimumId(std::string const &table, long long int offset, std::string const &id = std::string("_id")) const;
+  void setMinimumId(std::string const &table, long long int offset) const;
   void cleanDatabaseByMessages();
   void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences, long long int groups, long long int identies, long long int group_receipts, long long int drafts);
   long long int dateToMSecsSinceEpoch(std::string const &date) const;
@@ -323,7 +324,7 @@ inline std::pair<unsigned char*, size_t> SignalBackup::numToData(T num) const
 template <>
 inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std::string const &file, bool quiet) const
 {
-  std::ifstream datastream(file, std::ios_base::binary);
+  std::ifstream datastream(file, std::ios_base::binary | std::ios::in);
   if (!datastream.is_open())
   {
     if (!quiet)
@@ -337,7 +338,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std
 template <class T>
 inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet) const
 {
-  std::ifstream datastream(file, std::ios_base::binary);
+  std::ifstream datastream(file, std::ios_base::binary | std::ios::in);
   if (!datastream.is_open())
   {
     if (!quiet)

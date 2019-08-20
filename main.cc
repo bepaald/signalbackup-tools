@@ -114,6 +114,10 @@ int main(int argc, char *argv[])
   else
     sb.reset(new SignalBackup(rawindir));
 
+  //sb->listThreads();
+  //SignalBackup source2("../../PHONE/merge/signal-2019-08-17-09-04-39.backup", "871668681636341580140408145443");
+  //sb->importThread(&source2, 2);
+
   if (!outfilename.empty())
   {
     if (sb->dropBadFrames())
@@ -123,7 +127,7 @@ int main(int argc, char *argv[])
     sb->exportBackup(rawoutdir);
 
 
-  //sb->listThreads();
+
   //sb->cropToThread({8, 10, 11});
   //sb->listThreads();
 
