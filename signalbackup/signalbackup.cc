@@ -731,20 +731,20 @@ void SignalBackup::listThreads() const
 
 }
 
-void SignalBackup::setMinimumId(std::string const &table, long long int offset, std::string const &id) const
+void SignalBackup::setMinimumId(std::string const &table, long long int offset) const
 {
   if (offset == 0) // no changes requested
     return;
 
   if (offset < 0)
   {
-    d_database.exec("UPDATE " + table + " SET _id = " + id + " + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{1});
-    d_database.exec("UPDATE " + table + " SET _id = " + id + " - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{offset - 1});
+    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{1ll});
+    d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{(offset - 1)});
   }
   else
   {
-    d_database.exec("UPDATE " + table + " SET _id = " + id + " + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{offset});
-    d_database.exec("UPDATE " + table + " SET _id = " + id + " - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ")");
+    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{offset});
+    d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ")");
   }
 }
 
@@ -782,7 +782,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
 }
 
-void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient_preferences, long long int mingroups, long long int minidenties, long long int mingroup_receipts, long long int mindrafts)
+void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient_preferences, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts)
 {
   std::cout << "Adjusting indexes in tables..." << std::endl;
 
@@ -812,7 +812,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
   setMinimumId("groups", mingroups);
 
-  setMinimumId("identities", minidenties);
+  setMinimumId("identities", minidentities);
 
   setMinimumId("group_receipts", mingroup_receipts);
 
@@ -865,7 +865,20 @@ void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
   cleanDatabaseByMessages();
 }
 
-long long int SignalBackup::getLastUsedId(std::string const &table)
+long long int SignalBackup::getMinUsedId(std::string const &table)
+{
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT MIN(_id) FROM " + table, &results);
+  if (results.rows() != 1 ||
+      results.columns() != 1 ||
+      !results.valueHasType<long long int>(0, 0))
+  {
+    return 0;
+  }
+  return results.getValueAs<long long int>(0, 0);
+}
+
+long long int SignalBackup::getMaxUsedId(std::string const &table)
 {
   SqliteDB::QueryResults results;
   d_database.exec("SELECT MAX(_id) FROM " + table, &results);
@@ -911,22 +924,24 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
   source->d_database.exec("VACUUM");
 
-  long long int minthread = getLastUsedId("thread");
-  long long int minsms = getLastUsedId("sms");
-  long long int minmms = getLastUsedId("mms");
-  long long int minpart = getLastUsedId("part");
-  long long int minrecipient_preferences = getLastUsedId("recipient_preferences");
-  long long int mingroups = getLastUsedId("groups");
-  long long int minidenties = getLastUsedId("identities");
-  long long int mingroup_receipts = getLastUsedId("group_receipts");
-  long long int mindrafts = getLastUsedId("drafts");
-  source->makeIdsUnique(minthread, minsms, minmms, minpart, minrecipient_preferences, mingroups, minidenties, mingroup_receipts, mindrafts);
+  // make sure all id's are unique
+  // should rename these to offset
+  long long int minthread = getMaxUsedId("thread") + 1 - source->getMinUsedId("thread");
+  long long int minsms = getMaxUsedId("sms") + 1 - source->getMinUsedId("sms");
+  long long int minmms = getMaxUsedId("mms") + 1 - source->getMinUsedId("mms");
+  long long int minpart = getMaxUsedId("part") + 1 - source->getMinUsedId("part");
+  long long int minrecipient_preferences = getMaxUsedId("recipient_preferences") + 1 - source->getMinUsedId("recipient_preferences");
+  long long int mingroups = getMaxUsedId("groups") + 1 - source->getMinUsedId("groups");
+  long long int minidentities = getMaxUsedId("identities") + 1 - source->getMinUsedId("identities");
+  long long int mingroup_receipts = getMaxUsedId("group_receipts") + 1 - source->getMinUsedId("group_receipts");
+  long long int mindrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
+  source->makeIdsUnique(minthread, minsms, minmms, minpart, minrecipient_preferences, mingroups, minidentities, mingroup_receipts, mindrafts);
 
   // merge into existing thread, set the id on the sms, mms, and drafts
   // drop the recipient_preferences, identities and thread tables, they are already in the target db
   if (targetthread > -1)
   {
-    std::cout << "Found exisitng thread for this recipient in target database, merging into thread " << targetthread << std::endl;
+    std::cout << "Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
 
     source->d_database.exec("UPDATE sms SET thread_id = ?", std::vector<std::any>{targetthread});
     source->d_database.exec("UPDATE mms SET thread_id = ?", std::vector<std::any>{targetthread});
@@ -937,6 +952,22 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("DROP TABLE groups");
     source->d_avatars.clear();
   }
+  else
+  {
+    // check identities and recepient prefs for presence of values, they may be there (even though no thread was found (for example via a group chat or deleted thread))
+    // get identities from target, drop all rows from source that are allready present
+    d_database.exec("SELECT address FROM identities", &results);
+    for (uint i = 0; i < results.rows(); ++i)
+      if (results.header(0) == "address" && results.valueHasType<std::string>(i, 0))
+        source->d_database.exec("DELETE FROM identities WHERE ADDRESS = '" + results.getValueAs<std::string>(i, 0) + "'");
+
+    // get recipient_preferences from target, drop all rows from source that are allready present
+    d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
+    for (uint i = 0; i < results.rows(); ++i)
+      if (results.header(0) == "recipient_ids" && results.valueHasType<std::string>(i, 0))
+        source->d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids = '" + results.getValueAs<std::string>(i, 0) + "'");
+  }
+
 
   // now import the source tables into target,
 

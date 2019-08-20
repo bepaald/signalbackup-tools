@@ -181,7 +181,7 @@ inline bool FrameWithAttachment::setAttachmentData(unsigned char *data) // overr
 #include <fstream>
 inline bool FrameWithAttachment::setAttachmentData(std::string const &filename) // override
 {
-  std::ifstream file(filename, std::ios_base::binary);
+  std::ifstream file(filename, std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
   {
     std::cout << "Failed to open '" << filename << "' for reading" << std::endl;

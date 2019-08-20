@@ -108,43 +108,6 @@ inline BackupFrame *HeaderFrame::create(unsigned char *data, size_t length, uint
   return new HeaderFrame(data, length, count);
 }
 
-/*
-#include <fstream>
-inline BackupFrame *HeaderFrame::createFromHumanData(std::ifstream *datastream, uint64_t count) // static
-{
-  std::string line;
-  while (std::getline(*datastream, line))
-  {
-    uint pos = line.find(":", 0);
-    if (pos == std::string::npos)
-    {
-      std::cout << "Failed to read HeaderFrame from datafile" << std::endl;
-      return nullptr;
-    }
-    std::string field = line.substr(0, pos);
-
-    uint pos2 = line.find(":", pos);
-    if (pos2 == std::string::npos)
-    {
-      std::cout << "Failed to read HeaderFrame from datafile" << std::endl;
-      return nullptr;
-    }
-    std::string type = line.substr(pos, pos2 - pos);
-
-    std::string datastr = line.substr(pos2);
-
-    std::cout << field << std::endl;
-    std::cout << type << std::endl;
-    std::cout << datastr << std::endl;
-
-  }
-
-  unsigned char *data = nullptr;
-  uint64_t length = 0;
-  return new HeaderFrame(data, length, count);
-}
-*/
-
 inline void HeaderFrame::printInfo() const
 {
   //DEBUGOUT("TYPE: HEADERFRAME");
