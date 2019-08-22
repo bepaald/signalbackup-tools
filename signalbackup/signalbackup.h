@@ -87,6 +87,7 @@ class SignalBackup
   inline std::pair<unsigned char*, size_t> numToData(T num) const;
   void setMinimumId(std::string const &table, long long int offset) const;
   void cleanDatabaseByMessages();
+  void compactIds(std::string const &table);
   void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences, long long int groups, long long int identies, long long int group_receipts, long long int drafts);
   long long int dateToMSecsSinceEpoch(std::string const &date) const;
   void showQuery(std::string const &query) const;

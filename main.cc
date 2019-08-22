@@ -35,102 +35,62 @@
 
 #include "signalbackup/signalbackup.h"
 
-std::string signalfile;
-std::string passphrase;
-std::string newpassphrase;
-std::string outfilename;
-bool dumpattachments = true;
-bool dontbreak = true;
-std::string rawoutdir;
-std::string rawindir;
-
-bool parseArgs(int argc, char *argv[])
-{
-  if (argc < 3)
-  {
-    std::cout << "Usage: " << argv[0] << " [signal backup file] [PASSPHRASE 30 digits] [optional new output file] [optional new passphrase]" << std::endl;
-    std::cout << " - If no new output file name is given any info on bad frames is printed to stdout and the attachment data is dumped to file. Otherwise, a new backup file is created after dropping the bad attachment frames and removing the references to them from the sqlite database. If no new passphrase is given, the old one will be used." << std::endl;
-    return false;
-  }
-
-  for (int i = 1; i < argc; ++i)
-  {
-    std::string arg = argv[i];
-    if (arg.substr(0, 2) != "--") // not a switch
-    {
-      if (rawindir.empty() && signalfile.empty())
-        signalfile = arg;
-      else if (rawindir.empty() && passphrase.empty())
-        passphrase = arg;
-      else if (outfilename.empty())
-        outfilename = arg;
-      else if (newpassphrase.empty())
-        newpassphrase = arg;
-    }
-    else if (arg == "--dumptodir")
-    {
-      if (i == argc - 1)
-      {
-        std::cout << "Missing parameter for arg" << std::endl;
-        return false;
-      }
-      rawoutdir = argv[++i];
-    }
-    else if (arg == "--readrawfromdir")
-    {
-      if (i == argc - 1)
-      {
-        std::cout << "Missing parameter for arg" << std::endl;
-        return false;
-      }
-      rawindir = argv[++i];
-    }
-    else
-    {
-      std::cout << "Ignoring unknown option: '" << arg << "'" << std::endl;
-    }
-  }
-
-  if (newpassphrase.empty())
-    newpassphrase = passphrase;
-
-  return (!signalfile.empty() && !passphrase.empty()) || !rawindir.empty();
-}
+#include "arg/arg.h"
 
 int main(int argc, char *argv[])
 {
   //return 0;
 
-  if (!parseArgs(argc, argv))
+  Arg arg(argc, argv);
+  if (!arg.ok())
   {
     std::cout << "Error parsing arguments" << std::endl;
     return 1;
   }
 
+
+  // open input
   std::unique_ptr<SignalBackup> sb;
-
-  if (!signalfile.empty())
-    sb.reset(new SignalBackup(signalfile, passphrase));
+  if (arg.password().empty())
+    sb.reset(new SignalBackup(arg.input()));
   else
-    sb.reset(new SignalBackup(rawindir));
+    sb.reset(new SignalBackup(arg.input(), arg.password()));
 
-  //sb->listThreads();
-  //SignalBackup source2("../../PHONE/merge/signal-2019-08-17-09-04-39.backup", "871668681636341580140408145443");
-  //sb->importThread(&source2, 2);
+  if (arg.listthreads())
+    sb->listThreads();
 
-  if (!outfilename.empty())
+
+  if (!arg.source().empty())
   {
-    if (sb->dropBadFrames())
-      sb->exportBackup(outfilename, newpassphrase);
+    for (uint i = 0; i < arg.importthreads().size(); ++i)
+    {
+      // read the database
+      std::cout << "Importing thread " << arg.importthreads()[i] << " from source file: " << arg.source() << std::endl;
+
+      std::unique_ptr<SignalBackup> source;
+      if (arg.sourcepassword().empty())
+        source.reset(new SignalBackup(arg.source()));
+      else
+        source.reset(new SignalBackup(arg.source(), arg.sourcepassword()));
+
+      sb->importThread(source.get(), arg.importthreads()[i]);
+    }
   }
-  else if (!rawoutdir.empty())
-    sb->exportBackup(rawoutdir);
+
+
+  // export output
+  if (!arg.output().empty())
+  {
+    if (!arg.opassword().empty())
+      sb->exportBackup(arg.output(), arg.opassword());
+    else
+      sb->exportBackup(arg.output());
+  }
 
 
 
   //sb->cropToThread({8, 10, 11});
   //sb->listThreads();
-
 
   // std::cout << "Starting export!" << std::endl;
   // sb.exportBackup("NEWFILE");

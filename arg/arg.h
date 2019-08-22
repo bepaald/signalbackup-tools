@@ -1,0 +1,173 @@
+/*
+    Copyright (C) arg/arg.h  Selwin van Dijk
+
+    This file is part of .
+
+     is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+     is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with .  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+#ifndef ARGS_H_
+#define _ARGS_H_
+
+#include <iostream>
+#include <vector>
+#include <sstream>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>
+#include <algorithm>
+
+class Arg
+{
+  bool d_ok;
+  size_t d_positionals;
+  std::vector<int> d_importthreads;
+  std::string d_input;
+  std::string d_password;
+  std::string d_output;
+  std::string d_opassword;
+  std::string d_source;
+  std::string d_sourcepassword;
+  bool d_listthreads;
+ public:
+  Arg(int argc, char *argv[]);
+  inline Arg(Arg const &other) = delete;
+  inline Arg &operator=(Arg const &other) = delete;
+  inline bool ok() const;
+  inline std::vector<int> const &importthreads() const;
+  inline std::string const &input() const;
+  inline std::string const &password() const;
+  inline std::string const &output() const;
+  inline std::string const &opassword() const;
+  inline std::string const &source() const;
+  inline std::string const &sourcepassword() const;
+  inline bool listthreads() const;
+ private:
+  template <typename T>
+  bool ston(T &t, std::string const &str) const;
+  bool parseArgs(std::vector<std::string> const &args);
+  template <typename T>
+  bool parseNumberList(std::string const &strlist, std::vector<T> *list) const;
+  template <typename T>
+  bool parseNumberListToken(std::string const &token, std::vector<T> *list) const;
+  void usage() const;
+};
+
+inline std::vector<int> const &Arg::importthreads() const
+{
+  return d_importthreads;
+}
+
+inline std::string const &Arg::input() const
+{
+  return d_input;
+}
+
+inline std::string const &Arg::password() const
+{
+  return d_password;
+}
+
+inline std::string const &Arg::output() const
+{
+  return d_output;
+}
+
+inline std::string const &Arg::opassword() const
+{
+  return d_opassword;
+}
+
+inline std::string const &Arg::source() const
+{
+  return d_source;
+}
+
+inline std::string const &Arg::sourcepassword() const
+{
+  return d_sourcepassword;
+}
+
+inline bool Arg::listthreads() const
+{
+  return d_listthreads;
+}
+
+inline bool Arg::ok() const
+{
+  return d_ok;
+}
+
+template <typename T>
+bool Arg::ston(T &t, std::string const &str) const
+{
+  std::istringstream iss(str);
+  return !(iss >> t).fail();
+}
+
+template <typename T>
+bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list) const
+{
+  std::string tr = strlist;
+
+  size_t start = 0;
+  size_t pos = 0;
+  while ((pos = tr.find(',', start)) != std::string::npos)
+  {
+    if (!parseNumberListToken(tr.substr(start, pos - start), list))  // get&parse token
+      return false;
+    start = pos + 1;
+  }
+  if (!parseNumberListToken(tr.substr(start), list)) // get last bit
+    return false;
+
+  std::sort(list->begin(), list->end());
+
+  return true;
+}
+
+template <typename T>
+bool Arg::parseNumberListToken(std::string const &token, std::vector<T> *list) const
+{
+  size_t pos = 0;
+  int beg = -1;
+
+  // try and get first number
+  if ((pos = token.find('-')) != std::string::npos)
+  {
+    if (!ston<int>(beg, token.substr(0, pos)))
+      return false;
+
+    // then there must be a second number
+    int end = -1;
+    if (!ston<int>(end, token.substr(pos + 1)))
+      return false;
+
+    if (beg > end)
+      return false;
+    for (int i = beg; i <= end ; ++i)
+      list->push_back(i);
+  }
+  else
+  {
+    if (!ston<int>(beg, token))
+      return false;
+    else
+      list->push_back(beg);
+  }
+
+  return true;
+}
+
+#endif
