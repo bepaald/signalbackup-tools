@@ -26,7 +26,6 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   d_passphrase(passphrase),
   d_ok(false)
 {
-
   if (!d_fd->ok())
   {
     std::cout << "Failed to create filedecrypter" << std::endl;
@@ -782,6 +781,49 @@ void SignalBackup::cleanDatabaseByMessages()
 
 }
 
+void SignalBackup::compactIds(std::string const &table)
+{
+  std::cout << "Compacting table: " << table << std::endl;
+
+  SqliteDB::QueryResults results;
+  // d_database.exec("SELECT _id FROM " + table, &results);
+  // results.prettyPrint();
+
+  d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
+  while (results.rows() > 0 && results.valueHasType<long long int>(0, 0))
+  {
+    long long int nid = results.getValueAs<long long int>(0, 0);
+
+    d_database.exec("SELECT MIN(_id) FROM " + table + " WHERE _id > ?", std::vector<std::any>{nid}, &results);
+    if (results.rows() == 0 || !results.valueHasType<long long int>(0, 0))
+      break;
+    long long int valuetochange = results.getValueAs<long long int>(0, 0);
+
+    //std::cout << "Changing _id : " << valuetochange << " -> " << nid << std::endl;
+
+    d_database.exec("UPDATE " + table + " SET _id = ? WHERE _id = ?", std::vector<std::any>{nid, valuetochange});
+
+
+    if (table == "mms")
+    {
+      d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", std::vector<std::any>{nid, valuetochange}); // update part.mid to new mms._id's
+      d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", std::vector<std::any>{nid, valuetochange}); // "
+    }
+    else if (table == "part")
+    {
+      std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> newattdb;
+      for (auto &att : d_attachments)
+        if (reinterpret_cast<AttachmentFrame *>(att.second.get())->rowId() == static_cast<uint64_t>(valuetochange))
+          reinterpret_cast<AttachmentFrame *>(att.second.get())->setRowId(nid);
+    }
+
+    d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
+  }
+
+  // d_database.exec("SELECT _id FROM " + table, &results);
+  // results.prettyPrint();
+}
+
 void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient_preferences, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts)
 {
   std::cout << "Adjusting indexes in tables..." << std::endl;
@@ -792,10 +834,14 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   d_database.exec("UPDATE drafts SET thread_id = thread_id + ?", std::vector<std::any>{minthread}); // ""
 
   setMinimumId("sms",  minsms);
+  compactIds("sms");
+
+  // UPDATE t SET id = (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1) WHERE id = (SELECT MIN(id) FROM t WHERE id > (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1));
 
   setMinimumId("mms",  minmms);
   d_database.exec("UPDATE part SET mid = mid + ?", std::vector<std::any>{minmms}); // update part.mid to new mms._id's
   d_database.exec("UPDATE group_receipts SET mms_id = mms_id + ?", std::vector<std::any>{minmms}); // "
+  compactIds("mms");
 
   setMinimumId("part", minpart);
   // update rowid's in attachments
@@ -807,16 +853,22 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     newattdb.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
   }
   d_attachments = std::move(newattdb);
+  compactIds("part");
 
   setMinimumId("recipient_preferences", minrecipient_preferences);
+  compactIds("recipient_preferences");
 
   setMinimumId("groups", mingroups);
+  compactIds("groups");
 
   setMinimumId("identities", minidentities);
+  compactIds("identities");
 
   setMinimumId("group_receipts", mingroup_receipts);
+  compactIds("group_receipts");
 
   setMinimumId("drafts", mindrafts);
+  compactIds("drafts");
 }
 
 void SignalBackup::cropToThread(long long int threadid)
