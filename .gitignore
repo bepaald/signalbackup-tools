@@ -1,0 +1,4 @@
+*.swp
+*.bak
+**/o/
+signalbackup-tools
