@@ -1,0 +1,13 @@
+*
+!README.md
+!LICENSE
+!BUILDSCRIPT.sh
+!BUILDWINDOWS.sh
+!*.cc
+!*.h
+!*.ih
+!*/
+!*/*.cc
+!*/*.h
+!*/*.ih
+!.gitignore

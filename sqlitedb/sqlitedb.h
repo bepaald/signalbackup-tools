@@ -68,6 +68,7 @@ class SqliteDB
   inline ~SqliteDB();
   inline bool ok() const;
   inline void exec(std::string const &q, QueryResults *results = nullptr) const;
+  inline void exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
   void exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
   inline static bool copyDb(SqliteDB const &source, SqliteDB const &target);
  private:
@@ -105,6 +106,11 @@ inline bool SqliteDB::ok() const
 inline void SqliteDB::exec(std::string const &q, QueryResults *results) const
 {
   exec(q, std::vector<std::any>(), results);
+}
+
+inline void SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results) const
+{
+  exec(q, std::vector<std::any>{param}, results);
 }
 
 inline bool SqliteDB::copyDb(SqliteDB const &source, SqliteDB const &target) // static
