@@ -304,242 +304,6 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   d_ok = true;
 }
 
-void SignalBackup::exportBackup(std::string const &directory)
-{
-  // maybe check directory exists, and is empty or make it empty if overwrite was requested.
-
-  // export headerframe:
-  std::cout << "Writing HeaderFrame..." << std::endl;
-  writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe);
-
-  // export databaseversionframe
-  std::cout << "Writing DatabaseVersionFrame..." << std::endl;
-  writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe);
-
-  // export attachments
-  std::cout << "Writing Attachments..." << std::endl;
-  for (auto const &aframe : d_attachments)
-  {
-    AttachmentFrame *a = aframe.second.get();
-    writeRawFrameDataToFile(directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".sbf", a);
-    // write actual attachment:
-    std::ofstream attachmentstream(directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".bin", std::ios_base::binary);
-    if (!attachmentstream.is_open())
-      std::cout << "Failed to open file for writing: " << directory
-                << "/Attachment_" << bepaald::toString(a->rowId()) << "_" << bepaald::toString(a->attachmentId()) << ".bin" << std::endl;
-    else
-      attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
-  }
-
-  // export avatars
-  std::cout << "Writing Avatars..." << std::endl;
-  for (auto const &aframe : d_avatars)
-  {
-    AvatarFrame *a = aframe.second.get();
-    writeRawFrameDataToFile(directory + "/Avatar_" + a->name() + ".sbf", a);
-    // write actual attachment:
-    std::ofstream attachmentstream(directory + "/Avatar_" + a->name() + ".bin", std::ios_base::binary);
-    if (!attachmentstream.is_open())
-      std::cout << "Failed to open file for writing: " << directory
-                << "/Avatar_" << a->name() << ".bin" << std::endl;
-    else
-      attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
-  }
-
-  // export sharedpreferences
-  std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
-  int count = 0;
-  for (auto const &spframe : d_sharedpreferenceframes)
-    writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe);
-
-  // export stickers
-  std::cout << "Writing StickerFrames..." << std::endl;
-  count = 0;
-  for (auto const &sframe : d_stickers)
-  {
-    StickerFrame *s = sframe.second.get();
-    writeRawFrameDataToFile(directory + "/Sticker_" + bepaald::toString(count++) + ".sbf", s);
-  }
-
-  // export endframe
-  std::cout << "Writing EndFrame..." << std::endl;
-  writeRawFrameDataToFile(directory + "/End.sbf", d_endframe);
-
-  // export database
-  SqliteDB database(directory + "/database.sqlite", false /*readonly*/);
-  if (!SqliteDB::copyDb(d_database, database))
-    std::cout << "Error exporting sqlite database" << std::endl;
-}
-
-void SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase)
-{
-  std::cout << "Exporting backup to '" << filename << "'" << std::endl;
-
-  std::string newpw = passphrase;
-  if (newpw == std::string())
-    newpw = d_passphrase;
-
-  if (/*!overwrrite && */checkFileExists(filename))
-  {
-    std::cout << "File " << filename << " exists. Refusing to overwrite" << std::endl;
-    return;
-  }
-
-  std::ofstream outputfile(filename, std::ios_base::binary);
-
-  if (!d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length()))
-  {
-    std::cout << "Error initializing FileEncryptor" << std::endl;
-    return;
-  }
-
-  // HEADER // Note: HeaderFrame is not encrypted.
-  std::cout << "Writing HeaderFrame..." << std::endl;
-  if (!d_headerframe)
-  {
-    std::cout << "Error: HeaderFrame not found" << std::endl;
-    return;
-  }
-  std::pair<unsigned char *, uint64_t> framedata = d_headerframe->getData();
-  if (!framedata.first)
-  {
-    std::cout << "Error getting HeaderFrame data" << std::endl;
-    return;
-  }
-  writeFrameDataToFile(outputfile, framedata);
-  delete[] framedata.first;
-
-  // VERSION
-  std::cout << "Writing DatabaseVersionFrame..." << std::endl;
-  if (!d_databaseversionframe)
-  {
-    std::cout << "Error: DataBaseVersionFrame not found" << std::endl;
-    return;
-  }
-  writeEncryptedFrame(outputfile, d_databaseversionframe.get());
-
-  // SQL DATABASE + ATTACHMENTS
-  std::cout << "Writing SqlStatementFrame(s)..." << std::endl;
-
-  // get and write schema
-  std::string q("SELECT sql, name, type FROM sqlite_master");
-  SqliteDB::QueryResults results;
-  d_database.exec(q, &results);
-  std::vector<std::string> tables;
-  for (uint i = 0; i < results.rows(); ++i)
-  {
-    if (!results.valueHasType<std::nullptr_t>(i, 0))
-    {
-      if (results.valueHasType<std::string>(i, 1) &&
-          (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
-           results.getValueAs<std::string>(i, 1).find("sms_fts") == 0))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
-      else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                results.getValueAs<std::string>(i, 1).find("mms_fts") == 0))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
-      else
-      {
-        if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
-          tables.emplace_back(std::move(results.getValueAs<std::string>(i, 1)));
-
-        SqlStatementFrame NEWFRAME;
-        NEWFRAME.setStatementField(results.getValueAs<std::string>(i, 0));
-
-        //std::cout << "Writing SqlStatementFrame..." << std::endl;
-        writeEncryptedFrame(outputfile, &NEWFRAME);
-      }
-    }
-  }
-
-  // write contents of tables
-  for (std::string const &table : tables)
-  {
-    if (table == "signed_prekeys" ||
-        table == "one_time_prekeys" ||
-        table == "sessions" ||
-        table.substr(0, STRLEN("sms_fts")) == "sms_fts" ||
-        table.substr(0, STRLEN("mms_fts")) == "mms_fts" ||
-        table.substr(0, STRLEN("sqlite_")) == "sqlite_")
-      continue;
-
-    d_database.exec("SELECT * FROM " + table, &results);
-
-    for (uint i = 0; i < results.rows(); ++i)
-    {
-      std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
-
-      SqlStatementFrame NEWFRAME = buildSqlStatementFrame(table, results.row(i));
-
-      //std::cout << "Writing SqlStatementFrame..." << std::endl;
-      writeEncryptedFrame(outputfile, &NEWFRAME);
-
-      if (table == "part") // find corresponding attachment
-      {
-        uint64_t rowid = 0, uniqueid = 0;
-        for (uint j = 0; j < results.columns(); ++j)
-        {
-          if (results.header(j) == "_id" && results.valueHasType<long long int>(i, j))
-          {
-            rowid = results.getValueAs<long long int>(i, j);
-            if (rowid && uniqueid)
-              break;
-          }
-          else if (results.header(j) == "unique_id" && results.valueHasType<long long int>(i, j))
-          {
-           //std::cout << "UNIQUEID: " << std::any_cast<long long int>(results[i][j].second) << std::endl;
-            uniqueid = results.getValueAs<long long int>(i, j);
-            if (rowid && uniqueid)
-              break;
-          }
-        }
-        auto attachment = d_attachments.find({rowid, uniqueid});
-        if (attachment != d_attachments.end())
-          writeEncryptedFrame(outputfile, attachment->second.get());
-        else
-          std::cout << "Warning: attachment data not found" << std::endl;
-      }
-    }
-    if (results.rows())
-      std::cout << "done" << std::endl;
-    else
-      std::cout << "  Dealing with table '" << table << "'... 0/0 entries..." << std::endl;
-  }
-
-  std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
-  // SHAREDPREFS
-  for (uint i = 0; i < d_sharedpreferenceframes.size(); ++i)
-  {
-    //std::cout << "Writing SharedPreferenceFrame..." << std::endl;
-    writeEncryptedFrame(outputfile, d_sharedpreferenceframes[i].get());
-  }
-
-  // AVATAR + ATTACHMENTS
-  for (auto const &a : d_avatars)
-  {
-    //std::cout << "Writing AvatarFrame" << std::endl;
-    writeEncryptedFrame(outputfile, a.second.get());
-  }
-
-  // STICKER + ATTACHMENTS
-  for (auto const &s : d_stickers)
-  {
-    //std::cout << "Writing StickerFrame" << std::endl;
-    writeEncryptedFrame(outputfile, s.second.get());
-  }
-
-  // END
-  std::cout << "Writing EndFrame..." << std::endl;
-  if (!d_endframe)
-  {
-    std::cout << "Error: EndFrame not found" << std::endl;
-    return;
-  }
-  writeEncryptedFrame(outputfile, d_endframe.get());
-
-  std::cout << "Done!" << std::endl;
-}
-
 /*
 void SignalBackup::exportXml(std::string const &filename) const
 {
@@ -737,12 +501,12 @@ void SignalBackup::setMinimumId(std::string const &table, long long int offset) 
 
   if (offset < 0)
   {
-    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{1ll});
-    d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{(offset - 1)});
+    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", 1ll);
+    d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ") + ?", (offset - 1));
   }
   else
   {
-    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", std::vector<std::any>{offset});
+    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", offset);
     d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ")");
   }
 }
@@ -759,6 +523,7 @@ void SignalBackup::cleanDatabaseByMessages()
   std::cout << "Deleting removed groups..." << std::endl;
   d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT recipient_ids FROM thread)");
 
+  std::cout << "Deleting unreferenced recipient_preferences..." << std::endl;
   // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
   d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms)");
   // remove avatars not belonging to exisiting recipients
@@ -778,7 +543,6 @@ void SignalBackup::cleanDatabaseByMessages()
 
   std::cout << "Deleting drafts from deleted threads..." << std::endl;
   d_database.exec("DELETE FROM drafts WHERE thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");
-
 }
 
 void SignalBackup::compactIds(std::string const &table)
@@ -794,20 +558,20 @@ void SignalBackup::compactIds(std::string const &table)
   {
     long long int nid = results.getValueAs<long long int>(0, 0);
 
-    d_database.exec("SELECT MIN(_id) FROM " + table + " WHERE _id > ?", std::vector<std::any>{nid}, &results);
+    d_database.exec("SELECT MIN(_id) FROM " + table + " WHERE _id > ?", nid, &results);
     if (results.rows() == 0 || !results.valueHasType<long long int>(0, 0))
       break;
     long long int valuetochange = results.getValueAs<long long int>(0, 0);
 
     //std::cout << "Changing _id : " << valuetochange << " -> " << nid << std::endl;
 
-    d_database.exec("UPDATE " + table + " SET _id = ? WHERE _id = ?", std::vector<std::any>{nid, valuetochange});
+    d_database.exec("UPDATE " + table + " SET _id = ? WHERE _id = ?", {nid, valuetochange});
 
 
     if (table == "mms")
     {
-      d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", std::vector<std::any>{nid, valuetochange}); // update part.mid to new mms._id's
-      d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", std::vector<std::any>{nid, valuetochange}); // "
+      d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {nid, valuetochange}); // update part.mid to new mms._id's
+      d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {nid, valuetochange}); // "
     }
     else if (table == "part")
     {
@@ -829,9 +593,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   std::cout << "Adjusting indexes in tables..." << std::endl;
 
   setMinimumId("thread", minthread);
-  d_database.exec("UPDATE sms SET thread_id = thread_id + ?", std::vector<std::any>{minthread});    // update sms.thread_id to new thread._id's
-  d_database.exec("UPDATE mms SET thread_id = thread_id + ?", std::vector<std::any>{minthread});    // ""
-  d_database.exec("UPDATE drafts SET thread_id = thread_id + ?", std::vector<std::any>{minthread}); // ""
+  d_database.exec("UPDATE sms SET thread_id = thread_id + ?", minthread);    // update sms.thread_id to new thread._id's
+  d_database.exec("UPDATE mms SET thread_id = thread_id + ?", minthread);    // ""
+  d_database.exec("UPDATE drafts SET thread_id = thread_id + ?", minthread); // ""
 
   setMinimumId("sms",  minsms);
   compactIds("sms");
@@ -839,8 +603,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   // UPDATE t SET id = (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1) WHERE id = (SELECT MIN(id) FROM t WHERE id > (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1));
 
   setMinimumId("mms",  minmms);
-  d_database.exec("UPDATE part SET mid = mid + ?", std::vector<std::any>{minmms}); // update part.mid to new mms._id's
-  d_database.exec("UPDATE group_receipts SET mms_id = mms_id + ?", std::vector<std::any>{minmms}); // "
+  d_database.exec("UPDATE part SET mid = mid + ?", minmms); // update part.mid to new mms._id's
+  d_database.exec("UPDATE group_receipts SET mms_id = mms_id + ?", minmms); // "
   compactIds("mms");
 
   setMinimumId("part", minpart);
@@ -871,52 +635,6 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   compactIds("drafts");
 }
 
-void SignalBackup::cropToThread(long long int threadid)
-{
-  cropToThread(std::vector<long long int>{threadid});
-}
-
-void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
-{
-  std::string smsq;
-  std::string mmsq;
-  std::vector<std::any> tids;
-  for (uint i = 0; i < threadids.size(); ++i)
-  {
-    if (i == 0)
-    {
-      smsq = "DELETE FROM sms WHERE ";
-      mmsq = "DELETE FROM mms WHERE ";
-    }
-    else
-    {
-      smsq += "AND ";
-      mmsq += "AND ";
-    }
-    smsq += "thread_id != ?";
-    mmsq += "thread_id != ?";
-    if (i < threadids.size() - 1)
-    {
-      smsq += " ";
-      mmsq += " ";
-    }
-    tids.emplace_back(threadids[i]);
-  }
-
-  if (smsq.empty() || mmsq.empty() || tids.empty())
-  {
-    std::cout << "Error: building crop-to-thread statement resulted in invalid statement" << std::endl;
-    return;
-  }
-
-  std::cout << "Deleting messages not belonging to requested thread(s) from 'sms'" << std::endl;
-  d_database.exec(smsq, tids);
-  std::cout << "Deleting messages not belonging to requested thread(s) from 'mms'" << std::endl;
-  d_database.exec(mmsq, tids);
-
-  cleanDatabaseByMessages();
-}
-
 long long int SignalBackup::getMinUsedId(std::string const &table)
 {
   SqliteDB::QueryResults results;
@@ -941,133 +659,6 @@ long long int SignalBackup::getMaxUsedId(std::string const &table)
     return 0;
   }
   return results.getValueAs<long long int>(0, 0);
-}
-
-void SignalBackup::importThread(SignalBackup *source, long long int thread)
-{
-  // crop the source db to the specified thread
-  source->cropToThread(thread);
-
-  SqliteDB::QueryResults results;
-  source->d_database.exec("SELECT recipient_ids FROM thread WHERE _id = ?", std::vector<std::any>{thread}, &results);
-
-  if (results.rows() != 1 ||
-      results.columns() != 1 ||
-      !results.valueHasType<std::string>(0, 0))
-  {
-    std::cout << "Failed to get recipient id from source database" << std::endl;
-    return;
-  }
-
-  std::string recipient_id = results.getValueAs<std::string>(0, 0);
-
-  d_database.exec("SELECT _id FROM thread WHERE recipient_ids = ?", std::vector<std::any>{recipient_id}, &results);
-
-  long long int targetthread = -1;
-  if (results.rows() == 1 &&
-      results.columns() == 1 &&
-      results.valueHasType<long long int>(0, 0))
-    targetthread = results.getValueAs<long long int>(0, 0);
-
-  // the target will have its own job_spec etc...
-  source->d_database.exec("DELETE FROM job_spec");
-  source->d_database.exec("DELETE FROM push");
-  source->d_database.exec("DELETE FROM constraint_spec"); // has to do with job_spec, references it...
-  source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
-  source->d_database.exec("VACUUM");
-
-  // make sure all id's are unique
-  // should rename these to offset
-  long long int minthread = getMaxUsedId("thread") + 1 - source->getMinUsedId("thread");
-  long long int minsms = getMaxUsedId("sms") + 1 - source->getMinUsedId("sms");
-  long long int minmms = getMaxUsedId("mms") + 1 - source->getMinUsedId("mms");
-  long long int minpart = getMaxUsedId("part") + 1 - source->getMinUsedId("part");
-  long long int minrecipient_preferences = getMaxUsedId("recipient_preferences") + 1 - source->getMinUsedId("recipient_preferences");
-  long long int mingroups = getMaxUsedId("groups") + 1 - source->getMinUsedId("groups");
-  long long int minidentities = getMaxUsedId("identities") + 1 - source->getMinUsedId("identities");
-  long long int mingroup_receipts = getMaxUsedId("group_receipts") + 1 - source->getMinUsedId("group_receipts");
-  long long int mindrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
-  source->makeIdsUnique(minthread, minsms, minmms, minpart, minrecipient_preferences, mingroups, minidentities, mingroup_receipts, mindrafts);
-
-  // merge into existing thread, set the id on the sms, mms, and drafts
-  // drop the recipient_preferences, identities and thread tables, they are already in the target db
-  if (targetthread > -1)
-  {
-    std::cout << "Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
-
-    source->d_database.exec("UPDATE sms SET thread_id = ?", std::vector<std::any>{targetthread});
-    source->d_database.exec("UPDATE mms SET thread_id = ?", std::vector<std::any>{targetthread});
-    source->d_database.exec("UPDATE drafts SET thread_id = ?", std::vector<std::any>{targetthread});
-    source->d_database.exec("DROP TABLE thread");
-    source->d_database.exec("DROP TABLE identities");
-    source->d_database.exec("DROP TABLE recipient_preferences");
-    source->d_database.exec("DROP TABLE groups");
-    source->d_avatars.clear();
-  }
-  else
-  {
-    // check identities and recepient prefs for presence of values, they may be there (even though no thread was found (for example via a group chat or deleted thread))
-    // get identities from target, drop all rows from source that are allready present
-    d_database.exec("SELECT address FROM identities", &results);
-    for (uint i = 0; i < results.rows(); ++i)
-      if (results.header(0) == "address" && results.valueHasType<std::string>(i, 0))
-        source->d_database.exec("DELETE FROM identities WHERE ADDRESS = '" + results.getValueAs<std::string>(i, 0) + "'");
-
-    // get recipient_preferences from target, drop all rows from source that are allready present
-    d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
-    for (uint i = 0; i < results.rows(); ++i)
-      if (results.header(0) == "recipient_ids" && results.valueHasType<std::string>(i, 0))
-        source->d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids = '" + results.getValueAs<std::string>(i, 0) + "'");
-  }
-
-
-  // now import the source tables into target,
-
-  // get tables
-  std::string q("SELECT sql, name, type FROM sqlite_master");
-  source->d_database.exec(q, &results);
-  std::vector<std::string> tables;
-  for (uint i = 0; i < results.rows(); ++i)
-  {
-    if (!results.valueHasType<std::nullptr_t>(i, 0))
-    {
-      if (results.valueHasType<std::string>(i, 1) &&
-          (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
-           results.getValueAs<std::string>(i, 1).find("sms_fts") == 0))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
-      else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                results.getValueAs<std::string>(i, 1).find("mms_fts") == 0))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
-      else
-        if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
-          tables.emplace_back(std::move(results.getValueAs<std::string>(i, 1)));
-    }
-  }
-
-  // write contents of tables
-  for (std::string const &table : tables)
-  {
-    if (table == "signed_prekeys" ||
-        table == "one_time_prekeys" ||
-        table == "sessions" ||
-        table.substr(0, STRLEN("sms_fts")) == "sms_fts" ||
-        table.substr(0, STRLEN("mms_fts")) == "mms_fts" ||
-        table.substr(0, STRLEN("sqlite_")) == "sqlite_")
-      continue;
-    std::cout << "Importing statements from source table '" << table << "'...";
-    source->d_database.exec("SELECT * FROM " + table, &results);
-    std::cout << results.rows() << " entries..." << std::endl;
-    for (uint i = 0; i < results.rows(); ++i)
-    {
-      SqlStatementFrame NEWFRAME = buildSqlStatementFrame(table, results.headers(), results.row(i));
-      d_database.exec(NEWFRAME.bindStatement(), NEWFRAME.parameters());
-    }
-  }
-
-  // and copy avatars and attachments.
-  d_attachments.insert(std::make_move_iterator(source->d_attachments.begin()), std::make_move_iterator(source->d_attachments.end()));
-  d_avatars.insert(std::make_move_iterator(source->d_avatars.begin()), std::make_move_iterator(source->d_avatars.end()));
 }
 
 long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date) const

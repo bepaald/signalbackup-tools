@@ -48,7 +48,6 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-
   // open input
   std::unique_ptr<SignalBackup> sb;
   if (arg.password().empty())
@@ -76,7 +75,6 @@ int main(int argc, char *argv[])
       sb->importThread(source.get(), arg.importthreads()[i]);
     }
   }
-
 
   // export output
   if (!arg.output().empty())
