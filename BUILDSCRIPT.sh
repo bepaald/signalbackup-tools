@@ -5,7 +5,7 @@
 COMPILER=$(which g++)
 if [ -z "$COMPILER" ] ; then echo "Failed to find g++ binary" && exit 1 ; fi
 NUMCPU=$(nproc)
-if [ -z "$NUMCPU" ] ; then NUMCPU=1 ; fi
+if [ -z "$NUMCPU" ] || grep -q ^flags.*\ hypervisor /proc/cpuinfo ; then NUMCPU=1 ; fi
 
 echo -E "BUILDING (1/29): $COMPILER -std=c++2a -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -fomit-frame-pointer -O3 -march=native -flto -o \"cryptbase/o/cryptbase.o\" \"cryptbase/cryptbase.cc\""
 if [ ! -d "cryptbase/o" ] ; then mkdir "cryptbase/o" ; fi
