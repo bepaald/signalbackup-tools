@@ -17,12 +17,13 @@ void SignalBackup::exportBackup(std::string const &directory)
   for (auto const &aframe : d_attachments)
   {
     AttachmentFrame *a = aframe.second.get();
-    writeRawFrameDataToFile(directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".sbf", a);
+    std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId());
+    writeRawFrameDataToFile(attachment_basefilename + ".sbf", a);
     // write actual attachment:
-    std::ofstream attachmentstream(directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId()) + ".bin", std::ios_base::binary);
+    std::ofstream attachmentstream(attachment_basefilename + ".bin", std::ios_base::binary);
     if (!attachmentstream.is_open())
       std::cout << "Failed to open file for writing: " << directory
-                << "/Attachment_" << bepaald::toString(a->rowId()) << "_" << bepaald::toString(a->attachmentId()) << ".bin" << std::endl;
+                << attachment_basefilename << ".bin" << std::endl;
     else
       attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
   }
@@ -32,12 +33,13 @@ void SignalBackup::exportBackup(std::string const &directory)
   for (auto const &aframe : d_avatars)
   {
     AvatarFrame *a = aframe.second.get();
-    writeRawFrameDataToFile(directory + "/Avatar_" + a->name() + ".sbf", a);
+    std::string avatar_basefilename = directory + "/Avatar_" + a->name();
+    writeRawFrameDataToFile(avatar_basefilename + ".sbf", a);
     // write actual attachment:
-    std::ofstream attachmentstream(directory + "/Avatar_" + a->name() + ".bin", std::ios_base::binary);
+    std::ofstream attachmentstream(avatar_basefilename + ".bin", std::ios_base::binary);
     if (!attachmentstream.is_open())
       std::cout << "Failed to open file for writing: " << directory
-                << "/Avatar_" << a->name() << ".bin" << std::endl;
+                << avatar_basefilename << ".bin" << std::endl;
     else
       attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
   }
