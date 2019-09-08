@@ -280,7 +280,19 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         return std::unique_ptr<BackupFrame>(nullptr);
 
       if (!getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())))
+      {
+        std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
+        frame->printInfo();
         return std::unique_ptr<BackupFrame>(nullptr);
+      }
+      // else
+      // {
+      //   if (frame->frameType() == ATTACHMENT)
+      //   {
+      //     AttachmentFrame *tmp = reinterpret_cast<AttachmentFrame *>(frame.get());
+      //     std::cout << "got attachment data for rowid: " << tmp->rowId() << " uniqueid: " << tmp->attachmentId() << std::endl;
+      //   }
+      // }
     }
   }
 

@@ -64,6 +64,7 @@ void SignalBackup::exportBackup(std::string const &directory)
   writeRawFrameDataToFile(directory + "/End.sbf", d_endframe);
 
   // export database
+  std::cout << "Writing database..." << std::endl;
   SqliteDB database(directory + "/database.sqlite", false /*readonly*/);
   if (!SqliteDB::copyDb(d_database, database))
     std::cout << "Error exporting sqlite database" << std::endl;
@@ -195,7 +196,10 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
         if (attachment != d_attachments.end())
           writeEncryptedFrame(outputfile, attachment->second.get());
         else
-          std::cout << "Warning: attachment data not found" << std::endl;
+        {
+          std::cout << "Warning: attachment data not found (rowid: " << rowid << ", uniqueid: " << uniqueid << ")" << std::endl;
+          std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+        }
       }
     }
     if (results.rows())

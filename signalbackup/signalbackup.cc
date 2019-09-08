@@ -188,6 +188,9 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   d_fe(),
   d_ok(false)
 {
+
+  std::cout << "Opening from dir!" << std::endl;
+
   SqliteDB database(inputdir + "/database.sqlite");
   if (!SqliteDB::copyDb(database, d_database))
     return;

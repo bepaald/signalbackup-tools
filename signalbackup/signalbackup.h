@@ -68,6 +68,8 @@ class SignalBackup
   void importThread(SignalBackup *source, std::vector<long long int> const &threads);
   inline bool ok() const;
   bool dropBadFrames();
+  void fillThreadTableFromMessages();
+  inline void addEndFrame();
 
  private:
   void updateThreadsEntries(long long int thread = -1);
@@ -116,19 +118,26 @@ inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
 template <class T>
 inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const
 {
+  if (!frame)
+  {
+    std::cout << "Error: asked to write nullptr frame to disk" << std::endl;
+    return;
+  }
+
   std::ofstream rawframefile(outputfile, std::ios_base::binary);
   if (!rawframefile.is_open())
+  {
     std::cout << "Error opening file for writing: " << outputfile << std::endl;
+    return;
+  }
+
+  if (frame->frameType() == FRAMETYPE::END)
+    rawframefile << "END" << std::endl;
   else
   {
-    if (frame->frameType() == FRAMETYPE::END)
-      rawframefile << "END" << std::endl;
-    else
-    {
-      T *t = reinterpret_cast<T *>(frame.get());
-      std::string d = t->getHumanData();
-      rawframefile << d;
-    }
+    T *t = reinterpret_cast<T *>(frame.get());
+    std::string d = t->getHumanData();
+    rawframefile << d;
   }
 }
 
@@ -258,6 +267,11 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
   frame->reset(newframe.release());
 
   return true;
+}
+
+inline void SignalBackup::addEndFrame()
+{
+  d_endframe.reset(new EndFrame(nullptr, 1ull));
 }
 
 #endif

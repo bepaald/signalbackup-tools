@@ -1,22 +1,3 @@
-/*
-    Copyright (C) arg/arg.h  Selwin van Dijk
-
-    This file is part of .
-
-     is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-     is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with .  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 #ifndef ARGS_H_
 #define _ARGS_H_
 
@@ -40,6 +21,7 @@ class Arg
   std::string d_source;
   std::string d_sourcepassword;
   bool d_listthreads;
+  bool d_generatefromtruncated;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -53,6 +35,7 @@ class Arg
   inline std::string const &source() const;
   inline std::string const &sourcepassword() const;
   inline bool listthreads() const;
+  inline bool generatefromtruncated() const;
  private:
   template <typename T>
   bool ston(T &t, std::string const &str) const;
@@ -102,6 +85,11 @@ inline std::string const &Arg::sourcepassword() const
 inline bool Arg::listthreads() const
 {
   return d_listthreads;
+}
+
+inline bool Arg::generatefromtruncated() const
+{
+  return d_generatefromtruncated;
 }
 
 inline bool Arg::ok() const

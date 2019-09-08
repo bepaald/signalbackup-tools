@@ -24,3 +24,6 @@
 #include <sstream>
 #include <locale>
 #include <iomanip>
+
+#include "../msgtypes/msgtypes.h"
+#include "../protobufparser/protobufparser.h"

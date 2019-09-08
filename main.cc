@@ -54,12 +54,16 @@ int main(int argc, char *argv[])
     sb.reset(new SignalBackup(arg.input()));
   else
     sb.reset(new SignalBackup(arg.input(), arg.password()));
-
   if (arg.listthreads())
     sb->listThreads();
 
-
-  if (!arg.source().empty())
+  if (arg.generatefromtruncated())
+  {
+    std::cout << "fillthread" << std::endl;
+    sb->fillThreadTableFromMessages();
+    sb->addEndFrame();
+  }
+  else if (!arg.source().empty())
   {
     for (uint i = 0; i < arg.importthreads().size(); ++i)
     {
@@ -102,39 +106,39 @@ int main(int argc, char *argv[])
 }
 
 
-/* Notes on importing attachments
+  /* Notes on importing attachments
 
-   - all values are imported, but
-   "_data", "thumbnail" and "data_random" are reset by importer.
-   thumbnail is set to NULL, so probably a good idea to unset aspect_ratio as well? It is called "THUMBNAIL_ASPECT_RATIO" in src.
+     - all values are imported, but
+     "_data", "thumbnail" and "data_random" are reset by importer.
+     thumbnail is set to NULL, so probably a good idea to unset aspect_ratio as well? It is called "THUMBNAIL_ASPECT_RATIO" in src.
 
-   _id               : make sure not used already (int)
-   mid               : belongs to certain specific mms._id (int)
-   seq               : ??? take over? (int default 0)
-   ct                : type, eg "image/jpeg" (text)
-   name              : ??? not file_name, or maybe filename? (text)
-   chset             : ??? (int)
-   cd                : ??? content disposition (text)
-   fn                : ??? (text)
-   cid               : ??? (text)
-   cl                : ??? content location (text)
-   ctt_s             : ??? (int)
-   ctt_t             : ??? (text)
-   encrypted         : ??? (int)
-   pending_push      : ??? probably can just take this over, or actually make sure its false (int)
-   _data             : path to encrypted data, set when importing database (text)
-   data_size         : set to size? (int)
-   file_name         : filename? or maybe internal filename (/some/path/partXXXXXX.mms) (text)
-   thumbnail         : set to NULL by importer (text)
-   aspect_ratio      : maybe set to aspect ratio (if applicable) or Note: called THUMBNAIL_ASPECT_RATIO & THUMBNAIL = NULL (real)
-   unique_id         : take over, it has to match AttFrame value (int)
-   digest            : ??? (blob)
-   fast_preflight    : ??? (text)
-   voice_note        : indicates whether its a voice note i guess (int)
-   data_random       : ??? set by importer (blob)
-   thumbnail_random  : ??? (null)
-   quote             : indicates whether the attachment is in a quote maybe?? (int)
-   width             : width (int)
-   height            : height (int)
-   caption           : captino (text)
- */
+     _id               : make sure not used already (int)
+     mid               : belongs to certain specific mms._id (int)
+     seq               : ??? take over? (int default 0)
+     ct                : type, eg "image/jpeg" (text)
+     name              : ??? not file_name, or maybe filename? (text)
+     chset             : ??? (int)
+     cd                : ??? content disposition (text)
+     fn                : ??? (text)
+     cid               : ??? (text)
+     cl                : ??? content location (text)
+     ctt_s             : ??? (int)
+     ctt_t             : ??? (text)
+     encrypted         : ??? (int)
+     pending_push      : ??? probably can just take this over, or actually make sure its false (int)
+     _data             : path to encrypted data, set when importing database (text)
+     data_size         : set to size? (int)
+     file_name         : filename? or maybe internal filename (/some/path/partXXXXXX.mms) (text)
+     thumbnail         : set to NULL by importer (text)
+     aspect_ratio      : maybe set to aspect ratio (if applicable) or Note: called THUMBNAIL_ASPECT_RATIO & THUMBNAIL = NULL (real)
+     unique_id         : take over, it has to match AttFrame value (int)
+     digest            : ??? (blob)
+     fast_preflight    : ??? (text)
+     voice_note        : indicates whether its a voice note i guess (int)
+     data_random       : ??? set by importer (blob)
+     thumbnail_random  : ??? (null)
+     quote             : indicates whether the attachment is in a quote maybe?? (int)
+     width             : width (int)
+     height            : height (int)
+     caption           : captino (text)
+  */
