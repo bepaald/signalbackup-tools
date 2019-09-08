@@ -82,54 +82,13 @@ void SignalBackup::fillThreadTableFromMessages()
     results.prettyPrint();
   }
 
-  // deal with threads without outgoing messages
-
-  // get unused thread_ids from (s/m)ms tables
-  // check that only one address is there (if multiple addresses, it is groups thread, we cant make that because we cant make group_id?)
-  // if one address, check that no non-group threads with that recipient_id exist
-  // add it
-
-  //SELECT DISTINCT thread_id,address FROM sms WHERE thread_id == 31 AND (type&0x1f) NOT BETWEEN 21 AND 26;
-  // results.rows() == 1
-  // results.value(0, "address") not in (select recipient_ids from thread)
-  // INSERT INTO thread (_id, recipient_ids) VALUES (?, ?), {tid, address}
-
-
-  // std::cout << "Threadids in mms, not in thread" << std::endl;
-  // d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  // results.prettyPrint();
-  // for (uint i = 0; i < results.rows(); ++i)
-  //   if (results.valueHasType<long long int>(i, 0) && results.valueHasType<std::string>(i, 1))
-  //     d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
-  // d_database.exec("SELECT * FROM thread", &results);
-  // std::cout << "THREAD:" << std::endl;
-  // results.prettyPrint();
-  // std::cout << "Threadids in mms, not in thread" << std::endl;
-  // d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  // results.prettyPrint();
-
-  // std::cout << "Threadids in sms, not in thread" << std::endl;
-  // d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  // results.prettyPrint();
-  // for (uint i = 0; i < results.rows(); ++i)
-  //   if (results.valueHasType<long long int>(i, 0) && results.valueHasType<std::string>(i, 1))
-  //     d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
-  // d_database.exec("SELECT * FROM thread", &results);
-  // std::cout << "THREAD:" << std::endl;
-  // results.prettyPrint();
-  // std::cout << "Threadids in sms, not in thread" << std::endl;
-  // d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  // results.prettyPrint();
-
-
   updateThreadsEntries();
 
   // d_database.exec("SELECT _id, date, message_count, recipient_ids, snippet, snippet_cs, type, snippet_type, snippet_uri FROM thread", &results);
   // std::cout << "THREAD:" << std::endl;
   // results.prettyPrint();
 
-
-  // now for each group, try to determin members:
+  // now for each group, try to determine members:
 
   SqliteDB::QueryResults threadquery;
   std::string query = "SELECT DISTINCT _id, recipient_ids FROM thread WHERE SUBSTR(recipient_ids, 0, 22) == \"__textsecure_group__!\"";
