@@ -23,7 +23,7 @@
 #include <cryptopp/base64.h>
 #include <string>
 
-class Base64
+struct Base64
 {
  public:
   inline static std::string bytesToBase64String(unsigned char const *data, size_t size);

@@ -28,6 +28,8 @@ bool FileDecryptor::getAttachment(FrameWithAttachment *frame)
     std::cout << "Failed to open backup file for reading attachment" << std::endl;
     return false;
   }
+
+  //std::cout << "Getting attachment: " << frame->filepos() << " + " << frame->length() << std::endl;
   file.seekg(frame->filepos(), std::ios_base::beg);
 
   //uintToFourBytes(d_iv, d_counter++); // done in getFrame
@@ -46,7 +48,7 @@ bool FileDecryptor::getAttachment(FrameWithAttachment *frame)
   {
     if (!file.read(reinterpret_cast<char *>(encrypteddatabuffer), std::min(size - processed, BUFFERSIZE)))
     {
-      std::cout << " STOPPING BEFORE END OF ATTACHMENT!!!" << std::endl;
+      std::cout << " STOPPING BEFORE END OF ATTACHMENT!!!" << (file.eof() ? " (EOF) " : "") << std::endl;
       delete[] decryptedattachmentdata;
       return false;
     }

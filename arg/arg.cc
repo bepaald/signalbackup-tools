@@ -1,22 +1,3 @@
-/*
-    Copyright (C) arg/arg.h  Selwin van Dijk
-
-    This file is part of .
-
-     is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-     is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with .  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 #include "arg.h"
 
 Arg::Arg(int argc, char *argv[])
@@ -30,7 +11,8 @@ Arg::Arg(int argc, char *argv[])
   d_opassword(std::string()),
   d_source(std::string()),
   d_sourcepassword(std::string()),
-  d_listthreads(bool())
+  d_listthreads(false),
+  d_generatefromtruncated(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -98,6 +80,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-listthreads")
     {
       d_listthreads = false;
+      continue;
+    }
+    if (option == "--generatefromtruncated")
+    {
+      d_generatefromtruncated = true;
+      continue;
+    }
+    if (option == "--no-generatefromtruncated")
+    {
+      d_generatefromtruncated = false;
       continue;
     }
     if (option[0] != '-')

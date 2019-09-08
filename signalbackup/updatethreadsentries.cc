@@ -29,7 +29,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
       std::any date = results2.value(0, "union_date");
       if (date.type() == typeid(long long int))
       {
-        long long int roundeddate = (std::any_cast<long long int>(date) / 1000) * 1000;
+        long long int roundeddate = std::any_cast<long long int>(date) - (std::any_cast<long long int>(date) % 1000);
         std::cout << "  Setting last msg date" << std::endl;
         d_database.exec("UPDATE thread SET date = ? WHERE _id = ?", {roundeddate, threadid});
       }
