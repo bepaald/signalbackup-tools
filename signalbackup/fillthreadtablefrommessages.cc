@@ -1,20 +1,20 @@
 /*
-    Copyright (C)   Selwin van Dijk
+    Copyright (C) 2019  Selwin van Dijk
 
-    This file is part of .
+    This file is part of signalbackup-tools.
 
-     is free software: you can redistribute it and/or modify
+    signalbackup-tools is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-     is distributed in the hope that it will be useful,
+    signalbackup-tools is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with .  If not, see <https://www.gnu.org/licenses/>.
+    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "signalbackup.ih"
@@ -42,7 +42,9 @@ void SignalBackup::fillThreadTableFromMessages()
 
   std::cout << "Creating threads from 'mms' table data" << std::endl;
   //std::cout << "Threadids in mms, not in thread" << std::endl;
-  d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE (msg_box&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+  d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE (msg_box & " + bepaald::toString(Types::BASE_TYPE_MASK) +
+                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " + bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
+                  " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   //results.prettyPrint();
   for (uint i = 0; i < results.rows(); ++i)
     if (results.valueHasType<long long int>(i, 0) && results.valueHasType<std::string>(i, 1))
@@ -53,7 +55,9 @@ void SignalBackup::fillThreadTableFromMessages()
 
   std::cout << "Creating threads from 'sms' table data" << std::endl;
   //std::cout << "Threadids in sms, not in thread" << std::endl;
-  d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+  d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type & " + bepaald::toString(Types::BASE_TYPE_MASK) +
+                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " + bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
+                  " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   //results.prettyPrint();
   for (uint i = 0; i < results.rows(); ++i)
     if (results.valueHasType<long long int>(i, 0) && results.valueHasType<std::string>(i, 1))
@@ -122,9 +126,13 @@ void SignalBackup::fillThreadTableFromMessages()
     {
       std::string threadid = bepaald::toString(threadquery.getValueAs<long long int>(i, 0));
       d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms.address AS union_address, sms._id AS [sms._id], '' AS [mms._id] "
-                      "FROM 'sms' WHERE sms.thread_id = " + threadid + " AND (sms.type & 0x10000 IS NOT 0 OR sms.type & 0x20000 IS NOT 0) UNION "
+                      "FROM 'sms' WHERE sms.thread_id = " + threadid +
+                      " AND (sms.type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"
+                      " OR sms.type & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) UNION "
                       "SELECT mms.date AS union_display_date, mms.msg_box AS union_type, mms.body AS union_body, mms.address AS union_address, '' AS [sms._id], mms._id AS [mms._id] "
-                      "FROM mms WHERE mms.thread_id = " + threadid + " AND (mms.msg_box&0x10000 IS NOT 0 OR mms.msg_box&0x20000 IS NOT 0) ORDER BY union_date", &results);
+                      "FROM mms WHERE mms.thread_id = " + threadid +
+                      " AND (mms.msg_box & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"
+                      " OR mms.msg_box & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) ORDER BY union_date", &results);
 
       //std::cout << "STATUS MSGS FROM THREAD: " << threadid << std::endl;
       //results.prettyPrint();
