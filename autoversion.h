@@ -17,4 +17,9 @@
     along with .  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "stickerframe.h"
+#ifndef VERSION_H_
+#define VERSION_H_
+
+#define VERSIONDATE "20190913.090604"
+
+#endif

@@ -37,9 +37,15 @@
 
 #include "arg/arg.h"
 
+#if __has_include("autoversion.h")
+#include "autoversion.h"
+#endif
+
 int main(int argc, char *argv[])
 {
-  //return 0;
+#ifdef VERSIONDATE
+  std::cout << "signalbackup-tools build " << VERSIONDATE << std::endl;
+#endif
 
   Arg arg(argc, argv);
   if (!arg.ok())
