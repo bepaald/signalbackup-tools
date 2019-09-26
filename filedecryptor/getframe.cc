@@ -285,14 +285,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         return std::unique_ptr<BackupFrame>(nullptr);
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
-      if (getatt != 0)
+      if (getatt > 0)
       {
-        if (getatt < 0)
-          d_badmac = true;
         std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
         frame->printInfo();
         return std::unique_ptr<BackupFrame>(nullptr);
       }
+      if (getatt < 0)
+        d_badmac = true;
     }
   }
 

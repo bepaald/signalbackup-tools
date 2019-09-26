@@ -80,8 +80,8 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
   if (std::memcmp(theirMac, ourMac, 10) != 0)
   {
     std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
-    std::cout << "                             ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
+    std::cout << "WARNING: Bad MAC in attachmentdata: theirMac: " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
+    std::cout << "                                      ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
 
     badmac = true;
   }
