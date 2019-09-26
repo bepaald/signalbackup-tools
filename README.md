@@ -35,6 +35,7 @@ If any password is omitted, the corresponding backupfile is assumed to be a dire
     
 ```
 [~/programming/signalbackup-tools] $ ./signalbackup-tools CORRUPTEDSIGNALBACKUPS/signal-2019-05-20-05-29-06.backup3 949543593573534240555368549437 --output NEWBACKUPFILE --opassword 949543593573534240555368549437
+signalbackup-tools source version 20190926.164320
 IV: (hex:) 12 16 72 95 7a 00 68 44 7e cf 7d 20 26 f9 d3 7d (size: 16)
 SALT: (hex:) cc 03 85 02 61 97 eb 5b ed 3e 05 00 c4 a8 77 40 28 08 aa 9f e5 a8 00 74 b4 f8 56 aa 24 57 a9 5d (size: 32)
 BACKUPKEY: (hex:) 8f ff df 2b 9f 96 73 9a 63 95 0f ea 3f b1 e5 a4 87 12 19 ca 93 31 86 2a 60 3f 41 ef 6d a4 08 44 (size: 32)
@@ -43,7 +44,7 @@ MACKEY: (hex:) c2 77 af 1e 4b 05 db 62 52 57 af 8a d6 a4 d4 e9 6c 93 53 81 9a e7
 COUNTER: 303461013
 Reading backup file...
 FRAME 37636 (071.5%)... 
-WARNING: Bad MAC in frame: theirMac: (hex:) 30 75 bb b3 fb 65 a5 2a 5f b5
+WARNING: Bad MAC in attachmentdata: theirMac: (hex:) 30 75 bb b3 fb 65 a5 2a 5f b5
                              ourMac: (hex:) ff f2 37 c1 f0 d4 2c 67 a3 cf 6c 41 55 bd 9c 1d 85 84 0e 66 96 ae 52 4e 90 b5 a3 37 33 3c b4 fc
 
 WARNING: Bad MAC in frame, trying to print frame info:
