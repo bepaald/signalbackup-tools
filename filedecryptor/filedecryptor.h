@@ -23,13 +23,13 @@
 #include <cstring>
 #include <fstream>
 
-#include "../cryptbase/cryptbase.h"
+//#include "../cryptbase/cryptbase.h"
 #include "../common_be.h"
 #include "../backupframe/backupframe.h"
 #include "../framewithattachment/framewithattachment.h"
 #include "../basedecryptor/basedecryptor.h"
 
-class  FileDecryptor : public BaseDecryptor, public CryptBase
+class  FileDecryptor : public BaseDecryptor//, public CryptBase
 {
   std::unique_ptr<BackupFrame> d_headerframe;
   std::ifstream d_file;
@@ -43,7 +43,7 @@ class  FileDecryptor : public BaseDecryptor, public CryptBase
   FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy = true);
   FileDecryptor(FileDecryptor const &other) = delete;
   FileDecryptor operator=(FileDecryptor const &other) = delete;
-  // inline ~FileDecryptor();
+  //ine line ~FileDecryptor();
   inline bool ok() const;
   std::unique_ptr<BackupFrame> getFrame();
   inline uint64_t total() const;
@@ -53,7 +53,7 @@ class  FileDecryptor : public BaseDecryptor, public CryptBase
   inline uint32_t getNextFrameBlockSize();
   inline bool getNextFrameBlock(unsigned char *data, size_t length);
   BackupFrame *initBackupFrame(unsigned char *data, size_t length, uint64_t count = 0) const;
-  virtual bool getAttachment(FrameWithAttachment *frame) override;
+  //virtual int getAttachment(FrameWithAttachment *frame) override;
 
   std::unique_ptr<BackupFrame> bruteForceFrom(uint32_t filepos);
   std::unique_ptr<BackupFrame> getFrame2(uint32_t offset);

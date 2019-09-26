@@ -19,10 +19,10 @@
 
 #include "signalbackup.ih"
 
-SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase)
+SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource)
   :
   d_database(":memory:"),
-  d_fd(new FileDecryptor(filename, passphrase, false)),
+  d_fd(new FileDecryptor(filename, passphrase, issource)),
   d_passphrase(passphrase),
   d_ok(false)
 {

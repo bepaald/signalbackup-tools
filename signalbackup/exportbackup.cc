@@ -174,9 +174,9 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
     if (table == "signed_prekeys" ||
         table == "one_time_prekeys" ||
         table == "sessions" ||
-        table.substr(0, STRLEN("sms_fts")) == "sms_fts" ||
-        table.substr(0, STRLEN("mms_fts")) == "mms_fts" ||
-        table.substr(0, STRLEN("sqlite_")) == "sqlite_")
+        table.starts_with("sms_fts") ||
+        table.starts_with("mms_fts") ||
+        table.starts_with("sqlite_"))
       continue;
 
     d_database.exec("SELECT * FROM " + table, &results);
@@ -211,7 +211,9 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
         }
         auto attachment = d_attachments.find({rowid, uniqueid});
         if (attachment != d_attachments.end())
+        {
           writeEncryptedFrame(outputfile, attachment->second.get());
+        }
         else
         {
           std::cout << "Warning: attachment data not found (rowid: " << rowid << ", uniqueid: " << uniqueid << ")" << std::endl;

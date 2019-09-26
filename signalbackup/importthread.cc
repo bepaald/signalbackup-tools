@@ -94,7 +94,6 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
         source->d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids = '" + results.getValueAs<std::string>(i, 0) + "'");
   }
 
-
   // now import the source tables into target,
 
   // get tables
@@ -125,9 +124,9 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (table == "signed_prekeys" ||
         table == "one_time_prekeys" ||
         table == "sessions" ||
-        table.substr(0, STRLEN("sms_fts")) == "sms_fts" ||
-        table.substr(0, STRLEN("mms_fts")) == "mms_fts" ||
-        table.substr(0, STRLEN("sqlite_")) == "sqlite_")
+        table.starts_with("sms_fts") ||
+        table.starts_with("mms_fts") ||
+        table.starts_with("sqlite_"))
       continue;
     std::cout << "Importing statements from source table '" << table << "'...";
     source->d_database.exec("SELECT * FROM " + table, &results);
