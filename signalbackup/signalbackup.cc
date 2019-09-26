@@ -578,10 +578,14 @@ void SignalBackup::compactIds(std::string const &table)
     }
     else if (table == "part")
     {
-      std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> newattdb;
       for (auto &att : d_attachments)
         if (reinterpret_cast<AttachmentFrame *>(att.second.get())->rowId() == static_cast<uint64_t>(valuetochange))
-          reinterpret_cast<AttachmentFrame *>(att.second.get())->setRowId(nid);
+        {
+          AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att.second.release());
+          d_attachments.erase(att.first);
+          a->setRowId(nid);
+          d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
+        }
     }
 
     d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
@@ -619,6 +623,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     a->setRowId(a->rowId() + minpart);
     newattdb.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
   }
+  d_attachments.clear();
   d_attachments = std::move(newattdb);
   compactIds("part");
 

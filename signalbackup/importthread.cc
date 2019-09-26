@@ -139,6 +139,9 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   }
 
   // and copy avatars and attachments.
-  d_attachments.insert(std::make_move_iterator(source->d_attachments.begin()), std::make_move_iterator(source->d_attachments.end()));
-  d_avatars.insert(std::make_move_iterator(source->d_avatars.begin()), std::make_move_iterator(source->d_avatars.end()));
+  for (auto &att : source->d_attachments)
+    d_attachments.emplace(std::move(att));
+
+  for (auto &av : source->d_avatars)
+    d_avatars.emplace(std::move(av));
 }
