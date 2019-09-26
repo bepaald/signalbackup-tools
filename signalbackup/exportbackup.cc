@@ -87,7 +87,7 @@ void SignalBackup::exportBackup(std::string const &directory)
     std::cout << "Error exporting sqlite database" << std::endl;
 }
 
-void SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase)
+void SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory)
 {
   std::cout << "Exporting backup to '" << filename << "'" << std::endl;
 
@@ -213,6 +213,8 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
         if (attachment != d_attachments.end())
         {
           writeEncryptedFrame(outputfile, attachment->second.get());
+          if (!keepattachmentdatainmemory)
+            attachment->second.get()->clearData();
         }
         else
         {

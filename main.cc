@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   if (arg.password().empty())
     sb.reset(new SignalBackup(arg.input()));
   else
-    sb.reset(new SignalBackup(arg.input(), arg.password()));
+    sb.reset(new SignalBackup(arg.input(), arg.password(), arg.source().empty() ? false : SignalBackup::LOWMEM));
   if (arg.listthreads())
     sb->listThreads();
 
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
       if (arg.sourcepassword().empty())
         source.reset(new SignalBackup(arg.source()));
       else
-        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::IS_SOURCE));
+        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM));
 
       sb->importThread(source.get(), arg.importthreads()[i]);
     }
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
   if (!arg.output().empty())
   {
     if (!arg.opassword().empty())
-      sb->exportBackup(arg.output(), arg.opassword());
+      sb->exportBackup(arg.output(), arg.opassword(), SignalBackup::DROPATTACHMENTDATA);
     else
       sb->exportBackup(arg.output());
   }

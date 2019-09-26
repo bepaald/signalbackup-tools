@@ -45,7 +45,7 @@ COUNTER: 303461013
 Reading backup file...
 FRAME 37636 (071.5%)... 
 WARNING: Bad MAC in attachmentdata: theirMac: (hex:) 30 75 bb b3 fb 65 a5 2a 5f b5
-                             ourMac: (hex:) ff f2 37 c1 f0 d4 2c 67 a3 cf 6c 41 55 bd 9c 1d 85 84 0e 66 96 ae 52 4e 90 b5 a3 37 33 3c b4 fc
+                                      ourMac: (hex:) ff f2 37 c1 f0 d4 2c 67 a3 cf 6c 41 55 bd 9c 1d 85 84 0e 66 96 ae 52 4e 90 b5 a3 37 33 3c b4 fc
 
 WARNING: Bad MAC in frame, trying to print frame info:
 Frame number: 37637

@@ -40,7 +40,8 @@
 class SignalBackup
 {
  public:
-  static bool constexpr IS_SOURCE = true;
+  static bool constexpr LOWMEM = true;
+  static bool constexpr DROPATTACHMENTDATA = false;
  private:
   SqliteDB d_database;
   std::unique_ptr<FileDecryptor> d_fd;
@@ -58,7 +59,7 @@ class SignalBackup
  public:
   SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false);
   explicit SignalBackup(std::string const &inputdir);
-  void exportBackup(std::string const &filename, std::string const &passphrase);
+  void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
   //void exportXml(std::string const &filename) const;
   void listThreads() const;
