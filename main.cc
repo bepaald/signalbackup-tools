@@ -44,7 +44,7 @@
 int main(int argc, char *argv[])
 {
 #ifdef VERSIONDATE
-  std::cout << "signalbackup-tools build " << VERSIONDATE << std::endl;
+  std::cout << "signalbackup-tools source version " << VERSIONDATE << std::endl;
 #endif
 
   Arg arg(argc, argv);
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
       if (arg.sourcepassword().empty())
         source.reset(new SignalBackup(arg.source()));
       else
-        source.reset(new SignalBackup(arg.source(), arg.sourcepassword()));
+        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::IS_SOURCE));
 
       sb->importThread(source.get(), arg.importthreads()[i]);
     }

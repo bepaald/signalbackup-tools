@@ -17,18 +17,12 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef BASEDECRYPTOR_H_
-#define BASEDECRYPTOR_H_
+#include "basedecryptor.h"
 
-#include "../cryptbase/cryptbase.h"
+#include <cryptopp/aes.h>
+#include <cryptopp/ccm.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/hkdf.h>
 
-class FrameWithAttachment;
-
-class BaseDecryptor : public CryptBase
-{
- public:
-  inline BaseDecryptor() = default;
-  static int getAttachment(FrameWithAttachment *frame);
-};
-
-#endif
+#include "../common_be.h"
+#include "../framewithattachment/framewithattachment.h"

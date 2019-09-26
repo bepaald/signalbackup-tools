@@ -153,7 +153,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame2(uint32_t offset)
     uintToFourBytes(d_iv, d_counter++);
 
     if (frame->frameType() == ATTACHMENT || frame->frameType() == AVATAR)
-      reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, attsize, d_file.tellg(), this);
+      reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
@@ -162,8 +162,13 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame2(uint32_t offset)
       if (frame->frameType() != ATTACHMENT && frame->frameType() != AVATAR)
         return std::unique_ptr<BackupFrame>(nullptr);
 
-      if (!getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())))
+      int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
+      if (getatt != 0)
+      {
+        if (getatt < 0)
+          d_badmac = true;
         return std::unique_ptr<BackupFrame>(nullptr);
+      }
     }
   }
 
@@ -270,7 +275,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     uintToFourBytes(d_iv, d_counter++);
 
     if (frame->frameType() == ATTACHMENT || frame->frameType() == AVATAR)
-      reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, attsize, d_file.tellg(), this);
+      reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
@@ -279,20 +284,15 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
       if (frame->frameType() != ATTACHMENT && frame->frameType() != AVATAR)
         return std::unique_ptr<BackupFrame>(nullptr);
 
-      if (!getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())))
+      int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
+      if (getatt != 0)
       {
+        if (getatt < 0)
+          d_badmac = true;
         std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
         frame->printInfo();
         return std::unique_ptr<BackupFrame>(nullptr);
       }
-      // else
-      // {
-      //   if (frame->frameType() == ATTACHMENT)
-      //   {
-      //     AttachmentFrame *tmp = reinterpret_cast<AttachmentFrame *>(frame.get());
-      //     std::cout << "got attachment data for rowid: " << tmp->rowId() << " uniqueid: " << tmp->attachmentId() << std::endl;
-      //   }
-      // }
     }
   }
 

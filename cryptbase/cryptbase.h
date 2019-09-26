@@ -43,6 +43,8 @@ class CryptBase
   uint64_t d_counter;
  public:
   inline CryptBase();
+  CryptBase(CryptBase const &other) = delete;
+  CryptBase operator=(CryptBase const &other) = delete;
   inline ~CryptBase();
   inline bool ok() const;
  protected:

@@ -17,25 +17,24 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "filedecryptor.ih"
+#include "basedecryptor.ih"
 
-// expects a allocated char *
-bool FileDecryptor::getAttachment(FrameWithAttachment *frame)
+int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
 {
-  std::ifstream file(d_filename, std::ios_base::binary | std::ios_base::in);
+  std::ifstream file(frame->filename(), std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
   {
     std::cout << "Failed to open backup file for reading attachment" << std::endl;
-    return false;
+    return 1;
   }
 
   //std::cout << "Getting attachment: " << frame->filepos() << " + " << frame->length() << std::endl;
   file.seekg(frame->filepos(), std::ios_base::beg);
 
   //uintToFourBytes(d_iv, d_counter++); // done in getFrame
-  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption decryptor(d_cipherkey, d_cipherkey_size, frame->iv(), frame->iv_size());
+  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption decryptor(frame->cipherkey(), frame->cipherkey_size(), frame->iv(), frame->iv_size());
 
-  CryptoPP::HMAC<CryptoPP::SHA256> hmac(d_mackey, d_mackey_size);
+  CryptoPP::HMAC<CryptoPP::SHA256> hmac(frame->mackey(), frame->mackey_size());
   hmac.Update(frame->iv(), frame->iv_size());
 
   // read and process attachment data in 8MB chunks
@@ -50,7 +49,7 @@ bool FileDecryptor::getAttachment(FrameWithAttachment *frame)
     {
       std::cout << " STOPPING BEFORE END OF ATTACHMENT!!!" << (file.eof() ? " (EOF) " : "") << std::endl;
       delete[] decryptedattachmentdata;
-      return false;
+      return 1;
     }
     uint32_t read = file.gcount();
 
@@ -71,20 +70,29 @@ bool FileDecryptor::getAttachment(FrameWithAttachment *frame)
   {
     std::cout << " STOPPING BEFORE END OF ATTACHMENT!!! 2 " << std::endl;
     delete[] decryptedattachmentdata;
-    return false;
+    return 1;
   }
   DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, MACSIZE));
   DEBUGOUT("ourMac           : ", bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE));
+
+  bool badmac = false;
+
   if (std::memcmp(theirMac, ourMac, 10) != 0)
   {
     std::cout << "" << std::endl;
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
 
-    d_badmac = true;
+    badmac = true;
   }
   else
-    d_badmac = false;
+    badmac = false;
 
-  return frame->setAttachmentData(decryptedattachmentdata);
+  if (frame->setAttachmentData(decryptedattachmentdata))
+  {
+    if (badmac)
+      return -1;
+    return 0;
+  }
+  return 1;
 }

@@ -39,6 +39,9 @@
 
 class SignalBackup
 {
+ public:
+  static bool constexpr IS_SOURCE = true;
+ private:
   SqliteDB d_database;
   std::unique_ptr<FileDecryptor> d_fd;
   FileEncryptor d_fe;
@@ -53,7 +56,7 @@ class SignalBackup
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
  public:
-  SignalBackup(std::string const &filename, std::string const &passphrase);
+  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false);
   explicit SignalBackup(std::string const &inputdir);
   void exportBackup(std::string const &filename, std::string const &passphrase);
   void exportBackup(std::string const &directory);
@@ -153,11 +156,13 @@ inline void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupF
   std::pair<unsigned char *, uint64_t> framedata = frame->getData();
   if (!framedata.first)
     return;
+
   std::pair<unsigned char *, uint64_t> encryptedframe = d_fe.encryptFrame(framedata);
   delete[] framedata.first;
 
   if (!encryptedframe.first)
     return;
+
   writeFrameDataToFile(outputfile, encryptedframe);
   delete[] encryptedframe.first;
 
