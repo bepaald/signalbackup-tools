@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
   if (arg.password().empty())
     sb.reset(new SignalBackup(arg.input()));
   else
-    sb.reset(new SignalBackup(arg.input(), arg.password(), arg.source().empty() ? false : SignalBackup::LOWMEM));
+    sb.reset(new SignalBackup(arg.input(), arg.password(), (!arg.source().empty() || arg.listthreads()) ? SignalBackup::LOWMEM : false));
   if (arg.listthreads())
     sb->listThreads();
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < arg.importthreads().size(); ++i)
     {
       // read the database
-      std::cout << "Importing thread " << arg.importthreads()[i] << " from source file: " << arg.source() << std::endl;
+      std::cout << std::endl << "Importing thread " << arg.importthreads()[i] << " from source file: " << arg.source() << std::endl;
 
       std::unique_ptr<SignalBackup> source;
       if (arg.sourcepassword().empty())

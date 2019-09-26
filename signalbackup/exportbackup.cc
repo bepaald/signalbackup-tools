@@ -21,6 +21,8 @@
 
 void SignalBackup::exportBackup(std::string const &directory)
 {
+  std::cout << std::endl << "Exporting backup into '" << directory << "/'" << std::endl;
+
   // maybe check directory exists, and is empty or make it empty if overwrite was requested.
 
   // export headerframe:
@@ -89,7 +91,7 @@ void SignalBackup::exportBackup(std::string const &directory)
 
 void SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory)
 {
-  std::cout << "Exporting backup to '" << filename << "'" << std::endl;
+  std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
 
   std::string newpw = passphrase;
   if (newpw == std::string())
