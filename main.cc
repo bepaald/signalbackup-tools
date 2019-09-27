@@ -62,13 +62,9 @@ int main(int argc, char *argv[])
   if (arg.elbrutalo())
   {
     SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM);
-
     sb.runSimpleQuery("SELECT COUNT(*) AS num_sms, MIN(date), MAX(date) FROM sms");
-
     sb.runSimpleQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
-
     sb.runSimpleQuery("SELECT COUNT(*) AS num_thread FROM thread");
-
     return 0;
   }
 
@@ -103,6 +99,8 @@ int main(int argc, char *argv[])
       sb->importThread(source.get(), arg.importthreads()[i]);
     }
   }
+
+  //sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
 
   // export output
   if (!arg.output().empty())
