@@ -41,6 +41,7 @@ class Arg
   std::string d_sourcepassword;
   bool d_listthreads;
   bool d_generatefromtruncated;
+  bool d_elbrutalo;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -55,6 +56,7 @@ class Arg
   inline std::string const &sourcepassword() const;
   inline bool listthreads() const;
   inline bool generatefromtruncated() const;
+  inline bool elbrutalo() const;
  private:
   template <typename T>
   bool ston(T &t, std::string const &str) const;
@@ -109,6 +111,11 @@ inline bool Arg::listthreads() const
 inline bool Arg::generatefromtruncated() const
 {
   return d_generatefromtruncated;
+}
+
+inline bool Arg::elbrutalo() const
+{
+  return d_elbrutalo;
 }
 
 inline bool Arg::ok() const

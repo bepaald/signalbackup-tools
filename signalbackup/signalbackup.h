@@ -75,6 +75,8 @@ class SignalBackup
   void fillThreadTableFromMessages();
   inline void addEndFrame();
 
+  inline void runSimpleQuery(std::string const &q) const;
+
  private:
   void updateThreadsEntries(long long int thread = -1);
   long long int getMaxUsedId(std::string const &table);
@@ -278,6 +280,14 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
 inline void SignalBackup::addEndFrame()
 {
   d_endframe.reset(new EndFrame(nullptr, 1ull));
+}
+
+inline void SignalBackup::runSimpleQuery(std::string const &q) const
+{
+  std::cout << "Executing query: " << q << std::endl;
+  SqliteDB::QueryResults res;
+  d_database.exec(q, &res);
+  res.prettyPrint();
 }
 
 #endif
