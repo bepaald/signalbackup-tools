@@ -31,7 +31,8 @@ Arg::Arg(int argc, char *argv[])
   d_source(std::string()),
   d_sourcepassword(std::string()),
   d_listthreads(false),
-  d_generatefromtruncated(false)
+  d_generatefromtruncated(false),
+  d_elbrutalo(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -109,6 +110,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-generatefromtruncated")
     {
       d_generatefromtruncated = false;
+      continue;
+    }
+    if (option == "--elbrutalo")
+    {
+      d_elbrutalo = true;
+      continue;
+    }
+    if (option == "--no-elbrutalo")
+    {
+      d_elbrutalo = false;
       continue;
     }
     if (option[0] != '-')

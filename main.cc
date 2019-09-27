@@ -63,6 +63,26 @@ int main(int argc, char *argv[])
   if (arg.listthreads())
     sb->listThreads();
 
+
+  /*
+    This is just temporary to investigate one specific issue for one specific user.
+    Do not use this option.
+    It will disappear soon enough without any notification
+  */
+  if (arg.elbrutalo())
+  {
+
+    std::cout << "Number of entries in 'sms' table" << std::endl;
+    sb->runSimpleQuery("SELECT COUNT(*) FROM sms");
+
+    std::cout << "Number of entries in 'mms' table" << std::endl;
+    sb->runSimpleQuery("SELECT COUNT(*) FROM mms");
+
+    return 0;
+  }
+
+
+
   if (arg.generatefromtruncated())
   {
     std::cout << "fillthread" << std::endl;
