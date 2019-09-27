@@ -54,6 +54,24 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  /*
+    This is just temporary to investigate one specific issue for one specific user.
+    Do not use this option.
+    It will disappear soon enough without any notification
+  */
+  if (arg.elbrutalo())
+  {
+    SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM);
+
+    sb.runSimpleQuery("SELECT COUNT(*) AS num_sms, MIN(date), MAX(date) FROM sms");
+
+    sb.runSimpleQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
+
+    sb.runSimpleQuery("SELECT COUNT(*) AS num_thread FROM thread");
+
+    return 0;
+  }
+
   // open input
   std::unique_ptr<SignalBackup> sb;
   if (arg.password().empty())
@@ -62,26 +80,6 @@ int main(int argc, char *argv[])
     sb.reset(new SignalBackup(arg.input(), arg.password(), (!arg.source().empty() || arg.listthreads()) ? SignalBackup::LOWMEM : false));
   if (arg.listthreads())
     sb->listThreads();
-
-
-  /*
-    This is just temporary to investigate one specific issue for one specific user.
-    Do not use this option.
-    It will disappear soon enough without any notification
-  */
-  if (arg.elbrutalo())
-  {
-
-    std::cout << "Number of entries in 'sms' table" << std::endl;
-    sb->runSimpleQuery("SELECT COUNT(*) FROM sms");
-
-    std::cout << "Number of entries in 'mms' table" << std::endl;
-    sb->runSimpleQuery("SELECT COUNT(*) FROM mms");
-
-    return 0;
-  }
-
-
 
   if (arg.generatefromtruncated())
   {
