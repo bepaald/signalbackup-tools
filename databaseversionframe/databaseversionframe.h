@@ -63,7 +63,7 @@ inline BackupFrame *DatabaseVersionFrame::create(unsigned char *bytes, size_t le
   return new DatabaseVersionFrame(bytes, length, count);
 }
 
-inline FRAMETYPE DatabaseVersionFrame::frameType() const // virtual
+inline BackupFrame::FRAMETYPE DatabaseVersionFrame::frameType() const // virtual
 {
   return FRAMETYPE::DATABASEVERSION;
 }

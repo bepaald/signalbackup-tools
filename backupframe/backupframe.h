@@ -29,30 +29,31 @@
 #include "../common_be.h"
 #include "../basedecryptor/basedecryptor.h"
 
-enum FRAMETYPE : unsigned int
-{
-  HEADER = 1,
-  SQLSTATEMENT = 2,
-  SHAREDPREFERENCE = 3,
-  ATTACHMENT = 4,
-  DATABASEVERSION = 5,
-  END = 6, // bool
-  AVATAR = 7,
-  STICKER = 8,
-};
-
-enum WIRETYPE : unsigned int
-{
-  VARINT = 0,
-  FIXED64 = 1,
-  LENGTHDELIM = 2,
-  STARTTYPE = 3,
-  ENDTYPE = 4,
-  FIXED32 = 5
-};
-
 class BackupFrame
 {
+ public:
+  enum FRAMETYPE : unsigned int
+  {
+   HEADER = 1,
+   SQLSTATEMENT = 2,
+   SHAREDPREFERENCE = 3,
+   ATTACHMENT = 4,
+   DATABASEVERSION = 5,
+   END = 6, // bool
+   AVATAR = 7,
+   STICKER = 8,
+  };
+
+  enum WIRETYPE : unsigned int
+  {
+   VARINT = 0,
+   FIXED64 = 1,
+   LENGTHDELIM = 2,
+   STARTTYPE = 3,
+   ENDTYPE = 4,
+   FIXED32 = 5
+  };
+
  protected:
   inline static std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> &s_registry();
 
@@ -109,7 +110,7 @@ class BackupFrame
   inline static int64_t getLengthOrVarint(unsigned char *data, unsigned int *offset, unsigned int totallength);
 };
 
-inline std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> &BackupFrame::s_registry() // static
+inline std::unordered_map<BackupFrame::FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> &BackupFrame::s_registry() // static
 {
   static std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> impl;
   return impl;

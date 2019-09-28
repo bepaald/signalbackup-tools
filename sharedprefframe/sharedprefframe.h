@@ -80,7 +80,7 @@ inline void SharedPrefFrame::printInfo() const // virtual
   }
 }
 
-inline FRAMETYPE SharedPrefFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE SharedPrefFrame::frameType() const // virtual override
 {
   return FRAMETYPE::SHAREDPREFERENCE;
 }

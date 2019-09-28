@@ -114,7 +114,7 @@ inline void AttachmentFrame::printInfo() const // virtual override
   }
 }
 
-inline FRAMETYPE AttachmentFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE AttachmentFrame::frameType() const // virtual override
 {
   return FRAMETYPE::ATTACHMENT;
 }

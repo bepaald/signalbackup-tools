@@ -18,7 +18,7 @@
 */
 
 #ifndef ARGS_H_
-#define _ARGS_H_
+#define ARGS_H_
 
 #include <iostream>
 #include <vector>

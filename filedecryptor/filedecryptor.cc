@@ -58,7 +58,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
     std::cout << "Error: failed to retrieve HeaderFrame, length was " << headerlength << " bytes" << std::endl;
     return;
   }
-  if (!(headerframe->frameType() == FRAMETYPE::HEADER))
+  if (!(headerframe->frameType() == BackupFrame::FRAMETYPE::HEADER))
   {
     std::cout << "Error: First frame is not a HeaderFrame" << std::endl;
     delete headerframe;

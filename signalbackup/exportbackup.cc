@@ -159,7 +159,7 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
       else
       {
         if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
-          tables.emplace_back(std::move(results.getValueAs<std::string>(i, 1)));
+          tables.emplace_back(results.getValueAs<std::string>(i, 1));
 
         SqlStatementFrame NEWFRAME;
         NEWFRAME.setStatementField(results.getValueAs<std::string>(i, 0));

@@ -47,7 +47,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
       std::cout << std::endl << "WARNING: Bad MAC in frame, trying to print frame info:" << std::endl;
       frame->printInfo();
 
-      if (frame->frameType() == FRAMETYPE::ATTACHMENT)
+      if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
       {
         std::unique_ptr<AttachmentFrame> a = std::make_unique<AttachmentFrame>(*reinterpret_cast<AttachmentFrame *>(frame.get()));
         //std::unique_ptr<AttachmentFrame> a(reinterpret_cast<AttachmentFrame *>(frame.release()));
@@ -68,7 +68,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
           for (uint j = 0; j < results.columns(); ++j)
           {
             std::cout << " - " << results.header(j) << " : ";
-            if (results.valueHasType<nullptr_t>(i, j))
+            if (results.valueHasType<std::nullptr_t>(i, j))
               std::cout << "(NULL)" << std::endl;
             else if (results.valueHasType<std::string>(i, j))
               std::cout << results.getValueAs<std::string>(i, j) << std::endl;
@@ -95,7 +95,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
           for (uint j = 0; j < results.columns(); ++j)
           {
             std::cout << " - " << results.header(j) << " : ";
-            if (results.valueHasType<nullptr_t>(i, j))
+            if (results.valueHasType<std::nullptr_t>(i, j))
               std::cout << "(NULL)" << std::endl;
             else if (results.valueHasType<std::string>(i, j))
               std::cout << results.getValueAs<std::string>(i, j) << std::endl;
@@ -138,40 +138,40 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
               << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
               << "... " << std::flush;
 
-    if (frame->frameType() == FRAMETYPE::HEADER)
+    if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
     {
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
       //d_headerframe->printInfo();
     }
-    else if (frame->frameType() == FRAMETYPE::DATABASEVERSION)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       //d_databaseversionframe->printInfo();
     }
-    else if (frame->frameType() == FRAMETYPE::SQLSTATEMENT)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
       if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos)
         d_database.exec(s->bindStatement(), s->parameters());
     }
-    else if (frame->frameType() == FRAMETYPE::ATTACHMENT)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     {
       AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(frame.release());
       d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
     }
-    else if (frame->frameType() == FRAMETYPE::AVATAR)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
     {
       AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
-      d_avatars.emplace(std::move(std::string(a->name())), a);
+      d_avatars.emplace(std::string(a->name()), a);
     }
-    else if (frame->frameType() == FRAMETYPE::SHAREDPREFERENCE)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
       d_sharedpreferenceframes.emplace_back(reinterpret_cast<SharedPrefFrame *>(frame.release()));
-    else if (frame->frameType() == FRAMETYPE::STICKER)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
     {
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
       d_stickers.emplace(s->rowId(), s);
     }
-    else if (frame->frameType() == FRAMETYPE::END)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::END)
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
   }
 

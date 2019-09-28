@@ -109,7 +109,7 @@ inline void AvatarFrame::printInfo() const // virtual override
   }
 }
 
-inline FRAMETYPE AvatarFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE AvatarFrame::frameType() const // virtual override
 {
   return FRAMETYPE::AVATAR;
 }

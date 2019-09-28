@@ -64,7 +64,7 @@ inline StickerFrame::StickerFrame(unsigned char *data, size_t length, uint64_t c
   FrameWithAttachment(data, length, count)
 {}
 
-inline FRAMETYPE StickerFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE StickerFrame::frameType() const // virtual override
 {
   return FRAMETYPE::STICKER;
 }
