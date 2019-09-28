@@ -36,20 +36,20 @@ BackupFrame *FileDecryptor::initBackupFrame(unsigned char *data, size_t length, 
   DEBUGOUT("OFFSET: ", offset);
 
   if (datalength < 0 ||
-      (static_cast<FRAMETYPE>(fieldnum) != FRAMETYPE::END && static_cast<uint64_t>(datalength) > length - offset))
+      (static_cast<BackupFrame::FRAMETYPE>(fieldnum) != BackupFrame::FRAMETYPE::END && static_cast<uint64_t>(datalength) > length - offset))
     return nullptr;
 
-  if (static_cast<FRAMETYPE>(fieldnum) == FRAMETYPE::END) // is a raw bool type, not a message
+  if (static_cast<BackupFrame::FRAMETYPE>(fieldnum) == BackupFrame::FRAMETYPE::END) // is a raw bool type, not a message
   {
-    if (wiretype == WIRETYPE::VARINT && datalength == 1)
+    if (wiretype == BackupFrame::WIRETYPE::VARINT && datalength == 1)
       return new EndFrame(data, datalength, count);
     else
       return nullptr;
   }
   else
   {
-    if (wiretype != WIRETYPE::LENGTHDELIM)
+    if (wiretype != BackupFrame::WIRETYPE::LENGTHDELIM)
       return nullptr;
-    return BackupFrame::instantiate(static_cast<FRAMETYPE>(fieldnum), data + offset, datalength, count);
+    return BackupFrame::instantiate(static_cast<BackupFrame::FRAMETYPE>(fieldnum), data + offset, datalength, count);
   }
 }

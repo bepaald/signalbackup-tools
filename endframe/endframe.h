@@ -59,7 +59,7 @@ inline void EndFrame::printInfo() const // virtual override
     std::cout << "         - (value  : \"" << std::boolalpha << (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
 }
 
-inline FRAMETYPE EndFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE EndFrame::frameType() const // virtual override
 {
   return FRAMETYPE::END;
 }

@@ -182,7 +182,7 @@ inline SqlStatementFrame::~SqlStatementFrame()
   d_parameterdata.clear();
 }
 
-inline FRAMETYPE SqlStatementFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE SqlStatementFrame::frameType() const // virtual override
 {
   return FRAMETYPE::SQLSTATEMENT;
 }

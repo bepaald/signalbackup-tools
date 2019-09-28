@@ -114,7 +114,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
         ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
       else
         if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
-          tables.emplace_back(std::move(results.getValueAs<std::string>(i, 1)));
+          tables.emplace_back(results.getValueAs<std::string>(i, 1));
     }
   }
 

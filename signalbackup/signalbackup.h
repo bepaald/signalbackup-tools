@@ -137,7 +137,7 @@ inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
     return;
   }
 
-  if (frame->frameType() == FRAMETYPE::END)
+  if (frame->frameType() == BackupFrame::FRAMETYPE::END)
     rawframefile << "END" << std::endl;
   else
   {
@@ -219,7 +219,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
   std::string line;
   while (std::getline(datastream, line))
   {
-    uint pos = line.find(":", 0);
+    std::string::size_type pos = line.find(":", 0);
     if (pos == std::string::npos)
     {
       std::cout << "Failed to read frame data from '" << file << "'" << std::endl;
@@ -233,7 +233,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
     }
 
     ++pos;
-    uint pos2 = line.find(":", pos);
+    std::string::size_type pos2 = line.find(":", pos);
     if (pos2 == std::string::npos)
     {
       std::cout << "Failed to read HeaderFrame from datafile" << std::endl;

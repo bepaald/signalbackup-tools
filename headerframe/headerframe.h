@@ -66,7 +66,7 @@ inline HeaderFrame::HeaderFrame(unsigned char *data, size_t length, uint64_t cou
   d_ok = iv_length() == 16;
 }
 
-inline FRAMETYPE HeaderFrame::frameType() const // virtual override
+inline BackupFrame::FRAMETYPE HeaderFrame::frameType() const // virtual override
 {
   return FRAMETYPE::HEADER;
 }

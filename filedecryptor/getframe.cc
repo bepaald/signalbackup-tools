@@ -152,14 +152,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame2(uint32_t offset)
   {
     uintToFourBytes(d_iv, d_counter++);
 
-    if (frame->frameType() == ATTACHMENT || frame->frameType() == AVATAR)
+    if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT || frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
       reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      if (frame->frameType() != ATTACHMENT && frame->frameType() != AVATAR)
+      if (frame->frameType() != BackupFrame::FRAMETYPE::ATTACHMENT && frame->frameType() != BackupFrame::FRAMETYPE::AVATAR)
         return std::unique_ptr<BackupFrame>(nullptr);
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
@@ -274,14 +274,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   {
     uintToFourBytes(d_iv, d_counter++);
 
-    if (frame->frameType() == ATTACHMENT || frame->frameType() == AVATAR)
+    if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT || frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
       reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      if (frame->frameType() != ATTACHMENT && frame->frameType() != AVATAR)
+      if (frame->frameType() != BackupFrame::FRAMETYPE::ATTACHMENT && frame->frameType() != BackupFrame::FRAMETYPE::AVATAR)
         return std::unique_ptr<BackupFrame>(nullptr);
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
