@@ -17,14 +17,23 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.h"
+#include "signalbackup.ih"
 
-#include <ctime>
-#include <filesystem>
-#include <sstream>
-#include <locale>
-#include <iomanip>
-#include <regex>
+long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date) const
+{
+  long long int ret = -1;
 
-#include "../msgtypes/msgtypes.h"
-#include "../protobufparser/protobufparser.h"
+  // check
+  std::regex datestring("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
+  if (std::regex_match(date, datestring))
+  {
+    std::tm t = {};
+    std::istringstream ss(date);
+    if (ss >> std::get_time(&t, "%Y-%m-%d %H:%M:%S"))
+      ret = std::mktime(&t) * 1000;
+  }
+  else
+    ret = bepaald::toNumber<long long int>(date);
+
+  return ret;
+}

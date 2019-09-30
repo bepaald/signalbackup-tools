@@ -47,6 +47,8 @@ namespace bepaald
   template<typename ...Args>
   inline void log(Args && ...args);
 #endif
+  template <typename T>
+  T toNumber(std::string const &str);
   std::wstring bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
   std::wstring bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
   std::wstring bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted = false);
@@ -95,6 +97,15 @@ inline void bepaald::log(Args && ...args)
   (std::cout << ... << args) << std::endl;
 }
 #endif
+
+template <typename T>
+T bepaald::toNumber(std::string const &str)
+{
+  std::istringstream s(str);
+  T i = 0;
+  s >> i;
+  return i;
+}
 
 inline std::string bepaald::bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
 {

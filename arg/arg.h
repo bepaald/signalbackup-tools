@@ -41,7 +41,10 @@ class Arg
   std::string d_sourcepassword;
   bool d_listthreads;
   bool d_generatefromtruncated;
+  std::vector<long long int> d_croptothreads;
+  std::vector<std::string> d_croptodates;
   bool d_elbrutalo;
+  std::vector<std::string> d_mergerecipients;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -56,11 +59,15 @@ class Arg
   inline std::string const &sourcepassword() const;
   inline bool listthreads() const;
   inline bool generatefromtruncated() const;
+  inline std::vector<long long int> const &croptothreads() const;
+  inline std::vector<std::string> const &croptodates() const;
   inline bool elbrutalo() const;
+  inline std::vector<std::string> const &mergerecipients() const;
  private:
   template <typename T>
-  bool ston(T &t, std::string const &str) const;
+  bool ston(T *t, std::string const &str) const;
   bool parseArgs(std::vector<std::string> const &args);
+  inline bool parseStringList(std::string const &strlist, std::vector<std::string> *list) const;
   template <typename T>
   bool parseNumberList(std::string const &strlist, std::vector<T> *list) const;
   template <typename T>
@@ -113,9 +120,24 @@ inline bool Arg::generatefromtruncated() const
   return d_generatefromtruncated;
 }
 
+inline std::vector<long long int> const &Arg::croptothreads() const
+{
+  return d_croptothreads;
+}
+
+inline std::vector<std::string> const &Arg::croptodates() const
+{
+  return d_croptodates;
+}
+
 inline bool Arg::elbrutalo() const
 {
   return d_elbrutalo;
+}
+
+inline std::vector<std::string> const &Arg::mergerecipients() const
+{
+  return d_mergerecipients;
 }
 
 inline bool Arg::ok() const
@@ -124,10 +146,25 @@ inline bool Arg::ok() const
 }
 
 template <typename T>
-bool Arg::ston(T &t, std::string const &str) const
+bool Arg::ston(T *t, std::string const &str) const
 {
   std::istringstream iss(str);
-  return !(iss >> t).fail();
+  return !(iss >> *t).fail();
+}
+
+inline bool Arg::parseStringList(std::string const &strlist, std::vector<std::string> *list) const
+{
+  std::string tr = strlist;
+
+  size_t start = 0;
+  size_t pos = 0;
+  while ((pos = tr.find(',', start)) != std::string::npos)
+  {
+    list->push_back(tr.substr(start, pos - start));
+    start = pos + 1;
+  }
+  list->push_back(tr.substr(start));
+  return true;
 }
 
 template <typename T>
@@ -155,17 +192,17 @@ template <typename T>
 bool Arg::parseNumberListToken(std::string const &token, std::vector<T> *list) const
 {
   size_t pos = 0;
-  int beg = -1;
+  T beg = -1;
 
   // try and get first number
   if ((pos = token.find('-')) != std::string::npos)
   {
-    if (!ston<int>(beg, token.substr(0, pos)))
+    if (!ston<T>(&beg, token.substr(0, pos)))
       return false;
 
     // then there must be a second number
-    int end = -1;
-    if (!ston<int>(end, token.substr(pos + 1)))
+    T end = -1;
+    if (!ston<T>(&end, token.substr(pos + 1)))
       return false;
 
     if (beg > end)
@@ -175,7 +212,7 @@ bool Arg::parseNumberListToken(std::string const &token, std::vector<T> *list) c
   }
   else
   {
-    if (!ston<int>(beg, token))
+    if (!ston<T>(&beg, token))
       return false;
     else
       list->push_back(beg);

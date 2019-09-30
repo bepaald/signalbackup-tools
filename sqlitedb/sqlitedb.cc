@@ -108,6 +108,12 @@ std::wstring SqliteDB::QueryResults::wideString(std::string const &narrow) const
 
 void SqliteDB::QueryResults::prettyPrint() const
 {
+  if (rows() == 0 && columns() == 0)
+  {
+    std::cout << "(no results)" << std::endl;
+    return;
+  }
+
   std::setlocale(LC_ALL, "en_US.utf8");
   std::freopen(nullptr, "a", stdout);
 

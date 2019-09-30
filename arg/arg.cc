@@ -32,7 +32,10 @@ Arg::Arg(int argc, char *argv[])
   d_sourcepassword(std::string()),
   d_listthreads(false),
   d_generatefromtruncated(false),
-  d_elbrutalo(false)
+  d_croptothreads(std::vector<long long int>()),
+  d_croptodates(std::vector<std::string>()),
+  d_elbrutalo(false),
+  d_mergerecipients(std::vector<std::string>())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -112,6 +115,28 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_generatefromtruncated = false;
       continue;
     }
+    if (option == "--croptothreads")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseNumberList(arguments[++i], &d_croptothreads))
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+      }
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--croptodates")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_croptodates))
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+      }
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
     if (option == "--elbrutalo")
     {
       d_elbrutalo = true;
@@ -120,6 +145,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-elbrutalo")
     {
       d_elbrutalo = false;
+      continue;
+    }
+    if (option == "--mergerecipients")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_mergerecipients))
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+      }
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;
     }
     if (option[0] != '-')

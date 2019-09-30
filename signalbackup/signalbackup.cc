@@ -514,40 +514,6 @@ void SignalBackup::setMinimumId(std::string const &table, long long int offset) 
   }
 }
 
-void SignalBackup::cleanDatabaseByMessages()
-{
-  std::cout << "Deleting attachment entries from 'part' not belonging to remaining mms entries" << std::endl;
-  d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM mms)");
-
-  std::cout << "Deleting other threads from 'thread'..." << std::endl;
-  d_database.exec("DELETE FROM thread where _id NOT IN (SELECT DISTINCT thread_id FROM sms) AND _id NOT IN (SELECT DISTINCT thread_id FROM mms)");
-  updateThreadsEntries();
-
-  std::cout << "Deleting removed groups..." << std::endl;
-  d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT recipient_ids FROM thread)");
-
-  std::cout << "Deleting unreferenced recipient_preferences..." << std::endl;
-  // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
-  d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms)");
-  // remove avatars not belonging to exisiting recipients
-  SqliteDB::QueryResults results;
-  d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
-  for (std::map<std::string, std::unique_ptr<AvatarFrame>>::iterator avit = d_avatars.begin(); avit != d_avatars.end();)
-    if (!results.contains(avit->first))
-      avit = d_avatars.erase(avit);
-    else
-      ++avit;
-
-  std::cout << "Delete others from 'identities'" << std::endl;
-  d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT recipient_ids FROM recipient_preferences)");
-
-  std::cout << "Deleting group receipts entries from deleted messages..." << std::endl;
-  d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM mms)");
-
-  std::cout << "Deleting drafts from deleted threads..." << std::endl;
-  d_database.exec("DELETE FROM drafts WHERE thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");
-}
-
 void SignalBackup::compactIds(std::string const &table)
 {
   std::cout << "Compacting table: " << table << std::endl;
@@ -667,71 +633,6 @@ long long int SignalBackup::getMaxUsedId(std::string const &table)
     return 0;
   }
   return results.getValueAs<long long int>(0, 0);
-}
-
-long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date) const
-{
-  long long int ret = -1;
-  std::tm t = {};
-  std::istringstream ss(date);
-  if (ss >> std::get_time(&t, "%Y-%m-%d %H:%M:%S"))
-    ret = std::mktime(&t) * 1000;
-  return ret;
-}
-
-void SignalBackup::showQuery(std::string const &query) const
-{
-  SqliteDB::QueryResults results;
-  d_database.exec(query, &results);
-  results.prettyPrint();
-}
-
-void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges)
-{
-
-  std::string smsq;
-  std::string mmsq;
-  std::vector<std::any> params;
-  for (uint i = 0; i < dateranges.size(); ++i)
-  {
-    long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
-    long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second);
-    if (startrange == -1 || endrange == -1 || endrange < startrange)
-    {
-      std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
-      continue;
-    }
-    endrange += 999; // to get everything in the second specified...
-
-    if (i == 0)
-    {
-      smsq = "DELETE FROM sms WHERE ";
-      mmsq = "DELETE FROM mms WHERE ";
-    }
-    else
-    {
-      smsq += "AND ";
-      mmsq += "AND ";
-    }
-    smsq += "date NOT BETWEEN ? AND ?";
-    mmsq += "date_received NOT BETWEEN ? AND ?";
-    if (i < dateranges.size() - 1)
-    {
-      smsq += " ";
-      mmsq += " ";
-    }
-    params.emplace_back(startrange);
-    params.emplace_back(endrange);
-  }
-  if (smsq.empty() || mmsq.empty())
-  {
-    std::cout << "Error: Failed to get any date ranges.";
-    return;
-  }
-
-  d_database.exec(smsq, params);
-  d_database.exec(mmsq, params);
-  cleanDatabaseByMessages();
 }
 
 void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming)

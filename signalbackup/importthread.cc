@@ -36,12 +36,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     return;
   }
   std::string recipient_id = results.getValueAs<std::string>(0, 0);
-  d_database.exec("SELECT _id FROM thread WHERE recipient_ids = ?", recipient_id, &results);
-  long long int targetthread = -1;
-  if (results.rows() == 1 &&
-      results.columns() == 1 &&
-      results.valueHasType<long long int>(0, 0))
-    targetthread = results.getValueAs<long long int>(0, 0);
+  long long int targetthread = getThreadIdFromRecipient(recipient_id);
 
   // the target will have its own job_spec etc...
   source->d_database.exec("DELETE FROM job_spec");
