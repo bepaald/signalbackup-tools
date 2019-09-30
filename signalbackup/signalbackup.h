@@ -74,7 +74,7 @@ class SignalBackup
   bool dropBadFrames();
   void fillThreadTableFromMessages();
   inline void addEndFrame();
-
+  void mergeRecipients(std::vector<std::string> const &addresses);
   inline void runSimpleQuery(std::string const &q) const;
 
  private:
@@ -99,7 +99,8 @@ class SignalBackup
   void compactIds(std::string const &table);
   void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences, long long int groups, long long int identies, long long int group_receipts, long long int drafts);
   long long int dateToMSecsSinceEpoch(std::string const &date) const;
-  void showQuery(std::string const &query) const;
+  //void showQuery(std::string const &query) const;
+  long long int getThreadIdFromRecipient(std::string const &recipient) const;
 };
 
 inline bool SignalBackup::ok() const

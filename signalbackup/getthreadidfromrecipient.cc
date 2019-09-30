@@ -17,14 +17,14 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.h"
+#include "signalbackup.ih"
 
-#include <ctime>
-#include <filesystem>
-#include <sstream>
-#include <locale>
-#include <iomanip>
-#include <regex>
-
-#include "../msgtypes/msgtypes.h"
-#include "../protobufparser/protobufparser.h"
+long long int SignalBackup::getThreadIdFromRecipient(std::string const &recipient) const
+{
+  long long int tid = -1;
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT _id FROM thread WHERE recipient_ids = ?", recipient, &results);
+  if (results.rows() == 1 && results.columns() == 1 && results.valueHasType<long long int>(0, 0))
+    tid = results.getValueAs<long long int>(0, 0);
+  return tid;
+}

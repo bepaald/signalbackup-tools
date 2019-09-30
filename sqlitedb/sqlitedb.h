@@ -71,6 +71,7 @@ class SqliteDB
   inline void exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
   void exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
   inline static bool copyDb(SqliteDB const &source, SqliteDB const &target);
+  inline int changed() const;
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
@@ -166,6 +167,11 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, double param
 {
   //std::cout << "Binding DOUBLE at " << count << ": " << param << std::endl;
   return sqlite3_bind_double(stmt, count, param);
+}
+
+inline int SqliteDB::changed() const
+{
+  return sqlite3_changes(d_db);
 }
 
 inline void SqliteDB::QueryResults::emplaceHeader(std::string &&h)

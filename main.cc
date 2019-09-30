@@ -63,9 +63,9 @@ int main(int argc, char *argv[])
   {
     SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM);
     sb.runSimpleQuery("SELECT COUNT(*) AS num_sms, MIN(date), MAX(date) FROM sms");
-    sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND t1.body = t2.body AND t1.date_sent = t2.date_sent AND t1._id <> t2._id)");
+    sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND t1.body = t2.body AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.date_sent = t2.date_sent AND t1._id <> t2._id)");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
-    sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND t1.body = t2.body AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles");
+    sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND t1.body = t2.body AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_thread FROM thread");
     return 0;
   }
@@ -102,7 +102,28 @@ int main(int argc, char *argv[])
     }
   }
 
-  //sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
+  if (!arg.croptodates().empty())
+  {
+    if (arg.croptodates().size() % 2 != 0)
+    {
+      std::cout << "Wrong number of date-strings to croptodate" << std::endl;
+      return 1;
+    }
+    std::vector<std::pair<std::string, std::string>> dates;
+    for (uint i = 0; i < arg.croptodates().size(); i += 2)
+      dates.push_back({arg.croptodates()[i], arg.croptodates()[i + 1]});
+    sb->cropToDates(dates);
+    //sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
+  }
+
+  if (!arg.croptothreads().empty())
+    sb->cropToThread(arg.croptothreads());
+
+  if (!arg.mergerecipients().empty())
+  {
+    std::cout << "Merging recipients..." << std::endl;
+    sb->mergeRecipients(arg.mergerecipients());
+  }
 
   // export output
   if (!arg.output().empty())
