@@ -17,9 +17,16 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlcipherdecryptor.ih"
 
-#define VERSIONDATE "20191008.221729"
-
-#endif
+SqlCipherDecryptor::~SqlCipherDecryptor()
+{
+  bepaald::destroyPtr(&d_key, &d_keysize);
+  bepaald::destroyPtr(&d_hmackey, &d_hmackeysize);
+  bepaald::destroyPtr(&d_salt, &d_saltsize);
+  bepaald::destroyPtr(&d_decrypteddata, &d_decrypteddatasize);
+  if (d_hmac)
+    delete d_hmac;
+  if (d_pbkdf)
+    delete d_pbkdf;
+}

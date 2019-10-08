@@ -17,9 +17,13 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlcipherdecryptor.h"
 
-#define VERSIONDATE "20191008.221729"
-
-#endif
+#include <regex>
+#include <fstream>
+#include <charconv>
+#include <cryptopp/modes.h>
+#include <cryptopp/aes.h>
+//#include <cryptopp/ccm.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/pwdbased.h>
