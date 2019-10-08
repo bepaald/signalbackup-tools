@@ -17,21 +17,24 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "sqlitedb.h"
+#include "sqlitedb.ih"
 
-#include <sstream>
-#include <algorithm>
-#include <numeric>
-#include <iomanip>
-#include <locale>
-#include <codecvt>
-
-#include "../common_be.h"
-
+int SqliteDB::QueryResults::availableWidth() const
+{
 #if defined(__linux__)
-#include <sys/ioctl.h>
-#include <unistd.h>
+  struct winsize ts;
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ts) != -1)
+    return (ts.ws_col < 40) ? 40 : ts.ws_col;
+  return 80; // some random default;
+#else
+#if defined(_WIN32) || defined(__MINGW64__) // this is untested, I don't have windows
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  int ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+  if (ret)
+    return (csbi.dwSize.X < 40) ? 40 : csbi.dwSize.X;
+  return 80;
+#else
+return 80;
 #endif
-#if defined(_WIN32) || defined(__MINGW64__)
-#include <windows.h>
 #endif
+}
