@@ -17,9 +17,11 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlitedb.ih"
 
-#define VERSIONDATE "20191008.221155"
-
-#endif
+std::wstring SqliteDB::QueryResults::wideString(std::string const &narrow) const
+{
+  std::setlocale(LC_ALL, "en_US.utf8");
+  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  return converter.from_bytes(narrow);
+}

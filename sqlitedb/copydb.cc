@@ -17,9 +17,23 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlitedb.ih"
 
-#define VERSIONDATE "20191008.221155"
-
-#endif
+bool SqliteDB::copyDb(SqliteDB const &source, SqliteDB const &target) // static
+{
+  sqlite3_backup *backup = sqlite3_backup_init(target.d_db, "main", source.d_db, "main");
+  if (!backup)
+  {
+    std::cout << "SQL Error: " << sqlite3_errmsg(target.d_db) << std::endl;
+    return false;
+  }
+  int rc = 0;
+  if ((rc = sqlite3_backup_step(backup, -1)) != SQLITE_DONE)
+    std::cout << "SQL Error: " << sqlite3_errstr(rc) << std::endl;
+  if (sqlite3_backup_finish(backup) != SQLITE_OK)
+  {
+    std::cout << "SQL Error: Error finishing backup" << std::endl;
+    return false;
+  }
+  return true;
+}
