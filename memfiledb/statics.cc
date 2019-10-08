@@ -17,21 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "sqlitedb.h"
+#include "memfiledb.h"
 
-#include <sstream>
-#include <algorithm>
-#include <numeric>
-#include <iomanip>
-#include <locale>
-#include <codecvt>
-
-#include "../common_be.h"
-
-#if defined(__linux__)
-#include <sys/ioctl.h>
-#include <unistd.h>
-#endif
-#if defined(_WIN32) || defined(__MINGW64__)
-#include <windows.h>
-#endif
+sqlite3_vfs MemFileDB::s_demovfs; // static

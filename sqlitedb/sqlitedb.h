@@ -27,6 +27,8 @@
 #include <iostream>
 #include <any>
 
+#include "../memfiledb/memfiledb.h"
+
 class SqliteDB
 {
  public:
@@ -56,13 +58,16 @@ class SqliteDB
    private:
     std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
+    int availableWidth() const;
   };
 
  private:
   sqlite3 *d_db;
+  sqlite3_vfs *d_vfs;
   bool d_ok;
  public:
   inline explicit SqliteDB(std::string const &name, bool readonly = true);
+  inline SqliteDB(std::pair<unsigned char *, uint64_t> *data);
   inline SqliteDB(SqliteDB const &other) = delete;
   inline SqliteDB &operator=(SqliteDB const &other) = delete;
   inline ~SqliteDB();
@@ -85,6 +90,7 @@ class SqliteDB
 inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   :
   d_db(nullptr),
+  d_vfs(nullptr),
   d_ok(false)
 {
   if (name != ":memory:" && readonly)
@@ -93,10 +99,23 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
     d_ok = (sqlite3_open(name.c_str(), &d_db) == SQLITE_OK);
 }
 
+inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
+  :
+  d_db(nullptr),
+  d_vfs(MemFileDB::sqlite3_demovfs(data)),
+  d_ok(false)
+{
+  if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
+    d_ok = (sqlite3_open_v2("dummy", &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+}
+
 inline SqliteDB::~SqliteDB()
 {
-  if (d_ok)
+  if (d_db)
     sqlite3_close(d_db);
+
+  if (d_vfs)
+    sqlite3_vfs_unregister(d_vfs);
 }
 
 inline bool SqliteDB::ok() const
