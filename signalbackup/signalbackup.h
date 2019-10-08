@@ -62,11 +62,11 @@ class SignalBackup
   void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
   //void exportXml(std::string const &filename) const;
-  void listThreads() const;
+  inline void listThreads() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
   void cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
-  void addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming);
+  inline void addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming);
   void addSMSMessage(std::string const &body, std::string const &address, long long int timestamp, long long int thread, bool incoming);
   void importThread(SignalBackup *source, long long int thread);
   void importThread(SignalBackup *source, std::vector<long long int> const &threads);
@@ -87,7 +87,7 @@ class SignalBackup
   template <class T>
   inline void writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   inline void writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
-  inline void writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
+  void writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers, std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
   template <class T>
@@ -153,33 +153,6 @@ inline void SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::p
   uint32_t besize = bepaald::swap_endian(static_cast<uint32_t>(data.second));
   outputfile.write(reinterpret_cast<char *>(&besize), sizeof(uint32_t));
   outputfile.write(reinterpret_cast<char *>(data.first), data.second);
-}
-
-inline void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame)
-{
-  std::pair<unsigned char *, uint64_t> framedata = frame->getData();
-  if (!framedata.first)
-    return;
-
-  std::pair<unsigned char *, uint64_t> encryptedframe = d_fe.encryptFrame(framedata);
-  delete[] framedata.first;
-
-  if (!encryptedframe.first)
-    return;
-
-  writeFrameDataToFile(outputfile, encryptedframe);
-  delete[] encryptedframe.first;
-
-  uint32_t attachmentsize = 0;
-  if ((attachmentsize = frame->attachmentSize()) > 0)
-  {
-    FrameWithAttachment *f = reinterpret_cast<FrameWithAttachment *>(frame);
-    unsigned char *attachmentdata = f->attachmentData();
-    std::pair<unsigned char *, uint64_t> newadata = d_fe.encryptAttachment(attachmentdata, attachmentsize);
-    //std::cout << "Writing attachment data..." << std::endl;
-    outputfile.write(reinterpret_cast<char *>(newadata.first), newadata.second);
-    delete[] newadata.first;
-  }
 }
 
 template <typename T>
@@ -289,6 +262,19 @@ inline void SignalBackup::runSimpleQuery(std::string const &q) const
   SqliteDB::QueryResults res;
   d_database.exec(q, &res);
   res.prettyPrint();
+}
+
+inline void SignalBackup::listThreads() const
+{
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
+
+  results.prettyPrint();
+}
+
+inline void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming)
+{
+  addSMSMessage(body, address, dateToMSecsSinceEpoch(timestamp), thread, incoming);
 }
 
 #endif

@@ -17,9 +17,30 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20191008.221155"
+long long int SignalBackup::getMinUsedId(std::string const &table)
+{
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT MIN(_id) FROM " + table, &results);
+  if (results.rows() != 1 ||
+      results.columns() != 1 ||
+      !results.valueHasType<long long int>(0, 0))
+  {
+    return 0;
+  }
+  return results.getValueAs<long long int>(0, 0);
+}
 
-#endif
+long long int SignalBackup::getMaxUsedId(std::string const &table)
+{
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT MAX(_id) FROM " + table, &results);
+  if (results.rows() != 1 ||
+      results.columns() != 1 ||
+      !results.valueHasType<long long int>(0, 0))
+  {
+    return 0;
+  }
+  return results.getValueAs<long long int>(0, 0);
+}
