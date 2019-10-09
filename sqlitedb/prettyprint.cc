@@ -46,6 +46,9 @@ void SqliteDB::QueryResults::prettyPrint() const
       if (valueHasType<std::string>(i, j))
       {
         contents.back().emplace_back(wideString(getValueAs<std::string>(i, j)));
+        std::string::size_type newline = std::string::npos;
+        if ((newline = contents.back().back().find('\n')) != std::string::npos)
+          contents.back().back().resize(newline);
       }
       else if (valueHasType<long long int>(i, j))
       {
@@ -123,17 +126,17 @@ void SqliteDB::QueryResults::prettyPrint() const
       changed = false;
       for (auto it = oversizedcols.begin(); it != oversizedcols.end(); ++it)
       {
-        if (widths[*it] < fairwidthpercol + spaceleftbyshortcols / oversizedcols.size())
+        if (widths[*it] < maxwidthpercol)
         {
-          //std::wcout << L"Column has room, needs " << widths[*it] << L" available: " << fairwidthpercol + spaceleftbyshortcols / oversizedcols.size() << L" adds " << (fairwidthpercol + spaceleftbyshortcols / oversizedcols.size()) - widths[*it] << L" to pool of leftspace" << std::endl;
+          //std::wcout << L"Column has room, needs " << widths[*it] << L" available: " << maxwidthpercol << L" adds " << maxwidthpercol - widths[*it] << L" to pool of leftspace for " << oversizedcols.size() - 1 << L" remaining oversized cols" << std::endl;
           changed = true;
-          maxwidthpercol += (fairwidthpercol + spaceleftbyshortcols / oversizedcols.size()) - widths[*it];
+          maxwidthpercol += (maxwidthpercol - widths[*it]) / (oversizedcols.size() - 1);
           oversizedcols.erase(it);
           break;
         }
         //else
         //{
-        //  std::wcout << L"Column needs that extra space" << std::endl;
+        //  std::wcout << L"Column needs that extra space " << widths[*it] << L" available: " << maxwidthpercol << std::endl;
         //}
       }
       //std::wcout << L"" << std::endl;
