@@ -30,7 +30,10 @@
 
 #if defined(__linux__)
 #include <sys/ioctl.h>
-#include <unistd.h>
+  #if __has_include("unistd.h")
+  #define HAS_UNISTD_H_
+  #include <unistd.h>
+  #endif
 #endif
 #if defined(_WIN32) || defined(__MINGW64__)
 #include <windows.h>

@@ -17,9 +17,13 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlitedb.ih"
 
-#define VERSIONDATE "20191012.093021"
-
+bool SqliteDB::QueryResults::isTerminal() const
+{
+#ifdef HAS_UNISTD_H_ // defined in .ih if unistd.h is available
+  return isatty(STDOUT_FILENO);
+#else
+  return false;
 #endif
+}

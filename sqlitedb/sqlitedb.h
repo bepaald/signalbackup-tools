@@ -58,6 +58,9 @@ class SqliteDB
    private:
     std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
+    inline bool supportsAnsi() const;
+    bool isTerminal() const;
+    inline bool useEscapeCodes() const;
     int availableWidth() const;
   };
 
@@ -260,6 +263,34 @@ inline bool SqliteDB::QueryResults::contains(T const &value) const
 inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) const
 {
   return d_values[row];
+}
+
+// This function was taken from https://github.com/agauniyal/rang/
+// Used here to (poorly!) detect support for ansi escape codes
+inline bool SqliteDB::QueryResults::supportsAnsi() const
+{
+  static const bool result = []
+                             {
+                               const char *Terms[]
+                                 = { "ansi",    "color",  "console", "cygwin", "gnome",
+                                     "konsole", "kterm",  "linux",   "msys",   "putty",
+                                     "rxvt",    "screen", "vt100",   "xterm" };
+                               const char *env_p = std::getenv("TERM");
+                               if (env_p == nullptr)
+                                 return false;
+                               return std::any_of(std::begin(Terms), std::end(Terms),
+                                                  [&](const char *term)
+                                                  {
+                                                    return std::strstr(env_p, term) != nullptr;
+                                                  });
+                             }();
+  return result;
+}
+
+
+bool SqliteDB::QueryResults::useEscapeCodes() const
+{
+  return supportsAnsi() && isTerminal();
 }
 
 #endif
