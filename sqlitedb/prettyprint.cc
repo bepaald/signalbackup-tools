@@ -163,17 +163,25 @@ void SqliteDB::QueryResults::prettyPrint() const
   }
 
   //std::wcout << std::wstring(availableWidth(), L'*') << std::endl;
-
+  bool ansi = useEscapeCodes();
   std::wcout << std::wstring(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, L'-') << std::endl;
-  for (uint i = 0; i < contents.size(); ++i)
+  for (uint row = 0; row < contents.size(); ++row)
   {
     std::wcout.setf(std::ios_base::left);
-    for (uint j = 0; j < contents[i].size(); ++j)
-      std::wcout << L"| " << std::setw(widths[j]) << std::setfill(L' ') << contents[i][j] << std::setw(0) << L" ";
+    unsigned int pos = 1; // for seeking horizonatl position with ANSI escape codes, this starts counting at 1
+    for (uint col = 0; col < contents[row].size(); ++col)
+    {
+      std::wcout << L"| " << std::setw(widths[col]) << std::setfill(L' ') << contents[row][col] << std::setw(0) << L" ";
+      if (ansi)
+      {
+        pos += 2 + widths[col] + 1; // "| " + content + " "
+        std::wcout << L"\033[" << pos - 1 << L"G "; // prints a space right before where the next '|' will come
+      }
+    }
     std::wcout << L"|" << std::endl;
 
     // another bar under top row
-    if (i == 0)
+    if (row == 0)
       std::wcout << std::wstring(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, L'-') << std::endl;
   }
   std::wcout << std::wstring(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, L'-') << std::endl;
