@@ -13,7 +13,7 @@ Current stable released versions of
 A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++2a */*.cc *.cc -lcryptopp -lsqlite3` should do the trick. If you have difficulty compling under your OS, I recommend downloading a Fedora Live image, booting of of that and running the following commands in a terminal (in the project directory):
 
 ```
- $ sudo dnf install gcc-g++ cryptopp-devel sqlite-devel
+ $ sudo dnf install gcc-g++ cryptopp-devel sqlite-devel which
  $ sh BUILDSCRIPT.sh
 ```
 
