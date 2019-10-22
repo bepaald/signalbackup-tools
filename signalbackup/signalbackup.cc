@@ -147,6 +147,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       //d_databaseversionframe->printInfo();
+      std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
