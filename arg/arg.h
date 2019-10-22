@@ -45,6 +45,7 @@ class Arg
   std::vector<std::string> d_croptodates;
   bool d_elbrutalo;
   std::vector<std::string> d_mergerecipients;
+  bool d_editgroupmembers;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -63,6 +64,7 @@ class Arg
   inline std::vector<std::string> const &croptodates() const;
   inline bool elbrutalo() const;
   inline std::vector<std::string> const &mergerecipients() const;
+  inline bool editgroupmembers() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -138,6 +140,11 @@ inline bool Arg::elbrutalo() const
 inline std::vector<std::string> const &Arg::mergerecipients() const
 {
   return d_mergerecipients;
+}
+
+inline bool Arg::editgroupmembers() const
+{
+  return d_editgroupmembers;
 }
 
 inline bool Arg::ok() const

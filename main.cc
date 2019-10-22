@@ -67,6 +67,15 @@ int main(int argc, char *argv[])
     sb.runSimpleQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
     sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND t1.body = t2.body AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_thread FROM thread");
+
+
+    //sb.runSimpleQuery("SELECT sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] "
+    //                  "FROM 'sms' WHERE (sms.type & 0x10000 IS NOT 0"
+    //                  " OR sms.type & 0x20000 IS NOT 0) UNION "
+    //                  "SELECT mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] "
+    //                  "FROM mms WHERE (mms.msg_box & 0x10000 IS NOT 0"
+    //                  " OR mms.msg_box & 0x20000 IS NOT 0)");
+
     return 0;
   }
 
@@ -122,7 +131,7 @@ int main(int argc, char *argv[])
   if (!arg.mergerecipients().empty())
   {
     std::cout << "Merging recipients..." << std::endl;
-    sb->mergeRecipients(arg.mergerecipients());
+    sb->mergeRecipients(arg.mergerecipients(), arg.editgroupmembers());
   }
 
   // export output

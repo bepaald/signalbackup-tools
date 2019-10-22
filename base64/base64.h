@@ -32,7 +32,7 @@ struct Base64
 
 inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t size)
 {
-  CryptoPP::Base64Encoder b64e;
+  CryptoPP::Base64Encoder b64e(nullptr, false);
   b64e.Put(data, size);
   b64e.MessageEnd();
   uint64_t length = b64e.MaxRetrievable();

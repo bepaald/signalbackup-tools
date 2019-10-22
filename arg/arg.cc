@@ -35,7 +35,8 @@ Arg::Arg(int argc, char *argv[])
   d_croptothreads(std::vector<long long int>()),
   d_croptodates(std::vector<std::string>()),
   d_elbrutalo(false),
-  d_mergerecipients(std::vector<std::string>())
+  d_mergerecipients(std::vector<std::string>()),
+  d_editgroupmembers(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -156,6 +157,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--editgroupmembers")
+    {
+      d_editgroupmembers = true;
+      continue;
+    }
+    if (option == "--no-editgroupmembers")
+    {
+      d_editgroupmembers = false;
       continue;
     }
     if (option[0] != '-')

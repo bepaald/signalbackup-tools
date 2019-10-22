@@ -74,7 +74,7 @@ class SignalBackup
   bool dropBadFrames();
   void fillThreadTableFromMessages();
   inline void addEndFrame();
-  void mergeRecipients(std::vector<std::string> const &addresses);
+  void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
   inline void runSimpleQuery(std::string const &q) const;
 
  private:
@@ -267,9 +267,13 @@ inline void SignalBackup::runSimpleQuery(std::string const &q) const
 inline void SignalBackup::listThreads() const
 {
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
-
+  d_database.exec("SELECT thread._id, recipient.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
   results.prettyPrint();
+
+  // FOR DATABASEVERSION >= 27
+  //d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+  //results.prettyPrint();
+
 }
 
 inline void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming)
