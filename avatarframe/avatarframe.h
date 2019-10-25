@@ -30,7 +30,8 @@ class AvatarFrame : public FrameWithAttachment
   {
    INVALID = 0,
    NAME = 1, // string
-   LENGTH = 2 // uint32
+   LENGTH = 2, // uint32
+   RECIPIENT = 3, //string
   };
 
   static Registrar s_registrar;
@@ -48,6 +49,7 @@ class AvatarFrame : public FrameWithAttachment
   inline uint32_t length() const;
   inline virtual uint32_t attachmentSize() const override;
   inline std::string name() const;
+  inline std::string recipient() const;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
@@ -95,9 +97,11 @@ inline void AvatarFrame::printInfo() const // virtual override
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::NAME)
-      std::cout << "         - name  : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      std::cout << "         - name     : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+    else if (std::get<0>(p) == FIELD::RECIPIENT)
+      std::cout << "         - recipient: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
     else if (std::get<0>(p) == FIELD::LENGTH)
-      std::cout << "         - length: " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      std::cout << "         - length   : " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
   }
   if (d_attachmentdata)
   {
@@ -136,6 +140,14 @@ inline std::string AvatarFrame::name() const
   return std::string();
 }
 
+inline std::string AvatarFrame::recipient() const
+{
+  for (auto const &p : d_framedata)
+    if (std::get<0>(p) == FIELD::RECIPIENT)
+      return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
+  return std::string();
+}
+
 inline uint64_t AvatarFrame::dataSize() const
 {
   uint64_t size = 0;
@@ -145,6 +157,13 @@ inline uint64_t AvatarFrame::dataSize() const
     switch (std::get<0>(fd))
     {
     case FIELD::NAME:
+      {
+        uint64_t stringsize = std::get<2>(fd);
+        size += varIntSize(stringsize);
+        size += stringsize + 1; // +1 for fieldtype + wiretype
+        break;
+      }
+    case FIELD::RECIPIENT:
       {
         uint64_t stringsize = std::get<2>(fd);
         size += varIntSize(stringsize);
@@ -185,6 +204,9 @@ inline std::pair<unsigned char *, uint64_t> AvatarFrame::getData() const
     case FIELD::LENGTH:
       datapos += putVarIntType(fd, data + datapos);
       break;
+    case FIELD::RECIPIENT:
+      datapos += putLengthDelimType(fd, data + datapos);
+      break;
     }
   }
   return {data, size};
@@ -198,6 +220,7 @@ inline bool AvatarFrame::validate() const
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::NAME &&
+        std::get<0>(p) != FIELD::RECIPIENT &&
         std::get<0>(p) != FIELD::LENGTH)
       return false;
   }
@@ -211,6 +234,8 @@ inline std::string AvatarFrame::getHumanData() const
   {
     if (std::get<0>(p) == FIELD::NAME)
       data += "NAME:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
+    else if (std::get<0>(p) == FIELD::RECIPIENT)
+      data += "RECIPIENT:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
     else if (std::get<0>(p) == FIELD::LENGTH)
       data += "LENGTH:uint32:" + bepaald::toString(bytesToUint32(std::get<1>(p), std::get<2>(p))) + "\n";
   }
@@ -219,6 +244,8 @@ inline std::string AvatarFrame::getHumanData() const
 
 inline unsigned int AvatarFrame::getField(std::string const &str) const
 {
+  if (str == "RECIPIENT")
+    return FIELD::RECIPIENT;
   if (str == "NAME")
     return FIELD::NAME;
   if (str == "LENGTH")

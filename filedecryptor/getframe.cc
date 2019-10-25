@@ -110,7 +110,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame2(uint32_t offset)
     unsigned char *decodedframe = new unsigned char[encryptedframelength - MACSIZE];
 
     uintToFourBytes(d_iv, d_counter + skipped);
-    CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv, d_iv_size);
+    CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);
     d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
 
     //std::string ps(reinterpret_cast<char *>(decodedframe), decodedframelength);
@@ -242,7 +242,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   unsigned char *decodedframe = new unsigned char[encryptedframelength - MACSIZE];
 
   uintToFourBytes(d_iv, d_counter++);
-  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv, d_iv_size);
+  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);//, d_iv_size);
   d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
 
   delete[] encryptedframe;
