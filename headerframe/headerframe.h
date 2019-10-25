@@ -155,7 +155,7 @@ inline std::string HeaderFrame::getHumanData() const
       data += "IV:bytes:";
     else if (std::get<0>(p) == FIELD::SALT)
       data += "SALT:bytes:";
-    data += Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p));
+    data += Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p)) + "\n";
   }
   return data;
 }
