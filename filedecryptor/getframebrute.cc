@@ -134,7 +134,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset)
       {
         d_counter += skipped;
         std::cout << "YEAH!" << std::endl;
-        frame->printInfo();
+        //frame->printInfo();
+        std::cout << "Good frame: " << frame->frameNumber() << std::endl;
         delete[] encryptedframe;
         break;
       }

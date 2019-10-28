@@ -104,31 +104,20 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
   }
   else
   {
-    std::cout << "Error: Bad MAC in frame other than AttachmentFrame. Not sure what to do..." << std::endl;
+    std::cout << "Error: Bad MAC in frame other than AttachmentFrame. Just dropping the frame, this could cause more problems..." << std::endl;
     (*frame)->printInfo();
   }
+}
 
 
-  /*
-
-  std::cout << std::endl << "WARNING: Bad MAC in frame, trying to print frame info:" << std::endl;
-  if ((*frame)->frameType() != BackupFrame::FRAMETYPE::ATTACHMENT)
+void SignalBackup::dumpInfoOnBadFrames() const
+{
+  for (uint a = 0; a < d_badattachments.size(); ++a)
   {
-    std::cout << "Error: Bad MAC in frame other than AttachmentFrame. Not sure what to do..." << std::endl;
-    (*frame)->printInfo();
-    return;
-  }
+    uint32_t rowid = d_badattachments[a].first;
+    uint64_t uniqueid = d_badattachments[a].second;
 
-  std::unique_ptr<AttachmentFrame> a = std::make_unique<AttachmentFrame>(*reinterpret_cast<AttachmentFrame *>(frame->get()));
-  //std::unique_ptr<AttachmentFrame> a(reinterpret_cast<AttachmentFrame *>(frame.release()));
-
-  uint32_t rowid = a->rowId();
-  uint64_t uniqueid = a->attachmentId();
-
-  d_badattachments.emplace_back(std::make_pair(rowid, uniqueid));
-
-  {
-    std::cout << "Short info (full info follows)" << std::endl;
+    std::cout << "Short info on message to which attachment with bad mac belongs (" << a + 1 << "/" << d_badattachments.size() << "):" << std::endl;
 
     SqliteDB::QueryResults results;
     std::string query = "SELECT mid FROM part WHERE _id = " + bepaald::toString(rowid) + " AND unique_id = " + bepaald::toString(uniqueid);
@@ -184,19 +173,17 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
     }
 
     std::string partner;
-    query = "SELECT thread._id, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'convpartner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id";// WHERE thread._id = " + bepaald::toString(thread_id);
+    if (d_databaseversion < 25) // OLD VERSION
+      query = "SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'convpartner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id WHERE thread._id = " + bepaald::toString(thread_id);
+    else
+      query = "SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'convpartner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE thread._id = " + bepaald::toString(thread_id);
     d_database.exec(query, &results);
-    results.prettyPrint();
     if (results.header(0) == "convpartner" && results.valueHasType<std::string>(0, 0))
       partner = results.getValueAs<std::string>(0, 0);
 
-    std::cout << "Frame is attachment, corresponding message:" << std::endl;
-    std::cout << "Date          :" << date << std::endl;
-    std::cout << "Date received :" << date_received << std::endl;
-    std::cout << "Sent " << (Types::isInboxType(type) ? "by       :" : "to       :") << partner << std::endl;
-    std::cout << "Body          :" << body << std::endl;
+    std::cout << "Date          : " << date << std::endl;
+    std::cout << "Date received : " << date_received << std::endl;
+    std::cout << "Sent " << (Types::isInboxType(type) ? "by       : " : "to       : ") << partner << std::endl;
+    std::cout << "Message body  : " << body << std::endl;
   }
-
-
-      */
 }

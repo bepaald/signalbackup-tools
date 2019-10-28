@@ -56,6 +56,7 @@ class SignalBackup
   std::unique_ptr<EndFrame> d_endframe;
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
+  unsigned int d_databaseversion;
  public:
   SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false);
   explicit SignalBackup(std::string const &inputdir);
@@ -82,9 +83,9 @@ class SignalBackup
   long long int getMaxUsedId(std::string const &table);
   long long int getMinUsedId(std::string const &table);
   inline bool checkFileExists(std::string const &filename) const;
-  template <class T>
+  template <typename T>
   inline void writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
-  template <class T>
+  template <typename T>
   inline void writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   inline void writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   void writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
@@ -102,6 +103,7 @@ class SignalBackup
   //void showQuery(std::string const &query) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
+  void dumpInfoOnBadFrames() const;
 };
 
 inline bool SignalBackup::ok() const
@@ -115,7 +117,7 @@ inline bool SignalBackup::checkFileExists(std::string const &) const
   return false;
 }
 
-template <class T>
+template <typename T>
 inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, T *frame) const
 {
   std::unique_ptr<T> temp(frame);
@@ -178,7 +180,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std
   return true;
 }
 
-template <class T>
+template <typename T>
 inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet) const
 {
   std::ifstream datastream(file, std::ios_base::binary | std::ios::in);
@@ -268,13 +270,12 @@ inline void SignalBackup::runSimpleQuery(std::string const &q) const
 inline void SignalBackup::listThreads() const
 {
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT thread._id, recipient.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
+
+  if (d_databaseversion < 25)
+    d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
+  else
+    d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
   results.prettyPrint();
-
-  // FOR DATABASEVERSION >= 27
-  //d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
-  //results.prettyPrint();
-
 }
 
 inline void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming)

@@ -24,7 +24,8 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   d_database(":memory:"),
   d_fd(new FileDecryptor(filename, passphrase, issource)),
   d_passphrase(passphrase),
-  d_ok(false)
+  d_ok(false),
+  d_databaseversion(-1)
 {
   if (!d_fd->ok())
   {
@@ -58,8 +59,8 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
-      //d_databaseversionframe->printInfo();
-      std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
+      d_databaseversion = d_databaseversionframe->version();
+      //std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
@@ -90,6 +91,13 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
 
   d_database.exec("COMMIT");
 
+  if (!d_badattachments.empty())
+  {
+    std::cout << "Attachment data with BAD MAC was encountered:" << std::endl;
+    dumpInfoOnBadFrames();
+  }
+  std::cout << "" << std::endl;
+
   std::cout << "done!" << std::endl;
 
   d_ok = true;
@@ -99,7 +107,8 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   :
   d_database(":memory:"),
   d_fe(),
-  d_ok(false)
+  d_ok(false),
+  d_databaseversion(-1)
 {
 
   std::cout << "Opening from dir!" << std::endl;
@@ -114,7 +123,10 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   //d_headerframe->printInfo();
 
   if (!setFrameFromFile(&d_databaseversionframe, inputdir + "/DatabaseVersion.sbf"))
+  {
+    d_databaseversion = d_databaseversionframe->version();
     return;
+  }
 
   //d_databaseversionframe->printInfo();
 
