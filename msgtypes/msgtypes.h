@@ -26,6 +26,7 @@ struct Types
 {
   static uint64_t constexpr BASE_TYPE_MASK                     = 0x1F;
 
+  static uint64_t constexpr BASE_INBOX_TYPE                    = 20;
   static uint64_t constexpr BASE_OUTBOX_TYPE                   = 21;
   static uint64_t constexpr BASE_PENDING_INSECURE_SMS_FALLBACK = 26;
 
@@ -41,6 +42,11 @@ struct Types
   inline static bool isGroupQuit(uint64_t type)
   {
     return (type & GROUP_QUIT_BIT) != 0;
+  }
+
+  inline static bool isInboxType(uint64_t type)
+  {
+    return (type & BASE_TYPE_MASK) == BASE_INBOX_TYPE;
   }
 };
 

@@ -32,7 +32,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
   file.seekg(frame->filepos(), std::ios_base::beg);
 
   //uintToFourBytes(d_iv, d_counter++); // done in getFrame
-  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption decryptor(frame->cipherkey(), frame->cipherkey_size(), frame->iv());//, frame->iv_size());
+  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption decryptor(frame->cipherkey(), frame->cipherkey_size(), frame->iv());
 
   CryptoPP::HMAC<CryptoPP::SHA256> hmac(frame->mackey(), frame->mackey_size());
   hmac.Update(frame->iv(), frame->iv_size());

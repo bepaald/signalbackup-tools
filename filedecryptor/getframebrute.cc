@@ -19,11 +19,30 @@
 
 #include "filedecryptor.ih"
 
-std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
+std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos)
 {
-  long int filepos = d_file.tellg();
+  std::cout << "Starting bruteforcing offset to next valid frame..." << std::endl;
+  uint32_t skip = 1;
+  std::unique_ptr<BackupFrame> ret(nullptr);
+  while (filepos + skip < d_filesize)
+  {
+    d_file.clear();
+    if (skip % 10 == 0)
+      std::cout << "\rChecking offset " << skip << " bytes" << std::flush;
+    d_file.seekg(filepos + skip, std::ios_base::beg);
+    ret.reset(getFrameBrute(skip++).release());
+    if (ret)
+    {
+      std::cout << std::endl << "Got frame, breaking" << std::endl;
+      break;
+    }
+  }
+  return ret;
+}
 
-  if (static_cast<uint64_t>(filepos) == d_filesize)
+std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset)
+{
+  if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
   {
     std::cout << "Read entire backup file..." << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -36,21 +55,16 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
-
-  DEBUGOUT("Framelength: ", encryptedframelength);
+  if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
+  {
+    //std::cout << "Framesize too big to be real" << std::endl;
+    return std::unique_ptr<BackupFrame>(nullptr);
+  }
 
   unsigned char *encryptedframe = new unsigned char[encryptedframelength];
   if (!getNextFrameBlock(encryptedframe, encryptedframelength))
   {
     delete[] encryptedframe;
-    //std::cout << encryptedframelength << std::endl;
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
-    //std::cout << "Filepos is now " << d_file.tellg() << std::endl;
-    //std::cout << "Stat: " << d_file.good() << std::endl;
-
-    // maybe hide this behind option
-    return bruteForceFrom(filepos);
-
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -65,46 +79,69 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   hmac.Update(encryptedframe, encryptedframelength - MACSIZE);
   hmac.Final(ourMac);
 
-  DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, MACSIZE));
-  DEBUGOUT("ourMac           : ", bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE));
   if (std::memcmp(theirMac, ourMac, 10) != 0)
   {
-    std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
-    std::cout << "                             ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
-
-    d_badmac = true;
-  }
-  else
-    d_badmac = false;
-
-  // decode
-  int decodedframelength = encryptedframelength - MACSIZE;
-  unsigned char *decodedframe = new unsigned char[encryptedframelength - MACSIZE];
-
-  uintToFourBytes(d_iv, d_counter++);
-  CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);
-  d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
-
-  delete[] encryptedframe;
-
-  //std::string ps(reinterpret_cast<char *>(decodedframe), decodedframelength);
-  //DEBUGOUT("Decoded plaintext: ", ps);
-  DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
-
-  std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
-
-  delete[] decodedframe;
-
-  if (!frame)
-  {
-    //std::cout << "DONE 2" << std::endl;
-    std::cout << "Failed to get valid frame from decoded data..." << std::endl;
-    std::cout << "Data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+    delete[] encryptedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
+  else
+  {
+    std::cout << "" << std::endl;
+    std::cout << "GOT GOOD MAC AT OFFSET " << offset << " BYTES!" << std::endl;
+    std::cout << "Now let's try and find out how many frames we skipped to get here...." << std::endl;
+    d_badmac = false;
+  }
 
-  //std::cout << "Got frame at filepos 0x" << std::hex << filepos << std::dec << ", counter: " << d_counter - 1 << std::endl;
+  // decode
+  uint skipped = 0;
+  std::unique_ptr<BackupFrame> frame(nullptr);
+  while (!frame)
+  {
+
+    if (skipped > offset / 10) // a frame is at least 10 bytes?
+    {
+      std::cout << "No valid frame found at maximum frameskip for this offset..." << std::endl;
+      return std::unique_ptr<BackupFrame>(nullptr);
+    }
+
+    std::cout << "Checking if we skipped " << skipped << " frames... " << std::flush;
+
+    int decodedframelength = encryptedframelength - MACSIZE;
+    unsigned char *decodedframe = new unsigned char[encryptedframelength - MACSIZE];
+
+    uintToFourBytes(d_iv, d_counter + skipped);
+    CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);
+    d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
+
+    //std::string ps(reinterpret_cast<char *>(decodedframe), decodedframelength);
+    //DEBUGOUT("Decoded plaintext: ", ps);
+    DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
+
+    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
+
+    delete[] decodedframe;
+
+    ++skipped;
+
+    if (!frame)
+    {
+      std::cout << "nope! :(" << std::endl;
+      //if (skipped >
+    }
+    else
+    {
+      if (frame->validate())
+      {
+        d_counter += skipped;
+        std::cout << "YEAH!" << std::endl;
+        frame->printInfo();
+        delete[] encryptedframe;
+        break;
+      }
+      std::cout << "nope! :(" << std::endl;
+      frame.reset();
+    }
+  }
 
   DEBUGOUT("FRAMETYPE: ", frame->frameType());
   //frame->printInfo();
@@ -126,14 +163,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         return std::unique_ptr<BackupFrame>(nullptr);
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
-      if (getatt > 0)
+      if (getatt != 0)
       {
-        std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
-        frame->printInfo();
+        if (getatt < 0)
+          d_badmac = true;
         return std::unique_ptr<BackupFrame>(nullptr);
       }
-      if (getatt < 0)
-        d_badmac = true;
     }
   }
 
