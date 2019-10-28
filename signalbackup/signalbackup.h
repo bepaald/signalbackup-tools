@@ -101,6 +101,7 @@ class SignalBackup
   long long int dateToMSecsSinceEpoch(std::string const &date) const;
   //void showQuery(std::string const &query) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
+  void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
 };
 
 inline bool SignalBackup::ok() const

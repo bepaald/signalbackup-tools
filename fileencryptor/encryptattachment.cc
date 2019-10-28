@@ -28,7 +28,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
 
   // update iv:
   uintToFourBytes(d_iv, d_counter++);
-  CryptoPP::CTR_Mode<CryptoPP::AES>::Encryption e(d_cipherkey, d_cipherkey_size, d_iv);//, d_iv_size);
+  CryptoPP::CTR_Mode<CryptoPP::AES>::Encryption e(d_cipherkey, d_cipherkey_size, d_iv);
   e.ProcessData(encryptedframe, data, length);
   //std::cout << "Encrypted frame: " << bepaald::bytesToHexString(encryptedframe, length) << std::endl;
 
