@@ -85,6 +85,9 @@ int main(int argc, char *argv[])
     sb.reset(new SignalBackup(arg.input()));
   else
     sb.reset(new SignalBackup(arg.input(), arg.password(), (!arg.source().empty() || arg.listthreads()) ? SignalBackup::LOWMEM : false));
+
+  //sb->exportXml("test.xml");
+
   if (arg.listthreads())
     sb->listThreads();
 

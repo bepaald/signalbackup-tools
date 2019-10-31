@@ -19,64 +19,171 @@
 
 #include "signalbackup.ih"
 
-
-/*
 void SignalBackup::exportXml(std::string const &filename) const
 {
+
+  /*
   if (checkFileExists(filename))
   {
     std::cout << "File " << filename << " exists. Refusing to overwrite" << std::endl;
     return;
   }
+  */
+
+  // output header
+  std::ofstream outputfile(filename, std::ios_base::binary);
+  outputfile << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" << std::endl;
+  outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << std::endl;
 
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT count(*) FROM sms", &results);
-  long long int smscount = 0;
-  if (results.valueHasType<long long int>(0, 0))
-    smscount = results.getValueAs<long long int>(0, 0);
-  d_database.exec("SELECT count(*) FROM mms", &results);
-  long long int mmscount = 0;
-  if (results.valueHasType<long long int>(0, 0))
-    mmscount = results.getValueAs<long long int>(0, 0);
-
-  std::ofstream outputfile(filename, std::ios_base::binary);
-  outputfile << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>";
-  outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>";
-  if (smscount)
+  d_database.exec("SELECT protocol,subject,service_center,read,status,date_sent,date,address,type,body FROM sms", &results);
+  if (results.rows())
   {
-    outputfile << "<smses count=" << bepaald::toString(smscount) << ">";
-    for (uint i = 0; i < smscount; ++i)
+    outputfile << "<smses count=" << bepaald::toString(results.rows()) << ">" << std::endl;;
+    for (uint i = 0; i < results.rows(); ++i)
     {
-      long long int protocol = 0; // optional, ubyte
-      std::string address = "31647474974"; // required, string
-      long long int date = 0; // req, ulong
-      std::string readable_date = ""; // opt, string
-      long long int type = 0; // req, ubyte
-      std::string body = ""; // required, string
-      std::string service_center = "null"; // opt, string // null for sent... ?? for received
-      long long int read = 0; // req, ubyte
-      long long int status = 0; // req, byte
-      std::string contact_name = ""; // opt, string
-      long long int locked = 0; // opt, ubyte;
+
+      /* protocol - Protocol used by the message, its mostly 0 in case of SMS messages. */
+      /* OPTIONAL */
+      long long int protocol = 0;
+      if (results.valueHasType<long long int>(i, "protocol"))
+        protocol = results.getValueAs<long long int>(i, "protocol");
+
+      /* subject - Subject of the message, its always null in case of SMS messages. */
+      /* OPTIONAL */
+      std::string subject;
+      if (results.valueHasType<std::string>(i, "subject"))
+        subject = results.getValueAs<std::string>(i, "subject");
+
+      /* service_center - The service center for the received message, null in case of sent messages. */
+      /* OPTIONAL */
+      std::string service_center;
+      if (results.valueHasType<std::string>(i, "service_center"))
+        service_center = results.getValueAs<std::string>(i, "service_center");
+
+      /* read - Read Message = 1, Unread Message = 0. */
+      /* REQUIRED */
+      long long int read = 0;
+      if (results.valueHasType<long long int>(i, "read"))
+        read = results.getValueAs<long long int>(i, "read");
+
+      /* status - None = -1, Complete = 0, Pending = 32, Failed = 64. */
+      /* REQUIRED */
+      long long int status = 0;
+      if (results.valueHasType<long long int>(i, "status"))
+        status = results.getValueAs<long long int>(i, "status");
+
+      /* type - 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued */
+      /* REQUIRED */
+      long long int type = 5;
+      if (results.valueHasType<long long int>(i, "type"))
+      {
+        long long int t = results.getValueAs<long long int>(i, "type");
+
+        switch (t & Types::BASE_TYPE_MASK)
+        {
+        case 1:
+        case 20:
+          type = 1;
+          break;
+        case 2:
+        case 23:
+          type = 2;
+          break;
+        case 3:
+        case 27:
+          type = 3;
+          break;
+        case 4:
+        case 21:
+          type = 4;
+          break;
+        case 5:
+        case 24:
+          type = 5;
+          break;
+        case 6:
+        case 22:
+        case 25:
+        case 26:
+          type = 7;
+          break;
+        }
+      }
+
+      /* date - The Java date representation (including millisecond) of the time when the message was sent/received. */
+      /* REQUIRED */
+      long long int date = 0;
+      if (type > 1) // we assume outgoing
+      {
+        if (results.valueHasType<long long int>(i, "date_sent"))
+          date = results.getValueAs<long long int>(i, "date_sent");
+      }
+      else // incoming message
+      {
+        if (results.valueHasType<long long int>(i, "date"))
+          date = results.getValueAs<long long int>(i, "date");
+      }
+
+      /* readable_date - Optional field that has the date in a human readable format. */
+      /* OPTIONAL */
+      std::string readable_date;
+      if (results.valueHasType<long long int>(i, "date"))
+      {
+        long long int datum = results.getValueAs<long long int>(i, "date");
+        std::time_t epoch = datum / 1000;
+        std::ostringstream tmp;
+        tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %T");
+        readable_date = tmp.str();
+      }
+
+      /* address - The phone number of the sender/recipient. */
+      /* REQUIRED */
+      std::string address;
+      if (results.valueHasType<std::string>(i, "address"))
+      {
+        std::string rid = results.getValueAs<std::string>(i, "address");
+        SqliteDB::QueryResults r2;
+        d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
+        if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
+          address = r2.getValueAs<std::string>(0, "phone");
+      }
+
+      /* body - The content of the message. */
+      /* REQUIRED */
+      std::string body;
+      if (results.valueHasType<std::string>(i, "body"))
+        body = results.getValueAs<std::string>(i, "body");
+
+      /* contact_name - Optional field that has the name of the contact. */
+      /* OPTIONAL */
+      std::string contact_name;
+      if (results.valueHasType<std::string>(i, "address"))
+      {
+        std::string rid = results.getValueAs<std::string>(i, "address");
+        SqliteDB::QueryResults r2;
+        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
+        if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
+          contact_name = r2.getValueAs<std::string>(0, "contact_name");
+      }
 
       outputfile << "  <sms "
                  << "protocol=\"" << protocol << "\" "
+                 << "subject=\"" << (subject.empty() ? std::string("null") : subject) << "\" "
                  << "address=\"" << address << "\" "
                  << "date=\"" << date << "\" "
                  << "type=\"" << type << "\" "
-                 << "subject=\"" << "null" << "\" "
                  << "body=\"" << body << "\" "
                  << "toa=\"" << "null" << "\" "
                  << "sc_toa=\"" << "null" << "\" "
-                 << "service_center=\"" << service_center << "\" "
+                 << "service_center=\"" << (service_center.empty() ? std::string("null") : service_center)<< "\" "
                  << "read=\"" << read << "\" "
                  << "status=\"" << status << "\" "
-                 << "locked=\"" << locked << "\" "
-                 << "readable_date=\"" << readable_date << "\" "
-                 << "contact_name=\"" << contact_name << "\" "
-                 << "/>";
+                 << "readable_date=\"" << (readable_date.empty() ? std::string("null") : readable_date) << "\" "
+                 << "contact_name=\"" << (contact_name.empty() ? std::string("null") : contact_name) << "\" "
+                 << "/>" << std::endl;
     }
-    outputfile << "</smses>";
+    outputfile << "</smses>" << std::endl;
   }
 
 
@@ -199,4 +306,3 @@ void SignalBackup::exportXml(std::string const &filename) const
   //             <xs:attribute name="readable_date" type="xs:string" use="optional" />
   //             <xs:attribute name="contact_name" type="xs:string" use="optional" />
 }
-*/
