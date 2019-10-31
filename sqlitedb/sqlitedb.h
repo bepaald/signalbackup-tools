@@ -43,10 +43,14 @@ class SqliteDB
 
     inline void emplaceValue(size_t row, std::any &&a);
     inline std::any value(size_t row, std::string const &header) const;
+    template <typename T>
+    inline T getValueAs(size_t row,std ::string const &header) const;
     inline std::any const &value(size_t row, size_t idx) const;
     inline std::vector<std::any> const &row(size_t row) const;
     template <typename T>
     inline bool valueHasType(size_t row, size_t idx) const;
+    template <typename T>
+    inline bool valueHasType(size_t row, std::string const &header) const;
     template <typename T>
     inline T getValueAs(size_t row, size_t idx) const;
     inline size_t rows() const;
@@ -219,6 +223,24 @@ inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &hea
   if (i > -1)
     return d_values[row][i];
   return std::any{nullptr};
+}
+
+template <typename T>
+inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &header) const
+{
+  int i = idxOfHeader(header);
+  if (i > -1)
+    return std::any_cast<T>(d_values[row][i]);
+  return T{};
+}
+
+template <typename T>
+inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string const &header) const
+{
+  int i = idxOfHeader(header);
+  if (i > -1)
+    return (d_values[row][i].type() == typeid(T));
+  return false;
 }
 
 template <typename T>
