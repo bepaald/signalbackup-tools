@@ -57,6 +57,7 @@ class SqliteDB
     inline size_t columns() const;
     inline void clear();
     void prettyPrint() const;
+    std::string valueAsString(size_t row, size_t column) const;
     template <typename T>
     inline bool contains(T const &value) const;
    private:
