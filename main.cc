@@ -84,10 +84,16 @@ int main(int argc, char *argv[])
   if (arg.password().empty())
     sb.reset(new SignalBackup(arg.input()));
   else
-    sb.reset(new SignalBackup(arg.input(), arg.password(), (!arg.source().empty() || arg.listthreads()) ? SignalBackup::LOWMEM : false));
+    sb.reset(new SignalBackup(arg.input(), arg.password(),
+                              (!arg.source().empty() || arg.listthreads() || !arg.exportcsv().empty()) ? SignalBackup::LOWMEM : false));
+
+  if (!arg.exportcsv().empty())
+  {
+    sb->exportCsv(arg.exportcsv() + "_sms.csv", "sms");
+    sb->exportCsv(arg.exportcsv() + "_mms.csv", "mms");
+  }
 
   //sb->exportXml("test.xml");
-  //sb->exportCsv("test.csv");
 
   if (arg.listthreads())
     sb->listThreads();

@@ -26,7 +26,7 @@ void SignalBackup::duplicateQuotes(std::string *s) const
     s->insert((++pos)++, 1, '"'); // this is beautiful ;P
 }
 
-void SignalBackup::exportCsv(std::string const &filename) const
+void SignalBackup::exportCsv(std::string const &filename, std::string const &table) const
 {
   /*
   if (checkFileExists(filename))
@@ -40,7 +40,7 @@ void SignalBackup::exportCsv(std::string const &filename) const
   std::ofstream outputfile(filename, std::ios_base::binary);
 
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT * FROM sms", &results);
+  d_database.exec("SELECT * FROM " + table, &results);
 
   // output header
   for (uint i = 0; i < results.columns(); ++i)
