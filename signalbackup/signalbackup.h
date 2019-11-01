@@ -63,6 +63,7 @@ class SignalBackup
   void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
   void exportXml(std::string const &filename) const;
+  void exportCsv(std::string const &filename) const;
   inline void listThreads() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
@@ -104,6 +105,7 @@ class SignalBackup
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;
+  void duplicateQuotes(std::string *s) const;
 };
 
 inline bool SignalBackup::ok() const

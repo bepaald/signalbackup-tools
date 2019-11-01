@@ -43,6 +43,9 @@ void SignalBackup::exportXml(std::string const &filename) const
     for (uint i = 0; i < results.rows(); ++i)
     {
 
+      // probably need to escape certain chars in this output (at least in body, but for safety probably everywhere)
+      // like " and &
+
       /* protocol - Protocol used by the message, its mostly 0 in case of SMS messages. */
       /* OPTIONAL */
       long long int protocol = 0;

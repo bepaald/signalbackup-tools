@@ -26,6 +26,7 @@
 #include <locale>
 #include <codecvt>
 
+#include "../base64/base64.h"
 #include "../common_be.h"
 
 #if defined(__linux__) && !defined(__MINGW64__)
