@@ -63,7 +63,7 @@ class SignalBackup
   void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
   void exportXml(std::string const &filename) const;
-  void exportCsv(std::string const &filename) const;
+  void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
