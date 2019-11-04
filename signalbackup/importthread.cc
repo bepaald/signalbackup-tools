@@ -138,7 +138,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_attachments.emplace(std::move(att));
 
   for (auto &av : source->d_avatars)
-    d_avatars.emplace(std::move(av));
+    d_avatars.emplace_back(std::move(av));
 
   // update thread snippet and date and count
   updateThreadsEntries();

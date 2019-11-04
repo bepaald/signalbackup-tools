@@ -19,6 +19,135 @@
 
 #include "signalbackup.ih"
 
+void SignalBackup::escapeXmlString(std::string *str) const
+{
+  size_t pos = 0;
+  while (pos != str->size())
+  {
+    if (str->at(pos) == '&')
+    {
+      str->replace(pos, 1, "&amp;");
+      pos += STRLEN("&amp;");
+      continue;
+    }
+
+    if (str->at(pos) == '<')
+    {
+      str->replace(pos, 1, "&lt;");
+      pos += STRLEN("&lt;");
+      continue;
+    }
+
+    if (str->at(pos) == '>')
+    {
+      str->replace(pos, 1, "&gt;");
+      pos += STRLEN("&gt;");
+      continue;
+    }
+
+    if (str->at(pos) == '"')
+    {
+      str->replace(pos, 1, "&quot;");
+      pos += STRLEN("&quot;");
+      continue;
+    }
+
+    if (str->at(pos) == '\'')
+    {
+      str->replace(pos, 1, "&apos;");
+      pos += STRLEN("&apos;");
+      continue;
+    }
+
+    // [^\u0020-\uD7FF]
+    /*
+      under 0020 = control chars (escape, linebreak, etc...)
+     */
+    if ((static_cast<unsigned int>(str->at(pos)) & 0xFF) < 0x20)
+    {
+      std::string rep = "&#" + bepaald::toString(static_cast<unsigned int>(str->at(pos)) & 0xFF) + ";";
+      str->replace(pos, 1, rep);
+      pos += rep.length();
+      continue;
+    }
+
+    /*
+      If you know that the data is UTF-8, then you just have to check the high bit:
+
+      0xxxxxxx = single-byte ASCII character
+      1xxxxxxx = part of multi-byte character
+
+      Or, if you need to distinguish lead/trail bytes:
+
+      10xxxxxx = 2nd, 3rd, or 4th byte of multi-byte character
+      110xxxxx = 1st byte of 2-byte character
+      1110xxxx = 1st byte of 3-byte character
+      11110xxx = 1st byte of 4-byte character
+    */
+    /*
+      Over 0xd7ff.
+      0x800 - 0xffff is only 3 byte utf chars, and are represented by utf16 points directly?
+    */
+    if ((str->at(pos) & 0b11110000) == 0b11100000) // or 0b11110000
+    {
+      if (pos + 2 >= str->size())
+      {
+        ++pos;
+        continue;
+      }
+      uint32_t unicode = 0;
+      unicode += (static_cast<uint32_t>(str->at(pos) & 0b0001111) << 12);
+      unicode += (static_cast<uint32_t>(str->at(pos + 1) & 0b0111111) << 6);
+      unicode += (static_cast<uint32_t>(str->at(pos + 2) & 0b0111111));
+
+      std::string rep = "&#" + bepaald::toString(unicode) + ";";
+
+      str->replace(pos, 3, rep);
+      pos += rep.length();
+      continue;
+
+    }
+
+    /*
+      Over 0xffff is only 4 byte utf chars
+    */
+    if ((str->at(pos) & 0b11111000) == 0b11110000) // or 0b11110000
+    {
+
+      if (pos + 3 >= str->size())
+      {
+        ++pos;
+        continue;
+      }
+
+      /*
+        bytes of unicode char:
+        UTF8:    11110XXX 10XXXXXX 10XXXXXX 10XXXXXX
+        UNICODE: ........ ...XXX_XX XXXX_XXXX XX_XXXXXX {21}
+        U' (UNICODE - 0x10000): yyyyyyyyyzzzzzzzzzz
+        UTF16 LOW: 110110yyyyyyyyyy
+        UTF16 HI : 110111zzzzzzzzzz
+      */
+
+      uint32_t unicode = 0;
+      unicode += (static_cast<uint32_t>(str->at(pos) & 0b0000111) << 18);
+      unicode += (static_cast<uint32_t>(str->at(pos + 1) & 0b0111111) << 12);
+      unicode += (static_cast<uint32_t>(str->at(pos + 2) & 0b0111111) << 6);
+      unicode += (static_cast<uint32_t>(str->at(pos + 3) & 0b0111111));
+      unicode -= 0x10000;
+
+      std::string rep = "&#" + bepaald::toString(0xd800 + (unicode >> 10)) + ";&#" + bepaald::toString(0xdc00 + (unicode & 0x3FF)) + ";";
+
+      str->replace(pos, 4, rep);
+      pos += rep.length();
+      continue;
+    }
+
+    ++pos;
+
+  }
+}
+
 void SignalBackup::exportXml(std::string const &filename) const
 {
 
@@ -56,13 +185,19 @@ void SignalBackup::exportXml(std::string const &filename) const
       /* OPTIONAL */
       std::string subject;
       if (results.valueHasType<std::string>(i, "subject"))
+      {
         subject = results.getValueAs<std::string>(i, "subject");
+        escapeXmlString(&subject);
+      }
 
       /* service_center - The service center for the received message, null in case of sent messages. */
       /* OPTIONAL */
       std::string service_center;
       if (results.valueHasType<std::string>(i, "service_center"))
+      {
         service_center = results.getValueAs<std::string>(i, "service_center");
+        escapeXmlString(&service_center);
+      }
 
       /* read - Read Message = 1, Unread Message = 0. */
       /* REQUIRED */
@@ -150,13 +285,20 @@ void SignalBackup::exportXml(std::string const &filename) const
         d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
         if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
           address = r2.getValueAs<std::string>(0, "phone");
+        escapeXmlString(&address);
       }
 
       /* body - The content of the message. */
       /* REQUIRED */
       std::string body;
       if (results.valueHasType<std::string>(i, "body"))
+      {
         body = results.getValueAs<std::string>(i, "body");
+
+        // get type, if status message -> decode
+
+        escapeXmlString(&body);
+      }
 
       /* contact_name - Optional field that has the name of the contact. */
       /* OPTIONAL */
@@ -168,6 +310,7 @@ void SignalBackup::exportXml(std::string const &filename) const
         d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
         if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
           contact_name = r2.getValueAs<std::string>(0, "contact_name");
+        escapeXmlString(&contact_name);
       }
 
       outputfile << "  <sms "
@@ -184,6 +327,7 @@ void SignalBackup::exportXml(std::string const &filename) const
                  << "status=\"" << status << "\" "
                  << "readable_date=\"" << (readable_date.empty() ? std::string("null") : readable_date) << "\" "
                  << "contact_name=\"" << (contact_name.empty() ? std::string("null") : contact_name) << "\" "
+                 << "locked=\"" << 0 << "\" "
                  << "/>" << std::endl;
     }
     outputfile << "</smses>" << std::endl;

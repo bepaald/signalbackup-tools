@@ -37,7 +37,8 @@ Arg::Arg(int argc, char *argv[])
   d_elbrutalo(false),
   d_mergerecipients(std::vector<std::string>()),
   d_editgroupmembers(false),
-  d_exportcsv(std::string())
+  d_exportcsv(std::string()),
+  d_exportxml(std::string())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -174,6 +175,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
         d_exportcsv = arguments[++i];
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--exportxml")
+    {
+      if (i < arguments.size() - 1)
+        d_exportxml = arguments[++i];
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;

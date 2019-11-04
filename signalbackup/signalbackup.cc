@@ -76,7 +76,10 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     else if (frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
     {
       AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
-      d_avatars.emplace(std::string(a->name()), a);
+
+      std::cout << "Added avatar: " << a->recipient() << std::endl;
+
+      d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
       d_sharedpreferenceframes.emplace_back(reinterpret_cast<SharedPrefFrame *>(frame.release()));
@@ -151,18 +154,22 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   // avatars
   std::error_code ec;
   std::filesystem::directory_iterator dirit(inputdir, ec);
+  std::vector<std::string> avatarfiles;
   if (ec)
   {
     std::cout << "Error iterating directory `" << inputdir << "' : " << ec.message() << std::endl;
     return;
   }
-  for (auto const &avatar : dirit)
-  {
-    if (avatar.path().filename().string().substr(0, STRLEN("Avatar_")) != "Avatar_" || avatar.path().extension() != ".sbf")
-      continue;
+  for (auto const &avatar : dirit) // put all Avatar_[...].sbf files in vector:
+    if (avatar.path().extension() == ".sbf" && avatar.path().filename().string().starts_with("Avatar_"))
+      avatarfiles.push_back(avatar.path());
 
-    std::filesystem::path avatarframe = avatar.path();
-    std::filesystem::path avatarbin = avatar.path();
+  std::sort(avatarfiles.begin(), avatarfiles.end());
+
+  for (auto const &file : avatarfiles)
+  {
+    std::filesystem::path avatarframe(file);
+    std::filesystem::path avatarbin(file);
     avatarbin.replace_extension(".bin");
 
     std::unique_ptr<AvatarFrame> temp;
@@ -172,9 +179,9 @@ SignalBackup::SignalBackup(std::string const &inputdir)
 
     //temp->printInfo();
 
-    std::string name = temp->name();
+    std::string name = (d_databaseversion < 33) ? temp->name() : temp->recipient();
 
-    d_avatars.emplace(name, temp.release());
+    d_avatars.emplace_back(name, temp.release());
   }
 
   //attachments
@@ -186,7 +193,7 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   }
   for (auto const &att : dirit)
   {
-    if (att.path().extension() != ".sbf" || att.path().filename().string().substr(0, STRLEN("Attachment_")) != "Attachment_")
+    if (att.path().extension() != ".sbf" || !att.path().filename().string().starts_with("Attachment_"))
       continue;
 
     std::filesystem::path attframe = att.path();

@@ -51,10 +51,10 @@ void SignalBackup::exportBackup(std::string const &directory)
 
   // export avatars
   std::cout << "Writing Avatars..." << std::endl;
-  for (auto const &aframe : d_avatars)
+  for (int count = 1 ; auto const &aframe : d_avatars)
   {
     AvatarFrame *a = aframe.second.get();
-    std::string avatar_basefilename = directory + "/Avatar_" + a->name();
+    std::string avatar_basefilename = directory + "/Avatar_" + bepaald::toString(count++) + "_" + ((d_databaseversion < 33) ? a->name() : a->recipient());
     writeRawFrameDataToFile(avatar_basefilename + ".sbf", a);
     // write actual attachment:
     std::ofstream attachmentstream(avatar_basefilename + ".bin", std::ios_base::binary);
@@ -240,13 +240,16 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
   }
 
   // AVATAR + ATTACHMENTS
+  std::cout << "Writing Avatars..." << std::endl;
   for (auto const &a : d_avatars)
   {
     //std::cout << "Writing AvatarFrame" << std::endl;
+    std::cout << "Writing Avatar: " << a.second->recipient() << std::endl;
     writeEncryptedFrame(outputfile, a.second.get());
   }
 
   // STICKER + ATTACHMENTS
+  std::cout << "Writing Stickers..." << std::endl;
   for (auto const &s : d_stickers)
   {
     //std::cout << "Writing StickerFrame" << std::endl;
