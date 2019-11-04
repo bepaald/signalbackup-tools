@@ -47,6 +47,7 @@ class Arg
   std::vector<std::string> d_mergerecipients;
   bool d_editgroupmembers;
   std::string d_exportcsv;
+  std::string d_exportxml;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -67,6 +68,7 @@ class Arg
   inline std::vector<std::string> const &mergerecipients() const;
   inline bool editgroupmembers() const;
   inline std::string const &exportcsv() const;
+  inline std::string const &exportxml() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -152,6 +154,11 @@ inline bool Arg::editgroupmembers() const
 inline std::string const &Arg::exportcsv() const
 {
   return d_exportcsv;
+}
+
+inline std::string const &Arg::exportxml() const
+{
+  return d_exportxml;
 }
 
 inline bool Arg::ok() const

@@ -39,6 +39,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   DEBUGOUT("Framelength: ", encryptedframelength);
 
+
   unsigned char *encryptedframe = new unsigned char[encryptedframelength];
   if (!getNextFrameBlock(encryptedframe, encryptedframelength))
   {

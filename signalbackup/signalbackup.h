@@ -47,7 +47,7 @@ class SignalBackup
   std::unique_ptr<FileDecryptor> d_fd;
   FileEncryptor d_fe;
   std::string d_passphrase;
-  std::map<std::string, std::unique_ptr<AvatarFrame>> d_avatars;
+  std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
   std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
   std::unique_ptr<HeaderFrame> d_headerframe;
@@ -106,6 +106,7 @@ class SignalBackup
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;
   void duplicateQuotes(std::string *s) const;
+  void escapeXmlString(std::string *s) const;
 };
 
 inline bool SignalBackup::ok() const

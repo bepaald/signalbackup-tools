@@ -47,13 +47,21 @@ void SignalBackup::cleanDatabaseByMessages()
 
   // remove avatars not belonging to exisiting recipients
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
-  for (std::map<std::string, std::unique_ptr<AvatarFrame>>::iterator avit = d_avatars.begin(); avit != d_avatars.end();)
-    if (!results.contains(avit->first))
-      avit = d_avatars.erase(avit);
-    else
-      ++avit;
-
+  d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results); // THIS NEEDS TO CHANGE FOR DATABASE >= 33
+  bool erased = true;
+  while (erased)
+  {
+    erased = false;
+    for (std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>>::iterator avit = d_avatars.begin(); avit != d_avatars.end();)
+      if (!results.contains(avit->first))
+      {
+        avit = d_avatars.erase(avit);
+        erased = true;
+        break;
+      }
+      else
+        ++avit;
+  }
   std::cout << "Delete others from 'identities'" << std::endl;
   d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT recipient_ids FROM recipient_preferences)");
 
