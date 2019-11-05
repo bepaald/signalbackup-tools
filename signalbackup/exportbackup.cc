@@ -105,7 +105,7 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
 
   std::ofstream outputfile(filename, std::ios_base::binary);
 
-  if (!d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length()))
+  if (!d_headerframe || !d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length()))
   {
     std::cout << "Error initializing FileEncryptor" << std::endl;
     return;
