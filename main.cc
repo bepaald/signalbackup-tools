@@ -87,6 +87,12 @@ int main(int argc, char *argv[])
     sb.reset(new SignalBackup(arg.input(), arg.password(),
                               (!arg.source().empty() || arg.listthreads() || !arg.exportcsv().empty() || !arg.exportxml().empty()) ? SignalBackup::LOWMEM : false));
 
+  if (!sb->ok())
+  {
+    std::cout << "Failed to open backup" << std::endl;
+    return 1;
+  }
+
   if (!arg.exportcsv().empty())
   {
     sb->exportCsv(arg.exportcsv() + "_sms.csv", "sms");
