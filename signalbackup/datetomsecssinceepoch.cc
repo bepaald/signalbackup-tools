@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date) const
+long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring) const
 {
   long long int ret = -1;
 
@@ -31,9 +31,15 @@ long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date) const
     std::istringstream ss(date);
     if (ss >> std::get_time(&t, "%Y-%m-%d %H:%M:%S"))
       ret = std::mktime(&t) * 1000;
+    if (fromdatestring)
+      *fromdatestring = true;
   }
   else
+  {
     ret = bepaald::toNumber<long long int>(date);
+    if (fromdatestring)
+      *fromdatestring = false;
+  }
 
   return ret;
 }

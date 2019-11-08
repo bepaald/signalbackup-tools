@@ -21,7 +21,9 @@
 
 void SignalBackup::compactIds(std::string const &table)
 {
-  std::cout << "Compacting table: " << table << std::endl;
+  std::cout << __FUNCTION__ << std::endl;
+
+  std::cout << "  Compacting table: " << table << std::endl;
 
   SqliteDB::QueryResults results;
   // d_database.exec("SELECT _id FROM " + table, &results);

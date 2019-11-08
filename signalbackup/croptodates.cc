@@ -21,23 +21,26 @@
 
 void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges)
 {
+  std::cout << __FUNCTION__ << std::endl;
+
   std::string smsq;
   std::string mmsq;
   std::vector<std::any> params;
   for (uint i = 0; i < dateranges.size(); ++i)
   {
+    bool needrounding = false;
     long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
-    long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second);
+    long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
       std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
       continue;
     }
-    std::cout << "Using range: " << dateranges[i].first << " - " << dateranges[i].second << std::endl;
-    std::cout << "             " << startrange << " - " << endrange << std::endl;
+    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second << std::endl;
+    std::cout << "               " << startrange << " - " << endrange << std::endl;
 
-    // if called with "YYYY-MM-DD HH:MM:SS"
-    endrange += 999; // to get everything in the second specified...
+    if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
+      endrange += 999; // to get everything in the second specified...
 
     if (i == 0)
     {
