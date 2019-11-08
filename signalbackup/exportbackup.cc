@@ -183,9 +183,13 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
 
     d_database.exec("SELECT * FROM " + table, &results);
 
+    if (!d_showprogress)
+      std::cout << "  Dealing with table '" << table << "'... " << std::flush;
+
     for (uint i = 0; i < results.rows(); ++i)
     {
-      std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+      if (d_showprogress)
+        std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
 
       SqlStatementFrame NEWFRAME = buildSqlStatementFrame(table, results.row(i));
 
@@ -221,12 +225,13 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
         else
         {
           std::cout << "Warning: attachment data not found (rowid: " << rowid << ", uniqueid: " << uniqueid << ")" << std::endl;
-          std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+          if (d_showprogress)
+            std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
         }
       }
     }
     if (results.rows())
-      std::cout << "done" << std::endl;
+        std::cout << "done" << std::endl;
     else
       std::cout << "  Dealing with table '" << table << "'... 0/0 entries..." << std::endl;
   }
@@ -244,7 +249,6 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
   for (auto const &a : d_avatars)
   {
     //std::cout << "Writing AvatarFrame" << std::endl;
-    std::cout << "Writing Avatar: " << a.second->recipient() << std::endl;
     writeEncryptedFrame(outputfile, a.second.get());
   }
 

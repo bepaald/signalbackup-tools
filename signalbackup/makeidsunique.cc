@@ -19,9 +19,11 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient_preferences, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts)
+void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts)
 {
-  std::cout << "Adjusting indexes in tables..." << std::endl;
+  std::cout << __FUNCTION__ << std::endl;
+
+  std::cout << "  Adjusting indexes in tables..." << std::endl;
 
   setMinimumId("thread", minthread);
   d_database.exec("UPDATE sms SET thread_id = thread_id + ?", minthread);    // update sms.thread_id to new thread._id's
@@ -51,8 +53,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   d_attachments = std::move(newattdb);
   compactIds("part");
 
-  setMinimumId("recipient_preferences", minrecipient_preferences);
-  compactIds("recipient_preferences");
+  setMinimumId((d_databaseversion < 27) ? "recipient_preferences" : "recipient", minrecipient);
+  compactIds((d_databaseversion < 27) ? "recipient_preferences" : "recipient");
 
   setMinimumId("groups", mingroups);
   compactIds("groups");

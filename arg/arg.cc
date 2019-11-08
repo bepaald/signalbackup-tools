@@ -38,7 +38,9 @@ Arg::Arg(int argc, char *argv[])
   d_mergerecipients(std::vector<std::string>()),
   d_editgroupmembers(false),
   d_exportcsv(std::string()),
-  d_exportxml(std::string())
+  d_exportxml(std::string()),
+  d_runsqlquery(std::string()),
+  d_showprogress(true)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -185,6 +187,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         d_exportxml = arguments[++i];
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--runsqlquery")
+    {
+      if (i < arguments.size() - 1)
+        d_runsqlquery = arguments[++i];
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--showprogress")
+    {
+      d_showprogress = true;
+      continue;
+    }
+    if (option == "--no-showprogress")
+    {
+      d_showprogress = false;
       continue;
     }
     if (option[0] != '-')

@@ -114,7 +114,7 @@ void SignalBackup::fillThreadTableFromMessages()
   // now for each group, try to determine members:
 
   SqliteDB::QueryResults threadquery;
-  std::string query = "SELECT DISTINCT _id, recipient_ids FROM thread WHERE SUBSTR(recipient_ids, 0, 22) == \"__textsecure_group__!\"";
+  std::string query = "SELECT DISTINCT _id, recipient_ids FROM thread WHERE SUBSTR(recipient_ids, 0, 22) == \"__textsecure_group__!\""; // maybe || SUBSTR == "__signal_mms_group__!"
   d_database.exec(query, &threadquery);
 
   for (uint i = 0; i < threadquery.rows(); ++i)

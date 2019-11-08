@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
   */
   if (arg.elbrutalo())
   {
-    SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM);
+    SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM, arg.showprogress());
     sb.runSimpleQuery("SELECT COUNT(*) AS num_sms, MIN(date), MAX(date) FROM sms");
     sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND t1.body = t2.body AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.date_sent = t2.date_sent AND t1._id <> t2._id)");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
@@ -82,10 +82,13 @@ int main(int argc, char *argv[])
   // open input
   std::unique_ptr<SignalBackup> sb;
   if (arg.password().empty())
-    sb.reset(new SignalBackup(arg.input()));
+    sb.reset(new SignalBackup(arg.input(), arg.showprogress()));
   else
     sb.reset(new SignalBackup(arg.input(), arg.password(),
-                              (!arg.source().empty() || arg.listthreads() || !arg.exportcsv().empty() || !arg.exportxml().empty()) ? SignalBackup::LOWMEM : false));
+                              (!arg.source().empty() || arg.listthreads() ||
+                               !arg.exportcsv().empty() || !arg.exportxml().empty() ||
+                               !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
+                               !arg.croptodates().empty()) ? SignalBackup::LOWMEM : false, arg.showprogress()));
 
   if (!sb->ok())
   {
@@ -120,9 +123,9 @@ int main(int argc, char *argv[])
 
       std::unique_ptr<SignalBackup> source;
       if (arg.sourcepassword().empty())
-        source.reset(new SignalBackup(arg.source()));
+        source.reset(new SignalBackup(arg.source(), arg.showprogress()));
       else
-        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM));
+        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
 
       sb->importThread(source.get(), arg.importthreads()[i]);
     }
@@ -150,6 +153,9 @@ int main(int argc, char *argv[])
     std::cout << "Merging recipients..." << std::endl;
     sb->mergeRecipients(arg.mergerecipients(), arg.editgroupmembers());
   }
+
+  if (!arg.runsqlquery().empty())
+    sb->runSimpleQuery(arg.runsqlquery(), false);
 
   // export output
   if (!arg.output().empty())

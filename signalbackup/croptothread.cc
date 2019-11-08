@@ -26,6 +26,8 @@ void SignalBackup::cropToThread(long long int threadid)
 
 void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
 {
+  std::cout << __FUNCTION__ << std::endl;
+
   std::string smsq;
   std::string mmsq;
   std::vector<std::any> tids;
@@ -57,9 +59,9 @@ void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
     return;
   }
 
-  std::cout << "Deleting messages not belonging to requested thread(s) from 'sms'" << std::endl;
+  std::cout << "  Deleting messages not belonging to requested thread(s) from 'sms'" << std::endl;
   d_database.exec(smsq, tids);
-  std::cout << "Deleting messages not belonging to requested thread(s) from 'mms'" << std::endl;
+  std::cout << "  Deleting messages not belonging to requested thread(s) from 'mms'" << std::endl;
   d_database.exec(mmsq, tids);
 
   cleanDatabaseByMessages();

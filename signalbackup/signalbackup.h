@@ -57,9 +57,10 @@ class SignalBackup
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
   unsigned int d_databaseversion;
+  bool d_showprogress;
  public:
-  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false);
-  explicit SignalBackup(std::string const &inputdir);
+  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true);
+  explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
   void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
   void exportXml(std::string const &filename) const;
@@ -77,7 +78,7 @@ class SignalBackup
   void fillThreadTableFromMessages();
   inline void addEndFrame();
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
-  inline void runSimpleQuery(std::string const &q) const;
+  inline void runSimpleQuery(std::string const &q, bool pretty = true) const;
 
  private:
   void updateThreadsEntries(long long int thread = -1);
@@ -100,7 +101,7 @@ class SignalBackup
   void cleanDatabaseByMessages();
   void compactIds(std::string const &table);
   void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences, long long int groups, long long int identies, long long int group_receipts, long long int drafts);
-  long long int dateToMSecsSinceEpoch(std::string const &date) const;
+  long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
   //void showQuery(std::string const &query) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
@@ -262,17 +263,23 @@ inline void SignalBackup::addEndFrame()
   d_endframe.reset(new EndFrame(nullptr, 1ull));
 }
 
-inline void SignalBackup::runSimpleQuery(std::string const &q) const
+inline void SignalBackup::runSimpleQuery(std::string const &q, bool pretty) const
 {
   std::cout << "Executing query: " << q << std::endl;
   SqliteDB::QueryResults res;
   d_database.exec(q, &res);
-  res.prettyPrint();
+  if (pretty)
+    res.prettyPrint();
+  else
+    res.print();
 }
 
 inline void SignalBackup::listThreads() const
 {
   SqliteDB::QueryResults results;
+
+  d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM (SELECT MIN(sms.date) AS mindate, MAX(sms.date) AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
+  results.prettyPrint();
 
   if (d_databaseversion < 25)
     d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);

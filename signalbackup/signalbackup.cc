@@ -19,13 +19,14 @@
 
 #include "signalbackup.ih"
 
-SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource)
+SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress)
   :
   d_database(":memory:"),
   d_fd(new FileDecryptor(filename, passphrase, issource)),
   d_passphrase(passphrase),
   d_ok(false),
-  d_databaseversion(-1)
+  d_databaseversion(-1),
+  d_showprogress(showprogress)
 {
   if (!d_fd->ok())
   {
@@ -46,10 +47,11 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     if (d_fd->badMac())
       dumpInfoOnBadFrame(&frame);
 
-    std::cout << "\33[2K\rFRAME " << frame->frameNumber() << " ("
-              << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
-              << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
-              << "... " << std::flush;
+    if (d_showprogress)
+      std::cout << "\33[2K\rFRAME " << frame->frameNumber() << " ("
+                << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
+                << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
+                << "... " << std::flush;
 
     if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
     {
@@ -76,9 +78,6 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     else if (frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
     {
       AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
-
-      std::cout << "Added avatar: " << a->recipient() << std::endl;
-
       d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
@@ -106,12 +105,13 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   d_ok = true;
 }
 
-SignalBackup::SignalBackup(std::string const &inputdir)
+SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
   :
   d_database(":memory:"),
   d_fe(),
   d_ok(false),
-  d_databaseversion(-1)
+  d_databaseversion(-1),
+  d_showprogress(showprogress)
 {
 
   std::cout << "Opening from dir!" << std::endl;
@@ -126,11 +126,9 @@ SignalBackup::SignalBackup(std::string const &inputdir)
   //d_headerframe->printInfo();
 
   if (!setFrameFromFile(&d_databaseversionframe, inputdir + "/DatabaseVersion.sbf"))
-  {
-    d_databaseversion = d_databaseversionframe->version();
     return;
-  }
 
+  d_databaseversion = d_databaseversionframe->version();
   //d_databaseversionframe->printInfo();
 
   int idx = 0;

@@ -48,6 +48,8 @@ class Arg
   bool d_editgroupmembers;
   std::string d_exportcsv;
   std::string d_exportxml;
+  std::string d_runsqlquery;
+  bool d_showprogress;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -69,6 +71,8 @@ class Arg
   inline bool editgroupmembers() const;
   inline std::string const &exportcsv() const;
   inline std::string const &exportxml() const;
+  inline std::string const &runsqlquery() const;
+  inline bool showprogress() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -159,6 +163,16 @@ inline std::string const &Arg::exportcsv() const
 inline std::string const &Arg::exportxml() const
 {
   return d_exportxml;
+}
+
+inline std::string const &Arg::runsqlquery() const
+{
+  return d_runsqlquery;
+}
+
+inline bool Arg::showprogress() const
+{
+  return d_showprogress;
 }
 
 inline bool Arg::ok() const
