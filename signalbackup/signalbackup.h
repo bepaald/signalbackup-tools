@@ -276,6 +276,8 @@ inline void SignalBackup::runSimpleQuery(std::string const &q, bool pretty) cons
 
 inline void SignalBackup::listThreads() const
 {
+  std::cout << "Database version: " << d_databaseversion << std::endl;
+
   SqliteDB::QueryResults results;
 
   d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM (SELECT MIN(sms.date) AS mindate, MAX(sms.date) AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
