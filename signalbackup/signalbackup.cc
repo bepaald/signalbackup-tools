@@ -44,6 +44,11 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   while ((frame = d_fd->getFrame())) // deal with bad mac??
   {
 
+
+    //std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
+    //frame->printInfo();
+
+
     if (d_fd->badMac())
       dumpInfoOnBadFrame(&frame);
 
@@ -67,7 +72,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
-      if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos)
+      if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
         d_database.exec(s->bindStatement(), s->parameters());
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
