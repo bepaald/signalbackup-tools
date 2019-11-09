@@ -50,6 +50,7 @@ class Arg
   std::string d_exportxml;
   std::string d_runsqlquery;
   bool d_showprogress;
+  bool d_removedoubles;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -73,6 +74,7 @@ class Arg
   inline std::string const &exportxml() const;
   inline std::string const &runsqlquery() const;
   inline bool showprogress() const;
+  inline bool removedoubles() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -173,6 +175,11 @@ inline std::string const &Arg::runsqlquery() const
 inline bool Arg::showprogress() const
 {
   return d_showprogress;
+}
+
+inline bool Arg::removedoubles() const
+{
+  return d_removedoubles;
 }
 
 inline bool Arg::ok() const

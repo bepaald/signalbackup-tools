@@ -40,7 +40,8 @@ Arg::Arg(int argc, char *argv[])
   d_exportcsv(std::string()),
   d_exportxml(std::string()),
   d_runsqlquery(std::string()),
-  d_showprogress(true)
+  d_showprogress(true),
+  d_removedoubles(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -205,6 +206,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-showprogress")
     {
       d_showprogress = false;
+      continue;
+    }
+    if (option == "--removedoubles")
+    {
+      d_removedoubles = true;
+      continue;
+    }
+    if (option == "--no-removedoubles")
+    {
+      d_removedoubles = false;
       continue;
     }
     if (option[0] != '-')

@@ -79,6 +79,7 @@ class SignalBackup
   inline void addEndFrame();
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
   inline void runSimpleQuery(std::string const &q, bool pretty = true) const;
+  void removeDoubles();
 
  private:
   void updateThreadsEntries(long long int thread = -1);
