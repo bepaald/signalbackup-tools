@@ -64,8 +64,10 @@ int main(int argc, char *argv[])
     SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM, arg.showprogress());
     sb.runSimpleQuery("SELECT COUNT(*) AS num_sms, MIN(date), MAX(date) FROM sms");
     sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id)");
+    sb.runSimpleQuery("SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
     sb.runSimpleQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.msg_box = t2.msg_box AND t1.date_received = t2.date_received AND t1._id <> t2._id)");
+    sb.runSimpleQuery("SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.msg_box = t2.msg_box AND t1.date_received = t2.date_received AND t1._id <> t2._id");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_thread FROM thread");
 
 
