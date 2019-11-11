@@ -38,29 +38,64 @@ std::string SignalBackup::getStatusMessage(std::string const &msg) const
     results += "Group name is now '" + title + "'";
   }
   // if quit
-  // if call
 
+Signal-Android-master/src/org/thoughtcrime/securesms/database/model/MessageRecord.java:91:
+    if (isGroupUpdate() && isOutgoing()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_you_updated_group));
+    } else if (isGroupUpdate()) {
+      return new SpannableString(GroupUtil.getDescription(context, getBody()).toString(getIndividualRecipient())); -> <string name="MessageRecord_s_updated_group">%s updated the group.</string> (this already implemented above)
+    } else if (isGroupQuit() && isOutgoing()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_left_group));
+    } else if (isGroupQuit()) {
+      return new SpannableString(context.getString(R.string.ConversationItem_group_action_left, getIndividualRecipient().toShortString()));
+    } else if (isIncomingCall()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_s_called_you, getIndividualRecipient().toShortString()));
+    } else if (isOutgoingCall()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_you_called));
+    } else if (isMissedCall()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_missed_call));
+    } else if (isJoined()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_s_joined_signal, getIndividualRecipient().toShortString()));
+    } else if (isExpirationTimerUpdate()) {
+      int seconds = (int)(getExpiresIn() / 1000);
+      if (seconds <= 0) {
+        return isOutgoing() ? new SpannableString(context.getString(R.string.MessageRecord_you_disabled_disappearing_messages))
+                            : new SpannableString(context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, getIndividualRecipient().toShortString()));
+      }
+      String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
+      return isOutgoing() ? new SpannableString(context.getString(R.string.MessageRecord_you_set_disappearing_message_time_to_s, time))
+                          : new SpannableString(context.getString(R.string.MessageRecord_s_set_disappearing_message_time_to_s, getIndividualRecipient().toShortString(), time));
+    } else if (isIdentityUpdate()) {
+      return new SpannableString(context.getString(R.string.MessageRecord_your_safety_number_with_s_has_changed, getIndividualRecipient().toShortString()));
+    } else if (isIdentityVerified()) {
+      if (isOutgoing()) return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_verified, getIndividualRecipient().toShortString()));
+      else              return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_verified_from_another_device, getIndividualRecipient().toShortString()));
+    } else if (isIdentityDefault()) {
+      if (isOutgoing()) return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_unverified, getIndividualRecipient().toShortString()));
+      else              return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device, getIndividualRecipient().toShortString()));
+    }
 
+  // <string name="MessageRecord_left_group">You have left the group.</string>
+  // <string name="MessageRecord_you_updated_group">You updated the group.</string>
+  // <string name="MessageRecord_you_called">You called</string>
+  // <string name="MessageRecord_s_called_you">%s called you</string>
+  // <string name="MessageRecord_called_you">Contact called</string> ??
+  // <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
+  // <string name="MessageRecord_missed_call">Missed call</string>
+  // <string name="MessageRecord_s_joined_signal">%s is on Signal!</string>
+  // <string name="MessageRecord_you_disabled_disappearing_messages">You disabled disappearing messages.</string>
+  // <string name="MessageRecord_s_disabled_disappearing_messages">%1$s disabled disappearing messages.</string>
+  // <string name="MessageRecord_you_set_disappearing_message_time_to_s">You set the disappearing message timer to %1$s.</string>
+  // <string name="MessageRecord_s_set_disappearing_message_time_to_s">%1$s set the disappearing message timer to %2$s.</string>
+  // <string name="MessageRecord_your_safety_number_with_s_has_changed">Your safety number with %s has changed.</string>
+  // <string name="MessageRecord_you_marked_your_safety_number_with_s_verified">You marked your safety number with %s verified</string>
+  // <string name="MessageRecord_you_marked_your_safety_number_with_s_verified_from_another_device">You marked your safety number with %s verified from another device</string>
+  // <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">You marked your safety number with %s unverified</string>
+  // <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">You marked your safety number with %s unverified from another device</string>
+
+  // Signal-Android-master/res/values/strings.xml:155:    <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
     // <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Received a message encrypted using an old version of Signal that is no longer supported. Please ask the sender to update to the most recent version and resend the message.</string>
-    // <string name="MessageRecord_left_group">You have left the group.</string>
-    // <string name="MessageRecord_you_updated_group">You updated the group.</string>
-    // <string name="MessageRecord_you_called">You called</string>
-    // <string name="MessageRecord_called_you">Contact called</string>
-    // <string name="MessageRecord_missed_call">Missed call</string>
-    // <string name="MessageRecord_s_updated_group">%s updated the group.</string>
-    // <string name="MessageRecord_s_called_you">%s called you</string>
-    // <string name="MessageRecord_called_s">Called %s</string>
-    // <string name="MessageRecord_missed_call_from">Missed call from %s</string>
-    // <string name="MessageRecord_s_joined_signal">%s is on Signal!</string>
-    // <string name="MessageRecord_you_disabled_disappearing_messages">You disabled disappearing messages.</string>
-    // <string name="MessageRecord_s_disabled_disappearing_messages">%1$s disabled disappearing messages.</string>
-    // <string name="MessageRecord_you_set_disappearing_message_time_to_s">You set the disappearing message timer to %1$s.</string>
-    // <string name="MessageRecord_s_set_disappearing_message_time_to_s">%1$s set the disappearing message timer to %2$s.</string>
-    // <string name="MessageRecord_your_safety_number_with_s_has_changed">Your safety number with %s has changed.</string>
-    // <string name="MessageRecord_you_marked_your_safety_number_with_s_verified">You marked your safety number with %s verified</string>
-    // <string name="MessageRecord_you_marked_your_safety_number_with_s_verified_from_another_device">You marked your safety number with %s verified from another device</string>
-    // <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">You marked your safety number with %s unverified</string>
-    // <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">You marked your safety number with %s unverified from another device</string>
+
 }
 */
 

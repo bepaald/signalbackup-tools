@@ -62,6 +62,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
+        if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
+        {
+          int tmp;
+          if (!ston(&tmp, std::string("-1")))
+            std::cerr << "Bad special value in argument spec file!" << std::endl;
+          d_importthreads.clear();
+          d_importthreads.push_back(tmp);
+          ++i;
+          continue;
+        }
         if (!parseNumberList(arguments[++i], &d_importthreads))
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
       }
