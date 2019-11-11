@@ -119,10 +119,16 @@ int main(int argc, char *argv[])
   }
   else if (!arg.source().empty())
   {
-    for (uint i = 0; i < arg.importthreads().size(); ++i)
+    std::vector<int> threads;
+    if (arg.importthreads().size() == 1 && arg.importthreads()[0] == -1) // import all threads!
+      threads = sb->threadIds();
+    else
+      threads = arg.importthreads();
+
+    for (uint i = 0; i < threads.size(); ++i)
     {
       // read the database
-      std::cout << std::endl << "Importing thread " << arg.importthreads()[i] << " from source file: " << arg.source() << std::endl;
+      std::cout << std::endl << "Importing thread " << threads[i] << " from source file: " << arg.source() << std::endl;
 
       std::unique_ptr<SignalBackup> source;
       if (arg.sourcepassword().empty())
@@ -130,7 +136,7 @@ int main(int argc, char *argv[])
       else
         source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
 
-      sb->importThread(source.get(), arg.importthreads()[i]);
+      sb->importThread(source.get(), threads[i]);
     }
   }
 

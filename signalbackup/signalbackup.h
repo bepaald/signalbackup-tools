@@ -80,6 +80,7 @@ class SignalBackup
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
   inline void runSimpleQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
+  inline std::vector<int> threadIds() const;
 
  private:
   void updateThreadsEntries(long long int thread = -1);
@@ -294,6 +295,18 @@ inline void SignalBackup::listThreads() const
 inline void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming)
 {
   addSMSMessage(body, address, dateToMSecsSinceEpoch(timestamp), thread, incoming);
+}
+
+inline std::vector<int> SignalBackup::threadIds() const
+{
+  std::vector<int> res;
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT DISTINCT _id FROM thread ORDER BY _id ASC", &results);
+  if (results.columns() == 1)
+    for (uint i = 0; i < results.rows(); ++i)
+      if (results.valueHasType<long long int>(i, 0))
+        res.push_back(results.getValueAs<long long int>(i, 0));
+  return res;
 }
 
 #endif
