@@ -22,6 +22,7 @@
 std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 {
   long int filepos = d_file.tellg();
+  //std::cout << "Getting frame at filepos: " << filepos << std::endl;
 
   if (static_cast<uint64_t>(filepos) == d_filesize)
   {
@@ -51,7 +52,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
 
     // maybe hide this behind option
-    return bruteForceFrom(filepos);
+    return bruteForceFrom(filepos, encryptedframelength);
 
     return std::unique_ptr<BackupFrame>(nullptr);
   }
@@ -91,6 +92,18 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
+
+  if (!d_editattachments.empty() && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
+    for (uint i = 0; i < d_editattachments.size(); i += 2)
+      if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
+      {
+        std::cout << "Editing attachment data size in AttachmentFrame" << std::endl;
+        reinterpret_cast<AttachmentFrame *>(frame.get())->printInfo();
+        reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
+        reinterpret_cast<AttachmentFrame *>(frame.get())->printInfo();
+        break;
+      }
+
   delete[] decodedframe;
 
   if (!frame)
@@ -100,7 +113,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     if (d_badmac)
     {
       std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
-      return bruteForceFrom(filepos);
+      return bruteForceFrom(filepos, encryptedframelength);
     }
     else
       std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... Aborting :(" << std::endl;
@@ -133,7 +146,13 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
       {
         d_badmac = true;
         if (d_assumebadframesize)
-          return bruteForceFrom(filepos);
+        {
+          std::unique_ptr<BackupFrame> f = bruteForceFrom(filepos, encryptedframelength);
+          //long int curfilepos = d_file.tellg();
+          //std::cout << "curpso: " << curfilepos << std::endl;
+          //std::cout << "ATTACHMENT LENGTH SHOULD HAVE BEEN: " << curfilepos - filepos - encryptedframelength - MACSIZE << std::endl;
+          return f;
+        }
       }
     }
   }

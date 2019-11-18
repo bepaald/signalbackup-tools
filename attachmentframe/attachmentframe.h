@@ -55,6 +55,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
+  inline void setLengthField(uint32_t newlength);
  private:
   inline uint64_t dataSize() const;
 };
@@ -240,6 +241,25 @@ inline unsigned int AttachmentFrame::getField(std::string const &str) const
   if (str == "LENGTH")
     return FIELD::LENGTH;
   return FIELD::INVALID;
+}
+
+inline void AttachmentFrame::setLengthField(uint32_t newlength)
+{
+  for (auto &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::LENGTH)
+    {
+      // out with the old
+      if (std::get<1>(p))
+        delete[] std::get<1>(p);
+
+      // in with the new
+      uint32_t tmp = bepaald::swap_endian(newlength);
+      std::get<1>(p) = new unsigned char[sizeof(uint32_t)];
+      std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&tmp), sizeof(uint32_t));
+      std::get<2>(p) = sizeof(uint32_t);
+    }
+  }
 }
 
 #endif

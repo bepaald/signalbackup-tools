@@ -19,10 +19,10 @@
 
 #include "signalbackup.ih"
 
-SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress, bool assumebadframesizeonbadmac)
+SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress, bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
   :
   d_database(":memory:"),
-  d_fd(new FileDecryptor(filename, passphrase, issource, assumebadframesizeonbadmac)),
+  d_fd(new FileDecryptor(filename, passphrase, issource, assumebadframesizeonbadmac, editattachments)),
   d_passphrase(passphrase),
   d_ok(false),
   d_databaseversion(-1),
@@ -38,8 +38,6 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
 
   std::cout << "Reading backup file..." << std::endl;
   std::unique_ptr<BackupFrame> frame(nullptr);
-
-  d_database.exec("BEGIN TRANSACTION");
 
   while ((frame = d_fd->getFrame())) // deal with bad mac??
   {

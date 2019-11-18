@@ -70,7 +70,6 @@ int main(int argc, char *argv[])
     sb.runSimpleQuery("SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.msg_box = t2.msg_box AND t1.date_received = t2.date_received AND t1._id <> t2._id");
     sb.runSimpleQuery("SELECT COUNT(*) AS num_thread FROM thread");
 
-
     //sb.runSimpleQuery("SELECT sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] "
     //                  "FROM 'sms' WHERE (sms.type & 0x10000 IS NOT 0"
     //                  " OR sms.type & 0x20000 IS NOT 0) UNION "
@@ -91,7 +90,8 @@ int main(int argc, char *argv[])
                                !arg.exportcsv().empty() || !arg.exportxml().empty() ||
                                !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
                                !arg.croptodates().empty() || arg.removedoubles())
-                              ? SignalBackup::LOWMEM : false, arg.showprogress(), arg.assumebadframesizeonbadmac()));
+                              ? SignalBackup::LOWMEM : false, arg.showprogress(),
+                              arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
 
   if (!sb->ok())
   {

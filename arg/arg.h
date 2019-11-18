@@ -52,6 +52,7 @@ class Arg
   bool d_showprogress;
   bool d_removedoubles;
   bool d_assumebadframesizeonbadmac;
+  std::vector<long long int> d_editattachmentsize;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -77,6 +78,7 @@ class Arg
   inline bool showprogress() const;
   inline bool removedoubles() const;
   inline bool assumebadframesizeonbadmac() const;
+  inline std::vector<long long int> const &editattachmentsize() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -187,6 +189,11 @@ inline bool Arg::removedoubles() const
 inline bool Arg::assumebadframesizeonbadmac() const
 {
   return d_assumebadframesizeonbadmac;
+}
+
+inline std::vector<long long int> const &Arg::editattachmentsize() const
+{
+  return d_editattachmentsize;
 }
 
 inline bool Arg::ok() const
