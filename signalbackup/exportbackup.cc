@@ -97,7 +97,7 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
   if (newpw == std::string())
     newpw = d_passphrase;
 
-  if (/*!overwrrite && */checkFileExists(filename))
+  if (/*!overwrite && */checkFileExists(filename))
   {
     std::cout << "File " << filename << " exists. Refusing to overwrite" << std::endl;
     return;

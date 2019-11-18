@@ -19,10 +19,10 @@
 
 #include "signalbackup.ih"
 
-SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress)
+SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress, bool assumebadframesizeonbadmac)
   :
   d_database(":memory:"),
-  d_fd(new FileDecryptor(filename, passphrase, issource)),
+  d_fd(new FileDecryptor(filename, passphrase, issource, assumebadframesizeonbadmac)),
   d_passphrase(passphrase),
   d_ok(false),
   d_databaseversion(-1),
@@ -74,6 +74,16 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
       if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
         d_database.exec(s->bindStatement(), s->parameters());
+      #ifdef BUILT_FOR_TESTING
+      else if (s->frameNumber() == 2 && s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
+      {
+        // force early creation of sqlite_sequence table, this is completely unnessecary and only used
+        // to get byte-identical backups during testing
+        std::cout << "Forcing early creation of sqlite_sequence table..." << std::endl;
+        d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
+        d_database.exec("DROP TABLE dummy");
+      }
+      #endif
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     {
