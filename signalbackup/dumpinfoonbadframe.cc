@@ -143,7 +143,7 @@ void SignalBackup::dumpInfoOnBadFrames() const
         if (results.valueHasType<long long int>(i, j))
         {
           if (results.header(j) == "thread_id")
-          thread_id = results.getValueAs<long long int>(i, j);
+            thread_id = results.getValueAs<long long int>(i, j);
           if (results.header(j) == "msg_box")
             type = results.getValueAs<long long int>(i, j);
           if (results.header(j) == "date")

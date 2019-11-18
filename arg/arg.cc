@@ -41,7 +41,8 @@ Arg::Arg(int argc, char *argv[])
   d_exportxml(std::string()),
   d_runsqlquery(std::string()),
   d_showprogress(true),
-  d_removedoubles(false)
+  d_removedoubles(false),
+  d_assumebadframesizeonbadmac(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -226,6 +227,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-removedoubles")
     {
       d_removedoubles = false;
+      continue;
+    }
+    if (option == "--assumebadframesizeonbadmac")
+    {
+      d_assumebadframesizeonbadmac = true;
+      continue;
+    }
+    if (option == "--no-assumebadframesizeonbadmac")
+    {
+      d_assumebadframesizeonbadmac = false;
       continue;
     }
     if (option[0] != '-')

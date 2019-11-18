@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
                                !arg.exportcsv().empty() || !arg.exportxml().empty() ||
                                !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
                                !arg.croptodates().empty() || arg.removedoubles())
-                              ? SignalBackup::LOWMEM : false, arg.showprogress()));
+                              ? SignalBackup::LOWMEM : false, arg.showprogress(), arg.assumebadframesizeonbadmac()));
 
   if (!sb->ok())
   {

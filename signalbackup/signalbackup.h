@@ -59,7 +59,7 @@ class SignalBackup
   unsigned int d_databaseversion;
   bool d_showprogress;
  public:
-  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true);
+  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false);
   explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
   void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
@@ -109,6 +109,7 @@ class SignalBackup
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;
   void duplicateQuotes(std::string *s) const;
+  std::string decodeStatusMessage(std::string const &body, long long int type, std::string const &contactname) const;
   void escapeXmlString(std::string *s) const;
 };
 

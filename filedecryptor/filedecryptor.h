@@ -38,12 +38,13 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   uint64_t d_filesize;
   bool d_lazyload;
   bool d_badmac;
+  bool d_assumebadframesize;
 
  public:
-  FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy = true);
+  FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy = true, bool assumebadframesize = false);
   FileDecryptor(FileDecryptor const &other) = delete;
   FileDecryptor operator=(FileDecryptor const &other) = delete;
-  //ine line ~FileDecryptor();
+  //inline ~FileDecryptor();
   inline bool ok() const;
   std::unique_ptr<BackupFrame> getFrame();
   inline uint64_t total() const;

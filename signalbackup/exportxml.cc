@@ -19,85 +19,105 @@
 
 #include "signalbackup.ih"
 
-/*
-std::string SignalBackup::getStatusMessage(std::string const &msg) const
+std::string SignalBackup::decodeStatusMessage(std::string const &body, long long int type, std::string const &contactname) const
 {
-  if (groupupdate)
+  if (Types::isGroupUpdate(type))
   {
+    if (Types::isOutgoing(type))
+      return "You updated the group.";
 
-    std::string name = "sender";
-    std::string result += " updated the group.";
+    std::string result = contactname + " updated the group.";
 
     // decode msg
+    ProtoBufParser<protobuffer::optional::BYTES,
+                   protobuffer::optional::ENUM,
+                   protobuffer::optional::STRING,
+                   protobuffer::repeated::STRING,
+                   ProtoBufParser<protobuffer::optional::FIXED64,
+                                  protobuffer::optional::STRING,
+                                  protobuffer::optional::BYTES,
+                                  protobuffer::optional::UINT32,
+                                  protobuffer::optional::BYTES,
+                                  protobuffer::optional::BYTES,
+                                  protobuffer::optional::STRING,
+                                  protobuffer::optional::UINT32,
+                                  protobuffer::optional::UINT32,
+                                  protobuffer::optional::UINT32>> statusmsg(body);
 
-    // if (members)
-    result += "\n" + "[...] joined the group.";
-
-    // if (title)
-    results += (members ? ' ' : '\n');
-    results += "Group name is now '" + title + "'";
-  }
-  // if quit
-
-Signal-Android-master/src/org/thoughtcrime/securesms/database/model/MessageRecord.java:91:
-    if (isGroupUpdate() && isOutgoing()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_you_updated_group));
-    } else if (isGroupUpdate()) {
-      return new SpannableString(GroupUtil.getDescription(context, getBody()).toString(getIndividualRecipient())); -> <string name="MessageRecord_s_updated_group">%s updated the group.</string> (this already implemented above)
-    } else if (isGroupQuit() && isOutgoing()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_left_group));
-    } else if (isGroupQuit()) {
-      return new SpannableString(context.getString(R.string.ConversationItem_group_action_left, getIndividualRecipient().toShortString()));
-    } else if (isIncomingCall()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_s_called_you, getIndividualRecipient().toShortString()));
-    } else if (isOutgoingCall()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_you_called));
-    } else if (isMissedCall()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_missed_call));
-    } else if (isJoined()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_s_joined_signal, getIndividualRecipient().toShortString()));
-    } else if (isExpirationTimerUpdate()) {
-      int seconds = (int)(getExpiresIn() / 1000);
-      if (seconds <= 0) {
-        return isOutgoing() ? new SpannableString(context.getString(R.string.MessageRecord_you_disabled_disappearing_messages))
-                            : new SpannableString(context.getString(R.string.MessageRecord_s_disabled_disappearing_messages, getIndividualRecipient().toShortString()));
+    std::string members;
+    auto field4 = statusmsg.getField<4>();
+    if (field4.size())
+      for (uint k = 0; k < field4.size(); ++k)
+      {
+        // get name from members string
+        SqliteDB::QueryResults res;
+        if (d_databaseversion >= 33)
+          d_database.exec("SELECT COALESCE(recipient.signal_profile_name, recipient.system_display_name) AS 'name' FROM recipient WHERE _id = " + field4[k], &res);
+        else
+        {
+          ;//d_database.exec("SELECT COALESCE(recipient.signal_profile_name, recipient.system_display_name) AS 'name' FROM recipient_preferences WHERE _something
+        }
+        members += field4[k] + ", ";
       }
-      String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
-      return isOutgoing() ? new SpannableString(context.getString(R.string.MessageRecord_you_set_disappearing_message_time_to_s, time))
-                          : new SpannableString(context.getString(R.string.MessageRecord_s_set_disappearing_message_time_to_s, getIndividualRecipient().toShortString(), time));
-    } else if (isIdentityUpdate()) {
-      return new SpannableString(context.getString(R.string.MessageRecord_your_safety_number_with_s_has_changed, getIndividualRecipient().toShortString()));
-    } else if (isIdentityVerified()) {
-      if (isOutgoing()) return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_verified, getIndividualRecipient().toShortString()));
-      else              return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_verified_from_another_device, getIndividualRecipient().toShortString()));
-    } else if (isIdentityDefault()) {
-      if (isOutgoing()) return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_unverified, getIndividualRecipient().toShortString()));
-      else              return new SpannableString(context.getString(R.string.MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device, getIndividualRecipient().toShortString()));
+
+    if (!members.empty())
+      result += "\n" + members + " joined the group.";
+
+
+    std::string title = statusmsg.getField<3>().value_or(std::string());
+    if (!title.empty())
+    {
+      result += (!members.empty() ? ' ' : '\n');
+      result += "Group name is now '" + title + "'.";
     }
 
-  // <string name="MessageRecord_left_group">You have left the group.</string>
-  // <string name="MessageRecord_you_updated_group">You updated the group.</string>
-  // <string name="MessageRecord_you_called">You called</string>
-  // <string name="MessageRecord_s_called_you">%s called you</string>
-  // <string name="MessageRecord_called_you">Contact called</string> ??
-  // <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
-  // <string name="MessageRecord_missed_call">Missed call</string>
-  // <string name="MessageRecord_s_joined_signal">%s is on Signal!</string>
-  // <string name="MessageRecord_you_disabled_disappearing_messages">You disabled disappearing messages.</string>
-  // <string name="MessageRecord_s_disabled_disappearing_messages">%1$s disabled disappearing messages.</string>
-  // <string name="MessageRecord_you_set_disappearing_message_time_to_s">You set the disappearing message timer to %1$s.</string>
-  // <string name="MessageRecord_s_set_disappearing_message_time_to_s">%1$s set the disappearing message timer to %2$s.</string>
-  // <string name="MessageRecord_your_safety_number_with_s_has_changed">Your safety number with %s has changed.</string>
-  // <string name="MessageRecord_you_marked_your_safety_number_with_s_verified">You marked your safety number with %s verified</string>
-  // <string name="MessageRecord_you_marked_your_safety_number_with_s_verified_from_another_device">You marked your safety number with %s verified from another device</string>
-  // <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified">You marked your safety number with %s unverified</string>
-  // <string name="MessageRecord_you_marked_your_safety_number_with_s_unverified_from_another_device">You marked your safety number with %s unverified from another device</string>
+    return result;
+  }
+  if (Types::isGroupQuit(type))
+  {
+    if (Types::isOutgoing(type))
+      return "You have left the group.";
+    return contactname + "has left the group.";
+  }
+  if (Types::isIncomingCall(type))
+    return contactname + "called you";
+  if (Types::isOutgoingCall(type))
+    return "You called";
+  if (Types::isMissedCall(type))
+    return "Missed call";
+  if (Types::isJoined(type))
+    return contactname + "is on Signal!";
+  if (Types::isExpirationTimerUpdate(type))
+  {
+    int seconds = -1;//(int)(getExpiresIn() / 1000);
+    if (seconds < 0)
+    {
+      if (Types::isOutgoing(type))
+        return "You disabled disappearing messages.";
+      return contactname + " disabled disappearing messages.";
+    }
+    //String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
+    if (Types::isOutgoing(type))
+      return "You set the disappearing message timer to " + bepaald::toString(seconds);
+    return contactname + " set the disappearing message timer to " + bepaald::toString(seconds);
+  }
+  if (Types::isIdentityUpdate(type))
+    return "Your safety number with " + contactname + " has changed.";
+  if (Types::isIdentityVerified(type))
+  {
+    if (Types::isOutgoing(type))
+      return "You marked your safety number with " + contactname + " verified";
+    return "You marked your safety number with " + contactname + " verified from another device";
+  }
+  if (Types::isIdentityDefault(type))
+  {
+    if (Types::isOutgoing(type))
+      return "You marked your safety number with " + contactname + " unverified";
+    return "You marked your safety number with " + contactname + " verified from another device";
+  }
 
-  // Signal-Android-master/res/values/strings.xml:155:    <string name="ConversationItem_group_action_left">%1$s has left the group.</string>
-    // <string name="MessageRecord_message_encrypted_with_a_legacy_protocol_version_that_is_no_longer_supported">Received a message encrypted using an old version of Signal that is no longer supported. Please ask the sender to update to the most recent version and resend the message.</string>
-
+  return body;
 }
-*/
 
 void SignalBackup::escapeXmlString(std::string *str) const
 {
@@ -294,11 +314,12 @@ void SignalBackup::exportXml(std::string const &filename) const
       /* type - 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued */
       /* REQUIRED */
       long long int type = 5;
+      long long int realtype = -1;
       if (results.valueHasType<long long int>(i, "type"))
       {
-        long long int t = results.getValueAs<long long int>(i, "type");
+        realtype = results.getValueAs<long long int>(i, "type");
 
-        switch (t & Types::BASE_TYPE_MASK)
+        switch (realtype & Types::BASE_TYPE_MASK)
         {
         case 1:
         case 20:
@@ -368,18 +389,6 @@ void SignalBackup::exportXml(std::string const &filename) const
         escapeXmlString(&address);
       }
 
-      /* body - The content of the message. */
-      /* REQUIRED */
-      std::string body;
-      if (results.valueHasType<std::string>(i, "body"))
-      {
-        body = results.getValueAs<std::string>(i, "body");
-
-        // get type, if status message -> decode
-
-        escapeXmlString(&body);
-      }
-
       /* contact_name - Optional field that has the name of the contact. */
       /* OPTIONAL */
       std::string contact_name;
@@ -387,26 +396,38 @@ void SignalBackup::exportXml(std::string const &filename) const
       {
         std::string rid = results.getValueAs<std::string>(i, "address");
         SqliteDB::QueryResults r2;
-        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
+        d_database.exec("SELECT COALESCE(recipient.signal_display_name, recipient.system_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
         if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
           contact_name = r2.getValueAs<std::string>(0, "contact_name");
         escapeXmlString(&contact_name);
       }
 
+      /* body - The content of the message. */
+      /* REQUIRED */
+      std::string body;
+      if (results.valueHasType<std::string>(i, "body"))
+      {
+        body = results.getValueAs<std::string>(i, "body");
+
+        body = decodeStatusMessage(body, realtype, contact_name);
+
+        escapeXmlString(&body);
+      }
+
       outputfile << "  <sms "
                  << "protocol=\"" << protocol << "\" "
-                 << "subject=\"" << (subject.empty() ? std::string("null") : subject) << "\" "
                  << "address=\"" << address << "\" "
+                 << "contact_name=\"" << (contact_name.empty() ? std::string("null") : contact_name) << "\" "
                  << "date=\"" << date << "\" "
+                 << "readable_date=\"" << (readable_date.empty() ? std::string("null") : readable_date) << "\" "
                  << "type=\"" << type << "\" "
+                 << "subject=\"" << (subject.empty() ? std::string("null") : subject) << "\" "
                  << "body=\"" << body << "\" "
                  << "toa=\"" << "null" << "\" "
                  << "sc_toa=\"" << "null" << "\" "
                  << "service_center=\"" << (service_center.empty() ? std::string("null") : service_center)<< "\" "
                  << "read=\"" << read << "\" "
                  << "status=\"" << status << "\" "
-                 << "readable_date=\"" << (readable_date.empty() ? std::string("null") : readable_date) << "\" "
-                 << "contact_name=\"" << (contact_name.empty() ? std::string("null") : contact_name) << "\" "
                  << "locked=\"" << 0 << "\" "
                  << "/>" << std::endl;
     }

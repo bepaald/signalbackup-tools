@@ -65,7 +65,7 @@ struct Types
     return (type & GROUP_QUIT_BIT) != 0;
   }
 
-  inline static bool isOutgoingMessageType(uint64_t type)
+  inline static bool isOutgoing(uint64_t type)
   {
     for (uint64_t const outgoingType : OUTGOING_MESSAGE_TYPES)
     {
@@ -95,7 +95,7 @@ struct Types
     return type == MISSED_CALL_TYPE;
   }
 
-  inline static bool isJoinedType(long type)
+  inline static bool isJoined(long type)
   {
     return (type & BASE_TYPE_MASK) == JOINED_TYPE;
   }

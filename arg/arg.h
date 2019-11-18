@@ -51,6 +51,7 @@ class Arg
   std::string d_runsqlquery;
   bool d_showprogress;
   bool d_removedoubles;
+  bool d_assumebadframesizeonbadmac;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -75,6 +76,7 @@ class Arg
   inline std::string const &runsqlquery() const;
   inline bool showprogress() const;
   inline bool removedoubles() const;
+  inline bool assumebadframesizeonbadmac() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -180,6 +182,11 @@ inline bool Arg::showprogress() const
 inline bool Arg::removedoubles() const
 {
   return d_removedoubles;
+}
+
+inline bool Arg::assumebadframesizeonbadmac() const
+{
+  return d_assumebadframesizeonbadmac;
 }
 
 inline bool Arg::ok() const

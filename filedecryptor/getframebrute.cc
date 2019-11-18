@@ -144,7 +144,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset)
     }
   }
 
-  DEBUGOUT("FRAMETYPE: ", frame->frameType());
   //frame->printInfo();
   //std::cout << "HEADERTYPE: " << frame->frameType() << std::endl;
 

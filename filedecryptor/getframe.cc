@@ -36,18 +36,19 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
+  //if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
+  //{
+  //  std::cout << "Suspicious framelength" << std::endl;
+  //  bruteForceFrom(filepos)???
+  //}
 
   DEBUGOUT("Framelength: ", encryptedframelength);
-
 
   unsigned char *encryptedframe = new unsigned char[encryptedframelength];
   if (!getNextFrameBlock(encryptedframe, encryptedframelength))
   {
     delete[] encryptedframe;
-    //std::cout << encryptedframelength << std::endl;
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
-    //std::cout << "Filepos is now " << d_file.tellg() << std::endl;
-    //std::cout << "Stat: " << d_file.good() << std::endl;
 
     // maybe hide this behind option
     return bruteForceFrom(filepos);
@@ -59,7 +60,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   unsigned char theirMac[MACSIZE]; // == 10
   std::memcpy(theirMac, encryptedframe + (encryptedframelength - MACSIZE), MACSIZE);
 
-  //int const ourmacsize = CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE;
   unsigned char ourMac[CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE];
 
   CryptoPP::HMAC<CryptoPP::SHA256> hmac(d_mackey, d_mackey_size);
@@ -89,27 +89,23 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   delete[] encryptedframe;
 
-  //std::string ps(reinterpret_cast<char *>(decodedframe), decodedframelength);
-  //DEBUGOUT("Decoded plaintext: ", ps);
-  DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
-
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
   delete[] decodedframe;
 
   if (!frame)
   {
-    //std::cout << "DONE 2" << std::endl;
     std::cout << "Failed to get valid frame from decoded data..." << std::endl;
-    std::cout << "Data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+    //std::cout << "Data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+    if (d_badmac)
+    {
+      std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
+      return bruteForceFrom(filepos);
+    }
+    else
+      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... Aborting :(" << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
-
-  //std::cout << "Got frame at filepos 0x" << std::hex << filepos << std::dec << ", counter: " << d_counter - 1 << std::endl;
-
-  DEBUGOUT("FRAMETYPE: ", frame->frameType());
-  //frame->printInfo();
-  //std::cout << "HEADERTYPE: " << frame->frameType() << std::endl;
 
   uint32_t attsize = 0;
   if (!d_badmac && (attsize = frame->attachmentSize()) > 0)
@@ -134,7 +130,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         return std::unique_ptr<BackupFrame>(nullptr);
       }
       if (getatt < 0)
+      {
         d_badmac = true;
+        if (d_assumebadframesize)
+          return bruteForceFrom(filepos);
+      }
     }
   }
 
