@@ -39,13 +39,12 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   std::cout << "Reading backup file..." << std::endl;
   std::unique_ptr<BackupFrame> frame(nullptr);
 
+  d_database.exec("BEGIN TRANSACTION");
+
   while ((frame = d_fd->getFrame())) // deal with bad mac??
   {
-
-
     //std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
     //frame->printInfo();
-
 
     if (d_fd->badMac())
       dumpInfoOnBadFrame(&frame);
