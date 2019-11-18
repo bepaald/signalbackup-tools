@@ -59,7 +59,7 @@ class SignalBackup
   unsigned int d_databaseversion;
   bool d_showprogress;
  public:
-  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false);
+  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false, std::vector<long long int> editattachments = std::vector<long long int>());
   explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
   void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
   void exportBackup(std::string const &directory);
@@ -220,7 +220,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
     std::string::size_type pos2 = line.find(":", pos);
     if (pos2 == std::string::npos)
     {
-      std::cout << "Failed to read HeaderFrame from datafile" << std::endl;
+      std::cout << "Failed to read frame data from '" << file << "'" << std::endl;
       return false;
     }
     std::string type = line.substr(pos, pos2 - pos);

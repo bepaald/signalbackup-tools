@@ -42,7 +42,8 @@ Arg::Arg(int argc, char *argv[])
   d_runsqlquery(std::string()),
   d_showprogress(true),
   d_removedoubles(false),
-  d_assumebadframesizeonbadmac(false)
+  d_assumebadframesizeonbadmac(false),
+  d_editattachmentsize(std::vector<long long int>())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -237,6 +238,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-assumebadframesizeonbadmac")
     {
       d_assumebadframesizeonbadmac = false;
+      continue;
+    }
+    if (option == "--editattachmentsize")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseNumberList(arguments[++i], &d_editattachmentsize))
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+      }
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;
     }
     if (option[0] != '-')

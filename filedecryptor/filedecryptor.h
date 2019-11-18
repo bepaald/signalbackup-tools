@@ -39,9 +39,10 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   bool d_lazyload;
   bool d_badmac;
   bool d_assumebadframesize;
+  std::vector<long long int> d_editattachments;
 
  public:
-  FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy = true, bool assumebadframesize = false);
+  FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy = true, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
   FileDecryptor(FileDecryptor const &other) = delete;
   FileDecryptor operator=(FileDecryptor const &other) = delete;
   //inline ~FileDecryptor();
@@ -56,8 +57,8 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   BackupFrame *initBackupFrame(unsigned char *data, size_t length, uint64_t count = 0) const;
   //virtual int getAttachment(FrameWithAttachment *frame) override;
 
-  std::unique_ptr<BackupFrame> bruteForceFrom(uint32_t filepos);
-  std::unique_ptr<BackupFrame> getFrameBrute(uint32_t offset);
+  std::unique_ptr<BackupFrame> bruteForceFrom(uint32_t filepos, uint32_t previousframelength);
+  std::unique_ptr<BackupFrame> getFrameBrute(uint32_t offset, uint32_t previousframelength);
 };
 
 inline bool FileDecryptor::ok() const

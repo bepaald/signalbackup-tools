@@ -17,6 +17,8 @@ A script is provided that will compile the binary on Arch and Fedora (and possib
  $ sh BUILDSCRIPT.sh
 ```
 
+Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is available at his gitlab page: https://gitlab.com/splatops/cntn-signalbackup-tools.
+
 If you manage to compile it for Windows, please let me know. I have tried cross compiling, but (in spite of no errors) it has worked only once a long time ago.
 
 **Running**

@@ -19,9 +19,9 @@
 
 #include "filedecryptor.ih"
 
-std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos)
+std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos, uint32_t previousframelength)
 {
-  std::cout << "Starting bruteforcing offset to next valid frame..." << std::endl;
+  std::cout << "Starting bruteforcing offset to next valid frame... starting after: " << filepos << std::endl;
   uint32_t skip = 1;
   std::unique_ptr<BackupFrame> ret(nullptr);
   while (filepos + skip < d_filesize)
@@ -30,7 +30,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos)
     if (skip % 10 == 0)
       std::cout << "\rChecking offset " << skip << " bytes" << std::flush;
     d_file.seekg(filepos + skip, std::ios_base::beg);
-    ret.reset(getFrameBrute(skip++).release());
+    ret.reset(getFrameBrute(skip++, previousframelength).release());
     if (ret)
     {
       std::cout << std::endl << "Got frame, breaking" << std::endl;
@@ -40,7 +40,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos)
   return ret;
 }
 
-std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset)
+std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint32_t previousframelength)
 {
   if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
   {
@@ -136,6 +136,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset)
         std::cout << "YEAH!" << std::endl;
         //frame->printInfo();
         std::cout << "Good frame: " << frame->frameNumber() << std::endl;
+        if (d_assumebadframesize && skipped == 1 /*NOTE, skipped was already upped*/)
+        {
+          std::cout << "CORRECT FRAME_NUMBER:SIZE = " << frame->frameNumber() - 1 << ":"
+                    << offset - previousframelength - MACSIZE - 4 << std::endl;
+        }
         delete[] encryptedframe;
         break;
       }
