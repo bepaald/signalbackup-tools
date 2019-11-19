@@ -97,10 +97,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     for (uint i = 0; i < d_editattachments.size(); i += 2)
       if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
       {
-        std::cout << "Editing attachment data size in AttachmentFrame" << std::endl;
-        reinterpret_cast<AttachmentFrame *>(frame.get())->printInfo();
+        std::cout << "Editing attachment data size in AttachmentFrame "
+                  << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
         reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
-        reinterpret_cast<AttachmentFrame *>(frame.get())->printInfo();
+        std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
+        std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
+                  << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
         break;
       }
 

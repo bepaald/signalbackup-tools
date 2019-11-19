@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-std::string SignalBackup::decodeStatusMessage(std::string const &body, long long int type, std::string const &contactname) const
+std::string SignalBackup::decodeStatusMessage(std::string const &body, long long int expiration, long long int type, std::string const &contactname) const
 {
   if (Types::isGroupUpdate(type))
   {
@@ -52,7 +52,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         // get name from members string
         SqliteDB::QueryResults res;
         if (d_databaseversion >= 33)
-          d_database.exec("SELECT COALESCE(recipient.signal_profile_name, recipient.system_display_name) AS 'name' FROM recipient WHERE _id = " + field4[k], &res);
+          d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'name' FROM recipient WHERE _id = " + field4[k], &res);
         else
         {
           ;//d_database.exec("SELECT COALESCE(recipient.signal_profile_name, recipient.system_display_name) AS 'name' FROM recipient_preferences WHERE _something
@@ -89,17 +89,16 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     return contactname + "is on Signal!";
   if (Types::isExpirationTimerUpdate(type))
   {
-    int seconds = -1;//(int)(getExpiresIn() / 1000);
-    if (seconds < 0)
+    if (expiration < 0)
     {
       if (Types::isOutgoing(type))
         return "You disabled disappearing messages.";
       return contactname + " disabled disappearing messages.";
     }
-    //String time = ExpirationUtil.getExpirationDisplayValue(context, seconds);
+    std::string time = bepaald::toString(expiration) + " seconds";//ExpirationUtil.getExpirationDisplayValue(context, expiration);
     if (Types::isOutgoing(type))
-      return "You set the disappearing message timer to " + bepaald::toString(seconds);
-    return contactname + " set the disappearing message timer to " + bepaald::toString(seconds);
+      return "You set the disappearing message timer to " + time;
+    return contactname + " set the disappearing message timer to " + time;
   }
   if (Types::isIdentityUpdate(type))
     return "Your safety number with " + contactname + " has changed.";
@@ -265,7 +264,7 @@ void SignalBackup::exportXml(std::string const &filename) const
   outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << std::endl;
 
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT protocol,subject,service_center,read,status,date_sent,date,address,type,body FROM sms", &results);
+  d_database.exec("SELECT protocol,subject,service_center,read,status,date_sent,date,address,type,body,expires_in FROM sms", &results);
   if (results.rows())
   {
     outputfile << "<smses count=" << bepaald::toString(results.rows()) << ">" << std::endl;;
@@ -396,11 +395,16 @@ void SignalBackup::exportXml(std::string const &filename) const
       {
         std::string rid = results.getValueAs<std::string>(i, "address");
         SqliteDB::QueryResults r2;
-        d_database.exec("SELECT COALESCE(recipient.signal_display_name, recipient.system_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
+        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
         if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
           contact_name = r2.getValueAs<std::string>(0, "contact_name");
         escapeXmlString(&contact_name);
       }
+
+
+      long long int expiration = -1;
+      if (results.valueHasType<long long int>(i, "expires_in"))
+        expiration = results.getValueAs<long long int>(i, "expires_in");
 
       /* body - The content of the message. */
       /* REQUIRED */
@@ -409,7 +413,7 @@ void SignalBackup::exportXml(std::string const &filename) const
       {
         body = results.getValueAs<std::string>(i, "body");
 
-        body = decodeStatusMessage(body, realtype, contact_name);
+        body = decodeStatusMessage(body, expiration, realtype, contact_name);
 
         escapeXmlString(&body);
       }

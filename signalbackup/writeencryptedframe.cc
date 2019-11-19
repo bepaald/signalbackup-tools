@@ -21,6 +21,14 @@
 
 void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame)
 {
+
+  // if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
+  // {
+  //   if (reinterpret_cast<AttachmentFrame *>(frame)->rowId() == 8 &&
+  //       reinterpret_cast<AttachmentFrame *>(frame)->attachmentId() == 1529478705314)
+  //     reinterpret_cast<AttachmentFrame *>(frame)->setLengthField(80000);
+  // }
+
   std::pair<unsigned char *, uint64_t> framedata = frame->getData();
   if (!framedata.first)
     return;
@@ -33,6 +41,13 @@ void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
 
   writeFrameDataToFile(outputfile, encryptedframe);
   delete[] encryptedframe.first;
+
+  // if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
+  // {
+  //   if (reinterpret_cast<AttachmentFrame *>(frame)->rowId() == 8 &&
+  //       reinterpret_cast<AttachmentFrame *>(frame)->attachmentId() == 1529478705314)
+  //     reinterpret_cast<AttachmentFrame *>(frame)->setLengthField(78947);
+  // }
 
   uint32_t attachmentsize = 0;
   if ((attachmentsize = frame->attachmentSize()) > 0)
