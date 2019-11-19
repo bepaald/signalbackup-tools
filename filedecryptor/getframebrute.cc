@@ -135,12 +135,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
         d_counter += skipped;
         std::cout << "YEAH!" << std::endl;
         //frame->printInfo();
-        std::cout << "Good frame: " << frame->frameNumber() << std::endl;
         if (d_assumebadframesize && skipped == 1 /*NOTE, skipped was already upped*/)
         {
-          std::cout << "CORRECT FRAME_NUMBER:SIZE = " << frame->frameNumber() - 1 << ":"
-                    << offset - previousframelength - MACSIZE - 4 << std::endl;
+          std::cout << std::endl << " ! CORRECT FRAME_NUMBER:SIZE = " << frame->frameNumber() - 1 << ":"
+                    << offset - previousframelength - MACSIZE - 4 << std::endl << std::endl;
         }
+        std::cout << "Good frame: " << frame->frameNumber() << std::endl;
         delete[] encryptedframe;
         break;
       }
