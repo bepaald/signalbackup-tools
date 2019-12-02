@@ -49,11 +49,11 @@ namespace bepaald
 #endif
   template <typename T>
   T toNumber(std::string const &str);
-  std::wstring bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
-  std::wstring bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
-  std::wstring bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted = false);
-  std::wstring bytesToWString(unsigned char const *data, unsigned int length);
-  std::wstring bytesToPrintableWString(unsigned char const *data, unsigned int length);
+  //std::wstring bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
+  //std::wstring bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
+  //std::wstring bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted = false);
+  //std::wstring bytesToWString(unsigned char const *data, unsigned int length);
+  //std::wstring bytesToPrintableWString(unsigned char const *data, unsigned int length);
   std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
@@ -61,9 +61,9 @@ namespace bepaald
   std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
   template <typename T>
   void destroyPtr(unsigned char **p, T *psize);
-  template <typename T>
-  inline std::wstring toWString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
-  inline std::wstring toWString(double num);
+  //template <typename T>
+  //inline std::wstring toWString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
+  //inline std::wstring toWString(double num);
   template <typename T>
   inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
   inline std::string toString(double num);
@@ -160,58 +160,58 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
   return oss.str();
 }
 
-inline std::wstring bepaald::bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
-{
-  return bytesToHexWString(data.first.get(), data.second, unformatted);
-}
+// inline std::wstring bepaald::bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
+// {
+//   return bytesToHexWString(data.first.get(), data.second, unformatted);
+// }
 
-inline std::wstring bepaald::bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted/* = false*/)
-{
-  return bytesToHexWString(data.first, data.second, unformatted);
-}
+// inline std::wstring bepaald::bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted/* = false*/)
+// {
+//   return bytesToHexWString(data.first, data.second, unformatted);
+// }
 
-inline std::wstring bepaald::bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted/* = false*/)
-{
-  std::wostringstream woss;
-  if (!unformatted)
-    woss << L"(hex:) ";
-  for (uint i = 0; i < length; ++i)
-    woss << std::hex << std::setfill(L'0') << std::setw(2)
-         << (static_cast<int32_t>(data[i]) & 0xFF)
-         << ((i == length - 1 || unformatted) ? L"" : L" ");
-  return woss.str();
-}
+// inline std::wstring bepaald::bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted/* = false*/)
+// {
+//   std::wostringstream woss;
+//   if (!unformatted)
+//     woss << L"(hex:) ";
+//   for (uint i = 0; i < length; ++i)
+//     woss << std::hex << std::setfill(L'0') << std::setw(2)
+//          << (static_cast<int32_t>(data[i]) & 0xFF)
+//          << ((i == length - 1 || unformatted) ? L"" : L" ");
+//   return woss.str();
+// }
 
-inline std::wstring bepaald::bytesToWString(unsigned char const *data, unsigned int length)
-{
-  std::wostringstream woss;
-  for (uint i = 0; i < length; ++i)
-    woss << static_cast<char>(data[i]);
-  return woss.str();
-}
+// inline std::wstring bepaald::bytesToWString(unsigned char const *data, unsigned int length)
+// {
+//   std::wostringstream woss;
+//   for (uint i = 0; i < length; ++i)
+//     woss << static_cast<char>(data[i]);
+//   return woss.str();
+// }
 
-inline std::wstring bepaald::bytesToPrintableWString(unsigned char const *data, unsigned int length)
-{
-  bool prevwashex = false;
-  std::wostringstream woss;
-  for (uint i = 0; i < length; ++i)
-  {
-    bool curishex = !std::isprint(static_cast<char>(data[i]));
+// inline std::wstring bepaald::bytesToPrintableWString(unsigned char const *data, unsigned int length)
+// {
+//   bool prevwashex = false;
+//   std::wostringstream woss;
+//   for (uint i = 0; i < length; ++i)
+//   {
+//     bool curishex = !std::isprint(static_cast<char>(data[i]));
 
-    if (curishex != prevwashex && i > 0)
-      woss << L" ";
+//     if (curishex != prevwashex && i > 0)
+//       woss << L" ";
 
-    if (curishex)
-      woss << "0x" << std::hex << std::setfill(L'0') << std::setw(2)
-           << (static_cast<int32_t>(data[i]) & 0xFF)
-           << (i == length - 1 ? L"" : L" ");
-    else
-      woss << static_cast<char>(data[i]);
+//     if (curishex)
+//       woss << "0x" << std::hex << std::setfill(L'0') << std::setw(2)
+//            << (static_cast<int32_t>(data[i]) & 0xFF)
+//            << (i == length - 1 ? L"" : L" ");
+//     else
+//       woss << static_cast<char>(data[i]);
 
-    prevwashex = curishex;
-  }
-  return woss.str();
-}
+//     prevwashex = curishex;
+//   }
+//   return woss.str();
+// }
 
 template <typename T>
 inline void bepaald::destroyPtr(unsigned char **p, T *psize)
@@ -224,20 +224,20 @@ inline void bepaald::destroyPtr(unsigned char **p, T *psize)
   }
 }
 
-template <typename T>
-inline std::wstring bepaald::toWString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
-{
-  std::wostringstream woss;
-  woss << num;
-  return woss.str();
-}
+// template <typename T>
+// inline std::wstring bepaald::toWString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
+// {
+//   std::wostringstream woss;
+//   woss << num;
+//   return woss.str();
+// }
 
-inline std::wstring bepaald::toWString(double num)
-{
-  std::wostringstream woss;
-  woss << std::defaultfloat << std::setprecision(17) << num;
-  return woss.str();
-}
+// inline std::wstring bepaald::toWString(double num)
+// {
+//   std::wostringstream woss;
+//   woss << std::defaultfloat << std::setprecision(17) << num;
+//   return woss.str();
+// }
 
 template <typename T>
 inline std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)

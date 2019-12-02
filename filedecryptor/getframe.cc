@@ -21,7 +21,7 @@
 
 std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 {
-  long int filepos = d_file.tellg();
+  long long int filepos = d_file.tellg();
   //std::cout << "Getting frame at filepos: " << filepos << std::endl;
 
   if (static_cast<uint64_t>(filepos) == d_filesize)
@@ -150,7 +150,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         if (d_assumebadframesize)
         {
           std::unique_ptr<BackupFrame> f = bruteForceFrom(filepos, encryptedframelength);
-          //long int curfilepos = d_file.tellg();
+          //long long int curfilepos = d_file.tellg();
           //std::cout << "curpso: " << curfilepos << std::endl;
           //std::cout << "ATTACHMENT LENGTH SHOULD HAVE BEEN: " << curfilepos - filepos - encryptedframelength - MACSIZE << std::endl;
           return f;

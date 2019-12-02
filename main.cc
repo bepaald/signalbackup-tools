@@ -41,8 +41,24 @@
 #include "autoversion.h"
 #endif
 
+#if defined(_WIN32) || defined(__MINGW64__)
+#include <windows.h>
+#endif
+
 int main(int argc, char *argv[])
 {
+#if defined(_WIN32) || defined(__MINGW64__)
+  // set utf8 output
+  unsigned int oldcodepage = GetConsoleOutputCP();
+  SetConsoleOutputCP(65001);
+  // enable ansi escape codes
+  HANDLE hConsole = GetStdHanlde(STD_OUTPUT_HANDLE);
+  DWORD mode = 0;
+  GetConsoleMode(hConsole, &mode);
+  mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+  SetConsoleMode(hConsole, mode);
+#endif
+
 #ifdef VERSIONDATE
   std::cout << "signalbackup-tools source version " << VERSIONDATE << std::endl;
 #endif
@@ -89,7 +105,8 @@ int main(int argc, char *argv[])
                               (!arg.source().empty() || arg.listthreads() ||
                                !arg.exportcsv().empty() || !arg.exportxml().empty() ||
                                !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
-                               !arg.croptodates().empty() || arg.removedoubles())
+                               !arg.croptodates().empty() || arg.removedoubles() ||
+                               !arg.runprettysqlquery().empty())
                               ? SignalBackup::LOWMEM : false, arg.showprogress(),
                               arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
 
@@ -169,6 +186,9 @@ int main(int argc, char *argv[])
   if (!arg.runsqlquery().empty())
     sb->runSimpleQuery(arg.runsqlquery(), false);
 
+  if (!arg.runprettysqlquery().empty())
+    sb->runSimpleQuery(arg.runprettysqlquery(), true);
+
   // export output
   if (!arg.output().empty())
   {
@@ -177,8 +197,6 @@ int main(int argc, char *argv[])
     else
       sb->exportBackup(arg.output());
   }
-
-
 
   //sb->cropToThread({8, 10, 11});
   //sb->listThreads();
@@ -190,6 +208,10 @@ int main(int argc, char *argv[])
   // // std::cout << "Starting export!" << std::endl;
   // // sb2.exportBackup("NEWFILE2");
   // // std::cout << "Finished" << std::endl;
+
+#if defined(_WIN32) || defined(__MINGW64__)
+  SetConsoleOutputCP(oldcodepage);
+#endif
 
   return 0;
 }

@@ -24,6 +24,10 @@ bool SqliteDB::QueryResults::isTerminal() const
 #ifdef HAS_UNISTD_H_ // defined in .ih if unistd.h is available
   return isatty(STDOUT_FILENO);
 #else
+#if defined(_WIN32) || defined(__MINGW64__)
+  DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
+  return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg redirect to printer)...
+#endif
   return false;
 #endif
 }
