@@ -22,6 +22,6 @@
 std::wstring SqliteDB::QueryResults::wideString(std::string const &narrow) const
 {
   std::setlocale(LC_ALL, "en_US.utf8");
-  std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+  std::wstring_convert<std::codecvt_utf8/*_utf16*/<wchar_t>> converter;
   return converter.from_bytes(narrow);
 }

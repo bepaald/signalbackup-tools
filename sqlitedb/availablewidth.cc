@@ -31,7 +31,7 @@ int SqliteDB::QueryResults::availableWidth() const
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   int ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
   if (ret)
-    return (csbi.dwSize.X < 40) ? 40 : csbi.dwSize.X;
+    return (csbi.dwSize.X - 1 < 40) ? 40 : csbi.dwSize.X - 1;
   return 80;
 #else
 return 80;

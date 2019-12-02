@@ -49,6 +49,7 @@ class Arg
   std::string d_exportcsv;
   std::string d_exportxml;
   std::string d_runsqlquery;
+  std::string d_runprettysqlquery;
   bool d_showprogress;
   bool d_removedoubles;
   bool d_assumebadframesizeonbadmac;
@@ -75,6 +76,7 @@ class Arg
   inline std::string const &exportcsv() const;
   inline std::string const &exportxml() const;
   inline std::string const &runsqlquery() const;
+  inline std::string const &runprettysqlquery() const;
   inline bool showprogress() const;
   inline bool removedoubles() const;
   inline bool assumebadframesizeonbadmac() const;
@@ -174,6 +176,11 @@ inline std::string const &Arg::exportxml() const
 inline std::string const &Arg::runsqlquery() const
 {
   return d_runsqlquery;
+}
+
+inline std::string const &Arg::runprettysqlquery() const
+{
+  return d_runprettysqlquery;
 }
 
 inline bool Arg::showprogress() const

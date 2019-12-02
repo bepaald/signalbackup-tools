@@ -40,6 +40,7 @@ Arg::Arg(int argc, char *argv[])
   d_exportcsv(std::string()),
   d_exportxml(std::string()),
   d_runsqlquery(std::string()),
+  d_runprettysqlquery(std::string()),
   d_showprogress(true),
   d_removedoubles(false),
   d_assumebadframesizeonbadmac(false),
@@ -206,6 +207,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
         d_runsqlquery = arguments[++i];
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--runprettysqlquery")
+    {
+      if (i < arguments.size() - 1)
+        d_runprettysqlquery = arguments[++i];
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;

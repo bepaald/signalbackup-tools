@@ -64,10 +64,11 @@ class SqliteDB
    private:
     std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
-    inline bool supportsAnsi() const;
+    bool supportsAnsi() const;
     bool isTerminal() const;
     inline bool useEscapeCodes() const;
     int availableWidth() const;
+    inline uint64_t charCount(std::string const &utf8) const;
   };
 
  private:
@@ -289,32 +290,35 @@ inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) cons
   return d_values[row];
 }
 
-// This function was taken from https://github.com/agauniyal/rang/
-// Used here to (poorly!) detect support for ansi escape codes
-inline bool SqliteDB::QueryResults::supportsAnsi() const
-{
-  static const bool result = []
-                             {
-                               const char *Terms[]
-                                 = { "ansi",    "color",  "console", "cygwin", "gnome",
-                                     "konsole", "kterm",  "linux",   "msys",   "putty",
-                                     "rxvt",    "screen", "vt100",   "xterm" };
-                               const char *env_p = std::getenv("TERM");
-                               if (env_p == nullptr)
-                                 return false;
-                               return std::any_of(std::begin(Terms), std::end(Terms),
-                                                  [&](const char *term)
-                                                  {
-                                                    return std::strstr(env_p, term) != nullptr;
-                                                  });
-                             }();
-  return result;
-}
-
-
 bool SqliteDB::QueryResults::useEscapeCodes() const
 {
   return supportsAnsi() && isTerminal();
+}
+
+/*
+  If you know that the data is UTF-8, then you just have to check the high bit:
+
+  0xxxxxxx = single-byte ASCII character
+  1xxxxxxx = part of multi-byte character
+
+  Or, if you need to distinguish lead/trail bytes:
+
+  10xxxxxx = 2nd, 3rd, or 4th byte of multi-byte character
+  110xxxxx = 1st byte of 2-byte character
+  1110xxxx = 1st byte of 3-byte character
+  11110xxx = 1st byte of 4-byte character
+*/
+inline uint64_t SqliteDB::QueryResults::charCount(std::string const &utf8) const
+{
+  uint64_t ret = utf8.length();
+  for (uint i = 0; i < utf8.size(); ++i)
+    if ((utf8[i] & 0b11111000) == 0b11110000)
+      ret -= 3;
+    else if ((utf8[i] & 0b11110000) == 0b11100000)
+      ret -= 2;
+    else if ((utf8[i] & 0b11100000) == 0b11000000)
+      --ret;
+  return ret;
 }
 
 #endif
