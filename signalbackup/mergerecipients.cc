@@ -62,7 +62,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   // change quote authors:
   for (uint i = 0; i < addresses.size() - 1; ++i)
   {
-    d_database.exec("UPDATE mms SET quote_author = ?, WHERE quote_author = ?", {targetaddr, addresses[i]});
+    d_database.exec("UPDATE mms SET quote_author = ? WHERE quote_author = ?", {targetaddr, addresses[i]});
     std::cout << "Updated " << d_database.changed() << " quotes in 'mms' table" << std::endl;
   }
 
