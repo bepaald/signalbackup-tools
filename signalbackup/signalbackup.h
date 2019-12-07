@@ -233,15 +233,15 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
         return false;
       newframe->setNewData(field, decdata.first, decdata.second);
     }
-    else if (type == "uint32")
-    {
-      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoul(datastr)));
-      if (!decdata.first)
-        return false;
-      newframe->setNewData(field, decdata.first, decdata.second);
-    }
-    else if (type == "uint64")
-    {
+    // else if (type == "uint32")
+    // {
+    //   std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoul(datastr)));
+    //   if (!decdata.first)
+    //     return false;
+    //   newframe->setNewData(field, decdata.first, decdata.second);
+    // }
+    else if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
+    {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
       std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
       if (!decdata.first)
         return false;

@@ -128,7 +128,7 @@ inline std::pair<unsigned char *, uint64_t> DatabaseVersionFrame::getData() cons
       //uint32_t value = bytesToUint32(std::get<1>(p), std::get<2>(p));
       //datapos += setFieldAndWire(FIELD::VERSION, WIRETYPE::VARINT, data + datapos);
       //datapos += putVarInt(value, data + datapos);
-      datapos += putVarIntType(fd, data + datapos);
+    datapos += putVarIntType(fd, data + datapos);
       //}
   }
 

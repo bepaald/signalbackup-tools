@@ -26,7 +26,7 @@ bool SqliteDB::QueryResults::isTerminal() const
 #else
 #if defined(_WIN32) || defined(__MINGW64__)
   DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
-  return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg redirect to printer)...
+  return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg output is printer)...
 #endif
   return false;
 #endif

@@ -150,11 +150,11 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
     {
       if (results.valueHasType<std::string>(i, 1) &&
           (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
-           results.getValueAs<std::string>(i, 1).find("sms_fts") == 0))
+           results.getValueAs<std::string>(i, 1).starts_with("sms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                results.getValueAs<std::string>(i, 1).find("mms_fts") == 0))
+                results.getValueAs<std::string>(i, 1).starts_with("mms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
       else
       {
@@ -178,7 +178,10 @@ void SignalBackup::exportBackup(std::string const &filename, std::string const &
         table == "sessions" ||
         table.starts_with("sms_fts") ||
         table.starts_with("mms_fts") ||
-        table.starts_with("sqlite_"))
+        //table == "job_spec" ||           // this is in the official export. But it makes testing more difficult.
+        //table == "constraint_spec" ||    // it should be ok to export these (if present in source), since we are
+        //table == "dependency_spec" ||    // only dealing with exported backups (not from live installations) and the
+        table.starts_with("sqlite_"))      // official import should be able to deal with them
       continue;
 
     d_database.exec("SELECT * FROM " + table, &results);
