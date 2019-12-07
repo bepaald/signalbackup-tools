@@ -128,21 +128,25 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
 
   std::cout << "Opening from dir!" << std::endl;
 
+  std::cout << "Reading database..." << std::endl;
   SqliteDB database(inputdir + "/database.sqlite");
   if (!SqliteDB::copyDb(database, d_database))
     return;
 
+  std::cout << "Reading HeaderFrame" << std::endl;
   if (!setFrameFromFile(&d_headerframe, inputdir + "/Header.sbf"))
     return;
 
   //d_headerframe->printInfo();
 
+  std::cout << "Reading DatabaseVersionFrame" << std::endl;
   if (!setFrameFromFile(&d_databaseversionframe, inputdir + "/DatabaseVersion.sbf"))
     return;
 
   d_databaseversion = d_databaseversionframe->version();
   //d_databaseversionframe->printInfo();
 
+  std::cout << "Reading SharedPreferenceFrame(s)" << std::endl;
   int idx = 0;
   while (true)
   {
@@ -156,12 +160,15 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
     ++idx;
   }
 
+  std::cout << "Reading EndFrame" << std::endl;
   if (!setFrameFromFile(&d_endframe, inputdir + "/End.sbf"))
     return;
 
   //d_endframe->printInfo();
 
-  // avatars
+  // avatars // NOTE, avatars are read in two
+  if (!d_showprogress)
+    std::cout << "Reading AvatarFrames" << std::flush;
   std::error_code ec;
   std::filesystem::directory_iterator dirit(inputdir, ec);
   std::vector<std::string> avatarfiles;
@@ -176,8 +183,15 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
 
   std::sort(avatarfiles.begin(), avatarfiles.end());
 
-  for (auto const &file : avatarfiles)
+  for (unsigned int i = 0; auto const &file : avatarfiles)
   {
+    if (d_showprogress)
+    {
+      std::cout << "\33[2K\rReading AvatarFrames: " << ++i << "/" << avatarfiles.size() << std::flush;
+      if (i == avatarfiles.size())
+        std::cout << std::endl;
+    }
+
     std::filesystem::path avatarframe(file);
     std::filesystem::path avatarbin(file);
     avatarbin.replace_extension(".bin");
@@ -194,6 +208,7 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
     d_avatars.emplace_back(name, temp.release());
   }
 
+  std::cout << "Reading AttachmentFrames" << std::endl;
   //attachments
   dirit = std::filesystem::directory_iterator(inputdir, ec);
   if (ec)
