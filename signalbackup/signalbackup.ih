@@ -25,6 +25,7 @@
 #include <locale>
 #include <iomanip>
 #include <regex>
+#include <set>
 
 #include "../msgtypes/msgtypes.h"
 #include "../protobufparser/protobufparser.h"

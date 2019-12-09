@@ -183,6 +183,12 @@ int main(int argc, char *argv[])
     sb->mergeRecipients(arg.mergerecipients(), arg.editgroupmembers());
   }
 
+  if (!arg.mergegroups().empty())
+  {
+    std::cout << "Merging groups..." << std::endl;
+    sb->mergeGroups(arg.mergegroups());
+  }
+
   if (!arg.runsqlquery().empty())
     sb->runSimpleQuery(arg.runsqlquery(), false);
 
@@ -192,10 +198,17 @@ int main(int argc, char *argv[])
   // export output
   if (!arg.output().empty())
   {
+    bool writeresult = false;
     if (!arg.opassword().empty())
-      sb->exportBackup(arg.output(), arg.opassword(), SignalBackup::DROPATTACHMENTDATA);
+      writeresult = sb->exportBackup(arg.output(), arg.opassword(), SignalBackup::DROPATTACHMENTDATA);
     else
-      sb->exportBackup(arg.output());
+      writeresult = sb->exportBackup(arg.output());
+
+    if (!writeresult)
+    {
+      std::cout << "Failed to export backup to '" << arg.output() << "'" << std::endl;
+      return 1;
+    }
   }
 
   //sb->cropToThread({8, 10, 11});

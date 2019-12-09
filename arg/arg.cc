@@ -37,6 +37,7 @@ Arg::Arg(int argc, char *argv[])
   d_elbrutalo(false),
   d_mergerecipients(std::vector<std::string>()),
   d_editgroupmembers(false),
+  d_mergegroups(std::vector<std::string>()),
   d_exportcsv(std::string()),
   d_exportxml(std::string()),
   d_runsqlquery(std::string()),
@@ -185,6 +186,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-editgroupmembers")
     {
       d_editgroupmembers = false;
+      continue;
+    }
+    if (option == "--mergegroups")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_mergegroups))
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+      }
+      else
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;
     }
     if (option == "--exportcsv")

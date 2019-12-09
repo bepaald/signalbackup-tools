@@ -46,6 +46,7 @@ class Arg
   bool d_elbrutalo;
   std::vector<std::string> d_mergerecipients;
   bool d_editgroupmembers;
+  std::vector<std::string> d_mergegroups;
   std::string d_exportcsv;
   std::string d_exportxml;
   std::string d_runsqlquery;
@@ -73,6 +74,7 @@ class Arg
   inline bool elbrutalo() const;
   inline std::vector<std::string> const &mergerecipients() const;
   inline bool editgroupmembers() const;
+  inline std::vector<std::string> const &mergegroups() const;
   inline std::string const &exportcsv() const;
   inline std::string const &exportxml() const;
   inline std::string const &runsqlquery() const;
@@ -161,6 +163,11 @@ inline std::vector<std::string> const &Arg::mergerecipients() const
 inline bool Arg::editgroupmembers() const
 {
   return d_editgroupmembers;
+}
+
+inline std::vector<std::string> const &Arg::mergegroups() const
+{
+  return d_mergegroups;
 }
 
 inline std::string const &Arg::exportcsv() const
