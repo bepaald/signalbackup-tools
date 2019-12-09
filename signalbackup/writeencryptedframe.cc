@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame)
+bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame)
 {
 
   // if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
@@ -31,16 +31,28 @@ void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
 
   std::pair<unsigned char *, uint64_t> framedata = frame->getData();
   if (!framedata.first)
-    return;
+  {
+    std::cout << "Failed to get framedata from frame" << std::endl;
+    return false;
+  }
 
   std::pair<unsigned char *, uint64_t> encryptedframe = d_fe.encryptFrame(framedata);
   delete[] framedata.first;
 
   if (!encryptedframe.first)
-    return;
+  {
+    std::cout << "Failed to encrypt framedata" << std::endl;
+    return false;
+  }
 
-  writeFrameDataToFile(outputfile, encryptedframe);
+  bool writeok = writeFrameDataToFile(outputfile, encryptedframe);
   delete[] encryptedframe.first;
+
+  if (!writeok)
+  {
+    std::cout << "Failed to write encrypted frame data to file" << std::endl;
+    return false;
+  }
 
   // if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
   // {
@@ -58,5 +70,13 @@ void SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
     //std::cout << "Writing attachment data..." << std::endl;
     outputfile.write(reinterpret_cast<char *>(newadata.first), newadata.second);
     delete[] newadata.first;
+
+    if (!outputfile.good())
+    {
+      std::cout << "Failed to write encrypted attachmentdata to file" << std::endl;
+      return false;
+    }
   }
+
+  return true;
 }

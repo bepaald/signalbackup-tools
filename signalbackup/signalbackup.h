@@ -61,8 +61,8 @@ class SignalBackup
  public:
   SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false, std::vector<long long int> editattachments = std::vector<long long int>());
   explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
-  void exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
-  void exportBackup(std::string const &directory);
+  [[nodiscard]] bool exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
+  [[nodiscard]] bool exportBackup(std::string const &directory);
   void exportXml(std::string const &filename) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
@@ -78,6 +78,7 @@ class SignalBackup
   void fillThreadTableFromMessages();
   inline void addEndFrame();
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
+  void mergeGroups(std::vector<std::string> const &groups);
   inline void runSimpleQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
   inline std::vector<int> threadIds() const;
@@ -88,11 +89,11 @@ class SignalBackup
   long long int getMinUsedId(std::string const &table);
   inline bool checkFileExists(std::string const &filename) const;
   template <typename T>
-  inline void writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
+  [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
   template <typename T>
-  inline void writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
-  inline void writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
-  void writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
+  [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
+  [[nodiscard]] inline bool writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
+  [[nodiscard]] bool writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers, std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
   template <class T>
@@ -125,27 +126,28 @@ inline bool SignalBackup::checkFileExists(std::string const &) const
 }
 
 template <typename T>
-inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, T *frame) const
+inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, T *frame) const
 {
   std::unique_ptr<T> temp(frame);
-  writeRawFrameDataToFile(outputfile, temp);
+  bool res = writeRawFrameDataToFile(outputfile, temp);
   temp.release();
+  return res;
 }
 
 template <class T>
-inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const
+inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const
 {
   if (!frame)
   {
     std::cout << "Error: asked to write nullptr frame to disk" << std::endl;
-    return;
+    return false;
   }
 
   std::ofstream rawframefile(outputfile, std::ios_base::binary);
   if (!rawframefile.is_open())
   {
     std::cout << "Error opening file for writing: " << outputfile << std::endl;
-    return;
+    return false;
   }
 
   if (frame->frameType() == BackupFrame::FRAMETYPE::END)
@@ -156,13 +158,19 @@ inline void SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
     std::string d = t->getHumanData();
     rawframefile << d;
   }
+  return rawframefile.good();
 }
 
-inline void SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const
+inline bool SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const
 {
   uint32_t besize = bepaald::swap_endian(static_cast<uint32_t>(data.second));
-  outputfile.write(reinterpret_cast<char *>(&besize), sizeof(uint32_t));
-  outputfile.write(reinterpret_cast<char *>(data.first), data.second);
+  // write 4 byte size header
+  if (!outputfile.write(reinterpret_cast<char *>(&besize), sizeof(uint32_t)))
+    return false;
+  // write data
+  if (!outputfile.write(reinterpret_cast<char *>(data.first), data.second))
+    return false;
+  return true;
 }
 
 template <typename T>
