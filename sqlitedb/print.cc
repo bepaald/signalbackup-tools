@@ -21,6 +21,18 @@
 
 void SqliteDB::QueryResults::print() const
 {
+
+  if (rows() == 0 && columns() == 0)
+  {
+    std::cout << "(no results)" << std::endl;
+    return;
+  }
+
+
+  for (unsigned int i = 0; i < d_headers.size(); ++i)
+    std::cout << d_headers[i] << ((i < d_headers.size() - 1) ? "|" : "");
+  std::cout << std::endl;
+
   for (unsigned int i = 0; i < rows(); ++i)
   {
     for (uint j = 0; j < columns(); ++j)
@@ -40,7 +52,7 @@ void SqliteDB::QueryResults::print() const
         std::cout << "(unhandled type)";
 
       if (j < columns() - 1)
-        std::cout << ",";
+        std::cout << "|";
     }
     std::cout << std::endl;
   }
