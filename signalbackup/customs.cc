@@ -117,6 +117,9 @@ void SignalBackup::esokrates()
   for (uint i = 0; i < ids_to_remove.size(); ++i)
     ids_to_remove_str += bepaald::toString(ids_to_remove[i]) + ((i < ids_to_remove.size() - 1) ? "," : "");
 
+  std::cout << std::endl << std::endl << "About to remove messages from 'sms' table with _id's = " << std::endl;
+  std::cout << ids_to_remove_str << std::endl << std::endl;
+
   std::cout << "Deleting " << ids_to_remove.size() << " duplicates..." << std::endl;
   d_database.exec("DELETE FROM sms WHERE _id IN (" + ids_to_remove_str + ")");
   std::cout << "Deleted " << d_database.changed() << " entries" << std::endl;
