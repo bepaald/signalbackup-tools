@@ -51,13 +51,21 @@ void SignalBackup::esokrates()
     long long int type = std::any_cast<long long int>(res.value(i, "type"));
 
     SqliteDB::QueryResults res2;
-    d_database.exec("SELECT _id "
-                    "FROM sms "
-                    "WHERE (type & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
-                    "AND date = " + bepaald::toString(date) + " "
-                    + (body_is_null ? ("AND body IS NULL ") : std::string("AND body = '" + body + "' ")) +
-                    "AND address = " + address + " "
-                    , &res2);
+    if (body_is_null)
+      d_database.exec("SELECT _id "
+                      "FROM sms "
+                      "WHERE (type & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
+                      "AND date = ? "
+                      "AND body IS NULL "
+                      "AND address = ?", {date, address}, &res);
+    else // !body_is_null
+      d_database.exec("SELECT _id "
+                      "FROM sms "
+                      "WHERE (type & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
+                      "AND date = ? "
+                      "AND body = ? "
+                      "AND address = ?", {date, body, address}, &res2);
+
     if (res2.rows() > 1)
     {
       std::cout << "Unexpectedley got multiple results when searching for duplicates... ignoring" << std::endl;
