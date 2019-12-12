@@ -200,6 +200,13 @@ int main(int argc, char *argv[])
     sb->mergeGroups(arg.mergegroups());
   }
 
+  if (!arg.runsqlquery().empty())
+    for (uint i = 0; i < arg.runsqlquery().size(); ++i)
+      sb->runQuery(arg.runsqlquery()[i], false);
+
+  if (!arg.runprettysqlquery().empty())
+    for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
+      sb->runQuery(arg.runprettysqlquery()[i], true);
 
 
 
@@ -220,14 +227,6 @@ int main(int argc, char *argv[])
 
 
 
-
-  if (!arg.runsqlquery().empty())
-    for (uint i = 0; i < arg.runsqlquery().size(); ++i)
-      sb->runQuery(arg.runsqlquery()[i], false);
-
-  if (!arg.runprettysqlquery().empty())
-    for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
-      sb->runQuery(arg.runprettysqlquery()[i], true);
 
   // export output
   if (!arg.output().empty())

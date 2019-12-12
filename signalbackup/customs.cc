@@ -21,7 +21,6 @@
   NOTE: THIS IS A CUSTOM FUNCTION IT WILL BE REMOVED WITHOUT NOTIFICATION IN THE NEAR FUTURE
 */
 
-
 #include "signalbackup.ih"
 
 void SignalBackup::esokrates()
@@ -57,7 +56,7 @@ void SignalBackup::esokrates()
                       "WHERE (type & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
                       "AND date = ? "
                       "AND body IS NULL "
-                      "AND address = ?", {date, address}, &res);
+                      "AND address = ?", {date, address}, &res2);
     else // !body_is_null
       d_database.exec("SELECT _id "
                       "FROM sms "
@@ -83,13 +82,20 @@ void SignalBackup::esokrates()
     }
 
 
-    d_database.exec("SELECT _id "
-                    "FROM mms "
-                    "WHERE (msg_box & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
-                    "AND date = " + bepaald::toString(date) + " "
-                    + (body_is_null ? ("AND body IS NULL ") : std::string("AND body = '" + body + "' ")) +
-                    "AND address = " + address + " "
-                    , &res2);
+    if (body_is_null)
+      d_database.exec("SELECT _id "
+                      "FROM mms "
+                      "WHERE (msg_box & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
+                      "AND date = ? "
+                      "AND body IS NULL "
+                      "AND address = ?", {date, address}, &res2);
+    else // !body_is_null
+      d_database.exec("SELECT _id "
+                      "FROM mms "
+                      "WHERE (msg_box & " + bepaald::toString(Types::SECURE_MESSAGE_BIT) + ") IS NOT 0 "
+                      "AND date = ? "
+                      "AND body = ? "
+                      "AND address = ?", {date, body, address}, &res2);
     if (res2.rows() > 1)
     {
       std::cout << "Unexpectedley got multiple results when searching for duplicates... ignoring" << std::endl;
