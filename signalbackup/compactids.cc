@@ -29,6 +29,7 @@ void SignalBackup::compactIds(std::string const &table)
   // d_database.exec("SELECT _id FROM " + table, &results);
   // results.prettyPrint();
 
+  // gets first available _id in table
   d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
   while (results.rows() > 0 && results.valueHasType<long long int>(0, 0))
   {
@@ -38,11 +39,9 @@ void SignalBackup::compactIds(std::string const &table)
     if (results.rows() == 0 || !results.valueHasType<long long int>(0, 0))
       break;
     long long int valuetochange = results.getValueAs<long long int>(0, 0);
-
     //std::cout << "Changing _id : " << valuetochange << " -> " << nid << std::endl;
 
     d_database.exec("UPDATE " + table + " SET _id = ? WHERE _id = ?", {nid, valuetochange});
-
 
     if (table == "mms")
     {
@@ -65,6 +64,7 @@ void SignalBackup::compactIds(std::string const &table)
       }
     }
 
+    // gets first available _id in table
     d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
   }
 

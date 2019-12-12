@@ -54,6 +54,8 @@ struct Types
   static uint64_t constexpr GROUP_QUIT_BIT              = 0x20000;
   static uint64_t constexpr EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
 
+  static uint64_t constexpr SECURE_MESSAGE_BIT = 0x800000;
+
  public:
   inline static bool isGroupUpdate(uint64_t type)
   {
@@ -119,6 +121,12 @@ struct Types
   {
     return (type & KEY_EXCHANGE_IDENTITY_DEFAULT_BIT) != 0;
   }
+
+  inline static bool isSecureType(long type)
+  {
+    return (type & SECURE_MESSAGE_BIT) != 0;
+  }
+
 };
 
 #endif

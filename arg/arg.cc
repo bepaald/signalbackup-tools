@@ -40,12 +40,13 @@ Arg::Arg(int argc, char *argv[])
   d_mergegroups(std::vector<std::string>()),
   d_exportcsv(std::string()),
   d_exportxml(std::string()),
-  d_runsqlquery(std::string()),
-  d_runprettysqlquery(std::string()),
+  d_runsqlquery(std::vector<std::string>()),
+  d_runprettysqlquery(std::vector<std::string>()),
   d_showprogress(true),
   d_removedoubles(false),
   d_assumebadframesizeonbadmac(false),
-  d_editattachmentsize(std::vector<long long int>())
+  d_editattachmentsize(std::vector<long long int>()),
+  d_esokrates(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -218,7 +219,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--runsqlquery")
     {
       if (i < arguments.size() - 1)
-        d_runsqlquery = arguments[++i];
+        d_runsqlquery.push_back(arguments[++i]);
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;
@@ -226,7 +227,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--runprettysqlquery")
     {
       if (i < arguments.size() - 1)
-        d_runprettysqlquery = arguments[++i];
+        d_runprettysqlquery.push_back(arguments[++i]);
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
       continue;
@@ -270,6 +271,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+      continue;
+    }
+    if (option == "--esokrates")
+    {
+      d_esokrates = true;
+      continue;
+    }
+    if (option == "--no-esokrates")
+    {
+      d_esokrates = false;
       continue;
     }
     if (option[0] != '-')
