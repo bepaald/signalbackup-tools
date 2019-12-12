@@ -79,7 +79,7 @@ class SignalBackup
   inline void addEndFrame();
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
   void mergeGroups(std::vector<std::string> const &groups);
-  inline void runSimpleQuery(std::string const &q, bool pretty = true) const;
+  inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
   inline std::vector<int> threadIds() const;
 
@@ -276,11 +276,22 @@ inline void SignalBackup::addEndFrame()
   d_endframe.reset(new EndFrame(nullptr, 1ull));
 }
 
-inline void SignalBackup::runSimpleQuery(std::string const &q, bool pretty) const
+inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
 {
-  std::cout << "Executing query: " << q << std::endl;
+  std::cout << " * Executing query: " << q << std::endl;
   SqliteDB::QueryResults res;
   d_database.exec(q, &res);
+
+  std::string q_comm = q.substr(0, STRLEN("DELETE")); // delete, insert and update are same length...
+  std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) { ch = std::toupper(ch); });
+
+  if (q_comm == "DELETE" || q_comm == "INSERT" || q_comm == "UPDATE")
+  {
+    std::cout << "Modified " << d_database.changed() << " rows" << std::endl;
+    if (res.rows() == 0 && res.columns() == 0)
+      return;
+  }
+
   if (pretty)
     res.prettyPrint();
   else
