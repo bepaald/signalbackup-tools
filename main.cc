@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
                                !arg.exportcsv().empty() || !arg.exportxml().empty() ||
                                !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
                                !arg.croptodates().empty() || arg.removedoubles() ||
-                               !arg.runprettysqlquery().empty())
+                               !arg.runprettysqlquery().empty() || arg.esokrates())
                               ? SignalBackup::LOWMEM : false, arg.showprogress(),
                               arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
 
@@ -200,11 +200,34 @@ int main(int argc, char *argv[])
     sb->mergeGroups(arg.mergegroups());
   }
 
+
+
+
+
+
+
+
+
+  // custom for esokrates
+  if (arg.esokrates())
+    sb->esokrates();
+
+
+
+
+
+
+
+
+
+
   if (!arg.runsqlquery().empty())
-    sb->runSimpleQuery(arg.runsqlquery(), false);
+    for (uint i = 0; i < arg.runsqlquery().size(); ++i)
+      sb->runSimpleQuery(arg.runsqlquery()[i], false);
 
   if (!arg.runprettysqlquery().empty())
-    sb->runSimpleQuery(arg.runprettysqlquery(), true);
+    for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
+      sb->runSimpleQuery(arg.runprettysqlquery()[i], true);
 
   // export output
   if (!arg.output().empty())

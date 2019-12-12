@@ -83,6 +83,8 @@ class SignalBackup
   void removeDoubles();
   inline std::vector<int> threadIds() const;
 
+  void esokrates();
+
  private:
   void updateThreadsEntries(long long int thread = -1);
   long long int getMaxUsedId(std::string const &table);

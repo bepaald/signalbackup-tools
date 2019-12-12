@@ -49,12 +49,13 @@ class Arg
   std::vector<std::string> d_mergegroups;
   std::string d_exportcsv;
   std::string d_exportxml;
-  std::string d_runsqlquery;
-  std::string d_runprettysqlquery;
+  std::vector<std::string> d_runsqlquery;
+  std::vector<std::string> d_runprettysqlquery;
   bool d_showprogress;
   bool d_removedoubles;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
+  bool d_esokrates;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -77,12 +78,13 @@ class Arg
   inline std::vector<std::string> const &mergegroups() const;
   inline std::string const &exportcsv() const;
   inline std::string const &exportxml() const;
-  inline std::string const &runsqlquery() const;
-  inline std::string const &runprettysqlquery() const;
+  inline std::vector<std::string> const &runsqlquery() const;
+  inline std::vector<std::string> const &runprettysqlquery() const;
   inline bool showprogress() const;
   inline bool removedoubles() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
+  inline bool esokrates() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -180,12 +182,12 @@ inline std::string const &Arg::exportxml() const
   return d_exportxml;
 }
 
-inline std::string const &Arg::runsqlquery() const
+inline std::vector<std::string> const &Arg::runsqlquery() const
 {
   return d_runsqlquery;
 }
 
-inline std::string const &Arg::runprettysqlquery() const
+inline std::vector<std::string> const &Arg::runprettysqlquery() const
 {
   return d_runprettysqlquery;
 }
@@ -208,6 +210,11 @@ inline bool Arg::assumebadframesizeonbadmac() const
 inline std::vector<long long int> const &Arg::editattachmentsize() const
 {
   return d_editattachmentsize;
+}
+
+inline bool Arg::esokrates() const
+{
+  return d_esokrates;
 }
 
 inline bool Arg::ok() const
