@@ -332,7 +332,7 @@ The program can run any sql queries on the database in the backup file and save 
 
 ```
 # delete all sms and mms messages from one thread:
-signalbackup-tools [input] [password] --runsqlquery "DELETE * FROM sms WHERE thread_id = 1" --runsqlquery "DELETE * FROM mms WHERE thread_id = 1" --output [output] (--opassword [password])
+signalbackup-tools [input] [password] --runsqlquery "DELETE * FROM sms WHERE thread_id = 1" --runsqlquery "DELETE * FROM mms WHERE thread_id = 1" --output [output] (--opassword [newpassword])
 ```
 
 If you also need to edit the attachments, dump the backup to directory first (as described above) and do whatever you want, but realize when editing the .bin file, it will usually require changes to also be made to the .sbf file and the sql database to end up with a valid database.
