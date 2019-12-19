@@ -23,18 +23,19 @@ Arg::Arg(int argc, char *argv[])
   :
   d_ok(false),
   d_positionals(0),
+  d_maxpositional(2),
   d_importthreads(std::vector<int>()),
   d_input(std::string()),
   d_password(std::string()),
   d_output(std::string()),
   d_opassword(std::string()),
+  d_overwrite(false),
   d_source(std::string()),
   d_sourcepassword(std::string()),
   d_listthreads(false),
   d_generatefromtruncated(false),
   d_croptothreads(std::vector<long long int>()),
   d_croptodates(std::vector<std::string>()),
-  d_elbrutalo(false),
   d_mergerecipients(std::vector<std::string>()),
   d_editgroupmembers(false),
   d_mergegroups(std::vector<std::string>()),
@@ -46,7 +47,7 @@ Arg::Arg(int argc, char *argv[])
   d_removedoubles(false),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
-  d_esokrates(false)
+  d_fast(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -59,6 +60,9 @@ Arg::Arg(int argc, char *argv[])
 
 bool Arg::parseArgs(std::vector<std::string> const &arguments)
 {
+
+  bool ok = true;
+
   for (size_t i = 0; i < arguments.size(); ++i)
   {
     std::string option = arguments[i];
@@ -71,17 +75,26 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         {
           int tmp;
           if (!ston(&tmp, std::string("-1")))
+          {
             std::cerr << "Bad special value in argument spec file!" << std::endl;
+            ok = false;
+          }
           d_importthreads.clear();
           d_importthreads.push_back(tmp);
           ++i;
           continue;
         }
         if (!parseNumberList(arguments[++i], &d_importthreads))
+        {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "-o" || option == "--output")
@@ -89,7 +102,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_output = arguments[++i];
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "-op" || option == "--opassword")
@@ -97,7 +113,20 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_opassword = arguments[++i];
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--overwrite")
+    {
+      d_overwrite = true;
+      continue;
+    }
+    if (option == "--no-overwrite")
+    {
+      d_overwrite = false;
       continue;
     }
     if (option == "--source")
@@ -105,7 +134,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_source = arguments[++i];
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--sourcepassword")
@@ -113,7 +145,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_sourcepassword = arguments[++i];
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--listthreads")
@@ -141,10 +176,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!parseNumberList(arguments[++i], &d_croptothreads))
+        {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--croptodates")
@@ -152,20 +193,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!parseStringList(arguments[++i], &d_croptodates))
+        {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-      continue;
-    }
-    if (option == "--elbrutalo")
-    {
-      d_elbrutalo = true;
-      continue;
-    }
-    if (option == "--no-elbrutalo")
-    {
-      d_elbrutalo = false;
+        ok = false;
+      }
       continue;
     }
     if (option == "--mergerecipients")
@@ -173,10 +210,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!parseStringList(arguments[++i], &d_mergerecipients))
+        {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--editgroupmembers")
@@ -194,10 +237,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!parseStringList(arguments[++i], &d_mergegroups))
+        {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--exportcsv")
@@ -205,7 +254,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_exportcsv = arguments[++i];
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--exportxml")
@@ -213,7 +265,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_exportxml = arguments[++i];
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--runsqlquery")
@@ -221,7 +276,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_runsqlquery.push_back(arguments[++i]);
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--runprettysqlquery")
@@ -229,7 +287,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
         d_runprettysqlquery.push_back(arguments[++i]);
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--showprogress")
@@ -267,24 +328,35 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!parseNumberList(arguments[++i], &d_editattachmentsize))
+        {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
+      {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
-    if (option == "--esokrates")
+    if (option == "--fast")
     {
-      d_esokrates = true;
+      d_fast = true;
       continue;
     }
-    if (option == "--no-esokrates")
+    if (option == "--no-fast")
     {
-      d_esokrates = false;
+      d_fast = false;
       continue;
     }
     if (option[0] != '-')
     {
+      if (d_positionals >= 2)
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Unknown option. ]" << std::endl;
+        ok = false;
+      }
       if (d_positionals == 0)
       {
         d_input = arguments[i];
@@ -296,7 +368,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       ++d_positionals;
       continue;
     }
+    std::cerr << "[ Error parsing command line option `" << option << "': Unknown option. ]" << std::endl;
+    ok = false;
 
   }
-  return true;
+  return ok;
 }

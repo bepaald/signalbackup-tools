@@ -19,111 +19,7 @@
 
 #include "signalbackup.ih"
 
-SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress, bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
-  :
-  d_database(":memory:"),
-  d_fd(new FileDecryptor(filename, passphrase, issource, assumebadframesizeonbadmac, editattachments)),
-  d_passphrase(passphrase),
-  d_ok(false),
-  d_databaseversion(-1),
-  d_showprogress(showprogress)
-{
-  if (!d_fd->ok())
-  {
-    std::cout << "Failed to create filedecrypter" << std::endl;
-    return;
-  }
-
-  uint64_t totalsize = d_fd->total();
-
-  std::cout << "Reading backup file..." << std::endl;
-  std::unique_ptr<BackupFrame> frame(nullptr);
-
-  d_database.exec("BEGIN TRANSACTION");
-
-  while ((frame = d_fd->getFrame())) // deal with bad mac??
-  {
-    //std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
-    //frame->printInfo();
-
-    if (d_fd->badMac())
-      dumpInfoOnBadFrame(&frame);
-
-    if (d_showprogress)
-      std::cout << "\33[2K\rFRAME " << frame->frameNumber() << " ("
-                << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
-                << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
-                << "... " << std::flush;
-
-    if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
-    {
-      d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
-      //d_headerframe->printInfo();
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
-    {
-      d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
-      d_databaseversion = d_databaseversionframe->version();
-      //std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
-    {
-      SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
-      if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
-        d_database.exec(s->bindStatement(), s->parameters());
-      #ifdef BUILT_FOR_TESTING
-      else if (s->frameNumber() == 2 && s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
-      {
-        // force early creation of sqlite_sequence table, this is completely unnessecary and only used
-        // to get byte-identical backups during testing
-        std::cout << "Forcing early creation of sqlite_sequence table..." << std::endl;
-        d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
-        d_database.exec("DROP TABLE dummy");
-      }
-      #endif
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
-    {
-      AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(frame.release());
-      d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
-    {
-      AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
-      d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
-      d_sharedpreferenceframes.emplace_back(reinterpret_cast<SharedPrefFrame *>(frame.release()));
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
-    {
-      StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
-      d_stickers.emplace(s->rowId(), s);
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::END)
-      d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
-  }
-
-  d_database.exec("COMMIT");
-
-  if (!d_badattachments.empty())
-  {
-    std::cout << "Attachment data with BAD MAC was encountered:" << std::endl;
-    dumpInfoOnBadFrames();
-  }
-  std::cout << "" << std::endl;
-
-  std::cout << "done!" << std::endl;
-
-  d_ok = true;
-}
-
-SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
-  :
-  d_database(":memory:"),
-  d_fe(),
-  d_ok(false),
-  d_databaseversion(-1),
-  d_showprogress(showprogress)
+void SignalBackup::initFromDir(std::string const &inputdir)
 {
 
   std::cout << "Opening from dir!" << std::endl;
@@ -166,7 +62,7 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
 
   //d_endframe->printInfo();
 
-  // avatars // NOTE, avatars are read in two
+  // avatars // NOTE, avatars are read in two passes to force correct order
   if (!d_showprogress)
     std::cout << "Reading AvatarFrames" << std::flush;
   std::error_code ec;
@@ -199,7 +95,8 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
     std::unique_ptr<AvatarFrame> temp;
     if (!setFrameFromFile(&temp, avatarframe.string()))
       return;
-    temp->setAttachmentData(avatarbin.string());
+    if (!temp->setAttachmentData(avatarbin.string()))
+      return;
 
     //temp->printInfo();
 
@@ -228,7 +125,8 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
     std::unique_ptr<AttachmentFrame> temp;
     if (!setFrameFromFile(&temp, attframe.string()))
       return;
-    temp->setAttachmentData(attbin.string());
+    if (!temp->setAttachmentData(attbin.string()))
+      return;
 
     uint64_t rowid = temp->rowId();
     uint64_t attachmentid = temp->attachmentId();
@@ -254,7 +152,8 @@ SignalBackup::SignalBackup(std::string const &inputdir, bool showprogress)
     std::unique_ptr<StickerFrame> temp;
     if (!setFrameFromFile(&temp, stickerframe.string()))
       return;
-    temp->setAttachmentData(stickerbin.string());
+    if (!temp->setAttachmentData(stickerbin.string()))
+      return;
 
     uint64_t rowid = temp->rowId();
     d_stickers.emplace(std::make_pair(rowid, temp.release()));

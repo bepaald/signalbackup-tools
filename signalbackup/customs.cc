@@ -18,11 +18,12 @@
 */
 
 /*
-  NOTE: THIS IS A CUSTOM FUNCTION IT WILL BE REMOVED WITHOUT NOTIFICATION IN THE NEAR FUTURE
+  NOTE: THESE ARE CUSTOM FUNCTIONS AND WILL BE REMOVED WITHOUT NOTIFICATION IN THE NEAR FUTURE
 */
 
 #include "signalbackup.ih"
 
+/*
 void SignalBackup::esokrates()
 {
   SqliteDB::QueryResults res;
@@ -124,3 +125,4 @@ void SignalBackup::esokrates()
   d_database.exec("DELETE FROM sms WHERE _id IN (" + ids_to_remove_str + ")");
   std::cout << "Deleted " << d_database.changed() << " entries" << std::endl;
 }
+*/

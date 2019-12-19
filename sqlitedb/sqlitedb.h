@@ -77,14 +77,14 @@ class SqliteDB
   bool d_ok;
  public:
   inline explicit SqliteDB(std::string const &name, bool readonly = true);
-  inline SqliteDB(std::pair<unsigned char *, uint64_t> *data);
+  inline explicit SqliteDB(std::pair<unsigned char *, uint64_t> *data);
   inline SqliteDB(SqliteDB const &other) = delete;
   inline SqliteDB &operator=(SqliteDB const &other) = delete;
   inline ~SqliteDB();
   inline bool ok() const;
-  inline void exec(std::string const &q, QueryResults *results = nullptr) const;
-  inline void exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
-  void exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
+  inline bool exec(std::string const &q, QueryResults *results = nullptr) const;
+  inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
+  bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
  private:
@@ -133,14 +133,14 @@ inline bool SqliteDB::ok() const
   return d_ok;
 }
 
-inline void SqliteDB::exec(std::string const &q, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, QueryResults *results) const
 {
-  exec(q, std::vector<std::any>(), results);
+  return exec(q, std::vector<std::any>(), results);
 }
 
-inline void SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results) const
 {
-  exec(q, std::vector<std::any>{param}, results);
+  return exec(q, std::vector<std::any>{param}, results);
 }
 
 template <typename T>
