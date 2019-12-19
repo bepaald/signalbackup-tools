@@ -28,7 +28,11 @@ If you manage to compile it for Windows, please let me know. I have tried cross 
 
 At the moment it has been used succesfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
 
-`signalbackups-tools [backupfile] [password] --output [newbackupfile] (--opassword [newpassword])`
+```
+signalbackups-tools [backupfile] [password] --output [newbackupfile] (--opassword [newpassword])`
+
+```
+
 
 _NOTE_: if the corruption happens outside of attachment data, which is usually unlikely, chances of recovery are much lower.
 
@@ -294,7 +298,7 @@ _NOTE: This feature is experimental (even more so than the others). I test it fa
 To crop a backup file to certain threads, run:
 
 ```
-signalbackup-tools [input] [password] --croptothreads [list-of-threads] --output [output] (--password [password])
+signalbackup-tools [input] [password] --croptothreads [list-of-threads] --output [output] (--password [newpassword])
 ```
 
 Where the list of threads are the ids as reported by `signalbackup-tools [input] [password] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`.
@@ -302,7 +306,7 @@ Where the list of threads are the ids as reported by `signalbackup-tools [input]
 To crop a backup file to certain dates, run:
 
 ```
-signalbackup-tools [input] [password] --croptodates begindate1,enddate2(,begindate2,enddate2(,...)) --output [output] (--opassword [password])
+signalbackup-tools [input] [password] --croptodates begindate1,enddate2(,begindate2,enddate2(,...)) --output [output] (--opassword [newpassword])
 ```
 
 The 'begindate' and 'enddate' must always appear in pairs and can be either in "YYYY-MM-DD hh:mm:ss" format or as a single number of [milliseconds since epoch](https://en.wikipedia.org/wiki/Unix_time). For example, the following commands are equivalent (in my time zone) and both crop the database to the messages between Sept. 18 2019 and Sept 18 2020: `--croptodates "2019-09-18 00:00:00","2020-09-18 00:00:00"` or `--croptodates 1568761200000,1600383600000`.
@@ -327,7 +331,7 @@ If you use this option and read this line, I would really appreciate it if you l
 The program can run any sql queries on the database in the backup file and save the output. If you know the schema of the database and know what you're doing, feel free to run any query and save the output:
 
 ```
-\# delete all sms and mms messages from one thread:
+# delete all sms and mms messages from one thread:
 signalbackup-tools [input] [password] --runsqlquery "DELETE * FROM sms WHERE thread_id = 1" --runsqlquery "DELETE * FROM mms WHERE thread_id = 1" --output [output] (--opassword [password])
 ```
 
