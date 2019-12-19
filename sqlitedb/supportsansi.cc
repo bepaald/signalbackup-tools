@@ -24,7 +24,7 @@
 bool SqliteDB::QueryResults::supportsAnsi() const
 {
 #if defined(_WIN32) || defined(__MINGW64__)
-  HANDLE hConsole = GetStdHanlde(STD_OUTPUT_HANDLE);
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   DWORD mode = 0;
   GetConsoleMode(hConsole, &mode);
   return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING;

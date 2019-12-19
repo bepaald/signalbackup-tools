@@ -59,10 +59,11 @@ class SignalBackup
   unsigned int d_databaseversion;
   bool d_showprogress;
  public:
-  SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false, std::vector<long long int> editattachments = std::vector<long long int>());
-  explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
-  [[nodiscard]] bool exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory = true);
-  [[nodiscard]] bool exportBackup(std::string const &directory);
+  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false, std::vector<long long int> editattachments = std::vector<long long int>());
+  //explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
+  [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite = false, bool keepattachmentdatainmemory = true);
+  [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase, bool overwrite = false, bool keepattachmentdatainmemory = true);
+  [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite = false);
   void exportXml(std::string const &filename) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
@@ -82,14 +83,12 @@ class SignalBackup
   inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
   inline std::vector<int> threadIds() const;
-
-  void esokrates();
-
  private:
+  void initFromFile();
+  void initFromDir(std::string const &inputdir);
   void updateThreadsEntries(long long int thread = -1);
   long long int getMaxUsedId(std::string const &table);
   long long int getMinUsedId(std::string const &table);
-  inline bool checkFileExists(std::string const &filename) const;
   template <typename T>
   [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
   template <typename T>
@@ -116,15 +115,33 @@ class SignalBackup
   void escapeXmlString(std::string *s) const;
 };
 
+inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress, bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
+  :
+  d_database(":memory:"),
+  d_passphrase(passphrase),
+  d_ok(false),
+  d_databaseversion(-1),
+  d_showprogress(showprogress)
+{
+  if (bepaald::isDir(filename))
+    initFromDir(filename);
+  else // not directory
+  {
+    d_fd.reset(new FileDecryptor(filename, passphrase, issource, assumebadframesizeonbadmac, editattachments));
+    initFromFile();
+  }
+}
+
+inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite, bool keepattachmentdatainmemory)
+{
+  if (bepaald::fileOrDirExists(filename) && bepaald::isDir(filename))
+    return exportBackupToDir(filename, overwrite);
+  return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);
+}
+
 inline bool SignalBackup::ok() const
 {
   return d_ok;
-}
-
-inline bool SignalBackup::checkFileExists(std::string const &) const
-{
-  // needs implementing....
-  return false;
 }
 
 template <typename T>
@@ -280,7 +297,8 @@ inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
 {
   std::cout << " * Executing query: " << q << std::endl;
   SqliteDB::QueryResults res;
-  d_database.exec(q, &res);
+  if (!d_database.exec(q, &res))
+    return;
 
   std::string q_comm = q.substr(0, STRLEN("DELETE")); // delete, insert and update are same length...
   std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) { ch = std::toupper(ch); });

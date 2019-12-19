@@ -19,13 +19,13 @@
 
 #include "sqlitedb.ih"
 
-void SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results) const
+bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results) const
 {
   sqlite3_stmt *stmt;
   if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
   {
-    std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
-    return;
+    std::cout << "SQL error during sqlite3_prepare_v2(): " << sqlite3_errmsg(d_db) << std::endl;
+    return false;
   }
 
   for (uint i = 0; i < params.size(); ++i)
@@ -33,30 +33,48 @@ void SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     if (isType<std::nullptr_t>(params[i]))
     {
       if (execParamFiller(stmt, i + 1, nullptr) != SQLITE_OK)
-        std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
     }
     else if (isType<double>(params[i]))
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<double>(params[i])) != SQLITE_OK)
-        std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
     }
     else if (isType<long long int>(params[i]))
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<long long int>(params[i])) != SQLITE_OK)
-        std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
     }
     else if (isType<std::string>(params[i]))
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::string>(params[i])) != SQLITE_OK)
-        std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
     }
     else if (isType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(params[i]))
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(params[i])) != SQLITE_OK)
-        std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
     }
     else
+    {
       std::cout << "Error : Unhandled parameter type " << params[i].type().name() << std::endl;
+      return false;
+    }
   }
 
   if (results)
@@ -95,6 +113,16 @@ void SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     ++row;
   }
   if (rc != SQLITE_DONE)
-    std::cout << "SQL Error: " << sqlite3_errmsg(d_db) << std::endl;
-  sqlite3_finalize(stmt);
+  {
+    std::cout << "SQL error after sqlite3_step(): " << sqlite3_errmsg(d_db) << std::endl;
+    return false;
+  }
+
+  if (sqlite3_finalize(stmt) != SQLITE_OK)
+  {
+    std::cout << "SQL error during sqlite3_finalize(): " << sqlite3_errmsg(d_db) << std::endl;
+    return false;
+  }
+
+  return true;
 }

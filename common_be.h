@@ -28,6 +28,7 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <filesystem>
 
 #ifdef DEBUG
 #define DEBUGOUT(...) bepaald::log("[DEBUG] : ", __PRETTY_FUNCTION__," : ", __VA_ARGS__);
@@ -68,6 +69,11 @@ namespace bepaald
   inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
+
+  inline bool fileOrDirExists(std::string const &path);
+  inline bool isDir(std::string const &path);
+  inline bool isEmpty(std::string const &path);
+  inline bool clearDirectory(std::string const &path);
 }
 
 template <typename T>
@@ -257,6 +263,35 @@ inline std::string bepaald::toString(double num)
 inline constexpr int bepaald::strlitLength(char const *str, int pos)
 {
   return str[pos] == '\0' ? 0 : 1 + strlitLength(str, pos + 1);
+}
+
+inline bool bepaald::fileOrDirExists(std::string const &path)
+{
+  std::error_code ec;
+  return std::filesystem::exists(path, ec);
+}
+
+inline bool bepaald::isDir(std::string const &path)
+{
+  std::error_code ec;
+  return std::filesystem::is_directory(path, ec);
+}
+
+inline bool bepaald::isEmpty(std::string const &path)
+{
+  std::error_code ec;
+  for (auto const &p: std::filesystem::directory_iterator(path))
+    if (p.exists(ec))
+      return false;
+  return true;
+}
+
+inline bool bepaald::clearDirectory(std::string const &path)
+{
+  for (auto const &p: std::filesystem::directory_iterator(path))
+    if (!std::filesystem::remove(p.path()))
+      return false;
+  return true;
 }
 
 #endif

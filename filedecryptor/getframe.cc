@@ -123,20 +123,19 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   }
 
   uint32_t attsize = 0;
-  if (!d_badmac && (attsize = frame->attachmentSize()) > 0)
+  if (!d_badmac && (attsize = frame->attachmentSize()) > 0 &&
+      (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT ||
+       frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
+       frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
     uintToFourBytes(d_iv, d_counter++);
 
-    if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT || frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
-      reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      if (frame->frameType() != BackupFrame::FRAMETYPE::ATTACHMENT && frame->frameType() != BackupFrame::FRAMETYPE::AVATAR)
-        return std::unique_ptr<BackupFrame>(nullptr);
-
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
       if (getatt > 0)
       {

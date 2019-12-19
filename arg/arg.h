@@ -32,18 +32,19 @@ class Arg
 {
   bool d_ok;
   size_t d_positionals;
+  size_t d_maxpositional;
   std::vector<int> d_importthreads;
   std::string d_input;
   std::string d_password;
   std::string d_output;
   std::string d_opassword;
+  bool d_overwrite;
   std::string d_source;
   std::string d_sourcepassword;
   bool d_listthreads;
   bool d_generatefromtruncated;
   std::vector<long long int> d_croptothreads;
   std::vector<std::string> d_croptodates;
-  bool d_elbrutalo;
   std::vector<std::string> d_mergerecipients;
   bool d_editgroupmembers;
   std::vector<std::string> d_mergegroups;
@@ -55,7 +56,7 @@ class Arg
   bool d_removedoubles;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
-  bool d_esokrates;
+  bool d_fast;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -66,13 +67,13 @@ class Arg
   inline std::string const &password() const;
   inline std::string const &output() const;
   inline std::string const &opassword() const;
+  inline bool overwrite() const;
   inline std::string const &source() const;
   inline std::string const &sourcepassword() const;
   inline bool listthreads() const;
   inline bool generatefromtruncated() const;
   inline std::vector<long long int> const &croptothreads() const;
   inline std::vector<std::string> const &croptodates() const;
-  inline bool elbrutalo() const;
   inline std::vector<std::string> const &mergerecipients() const;
   inline bool editgroupmembers() const;
   inline std::vector<std::string> const &mergegroups() const;
@@ -84,7 +85,7 @@ class Arg
   inline bool removedoubles() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
-  inline bool esokrates() const;
+  inline bool fast() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -122,6 +123,11 @@ inline std::string const &Arg::opassword() const
   return d_opassword;
 }
 
+inline bool Arg::overwrite() const
+{
+  return d_overwrite;
+}
+
 inline std::string const &Arg::source() const
 {
   return d_source;
@@ -150,11 +156,6 @@ inline std::vector<long long int> const &Arg::croptothreads() const
 inline std::vector<std::string> const &Arg::croptodates() const
 {
   return d_croptodates;
-}
-
-inline bool Arg::elbrutalo() const
-{
-  return d_elbrutalo;
 }
 
 inline std::vector<std::string> const &Arg::mergerecipients() const
@@ -212,9 +213,9 @@ inline std::vector<long long int> const &Arg::editattachmentsize() const
   return d_editattachmentsize;
 }
 
-inline bool Arg::esokrates() const
+inline bool Arg::fast() const
 {
-  return d_esokrates;
+  return d_fast;
 }
 
 inline bool Arg::ok() const

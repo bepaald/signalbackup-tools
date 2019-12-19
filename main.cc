@@ -19,23 +19,11 @@
 
 #include <iostream>
 #include <string>
-#include <map>
 #include <vector>
-#include <fstream>
-#include <algorithm>
-
-#include "backupframe/backupframe.h"
-#include "headerframe/headerframe.h"
-#include "sqlstatementframe/sqlstatementframe.h"
-#include "filedecryptor/filedecryptor.h"
-#include "fileencryptor/fileencryptor.h"
-#include "attachmentframe/attachmentframe.h"
-
-#include "sqlitedb/sqlitedb.h"
-
-#include "signalbackup/signalbackup.h"
 
 #include "arg/arg.h"
+#include "common_be.h"
+#include "signalbackup/signalbackup.h"
 
 #if __has_include("autoversion.h")
 #include "autoversion.h"
@@ -52,7 +40,7 @@ int main(int argc, char *argv[])
   unsigned int oldcodepage = GetConsoleOutputCP();
   SetConsoleOutputCP(65001);
   // enable ansi escape codes
-  HANDLE hConsole = GetStdHanlde(STD_OUTPUT_HANDLE);
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   DWORD mode = 0;
   GetConsoleMode(hConsole, &mode);
   mode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
@@ -70,46 +58,28 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /*
-    This is just temporary to investigate one specific issue for one specific user.
-    Do not use this option.
-    It will disappear soon enough without any notification
-  */
-  if (arg.elbrutalo())
+  if (!arg.output().empty() && bepaald::fileOrDirExists(arg.output()) &&
+      ((!bepaald::isDir(arg.output()) || (bepaald::isDir(arg.output()) && !bepaald::isEmpty(arg.output()))) &&
+       !arg.overwrite()))
   {
-    SignalBackup sb(arg.input(), arg.password(), SignalBackup::LOWMEM, arg.showprogress());
-    sb.runQuery("SELECT COUNT(*) AS num_sms, MIN(date), MAX(date) FROM sms");
-    sb.runQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id)");
-    sb.runQuery("SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id");
-    sb.runQuery("SELECT COUNT(*) AS num_mms, MIN(date), MAX(date) FROM mms");
-    sb.runQuery("SELECT COUNT(*) AS doubles FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.msg_box = t2.msg_box AND t1.date_received = t2.date_received AND t1._id <> t2._id)");
-    sb.runQuery("SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.msg_box = t2.msg_box AND t1.date_received = t2.date_received AND t1._id <> t2._id");
-    sb.runQuery("SELECT COUNT(*) AS num_thread FROM thread");
-
-    //sb.runQuery("SELECT sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] "
-    //            "FROM 'sms' WHERE (sms.type & 0x10000 IS NOT 0"
-    //            " OR sms.type & 0x20000 IS NOT 0) UNION "
-    //            "SELECT mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] "
-    //            "FROM mms WHERE (mms.msg_box & 0x10000 IS NOT 0"
-    //            " OR mms.msg_box & 0x20000 IS NOT 0)");
-
-    return 0;
+    if (bepaald::isDir(arg.output()))
+      std::cout << "Output directory `" << arg.output()
+                << "' not empty. Use --overwrite to clear contents before export." << std::endl;
+    else
+      std::cout << "Output file `" << arg.output() << "' exists. Use --overwrite to overwrite." << std::endl;
+    return 1;
   }
 
   // open input
-  std::unique_ptr<SignalBackup> sb;
-  if (arg.password().empty())
-    sb.reset(new SignalBackup(arg.input(), arg.showprogress()));
-  else
-    sb.reset(new SignalBackup(arg.input(), arg.password(),
-                              (!arg.source().empty() || arg.listthreads() ||
-                               !arg.exportcsv().empty() || !arg.exportxml().empty() ||
-                               !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
-                               !arg.croptodates().empty() || arg.removedoubles() ||
-                               !arg.runprettysqlquery().empty() || arg.esokrates())
-                              ? SignalBackup::LOWMEM : false, arg.showprogress(),
-                              arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
-
+  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(),
+                                                    (!arg.source().empty() || arg.listthreads() ||
+                                                     !arg.exportcsv().empty() || !arg.exportxml().empty() ||
+                                                     !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
+                                                     !arg.croptodates().empty() || arg.removedoubles() ||
+                                                     !arg.runprettysqlquery().empty() || !arg.mergerecipients().empty() ||
+                                                     arg.fast())
+                                                    ? SignalBackup::LOWMEM : false, arg.showprogress(),
+                                                    arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
   if (!sb->ok())
   {
     std::cout << "Failed to open backup" << std::endl;
@@ -134,36 +104,26 @@ int main(int argc, char *argv[])
     sb->fillThreadTableFromMessages();
     sb->addEndFrame();
   }
-  else if (!arg.source().empty())
+
+  if (!arg.source().empty())
   {
     std::unique_ptr<SignalBackup> source;
-    std::vector<int> threads;
-    if (arg.importthreads().size() == 1 && arg.importthreads()[0] == -1) // import all threads!
+    std::vector<int> threads = arg.importthreads();
+    if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
-      if (arg.sourcepassword().empty())
-        source.reset(new SignalBackup(arg.source(), arg.showprogress()));
-      else
-        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
-
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
       std::cout << "Getting list of thread id's..." << std::flush;
       threads = source->threadIds();
       std::cout << "Got: " << std::flush;
       for (uint i = 0; i < threads.size(); ++i)
         std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
     }
-    else
-      threads = arg.importthreads();
 
     for (uint i = 0; i < threads.size(); ++i)
     {
-      // read the database
       std::cout << std::endl << "Importing thread " << threads[i] << " from source file: " << arg.source() << std::endl;
-      if (arg.sourcepassword().empty())
-        source.reset(new SignalBackup(arg.source(), arg.showprogress()));
-      else
-        source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
-
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
       sb->importThread(source.get(), threads[i]);
     }
   }
@@ -208,41 +168,13 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
-
-
-
-
-
-
-
-  // custom for esokrates
-  if (arg.esokrates())
-    sb->esokrates();
-
-
-
-
-
-
-
-
-
-
   // export output
   if (!arg.output().empty())
-  {
-    bool writeresult = false;
-    if (!arg.opassword().empty())
-      writeresult = sb->exportBackup(arg.output(), arg.opassword(), SignalBackup::DROPATTACHMENTDATA);
-    else
-      writeresult = sb->exportBackup(arg.output());
-
-    if (!writeresult)
+    if (!sb->exportBackup(arg.output(), arg.opassword(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA))
     {
       std::cout << "Failed to export backup to '" << arg.output() << "'" << std::endl;
       return 1;
     }
-  }
 
   //sb->cropToThread({8, 10, 11});
   //sb->listThreads();

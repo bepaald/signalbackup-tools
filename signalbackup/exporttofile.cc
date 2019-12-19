@@ -19,112 +19,22 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::exportBackup(std::string const &directory)
-{
-  std::cout << std::endl << "Exporting backup into '" << directory << "/'" << std::endl;
-
-  // maybe check directory exists, and is empty or make it empty if overwrite was requested.
-
-  // export headerframe:
-  std::cout << "Writing HeaderFrame..." << std::endl;
-  if (!writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe))
-    return false;
-
-  // export databaseversionframe
-  std::cout << "Writing DatabaseVersionFrame..." << std::endl;
-  if (!writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe))
-    return false;
-
-  // export attachments
-  std::cout << "Writing Attachments..." << std::endl;
-  for (auto const &aframe : d_attachments)
-  {
-    AttachmentFrame *a = aframe.second.get();
-    std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId());
-
-    // write frame
-    if (!writeRawFrameDataToFile(attachment_basefilename + ".sbf", a))
-      return false;
-
-    // write actual attachment:
-    std::ofstream attachmentstream(attachment_basefilename + ".bin", std::ios_base::binary);
-    if (!attachmentstream.is_open())
-    {
-      std::cout << "Failed to open file for writing: " << directory << attachment_basefilename << ".bin" << std::endl;
-      return false;
-    }
-    else
-      if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
-        return false;
-  }
-
-  // export avatars
-  std::cout << "Writing Avatars..." << std::endl;
-  for (int count = 1 ; auto const &aframe : d_avatars)
-  {
-    AvatarFrame *a = aframe.second.get();
-    std::string avatar_basefilename = directory + "/Avatar_" + bepaald::toString(count++) + "_" + ((d_databaseversion < 33) ? a->name() : a->recipient());
-
-    // write frame
-    if (!writeRawFrameDataToFile(avatar_basefilename + ".sbf", a))
-      return false;
-
-    // write actual attachment:
-    std::ofstream attachmentstream(avatar_basefilename + ".bin", std::ios_base::binary);
-    if (!attachmentstream.is_open())
-    {
-      std::cout << "Failed to open file for writing: " << directory << avatar_basefilename << ".bin" << std::endl;
-      return false;
-    }
-    else
-      if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
-        return false;
-  }
-
-  // export sharedpreferences
-  std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
-  for (int count = 0; auto const &spframe : d_sharedpreferenceframes)
-    if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
-      return false;
-
-  // export stickers
-  std::cout << "Writing StickerFrames..." << std::endl;
-  for (int count = 0; auto const &sframe : d_stickers)
-  {
-    StickerFrame *s = sframe.second.get();
-    if (!writeRawFrameDataToFile(directory + "/Sticker_" + bepaald::toString(count++) + ".sbf", s))
-      return false;
-  }
-
-  // export endframe
-  std::cout << "Writing EndFrame..." << std::endl;
-  if (!writeRawFrameDataToFile(directory + "/End.sbf", d_endframe))
-    return false;
-
-  // export database
-  std::cout << "Writing database..." << std::endl;
-  SqliteDB database(directory + "/database.sqlite", false /*readonly*/);
-  if (!SqliteDB::copyDb(d_database, database))
-  {
-    std::cout << "Error exporting sqlite database" << std::endl;
-    return false;
-  }
-
-  std::cout << "Done!" << std::endl;
-  return true;
-}
-
-bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool keepattachmentdatainmemory)
+bool SignalBackup::exportBackupToFile(std::string const &filename, std::string const &passphrase, bool overwrite, bool keepattachmentdatainmemory)
 {
   std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
 
   std::string newpw = passphrase;
   if (newpw == std::string())
     newpw = d_passphrase;
-
-  if (/*!overwrite && */checkFileExists(filename))
+  if (newpw == std::string())
   {
-    std::cout << "File " << filename << " exists. Refusing to overwrite" << std::endl;
+    std::cout << "Need password to create encrypted backup file." << std::endl;
+    return false;
+  }
+
+  if (!overwrite && bepaald::fileOrDirExists(filename))
+  {
+    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
     return false;
   }
 
@@ -263,6 +173,30 @@ bool SignalBackup::exportBackup(std::string const &filename, std::string const &
             std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
         }
       }
+      else if (table == "sticker") // find corresponding sticker
+      {
+        uint64_t rowid = 0;
+        for (uint j = 0; j < results.columns(); ++j)
+          if (results.header(j) == "_id" && results.valueHasType<long long int>(i, j))
+          {
+            rowid = results.getValueAs<long long int>(i, j);
+            break;
+          }
+        auto sticker = d_stickers.find(rowid);
+        if (sticker != d_stickers.end())
+        {
+          if (!writeEncryptedFrame(outputfile, sticker->second.get()))
+            return false;
+          if (!keepattachmentdatainmemory)
+            sticker->second.get()->clearData();
+        }
+        else
+        {
+          std::cout << "Warning: sticker data not found (rowid: " << rowid << ")" << std::endl;
+          if (d_showprogress)
+            std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+        }
+      }
     }
     if (results.rows())
         std::cout << "done" << std::endl;
@@ -282,11 +216,11 @@ bool SignalBackup::exportBackup(std::string const &filename, std::string const &
     if (!writeEncryptedFrame(outputfile, a.second.get()))
       return false;
 
-  // STICKER + ATTACHMENTS
-  std::cout << "Writing Stickers..." << std::endl;
-  for (auto const &s : d_stickers)
-    if (!writeEncryptedFrame(outputfile, s.second.get()))
-      return false;
+  // // STICKER + ATTACHMENTS
+  // std::cout << "Writing Stickers..." << std::endl;
+  // for (auto const &s : d_stickers)
+  //   if (!writeEncryptedFrame(outputfile, s.second.get()))
+  //     return false;
 
   // END
   std::cout << "Writing EndFrame..." << std::endl;
@@ -297,6 +231,8 @@ bool SignalBackup::exportBackup(std::string const &filename, std::string const &
   }
   if (!writeEncryptedFrame(outputfile, d_endframe.get()))
     return false;
+
+  outputfile.flush();
 
   std::cout << "Done!" << std::endl;
   return true;
