@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "endframe.ih"
 
 EndFrame::Registrar EndFrame::s_registrar(FRAMETYPE::END, create);

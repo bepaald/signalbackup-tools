@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef STICKERFRAME_H_
 #define STICKERFRAME_H_
 
 #include "../framewithattachment/framewithattachment.h"

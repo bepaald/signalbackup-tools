@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "signalbackup.ih"
 
 long long int SignalBackup::getMinUsedId(std::string const &table)
 {

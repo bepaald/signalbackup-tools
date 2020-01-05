@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "attachmentframe.ih"
 
 AttachmentFrame::Registrar AttachmentFrame::s_registrar(FRAMETYPE::ATTACHMENT, create);

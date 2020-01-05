@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "filedecryptor.ih"
 
 std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 {

@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef MSGTYPES_H_
 #define MSGTYPES_H_
 
 // see /src/org/thoughtcrime/securesms/database/MmsSmsColumns.java

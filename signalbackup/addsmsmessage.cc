@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "signalbackup.ih"
 
 void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, long long int timestamp, long long int thread, bool incoming)
 {

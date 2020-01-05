@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef BASE64_H_
 #define BASE64_H_
 
 #include <cryptopp/base64.h>

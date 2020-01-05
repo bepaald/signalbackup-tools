@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef SQLITEDB_H_
 #define SQLITEDB_H_
 
 #include <sqlite3.h>

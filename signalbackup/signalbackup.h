@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef SIGNALBACKUP_H_
 #define SIGNALBACKUP_H_
 
 #include "../sqlitedb/sqlitedb.h"

@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef DATABASEVERSIONFRAME_H_
 #define DATABASEVERSIONFRAME_H_
 
 #include "../backupframe/backupframe.h"

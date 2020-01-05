@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlitedb.ih"
 
 std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) const
 {

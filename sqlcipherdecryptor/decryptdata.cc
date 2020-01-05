@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlcipherdecryptor.ih"
 
 bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
 {

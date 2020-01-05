@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "basedecryptor.ih"
 
 int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
 {

@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlstatementframe.ih"
 
 SqlStatementFrame::Registrar SqlStatementFrame::s_registrar(FRAMETYPE::SQLSTATEMENT, SqlStatementFrame::create);

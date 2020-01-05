@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "fileencryptor.ih"
 
 bool FileEncryptor::init(unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size)
 {

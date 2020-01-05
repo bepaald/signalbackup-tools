@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "filedecryptor.ih"
 
 BackupFrame *FileDecryptor::initBackupFrame(unsigned char *data, size_t length, uint64_t count) const
 {

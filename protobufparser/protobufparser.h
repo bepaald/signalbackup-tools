@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef PROTOBUFPARSER_H_
 #define PROTOBUFPARSER_H_
 
 #include <cstring>

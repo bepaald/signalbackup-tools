@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "stickerframe.ih"
 
 StickerFrame::Registrar StickerFrame::s_registrar(FRAMETYPE::STICKER, StickerFrame::create);

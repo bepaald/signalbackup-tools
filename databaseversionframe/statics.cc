@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "databaseversionframe.ih"
 
 DatabaseVersionFrame::Registrar DatabaseVersionFrame::s_registrar(FRAMETYPE::DATABASEVERSION, DatabaseVersionFrame::create);

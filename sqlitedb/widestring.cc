@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlitedb.ih"
 
 std::wstring SqliteDB::QueryResults::wideString(std::string const &narrow) const
 {

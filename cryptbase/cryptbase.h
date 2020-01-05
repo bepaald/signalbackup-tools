@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef CRYPTBASE_H_
 #define CRYPTBASE_H_
 
 #include <cstring>

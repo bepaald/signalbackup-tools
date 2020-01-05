@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlitedb.ih"
 
 int SqliteDB::QueryResults::availableWidth() const
 {

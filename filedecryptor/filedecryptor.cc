@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "filedecryptor.ih"
 
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy, bool assumebadframesize, std::vector<long long int> editattachments)
   :
