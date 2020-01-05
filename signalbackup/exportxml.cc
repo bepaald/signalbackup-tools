@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,7 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.ih"
 
 std::string SignalBackup::decodeStatusMessage(std::string const &body, long long int expiration, long long int type, std::string const &contactname) const
 {

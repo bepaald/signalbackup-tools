@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,7 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef STICKERFRAME_H_
 #define STICKERFRAME_H_
 
 #include "../framewithattachment/framewithattachment.h"

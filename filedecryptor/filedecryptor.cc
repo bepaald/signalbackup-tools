@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,7 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "filedecryptor.ih"
 
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy, bool assumebadframesize, std::vector<long long int> editattachments)
   :

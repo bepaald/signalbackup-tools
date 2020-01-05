@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,7 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
 #include <string>
 #include <vector>
 
@@ -85,15 +84,6 @@ int main(int argc, char *argv[])
     std::cout << "Failed to open backup" << std::endl;
     return 1;
   }
-
-  if (!arg.exportcsv().empty())
-  {
-    sb->exportCsv(arg.exportcsv() + "_sms.csv", "sms");
-    sb->exportCsv(arg.exportcsv() + "_mms.csv", "mms");
-  }
-
-  if (!arg.exportxml().empty())
-    sb->exportXml(arg.exportxml());
 
   if (arg.listthreads())
     sb->listThreads();
@@ -167,6 +157,13 @@ int main(int argc, char *argv[])
   if (!arg.runprettysqlquery().empty())
     for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
       sb->runQuery(arg.runprettysqlquery()[i], true);
+
+  if (!arg.exportcsv().empty())
+    for (uint i = 0; i < arg.exportcsv().size(); ++i)
+      sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first);
+
+  if (!arg.exportxml().empty())
+    sb->exportXml(arg.exportxml());
 
   // export output
   if (!arg.output().empty())

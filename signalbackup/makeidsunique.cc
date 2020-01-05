@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,7 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.ih"
 
 void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts)
 {

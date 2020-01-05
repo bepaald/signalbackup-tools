@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,7 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.ih"
 
 void SignalBackup::initFromFile()
 {
@@ -63,7 +62,8 @@ void SignalBackup::initFromFile()
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
       if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
-        d_database.exec(s->bindStatement(), s->parameters());
+        if (!d_database.exec(s->bindStatement(), s->parameters()))
+          std::cout << "WARNING: Failed to execute statement: " << s->statement() << std::endl;
       #ifdef BUILT_FOR_TESTING
       else if (s->frameNumber() == 2 && s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {
@@ -106,6 +106,9 @@ void SignalBackup::initFromFile()
   std::cout << "" << std::endl;
 
   std::cout << "done!" << std::endl;
+
+  if (!d_endframe)
+    std::cout << "Warning: EndFrame was not read: backup is probably incomplete" << std::endl;
 
   d_ok = true;
 }
