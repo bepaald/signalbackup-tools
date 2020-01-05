@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "backupframe.ih"
 
 bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
 {

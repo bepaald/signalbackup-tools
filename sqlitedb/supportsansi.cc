@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlitedb.ih"
 
 // This function was taken from https://github.com/agauniyal/rang/
 // Used here to (poorly!) detect support for ansi escape codes

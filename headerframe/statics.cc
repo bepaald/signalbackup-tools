@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "headerframe.ih"
 
 HeaderFrame::Registrar HeaderFrame::s_registrar(FRAMETYPE::HEADER, HeaderFrame::create);

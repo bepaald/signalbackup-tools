@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "memfiledb.h"
 
 sqlite3_vfs MemFileDB::s_demovfs; // static

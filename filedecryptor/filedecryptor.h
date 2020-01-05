@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef FILEDECRYPTOR_H_
 #define FILEDECRYPTOR_H_
 
 #include <cstring>

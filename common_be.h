@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef COMMON_BE_H_
 #define COMMON_BE_H_
 
 #include <cstddef>

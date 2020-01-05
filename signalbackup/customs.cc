@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/*
   NOTE: THESE ARE CUSTOM FUNCTIONS AND WILL BE REMOVED WITHOUT NOTIFICATION IN THE NEAR FUTURE
 */
 

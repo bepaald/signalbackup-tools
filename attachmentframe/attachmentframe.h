@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef ATTACHMENTFRAME_H_
 #define ATTACHMENTFRAME_H_
 
 #include <cstring>

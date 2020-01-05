@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef SHAREDPREFFRAME_H_
 #define SHAREDPREFFRAME_H_
 
 #include "../backupframe/backupframe.h"

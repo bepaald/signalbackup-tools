@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef MEMFILEDB_H_
 #define MEMFILEDB_H_
 
 #include <sqlite3.h>

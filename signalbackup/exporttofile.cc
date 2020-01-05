@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "signalbackup.ih"
 
 bool SignalBackup::exportBackupToFile(std::string const &filename, std::string const &passphrase, bool overwrite, bool keepattachmentdatainmemory)
 {

@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sqlitedb.ih"
 
 bool SqliteDB::copyDb(SqliteDB const &source, SqliteDB const &target) // static
 {

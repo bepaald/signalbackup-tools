@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef HEADERFRAME_H_
 #define HEADERFRAME_H_
 
 #include "../backupframe/backupframe.h"

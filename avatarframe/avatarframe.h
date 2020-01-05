@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef AVATARFRAME_H_
 #define AVATARFRAME_H_
 
 #include <cstring>

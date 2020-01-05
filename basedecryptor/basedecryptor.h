@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef BASEDECRYPTOR_H_
 #define BASEDECRYPTOR_H_
 
 #include "../cryptbase/cryptbase.h"

@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "sharedprefframe.ih"
 
 SharedPrefFrame::Registrar SharedPrefFrame::s_registrar(FRAMETYPE::SHAREDPREFERENCE, create);

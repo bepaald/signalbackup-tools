@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "fileencryptor.ih"
 
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned char *data, uint64_t length)
 {

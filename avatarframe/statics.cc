@@ -17,5 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#include "avatarframe.ih"
 
 AvatarFrame::Registrar AvatarFrame::s_registrar(FRAMETYPE::AVATAR, create);

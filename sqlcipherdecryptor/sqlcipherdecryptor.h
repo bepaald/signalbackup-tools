@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef SQLCIPHERDECRYPTOR_H_
 #define SQLCIPHERDECRYPTOR_H_
 
 #include <string>

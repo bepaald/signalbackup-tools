@@ -17,6 +17,7 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#ifndef SQLSTATEMENTFRAME_H_
 #define SQLSTATEMENTFRAME_H_
 
 #include <locale>
