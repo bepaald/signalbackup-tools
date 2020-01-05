@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iterator>
 #include <algorithm>
+#include <utility>
 
 class Arg
 {
@@ -48,7 +49,7 @@ class Arg
   std::vector<std::string> d_mergerecipients;
   bool d_editgroupmembers;
   std::vector<std::string> d_mergegroups;
-  std::string d_exportcsv;
+  std::vector<std::pair<std::string,std::string>> d_exportcsv;
   std::string d_exportxml;
   std::vector<std::string> d_runsqlquery;
   std::vector<std::string> d_runprettysqlquery;
@@ -77,7 +78,7 @@ class Arg
   inline std::vector<std::string> const &mergerecipients() const;
   inline bool editgroupmembers() const;
   inline std::vector<std::string> const &mergegroups() const;
-  inline std::string const &exportcsv() const;
+  inline std::vector<std::pair<std::string,std::string>> const &exportcsv() const;
   inline std::string const &exportxml() const;
   inline std::vector<std::string> const &runsqlquery() const;
   inline std::vector<std::string> const &runprettysqlquery() const;
@@ -91,8 +92,12 @@ class Arg
   bool ston(T *t, std::string const &str) const;
   bool parseArgs(std::vector<std::string> const &args);
   inline bool parseStringList(std::string const &strlist, std::vector<std::string> *list) const;
+  template <typename T, typename U>
+  inline bool parsePairList(std::string const &pairlist, std::string const &delim, std::vector<std::pair<T, U>> *list, std::string *error) const;
   template <typename T>
   bool parseNumberList(std::string const &strlist, std::vector<T> *list) const;
+  template <typename T, typename U>
+  bool parsePair(std::string const &token, std::string const &delim, std::pair<T, U> *pair, std::string *error) const;
   template <typename T>
   bool parseNumberListToken(std::string const &token, std::vector<T> *list) const;
   void usage() const;
@@ -173,7 +178,7 @@ inline std::vector<std::string> const &Arg::mergegroups() const
   return d_mergegroups;
 }
 
-inline std::string const &Arg::exportcsv() const
+inline std::vector<std::pair<std::string,std::string>> const &Arg::exportcsv() const
 {
   return d_exportcsv;
 }
@@ -245,6 +250,28 @@ inline bool Arg::parseStringList(std::string const &strlist, std::vector<std::st
   return true;
 }
 
+template <typename T, typename U>
+inline bool Arg::parsePairList(std::string const &pairlist, std::string const &delim, std::vector<std::pair<T, U>> *list, std::string *error) const
+{
+  std::string tr = pairlist;
+
+  size_t start = 0;
+  size_t pos = 0;
+  while ((pos = tr.find(',', start)) != std::string::npos)
+  {
+    std::pair<T, U> tmp;
+    if (!parsePair(tr.substr(start, pos - start), delim, &tmp, error))
+      return false;
+    list->emplace_back(std::move(tmp));
+    start = pos + 1;
+  }
+  std::pair<T, U> tmp;
+  if (!parsePair(tr.substr(start), delim, &tmp, error))
+    return false;
+  list->emplace_back(std::move(tmp));
+  return true;
+}
+
 template <typename T>
 bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list) const
 {
@@ -262,6 +289,49 @@ bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list) cons
     return false;
 
   std::sort(list->begin(), list->end());
+
+  return true;
+}
+
+template <typename T, typename U>
+bool Arg::parsePair(std::string const &token, std::string const &delim, std::pair<T, U> *pair, std::string *error) const
+{
+  std::string::size_type pos = token.find(delim);
+  if (pos == std::string::npos)
+  {
+    *error = "Delimiter not found.";
+    return false;
+  }
+
+  std::string first = token.substr(0, pos);
+  std::string second = token.substr(pos + 1);
+  if (first.empty() || second.empty())
+  {
+    *error = "Empty field in pair.";
+    return false;
+  }
+
+  if constexpr (std::is_same<T, std::string>::value)
+    pair->first = first;
+  else
+  {
+    if (!ston(&(pair->first), first))
+    {
+      *error = "Bad argument.";
+      return false;
+    }
+  }
+
+  if constexpr (std::is_same<U, std::string>::value)
+    pair->second = second;
+  else
+  {
+    if (!ston(&(pair->second), second))
+    {
+      *error = "Bad argument.";
+      return false;
+    }
+  }
 
   return true;
 }

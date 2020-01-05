@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -39,7 +39,7 @@ Arg::Arg(int argc, char *argv[])
   d_mergerecipients(std::vector<std::string>()),
   d_editgroupmembers(false),
   d_mergegroups(std::vector<std::string>()),
-  d_exportcsv(std::string()),
+  d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_exportxml(std::string()),
   d_runsqlquery(std::vector<std::string>()),
   d_runprettysqlquery(std::vector<std::string>()),
@@ -252,7 +252,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--exportcsv")
     {
       if (i < arguments.size() - 1)
-        d_exportcsv = arguments[++i];
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_exportcsv, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -274,7 +281,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--runsqlquery")
     {
       if (i < arguments.size() - 1)
-        d_runsqlquery.push_back(arguments[++i]);
+      {
+          d_runsqlquery.push_back(arguments[++i]);
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -285,7 +294,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--runprettysqlquery")
     {
       if (i < arguments.size() - 1)
-        d_runprettysqlquery.push_back(arguments[++i]);
+      {
+          d_runprettysqlquery.push_back(arguments[++i]);
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
