@@ -52,7 +52,7 @@ void SignalBackup::exportCsv(std::string const &filename, std::string const &tab
     {
       std::string vas = results.valueAsString(j, i);
       duplicateQuotes(&vas);
-      bool escape = (vas.find_first_of(",\"\n") != std::string::npos) || // contains newling, quote or comma
+      bool escape = (vas.find_first_of(",\"\n") != std::string::npos) || // contains newline, quote or comma
         (!vas.empty() && (std::find_if(vas.begin(), vas.end(), [](char c){ return !std::isspace(c); }) == vas.end())); // is all whitespace (and non empty)
       outputfile << (escape ? "\"" : "") << vas << (escape ? "\"" : "") << ((i == results.columns() - 1) ? '\n' : ',');
     }

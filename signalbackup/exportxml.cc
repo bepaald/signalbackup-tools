@@ -381,10 +381,17 @@ void SignalBackup::exportXml(std::string const &filename) const
       if (results.valueHasType<std::string>(i, "address"))
       {
         std::string rid = results.getValueAs<std::string>(i, "address");
-        SqliteDB::QueryResults r2;
-        d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
-        if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
-          address = r2.getValueAs<std::string>(0, "phone");
+
+        if (d_databaseversion >= 25)
+        {
+          SqliteDB::QueryResults r2;
+          d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
+          if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
+            address = r2.getValueAs<std::string>(0, "phone");
+        }
+        else
+          address = rid;
+
         escapeXmlString(&address);
       }
 
@@ -395,7 +402,10 @@ void SignalBackup::exportXml(std::string const &filename) const
       {
         std::string rid = results.getValueAs<std::string>(i, "address");
         SqliteDB::QueryResults r2;
-        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = " + rid, &r2);
+        if (d_databaseversion >= 25)
+          d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+        else
+          d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
         if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
           contact_name = r2.getValueAs<std::string>(0, "contact_name");
         escapeXmlString(&contact_name);
