@@ -30,7 +30,7 @@
 #include <vector>
 #include <filesystem>
 
-#ifdef DEBUG
+#ifdef DEBUGMSG
 #define DEBUGOUT(...) bepaald::log("[DEBUG] : ", __PRETTY_FUNCTION__," : ", __VA_ARGS__);
 #else
 #define DEBUGOUT(...)

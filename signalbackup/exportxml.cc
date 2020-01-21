@@ -47,22 +47,27 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     std::string members;
     auto field4 = statusmsg.getField<4>();
     if (field4.size())
+    {
       for (uint k = 0; k < field4.size(); ++k)
       {
         // get name from members string
         SqliteDB::QueryResults res;
-        if (d_databaseversion >= 33)
-          d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'name' FROM recipient WHERE _id = " + field4[k], &res);
+        if (d_databaseversion >= 25)
+          d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'name' FROM recipient WHERE phone = ?", field4[k], &res);
         else
-        {
-          ;//d_database.exec("SELECT COALESCE(recipient.signal_profile_name, recipient.system_display_name) AS 'name' FROM recipient_preferences WHERE _something
-        }
-        members += field4[k] + ", ";
-      }
+          d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'name' FROM recipient_preferences WHERE recipient_preferences.recipient_ids = ?", field4[k], &res);
 
+        std::string name = field4[k];
+        if (res.rows() == 1 && res.columns() == 1 && res.valueHasType<std::string>(0, "name"))
+          name = res.getValueAs<std::string>(0, "name");
+
+        members += name;
+        if (k < field4.size() - 1)
+          members += ", ";
+      }
+    }
     if (!members.empty())
       result += "\n" + members + " joined the group.";
-
 
     std::string title = statusmsg.getField<3>().value_or(std::string());
     if (!title.empty())
@@ -95,7 +100,19 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         return "You disabled disappearing messages.";
       return contactname + " disabled disappearing messages.";
     }
-    std::string time = bepaald::toString(expiration) + " seconds";//ExpirationUtil.getExpirationDisplayValue(context, expiration);
+
+    std::string time;
+    if (expiration < 60) // less than full minute
+      time = bepaald::toString(expiration) + " seconds";
+    else if (expiration < 60 * 60) // less than full hour
+      time = bepaald::toString(expiration / 60) + " minutes";
+    else if (expiration < 24 * 60 * 60) // less than full day
+      time = bepaald::toString(expiration / (60 * 60)) + " hours";
+    else if (expiration < 7 * 24 * 60 * 60) // less than full week
+      time = bepaald::toString(expiration / (24 * 60 * 60)) + " days";
+    else // show expiration in number of weeks
+      time = bepaald::toString(expiration / (7 * 24 * 60 * 60)) + " weeks";
+
     if (Types::isOutgoing(type))
       return "You set the disappearing message timer to " + time;
     return contactname + " set the disappearing message timer to " + time;
@@ -158,10 +175,11 @@ void SignalBackup::escapeXmlString(std::string *str) const
       continue;
     }
 
-    // [^\u0020-\uD7FF]
+    // [^\u0020-\uD7FF] <-- range than is escaped (note the ^)
+
     /*
-      under 0020 = control chars (escape, linebreak, etc...)
-     */
+      under \u0020 = control chars (escape, linebreak, etc...)
+    */
     if ((static_cast<unsigned int>(str->at(pos)) & 0xFF) < 0x20)
     {
       std::string rep = "&#" + bepaald::toString(static_cast<unsigned int>(str->at(pos)) & 0xFF) + ";";
@@ -183,11 +201,13 @@ void SignalBackup::escapeXmlString(std::string *str) const
       1110xxxx = 1st byte of 3-byte character
       11110xxx = 1st byte of 4-byte character
     */
+
     /*
       Over 0xd7ff.
-      0x800 - 0xffff is only 3 byte utf chars, and are represented by utf16 points directly?
     */
-    if ((str->at(pos) & 0b11110000) == 0b11100000) // or 0b11110000
+
+    //0x800 - 0xffff is only 3 byte utf chars, and are represented by utf16 points directly?
+    if ((str->at(pos) & 0b11110000) == 0b11100000)
     {
       if (pos + 2 >= str->size())
       {
@@ -204,12 +224,9 @@ void SignalBackup::escapeXmlString(std::string *str) const
       str->replace(pos, 3, rep);
       pos += rep.length();
       continue;
-
     }
 
-    /*
-      Over 0xffff is only 4 byte utf chars
-    */
+    // Beyond 0xffff is only 4 byte utf chars
     if ((str->at(pos) & 0b11111000) == 0b11110000) // or 0b11110000
     {
 

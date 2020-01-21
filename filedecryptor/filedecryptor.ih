@@ -23,6 +23,13 @@
 #include <cstring>
 #include <cctype>
 
+#ifdef USE_OPENSSL
+
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+
+#endif
+
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/sha.h>
