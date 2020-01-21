@@ -19,6 +19,14 @@
 
 #include "fileencryptor.h"
 
+#ifdef USE_OPENSSL
+
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+
+#else
+
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/sha.h>
@@ -27,3 +35,5 @@
 #include <cryptopp/algparam.h>
 #endif
 #include <cryptopp/hkdf.h>
+
+#endif

@@ -57,6 +57,48 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
+#ifdef USE_OPENSSL
+
+  // check hash
+  unsigned int digest_size = SHA256_DIGEST_LENGTH;
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe, encryptedframelength - MACSIZE, hash, &digest_size);
+  if (std::memcmp(encryptedframe + (encryptedframelength - MACSIZE), hash, 10) != 0)
+  {
+    std::cout << "" << std::endl;
+    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+  }
+
+  // decode
+  uintToFourBytes(d_iv, d_counter++);
+
+  // create context
+  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
+
+  // disable padding
+  EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
+
+  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+  {
+    std::cout << "CTX INIT FAILED" << std::endl;
+    delete[] encryptedframe;
+    return std::unique_ptr<BackupFrame>(nullptr);
+  }
+
+  int decodedframelength = encryptedframelength - MACSIZE;
+  unsigned char *decodedframe = new unsigned char[decodedframelength];
+
+  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe, encryptedframelength - MACSIZE) != 1)
+  {
+    std::cout << "Failed to decrypt data" << std::endl;
+    delete[] encryptedframe;
+    delete[] decodedframe;
+    return std::unique_ptr<BackupFrame>(nullptr);
+  }
+
+#else
+
   // check hash
   unsigned char theirMac[MACSIZE]; // == 10
   std::memcpy(theirMac, encryptedframe + (encryptedframelength - MACSIZE), MACSIZE);
@@ -88,10 +130,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);
   d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
 
+#endif
+
   delete[] encryptedframe;
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
-
 
   if (!d_editattachments.empty() && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     for (uint i = 0; i < d_editattachments.size(); i += 2)

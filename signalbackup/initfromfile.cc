@@ -63,8 +63,10 @@ void SignalBackup::initFromFile()
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
       if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
+      {
         if (!d_database.exec(s->bindStatement(), s->parameters()))
           std::cout << "WARNING: Failed to execute statement: " << s->statement() << std::endl;
+      }
       #ifdef BUILT_FOR_TESTING
       else if (s->frameNumber() == 2 && s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {

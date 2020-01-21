@@ -21,6 +21,14 @@
 
 #include <cstring>
 
+#ifdef USE_OPENSSL
+
+#include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+
+#else
+
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/sha.h>
@@ -29,3 +37,5 @@
 #include <cryptopp/algparam.h>
 #endif
 #include <cryptopp/hkdf.h>
+
+#endif
