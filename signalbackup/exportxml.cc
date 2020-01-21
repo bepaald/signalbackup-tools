@@ -175,7 +175,7 @@ void SignalBackup::escapeXmlString(std::string *str) const
       continue;
     }
 
-    // [^\u0020-\uD7FF] <-- range than is escaped (note the ^)
+    // [^\u0020-\uD7FF] <-- range that's escaped (note the ^)
 
     /*
       under \u0020 = control chars (escape, linebreak, etc...)
