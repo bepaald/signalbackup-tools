@@ -61,29 +61,87 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-  unsigned char *encryptedframe = new unsigned char[encryptedframelength];
-  if (!getNextFrameBlock(encryptedframe, encryptedframelength))
-  {
-    delete[] encryptedframe;
+  std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
+  if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength))
     return std::unique_ptr<BackupFrame>(nullptr);
+
+#ifdef USE_OPENSSL
+
+  // check hash
+  unsigned int digest_size = SHA256_DIGEST_LENGTH;
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
+  if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, MACSIZE) != 0)
+    return std::unique_ptr<BackupFrame>(nullptr);
+  else
+  {
+    std::cout << "" << std::endl;
+    std::cout << "GOT GOOD MAC AT OFFSET " << offset << " BYTES!" << std::endl;
+    std::cout << "Now let's try and find out how many frames we skipped to get here...." << std::endl;
+    d_badmac = false;
   }
+
+  // decode
+  uint skipped = 0;
+  std::unique_ptr<BackupFrame> frame(nullptr);
+  while (!frame)
+  {
+
+    if (skipped > offset / 10) // a frame is at least 10 bytes?
+    {
+      std::cout << "No valid frame found at maximum frameskip for this offset..." << std::endl;
+      return std::unique_ptr<BackupFrame>(nullptr);
+    }
+
+    std::cout << "Checking if we skipped " << skipped << " frames... " << std::flush;
+
+    uintToFourBytes(d_iv, d_counter + skipped);
+
+    // create context
+    std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
+
+    // disable padding
+    EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
+
+    if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+    {
+      std::cout << "CTX INIT FAILED" << std::endl;
+      return std::unique_ptr<BackupFrame>(nullptr);
+    }
+
+    int decodedframelength = encryptedframelength - MACSIZE;
+    unsigned char *decodedframe = new unsigned char[decodedframelength];
+
+    if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
+    {
+      std::cout << "Failed to decrypt data" << std::endl;
+      delete[] decodedframe;
+      return std::unique_ptr<BackupFrame>(nullptr);
+    }
+
+    DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
+
+    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
+
+    delete[] decodedframe;
+
+    ++skipped;
+
+#else
 
   // check hash
   unsigned char theirMac[MACSIZE]; // == 10
-  std::memcpy(theirMac, encryptedframe + (encryptedframelength - MACSIZE), MACSIZE);
+  std::memcpy(theirMac, encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE);
 
   //int const ourmacsize = CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE;
   unsigned char ourMac[CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE];
 
   CryptoPP::HMAC<CryptoPP::SHA256> hmac(d_mackey, d_mackey_size);
-  hmac.Update(encryptedframe, encryptedframelength - MACSIZE);
+  hmac.Update(encryptedframe.get(), encryptedframelength - MACSIZE);
   hmac.Final(ourMac);
 
   if (std::memcmp(theirMac, ourMac, 10) != 0)
-  {
-    delete[] encryptedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
-  }
   else
   {
     std::cout << "" << std::endl;
@@ -111,7 +169,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
 
     uintToFourBytes(d_iv, d_counter + skipped);
     CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);
-    d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
+    d.ProcessData(decodedframe, encryptedframe.get(), encryptedframelength - MACSIZE);
 
     //std::string ps(reinterpret_cast<char *>(decodedframe), decodedframelength);
     //DEBUGOUT("Decoded plaintext: ", ps);
@@ -122,6 +180,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
     delete[] decodedframe;
 
     ++skipped;
+
+#endif
 
     if (!frame)
     {
@@ -141,7 +201,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
                     << offset - previousframelength - MACSIZE - 4 << std::endl << std::endl;
         }
         std::cout << "Good frame: " << frame->frameNumber() << std::endl;
-        delete[] encryptedframe;
+        delete[] encryptedframe.release();
         break;
       }
       std::cout << "nope! :(" << std::endl;
@@ -153,12 +213,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
   //std::cout << "HEADERTYPE: " << frame->frameType() << std::endl;
 
   uint32_t attsize = 0;
-  if (!d_badmac && (attsize = frame->attachmentSize()) > 0)
+  if (!d_badmac && (attsize = frame->attachmentSize()) > 0 &&
+      (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT ||
+       frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
+       frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
     uintToFourBytes(d_iv, d_counter++);
 
-    if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT || frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
-      reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 

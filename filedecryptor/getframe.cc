@@ -45,10 +45,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   DEBUGOUT("Framelength: ", encryptedframelength);
 
-  unsigned char *encryptedframe = new unsigned char[encryptedframelength];
-  if (!getNextFrameBlock(encryptedframe, encryptedframelength))
+  std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
+  if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength))
   {
-    delete[] encryptedframe;
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
 
     // maybe hide this behind option
@@ -62,13 +61,16 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   // check hash
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
-  HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe, encryptedframelength - MACSIZE, hash, &digest_size);
-  if (std::memcmp(encryptedframe + (encryptedframelength - MACSIZE), hash, 10) != 0)
+  HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
+  if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0)
   {
     std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+    d_badmac = true;
   }
+  else
+    d_badmac = false;
 
   // decode
   uintToFourBytes(d_iv, d_counter++);
@@ -82,17 +84,15 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
   {
     std::cout << "CTX INIT FAILED" << std::endl;
-    delete[] encryptedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
   int decodedframelength = encryptedframelength - MACSIZE;
   unsigned char *decodedframe = new unsigned char[decodedframelength];
 
-  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe, encryptedframelength - MACSIZE) != 1)
+  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
   {
     std::cout << "Failed to decrypt data" << std::endl;
-    delete[] encryptedframe;
     delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
@@ -101,12 +101,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   // check hash
   unsigned char theirMac[MACSIZE]; // == 10
-  std::memcpy(theirMac, encryptedframe + (encryptedframelength - MACSIZE), MACSIZE);
+  std::memcpy(theirMac, encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE);
 
   unsigned char ourMac[CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE];
 
   CryptoPP::HMAC<CryptoPP::SHA256> hmac(d_mackey, d_mackey_size);
-  hmac.Update(encryptedframe, encryptedframelength - MACSIZE);
+  hmac.Update(encryptedframe.get(), encryptedframelength - MACSIZE);
   hmac.Final(ourMac);
 
   DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, MACSIZE));
@@ -128,11 +128,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   uintToFourBytes(d_iv, d_counter++);
   CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption d(d_cipherkey, d_cipherkey_size, d_iv);
-  d.ProcessData(decodedframe, encryptedframe, encryptedframelength - MACSIZE);
+  d.ProcessData(decodedframe, encryptedframe.get(), encryptedframelength - MACSIZE);
 
 #endif
 
-  delete[] encryptedframe;
+  delete[] encryptedframe.release(); // free up already....
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 

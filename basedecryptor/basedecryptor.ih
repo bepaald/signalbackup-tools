@@ -19,6 +19,14 @@
 
 #include "basedecryptor.h"
 
+#ifdef USE_OPENSSL
+
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+
+#endif
+
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/sha.h>
