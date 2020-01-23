@@ -43,7 +43,6 @@
 //#define STRING(x) STRING2(x)
 //#pragma message "CRYPTOPP_VERSION = " STRING(CRYPTOPP_VERSION)
 
-
 #include "../headerframe/headerframe.h"
 #include "../attachmentframe/attachmentframe.h"
 #include "../endframe/endframe.h"

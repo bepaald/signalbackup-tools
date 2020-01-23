@@ -42,7 +42,7 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
   if (i != passlength || j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
     return false;
 
-  std::cout << "Passphrase: " << bepaald::bytesToHexString(pass, passlength) << std::endl;
+  //std::cout << "Passphrase: " << bepaald::bytesToHexString(pass, passlength) << std::endl;
 
   std::unique_ptr<EVP_MD_CTX, decltype(&::EVP_MD_CTX_free)> mdctx(EVP_MD_CTX_create(), &::EVP_MD_CTX_free);
 
