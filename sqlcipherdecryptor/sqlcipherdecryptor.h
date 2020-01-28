@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020  Selwin van Dijk
+    Copyright (C) 2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -24,11 +24,16 @@
 
 #include "../common_be.h"
 
+
+#ifdef USE_OPENSSL
+class evp_md_st;
+#else
 namespace CryptoPP
 {
   class PasswordBasedKeyDerivationFunction;
   class HMAC_Base;
 }
+#endif
 
 class SqlCipherDecryptor
 {
@@ -40,16 +45,21 @@ class SqlCipherDecryptor
   unsigned int d_hmackeysize;
   unsigned char *d_salt;
   unsigned int d_saltsize;
+#ifdef USE_OPENSSL
+  evp_md_st const *d_digest;
+#else
   CryptoPP::PasswordBasedKeyDerivationFunction *d_pbkdf;
   CryptoPP::HMAC_Base *d_hmac;
-  unsigned int d_pagesize;
+#endif
   unsigned int d_digestsize;
+  unsigned int d_pagesize;
 
   unsigned char *d_decrypteddata;
   unsigned int d_decrypteddatasize;
 
   static unsigned char constexpr s_saltmask = 0x3a;
-  static char constexpr s_sqlliteheader[16] = {'S', 'Q', 'L', 'i', 't', 'e', ' ', 'f', 'o', 'r', 'm', 'a', 't', ' ', '3', '\0'};
+  static int constexpr s_sqlliteheader_size = 16;
+  static char constexpr s_sqlliteheader[s_sqlliteheader_size] = {'S', 'Q', 'L', 'i', 't', 'e', ' ', 'f', 'o', 'r', 'm', 'a', 't', ' ', '3', '\0'};
 
   struct DecodedData
   {
