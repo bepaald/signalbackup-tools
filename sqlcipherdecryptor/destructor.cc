@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020  Selwin van Dijk
+    Copyright (C) 2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -25,8 +25,12 @@ SqlCipherDecryptor::~SqlCipherDecryptor()
   bepaald::destroyPtr(&d_hmackey, &d_hmackeysize);
   bepaald::destroyPtr(&d_salt, &d_saltsize);
   bepaald::destroyPtr(&d_decrypteddata, &d_decrypteddatasize);
+#ifdef USE_OPENSSL
+  //EVP_MD_CTX_destroy(d_digest);
+#else
   if (d_hmac)
     delete d_hmac;
   if (d_pbkdf)
     delete d_pbkdf;
+#endif
 }

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020  Selwin van Dijk
+    Copyright (C) 2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -37,14 +37,19 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
   d_hmackeysize(0),
   d_salt(nullptr),
   d_saltsize(0),
+#ifdef USE_OPENSSL
+  d_digest(version == 4 ? EVP_sha512() : EVP_sha1()),
+  d_digestsize(EVP_MD_size(d_digest)),
+#else
   d_pbkdf(version == 4 ?
           static_cast<CryptoPP::PasswordBasedKeyDerivationFunction *>(new CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA512>) :
           static_cast<CryptoPP::PasswordBasedKeyDerivationFunction *>(new CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA1>)),
   d_hmac(version == 4 ?
          static_cast<CryptoPP::HMAC_Base *>(new CryptoPP::HMAC<CryptoPP::SHA512>) :
          static_cast<CryptoPP::HMAC_Base *>(new CryptoPP::HMAC<CryptoPP::SHA1>)),
-  d_pagesize(version == 4 ? 4096 : 1024),
   d_digestsize(d_hmac->DigestSize()),
+#endif
+  d_pagesize(version == 4 ? 4096 : 1024),
   d_decrypteddata(nullptr),
   d_decrypteddatasize(0)
 {
@@ -77,7 +82,10 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
   if (!getHmacKey())
     return;
 
+#ifdef USE_OPENSSL
+#else
   d_hmac->SetKey(d_hmackey, d_hmackeysize);
+#endif
 
   if (!decryptData(&dbfile))
     return;
