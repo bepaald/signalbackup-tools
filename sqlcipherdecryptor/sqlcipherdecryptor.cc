@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2020  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -37,7 +37,7 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
   d_hmackeysize(0),
   d_salt(nullptr),
   d_saltsize(0),
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
   d_digest(version == 4 ? EVP_sha512() : EVP_sha1()),
   d_digestsize(EVP_MD_size(d_digest)),
 #else
@@ -82,8 +82,7 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
   if (!getHmacKey())
     return;
 
-#ifdef USE_OPENSSL
-#else
+#ifdef USE_CRYPTOPP
   d_hmac->SetKey(d_hmackey, d_hmackeysize);
 #endif
 

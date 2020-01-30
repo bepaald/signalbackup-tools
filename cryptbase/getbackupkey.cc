@@ -19,7 +19,7 @@
 
 #include "cryptbase.ih"
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 // openssl
 bool CryptBase::getBackupKey(std::string const &passphrase)

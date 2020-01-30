@@ -21,7 +21,7 @@
 
 #include <cstring>
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>

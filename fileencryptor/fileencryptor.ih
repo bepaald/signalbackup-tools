@@ -19,7 +19,7 @@
 
 #include "fileencryptor.h"
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -30,7 +30,7 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/sha.h>
-// this defines ConstByteParameter which is used in hkfd, probably a bug
+// this defines ConstByteParameter which is used in hkfd.h, maybe a bug?
 #if (CRYPTOPP_VERSION == 700 || CRYPTOPP_VERSION == 710)
 #include <cryptopp/algparam.h>
 #endif

@@ -24,7 +24,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(std::pair<unsig
   return encryptFrame(data.first, data.second);
 }
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *data, uint64_t length)
 {

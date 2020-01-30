@@ -48,7 +48,7 @@ class CryptBase
   inline ~CryptBase();
   inline bool ok() const;
  protected:
-  bool getCipherAndMac(uint hashoutputsize, long unsigned int outputsize);
+  bool getCipherAndMac(uint hashoutputsize, size_t outputsize);
   bool getBackupKey(std::string const &passphrase);
   inline void uintToFourBytes(unsigned char *bytes, uint32_t val) const;
   inline uint32_t fourBytesToUint(unsigned char *b) const;

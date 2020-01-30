@@ -65,7 +65,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
   if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength))
     return std::unique_ptr<BackupFrame>(nullptr);
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
   // check hash
   unsigned int digest_size = SHA256_DIGEST_LENGTH;

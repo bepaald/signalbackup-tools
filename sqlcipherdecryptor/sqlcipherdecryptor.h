@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2020  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -25,7 +25,7 @@
 #include "../common_be.h"
 
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 class evp_md_st;
 #else
 namespace CryptoPP
@@ -45,7 +45,7 @@ class SqlCipherDecryptor
   unsigned int d_hmackeysize;
   unsigned char *d_salt;
   unsigned int d_saltsize;
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
   evp_md_st const *d_digest;
 #else
   CryptoPP::PasswordBasedKeyDerivationFunction *d_pbkdf;

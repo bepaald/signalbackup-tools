@@ -19,7 +19,7 @@
 
 #include "fileencryptor.ih"
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned char *data, uint64_t length)
 {

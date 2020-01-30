@@ -20,7 +20,7 @@
 #ifndef BASE64_H_
 #define BASE64_H_
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 #include <openssl/evp.h>
 #include <memory>
 #include <cstring>
@@ -42,7 +42,7 @@ struct Base64
 
 inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t size)
 {
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
   int base64length = ((4 * size / 3) + 3) & ~3;
   std::unique_ptr<unsigned char[]> output(new unsigned char[base64length + 1]); // +1 for terminating null
   if (EVP_EncodeBlock(output.get(), data, size) != base64length)
@@ -70,7 +70,7 @@ inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t
 
 inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(std::string const &str)
 {
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
   int binarylength = str.size() / 4 * 3;
   std::unique_ptr<unsigned char[]> output(new unsigned char[binarylength]);
   if (EVP_DecodeBlock(output.get(), reinterpret_cast<unsigned const char *>(str.data()), str.size()) == -1)
