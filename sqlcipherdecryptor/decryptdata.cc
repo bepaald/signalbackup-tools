@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2020  Selwin van Dijk
+    Copyright (C) 2019-2020  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -19,7 +19,7 @@
 
 #include "sqlcipherdecryptor.ih"
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
 {

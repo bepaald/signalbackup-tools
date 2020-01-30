@@ -19,7 +19,7 @@
 
 #include "basedecryptor.ih"
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
 {

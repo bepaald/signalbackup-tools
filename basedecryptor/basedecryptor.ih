@@ -19,18 +19,20 @@
 
 #include "basedecryptor.h"
 
-#ifdef USE_OPENSSL
+#ifndef USE_CRYPTOPP
 
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 
-#endif
+#else
 
 #include <cryptopp/aes.h>
 #include <cryptopp/ccm.h>
 #include <cryptopp/sha.h>
 #include <cryptopp/hkdf.h>
+
+#endif
 
 #include "../common_be.h"
 #include "../framewithattachment/framewithattachment.h"

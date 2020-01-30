@@ -75,7 +75,7 @@ void SignalBackup::initFromDir(std::string const &inputdir)
   }
   for (auto const &avatar : dirit) // put all Avatar_[...].sbf files in vector:
     if (avatar.path().extension() == ".sbf" && avatar.path().filename().string().starts_with("Avatar_"))
-      avatarfiles.push_back(avatar.path());
+      avatarfiles.push_back(avatar.path().string());
 
   std::sort(avatarfiles.begin(), avatarfiles.end());
 
