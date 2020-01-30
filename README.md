@@ -39,7 +39,7 @@ If for any reason you need to compile against cryptopp instead of openssl, run `
 
 **<span id="windows">Windows binary</span>**
 
-For the most recent Windows executable, check the releases page. This executable is a static build, cross compiled from my Arch linux install. It is only minimally tested.
+For the most recent Windows executable, check [the releases page](https://github.com/bepaald/signalbackup-tools/releases). This executable is a static build, cross compiled from my Arch linux install. It is only minimally tested.
 
 ### Running
 
