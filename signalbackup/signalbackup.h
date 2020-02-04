@@ -42,6 +42,7 @@ class SignalBackup
  public:
   static bool constexpr LOWMEM = true;
   static bool constexpr DROPATTACHMENTDATA = false;
+
  private:
   SqliteDB d_database;
   std::unique_ptr<FileDecryptor> d_fd;
@@ -58,20 +59,26 @@ class SignalBackup
   bool d_ok;
   unsigned int d_databaseversion;
   bool d_showprogress;
+
  public:
-  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false, std::vector<long long int> editattachments = std::vector<long long int>());
-  //explicit SignalBackup(std::string const &inputdir, bool showprogress = true);
-  [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite = false, bool keepattachmentdatainmemory = true);
-  [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase, bool overwrite = false, bool keepattachmentdatainmemory = true);
+  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false,
+                      bool showprogress = true, bool assumebadframesizeonbadmac = false,
+                      std::vector<long long int> editattachments = std::vector<long long int>());
+  [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
+                                         bool overwrite = false, bool keepattachmentdatainmemory = true);
+  [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
+                                        bool overwrite = false, bool keepattachmentdatainmemory = true);
   [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite = false);
-  void exportXml(std::string const &filename) const;
+  bool exportXml(std::string const &filename, bool overwrite, bool includemms = false) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
   void cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
-  inline void addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming);
-  void addSMSMessage(std::string const &body, std::string const &address, long long int timestamp, long long int thread, bool incoming);
+  inline void addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp,
+                            long long int thread, bool incoming);
+  void addSMSMessage(std::string const &body, std::string const &address, long long int timestamp,
+                     long long int thread, bool incoming);
   void importThread(SignalBackup *source, long long int thread);
   void importThread(SignalBackup *source, std::vector<long long int> const &threads);
   inline bool ok() const;
@@ -83,6 +90,7 @@ class SignalBackup
   inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
   inline std::vector<int> threadIds() const;
+
  private:
   void initFromFile();
   void initFromDir(std::string const &inputdir);
@@ -95,27 +103,31 @@ class SignalBackup
   [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   [[nodiscard]] inline bool writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   [[nodiscard]] bool writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
-  SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers, std::vector<std::any> const &result) const;
+  SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers,
+                                           std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
-  template <class T>
-  inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
-  template <typename T>
-  inline std::pair<unsigned char*, size_t> numToData(T num) const;
+  template <class T> inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
+  template <typename T> inline std::pair<unsigned char*, size_t> numToData(T num) const;
   void setMinimumId(std::string const &table, long long int offset) const;
   void cleanDatabaseByMessages();
   void compactIds(std::string const &table);
-  void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences, long long int groups, long long int identies, long long int group_receipts, long long int drafts);
+  void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part, long long int recipient_preferences,
+                     long long int groups, long long int identies, long long int group_receipts, long long int drafts);
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
-  //void showQuery(std::string const &query) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;
   void duplicateQuotes(std::string *s) const;
   std::string decodeStatusMessage(std::string const &body, long long int expiration, long long int type, std::string const &contactname) const;
   void escapeXmlString(std::string *s) const;
+  void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const;
+  void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const;
+  inline std::string getStringOrEmpty(SqliteDB::QueryResults const &results, int i, std::string const &columnname) const;
+  inline long long int getIntOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, long long int def) const;
 };
 
-inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress, bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
+inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress,
+                                  bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
   :
   d_database(":memory:"),
   d_passphrase(passphrase),
@@ -132,7 +144,8 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   }
 }
 
-inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite, bool keepattachmentdatainmemory)
+inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
+                                       bool keepattachmentdatainmemory)
 {
   if (bepaald::fileOrDirExists(filename) && bepaald::isDir(filename))
     return exportBackupToDir(filename, overwrite);
@@ -347,6 +360,26 @@ inline std::vector<int> SignalBackup::threadIds() const
       if (results.valueHasType<long long int>(i, 0))
         res.push_back(results.getValueAs<long long int>(i, 0));
   return res;
+}
+
+inline std::string SignalBackup::getStringOrEmpty(SqliteDB::QueryResults const &results, int i, std::string const &columnname) const
+{
+  std::string tmp;
+  if (results.valueHasType<std::string>(i, columnname))
+  {
+    tmp = results.getValueAs<std::string>(i, columnname);
+    escapeXmlString(&tmp);
+  }
+  return tmp;
+}
+
+inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &results, int i,
+                                     std::string const &columnname, long long int def) const
+{
+  long long int temp = def;
+  if (results.valueHasType<long long int>(i, columnname))
+    temp = results.getValueAs<long long int>(i, columnname);
+  return temp;
 }
 
 #endif

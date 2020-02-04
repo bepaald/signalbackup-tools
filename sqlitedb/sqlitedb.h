@@ -36,11 +36,11 @@ class SqliteDB
   {
     std::vector<std::string> d_headers;
     std::vector<std::vector<std::any>> d_values;
+
    public:
     inline void emplaceHeader(std::string &&h);
     inline std::vector<std::string> const &headers() const;
     inline std::string const &header(size_t idx) const;
-
     inline void emplaceValue(size_t row, std::any &&a);
     inline std::any value(size_t row, std::string const &header) const;
     template <typename T>
@@ -61,6 +61,7 @@ class SqliteDB
     std::string valueAsString(size_t row, size_t column) const;
     template <typename T>
     inline bool contains(T const &value) const;
+
    private:
     std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
@@ -75,6 +76,7 @@ class SqliteDB
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
   bool d_ok;
+
  public:
   inline explicit SqliteDB(std::string const &name, bool readonly = true);
   inline explicit SqliteDB(std::pair<unsigned char *, uint64_t> *data);
@@ -87,6 +89,7 @@ class SqliteDB
   bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
+
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
