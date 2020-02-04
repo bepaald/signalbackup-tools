@@ -168,7 +168,11 @@ int main(int argc, char *argv[])
       sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first);
 
   if (!arg.exportxml().empty())
-    sb->exportXml(arg.exportxml());
+    if (!sb->exportXml(arg.exportxml(), arg.overwrite()))
+    {
+      std::cout << "Failed to export backup to '" << arg.exportxml() << "'" << std::endl;
+      return 1;
+    }
 
   // export output
   if (!arg.output().empty())
