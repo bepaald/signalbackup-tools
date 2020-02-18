@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
       sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first);
 
   if (!arg.exportxml().empty())
-    if (!sb->exportXml(arg.exportxml(), arg.overwrite()))
+    if (!sb->exportXml(arg.exportxml(), arg.overwrite(), false /*include mms*/, SignalBackup::DROPATTACHMENTDATA))
     {
       std::cout << "Failed to export backup to '" << arg.exportxml() << "'" << std::endl;
       return 1;

@@ -27,11 +27,11 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
   /* subject - Subject of the message, its always null in case of SMS messages. */
   /* OPTIONAL */
-  std::string subject = getStringOrEmpty(results, i, "subject");
+  std::string subject = getStringOr(results, i, "subject");
 
   /* service_center - The service center for the received message, null in case of sent messages. */
   /* OPTIONAL */
-  std::string service_center = getStringOrEmpty(results, i, "service_center");
+  std::string service_center = getStringOr(results, i, "service_center");
 
   /* read - Read Message = 1, Unread Message = 0. */
   /* REQUIRED */
@@ -171,7 +171,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
              << "/>" << std::endl;
 }
 
-void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const
+void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i, bool keepattachmentdatainmemory) const
 {
 
   // msg_box - The type of message, 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox
@@ -261,49 +261,49 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   }
 
   // sub - The subject of the message, if present.
-  std::string sub = getStringOrEmpty(results, i, "sub");
+  std::string sub = getStringOr(results, i, "sub");
 
   // read - Has the message been read
   long long int read = getIntOr(results, i, "read", 0);
 
   // read_status - The read-status of the message.
-  std::string read_status = getStringOrEmpty(results, i, "read_status");
+  std::string read_status = getStringOr(results, i, "read_status");
 
   // rr - The read-report of the message.
   long long int rr = getIntOr(results, i, "rr", 0);
 
   // ct_t - The Content-Type of the message, usually "application/vnd.wap.multipart.related"
-  std::string ct_t = getStringOrEmpty(results, i, "ct_t");
+  std::string ct_t = getStringOr(results, i, "ct_t");
 
-  std::string ct_cls = getStringOrEmpty(results, i, "ct_cls");
-  std::string sub_cs = getStringOrEmpty(results, i, "sub_cs");
+  std::string ct_cls = getStringOr(results, i, "ct_cls");
+  std::string sub_cs = getStringOr(results, i, "sub_cs");
   long long int pri = getIntOr(results, i, "pri", 0);
   long long int v = getIntOr(results, i, "v", 0);
 
   // m_id - The Message-ID of the message
-  std::string m_id = getStringOrEmpty(results, i, "m_id");
+  std::string m_id = getStringOr(results, i, "m_id");
 
   // m_size - The size of the message.
-  std::string m_size = getStringOrEmpty(results, i, "m_size");
+  std::string m_size = getStringOr(results, i, "m_size");
 
   // m_type - The type of the message defined by MMS spec.
   long long int m_type = getIntOr(results, i, "m_type", 0);
 
   // m_cls
-  std::string m_cls = getStringOrEmpty(results, i, "m_cls");
+  std::string m_cls = getStringOr(results, i, "m_cls");
 
-  std::string retr_st = getStringOrEmpty(results, i, "retr_st");
-  std::string retr_txt = getStringOrEmpty(results, i, "retr_txt");
-  std::string retr_txt_cs = getStringOrEmpty(results, i, "retr_txt_cs");
-  std::string ct_l = getStringOrEmpty(results, i, "ct_l");
-  std::string d_tm = getStringOrEmpty(results, i, "d_tm");
-  std::string d_rpt = getStringOrEmpty(results, i, "d_rpt");
-  std::string exp = getStringOrEmpty(results, i, "exp");
-  std::string resp_txt = getStringOrEmpty(results, i, "resp_txt");
-  std::string rpt_a = getStringOrEmpty(results, i, "rpt_a");
-  std::string resp_st = getStringOrEmpty(results, i, "resp_st");
-  std::string st = getStringOrEmpty(results, i, "st");
-  std::string tr_id = getStringOrEmpty(results, i, "tr_id");
+  std::string retr_st = getStringOr(results, i, "retr_st");
+  std::string retr_txt = getStringOr(results, i, "retr_txt");
+  std::string retr_txt_cs = getStringOr(results, i, "retr_txt_cs");
+  std::string ct_l = getStringOr(results, i, "ct_l");
+  std::string d_tm = getStringOr(results, i, "d_tm");
+  std::string d_rpt = getStringOr(results, i, "d_rpt");
+  std::string exp = getStringOr(results, i, "exp");
+  std::string resp_txt = getStringOr(results, i, "resp_txt");
+  std::string rpt_a = getStringOr(results, i, "rpt_a");
+  std::string resp_st = getStringOr(results, i, "resp_st");
+  std::string st = getStringOr(results, i, "st");
+  std::string tr_id = getStringOr(results, i, "tr_id");
 
   /*
     REQUIRED
@@ -316,31 +316,6 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   long long int locked = 0;
 
   long long int text_only = 1;
-
-  /* PART */
-
-  /* text - The content of the message. */
-  long long int expiration = getIntOr(results, i, "expires_in", -1);
-  std::string text;
-  if (results.valueHasType<std::string>(i, "body"))
-  {
-    text = results.getValueAs<std::string>(i, "body");
-    text = decodeStatusMessage(text, expiration, realtype, contact_name);
-    escapeXmlString(&text);
-  }
-  else if (results.valueHasType<std::nullptr_t>(i, "body"))
-  {
-    text = decodeStatusMessage(text, expiration, realtype, contact_name);
-    escapeXmlString(&text);
-  }
-
-  //   seq - The order of the part.
-  //   ct - The content type of the part.
-  //   name - The name of the part.
-  //   chset - The charset of the part.
-  //   cl - The content location of the part.
-  //   data - The base64 encoded binary content of the part.
-
 
   outputfile << "  <mms "
              << "msg_box=\"" << msg_box << "\" "
@@ -378,15 +353,110 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
              << "resp_st=\"" << resp_st << "\" "
              << "text_only=\"" << text_only << "\">" << std::endl;
     // << "=\"" <<  << "\" "
-  outputfile << "    <part "
-             << "text=\"" << text << "\" "
-    //<< "=\"" <<  << "\" "
-             << "></part>" << std::endl;
+
+
+  /* PART */
+
+
+  long long int mid = getIntOr(results, i, "_id", -1);
+  /* text - The content of the message. */
+  long long int expiration = getIntOr(results, i, "expires_in", -1);
+  std::string text;
+  if (results.valueHasType<std::string>(i, "body"))
+  {
+    text = results.getValueAs<std::string>(i, "body");
+    text = decodeStatusMessage(text, expiration, realtype, contact_name);
+    escapeXmlString(&text);
+  }
+  else if (results.valueHasType<std::nullptr_t>(i, "body"))
+  {
+    text = decodeStatusMessage(text, expiration, realtype, contact_name);
+    escapeXmlString(&text);
+  }
+
+  if (!text.empty())
+  {
+    outputfile << "    <part "
+               << "seq=\"0\" "
+               << "ct=\"text/plain\" "
+               << "name=\"null\" "
+               << "chset=\"null\" " // 106 ???
+               << "cd=\"null\" "
+               << "fn=\"null\" "
+               << "cid=\"null\" "
+               << "cl=\"txt" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << ".txt\" "
+               << "ctt_s=\"null\" "
+               << "ctt_t=\"null\" "
+               << "text=\"" << text << "\" "
+               << "></part>" << std::endl;
+  }
+
+
+  SqliteDB::QueryResults part_results;
+  if (mid >= 0)
+    d_database.exec("SELECT _id,unique_id,seq,ct,name,chset,cd,fn,cid,cl,ctt_s,ctt_t FROM part WHERE part.mid = ?", mid, &part_results);
+
+  for (uint j = 0; j < part_results.rows(); ++j)
+  {
+    long long int seq = getIntOr(part_results, j, "seq", 0);
+    std::string ct = getStringOr(part_results, j, "ct", "null");
+    std::string name = getStringOr(part_results, j, "name", "null");
+    std::string chset = getStringOr(part_results, j, "chset", "null");
+    std::string cd = getStringOr(part_results, j, "cd", "null");
+    std::string fn = getStringOr(part_results, j, "fn", "null");
+    std::string cid = getStringOr(part_results, j, "cid", "null");
+    std::string cl = getStringOr(part_results, j, "cl", "null");
+    std::string ctt_s = getStringOr(part_results, j, "ctt_s", "null");
+    std::string ctt_t = getStringOr(part_results, j, "ctt_t", "null");
+
+    //   seq - The order of the part.
+    //   ct - The content type of the part.
+    //   name - The name of the part.
+    //   chset - The charset of the part.
+    //   cl - The content location of the part.
+    //   data - The base64 encoded binary content of the part.
+    //                         <xs:attribute name="seq" type="xs:byte" use="required" />
+    //                         <xs:attribute name="ct" type="xs:string" use="required" />
+    //                         <xs:attribute name="name" type="xs:string" use="required" />
+    //                         <xs:attribute name="chset" type="xs:string" use="required" />
+    //                         <xs:attribute name="cd" type="xs:string" use="required" />
+    //                         <xs:attribute name="fn" type="xs:string" use="required" />
+    //                         <xs:attribute name="cid" type="xs:string" use="required" />
+    //                         <xs:attribute name="cl" type="xs:string" use="required" />
+    //                         <xs:attribute name="ctt_s" type="xs:string" use="required" />
+    //                         <xs:attribute name="ctt_t" type="xs:string" use="required" />
+    //                         <xs:attribute name="text" type="xs:string" use="required" />
+    //                         <xs:attribute name="data" type="xs:string" use="optional" />
+
+    outputfile << "    <part "
+               << "seq=\"" << seq << "\" "
+               << "ct=\"" << ct << "\" "
+               << "name=\"" << name << "\" "
+               << "chset=\"" << chset << "\" "
+               << "cd=\"" << cd << "\" "
+               << "fn=\"" << fn << "\" "
+               << "cid=\"" << cid << "\" "
+               << "cl=\"" << cl << "\" "
+               << "ctt_s=\"" << ctt_s << "\" "
+               << "ctt_t=\"" << ctt_t << "\" "
+               << "text=\"" << "null" << "\"";
+    // getAttachmentData
+    long long int rowid = getIntOr(part_results, j, "_id", -1);
+    long long int uniqueid = getIntOr(part_results, j, "unique_id", -1);
+    auto attachment = d_attachments.find({rowid, uniqueid});
+    if (attachment != d_attachments.end())
+    {
+      outputfile << "data=\"" << Base64::bytesToBase64String(attachment->second->attachmentData(), attachment->second->attachmentSize()) << "\" ";
+      if (!keepattachmentdatainmemory)
+        attachment->second.get()->clearData();
+    }
+    outputfile << "></part>" << std::endl;
+  }
   //outputfile << "    <addr....." << std::endl;
   outputfile << "  </mms>" << std::endl;
 }
 
-bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool includemms) const
+bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool includemms, bool keepattachmentdatainmemory) const
 {
 
   std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
@@ -407,7 +477,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
 
   SqliteDB::QueryResults mms_results;
   if (includemms)
-    d_database.exec("SELECT date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms", &mms_results);
+    d_database.exec("SELECT _id,date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms", &mms_results);
 
   outputfile << "<smses count=" << bepaald::toString(sms_results.rows() + mms_results.rows()) << ">" << std::endl;
   uint sms_row = 0;
@@ -421,7 +491,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
           mms_results.getValueAs<long long int>(mms_row, "date"))))
       handleSms(sms_results, outputfile, sms_row++);
     else if (mms_row < mms_results.rows())
-      handleMms(mms_results, outputfile, mms_row++);
+      handleMms(mms_results, outputfile, mms_row++, keepattachmentdatainmemory);
 
     //std::cout << "Handled row! Indeces now: " << sms_row << "/" << sms_results.rows() << " " << mms_row << "/" << mms_results.rows() << std::endl;
   }

@@ -69,7 +69,7 @@ class SignalBackup
   [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
                                         bool overwrite = false, bool keepattachmentdatainmemory = true);
   [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite = false);
-  bool exportXml(std::string const &filename, bool overwrite, bool includemms = false) const;
+  bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
   void cropToThread(long long int threadid);
@@ -121,8 +121,8 @@ class SignalBackup
   std::string decodeStatusMessage(std::string const &body, long long int expiration, long long int type, std::string const &contactname) const;
   void escapeXmlString(std::string *s) const;
   void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const;
-  void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const;
-  inline std::string getStringOrEmpty(SqliteDB::QueryResults const &results, int i, std::string const &columnname) const;
+  void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i, bool keepattachmentdatainmemory) const;
+  inline std::string getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def = std::string()) const;
   inline long long int getIntOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, long long int def) const;
 };
 
@@ -362,9 +362,9 @@ inline std::vector<int> SignalBackup::threadIds() const
   return res;
 }
 
-inline std::string SignalBackup::getStringOrEmpty(SqliteDB::QueryResults const &results, int i, std::string const &columnname) const
+inline std::string SignalBackup::getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def) const
 {
-  std::string tmp;
+  std::string tmp(def);
   if (results.valueHasType<std::string>(i, columnname))
   {
     tmp = results.getValueAs<std::string>(i, columnname);
