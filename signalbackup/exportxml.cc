@@ -213,13 +213,15 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   }
 
   // date - The Java date representation (including millisecond) of the time when the message was sent/received. Check out www.epochconverter.com for information on how to do the conversion from other languages to Java.
-  long long int date = getIntOr(results, i, "date", 0);
+  long long int date = getIntOr(results, i, "date_received", 0);
+
+  long long int date_sent = getIntOr(results, i, "date", 0) / 1000;
 
   // readable_date - Optional field that has the date in a human readable format.
   std::string readable_date;
-  if (results.valueHasType<long long int>(i, "date"))
+  if (results.valueHasType<long long int>(i, "date_received"))
   {
-    long long int datum = results.getValueAs<long long int>(i, "date");
+    long long int datum = results.getValueAs<long long int>(i, "date_received");
     std::time_t epoch = datum / 1000;
     std::ostringstream tmp;
     tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %T");
@@ -273,12 +275,12 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   long long int rr = getIntOr(results, i, "rr", 0);
 
   // ct_t - The Content-Type of the message, usually "application/vnd.wap.multipart.related"
-  std::string ct_t = getStringOr(results, i, "ct_t");
+  std::string ct_t = getStringOr(results, i, "ct_t", "application/vnd.wap.multipart.related");
 
   std::string ct_cls = getStringOr(results, i, "ct_cls");
   std::string sub_cs = getStringOr(results, i, "sub_cs");
   long long int pri = getIntOr(results, i, "pri", 0);
-  long long int v = getIntOr(results, i, "v", 0);
+  long long int v = getIntOr(results, i, "v", 0);   // v = (msg_box == 1 // m_type == 132) ? 16 : (== 2 // == 128) 18  ????
 
   // m_id - The Message-ID of the message
   std::string m_id = getStringOr(results, i, "m_id");
@@ -290,7 +292,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   long long int m_type = getIntOr(results, i, "m_type", 0);
 
   // m_cls
-  std::string m_cls = getStringOr(results, i, "m_cls");
+  std::string m_cls = getStringOr(results, i, "m_cls");  // if address == __textsecuregroup_ -> "personal" ???
 
   std::string retr_st = getStringOr(results, i, "retr_st");
   std::string retr_txt = getStringOr(results, i, "retr_txt");
@@ -308,10 +310,9 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   /*
     REQUIRED
     ints:
-    date_sent|seen|locked
+    seen|locked
   */
 
-  long long int date_sent = 0;
   long long int seen = 0;
   long long int locked = 0;
 
