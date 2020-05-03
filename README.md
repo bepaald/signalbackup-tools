@@ -48,7 +48,7 @@ For the most recent Windows executable, check [the releases page](https://github
 At the moment it has been used succesfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
 
 ```
-signalbackups-tools [input] [password] --output [output] (--opassword [newpassword])`
+signalbackups-tools [input] [password] --output [output] (--opassword [newpassword])
 
 ```
 
