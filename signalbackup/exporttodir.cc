@@ -77,7 +77,10 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
   for (int count = 1 ; auto const &aframe : d_avatars)
   {
     AvatarFrame *a = aframe.second.get();
-    std::string avatar_basefilename = directory + "/Avatar_" + bepaald::toString(count++) + "_" + ((d_databaseversion < 33) ? a->name() : a->recipient());
+    std::string avatar_basefilename = directory + "/Avatar_" +
+      std::string(bepaald::numDigits(d_avatars.size()) - bepaald::numDigits(count), '0') + bepaald::toString(count)
+      + "_" + ((d_databaseversion < 33) ? a->name() : a->recipient());
+    ++count;
 
     // write frame
     if (!writeRawFrameDataToFile(avatar_basefilename + ".sbf", a))
@@ -97,13 +100,13 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 
   // export sharedpreferences
   std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
-  for (int count = 0; auto const &spframe : d_sharedpreferenceframes)
+  for (int count = 1; auto const &spframe : d_sharedpreferenceframes)
     if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
       return false;
 
   // export stickers
   std::cout << "Writing StickerFrames..." << std::endl;
-  for (int count = 0; auto const &sframe : d_stickers)
+  for (int count = 1; auto const &sframe : d_stickers)
   {
     StickerFrame *s = sframe.second.get();
     std::string sticker_basefilename = directory + "/Sticker_" + bepaald::toString(count++) + "_" + bepaald::toString(s->rowId());
