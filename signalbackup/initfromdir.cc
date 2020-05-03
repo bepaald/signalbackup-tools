@@ -43,7 +43,7 @@ void SignalBackup::initFromDir(std::string const &inputdir)
   //d_databaseversionframe->printInfo();
 
   std::cout << "Reading SharedPreferenceFrame(s)" << std::endl;
-  int idx = 0;
+  int idx = 1;
   while (true)
   {
     d_sharedpreferenceframes.resize(d_sharedpreferenceframes.size() + 1);

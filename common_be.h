@@ -74,6 +74,8 @@ namespace bepaald
   inline bool isDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
+
+  inline int numDigits(long long int num);
 }
 
 template <typename T>
@@ -292,6 +294,17 @@ inline bool bepaald::clearDirectory(std::string const &path)
     if (!std::filesystem::remove(p.path()))
       return false;
   return true;
+}
+
+inline int bepaald::numDigits(long long int num)
+{
+  int count = 0;
+  while (num)
+  {
+    num /= 10;
+    ++count;
+  }
+  return count;
 }
 
 #endif

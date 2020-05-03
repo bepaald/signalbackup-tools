@@ -36,8 +36,11 @@ void SignalBackup::initFromFile()
 
   while ((frame = d_fd->getFrame())) // deal with bad mac??
   {
-    //std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
-    //frame->printInfo();
+    //if (true || frame->frameNumber() > 53700)
+    //{
+    //  std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
+    //  frame->printInfo();
+    //}
 
     if (d_fd->badMac())
       dumpInfoOnBadFrame(&frame);
