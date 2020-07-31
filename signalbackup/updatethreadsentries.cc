@@ -105,22 +105,22 @@ void SignalBackup::updateThreadsEntries(long long int thread)
             //std::cout << "FILE TYPE: " << t << std::endl;
 
             std::string snippet;
-            if (t.starts_with("image/gif"))
+            if (STRING_STARTS_WITH(t, "image/gif"))
             {
               snippet = "\xF0\x9F\x8E\xA1 "; // ferris wheel emoji for some reason
               snippet += (newsnippet.empty()) ? "GIF" : newsnippet;
             }
-            else if (t.starts_with("image"))
+            else if (STRING_STARTS_WITH(t, "image"))
             {
               snippet = "\xF0\x9F\x93\xB7 "; // (still) camera emoji
               snippet += (newsnippet.empty()) ? "Photo" : newsnippet;
             }
-            else if (t.starts_with("audio"))
+            else if (STRING_STARTS_WITH(t, "audio"))
             {
               snippet = "\xF0\x9F\x8E\xA4 "; // microphone emoji
               snippet += (newsnippet.empty()) ? "Voice message" : newsnippet;
             }
-            else if (t.starts_with("video"))
+            else if (STRING_STARTS_WITH(t, "video"))
             {
               snippet = "\xF0\x9F\x8E\xA5 "; //  (movie) camera emoji
               snippet += (newsnippet.empty()) ? "Video" : newsnippet;

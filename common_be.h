@@ -38,6 +38,12 @@
 
 #define STRLEN( STR ) (std::integral_constant<int, bepaald::strlitLength(STR)>::value)
 
+#if __GNUC__ < 9
+#define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
+#else
+#define STRING_STARTS_WITH( STR, SUB ) ( STR.starts_with(SUB) )
+#endif
+
 typedef unsigned int uint;
 
 namespace bepaald
@@ -117,7 +123,6 @@ T bepaald::toNumber(std::string const &str)
 
 inline std::string bepaald::bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
 {
-  std::cout << "THIS IS THE WEIRD CALL!!!" << std::endl;
   return bytesToHexString(data.first.get(), data.second, unformatted);
 }
 
