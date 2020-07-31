@@ -24,7 +24,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   long long int filepos = d_file.tellg();
   //std::cout << "Getting frame at filepos: " << filepos << std::endl;
 
-  if (static_cast<uint64_t>(filepos) == d_filesize)
+  [[unlikely]] if (static_cast<uint64_t>(filepos) == d_filesize)
   {
     std::cout << "Read entire backup file..." << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -46,7 +46,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   DEBUGOUT("Framelength: ", encryptedframelength);
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
-  if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength))
+  [[unlikely]] if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength))
   {
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
 
@@ -62,7 +62,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
-  if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0)
+  [[unlikely]] if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0)
   {
     std::cout << "" << std::endl;
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
@@ -81,7 +81,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   // disable padding
   EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
 
-  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+  [[unlikely]] if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
   {
     std::cout << "CTX INIT FAILED" << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -90,7 +90,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   int decodedframelength = encryptedframelength - MACSIZE;
   unsigned char *decodedframe = new unsigned char[decodedframelength];
 
-  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
+  [[unlikely]] if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
   {
     std::cout << "Failed to decrypt data" << std::endl;
     delete[] decodedframe;
@@ -111,7 +111,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, MACSIZE));
   DEBUGOUT("ourMac           : ", bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE));
-  if (std::memcmp(theirMac, ourMac, 10) != 0)
+  [[unlikely]] if (std::memcmp(theirMac, ourMac, 10) != 0)
   {
     std::cout << "" << std::endl;
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
@@ -151,7 +151,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   delete[] decodedframe;
 
-  if (!frame)
+  [[unlikely]] if (!frame)
   {
     std::cout << "Failed to get valid frame from decoded data..." << std::endl;
     //std::cout << "Data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;

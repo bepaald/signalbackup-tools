@@ -64,13 +64,13 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
   if ((attachmentsize = frame->attachmentSize()) > 0)
   {
     FrameWithAttachment *f = reinterpret_cast<FrameWithAttachment *>(frame);
-    unsigned char *attachmentdata = f->attachmentData();\
+    unsigned char *attachmentdata = f->attachmentData();
     if (!attachmentdata)
       return false;
-    std::pair<unsigned char *, uint64_t> newadata = d_fe.encryptAttachment(attachmentdata, attachmentsize);
+    std::pair<unsigned char *, uint64_t> newdata = d_fe.encryptAttachment(attachmentdata, attachmentsize);
     //std::cout << "Writing attachment data..." << std::endl;
-    outputfile.write(reinterpret_cast<char *>(newadata.first), newadata.second);
-    delete[] newadata.first;
+    outputfile.write(reinterpret_cast<char *>(newdata.first), newdata.second);
+    delete[] newdata.first;
 
     if (!outputfile.good())
     {

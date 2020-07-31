@@ -22,8 +22,8 @@
 long long int SignalBackup::getThreadIdFromRecipient(std::string const &recipient) const
 {
 
-  // note: for d_database < 27, recipient == "+316xxxxxxxx" || "__text_secure__!..."
-  //                      >= 27, recipient is just an int id
+  // note: for d_database < 24, recipient == "+316xxxxxxxx" || "__text_secure__!..."
+  //                      >= 24, recipient is just an int id
 
   long long int tid = -1;
   SqliteDB::QueryResults results;

@@ -339,7 +339,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       return fielddata;
     else // some numerical type (double / float / (u)int32/64 / bool / Enum)
     {
-      if (varint) /*[[likely]]*/ // wiretype was varint -> raw data needs to be decoded into the actual number
+      [[likely]] if (varint) // wiretype was varint -> raw data needs to be decoded into the actual number
       {
         if constexpr (std::is_same<T, ZigZag32>::value || std::is_same<T, ZigZag64>::value)
         {
@@ -356,7 +356,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       {
         if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value)
         {
-          if (sizeof(T) == fielddata.second) /*[[likely]]*/
+          [[likely]] if (sizeof(T) == fielddata.second)
           {
             T result;
             std::memcpy(reinterpret_cast<char *>(&result), reinterpret_cast<char *>(fielddata.first), fielddata.second);
@@ -396,7 +396,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
         result.emplace_back(fielddata);
       else // maybe check return type is numerical? if constexpr (typename ProtoBufParserReturn::item_return<T, true>::type::value_type == numerical type);
       {
-        if (varint) /*[[likely]]*/ // wiretype was varint -> raw data needs to be decoded into the actual number
+        [[likely]] if (varint) // wiretype was varint -> raw data needs to be decoded into the actual number
         {
           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
                         std::is_same<typename T::value_type, ZigZag64>::value)
@@ -412,7 +412,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
         }
         else
         {
-          if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second) /*[[likely]]*/
+          [[likely]] if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second)
           {
             typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
             std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);

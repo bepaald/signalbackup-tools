@@ -19,55 +19,57 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::compactIds(std::string const &table)
+void SignalBackup::compactIds(std::string const &table, std::string const &col)
 {
   std::cout << __FUNCTION__ << std::endl;
 
-  std::cout << "  Compacting table: " << table << std::endl;
+  std::cout << "  Compacting table: " << table << " (" << col << ")" << std::endl;
 
   SqliteDB::QueryResults results;
-  // d_database.exec("SELECT _id FROM " + table, &results);
+  // d_database.exec("SELECT " + col + " FROM " + table, &results);
   // results.prettyPrint();
 
   // gets first available _id in table
-  d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
+  d_database.exec("SELECT t1." + col + "+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2." + col + "=t1." + col + "+1 WHERE t2." + col + " IS NULL AND t1." + col + " > 0 ORDER BY t1." + col + " LIMIT 1", &results);
   while (results.rows() > 0 && results.valueHasType<long long int>(0, 0))
   {
     long long int nid = results.getValueAs<long long int>(0, 0);
 
-    d_database.exec("SELECT MIN(_id) FROM " + table + " WHERE _id > ?", nid, &results);
+    d_database.exec("SELECT MIN(" + col + ") FROM " + table + " WHERE " + col + " > ?", nid, &results);
     if (results.rows() == 0 || !results.valueHasType<long long int>(0, 0))
       break;
     long long int valuetochange = results.getValueAs<long long int>(0, 0);
     //std::cout << "Changing _id : " << valuetochange << " -> " << nid << std::endl;
 
-    d_database.exec("UPDATE " + table + " SET _id = ? WHERE _id = ?", {nid, valuetochange});
+    d_database.exec("UPDATE " + table + " SET " + col + " = ? WHERE " + col + " = ?", {nid, valuetochange});
 
-    if (table == "mms")
+    [[ likely ]] if (col == "_id")
     {
-      d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {nid, valuetochange}); // update part.mid to new mms._id's
-      d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {nid, valuetochange}); // "
-    }
-    else if (table == "part")
-    {
-      for (auto att = d_attachments.begin(); att != d_attachments.end(); )
+      if (table == "mms")
       {
-        if (reinterpret_cast<AttachmentFrame *>(att->second.get())->rowId() == static_cast<uint64_t>(valuetochange))
+        d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {nid, valuetochange}); // update part.mid to new mms._id's
+        d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {nid, valuetochange}); // "
+      }
+      else if (table == "part")
+      {
+        for (auto att = d_attachments.begin(); att != d_attachments.end(); )
         {
-          AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att->second.release());
-          att = d_attachments.erase(att);
-          a->setRowId(nid);
-          d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
+          if (reinterpret_cast<AttachmentFrame *>(att->second.get())->rowId() == static_cast<uint64_t>(valuetochange))
+          {
+            AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att->second.release());
+            att = d_attachments.erase(att);
+            a->setRowId(nid);
+            d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
+          }
+          else
+            ++att;
         }
-        else
-          ++att;
       }
     }
 
     // gets first available _id in table
-    d_database.exec("SELECT t1._id+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2._id=t1._id+1 WHERE t2._id IS NULL AND t1._id > 0 ORDER BY t1._id LIMIT 1", &results);
+    d_database.exec("SELECT t1." + col + "+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2." + col + "=t1." + col + "+1 WHERE t2." + col + " IS NULL AND t1." + col + " > 0 ORDER BY t1." + col + " LIMIT 1", &results);
   }
-
   // d_database.exec("SELECT _id FROM " + table, &results);
   // results.prettyPrint();
 }

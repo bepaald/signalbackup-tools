@@ -113,7 +113,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
 
-    if (d_databaseversion >= 25)
+    if (d_databaseversion >= 24)
     {
       SqliteDB::QueryResults r2;
       d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
@@ -133,7 +133,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
     SqliteDB::QueryResults r2;
-    if (d_databaseversion >= 25)
+    if (d_databaseversion >= 24)
       d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
     else
       d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
@@ -234,7 +234,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
 
-    if (d_databaseversion >= 25)
+    if (d_databaseversion >= 24)
     {
       SqliteDB::QueryResults r2;
       d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
@@ -253,7 +253,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
     SqliteDB::QueryResults r2;
-    if (d_databaseversion >= 25)
+    if (d_databaseversion >= 24)
       d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
     else
       d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);

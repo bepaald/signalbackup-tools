@@ -35,7 +35,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
       // set message count
       std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, 0));
       std::cout << "  Dealing with thread id: " << threadid << std::endl;
-      std::cout << "    Updating msgcount" << std::endl;
+      //std::cout << "    Updating msgcount" << std::endl;
       d_database.exec("UPDATE thread SET message_count = (SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
                       ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
 
@@ -44,47 +44,112 @@ void SignalBackup::updateThreadsEntries(long long int thread)
                       + threadid
                       + " UNION SELECT mms.date AS union_display_date, mms.msg_box AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
                       + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
-      //results2.prettyPrint();
 
       std::any date = results2.value(0, "union_date");
       if (date.type() == typeid(long long int))
       {
         long long int roundeddate = std::any_cast<long long int>(date) - (std::any_cast<long long int>(date) % 1000);
-        std::cout << "    Setting last msg date" << std::endl;
+        //std::cout << "    Setting last msg date (" << roundeddate << ")" << std::endl;
         d_database.exec("UPDATE thread SET date = ? WHERE _id = ?", {roundeddate, threadid});
       }
 
       std::any body = results2.value(0, "union_body");
+      std::string newsnippet;
       if (body.type() == typeid(std::string))
       {
-        std::cout << "    Updating snippet" << std::endl;
-        d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {std::any_cast<std::string>(body), threadid});
+        newsnippet = std::any_cast<std::string>(body);
+        //std::cout << "    Updating snippet (" << newsnippet << ")" << std::endl;
+        d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {newsnippet, threadid});
+      }
+      else
+      {
+        //std::cout << "    Updating snippet (NULL)" << std::endl;
+        d_database.exec("UPDATE thread SET snippet = NULL WHERE _id = ?", threadid);
       }
 
       std::any type = results2.value(0, "union_type");
       if (type.type() == typeid(long long int))
       {
-        std::cout << "    Updating snippet type" << std::endl;
+        //std::cout << "    Updating snippet type (" << std::any_cast<long long int>(type) << ")" << std::endl;
         d_database.exec("UPDATE thread SET snippet_type = ? WHERE _id = ?", {std::any_cast<long long int>(type), threadid});
       }
 
       std::any mid = results2.value(0, "mms._id");
       if (mid.type() == typeid(long long int))
       {
+        //std::cout << "Checking mms" << std::endl;
+
         SqliteDB::QueryResults results3;
-        d_database.exec("SELECT unique_id, _id FROM part WHERE mid = ?", {mid}, &results3);
+        d_database.exec("SELECT unique_id, _id, ct FROM part WHERE mid = ?", {mid}, &results3);
 
-        std::any uniqueid = results3.value(0, "unique_id");
-        std::any id = results3.value(0, "_id");
-
-        // snippet_uri = content://org.thoughtcrime.securesms/part/ + part.unique_id + '/' + part._id
-        if (id.type() == typeid(long long int) && uniqueid.type() == typeid(long long int))
+        if (results3.rows())
         {
-          std::cout << "    Updating snippet_uri" << std::endl;
-          d_database.exec("UPDATE thread SET snippet_uri = 'content://org.thoughtcrime.securesms/part/" +
-                          bepaald::toString(std::any_cast<long long int>(uniqueid)) + "/" +
-                          bepaald::toString(std::any_cast<long long int>(id)) + "' WHERE _id = " + threadid);
+          std::any uniqueid = results3.value(0, "unique_id");
+          std::any id = results3.value(0, "_id");
+          std::any filetype = results3.value(0, "ct");
+
+          // snippet_uri = content://org.thoughtcrime.securesms/part/ + part.unique_id + '/' + part._id
+          if (id.type() == typeid(long long int) && uniqueid.type() == typeid(long long int))
+          {
+            //std::cout << "    Updating snippet_uri" << std::endl;
+            d_database.exec("UPDATE thread SET snippet_uri = 'content://org.thoughtcrime.securesms/part/" +
+                            bepaald::toString(std::any_cast<long long int>(uniqueid)) + "/" +
+                            bepaald::toString(std::any_cast<long long int>(id)) + "' WHERE _id = " + threadid);
+          }
+
+          // update body to show photo/movie/file
+          if (filetype.type() == typeid(std::string))
+          {
+            std::string t = std::any_cast<std::string>(filetype);
+
+            //std::cout << "FILE TYPE: " << t << std::endl;
+
+            std::string snippet;
+            if (t.starts_with("image/gif"))
+            {
+              snippet = "\xF0\x9F\x8E\xA1 "; // ferris wheel emoji for some reason
+              snippet += (newsnippet.empty()) ? "GIF" : newsnippet;
+            }
+            else if (t.starts_with("image"))
+            {
+              snippet = "\xF0\x9F\x93\xB7 "; // (still) camera emoji
+              snippet += (newsnippet.empty()) ? "Photo" : newsnippet;
+            }
+            else if (t.starts_with("audio"))
+            {
+              snippet = "\xF0\x9F\x8E\xA4 "; // microphone emoji
+              snippet += (newsnippet.empty()) ? "Voice message" : newsnippet;
+            }
+            else if (t.starts_with("video"))
+            {
+              snippet = "\xF0\x9F\x8E\xA5 "; //  (movie) camera emoji
+              snippet += (newsnippet.empty()) ? "Video" : newsnippet;
+            }
+            else // if binary file
+            {
+              snippet = "\xF0\x9F\x93\x8E "; // paperclip
+              snippet += (newsnippet.empty()) ? "File" : newsnippet;
+            }
+            //std::cout << "    Updating snippet (" << snippet << ")" << std::endl;
+            d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {snippet, threadid});
+          }
         }
+        else // was mms, but no part -> maybe contact sharing?
+        {    // -> '[{"name":{"displayName":"Basje Timmer",...}}]'
+          SqliteDB::QueryResults results4;
+          d_database.exec("SELECT json_extract(mms.shared_contacts, '$[0].name.displayName') AS shared_contact_name from mms WHERE _id = ? AND shared_contacts IS NOT NULL", mid, &results4);
+          if (results4.rows() != 0 && results4.valueHasType<std::string>(0, "shared_contact_name"))
+          {
+            std::string snippet = "\xF0\x9F\x91\xA4 " + results4.getValueAs<std::string>(0, "shared_contact_name"); // bust in silouette emoji
+            //std::cout << "    Updating snippet (" << snippet << ")" << std::endl;
+            d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {snippet, threadid});
+          }
+        }
+      }
+      else
+      {
+        //std::cout << "    Updating snippet (NULL)" << std::endl;
+        d_database.exec("UPDATE thread SET snippet_uri = NULL");
       }
 
     }

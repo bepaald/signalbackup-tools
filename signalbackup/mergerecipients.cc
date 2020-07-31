@@ -32,9 +32,9 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   std::vector<std::string> recipient_ids = addresses;
   std::vector<std::string> phonenumbers = addresses;
 
-  // for database version < 27, addresses = recipient_ids, for dataversion >= 27 addresses = recipient.phone
+  // for database version < 24, addresses = recipient_ids, for dataversion >= 24 addresses = recipient.phone
   // so convert to recipient._ids
-  if (d_databaseversion >= 27)
+  if (d_databaseversion >= 24)
   {
     for (uint i = 0; i < recipient_ids.size(); ++i)
     {
@@ -113,7 +113,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
     std::cout << "Dealing with group: " << id << " (title: '" << title << "', members: " << members << ")" << std::endl;
 
     std::string recipient_id = id;
-    if (d_databaseversion >= 27)
+    if (d_databaseversion >= 24)
     {
       SqliteDB::QueryResults res;
       d_database.exec("SELECT _id FROM recipient WHERE group_id = ?", id, &res);

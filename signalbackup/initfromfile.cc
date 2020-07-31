@@ -42,30 +42,30 @@ void SignalBackup::initFromFile()
     //  frame->printInfo();
     //}
 
-    if (d_fd->badMac())
+    [[unlikely]] if (d_fd->badMac())
       dumpInfoOnBadFrame(&frame);
 
-    if (d_showprogress)
+    [[likely]] if (d_showprogress)
       std::cout << "\33[2K\rFRAME " << frame->frameNumber() << " ("
                 << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
                 << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
                 << "... " << std::flush;
 
-    if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
+    [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
     {
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
       //d_headerframe->printInfo();
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
+    else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       d_databaseversion = d_databaseversionframe->version();
       //std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
+    else [[likely]] if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
-      if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
+      [[unlikely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
       {
         if (!d_database.exec(s->bindStatement(), s->parameters()))
           std::cout << "WARNING: Failed to execute statement: " << s->statement() << std::endl;
@@ -80,6 +80,25 @@ void SignalBackup::initFromFile()
         d_database.exec("DROP TABLE dummy");
       }
       #endif
+
+      // if (s->frameNumber() == 222)
+      // {
+      //   std::cout << "Pos: " << d_fd->curFilePos() << std::endl;
+      //   std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
+      // }
+      // else if (s->frameNumber() == 223 && s->statement().find("INSERT INTO sms VALUES") != std::string::npos)
+      // {
+      //   std::cout << "Pos: " << d_fd->curFilePos() << std::endl;
+      //   std::cout << frame->getHumanData() << std::endl;
+      //   std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
+      //   frame->printInfo();
+      // }
+      // else if (s->frameNumber() == 224)
+      // {
+      //   std::cout << "Pos: " << d_fd->curFilePos() << std::endl;
+      //   std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
+      // }
+
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     {
@@ -98,7 +117,7 @@ void SignalBackup::initFromFile()
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
       d_stickers.emplace(s->rowId(), s);
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::END)
+    else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::END)
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
   }
 

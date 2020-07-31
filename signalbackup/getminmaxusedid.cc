@@ -19,10 +19,10 @@
 
 #include "signalbackup.ih"
 
-long long int SignalBackup::getMinUsedId(std::string const &table)
+long long int SignalBackup::getMinUsedId(std::string const &table, std::string const &col)
 {
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT MIN(_id) FROM " + table, &results);
+  d_database.exec("SELECT MIN(" + col + ") FROM " + table, &results);
   if (results.rows() != 1 ||
       results.columns() != 1 ||
       !results.valueHasType<long long int>(0, 0))
@@ -32,10 +32,10 @@ long long int SignalBackup::getMinUsedId(std::string const &table)
   return results.getValueAs<long long int>(0, 0);
 }
 
-long long int SignalBackup::getMaxUsedId(std::string const &table)
+long long int SignalBackup::getMaxUsedId(std::string const &table, std::string const &col)
 {
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT MAX(_id) FROM " + table, &results);
+  d_database.exec("SELECT MAX(" + col + ") FROM " + table, &results);
   if (results.rows() != 1 ||
       results.columns() != 1 ||
       !results.valueHasType<long long int>(0, 0))
