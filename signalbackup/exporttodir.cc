@@ -74,7 +74,12 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 
   // export avatars
   std::cout << "Writing Avatars..." << std::endl;
+#if __GNUC__ < 9
+  int count = 1;
+  for (auto const &aframe : d_avatars)
+#else
   for (int count = 1 ; auto const &aframe : d_avatars)
+#endif
   {
     AvatarFrame *a = aframe.second.get();
     std::string avatar_basefilename = directory + "/Avatar_" +
@@ -100,13 +105,23 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 
   // export sharedpreferences
   std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
+#if __GNUC__ < 9
+  count = 1;
+  for (auto const &spframe : d_sharedpreferenceframes)
+#else
   for (int count = 1; auto const &spframe : d_sharedpreferenceframes)
+#endif
     if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
       return false;
 
   // export stickers
   std::cout << "Writing StickerFrames..." << std::endl;
+#if __GNUC__ < 9
+  count = 1;
+  for (auto const &sframe : d_stickers)
+#else
   for (int count = 1; auto const &sframe : d_stickers)
+#endif
   {
     StickerFrame *s = sframe.second.get();
     std::string sticker_basefilename = directory + "/Sticker_" + bepaald::toString(count++) + "_" + bepaald::toString(s->rowId());

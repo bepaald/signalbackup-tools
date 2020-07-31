@@ -228,9 +228,9 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (table == "signed_prekeys" ||
         table == "one_time_prekeys" ||
         table == "sessions" ||
-        table.starts_with("sms_fts") ||
-        table.starts_with("mms_fts") ||
-        table.starts_with("sqlite_"))
+        STRING_STARTS_WITH(table, "sms_fts") ||
+        STRING_STARTS_WITH(table, "mms_fts") ||
+        STRING_STARTS_WITH(table, "sqlite_"))
       continue;
     std::cout << "Importing statements from source table '" << table << "'...";
     source->d_database.exec("SELECT * FROM " + table, &results);

@@ -74,12 +74,17 @@ void SignalBackup::initFromDir(std::string const &inputdir)
     return;
   }
   for (auto const &avatar : dirit) // put all Avatar_[...].sbf files in vector:
-    if (avatar.path().extension() == ".sbf" && avatar.path().filename().string().starts_with("Avatar_"))
+    if (avatar.path().extension() == ".sbf" && STRING_STARTS_WITH(avatar.path().filename().string(), "Avatar_"))
       avatarfiles.push_back(avatar.path().string());
 
   std::sort(avatarfiles.begin(), avatarfiles.end());
 
+#if __GNUC__ < 9
+  unsigned int i = 0;
+  for (auto const &file : avatarfiles)
+#else
   for (unsigned int i = 0; auto const &file : avatarfiles)
+#endif
   {
     if (d_showprogress)
     {
@@ -115,7 +120,7 @@ void SignalBackup::initFromDir(std::string const &inputdir)
   }
   for (auto const &att : dirit)
   {
-    if (att.path().extension() != ".sbf" || !att.path().filename().string().starts_with("Attachment_"))
+    if (att.path().extension() != ".sbf" || !STRING_STARTS_WITH(att.path().filename().string(), "Attachment_"))
       continue;
 
     std::filesystem::path attframe = att.path();
