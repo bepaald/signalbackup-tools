@@ -87,8 +87,12 @@ class SqliteDB
   inline bool exec(std::string const &q, QueryResults *results = nullptr) const;
   inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
   bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
+  inline bool prettyPrint(std::string const &q) const;
+  inline bool prettyPrint(std::string const &q, std::any const &param) const;
+  inline bool prettyPrint(std::string const &q, std::vector<std::any> const &params) const;
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
+  inline bool containsTable(std::string const &tablename) const;
 
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
@@ -146,6 +150,24 @@ inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryRes
   return exec(q, std::vector<std::any>{param}, results);
 }
 
+inline bool SqliteDB::prettyPrint(std::string const &q) const
+{
+  return prettyPrint(q, std::vector<std::any>());
+}
+
+inline bool SqliteDB::prettyPrint(std::string const &q, std::any const &param) const
+{
+  return prettyPrint(q, std::vector<std::any>{param});
+}
+
+inline bool SqliteDB::prettyPrint(std::string const &q, std::vector<std::any> const &params) const
+{
+  QueryResults results;
+  bool ret = exec(q, params, &results);
+  results.prettyPrint();
+  return ret;
+}
+
 template <typename T>
 inline bool SqliteDB::isType(std::any const &a) const
 {
@@ -185,6 +207,14 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, double param
 inline int SqliteDB::changed() const
 {
   return sqlite3_changes(d_db);
+}
+
+inline bool SqliteDB::containsTable(std::string const &tablename) const
+{
+  QueryResults tmp;
+  if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = '" + tablename + "'", &tmp))
+    return (tmp.rows() > 0);
+  return false;
 }
 
 inline void SqliteDB::QueryResults::emplaceHeader(std::string &&h)

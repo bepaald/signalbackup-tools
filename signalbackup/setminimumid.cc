@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::setMinimumId(std::string const &table, long long int offset) const
+void SignalBackup::setMinimumId(std::string const &table, long long int offset, std::string const &col) const
 {
   std::cout << __FUNCTION__ << std::endl;
 
@@ -28,12 +28,12 @@ void SignalBackup::setMinimumId(std::string const &table, long long int offset) 
 
   if (offset < 0)
   {
-    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", 1ll);
-    d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ") + ?", (offset - 1));
+    d_database.exec("UPDATE " + table + " SET " + col + " = " + col + " + (SELECT MAX(" + col + ") from " + table + ") - (SELECT MIN(" + col + ") from " + table + ") + ?", 1ll);
+    d_database.exec("UPDATE " + table + " SET " + col + " = " + col + " - (SELECT MAX(" + col + ") from " + table + ") + (SELECT MIN(" + col + ") from " + table + ") + ?", (offset - 1));
   }
   else
   {
-    d_database.exec("UPDATE " + table + " SET _id = _id + (SELECT MAX(_id) from " + table + ") - (SELECT MIN(_id) from " + table + ") + ?", offset);
-    d_database.exec("UPDATE " + table + " SET _id = _id - (SELECT MAX(_id) from " + table + ") + (SELECT MIN(_id) from " + table + ")");
+    d_database.exec("UPDATE " + table + " SET " + col + " = " + col + " + (SELECT MAX(" + col + ") from " + table + ") - (SELECT MIN(" + col + ") from " + table + ") + ?", offset);
+    d_database.exec("UPDATE " + table + " SET " + col + " = " + col + " - (SELECT MAX(" + col + ") from " + table + ") + (SELECT MIN(" + col + ") from " + table + ")");
   }
 }

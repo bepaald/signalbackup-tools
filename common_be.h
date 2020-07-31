@@ -38,7 +38,7 @@
 
 #define STRLEN( STR ) (std::integral_constant<int, bepaald::strlitLength(STR)>::value)
 
-#define uint unsigned int
+typedef unsigned int uint;
 
 namespace bepaald
 {
@@ -117,6 +117,7 @@ T bepaald::toNumber(std::string const &str)
 
 inline std::string bepaald::bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
 {
+  std::cout << "THIS IS THE WEIRD CALL!!!" << std::endl;
   return bytesToHexString(data.first.get(), data.second, unformatted);
 }
 

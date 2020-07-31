@@ -58,6 +58,7 @@ class Arg
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
   bool d_fast;
+  bool d_stoponbadmac;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -87,6 +88,7 @@ class Arg
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
   inline bool fast() const;
+  inline bool stoponbadmac() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -221,6 +223,11 @@ inline std::vector<long long int> const &Arg::editattachmentsize() const
 inline bool Arg::fast() const
 {
   return d_fast;
+}
+
+inline bool Arg::stoponbadmac() const
+{
+  return d_stoponbadmac;
 }
 
 inline bool Arg::ok() const

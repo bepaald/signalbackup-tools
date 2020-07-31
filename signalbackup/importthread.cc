@@ -37,7 +37,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
 
   long long int targetthread = -1;
   SqliteDB::QueryResults results;
-  if (d_databaseversion < 27)
+  if (d_databaseversion < 24)
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->target.thread_id
     source->d_database.exec("SELECT recipient_ids FROM thread WHERE _id = ?", thread, &results);
@@ -72,6 +72,18 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
   }
 
+  // delete double megaphones
+  if (d_database.containsTable("megaphone") && source->d_database.containsTable("megaphone"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT event FROM megaphone", &res);
+
+    std::cout << "  Deleting " << res.rows() << " existing megaphones" << std::endl;
+
+    for (uint i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.getValueAs<std::string>(i, 0));
+  }
+
   // the target will have its own job_spec etc...
   source->d_database.exec("DELETE FROM job_spec");
   source->d_database.exec("DELETE FROM push");
@@ -80,54 +92,66 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   source->d_database.exec("VACUUM");
 
   // make sure all id's are unique
-  // should rename these to offset
   long long int offsetthread = getMaxUsedId("thread") + 1 - source->getMinUsedId("thread");
   long long int offsetsms = getMaxUsedId("sms") + 1 - source->getMinUsedId("sms");
   long long int offsetmms = getMaxUsedId("mms") + 1 - source->getMinUsedId("mms");
   long long int offsetpart = getMaxUsedId("part") + 1 - source->getMinUsedId("part");
-  long long int offsetrecipient = getMaxUsedId((d_databaseversion < 27) ? "recipient_preferences" : "recipient") + 1 - source->getMinUsedId((d_databaseversion < 27) ? "recipient_preferences" : "recipient");
+  long long int offsetrecipient = getMaxUsedId((d_databaseversion < 24) ? "recipient_preferences" : "recipient") + 1 - source->getMinUsedId((d_databaseversion < 24) ? "recipient_preferences" : "recipient");
   long long int offsetgroups = getMaxUsedId("groups") + 1 - source->getMinUsedId("groups");
   long long int offsetidentities = getMaxUsedId("identities") + 1 - source->getMinUsedId("identities");
   long long int offsetgroup_receipts = getMaxUsedId("group_receipts") + 1 - source->getMinUsedId("group_receipts");
   long long int offsetdrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
-  source->makeIdsUnique(offsetthread, offsetsms, offsetmms, offsetpart, offsetrecipient, offsetgroups, offsetidentities, offsetgroup_receipts, offsetdrafts);
+  long long int offsetsticker = getMaxUsedId("sticker") + 1 - source->getMinUsedId("sticker");
+  long long int offsetmegaphone = getMaxUsedId("megaphone") + 1 - source->getMinUsedId("megaphone");
+  source->makeIdsUnique(offsetthread, offsetsms, offsetmms, offsetpart, offsetrecipient, offsetgroups, offsetidentities, offsetgroup_receipts, offsetdrafts, offsetsticker, offsetmegaphone);
 
   // merge into existing thread, set the id on the sms, mms, and drafts
   // drop the recipient_preferences, identities and thread tables, they are already in the target db
   if (targetthread > -1)
   {
     std::cout << "  Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
-
     source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE mms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
+
+    // see below for comment explaing this function
+    if (d_databaseversion >= 24)
+    {
+      d_database.exec("SELECT _id,COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      for (uint i = 0; i < results.rows(); ++i)
+        if (results.valueHasType<std::string>(i, "ident"))
+          source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
+    }
+
     source->d_database.exec("DROP TABLE thread");
     source->d_database.exec("DROP TABLE identities");
-    source->d_database.exec((d_databaseversion < 27) ? "DROP TABLE recipient_preferences" : "DROP TABLE recipient");
+    source->d_database.exec((d_databaseversion < 24) ? "DROP TABLE recipient_preferences" : "DROP TABLE recipient");
     source->d_database.exec("DROP TABLE groups");
     source->d_avatars.clear();
   }
   else
   {
-    // check identities and recepient prefs for presence of values, they may be there (even though no thread was found (for example via a group chat or deleted thread))
+    // check identities and recepient prefs for presence of values, they may be there (even though no
+    // thread was found (for example via a group chat or deleted thread))
     // get identities from target, drop all rows from source that are already present
-    if (d_databaseversion < 27)
+    if (d_databaseversion < 24)
     {
-      d_database.exec("SELECT address FROM identities", &results);
+      d_database.exec("SELECT address FROM identities", &results); // address == phonenumber/__text_secure_group
       for (uint i = 0; i < results.rows(); ++i)
         if (results.header(0) == "address" && results.valueHasType<std::string>(i, 0))
           source->d_database.exec("DELETE FROM identities WHERE ADDRESS = '" + results.getValueAs<std::string>(i, 0) + "'");
     }
     else
     {
+      // get all phonenums/groups_ids for all in identities
       d_database.exec("SELECT COALESCE(phone,group_id) AS ident FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
         if (results.header(0) == "ident" && results.valueHasType<std::string>(i, 0))
-          source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "'");
+          source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
     }
 
     // get recipient(_preferences) from target, drop all rows from source that are allready present
-    if (d_databaseversion < 27)
+    if (d_databaseversion < 24)
     {
       d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
       for (uint i = 0; i < results.rows(); ++i)
@@ -136,10 +160,20 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
     else
     {
-      d_database.exec("SELECT COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      d_database.exec("SELECT _id,COALESCE(phone,group_id) AS ident FROM recipient", &results);
       for (uint i = 0; i < results.rows(); ++i)
-        if (results.header(0) == "ident" && results.valueHasType<std::string>(i, 0))
-          source->d_database.exec("DELETE FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "'");
+        if (results.valueHasType<std::string>(i, "ident"))
+        {
+          // if the recipient is already in target, we are going to delete it from
+          // source, to prevent doubles. However, many tables refer to the recipient._id
+          // which was made unique above. If we just delete the doubles (by phone/group_id,
+          // and in the future probably uuid), the fields in other tables will point
+          // to random or non-existing recipients, so we need to map them:
+          source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
+
+          // now drop the already present recipient from source.
+          source->d_database.exec("DELETE FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
+        }
     }
 
     // even though the source was cropped to single thread, and this thread was not in target, avatar might still already be in target
@@ -203,6 +237,13 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     std::cout << results.rows() << " entries..." << std::endl;
     for (uint i = 0; i < results.rows(); ++i)
     {
+      // if (table == "identities")
+      // {
+      //   std::cout << "Trying to add: ";
+      //   for (uint j = 0; j < results.columns(); ++j)
+      //     std::cout << results.valueAsString(i, j) << " ";
+      //   std::cout << std::endl;
+      // }
       SqlStatementFrame NEWFRAME = buildSqlStatementFrame(table, results.headers(), results.row(i));
       d_database.exec(NEWFRAME.bindStatement(), NEWFRAME.parameters());
     }

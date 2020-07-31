@@ -25,7 +25,9 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
 
   std::string smsq;
   std::string mmsq;
+  std::string megaphoneq;
   std::vector<std::any> params;
+  std::vector<std::any> params2;
   for (uint i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
@@ -46,21 +48,26 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
     {
       smsq = "DELETE FROM sms WHERE ";
       mmsq = "DELETE FROM mms WHERE ";
+      megaphoneq = "DELETE FROM megaphone WHERE ";
     }
     else
     {
       smsq += "AND ";
       mmsq += "AND ";
+      megaphoneq += "AND ";
     }
     smsq += "date NOT BETWEEN ? AND ?";
     mmsq += "date_received NOT BETWEEN ? AND ?";
+    megaphoneq += "first_visible >= ?";
     if (i < dateranges.size() - 1)
     {
       smsq += " ";
       mmsq += " ";
+      megaphoneq += " ";
     }
     params.emplace_back(startrange);
     params.emplace_back(endrange);
+    params2.emplace_back(endrange / 10); // the timestamp in megaphone is not in msecs (one digit less)
   }
   if (smsq.empty() || mmsq.empty())
   {
@@ -70,5 +77,11 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
 
   d_database.exec(smsq, params);
   d_database.exec(mmsq, params);
+  if (d_database.containsTable("megaphone"))
+  {
+    d_database.exec(megaphoneq, params2);
+    //std::cout << "changed: " << d_database.changed() << std::endl;
+  }
+
   cleanDatabaseByMessages();
 }

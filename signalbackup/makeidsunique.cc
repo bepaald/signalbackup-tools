@@ -19,13 +19,14 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts)
+void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts, long long int minsticker, long long int minmegaphone)
 {
   std::cout << __FUNCTION__ << std::endl;
 
   std::cout << "  Adjusting indexes in tables..." << std::endl;
 
   setMinimumId("thread", minthread);
+  // compactIds("thread");  WE CAN NOT COMPACT THE THREAD TABLE! IT WILL BREAK THE FOLLOWING CODE
   d_database.exec("UPDATE sms SET thread_id = thread_id + ?", minthread);    // update sms.thread_id to new thread._id's
   d_database.exec("UPDATE mms SET thread_id = thread_id + ?", minthread);    // ""
   d_database.exec("UPDATE drafts SET thread_id = thread_id + ?", minthread); // ""
@@ -53,8 +54,46 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   d_attachments = std::move(newattdb);
   compactIds("part");
 
-  setMinimumId((d_databaseversion < 27) ? "recipient_preferences" : "recipient", minrecipient);
-  compactIds((d_databaseversion < 27) ? "recipient_preferences" : "recipient");
+  setMinimumId((d_databaseversion < 24) ? "recipient_preferences" : "recipient", minrecipient);
+  // compactIds((d_databaseversion < 27) ? "recipient_preferences" : "recipient"); WE CAN NOT COMPACT THE RECIPIENT TABLE! IT WILL BREAK THE FOLLOWING CODE
+  if (d_databaseversion >= 24) // the _id is referenced in other tables, update
+  {                            // them to link to the right identities.
+    d_database.exec("UPDATE sms SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE mms SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE mms SET quote_author = quote_author + ?", minrecipient);
+    d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE sessions SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE group_receipts SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE thread SET recipient_ids = recipient_ids + ?", minrecipient);
+    d_database.exec("UPDATE groups SET recipient_id = recipient_id + ?", minrecipient);
+
+    // get group members:
+    SqliteDB::QueryResults results;
+    //std::cout << minrecipient << std::endl;
+    d_database.exec("SELECT _id,members FROM groups", &results);
+    //d_database.prettyPrint("SELECT _id,members FROM groups");
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      long long int gid = results.getValueAs<long long int>(i, "_id");
+      std::string membersstr = results.getValueAs<std::string>(i, "members");
+      std::vector<int> membersvec;
+      std::stringstream ss(membersstr);
+      while (ss.good())
+      {
+        std::string substr;
+        std::getline(ss, substr, ',');
+        membersvec.emplace_back(bepaald::toNumber<int>(substr) + minrecipient);
+      }
+
+      std::string newmembers;
+      for (uint m = 0; m < membersvec.size(); ++m)
+        newmembers += (m == 0) ? bepaald::toString(membersvec[m]) : ("," + bepaald::toString(membersvec[m]));
+
+      d_database.exec("UPDATE groups SET members = ? WHERE _id == ?", {newmembers, gid});
+      //std::cout << d_database.changed() << std::endl;
+    }
+    //d_database.prettyPrint("SELECT _id,members FROM groups");
+  }
 
   setMinimumId("groups", mingroups);
   compactIds("groups");
@@ -67,4 +106,11 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
   setMinimumId("drafts", mindrafts);
   compactIds("drafts");
+
+  setMinimumId("sticker", minsticker);
+  compactIds("sticker");
+
+  setMinimumId("megaphone", minmegaphone);
+  compactIds("megaphone");
+
 }

@@ -41,7 +41,7 @@ void SqlStatementFrame::buildStatement()
   for (auto const &p : d_parameterdata)
   {
     pos = d_statement.find('?', pos);
-    if (pos == std::string::npos)
+    [[unlikely]] if (pos == std::string::npos)
     {
       DEBUGOUT("Fail to find '?'");
       d_statement.clear();

@@ -44,7 +44,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
 
-  if (d_databaseversion < 27)
+  if (d_databaseversion < 24)
   {
     std::cout << "  Deleting unreferenced recipient_preferences..." << std::endl;
     //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms");
@@ -67,7 +67,7 @@ void SignalBackup::cleanDatabaseByMessages()
   // remove avatars not belonging to exisiting recipients
   std::cout << "  Deleting unused avatars..." << std::endl;
   SqliteDB::QueryResults results;
-  if (d_databaseversion < 27)
+  if (d_databaseversion < 24)
     d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
   else if (d_databaseversion < 33)
     d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient", &results); // recipient_preferences does not exist anymore, but d_avatars are still linked to "+316xxxxxxxx" strings
@@ -117,7 +117,7 @@ void SignalBackup::cleanDatabaseByMessages()
   }
 
   std::cout << "  Delete others from 'identities'" << std::endl;
-  if (d_databaseversion < 27)
+  if (d_databaseversion < 24)
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT recipient_ids FROM recipient_preferences)");
   else
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");

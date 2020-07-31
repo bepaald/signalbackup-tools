@@ -47,7 +47,8 @@ Arg::Arg(int argc, char *argv[])
   d_removedoubles(false),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
-  d_fast(false)
+  d_fast(false),
+  d_stoponbadmac(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -359,6 +360,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-fast")
     {
       d_fast = false;
+      continue;
+    }
+    if (option == "--stoponbadmac")
+    {
+      d_stoponbadmac = true;
+      continue;
+    }
+    if (option == "--no-stoponbadmac")
+    {
+      d_stoponbadmac = false;
       continue;
     }
     if (option[0] != '-')

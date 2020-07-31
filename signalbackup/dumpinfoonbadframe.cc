@@ -173,7 +173,7 @@ void SignalBackup::dumpInfoOnBadFrames() const
     }
 
     std::string partner;
-    if (d_databaseversion < 25) // OLD VERSION
+    if (d_databaseversion < 24) // OLD VERSION
       query = "SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'convpartner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id WHERE thread._id = " + bepaald::toString(thread_id);
     else
       query = "SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'convpartner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE thread._id = " + bepaald::toString(thread_id);

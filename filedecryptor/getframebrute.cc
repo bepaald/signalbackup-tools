@@ -89,11 +89,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
 
     if (skipped > offset / 10) // a frame is at least 10 bytes?
     {
-      std::cout << "No valid frame found at maximum frameskip for this offset..." << std::endl;
+      std::cout << std::endl << "No valid frame found at maximum frameskip for this offset..." << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);
     }
 
-    std::cout << "Checking if we skipped " << skipped << " frames... " << std::flush;
+    std::cout << "\rChecking if we skipped " << skipped << " frames... " << std::flush;
 
     uintToFourBytes(d_iv, d_counter + skipped);
 
@@ -158,11 +158,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
 
     if (skipped > offset / 10) // a frame is at least 10 bytes?
     {
-      std::cout << "No valid frame found at maximum frameskip for this offset..." << std::endl;
+      std::cout << std::endl << "No valid frame found at maximum frameskip for this offset..." << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);
     }
 
-    std::cout << "Checking if we skipped " << skipped << " frames... " << std::flush;
+    std::cout << "\rChecking if we skipped " << skipped << " frames... " << std::flush;
 
     int decodedframelength = encryptedframelength - MACSIZE;
     unsigned char *decodedframe = new unsigned char[encryptedframelength - MACSIZE];
@@ -185,7 +185,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
 
     if (!frame)
     {
-      std::cout << "nope! :(" << std::endl;
+      std::cout << "nope! :(" << std::flush;
       //if (skipped >
     }
     else
@@ -200,11 +200,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
           std::cout << std::endl << " ! CORRECT FRAME_NUMBER:SIZE = " << frame->frameNumber() - 1 << ":"
                     << offset - previousframelength - MACSIZE - 4 << std::endl << std::endl;
         }
-        std::cout << "Good frame: " << frame->frameNumber() << std::endl;
+        std::cout << "Good frame: " << frame->frameNumber() << " (" << frame->frameTypeString() << ")" << std::endl;
         delete[] encryptedframe.release();
         break;
       }
-      std::cout << "nope! :(" << std::endl;
+      std::cout << "nope! :(" << std::flush;
       frame.reset();
     }
   }
