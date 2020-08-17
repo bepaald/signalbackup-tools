@@ -79,11 +79,11 @@ void SignalBackup::initFromDir(std::string const &inputdir)
 
   std::sort(avatarfiles.begin(), avatarfiles.end());
 
-#if __GNUC__ < 9
+#if __cplusplus > 201703L
+  for (unsigned int i = 0; auto const &file : avatarfiles)
+#else
   unsigned int i = 0;
   for (auto const &file : avatarfiles)
-#else
-  for (unsigned int i = 0; auto const &file : avatarfiles)
 #endif
   {
     if (d_showprogress)
