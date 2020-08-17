@@ -38,10 +38,10 @@
 
 #define STRLEN( STR ) (std::integral_constant<int, bepaald::strlitLength(STR)>::value)
 
-#if __GNUC__ < 9
-#define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
-#else
+#if __cplusplus > 201703L
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.starts_with(SUB) )
+#else
+#define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
 #endif
 
 typedef unsigned int uint;
