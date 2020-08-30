@@ -95,9 +95,9 @@ int main(int argc, char *argv[])
 
   if (arg.generatefromtruncated())
   {
-    std::cout << "fillthread" << std::endl;
+    //std::cout << "fillthread" << std::endl;
     sb->fillThreadTableFromMessages();
-    sb->addEndFrame();
+    //sb->addEndFrame(); // this should not be necessary, if endframe is missing, it's added in init
   }
 
   if (!arg.source().empty())
