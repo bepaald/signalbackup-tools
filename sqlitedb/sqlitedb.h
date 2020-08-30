@@ -22,11 +22,11 @@
 
 #include <sqlite3.h>
 #include <memory>
-#include <cstring>
 #include <vector>
 #include <iostream>
 #include <any>
 
+#include "../common_be.h"
 #include "../memfiledb/memfiledb.h"
 
 class SqliteDB
@@ -65,8 +65,8 @@ class SqliteDB
    private:
     std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
-    bool supportsAnsi() const;
-    bool isTerminal() const;
+    //bool supportsAnsi() const;
+    //bool isTerminal() const;
     inline bool useEscapeCodes() const;
     int availableWidth() const;
     inline uint64_t charCount(std::string const &utf8) const;
@@ -325,7 +325,7 @@ inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) cons
 
 bool SqliteDB::QueryResults::useEscapeCodes() const
 {
-  return supportsAnsi() && isTerminal();
+  return bepaald::supportsAnsi() && bepaald::isTerminal();
 }
 
 /*

@@ -58,7 +58,11 @@ void SignalBackup::initFromDir(std::string const &inputdir)
 
   std::cout << "Reading EndFrame" << std::endl;
   if (!setFrameFromFile(&d_endframe, inputdir + "/End.sbf"))
-    return;
+  {
+    std::cout << bepaald::bold_on << "WARNING " << bepaald::bold_off
+              << "EndFrame was not read: backup is probably incomplete" << std::endl;
+    addEndFrame();
+  }
 
   //d_endframe->printInfo();
 

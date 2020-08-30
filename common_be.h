@@ -29,6 +29,18 @@
 #include <sstream>
 #include <vector>
 #include <filesystem>
+#include <cstring>
+
+#if defined(__linux__) && !defined(__MINGW64__)
+#include <sys/ioctl.h>
+  #if __has_include("unistd.h")
+  #define HAS_UNISTD_H_
+  #include <unistd.h>
+  #endif
+#endif
+#if defined(_WIN32) || defined(__MINGW64__)
+#include <windows.h>
+#endif
 
 #ifdef DEBUGMSG
 #define DEBUGOUT(...) bepaald::log("[DEBUG] : ", __PRETTY_FUNCTION__," : ", __VA_ARGS__);
@@ -75,13 +87,15 @@ namespace bepaald
   inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
-
   inline bool fileOrDirExists(std::string const &path);
   inline bool isDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
-
   inline int numDigits(long long int num);
+  inline bool supportsAnsi();
+  inline bool isTerminal();
+  inline std::ostream &bold_on(std::ostream &os);
+  inline std::ostream &bold_off(std::ostream &os);
 }
 
 template <typename T>
@@ -174,59 +188,6 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
   return oss.str();
 }
 
-// inline std::wstring bepaald::bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
-// {
-//   return bytesToHexWString(data.first.get(), data.second, unformatted);
-// }
-
-// inline std::wstring bepaald::bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted/* = false*/)
-// {
-//   return bytesToHexWString(data.first, data.second, unformatted);
-// }
-
-// inline std::wstring bepaald::bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted/* = false*/)
-// {
-//   std::wostringstream woss;
-//   if (!unformatted)
-//     woss << L"(hex:) ";
-//   for (uint i = 0; i < length; ++i)
-//     woss << std::hex << std::setfill(L'0') << std::setw(2)
-//          << (static_cast<int32_t>(data[i]) & 0xFF)
-//          << ((i == length - 1 || unformatted) ? L"" : L" ");
-//   return woss.str();
-// }
-
-// inline std::wstring bepaald::bytesToWString(unsigned char const *data, unsigned int length)
-// {
-//   std::wostringstream woss;
-//   for (uint i = 0; i < length; ++i)
-//     woss << static_cast<char>(data[i]);
-//   return woss.str();
-// }
-
-// inline std::wstring bepaald::bytesToPrintableWString(unsigned char const *data, unsigned int length)
-// {
-//   bool prevwashex = false;
-//   std::wostringstream woss;
-//   for (uint i = 0; i < length; ++i)
-//   {
-//     bool curishex = !std::isprint(static_cast<char>(data[i]));
-
-//     if (curishex != prevwashex && i > 0)
-//       woss << L" ";
-
-//     if (curishex)
-//       woss << "0x" << std::hex << std::setfill(L'0') << std::setw(2)
-//            << (static_cast<int32_t>(data[i]) & 0xFF)
-//            << (i == length - 1 ? L"" : L" ");
-//     else
-//       woss << static_cast<char>(data[i]);
-
-//     prevwashex = curishex;
-//   }
-//   return woss.str();
-// }
-
 template <typename T>
 inline void bepaald::destroyPtr(unsigned char **p, T *psize)
 {
@@ -237,21 +198,6 @@ inline void bepaald::destroyPtr(unsigned char **p, T *psize)
     *psize = 0;
   }
 }
-
-// template <typename T>
-// inline std::wstring bepaald::toWString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
-// {
-//   std::wostringstream woss;
-//   woss << num;
-//   return woss.str();
-// }
-
-// inline std::wstring bepaald::toWString(double num)
-// {
-//   std::wostringstream woss;
-//   woss << std::defaultfloat << std::setprecision(17) << num;
-//   return woss.str();
-// }
 
 template <typename T>
 inline std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
@@ -311,6 +257,62 @@ inline int bepaald::numDigits(long long int num)
     ++count;
   }
   return count;
+}
+
+// This function was taken from https://github.com/agauniyal/rang/
+// Used here to (poorly!) detect support for ansi escape codes
+inline bool bepaald::supportsAnsi()
+{
+#if defined(_WIN32) || defined(__MINGW64__)
+  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+  DWORD mode = 0;
+  GetConsoleMode(hConsole, &mode);
+  return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+#endif
+  static const bool result = []
+  {
+    const char *Terms[] =
+      { "ansi",    "color",  "console", "cygwin", "gnome",
+        "konsole", "kterm",  "linux",   "msys",   "putty",
+        "rxvt",    "screen", "vt100",   "xterm" };
+    const char *env_p = std::getenv("TERM");
+    if (env_p == nullptr)
+      return false;
+    return std::any_of(std::begin(Terms), std::end(Terms),
+                       [&](const char *term) { return std::strstr(env_p, term) != nullptr; });
+  }();
+  return result;
+}
+
+inline bool bepaald::isTerminal()
+{
+#ifdef HAS_UNISTD_H_ // defined in .ih if unistd.h is available
+  static const bool result = []
+  {
+    return isatty(STDOUT_FILENO);
+  }();
+  return result;
+#else
+#if defined(_WIN32) || defined(__MINGW64__)
+  DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
+  return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg output is printer)...
+#endif
+  return false;
+#endif
+}
+
+inline std::ostream &bepaald::bold_on(std::ostream &os)
+{
+  [[unlikely]] if (!supportsAnsi() || !isTerminal())
+    return os;
+  return os << "\033[1m";
+}
+
+inline std::ostream &bepaald::bold_off(std::ostream &os)
+{
+  [[unlikely]] if (!supportsAnsi() || !isTerminal())
+    return os;
+  return os << "\033[0m";
 }
 
 #endif

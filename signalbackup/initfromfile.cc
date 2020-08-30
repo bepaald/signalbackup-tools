@@ -118,7 +118,9 @@ void SignalBackup::initFromFile()
       d_stickers.emplace(s->rowId(), s);
     }
     else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::END)
+    {
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
+    }
   }
 
   d_database.exec("COMMIT");
@@ -133,7 +135,11 @@ void SignalBackup::initFromFile()
   std::cout << "done!" << std::endl;
 
   if (!d_endframe)
-    std::cout << "Warning: EndFrame was not read: backup is probably incomplete" << std::endl;
+  {
+    std::cout << bepaald::bold_on << "WARNING " << bepaald::bold_off
+              << "EndFrame was not read: backup is probably incomplete" << std::endl;
+    addEndFrame();
+  }
 
   d_ok = true;
 }
