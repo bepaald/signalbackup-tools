@@ -44,7 +44,7 @@ class SqliteDB
     inline void emplaceValue(size_t row, std::any &&a);
     inline std::any value(size_t row, std::string const &header) const;
     template <typename T>
-    inline T getValueAs(size_t row,std ::string const &header) const;
+    inline T getValueAs(size_t row, std ::string const &header) const;
     inline std::any const &value(size_t row, size_t idx) const;
     inline std::vector<std::any> const &row(size_t row) const;
     template <typename T>
@@ -61,6 +61,7 @@ class SqliteDB
     std::string valueAsString(size_t row, size_t column) const;
     template <typename T>
     inline bool contains(T const &value) const;
+    bool removeColumn(uint idx);
 
    private:
     std::wstring wideString(std::string const &narrow) const;
@@ -93,12 +94,14 @@ class SqliteDB
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
   inline bool containsTable(std::string const &tablename) const;
+  inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
 
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, double param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::pair<std::shared_ptr<unsigned char []>, size_t> const &param) const;
+  inline int execParamFiller(sqlite3_stmt *stmt, int count, std::pair<unsigned char *, size_t> const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
@@ -186,6 +189,12 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::pair<st
   return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first.get()), param.second, SQLITE_TRANSIENT);
 }
 
+inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::pair<unsigned char *, size_t> const &param) const
+{
+  //std::cout << "Binding BLOB at " << count << std::endl;
+  return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first), param.second, SQLITE_TRANSIENT);
+}
+
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
@@ -213,6 +222,14 @@ inline bool SqliteDB::containsTable(std::string const &tablename) const
 {
   QueryResults tmp;
   if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = '" + tablename + "'", &tmp))
+    return (tmp.rows() > 0);
+  return false;
+}
+
+inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname) const
+{
+  QueryResults tmp;
+  if (exec("SELECT 1 FROM PRAGMA_TABLE_INFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp))
     return (tmp.rows() > 0);
   return false;
 }

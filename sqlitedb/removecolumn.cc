@@ -17,9 +17,19 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlitedb.ih"
 
-#define VERSIONDATE "20200913.122601"
+bool SqliteDB::QueryResults::removeColumn(uint idx)
+{
+  if (idx >= d_headers.size())
+    return false;
+  for (auto const &v : d_values)
+    if (idx >= v.size())
+      return false;
 
-#endif
+  d_headers.erase(d_headers.begin() + idx);
+  for (auto &v : d_values)
+    v.erase(v.begin() + idx);
+
+  return true;
+}

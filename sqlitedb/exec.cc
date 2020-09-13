@@ -70,6 +70,14 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
         return false;
       }
     }
+    else if (isType<std::pair<unsigned char *, size_t>>(params[i]))
+    {
+      if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<unsigned char *, size_t>>(params[i])) != SQLITE_OK)
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
+    }
     else
     {
       std::cout << "Error : Unhandled parameter type " << params[i].type().name() << std::endl;
