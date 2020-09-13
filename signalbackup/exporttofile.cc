@@ -99,11 +99,11 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
           tables.emplace_back(results.getValueAs<std::string>(i, 1));
 
-        SqlStatementFrame NEWFRAME;
-        NEWFRAME.setStatementField(results.getValueAs<std::string>(i, 0));
+        SqlStatementFrame newframe;
+        newframe.setStatementField(results.getValueAs<std::string>(i, 0));
 
         //std::cout << "Writing SqlStatementFrame..." << std::endl;
-        if (!writeEncryptedFrame(outputfile, &NEWFRAME))
+        if (!writeEncryptedFrame(outputfile, &newframe))
           return false;
       }
     }
@@ -133,10 +133,10 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
       if (d_showprogress)
         std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
 
-      SqlStatementFrame NEWFRAME = buildSqlStatementFrame(table, results.row(i));
+      SqlStatementFrame newframe = buildSqlStatementFrame(table, results.row(i));
 
       //std::cout << "Writing SqlStatementFrame..." << std::endl;
-      if (!writeEncryptedFrame(outputfile, &NEWFRAME))
+      if (!writeEncryptedFrame(outputfile, &newframe))
         return false;
 
       if (table == "part") // find corresponding attachment

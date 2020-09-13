@@ -30,6 +30,7 @@
 #include <vector>
 #include <filesystem>
 #include <cstring>
+#include <algorithm>
 
 #if defined(__linux__) && !defined(__MINGW64__)
 #include <sys/ioctl.h>

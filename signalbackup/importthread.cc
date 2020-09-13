@@ -37,7 +37,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
 
   long long int targetthread = -1;
   SqliteDB::QueryResults results;
-  if (d_databaseversion < 24)
+  if (d_databaseversion < 24) // old database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->target.thread_id
     source->d_database.exec("SELECT recipient_ids FROM thread WHERE _id = ?", thread, &results);
@@ -50,7 +50,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     std::string recipient_id = results.getValueAs<std::string>(0, 0);
     targetthread = getThreadIdFromRecipient(recipient_id);
   }
-  else
+  else // new database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
     source->d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient WHERE _id IS (SELECT recipient_ids FROM thread WHERE _id = ?)", thread, &results);
@@ -117,7 +117,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     // see below for comment explaing this function
     if (d_databaseversion >= 24)
     {
-      d_database.exec("SELECT _id,COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      d_database.exec("SELECT _id, COALESCE(phone,group_id) AS ident FROM recipient", &results);
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "ident"))
           source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
@@ -235,6 +235,23 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     std::cout << "Importing statements from source table '" << table << "'...";
     source->d_database.exec("SELECT * FROM " + table, &results);
     std::cout << results.rows() << " entries..." << std::endl;
+
+    // check if source contains columns not existing in target
+    // even though target is newer, a fresh install would not have
+    // created dropped columns that may still be present in
+    // source database;
+    uint idx = 0;
+    while (idx < results.headers().size())
+    {
+      if (!d_database.tableContainsColumn(table, results.headers()[idx]))
+      {
+        std::cout << "NOTE: dropping column '" << table << "." << results.headers()[idx] << "' from source : Column not present in target database" << std::endl;
+        if (results.removeColumn(idx++))
+          continue;
+      }
+      ++idx;
+    }
+
     for (uint i = 0; i < results.rows(); ++i)
     {
       // if (table == "identities")
@@ -244,8 +261,8 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
       //     std::cout << results.valueAsString(i, j) << " ";
       //   std::cout << std::endl;
       // }
-      SqlStatementFrame NEWFRAME = buildSqlStatementFrame(table, results.headers(), results.row(i));
-      d_database.exec(NEWFRAME.bindStatement(), NEWFRAME.parameters());
+      SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
+      d_database.exec(newframe.bindStatement(), newframe.parameters());
     }
   }
 

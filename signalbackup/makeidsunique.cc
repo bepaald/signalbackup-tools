@@ -54,14 +54,21 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   d_attachments = std::move(newattdb);
   compactIds("part");
 
+  //d_database.prettyPrint("SELECT _id, phone FROM recipient");
   setMinimumId((d_databaseversion < 24) ? "recipient_preferences" : "recipient", minrecipient);
+  //d_database.prettyPrint("SELECT _id, phone FROM recipient");
   // compactIds((d_databaseversion < 27) ? "recipient_preferences" : "recipient"); WE CAN NOT COMPACT THE RECIPIENT TABLE! IT WILL BREAK THE FOLLOWING CODE
   if (d_databaseversion >= 24) // the _id is referenced in other tables, update
   {                            // them to link to the right identities.
     d_database.exec("UPDATE sms SET address = address + ?", minrecipient);
     d_database.exec("UPDATE mms SET address = address + ?", minrecipient);
     d_database.exec("UPDATE mms SET quote_author = quote_author + ?", minrecipient);
-    d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
+
+    // address is UNIQUE in identities, so we can not simply do the following:
+    // d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
+    // instead we do the complicated way:
+    setMinimumId("identities", minrecipient, "address");
+
     d_database.exec("UPDATE sessions SET address = address + ?", minrecipient);
     d_database.exec("UPDATE group_receipts SET address = address + ?", minrecipient);
     d_database.exec("UPDATE thread SET recipient_ids = recipient_ids + ?", minrecipient);
@@ -93,6 +100,30 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
       //std::cout << d_database.changed() << std::endl;
     }
     //d_database.prettyPrint("SELECT _id,members FROM groups");
+
+    // update reaction authors
+    d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &results);
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      for (uint j = 0; j < reactions.numReactions(); ++j)
+      {
+        //std::cout << "Updating reaction author (sms) : " << reactions.getAuthor(j) << "..." << std::endl;
+        reactions.setAuthor(j, reactions.getAuthor(j) + minrecipient);
+      }
+      d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
+    }
+    d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      for (uint j = 0; j < reactions.numReactions(); ++j)
+      {
+        //std::cout << "Updating reaction author (mms) : " << reactions.getAuthor(j) << "..." << std::endl;
+        reactions.setAuthor(j, reactions.getAuthor(j) + minrecipient);
+      }
+      d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
+    }
   }
 
   setMinimumId("groups", mingroups);

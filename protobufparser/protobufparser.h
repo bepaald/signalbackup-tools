@@ -174,13 +174,15 @@ class ProtoBufParser
  public:
   inline ProtoBufParser();
   ProtoBufParser(std::string const &base64);
+  explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
   explicit ProtoBufParser(unsigned char *data, int64_t size);
   ProtoBufParser(ProtoBufParser const &other);
   ProtoBufParser(ProtoBufParser &&other);
   ~ProtoBufParser();
+  inline bool operator==(ProtoBufParser const &other) const;
 
   inline int64_t size() const;
-  inline char *data() const;
+  inline unsigned char *data() const;
   inline std::string getDataString() const;
   inline void setData(std::string const &base64);
   inline void setData(unsigned char *data, int64_t size);
@@ -200,18 +202,30 @@ class ProtoBufParser
   template <typename T = std::nullptr_t>
   bool deleteFirstField(int num, T const *value = nullptr);
 
-  template <int idx>
-  inline bool addField(std::pair<unsigned char *, uint64_t> const &blob);
-
+  // add repeated things
   template <int idx>
   inline bool addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type const &value);
+  template <int idx>
+  inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value, bool>::type addField(std::pair<unsigned char *, uint64_t> const &value); // specialization for repeated BYTES
+
+  // add optional things
+  template <int idx>
+  inline bool addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type const &value);
+  template <int idx>
+  inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value, bool>::type addField(std::pair<unsigned char *, uint64_t> const &value); // specialization for optional BYTES
+
+ protected:
+  inline void clear();
 
  private:
+  template <int idx, typename T>
+  inline bool addFieldInternal(T const &value);
   int64_t readVarInt(int *pos, unsigned char *data, int size, bool zigzag = false) const;
   int64_t getVarIntFieldLength(int pos, unsigned char *data, int size) const;
   std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint) const;
   std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint, int *pos) const;
   void getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const;
+  bool fieldExists(int num) const;
   inline uint64_t varIntSize(uint64_t value) const;
   template <int idx>
   static inline constexpr unsigned int getType();
@@ -259,6 +273,12 @@ ProtoBufParser<Spec...>::ProtoBufParser(std::string const &base64)
 }
 
 template <typename... Spec>
+ProtoBufParser<Spec...>::ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data)
+  :
+  ProtoBufParser(data.first.get(), data.second)
+{}
+
+template <typename... Spec>
 ProtoBufParser<Spec...>::ProtoBufParser(unsigned char *data, int64_t size)
   :
   d_data(nullptr),
@@ -273,6 +293,20 @@ template <typename... Spec>
 ProtoBufParser<Spec...>::~ProtoBufParser()
 {
   bepaald::destroyPtr(&d_data, &d_size);
+}
+
+
+template <typename... Spec>
+inline void ProtoBufParser<Spec...>::clear()
+{
+  bepaald::destroyPtr(&d_data, &d_size);
+}
+
+template <typename... Spec>
+inline bool ProtoBufParser<Spec...>::operator==(ProtoBufParser const &other) const
+{
+  return d_size == other.d_size &&
+    std::memcmp(d_data, other.d_data, d_size) == 0;
 }
 
 template <typename... Spec>
@@ -307,9 +341,9 @@ inline int64_t ProtoBufParser<Spec...>::size() const
 }
 
 template <typename... Spec>
-inline char *ProtoBufParser<Spec...>::data() const
+inline unsigned char *ProtoBufParser<Spec...>::data() const
 {
-  return reinterpret_cast<char *>(d_data);
+  return d_data;
 }
 
 template <typename... Spec>
@@ -354,7 +388,22 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       }
       else
       {
-        if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value)
+        if constexpr (std::is_same<T, Fixed32>::value || std::is_same<T, Fixed64>::value ||
+                      std::is_same<T, SFixed32>::value || std::is_same<T, SFixed64>::value)
+        {
+          [[likely]] if (sizeof(T) == fielddata.second)
+          {
+            typename ProtoBufParserReturn::item_return<T, false>::type::value_type result; // ie.: uint32_t result; (stripped off std::optional
+            std::memcpy(reinterpret_cast<char *>(&result), reinterpret_cast<char *>(fielddata.first), fielddata.second);
+            return result;
+          }
+          else
+          {
+            std::cout << "ERROR REQUESTED TYPE TOO SMALL" << std::endl;
+          }
+
+        }
+        else if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value)
         {
           [[likely]] if (sizeof(T) == fielddata.second)
           {
@@ -401,6 +450,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
                         std::is_same<typename T::value_type, ZigZag64>::value)
           {
+            std::cout << "YO1" << std::endl;
             int pos2 = 0;
             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
           }
@@ -502,19 +552,27 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
         if (value->second == data.second && std::memcmp(value->first, data.first, data.second) == 0)
           del = true;
       }
+      else if constexpr (is_specialization_of<ProtoBufParser, T>::value)
+      {
+        //std::cout << "YO666" << std::endl;
+        std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
+        T tmp(data.first, data.second);
+        if (tmp == *value)
+          del = true;
+      }
       else if constexpr (std::is_integral<T>::value)
       {
         std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
         if (isvarint)
         {
           int lpos = 0;
-          int64_t vint = readVarInt(&lpos, data.first, data.second, false); // zigzag not (yet) supported
+          T vint = readVarInt(&lpos, data.first, data.second, false); // zigzag not (yet) supported
           if (vint == *value)
             del = true;
         }
         else // fixed numerical (int32 (enum), int64, float or double)
         {
-          int64_t tmp = 0;
+          T tmp = 0;
           std::memcpy(reinterpret_cast<char *>(&tmp), reinterpret_cast<char *>(data.first), data.second);
           if (tmp == *value)
             del = true;
@@ -581,157 +639,111 @@ template <typename... Spec>
 template <int idx>
 inline constexpr unsigned int ProtoBufParser<Spec...>::getType() //static
 {
-  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                              protobuffer::optional::STRING>::value ||
-                std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
-                             protobuffer::repeated::STRING>::value)
+                std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                             protobuffer::repeated::STRING>::value ||
+                std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                             protobuffer::optional::BYTES>::value ||
+                std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                             protobuffer::repeated::BYTES>::value)
     return WIRETYPE::LENGTH_DELIMITED;
-  else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+  else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::ENUM>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::ENUM>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::INT32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::INT32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::INT64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::INT64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::UINT32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::UINT32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::UINT64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::UINT64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::SINT64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::SINT64>::value )
     return WIRETYPE::VARINT;
-  else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+  else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::FLOAT>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::FLOAT>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::FIXED32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::FIXED32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::SFIXED32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::SFIXED32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::BOOL>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::BOOL>::value)
     return WIRETYPE::FIXED32;
-  else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+  else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::DOUBLE>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::DOUBLE>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::FIXED64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::FIXED64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::SFIXED64>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::SFIXED64>::value)
     return WIRETYPE::FIXED64;
-  else if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type>{})
+  else if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
     return WIRETYPE::LENGTH_DELIMITED;
-}
+  else if constexpr (is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
+    if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type>{})
+      return WIRETYPE::LENGTH_DELIMITED;
 
-// specialization for binary blob
-template <typename... Spec>
-template <int idx>
-inline bool ProtoBufParser<Spec...>::addField(std::pair<unsigned char *, uint64_t> const &blob)
-{
-  static_assert(std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type,
-                protobuffer::optional::BYTES>::value);
-
-  unsigned int field = idx;
-  unsigned int constexpr type = WIRETYPE::LENGTH_DELIMITED;
-
-  int size = 1 + varIntSize(blob.second) + blob.second;
-  unsigned char *mem = new unsigned char[size];
-
-  // set field and wire
-  mem[0] = 0x00 | (field << 3);
-  mem[0] |= (type);
-
-  // put length (as varint) if type is length_delim, or put actual value if type is varint
-  uint64_t varint = blob.second;
-  uint64_t outputpos = 1;
-  while (varint > 127)
-  {
-    mem[outputpos] = (static_cast<uint8_t>(varint & 127)) | 128;
-    varint >>= 7;
-    ++outputpos;
-  }
-  mem[outputpos++] = (static_cast<uint8_t>(varint)) & 127;
-
-  // put actual data
-  std::memcpy(mem + outputpos, blob.first, blob.second);
-
-  unsigned char *newdata = new unsigned char[d_size + size];
-  std::memcpy(newdata, d_data, d_size);
-  std::memcpy(newdata + d_size, mem, size);
-
-  delete[] mem;
-  if (d_data)
-    delete[] d_data;
-  d_data = newdata;
-  d_size = d_size + size;
-
-  return true;
 }
 
 template <typename... Spec>
-template <int idx>
-inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type const &value)
+template <int idx, typename T>
+inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
 {
-  // TODO check if field is repeated field, if not -> check if field already present, if so -> return false;
-
   unsigned int field = idx;
   unsigned int constexpr type = getType<idx>();
   unsigned int fielddatasize = 0;
   if constexpr (type == WIRETYPE::LENGTH_DELIMITED)
   {
-    fielddatasize = value.size();
+    if constexpr (is_specialization_of<std::pair, T>{}) // bytes
+      fielddatasize = value.second;
+    else // string
+      fielddatasize = value.size();
   }
   else if constexpr (type == WIRETYPE::VARINT)
-  {
     fielddatasize = varIntSize(value);
-  }
   else if constexpr (type == WIRETYPE::FIXED32)
-  {
     fielddatasize = 4;
-  }
   else if constexpr (type == WIRETYPE::FIXED64)
-  {
     fielddatasize = 8;
-  }
-
-  // total size == 1 (field + type) + (type == LENDELIM ? varsizeof(len) : 0) + sizeoffield
 
   int size = 1 + (type == WIRETYPE::LENGTH_DELIMITED ? varIntSize(fielddatasize) : 0) + fielddatasize;
-  unsigned char *mem = new unsigned char[size];
-  for (int i = 0; i < size; ++i)
-    mem[i] = '\0';
+  unsigned char *mem = new unsigned char[size]{};
 
   // set field and wire
   mem[0] = 0x00 | (field << 3);
   mem[0] |= (type);
 
   // put length (as varint) if type is length_delim, or put actual value if type is varint
-  uint64_t varint = 0;
   uint64_t outputpos = 1;
   if constexpr (type == WIRETYPE::LENGTH_DELIMITED || type == WIRETYPE::VARINT)
   {
+    uint64_t varint = 0;
     if constexpr (type == WIRETYPE::LENGTH_DELIMITED)
       varint = fielddatasize;
     else if constexpr (type == WIRETYPE::VARINT)
@@ -747,11 +759,16 @@ inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<dec
 
   // put actual data
   if constexpr (type == WIRETYPE::LENGTH_DELIMITED)
-    std::memcpy(mem + outputpos, value.data(), fielddatasize);
+  {
+    if constexpr (is_specialization_of<std::pair, T>{}) // bytes
+      std::memcpy(mem + outputpos, value.first, fielddatasize);
+    else // string
+      std::memcpy(mem + outputpos, value.data(), fielddatasize);
+  }
   else if constexpr (type == WIRETYPE::FIXED32 || type == WIRETYPE::FIXED64)
     std::memcpy(mem + outputpos, reinterpret_cast<unsigned char const *>(&value), sizeof(value));
 
-  //std::cout << "Addin: " << bepaald::bytesToHexString(mem, size) << std::endl;
+  //std::cout << "Adding: " << bepaald::bytesToHexString(mem, size) << std::endl;
 
   unsigned char *newdata = new unsigned char[d_size + size];
   std::memcpy(newdata, d_data, d_size);
@@ -763,24 +780,72 @@ inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<dec
   d_data = newdata;
   d_size = d_size + size;
 
-  //std::cout << "OUTPT: " << bepaald::bytesToHexString(d_data, d_size) << std::endl;
+  //std::cout << "OUTPUT: " << bepaald::bytesToHexString(d_data, d_size) << std::endl;
 
   return true;
+}
+
+// add repeated things
+template <typename... Spec>
+template <int idx>
+inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type const &value)
+{
+  //std::cout << "Repeated -> go!" << std::endl;
+  return addFieldInternal<idx>(value);
+}
+
+// specialization for repeated BYTES
+template <typename... Spec>
+template <int idx>
+inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value, bool>::type ProtoBufParser<Spec...>::addField(std::pair<unsigned char *, uint64_t> const &value)
+{
+  //std::cout << "Repeated -> go!" << std::endl;
+  return addFieldInternal<idx>(value);
+}
+
+// add optional things
+template <typename... Spec>
+template <int idx>
+inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type const &value)
+{
+  //std::cout << "Optional -> go!" << std::endl;
+
+  if (fieldExists(idx))
+  {
+    //std::cout << "FIELD NOT REPEATED AND ALREADY SET! NOT ADDING!" << std::endl;
+    return false;
+  }
+  return addFieldInternal<idx>(value);
+}
+
+// specialization for optional BYTES
+template <typename... Spec>
+template <int idx>
+inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value, bool>::type ProtoBufParser<Spec...>::addField(std::pair<unsigned char *, uint64_t> const &value)
+{
+  //std::cout << "Optional -> go!" << std::endl;
+
+  if (fieldExists(idx))
+  {
+    //std::cout << "FIELD NOT REPEATED AND ALREADY SET! NOT ADDING!" << std::endl;
+    return false;
+  }
+  return addFieldInternal<idx>(value);
 }
 
 template <typename... Spec>
 int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char *data, int size, bool zigzag) const
 {
-  uint64_t length = 0;
+  uint64_t value = 0;
   uint64_t times = 0;
   while ((data[*pos]) & 0b10000000 && *pos < size)
-    length |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << (times += 7));
-  length |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << times);
+    value |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << (times++ * 7));
+  value |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << (times * 7));
 
   if (zigzag)
-    length = -(length & 1) ^ (length >> 1);
+    value = -(value & 1) ^ (value >> 1);
 
-  return length;
+  return value;
 }
 
 template <typename... Spec>
@@ -805,9 +870,14 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
   while (localpos < d_size)
   {
     //std::cout << "Checking at pos : " << localpos << std::endl;
+    //std::cout << "Asked posandlength of data at: " << bepaald::bytesToHexString(d_data + localpos, d_size - localpos) << std::endl;
+
     int32_t field    = (d_data[localpos] >> 3) & 0b00000000000000000000000000001111;
     int32_t wiretype = d_data[localpos] & 0b00000000000000000000000000000111;
     int nextpos = localpos + 1;
+
+    //std::cout << "Got field: " << field << ", wiretype: " << wiretype << std::endl;
+
     switch (wiretype)
     {
     case WIRETYPE::LENGTH_DELIMITED:
@@ -840,7 +910,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         if (field == num)
         {
           *pos = localpos;
-          *fieldlength = localfieldlength;
+          *fieldlength = localfieldlength + 1;
           return;
         }
         localpos = nextpos + localfieldlength;
@@ -848,11 +918,11 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       }
     case WIRETYPE::FIXED32:
       {
-        uint64_t localfieldlength = 8;
+        uint64_t localfieldlength = 4;
         if (field == num)
         {
           *pos = localpos;
-          *fieldlength = localfieldlength;
+          *fieldlength = localfieldlength + 1;
           return;
         }
         localpos = nextpos + localfieldlength;
@@ -868,6 +938,12 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       {
         if (field == num)
           std::cout << "Skipping endgroup for now" << std::endl;
+        break;
+      }
+    default:
+      {
+        std::cout << "Unknown wiretype: " << wiretype << std::endl;
+        return;
         break;
       }
     }
@@ -937,6 +1013,57 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
     }
   }
   return std::pair<unsigned char *, int64_t>(nullptr, 0);
+}
+
+template <typename... Spec>
+bool ProtoBufParser<Spec...>::fieldExists(int num) const
+{
+  int pos = 0;
+  while (pos < d_size)
+  {
+    int32_t field    = (d_data[pos] >> 3) & 0b00000000000000000000000000001111;
+
+    if (field == num)
+      return true;
+
+    int32_t wiretype = d_data[pos] & 0b00000000000000000000000000000111;
+    ++pos;
+
+    switch (wiretype)
+    {
+    case WIRETYPE::LENGTH_DELIMITED:
+      {
+        uint64_t fieldlength = readVarInt(&pos, d_data, d_size);
+        pos += fieldlength;
+        break;
+      }
+    case WIRETYPE::VARINT:
+      {
+        uint64_t fieldlength = getVarIntFieldLength(pos, d_data, d_size);
+        pos += fieldlength;
+        break;
+      }
+    case WIRETYPE::FIXED64:
+      {
+        pos += 8;
+        break;
+      }
+    case WIRETYPE::FIXED32:
+      {
+        pos += 4;
+        break;
+      }
+    case WIRETYPE::STARTGROUP: // deprecated/not implemented yet
+      {
+        break;
+      }
+    case WIRETYPE::ENDGROUP: // deprecated/not implemented yet
+      {
+        break;
+      }
+    }
+  }
+  return false;
 }
 
 #endif
