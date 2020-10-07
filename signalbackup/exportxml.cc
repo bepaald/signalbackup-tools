@@ -119,12 +119,16 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
       d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
+      else
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (sms (2))" << std::endl;
     }
     else
       address = rid;
 
     escapeXmlString(&address);
   }
+  else
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (sms (1))" << std::endl;
 
   /* contact_name - Optional field that has the name of the contact. */
   /* OPTIONAL */
@@ -134,7 +138,12 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
     std::string rid = results.getValueAs<std::string>(i, "address");
     SqliteDB::QueryResults r2;
     if (d_databaseversion >= 24)
-      d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+    {
+      if (d_database.tableContainsColumn("recipient", "profile_joined_name"))
+        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name, recipient.profile_joined_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+      else
+        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+    }
     else
       d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
     if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
@@ -240,12 +249,18 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
+      else
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (msm (2))" << std::endl;
+
     }
     else
       address = rid;
 
     escapeXmlString(&address);
   }
+  else
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (msm (1))" << std::endl;
+
 
   // contact_name - Optional field that has the name of the contact.
   std::string contact_name;

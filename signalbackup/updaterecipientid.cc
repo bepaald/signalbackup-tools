@@ -57,6 +57,12 @@ void SignalBackup::updateRecipientId(long long int targetid, std::string ident)
   d_database.exec("UPDATE thread SET recipient_ids = ? WHERE recipient_ids = ?", {targetid, sourceid});
   d_database.exec("UPDATE groups SET recipient_id = ? WHERE recipient_id = ?", {targetid, sourceid});
   d_database.exec("UPDATE sessions SET address = ? WHERE address = ?", {targetid, sourceid});
+  if (d_database.containsTable("remapped_recipients"))
+  {
+    d_database.exec("UPDATE remapped_recipients SET old_id = ? WHERE old_id = ?", {targetid, sourceid});
+    d_database.exec("UPDATE remapped_recipients SET new_id = ? WHERE new_id = ?", {targetid, sourceid});
+  }
+
 
   // get group members:
   SqliteDB::QueryResults results2;
