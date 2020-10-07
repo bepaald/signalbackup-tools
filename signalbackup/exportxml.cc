@@ -250,7 +250,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
       else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Type mismatch while retrieving required field 'address'" << std::endl;
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address'" << std::endl;
 
     }
     else
@@ -259,8 +259,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     escapeXmlString(&address);
   }
   else
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (msm (1))" << std::endl;
-
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Type mismatch while retrieving required field 'address'" << std::endl;
 
   // contact_name - Optional field that has the name of the contact.
   std::string contact_name;
