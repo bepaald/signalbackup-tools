@@ -111,7 +111,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string address;
   if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
-    std::string rid = results.getValueAs<std::string>(i, "address");
+    std::string rid = results.valueAsString(i, "address");
 
     if (d_databaseversion >= 24)
     {
@@ -135,7 +135,8 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string contact_name;
   if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
-    std::string rid = results.getValueAs<std::string>(i, "address");
+    std::string rid = results.valueAsString(i, "address");
+
     SqliteDB::QueryResults r2;
     if (d_databaseversion >= 24)
     {
@@ -241,7 +242,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string address;
   if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
-    std::string rid = results.getValueAs<std::string>(i, "address");
+    std::string rid = results.valueAsString(i, "address");
 
     if (d_databaseversion >= 24)
     {
@@ -265,7 +266,8 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string contact_name;
   if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
-    std::string rid = results.getValueAs<std::string>(i, "address");
+    std::string rid = results.valueAsString(i, "address");
+
     SqliteDB::QueryResults r2;
     if (d_databaseversion >= 24)
       d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
