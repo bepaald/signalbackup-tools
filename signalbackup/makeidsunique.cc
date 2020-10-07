@@ -63,16 +63,22 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     d_database.exec("UPDATE sms SET address = address + ?", minrecipient);
     d_database.exec("UPDATE mms SET address = address + ?", minrecipient);
     d_database.exec("UPDATE mms SET quote_author = quote_author + ?", minrecipient);
+    d_database.exec("UPDATE sessions SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE group_receipts SET address = address + ?", minrecipient);
+    d_database.exec("UPDATE thread SET recipient_ids = recipient_ids + ?", minrecipient);
+    d_database.exec("UPDATE groups SET recipient_id = recipient_id + ?", minrecipient);
+
+    // as of writing, remapped_recipients is a new (and currently unused?) table
+    if (d_database.containsTable("remapped_recipients"))
+    {
+      d_database.exec("UPDATE remapped_recipients SET old_id = oldid + ?", minrecipient);
+      d_database.exec("UPDATE remapped_recipients SET new_id = newid + ?", minrecipient);
+    }
 
     // address is UNIQUE in identities, so we can not simply do the following:
     // d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
     // instead we do the complicated way:
     setMinimumId("identities", minrecipient, "address");
-
-    d_database.exec("UPDATE sessions SET address = address + ?", minrecipient);
-    d_database.exec("UPDATE group_receipts SET address = address + ?", minrecipient);
-    d_database.exec("UPDATE thread SET recipient_ids = recipient_ids + ?", minrecipient);
-    d_database.exec("UPDATE groups SET recipient_id = recipient_id + ?", minrecipient);
 
     // get group members:
     SqliteDB::QueryResults results;
