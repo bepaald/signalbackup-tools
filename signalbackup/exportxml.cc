@@ -109,7 +109,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   /* address - The phone number of the sender/recipient. */
   /* REQUIRED */
   std::string address;
-  if (results.valueHasType<std::string>(i, "address"))
+  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
 
@@ -120,7 +120,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
       else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (sms (2))" << std::endl;
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address'" << std::endl;
     }
     else
       address = rid;
@@ -128,12 +128,12 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
     escapeXmlString(&address);
   }
   else
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (sms (1))" << std::endl;
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Type mismatch while retrieving required field 'address'" << std::endl;
 
   /* contact_name - Optional field that has the name of the contact. */
   /* OPTIONAL */
   std::string contact_name;
-  if (results.valueHasType<std::string>(i, "address"))
+  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
     SqliteDB::QueryResults r2;
@@ -239,7 +239,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
   /* address - The phone number of the sender/recipient. */
   std::string address;
-  if (results.valueHasType<std::string>(i, "address"))
+  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
 
@@ -250,7 +250,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
       else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (msm (2))" << std::endl;
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Type mismatch while retrieving required field 'address'" << std::endl;
 
     }
     else
@@ -264,7 +264,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
   // contact_name - Optional field that has the name of the contact.
   std::string contact_name;
-  if (results.valueHasType<std::string>(i, "address"))
+  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
   {
     std::string rid = results.getValueAs<std::string>(i, "address");
     SqliteDB::QueryResults r2;
