@@ -43,11 +43,13 @@ void SignalBackup::fillThreadTableFromMessages()
   std::cout << "Creating threads from 'mms' table data" << std::endl;
   //std::cout << "Threadids in mms, not in thread" << std::endl;
   d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE (msg_box & " + bepaald::toString(Types::BASE_TYPE_MASK) +
-                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " + bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
+                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " +
+                  bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
                   " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   //results.prettyPrint();
   for (uint i = 0; i < results.rows(); ++i)
-    if (results.valueHasType<long long int>(i, 0) && results.valueHasType<std::string>(i, 1))
+    if (results.valueHasType<long long int>(i, 0) &&
+        (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
       d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
   //std::cout << "Threadids in mms, not in thread" << std::endl;
   //d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE (msg_box&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
@@ -56,11 +58,13 @@ void SignalBackup::fillThreadTableFromMessages()
   std::cout << "Creating threads from 'sms' table data" << std::endl;
   //std::cout << "Threadids in sms, not in thread" << std::endl;
   d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type & " + bepaald::toString(Types::BASE_TYPE_MASK) +
-                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " + bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
+                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " +
+                  bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
                   " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   //results.prettyPrint();
   for (uint i = 0; i < results.rows(); ++i)
-    if (results.valueHasType<long long int>(i, 0) && results.valueHasType<std::string>(i, 1))
+    if (results.valueHasType<long long int>(i, 0) &&
+        (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
       d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
   // std::cout << "Threadids in sms, not in thread" << std::endl;
   // d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
