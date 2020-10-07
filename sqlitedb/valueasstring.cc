@@ -40,3 +40,11 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
   else
     return "(unhandled type)";
 }
+
+std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const &header) const
+{
+  int i = idxOfHeader(header);
+  if (i > -1)
+    return valueAsString(row, i);
+  return "(unhandled type)";
+}

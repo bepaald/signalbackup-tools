@@ -59,6 +59,7 @@ class SqliteDB
     void prettyPrint() const;
     void print() const;
     std::string valueAsString(size_t row, size_t column) const;
+    std::string valueAsString(size_t row, std::string const &header) const;
     template <typename T>
     inline bool contains(T const &value) const;
     bool removeColumn(uint idx);
