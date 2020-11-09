@@ -28,6 +28,7 @@
 #include "../backupframe/backupframe.h"
 #include "../framewithattachment/framewithattachment.h"
 #include "../basedecryptor/basedecryptor.h"
+#include "../invalidframe/invalidframe.h"
 
 class  FileDecryptor : public BaseDecryptor//, public CryptBase
 {

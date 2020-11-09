@@ -17,9 +17,34 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef INVALIDFRAME_H_
+#define INVALIDFRAME_H_
 
-#define VERSIONDATE "20201109.142456"
+#include "../backupframe/backupframe.h"
+
+class InvalidFrame : public BackupFrame
+{
+  static Registrar s_registrar;
+ public:
+  inline InvalidFrame(uint64_t count = 0);
+  inline virtual FRAMETYPE frameType() const override;
+  inline virtual void printInfo() const override;
+};
+
+inline InvalidFrame::InvalidFrame(uint64_t count)
+  :
+  BackupFrame(count)
+{}
+
+inline BackupFrame::FRAMETYPE InvalidFrame::frameType() const
+{
+  return FRAMETYPE::INVALID;
+}
+
+inline void InvalidFrame::printInfo() const
+{
+  std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Type: INVALID" << std::endl;
+}
 
 #endif

@@ -59,6 +59,7 @@ class Arg
   std::vector<long long int> d_editattachmentsize;
   bool d_fast;
   bool d_stoponbadmac;
+  bool d_verbose;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -89,6 +90,7 @@ class Arg
   inline std::vector<long long int> const &editattachmentsize() const;
   inline bool fast() const;
   inline bool stoponbadmac() const;
+  inline bool verbose() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -228,6 +230,11 @@ inline bool Arg::fast() const
 inline bool Arg::stoponbadmac() const
 {
   return d_stoponbadmac;
+}
+
+inline bool Arg::verbose() const
+{
+  return d_verbose;
 }
 
 inline bool Arg::ok() const

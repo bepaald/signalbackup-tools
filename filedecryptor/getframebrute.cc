@@ -121,7 +121,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
 
     DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
 
-    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
+    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount + skipped));
 
     delete[] decodedframe;
 
@@ -175,7 +175,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
     //DEBUGOUT("Decoded plaintext: ", ps);
     DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
 
-    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
+    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount + skipped));
 
     delete[] decodedframe;
 
@@ -193,7 +193,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
       if (frame->validate())
       {
         d_counter += skipped;
-        std::cout << "YEAH!" << std::endl;
+        d_framecount += skipped;
+        std::cout << "YEAH! :)" << std::endl;
         //frame->printInfo();
         if (d_assumebadframesize && skipped == 1 /*NOTE, skipped was already upped*/)
         {
@@ -201,6 +202,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
                     << offset - previousframelength - MACSIZE - 4 << std::endl << std::endl;
         }
         std::cout << "Good frame: " << frame->frameNumber() << " (" << frame->frameTypeString() << ")" << std::endl;
+        frame->printInfo();
         delete[] encryptedframe.release();
         break;
       }

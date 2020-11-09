@@ -27,7 +27,7 @@ Current stable released versions of
 
 **<span id="compiling">Compiling</span>**
 
-A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++2a */*.cc *.cc -lcrypto -lsqlite3` should do the trick. When compiling with an old comiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++2a` with `-std=c++17`. If you have difficulty compling under your OS, I recommend downloading a Fedora Live image, booting of of that and running the following commands in a terminal (in the project directory):
+A script is provided that will compile the binary on Arch and Fedora (and possibly many other distro's). In general just running `g++ -std=c++2a */*.cc *.cc -lcrypto -lsqlite3` should do the trick. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++2a` with `-std=c++17`. If you have difficulty compling under your OS, I recommend downloading a Fedora Live image, booting of of that and running the following commands in a terminal (in the project directory):
 
 ```
  $ sudo dnf install gcc-g++ openssl-devel sqlite-devel which
@@ -405,7 +405,7 @@ If you also need to edit the attachments, dump the backup to directory first ([a
 - ~~merging existing backups (succesfull tests have been done)~~ _DONE_
 - exporting to other formats (csv, xml, html) _WIP_
 - ~~cropping backup to certain conversations and time spans (succesfully done in testing)~~ _DONE_
-- replacing/deleting attachments without changing/deleting messages. For example, replacing with thumbnails or tiny placeholdersto save space.
+- replacing/deleting attachments without changing/deleting messages. For example, replacing with thumbnails or tiny placeholders to save space.
 - importing databases from the desktop app. I have no experience with that yet. _WIP_
 
 Development will be slow at times.
