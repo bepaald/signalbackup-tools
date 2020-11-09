@@ -49,9 +49,9 @@ int main(int argc, char *argv[])
 
 #ifdef VERSIONDATE
 #ifndef USE_CRYPTOPP
-  std::cout << "signalbackup-tools source version " << VERSIONDATE << " (OpenSSL)" << std::endl;
+  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE << " (OpenSSL)" << std::endl;
 #else
-  std::cout << "signalbackup-tools source version " << VERSIONDATE << " (CryptoPP)" << std::endl;
+  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE << " (CryptoPP)" << std::endl;
 #endif
 #endif
 
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
   }
 
   // open input
-  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(),
+  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(),
                                                     (!arg.source().empty() || arg.listthreads() ||
                                                      !arg.exportcsv().empty() || !arg.exportxml().empty() ||
                                                      !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
       std::cout << "Getting list of thread id's..." << std::flush;
       threads = source->threadIds();
       std::cout << "Got: " << std::flush;
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < threads.size(); ++i)
     {
       std::cout << std::endl << "Importing thread " << threads[i] << " from source file: " << arg.source() << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), SignalBackup::LOWMEM, arg.showprogress()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
       sb->importThread(source.get(), threads[i]);
     }
   }

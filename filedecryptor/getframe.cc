@@ -136,7 +136,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
-  if (!d_editattachments.empty() && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
+  [[unlikely]] if (!d_editattachments.empty() && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     for (uint i = 0; i < d_editattachments.size(); i += 2)
       if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
       {
@@ -154,14 +154,18 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   [[unlikely]] if (!frame)
   {
     std::cout << "Failed to get valid frame from decoded data..." << std::endl;
-    //std::cout << "Data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
     if (d_badmac)
     {
       std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
       return bruteForceFrom(filepos, encryptedframelength);
     }
     else
-      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... Aborting :(" << std::endl;
+    {
+      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(" << std::endl;
+      std::cout << "Decrypted frame data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+      std::unique_ptr<BackupFrame> tmp = std::make_unique<InvalidFrame>();
+      return tmp;
+    }
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 

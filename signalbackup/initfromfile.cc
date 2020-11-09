@@ -46,10 +46,15 @@ void SignalBackup::initFromFile()
       dumpInfoOnBadFrame(&frame);
 
     [[likely]] if (d_showprogress)
-      std::cout << "\33[2K\rFRAME " << frame->frameNumber() << " ("
+    {
+      std::cout << (d_verbose ? "" : "\33[2K\r") << "FRAME " << frame->frameNumber() << " ("
                 << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
                 << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
                 << "... " << std::flush;
+      [[unlikely]] if (d_verbose)
+        std::cout << "\n";
+
+    }
 
     [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
     {
@@ -60,7 +65,9 @@ void SignalBackup::initFromFile()
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       d_databaseversion = d_databaseversionframe->version();
-      //std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
+
+      [[unlikely]] if (d_verbose)
+        std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
     }
     else [[likely]] if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
@@ -80,25 +87,6 @@ void SignalBackup::initFromFile()
         d_database.exec("DROP TABLE dummy");
       }
       #endif
-
-      // if (s->frameNumber() == 222)
-      // {
-      //   std::cout << "Pos: " << d_fd->curFilePos() << std::endl;
-      //   std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
-      // }
-      // else if (s->frameNumber() == 223 && s->statement().find("INSERT INTO sms VALUES") != std::string::npos)
-      // {
-      //   std::cout << "Pos: " << d_fd->curFilePos() << std::endl;
-      //   std::cout << frame->getHumanData() << std::endl;
-      //   std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
-      //   frame->printInfo();
-      // }
-      // else if (s->frameNumber() == 224)
-      // {
-      //   std::cout << "Pos: " << d_fd->curFilePos() << std::endl;
-      //   std::cout << frame->frameNumber() << " : " << frame->frameTypeString() << std::endl;
-      // }
-
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     {
@@ -120,6 +108,10 @@ void SignalBackup::initFromFile()
     else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::END)
     {
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
+    }
+    else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID)
+    {
+      std::cout << std::endl << "WARNING! SKIPPING INVALID FRAME!" << std::endl;
     }
   }
 

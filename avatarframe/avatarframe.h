@@ -68,22 +68,6 @@ inline AvatarFrame::AvatarFrame(unsigned char *bytes, size_t length, uint64_t co
   FrameWithAttachment(bytes, length, count)
 {}
 
-// inline AvatarFrame::AvatarFrame(AvatarFrame &&other)
-//   :
-//   FrameWithAttachment(std::move(other))
-// {}
-
-// inline AvatarFrame &AvatarFrame::operator=(AvatarFrame &&other)
-// {
-//   if (this != &other)
-//   {
-//     FrameWithAttachment::operator=(std::move(other));
-//   }
-//   return *this;
-// }
-
-// inline AvatarFrame::~AvatarFrame()
-// {}
 
 inline BackupFrame *AvatarFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
 {

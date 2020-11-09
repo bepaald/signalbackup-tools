@@ -61,10 +61,11 @@ class SignalBackup
   unsigned int d_databaseversion;
   bool d_showprogress;
   bool d_stoponbadmac;
+  bool d_verbose;
 
  public:
-  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool issource = false,
-                      bool showprogress = true, bool assumebadframesizeonbadmac = false,
+  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
+                      bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false,
                       std::vector<long long int> editattachments = std::vector<long long int>());
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite = false, bool keepattachmentdatainmemory = true);
@@ -130,14 +131,16 @@ class SignalBackup
   inline long long int getIntOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, long long int def) const;
 };
 
-inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool issource, bool showprogress,
+inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
+                                  bool issource, bool showprogress,
                                   bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
   :
   d_database(":memory:"),
   d_passphrase(passphrase),
   d_ok(false),
   d_databaseversion(-1),
-  d_showprogress(showprogress)
+  d_showprogress(showprogress),
+  d_verbose(verbose)
 {
   if (bepaald::isDir(filename))
     initFromDir(filename);
