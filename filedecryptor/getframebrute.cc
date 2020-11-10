@@ -190,7 +190,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
     }
     else
     {
-      if (frame->validate())
+      if (frame->validate() &&
+          frame->frameType() != BackupFrame::FRAMETYPE::HEADER && // it is impossible to get in this function without the headerframe, and there is only one
+          (frame->frameType() != BackupFrame::FRAMETYPE::END || static_cast<uint64_t>(d_file.tellg()) == d_filesize))
       {
         d_counter += skipped;
         d_framecount += skipped;
