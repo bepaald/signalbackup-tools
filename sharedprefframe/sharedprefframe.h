@@ -67,6 +67,7 @@ inline void SharedPrefFrame::printInfo() const // virtual
 {
   //DEBUGOUT("TYPE: SHAREDPREFERENCEFRAME");
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: SHAREDPREFERENCEFRAME" << std::endl;
   for (auto const &p : d_framedata)
   {
@@ -116,19 +117,33 @@ inline std::pair<unsigned char *, uint64_t> SharedPrefFrame::getData() const
 
 }
 
+// not sure about the requirements, but at least _a_ field should be set
+// also a key needs a value, and a value needs a key
 inline bool SharedPrefFrame::validate() const
 {
   if (d_framedata.empty())
     return false;
 
+  int foundfile = 0;
+  int foundkey = 0;
+  int foundvalue = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::FILE &&
         std::get<0>(p) != FIELD::KEY &&
         std::get<0>(p) != FIELD::VALUE)
       return false;
+
+    if (std::get<0>(p) == FIELD::FILE)
+      ++foundfile;
+
+    if (std::get<0>(p) == FIELD::KEY)
+      ++foundkey;
+
+    if (std::get<0>(p) == FIELD::VALUE)
+      ++foundvalue;
   }
-  return true;
+  return (foundfile + foundkey + foundvalue) > 0 && foundkey == foundvalue;
 }
 
 inline std::string SharedPrefFrame::getHumanData() const

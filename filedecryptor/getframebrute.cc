@@ -87,7 +87,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
   while (!frame)
   {
 
-    if (skipped > offset / 10) // a frame is at least 10 bytes?
+    if (skipped > offset / 10) // a frame is at least 10 bytes? -> could probably safely set this higher. MAC alone is 10 bytes, there is also actual data
     {
       std::cout << std::endl << "No valid frame found at maximum frameskip for this offset..." << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);
@@ -156,7 +156,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
   while (!frame)
   {
 
-    if (skipped > offset / 10) // a frame is at least 10 bytes?
+    if (skipped > offset / 10) // a frame is at least 10 bytes? -> could probably safely set this higher. MAC alone is 10 bytes, there is also actual data
     {
       std::cout << std::endl << "No valid frame found at maximum frameskip for this offset..." << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);
@@ -195,7 +195,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
         d_counter += skipped;
         d_framecount += skipped;
         std::cout << "YEAH! :)" << std::endl;
-        //frame->printInfo();
         if (d_assumebadframesize && skipped == 1 /*NOTE, skipped was already upped*/)
         {
           std::cout << std::endl << " ! CORRECT FRAME_NUMBER:SIZE = " << frame->frameNumber() - 1 << ":"
@@ -220,6 +219,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
        frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
+    [[unlikely]] if (d_verbose)
+      std::cout << "Trying to read attachment (bruteforce)" << std::endl;
+
     uintToFourBytes(d_iv, d_counter++);
 
     reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
@@ -228,8 +230,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
 
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      if (frame->frameType() != BackupFrame::FRAMETYPE::ATTACHMENT && frame->frameType() != BackupFrame::FRAMETYPE::AVATAR)
-        return std::unique_ptr<BackupFrame>(nullptr);
+      [[unlikely]] if (d_verbose)
+        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
       if (getatt != 0)

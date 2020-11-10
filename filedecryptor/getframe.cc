@@ -22,7 +22,9 @@
 std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 {
   long long int filepos = d_file.tellg();
-  //std::cout << "Getting frame at filepos: " << filepos << std::endl;
+
+  [[unlikely]] if (d_verbose)
+    std::cout << "Getting frame at filepos: " << filepos << std::endl;
 
   [[unlikely]] if (static_cast<uint64_t>(filepos) == d_filesize)
   {
@@ -44,6 +46,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   //}
 
   DEBUGOUT("Framelength: ", encryptedframelength);
+  [[unlikely]] if (d_verbose)
+    std::cout << "Framelength: " << encryptedframelength << std::endl;
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
   [[unlikely]] if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength))
@@ -70,7 +74,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     d_badmac = true;
   }
   else
+  {
     d_badmac = false;
+    [[unlikely]] if (d_verbose)
+    {
+      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    }
+  }
 
   // decode
   uintToFourBytes(d_iv, d_counter++);
@@ -120,7 +131,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     d_badmac = true;
   }
   else
+  {
     d_badmac = false;
+    [[unlikely]] if (d_verbose)
+    {
+      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    }
+  }
 
   // decode
   int decodedframelength = encryptedframelength - MACSIZE;
@@ -136,7 +154,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
-  [[unlikely]] if (!d_editattachments.empty() && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
+  [[unlikely]] if (!d_editattachments.empty() && frame && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     for (uint i = 0; i < d_editattachments.size(); i += 2)
       if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
       {
@@ -149,28 +167,30 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         break;
       }
 
-  delete[] decodedframe;
-
   [[unlikely]] if (!frame)
   {
     std::cout << "Failed to get valid frame from decoded data..." << std::endl;
     if (d_badmac)
     {
       std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
+      delete[] decodedframe;
       return bruteForceFrom(filepos, encryptedframelength);
     }
     else
     {
       std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(" << std::endl;
       std::cout << "Decrypted frame data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
-      std::unique_ptr<BackupFrame> tmp = std::make_unique<InvalidFrame>();
-      return tmp;
+      delete[] decodedframe;
+      return std::make_unique<InvalidFrame>();
     }
+    delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-  uint32_t attsize = 0;
-  if (!d_badmac && (attsize = frame->attachmentSize()) > 0 &&
+  delete[] decodedframe;
+
+  uint32_t attsize = frame->attachmentSize();
+  if (!d_badmac && attsize > 0 &&
       (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT ||
        frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
@@ -183,6 +203,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
     if (!d_lazyload) // immediately decrypt i guess...
     {
+      [[unlikely]] if (d_verbose)
+        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
+
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
       if (getatt > 0)
       {
@@ -203,10 +226,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
         }
       }
     }
+
   }
 
   //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;
 
   //delete frame;
+
   return frame;
 }

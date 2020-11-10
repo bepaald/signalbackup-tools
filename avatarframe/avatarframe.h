@@ -77,23 +77,24 @@ inline BackupFrame *AvatarFrame::create(unsigned char *bytes, size_t length, uin
 inline void AvatarFrame::printInfo() const // virtual override
 {
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: AVATAR" << std::endl;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::NAME)
-      std::cout << "         - name     : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      std::cout << "         - name      : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
     else if (std::get<0>(p) == FIELD::RECIPIENT)
-      std::cout << "         - recipient: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      std::cout << "         - recipient : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
     else if (std::get<0>(p) == FIELD::LENGTH)
-      std::cout << "         - length   : " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      std::cout << "         - length    : " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
   }
   if (d_attachmentdata)
   {
     uint32_t size = length();
     if (size < 25)
-      std::cout << "         - attachment      : " << bepaald::bytesToHexString(d_attachmentdata, size) << std::endl;
+      std::cout << "         - attachment: " << bepaald::bytesToHexString(d_attachmentdata, size) << std::endl;
     else
-      std::cout << "         - attachment      : " << bepaald::bytesToHexString(d_attachmentdata, 25) << " ... (" << size << " bytes total)" << std::endl;
+      std::cout << "         - attachment: " << bepaald::bytesToHexString(d_attachmentdata, 25) << " ... (" << size << " bytes total)" << std::endl;
   }
 }
 
@@ -201,14 +202,23 @@ inline bool AvatarFrame::validate() const
   if (d_framedata.empty())
     return false;
 
+  int foundlength = 0;
+  int foundname_or_recipient = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::NAME &&
         std::get<0>(p) != FIELD::RECIPIENT &&
         std::get<0>(p) != FIELD::LENGTH)
       return false;
+
+    // a valid avatar frame must contain length AND (recipient (newer backups) XOR name (older backups))
+    if (std::get<0>(p) == FIELD::LENGTH)
+      ++foundlength;
+    else if (std::get<0>(p) == FIELD::RECIPIENT || std::get<0>(p) != FIELD::NAME)
+      ++foundname_or_recipient;
   }
-  return true;
+
+  return foundlength == 1 && foundname_or_recipient == 1;
 }
 
 inline std::string AvatarFrame::getHumanData() const
