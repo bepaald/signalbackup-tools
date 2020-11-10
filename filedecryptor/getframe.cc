@@ -135,8 +135,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     d_badmac = false;
     [[unlikely]] if (d_verbose)
     {
-      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
-      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+      std::cout << "Calculated mac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
+      std::cout << "Mac in file   : " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
     }
   }
 
