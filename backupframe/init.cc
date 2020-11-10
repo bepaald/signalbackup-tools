@@ -51,15 +51,6 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
       }
     case VARINT:
       {
-        /*
-        if (d_count == 66)
-        {
-          std::cout << bepaald::bytesToHexString(data + processed + 0, 1) << std::endl;
-          std::cout << bepaald::bytesToHexString(data + processed + 1, 1) << std::endl;
-          std::cout << bepaald::bytesToHexString(data + processed + 2, 1) << std::endl;
-          std::cout << bepaald::bytesToHexString(data + processed + 3, 1) << std::endl;
-        }
-        */
         int64_t val = getVarint(data, &processed, l); // for UNSIGNED varints
         //DEBUGOUT("Got varint: ", val);
         val = bepaald::swap_endian(val); // because java writes integers in big endian?

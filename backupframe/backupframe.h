@@ -313,7 +313,18 @@ inline BackupFrame *BackupFrame::instantiate(FRAMETYPE ft, unsigned char *data, 
   }
   */
 
-  return it == s_registry().end() ? nullptr : (it->second)(data, length, count);
+  [[unlikely]] if (it == s_registry().end())
+    return nullptr;
+
+  BackupFrame *ret = (it->second)(data, length, count);
+
+  [[unlikely]] if (!ret->ok())
+  {
+    delete ret;
+    return nullptr;
+  }
+
+  return (it->second)(data, length, count);
 }
 
 // maybe check endianness?
