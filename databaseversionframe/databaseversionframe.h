@@ -79,6 +79,7 @@ inline uint32_t DatabaseVersionFrame::version() const
 inline void DatabaseVersionFrame::printInfo() const
 {
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: DATABASEVERSION" << std::endl;
   std::cout << "         - Version: " << version() << std::endl;
 

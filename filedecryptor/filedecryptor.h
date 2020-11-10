@@ -41,9 +41,10 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   bool d_badmac;
   bool d_assumebadframesize;
   std::vector<long long int> d_editattachments;
+  bool d_verbose;
 
  public:
-  FileDecryptor(std::string const &filename, std::string const &passphrase, bool lazy = true, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
+  FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool lazy = true, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
   FileDecryptor(FileDecryptor const &other) = delete;
   FileDecryptor operator=(FileDecryptor const &other) = delete;
   //inline ~FileDecryptor();

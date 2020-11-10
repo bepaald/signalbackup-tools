@@ -146,7 +146,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
     initFromDir(filename);
   else // not directory
   {
-    d_fd.reset(new FileDecryptor(filename, passphrase, issource, assumebadframesizeonbadmac, editattachments));
+    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, issource, assumebadframesizeonbadmac, editattachments));
     initFromFile();
   }
 }

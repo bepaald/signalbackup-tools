@@ -77,6 +77,7 @@ inline BackupFrame *StickerFrame::create(unsigned char *data, size_t length, uin
 inline void StickerFrame::printInfo() const // virtual override
 {
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: STICKER" << std::endl;
   for (auto const &p : d_framedata)
   {
@@ -168,13 +169,20 @@ inline bool StickerFrame::validate() const
   if (d_framedata.empty())
     return false;
 
+  int foundrowid = 0;
+  int foundlength = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
         std::get<0>(p) != FIELD::LENGTH)
       return false;
+
+    if (std::get<0>(p) == FIELD::ROWID)
+      ++foundrowid;
+    else if (std::get<0>(p) == FIELD::LENGTH)
+      ++foundlength;
   }
-  return true;
+  return foundlength == 1 && foundrowid == 1;
 }
 
 inline std::string StickerFrame::getHumanData() const

@@ -25,6 +25,7 @@
 #include <vector>
 #include <tuple>
 #include <unordered_map>
+#include <limits>
 
 #include "../common_be.h"
 #include "../basedecryptor/basedecryptor.h"
@@ -43,7 +44,7 @@ class BackupFrame
    AVATAR = 7,
    STICKER = 8,
 
-   INVALID = 99
+   INVALID = std::numeric_limits<unsigned int>::max()
   };
 
   enum WIRETYPE : unsigned int
@@ -70,6 +71,7 @@ class BackupFrame
   bool d_ok;
   std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> d_framedata; // field number, field data, length
   uint64_t d_count;
+  size_t d_constructedsize;
  public:
   explicit inline BackupFrame(uint64_t count);
   inline BackupFrame(unsigned char *data, size_t length, uint64_t count);
@@ -121,13 +123,15 @@ inline std::unordered_map<BackupFrame::FRAMETYPE, BackupFrame *(*)(unsigned char
 inline BackupFrame::BackupFrame(uint64_t num)
   :
   d_ok(false),
-  d_count(num)
+  d_count(num),
+  d_constructedsize(0)
 {}
 
 inline BackupFrame::BackupFrame(unsigned char *data, size_t l, uint64_t num)
   :
   d_ok(false),
-  d_count(num)
+  d_count(num),
+  d_constructedsize(l)
 {
   DEBUGOUT("CREATING BACKUPFRAME!");
   DEBUGOUT("DATA: ", bepaald::bytesToHexString(data, l), " (", l, " bytes)");
@@ -138,7 +142,8 @@ inline BackupFrame::BackupFrame(BackupFrame &&other)
   :
   d_ok(std::move(other.d_ok)),
   d_framedata(std::move(other.d_framedata)),
-  d_count(std::move(other.d_count))
+  d_count(std::move(other.d_count)),
+  d_constructedsize(std::move(other.d_constructedsize))
 {
   other.d_framedata.clear(); // clear other without delete[]ing, ~this will do it
 }
@@ -157,6 +162,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame &&other)
     d_framedata = std::move(other.d_framedata);
     other.d_framedata.clear();
     d_count = std::move(other.d_count);
+    d_constructedsize = std::move(other.d_constructedsize);
   }
   return *this;
 }
@@ -165,6 +171,7 @@ inline BackupFrame::BackupFrame(BackupFrame const &other)
 {
   d_ok = other.d_ok;
   d_count = other.d_count;
+  d_constructedsize = other.d_constructedsize;
   for (uint i = 0; i < other.d_framedata.size(); ++i)
   {
     unsigned char *datacpy = nullptr;
@@ -183,6 +190,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame const &other)
   {
     d_ok = other.d_ok;
     d_count = other.d_count;
+    d_constructedsize = other.d_constructedsize;
     for (uint i = 0; i < other.d_framedata.size(); ++i)
     {
       unsigned char *datacpy = nullptr;
@@ -268,7 +276,7 @@ inline std::string BackupFrame::frameTypeString() const
   {
    return "StickerFrame";
   }
-  case 99:
+  case std::numeric_limits<unsigned int>::max():
   {
    return "InvalidFrame";
   }

@@ -99,7 +99,10 @@ void SignalBackup::initFromFile()
       d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
+    {
+      //frame->printInfo();
       d_sharedpreferenceframes.emplace_back(reinterpret_cast<SharedPrefFrame *>(frame.release()));
+    }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
     {
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());

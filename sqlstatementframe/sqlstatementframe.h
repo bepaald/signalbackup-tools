@@ -196,6 +196,7 @@ inline void SqlStatementFrame::printInfo() const
 {
   //DEBUGOUT("TYPE: SQLSTATEMENTFRAME");
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: SQLSTATEMENT" << std::endl;
   uint param_ctr = 0;
 
@@ -625,13 +626,16 @@ inline bool SqlStatementFrame::validate() const
   if (d_framedata.empty())
     return false;
 
+  bool foundstatement = false;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::STATEMENT &&
         std::get<0>(p) != FIELD::PARAMETERS)
       return false;
-  }
 
+    if (std::get<0>(p) == FIELD::STATEMENT)
+      foundstatement = true;
+  }
 
   for (auto const &pd : d_parameterdata)
   {
@@ -643,7 +647,7 @@ inline bool SqlStatementFrame::validate() const
       return false;
   }
 
-  return true;
+  return foundstatement;
 }
 
 #endif

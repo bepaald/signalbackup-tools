@@ -112,6 +112,7 @@ inline void HeaderFrame::printInfo() const
 {
   //DEBUGOUT("TYPE: HEADERFRAME");
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: HEADER" << std::endl;
   std::cout << "         - IV  : " << bepaald::bytesToHexString(iv(), iv_length()) << std::endl;
   std::cout << "         - SALT: " << bepaald::bytesToHexString(salt(), salt_length()) << std::endl;
@@ -165,13 +166,23 @@ inline bool HeaderFrame::validate() const
   if (d_framedata.empty())
     return false;
 
+  int foundiv = 0;
+  int foundsalt = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::IV &&
         std::get<0>(p) != FIELD::SALT)
       return false;
+
+    // must contain salt and iv, each 1 time.
+    if (std::get<0>(p) == FIELD::IV)
+      ++foundiv;
+    if (std::get<0>(p) == FIELD::SALT)
+      ++foundsalt;
   }
-  return true;
+
+  // salt length is 32, iv is 16
+  return foundsalt == 1 && foundiv == 1 && salt_length() == 32 && iv_length() == 16;
 }
 
 inline unsigned int HeaderFrame::getField(std::string const &str) const

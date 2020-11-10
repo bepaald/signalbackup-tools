@@ -95,6 +95,7 @@ inline BackupFrame *AttachmentFrame::create(unsigned char *bytes, size_t length,
 inline void AttachmentFrame::printInfo() const // virtual override
 {
   std::cout << "Frame number: " << d_count << std::endl;
+  std::cout << "        Size: " << d_constructedsize << std::endl;
   std::cout << "        Type: ATTACHMENT" << std::endl;
   for (auto const &p : d_framedata)
   {
@@ -207,14 +208,24 @@ inline bool AttachmentFrame::validate() const
   if (d_framedata.empty())
     return false;
 
+  int foundrowid = 0;
+  int foundlength = 0;
+  int foundattachmentid = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
         std::get<0>(p) != FIELD::ATTACHMENTID &&
         std::get<0>(p) != FIELD::LENGTH)
       return false;
+
+    if (std::get<0>(p) == FIELD::ROWID)
+      ++foundrowid;
+    else if (std::get<0>(p) == FIELD::ATTACHMENTID)
+      ++foundattachmentid;
+    else if (std::get<0>(p) == FIELD::LENGTH)
+      ++foundlength;
   }
-  return true;
+  return foundlength == 1 && foundattachmentid == 1 && foundrowid == 1;
 }
 
 inline std::string AttachmentFrame::getHumanData() const
