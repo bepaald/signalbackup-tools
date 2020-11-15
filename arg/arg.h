@@ -60,6 +60,8 @@ class Arg
   bool d_fast;
   bool d_stoponbadmac;
   bool d_verbose;
+  std::string d_dumpdesktopdb;
+  bool d_hhenkel;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -91,6 +93,8 @@ class Arg
   inline bool fast() const;
   inline bool stoponbadmac() const;
   inline bool verbose() const;
+  inline std::string const &dumpdesktopdb() const;
+  inline bool hhenkel() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -235,6 +239,16 @@ inline bool Arg::stoponbadmac() const
 inline bool Arg::verbose() const
 {
   return d_verbose;
+}
+
+inline std::string const &Arg::dumpdesktopdb() const
+{
+  return d_dumpdesktopdb;
+}
+
+inline bool Arg::hhenkel() const
+{
+  return d_hhenkel;
 }
 
 inline bool Arg::ok() const

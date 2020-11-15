@@ -93,6 +93,9 @@ class SignalBackup
   inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
   inline std::vector<int> threadIds() const;
+
+  void hhenkel();
+
  private:
   void initFromFile();
   void initFromDir(std::string const &inputdir);

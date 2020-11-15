@@ -21,6 +21,7 @@
 #define SQLCIPHERDECRYPTOR_H_
 
 #include <string>
+#include <fstream>
 
 #include "../common_be.h"
 
@@ -74,6 +75,7 @@ class SqlCipherDecryptor
   ~SqlCipherDecryptor();
   inline bool ok() const;
   inline DecodedData data() const;
+  inline bool writeToFile(std::string const &filename, bool overwrite) const;
  private:
   bool getKey();
   bool getHmacKey();
@@ -88,6 +90,30 @@ inline bool SqlCipherDecryptor::ok() const
 inline SqlCipherDecryptor::DecodedData SqlCipherDecryptor::data() const
 {
   return {d_decrypteddata, d_decrypteddatasize};
+}
+
+inline bool SqlCipherDecryptor::writeToFile(std::string const &filename, bool overwrite) const
+{
+  if (!overwrite && bepaald::fileOrDirExists(filename))
+  {
+    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
+    return false;
+  }
+
+  std::ofstream out(filename);
+  if (!out.is_open())
+  {
+    std::cout << "Failed to open " << filename << " for writing" << std::endl;
+    return false;
+  }
+
+  if (!out.write(reinterpret_cast<char *>(d_decrypteddata), d_decrypteddatasize))
+  {
+    std::cout << "Error writing data to file" << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 #endif
