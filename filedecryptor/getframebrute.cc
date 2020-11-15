@@ -34,7 +34,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos, uin
     if (ret)
     {
       std::cout << std::endl << "Got frame, breaking" << std::endl;
-      //break;
+      break;
     }
   }
   return ret;
