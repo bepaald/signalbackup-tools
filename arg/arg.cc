@@ -49,7 +49,9 @@ Arg::Arg(int argc, char *argv[])
   d_editattachmentsize(std::vector<long long int>()),
   d_fast(false),
   d_stoponbadmac(false),
-  d_verbose(false)
+  d_verbose(false),
+  d_dumpdesktopdb(std::string()),
+  d_hhenkel(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -381,6 +383,27 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-verbose")
     {
       d_verbose = false;
+      continue;
+    }
+    if (option == "--dumpdesktopdb")
+    {
+      if (i < arguments.size() - 1)
+        d_dumpdesktopdb = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--hhenkel")
+    {
+      d_hhenkel = true;
+      continue;
+    }
+    if (option == "--no-hhenkel")
+    {
+      d_hhenkel = false;
       continue;
     }
     if (option[0] != '-')

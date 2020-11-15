@@ -21,6 +21,9 @@
 
 bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
 {
+
+  //std::cout << "INITIALIZING FRAME OF " << l << " BYTES" << std::endl;
+
   unsigned int processed = 0;
   while (processed < l)
   {
@@ -62,8 +65,6 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
 
         // this used to say sizeof(sizeof(decltype(val))), I assumed it was a mistake
         framedata->push_back(std::make_tuple(fieldnumber, fielddata, sizeof(decltype(val))));
-
-
         // processed is set in getVarInt
         break;
       }

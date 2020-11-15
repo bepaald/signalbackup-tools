@@ -24,7 +24,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   long long int filepos = d_file.tellg();
 
   [[unlikely]] if (d_verbose)
-    std::cout << "Getting frame at filepos: " << filepos << std::endl;
+    std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
 
   [[unlikely]] if (static_cast<uint64_t>(filepos) == d_filesize)
   {

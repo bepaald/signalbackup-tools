@@ -21,12 +21,7 @@
 
 bool SqlCipherDecryptor::getKey()
 {
-
   // read key from config.json
-  /*
-    $ cat config.json | pcregrep -o1 "PRAGMA KEY = \"x\\\'([a-zA-Z0-9]{64})\\\'\"\;"
-    aac2f422c149db6180b1a76df1ee462101c11d2d2347044ef055a956dfcbfa98
-  */
 
   std::fstream config(d_path + "/config.json", std::ios_base::in | std::ios_base::binary);
   if (!config.is_open())
@@ -36,7 +31,12 @@ bool SqlCipherDecryptor::getKey()
   }
   std::string line;
   //std::regex keyregex("PRAGMA KEY = \"x\\\\'([a-zA-Z0-9]{64})\\\\'\";");
-  std::regex keyregex("^\\s*\"key\": \"([a-zA-Z0-9]{64})\",$");
+
+  /*
+    $ cat ~/.config/Signal/config.json | pcregrep -o1 "^\s*\"key\":\s*\"([a-z0-9]{64})\"$"
+    aac2f422c149db6180b1a76df1ee462101c11d2d2347044ef055a956dfcbfa98
+  */
+  std::regex keyregex("^\\s*\"key\":\\s*\"([a-zA-Z0-9]{64})\",?$");
   std::smatch m;
   bool found = false;
   while (std::getline(config, line))

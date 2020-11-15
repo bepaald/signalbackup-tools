@@ -108,7 +108,14 @@ inline SqlStatementFrame::SqlStatementFrame(unsigned char *data, size_t length, 
 {
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::PARAMETERS)
-      init(std::get<1>(p), std::get<2>(p), &d_parameterdata);
+    {
+      //std::cout << "INITIALIZING PARAMATERS: " << std::get<2>(p) << " bytes" << std::endl;
+      [[unlikely]]if (!init(std::get<1>(p), std::get<2>(p), &d_parameterdata))
+      {
+        d_ok = false;
+        break;
+      }
+    }
 }
 
 

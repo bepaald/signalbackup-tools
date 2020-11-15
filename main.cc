@@ -24,6 +24,7 @@
 #include "arg/arg.h"
 #include "common_be.h"
 #include "signalbackup/signalbackup.h"
+#include "sqlcipherdecryptor/sqlcipherdecryptor.h"
 
 #if __has_include("autoversion.h")
 #include "autoversion.h"
@@ -72,6 +73,13 @@ int main(int argc, char *argv[])
     else
       std::cout << "Output file `" << arg.output() << "' exists. Use --overwrite to overwrite." << std::endl;
     return 1;
+  }
+
+  if (arg.hhenkel())
+  {
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false);
+    fd.hhenkel(2148732446);
+    return 0;
   }
 
   // open input
@@ -192,6 +200,17 @@ int main(int argc, char *argv[])
   // // std::cout << "Starting export!" << std::endl;
   // // sb2.exportBackup("NEWFILE2");
   // // std::cout << "Finished" << std::endl;
+
+
+  // decode and dump Signal-Desktop database to 'desktop.db'.
+  if (!arg.dumpdesktopdb().empty())
+  {
+    SqlCipherDecryptor db(arg.dumpdesktopdb());
+    if (!db.ok() || !db.writeToFile("desktop.db", arg.overwrite()))
+      std::cout << "Failed to dump desktop database" << std::endl;
+  }
+
+
 
 #if defined(_WIN32) || defined(__MINGW64__)
   SetConsoleOutputCP(oldcodepage);
