@@ -42,7 +42,7 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
     case LENGTHDELIM: // need to read next bytes for length
       {
         int64_t length = getLength(data, &processed, l);
-        if (length < 0 || processed + static_cast<uint64_t>(length) > l) // more then we have
+        [[unlikely]] if (length < 0 || processed + static_cast<uint64_t>(length) > l) // more then we have
           return false;
         unsigned char *fielddata = new unsigned char[length];
         std::memcpy(fielddata, data + processed, length);
@@ -55,6 +55,10 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
     case VARINT:
       {
         int64_t val = getVarint(data, &processed, l); // for UNSIGNED varints
+        [[unlikely]] if (val == -1 &&                // (possible?) invalid value
+                         processed == l &&           // last byte was processed
+                         data[l - 1] & 0b10000000)   // but last byte was not end of varint
+              return false;
         //DEBUGOUT("Got varint: ", val);
         val = bepaald::swap_endian(val); // because java writes integers in big endian?
         //DEBUGOUT("Got varint: ", val);
