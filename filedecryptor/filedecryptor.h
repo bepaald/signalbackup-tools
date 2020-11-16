@@ -108,13 +108,17 @@ inline bool FileDecryptor::getNextFrameBlock(unsigned char *data, size_t length)
   return true;
 }
 
-
+#ifndef USE_CRYPTOPP
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
+#endif
+
 inline void FileDecryptor::hhenkel(uint64_t pos)
 {
+#ifndef USE_CRYPTOPP
+
   uint offset = 0;
 
   d_file.seekg(pos, std::ios_base::beg);
@@ -257,7 +261,7 @@ inline void FileDecryptor::hhenkel(uint64_t pos)
       }
     }
   }
-
+#endif
 }
 
 #endif
