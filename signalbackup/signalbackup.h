@@ -94,6 +94,8 @@ class SignalBackup
   void removeDoubles();
   inline std::vector<int> threadIds() const;
 
+  bool hhenkel(std::string const &);
+
  private:
   void initFromFile();
   void initFromDir(std::string const &inputdir);
