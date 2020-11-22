@@ -61,7 +61,7 @@ class Arg
   bool d_stoponbadmac;
   bool d_verbose;
   std::string d_dumpdesktopdb;
-  bool d_hhenkel;
+  std::string d_hhenkel;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -94,7 +94,7 @@ class Arg
   inline bool stoponbadmac() const;
   inline bool verbose() const;
   inline std::string const &dumpdesktopdb() const;
-  inline bool hhenkel() const;
+  inline std::string const &hhenkel() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -246,7 +246,7 @@ inline std::string const &Arg::dumpdesktopdb() const
   return d_dumpdesktopdb;
 }
 
-inline bool Arg::hhenkel() const
+inline std::string const &Arg::hhenkel() const
 {
   return d_hhenkel;
 }

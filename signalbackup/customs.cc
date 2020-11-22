@@ -23,6 +23,126 @@
 
 #include "signalbackup.ih"
 
+#include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
+
+bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
+{
+
+  // args
+
+
+  // open signal desktop database
+  SqlCipherDecryptor db(signaldesktoplocation);
+  if (!db.ok())
+  {
+    std::cout << "Error reading signal desktop database" << std::endl;
+    return false;
+  }
+  auto [data, size] = db.data();
+  std::pair<unsigned char *, uint64_t> tmp = std::make_pair(data, size);
+  SqliteDB desktopdb(&tmp);
+
+  //SqliteDB::QueryResults r;
+  //desktopdb.exec("SELECT hex(groupid) FROM conversations", &r);
+  //r.prettyPrint();
+
+  // all threads in messages
+  SqliteDB::QueryResults list_of_threads;
+  d_database.exec("SELECT DISTINCT mms.thread_id FROM mms UNION SELECT DISTINCT sms.thread_id FROM sms", &list_of_threads);
+  list_of_threads.prettyPrint();
+  std::cout << std::endl;
+
+  // for each thread, find a corresponding conversation in desktop-db
+  for (long long int i = 0; i < static_cast<long long int>(list_of_threads.rows()); ++i)
+  {
+    SqliteDB::QueryResults message_data;
+    d_database.exec("SELECT body,date FROM mms WHERE thread_id = ?",
+                    list_of_threads.value(i, 0), &message_data);
+    //message_data.prettyPrint();
+
+    bool matched = false;
+    for (uint j = 0; j < message_data.rows(); ++j)
+    {
+      SqliteDB::QueryResults r2;
+      desktopdb.exec("SELECT conversationId FROM messages WHERE sent_at == ? AND body == ?", {message_data.value(j, "date"), message_data.value(j, "body")}, &r2);
+      if (r2.rows() == 1)
+      {
+        matched = true;
+        std::cout << " - Got match for thread " << list_of_threads.valueAsString(i, 0) << std::endl;
+        desktopdb.prettyPrint("SELECT name,profileName,profileFamilyName,profileFullName FROM conversations WHERE id == ?", r2.value(0, 0));
+        std::cout << std::endl;
+      }
+
+      if (matched)
+        break;
+    }
+    if (!matched)
+    {
+      d_database.exec("SELECT body,date_sent FROM sms WHERE thread_id = ?",
+                      list_of_threads.value(i, 0), &message_data);
+      //message_data.prettyPrint();
+      for (uint j = 0; j < static_cast<long long int>(message_data.rows()); ++j)
+      {
+        SqliteDB::QueryResults r2;
+        desktopdb.exec("SELECT conversationId FROM messages WHERE sent_at == ? AND body == ?", {message_data.value(j, "date_sent"), message_data.value(j, "body")}, &r2);
+        if (r2.rows() == 1)
+        {
+          matched = true;
+          std::cout << " - Got match for thread " << list_of_threads.valueAsString(i, 0) << ":" << std::endl;
+          desktopdb.prettyPrint("SELECT name,profileName,profileFamilyName,profileFullName FROM conversations WHERE id == ?", r2.value(0, 0));
+          std::cout << std::endl;
+        }
+
+        if (matched)
+          break;
+      }
+    }
+    if (!matched)
+    {
+      std::cout << " - Failed to match thread " << list_of_threads.valueAsString(i, 0) << " to any conversation in Signal Desktop database" << std::endl;
+      std::cout << "   Last 10 messages from this thread:" << std::endl;
+      // todo
+
+      std::string q =
+        "SELECT "
+        "sms.date AS union_date, "
+        "sms.date_sent AS union_display_date, "
+        "sms.type AS union_type, "
+        "sms.body AS union_body "
+        "FROM sms WHERE " + list_of_threads.valueAsString(i, 0) + " = sms.thread_id "
+        "UNION "
+        "SELECT "
+        "mms.date_received AS union_date, " // not sure for outgoing
+        "mms.date AS union_display_date, "
+        "mms.msg_box AS union_type, "
+        "mms.body AS union_body "
+        "FROM mms WHERE " + list_of_threads.valueAsString(i, 0) + " = mms.thread_id "
+        "ORDER BY union_date DESC, union_display_date ASC LIMIT 10";
+
+      d_database.prettyPrint(q);
+      std::cout << std::endl;
+
+    }
+
+    /*
+      mms: desktop.messages.sent_at == android.mms.date
+      sms: desktop.messages.sent_at == android.sms.date_sent
+     */
+
+    // desktop messages:
+    // SELECT id,unread,expires_at,sent_at,schemaVersion,conversationId,received_at,source,sourceDevice,hasAttachments,hasFileAttachments,hasVisualMediaAttachments,expireTimer,expirationStartTimestamp,type,body,messageTimer,messageTimerStart,messageTimerExpiresAt,isErased,isViewOnce,sourceUuid FROM messages WHERE body == "Test terug";
+    //id|unread|expires_at|sent_at|schemaVersion|conversationId|received_at|source|sourceDevice|hasAttachments|hasFileAttachments|hasVisualMediaAttachments|expireTimer|expirationStartTimestamp|type|body|messageTimer|messageTimerStart|messageTimerExpiresAt|isErased|isViewOnce|sourceUuid
+    //13c39ffe-67e2-43a5-911b-9537e485b75d|||1597327208579|10|82184df5-c89b-4c5c-a0c6-b7c9449b3818|1598179687083|31683616099|1|0|||||incoming|Test terug|||||0|6b7e6b80-c3d9-4701-8f36-bf5e22ebd62c
+
+
+  }
+
+
+
+  return true;
+}
+
+
 /*
 void SignalBackup::esokrates()
 {

@@ -108,6 +108,8 @@ inline bool FileDecryptor::getNextFrameBlock(unsigned char *data, size_t length)
   return true;
 }
 
+/*
+
 #ifndef USE_CRYPTOPP
 #include <openssl/aes.h>
 #include <openssl/evp.h>
@@ -132,7 +134,7 @@ inline void FileDecryptor::hhenkel(uint64_t pos)
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
-  if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
+  if (encryptedframelength > 3145728 || encryptedframelength < 11)
   {
     std::cout << "Framesize too big to be real" << std::endl;
     return;
@@ -263,5 +265,7 @@ inline void FileDecryptor::hhenkel(uint64_t pos)
   }
 #endif
 }
+
+*/
 
 #endif

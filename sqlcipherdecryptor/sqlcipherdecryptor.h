@@ -56,7 +56,7 @@ class SqlCipherDecryptor
   unsigned int d_pagesize;
 
   unsigned char *d_decrypteddata;
-  unsigned int d_decrypteddatasize;
+  uint64_t d_decrypteddatasize;
 
   static unsigned char constexpr s_saltmask = 0x3a;
   static int constexpr s_sqlliteheader_size = 16;
@@ -65,7 +65,7 @@ class SqlCipherDecryptor
   struct DecodedData
   {
     unsigned char *d_data;
-    unsigned int d_datasize;
+    uint64_t d_datasize;
   };
 
  public:

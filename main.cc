@@ -75,13 +75,6 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (arg.hhenkel())
-  {
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false);
-    fd.hhenkel(2148732446);
-    return 0;
-  }
-
   // open input
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(),
                                                     (!arg.source().empty() || arg.listthreads() ||
@@ -201,6 +194,16 @@ int main(int argc, char *argv[])
   // // sb2.exportBackup("NEWFILE2");
   // // std::cout << "Finished" << std::endl;
 
+  //auto itm = arg.importthreadsmanual();
+  //for (uint i = 0; i < itm.size(); ++i)
+  //{
+  //  std::cout << itm[i].first << "  =  " << itm[i].second  << std::endl;
+  //}
+
+  if (!arg.hhenkel().empty())
+  {
+    sb->hhenkel(arg.hhenkel());
+  }
 
   // decode and dump Signal-Desktop database to 'desktop.db'.
   if (!arg.dumpdesktopdb().empty())
