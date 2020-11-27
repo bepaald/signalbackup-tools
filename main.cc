@@ -175,6 +175,12 @@ int main(int argc, char *argv[])
       return 1;
     }
 
+  // temporary, to generate truncated backup's missing data from Signal Desktop database
+  if (!arg.hhenkel().empty())
+  {
+    sb->hhenkel(arg.hhenkel());
+  }
+
   // export output
   if (!arg.output().empty())
     if (!sb->exportBackup(arg.output(), arg.opassword(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA))
@@ -199,11 +205,6 @@ int main(int argc, char *argv[])
   //{
   //  std::cout << itm[i].first << "  =  " << itm[i].second  << std::endl;
   //}
-
-  if (!arg.hhenkel().empty())
-  {
-    sb->hhenkel(arg.hhenkel());
-  }
 
   // decode and dump Signal-Desktop database to 'desktop.db'.
   if (!arg.dumpdesktopdb().empty())
