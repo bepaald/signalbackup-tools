@@ -44,7 +44,7 @@ class SqliteDB
     inline void emplaceValue(size_t row, std::any &&a);
     inline std::any value(size_t row, std::string const &header) const;
     template <typename T>
-    inline T getValueAs(size_t row, std ::string const &header) const;
+    inline T getValueAs(size_t row, std::string const &header) const;
     inline std::any const &value(size_t row, size_t idx) const;
     inline std::vector<std::any> const &row(size_t row) const;
     template <typename T>
