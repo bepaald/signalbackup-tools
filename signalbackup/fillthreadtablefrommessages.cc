@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020  Selwin van Dijk
+    Copyright (C) 2019-2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -16,6 +16,45 @@
     You should have received a copy of the GNU General Public License
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+/*
+ *
+ * !! NOTE !!
+ *
+ * This function has not been updated for current database versions
+ * This uses the old(?) V1(?) group status update protobuf
+
+message AttachmentPointer {
+  enum Flags {
+    VOICE_MESSAGE = 1;
+  }
+
+  optional fixed64 id          = 1;
+  optional string  contentType = 2;
+  optional bytes   key         = 3;
+  optional uint32  size        = 4;
+  optional bytes   thumbnail   = 5;
+  optional bytes   digest      = 6;
+  optional string  fileName    = 7;
+  optional uint32  flags       = 8;
+  optional uint32  width       = 9;
+  optional uint32  height      = 10;
+}
+message GroupContext {
+  enum Type {
+    UNKNOWN      = 0;
+    UPDATE       = 1;
+    DELIVER      = 2;
+    QUIT         = 3;
+    REQUEST_INFO = 4;
+  }
+  optional bytes             id      = 1;
+  optional Type              type    = 2;
+  optional string            name    = 3;
+  repeated string            members = 4;
+  optional AttachmentPointer avatar  = 5;
+}
+ */
 
 #include "signalbackup.ih"
 

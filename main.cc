@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020  Selwin van Dijk
+    Copyright (C) 2019-2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -223,6 +223,21 @@ int main(int argc, char *argv[])
   return 0;
 }
 
+
+  /* Database version notes
+
+
+    In database versions <= 23: recipients_ids were phone numbers (eg "+31601513210" or "__textsecure_group__!...")
+                                Avatars were linked to these contacts by AvatarFrame::name() which was also phone number -> "+31601513210"
+                                Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
+                23 < dbv <= 27: recipient ids were just id (eg "4")
+                                Avatars were still identified by AvatarFrame::name() -> phone number
+                                Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
+                 27 < dbv < 54: recipient ids were just id (eg "4")
+                                Avatars were identified by AvatarFrame::recipient() -> "4"
+                                Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
+                         >= 54: Same, groups have avatar in separate AvatarFrame, linked via groups.group_id == recipient.group_id -> recipient._id == AvatarFrame.recipient()
+  */
 
   /* Notes on importing attachments
 
