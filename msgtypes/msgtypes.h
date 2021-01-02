@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020  Selwin van Dijk
+    Copyright (C) 2019-2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -21,15 +21,24 @@
 #define MSGTYPES_H_
 
 // see /src/org/thoughtcrime/securesms/database/MmsSmsColumns.java
+// /app/src/main/java/org/thoughtcrime/securesms/database/MmsSmsColumns.java
 
 struct Types
 {
   static uint64_t constexpr BASE_TYPE_MASK                     = 0x1F;
 
-  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1;
-  static uint64_t constexpr OUTGOING_CALL_TYPE                 = 2;
-  static uint64_t constexpr MISSED_CALL_TYPE                   = 3;
+  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1; // INCOMING_AUDIO_CALL_TYPE
+  static uint64_t constexpr OUTGOING_CALL_TYPE                 = 2; // OUTGOING_AUDIO_CALL_TYPE
+  static uint64_t constexpr MISSED_CALL_TYPE                   = 3; // MISSED_AUDIO_CALL_TYPE
   static uint64_t constexpr JOINED_TYPE                        = 4;
+  static uint64_t constexpr UNSUPPORTED_MESSAGE_TYPE           = 5;
+  static uint64_t constexpr INVALID_MESSAGE_TYPE               = 6;
+  static uint64_t constexpr PROFILE_CHANGE_TYPE                = 7;
+  static uint64_t constexpr MISSED_VIDEO_CALL_TYPE             = 8;
+  static uint64_t constexpr GV1_MIGRATION_TYPE                 = 9;
+  static uint64_t constexpr INCOMING_VIDEO_CALL_TYPE           = 10;
+  static uint64_t constexpr OUTGOING_VIDEO_CALL_TYPE           = 11;
+  static uint64_t constexpr GROUP_CALL_TYPE                    = 12;
 
   static uint64_t constexpr BASE_INBOX_TYPE                    = 20;
   static uint64_t constexpr BASE_OUTBOX_TYPE                   = 21;
@@ -44,15 +53,22 @@ struct Types
                                                          BASE_SENDING_TYPE, BASE_SENT_FAILED_TYPE,
                                                          BASE_PENDING_SECURE_SMS_FALLBACK,
                                                          BASE_PENDING_INSECURE_SMS_FALLBACK,
-                                                         OUTGOING_CALL_TYPE};
+                                                         OUTGOING_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE};
 
+  static uint64_t constexpr KEY_EXCHANGE_MASK                  = 0xFF00;
+  static uint64_t constexpr KEY_EXCHANGE_BIT                   = 0x8000;
   static uint64_t constexpr KEY_EXCHANGE_IDENTITY_VERIFIED_BIT = 0x4000;
   static uint64_t constexpr KEY_EXCHANGE_IDENTITY_DEFAULT_BIT  = 0x2000;
+  static uint64_t constexpr KEY_EXCHANGE_CORRUPTED_BIT         = 0x1000;
+  static uint64_t constexpr KEY_EXCHANGE_INVALID_VERSION_BIT   = 0x800;
+  static uint64_t constexpr KEY_EXCHANGE_BUNDLE_BIT            = 0x400;
   static uint64_t constexpr KEY_EXCHANGE_IDENTITY_UPDATE_BIT   = 0x200;
+  static uint64_t constexpr KEY_EXCHANGE_CONTENT_FORMAT        = 0x100;
 
   static uint64_t constexpr GROUP_UPDATE_BIT            = 0x10000;
   static uint64_t constexpr GROUP_QUIT_BIT              = 0x20000;
   static uint64_t constexpr EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
+  static uint64_t constexpr GROUP_V2_BIT                = 0x80000;
 
   static uint64_t constexpr SECURE_MESSAGE_BIT = 0x800000;
 
@@ -60,6 +76,11 @@ struct Types
   inline static bool isGroupUpdate(uint64_t type)
   {
     return (type & GROUP_UPDATE_BIT) != 0;
+  }
+
+  inline static boolean isGroupV2(uint64_t type)
+  {
+    return (type & GROUP_V2_BIT) != 0;
   }
 
   inline static bool isGroupQuit(uint64_t type)
