@@ -49,11 +49,11 @@ struct Types
   static uint64_t constexpr BASE_PENDING_INSECURE_SMS_FALLBACK = 26;
   static uint64_t constexpr BASE_DRAFT_TYPE                    = 27;
 
-  static uint64_t constexpr OUTGOING_MESSAGE_TYPES[7] = {BASE_OUTBOX_TYPE, BASE_SENT_TYPE,
-                                                         BASE_SENDING_TYPE, BASE_SENT_FAILED_TYPE,
-                                                         BASE_PENDING_SECURE_SMS_FALLBACK,
-                                                         BASE_PENDING_INSECURE_SMS_FALLBACK,
-                                                         OUTGOING_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE};
+  static uint64_t constexpr OUTGOING_MESSAGE_TYPES[] = {BASE_OUTBOX_TYPE, BASE_SENT_TYPE,
+                                                        BASE_SENDING_TYPE, BASE_SENT_FAILED_TYPE,
+                                                        BASE_PENDING_SECURE_SMS_FALLBACK,
+                                                        BASE_PENDING_INSECURE_SMS_FALLBACK,
+                                                        OUTGOING_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE};
 
   static uint64_t constexpr KEY_EXCHANGE_MASK                  = 0xFF00;
   static uint64_t constexpr KEY_EXCHANGE_BIT                   = 0x8000;
@@ -78,7 +78,7 @@ struct Types
     return (type & GROUP_UPDATE_BIT) != 0;
   }
 
-  inline static boolean isGroupV2(uint64_t type)
+  inline static bool isGroupV2(uint64_t type)
   {
     return (type & GROUP_V2_BIT) != 0;
   }
