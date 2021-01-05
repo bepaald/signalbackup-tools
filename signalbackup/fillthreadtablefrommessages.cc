@@ -17,45 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-/*
- *
- * !! NOTE !!
- *
- * This function has not been updated for current database versions
- * This uses the old(?) V1(?) group status update protobuf
-
-message AttachmentPointer {
-  enum Flags {
-    VOICE_MESSAGE = 1;
-  }
-
-  optional fixed64 id          = 1;
-  optional string  contentType = 2;
-  optional bytes   key         = 3;
-  optional uint32  size        = 4;
-  optional bytes   thumbnail   = 5;
-  optional bytes   digest      = 6;
-  optional string  fileName    = 7;
-  optional uint32  flags       = 8;
-  optional uint32  width       = 9;
-  optional uint32  height      = 10;
-}
-message GroupContext {
-  enum Type {
-    UNKNOWN      = 0;
-    UPDATE       = 1;
-    DELIVER      = 2;
-    QUIT         = 3;
-    REQUEST_INFO = 4;
-  }
-  optional bytes             id      = 1;
-  optional Type              type    = 2;
-  optional string            name    = 3;
-  repeated string            members = 4;
-  optional AttachmentPointer avatar  = 5;
-}
- */
-
 #include "signalbackup.ih"
 
 #include <set>
@@ -186,23 +147,10 @@ void SignalBackup::fillThreadTableFromMessages()
         long long int type = std::any_cast<long long int>(results.value(j, "union_type"));
         std::string address = std::any_cast<std::string>(results.value(j, "union_address"));
 
-        if (Types::isGroupUpdate(type))
+        if (Types::isGroupUpdate(type) && !Types::isGroupV2(type))
         {
           //std::cout << j << " GROUP UPDATE" << std::endl;
-          ProtoBufParser<protobuffer::optional::BYTES,
-                         protobuffer::optional::ENUM,
-                         protobuffer::optional::STRING,
-                         protobuffer::repeated::STRING,
-                         ProtoBufParser<protobuffer::optional::FIXED64,
-                                        protobuffer::optional::STRING,
-                                        protobuffer::optional::BYTES,
-                                        protobuffer::optional::UINT32,
-                                        protobuffer::optional::BYTES,
-                                        protobuffer::optional::BYTES,
-                                        protobuffer::optional::STRING,
-                                        protobuffer::optional::UINT32,
-                                        protobuffer::optional::UINT32,
-                                        protobuffer::optional::UINT32>> statusmsg(body);
+          GroupContext statusmsg(body);
 
           auto field4 = statusmsg.getField<4>();
           for (uint k = 0; k < field4.size(); ++k)
