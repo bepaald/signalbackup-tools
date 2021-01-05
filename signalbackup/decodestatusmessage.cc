@@ -20,8 +20,11 @@
 #include "signalbackup.ih"
 
 
+
 /*
  * This uses the old(?) V1(?) group status update protobuf
+
+Signal-Android/libsignal/service/src/main/proto/SignalService.proto:
 
 message AttachmentPointer {
   enum Flags {

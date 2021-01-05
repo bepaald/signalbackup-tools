@@ -34,6 +34,12 @@ struct is_vector : public std::false_type {};
 template<typename T, typename A>
 struct is_vector<std::vector<T, A>> : public std::true_type {};
 
+template<typename T>
+struct is_optional : public std::false_type {};
+
+template<typename T>
+struct is_optional<std::optional<T>> : public std::true_type {};
+
 template < template <typename...> class Template, typename T >
 struct is_specialization_of : std::false_type {};
 
@@ -63,7 +69,7 @@ struct SFixed32
 
 struct SFixed64
 {
-  uint64_t value;
+  int64_t value;
 };
 
 namespace protobuffer
@@ -86,6 +92,7 @@ namespace protobuffer
     typedef bool BOOL;
     typedef std::string STRING;
     typedef unsigned char *BYTES;
+    typedef int DUMMY;
   }
   namespace repeated
   {
@@ -105,6 +112,7 @@ namespace protobuffer
     typedef std::vector<bool> BOOL;
     typedef std::vector<std::string> STRING;
     typedef std::vector<unsigned char *> BYTES;
+    typedef int DUMMY;
   }
 }
 
@@ -214,6 +222,8 @@ class ProtoBufParser
   template <int idx>
   inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value, bool>::type addField(std::pair<unsigned char *, uint64_t> const &value); // specialization for optional BYTES
 
+  inline void print(int indent = 0) const;
+
  protected:
   inline void clear();
 
@@ -229,6 +239,27 @@ class ProtoBufParser
   inline uint64_t varIntSize(uint64_t value) const;
   template <int idx>
   static inline constexpr unsigned int getType();
+
+  // printing this horrorshow...
+  template<std::size_t N, typename Indices = std::make_index_sequence<N>>
+  inline void printHelper1(int indent) const;
+  template<std::size_t... I>
+  inline void printHelper2(std::index_sequence<I...>, int indent) const;
+  template<std::size_t Idx>
+  struct printHelperWrapper
+  {
+    void printHelper3(ProtoBufParser const *ptr, int indent) const
+    {
+      ptr->printHelper4<Idx>(indent);
+    }
+  };
+  template<std::size_t Idx>
+  inline void printHelper4(int indent) const;
+  template<std::size_t idx>
+  inline void printSingle(int indent, std::string const &typestring) const;
+  template<std::size_t idx, typename T>
+  inline void printRepeated(int indent, std::string const &typestring) const;
+
 };
 
 template <typename... Spec>
@@ -399,7 +430,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL" << std::endl;
+            std::cout << "ERROR REQUESTED TYPE TOO SMALL (1)" << std::endl;
           }
 
         }
@@ -413,7 +444,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL" << std::endl;
+            std::cout << "ERROR REQUESTED TYPE TOO SMALL (2)" << std::endl;
           }
         }
       }
@@ -450,7 +481,6 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
                         std::is_same<typename T::value_type, ZigZag64>::value)
           {
-            std::cout << "YO1" << std::endl;
             int pos2 = 0;
             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
           }
@@ -470,7 +500,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL" << std::endl;
+            std::cout << "ERROR REQUESTED TYPE TOO SMALL (3)" << std::endl;
           }
         }
       }
@@ -669,9 +699,13 @@ inline constexpr unsigned int ProtoBufParser<Spec...>::getType() //static
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::repeated::UINT64>::value ||
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                                  protobuffer::optional::SINT32>::value ||
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                                  protobuffer::repeated::SINT32>::value ||
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::SINT64>::value ||
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
-                                  protobuffer::repeated::SINT64>::value )
+                                  protobuffer::repeated::SINT64>::value)
     return WIRETYPE::VARINT;
   else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::FLOAT>::value ||
@@ -1064,6 +1098,218 @@ bool ProtoBufParser<Spec...>::fieldExists(int num) const
     }
   }
   return false;
+}
+
+template <typename... Spec>
+template<std::size_t idx>
+inline void ProtoBufParser<Spec...>::printSingle(int indent, std::string const &typestring) const
+{
+  auto tmp = getField<idx + 1>();
+  if (tmp.has_value())
+    std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " " << typestring << ": " << tmp.value() << std::endl;
+}
+
+template <typename... Spec>
+template<std::size_t idx, typename T>
+inline void ProtoBufParser<Spec...>::printRepeated(int indent, std::string const &typestring) const
+{
+  std::vector<T> tmp = getField<idx + 1>();
+  for (uint i = 0; i < tmp.size(); ++i)
+    std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " " << typestring << " (" << i + 1  << "/" << tmp.size() << "): " << tmp[i] << std::endl;
+  return;
+}
+
+template <typename... Spec>
+template<std::size_t idx>
+inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
+{
+  // std::cout << "Dealing with field " << idx + 1 << std::endl;
+  if (!fieldExists(idx + 1))
+  {
+    // std::cout << "Not present" << std::endl;
+    return;
+  }
+
+  //std::cout << std::string(indent, ' ') << "Dealing with field " << idx + 1 << std::endl;
+
+  // SINGLE
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::STRING>::value)
+    return printSingle<idx>(indent, "(optional::string)");
+  // {
+  //   auto tmp = getField<idx + 1>();
+  //   if (tmp.has_value())
+  //     std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::STRING): " << tmp.value() << std::endl;
+  //   return;
+  // }
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::ENUM>::value)
+    return printSingle<idx>(indent, "(optional::enum)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::INT32>::value)
+    return printSingle<idx>(indent, "(optional::int32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::INT64>::value)
+    return printSingle<idx>(indent, "(optional::int32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::UINT32>::value)
+    return printSingle<idx>(indent, "(optional::uint32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::UINT64>::value)
+    return printSingle<idx>(indent, "(optional::uint64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::SINT32>::value)
+    return printSingle<idx>(indent, "(optional::sint32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::SINT64>::value)
+    return printSingle<idx>(indent, "(optional::sint64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::FLOAT>::value)
+    return printSingle<idx>(indent, "(optional::float)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::FIXED32>::value)
+    return printSingle<idx>(indent, "(optional::fixed32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::SFIXED32>::value)
+    return printSingle<idx>(indent, "(optional::sfixed32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::DOUBLE>::value)
+    return printSingle<idx>(indent, "(optional::double)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::FIXED64>::value)
+    return printSingle<idx>(indent, "(optional::fixed64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::SFIXED64>::value)
+    return printSingle<idx>(indent, "(optional::sfixed64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::BOOL>::value)
+  {
+    auto tmp = getField<idx + 1>();
+    if (tmp.has_value())
+      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::bool): " << std::boolalpha << tmp.value() << std::endl;
+    return;
+  }
+
+  // bytes
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value)
+  {
+    std::optional<std::pair<unsigned char *, size_t>> tmp = getField<idx + 1>();
+    if (tmp.has_value())
+      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::bytes): " << bepaald::bytesToHexString(tmp.value().first, tmp.value().second) << std::endl;
+    return;
+  }
+
+  // single protobuffer
+  if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type>{})
+  {
+    if (getField<idx + 1>().has_value())
+    {
+      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::protobuf): " << std::endl;
+      return getField<idx + 1>().value().print(indent + 2);
+    }
+  }
+
+
+  // REPEATED
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::STRING>::value)
+    return printRepeated<idx, std::string>(indent, "(repeated::string)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::ENUM>::value)
+    return printRepeated<idx, int32_t>(indent, "(repeated::enum)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::INT32>::value)
+    return printRepeated<idx, int32_t>(indent, "(repeated::int32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::INT64>::value)
+    return printRepeated<idx, int64_t>(indent, "(repeated::int64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::UINT32>::value)
+    return printRepeated<idx, uint32_t>(indent, "(repeated::uint32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::UINT64>::value)
+    return printRepeated<idx, uint64_t>(indent, "(repeated::uint64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::SINT32>::value)
+    return printRepeated<idx, int32_t>(indent, "(repeated::sint32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::SINT64>::value)
+    return printRepeated<idx, int64_t>(indent, "(repeated::sint64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::FLOAT>::value)
+    return printRepeated<idx, float>(indent, "(repeated::float)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::FIXED32>::value)
+    return printRepeated<idx, uint32_t>(indent, "(repeated::fixed32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::SFIXED32>::value)
+    return printRepeated<idx, int32_t>(indent, "(repeated::sfixed32)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::DOUBLE>::value)
+    return printRepeated<idx, double>(indent, "(repeated::double)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::FIXED64>::value)
+    return printRepeated<idx, uint64_t>(indent, "(repeated::fixed64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::SFIXED64>::value)
+    return printRepeated<idx, int64_t>(indent, "(repeated::sfixed64)");
+
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BOOL>::value)
+  {
+    std::vector<bool> tmp = getField<idx + 1>();
+    for (uint i = 0; i < tmp.size(); ++i)
+      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (repeated::bool) (" << i + 1  << "/" << tmp.size() << "): " << std::boolalpha << tmp[i] << std::endl;
+    return;
+  }
+
+  // bytes
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value)
+  {
+    std::vector<std::pair<unsigned char *, uint64_t>> tmp = getField<idx + 1>();
+    for (uint i = 0; i < tmp.size(); ++i)
+    {
+      std::pair<unsigned char *, size_t> tmp2 = tmp[i];
+      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (repeated::bytes) (" << i + 1  << "/" << tmp.size() << "): "
+                << bepaald::bytesToHexString(tmp2.first, tmp2.second) << std::endl;
+      return;
+    }
+    return;
+  }
+
+  // protobuf message
+  if constexpr (is_vector<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type>{})
+    if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type::value_type>{})
+    {
+      auto tmp = getField<idx + 1>();
+      for (uint i = 0; i < tmp.size(); ++i)
+      {
+        std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (repeated::protobuf) (" << i + 1  << "/" << tmp.size() << "): " << std::endl;
+        tmp.at(i).print(indent + 2);
+      }
+      return;
+    }
+
+  std::cout << std::string(indent, ' ') << "Field " << idx + 1 << ": (unhandled protobuf type)" << std::endl;
+}
+
+template <typename... Spec>
+template<std::size_t... Idx>
+inline void ProtoBufParser<Spec...>::printHelper2(std::index_sequence<Idx...>, int indent) const
+{
+  (printHelperWrapper<Idx>().printHelper3(this, indent), ...);
+}
+
+template <typename... Spec>
+template<std::size_t N, typename Indices>
+inline void ProtoBufParser<Spec...>::printHelper1(int indent) const
+{
+  printHelper2(Indices(), indent);
+}
+
+template <typename... Spec>
+inline void ProtoBufParser<Spec...>::print(int indent) const
+{
+  printHelper1<sizeof...(Spec)>(indent);
 }
 
 #endif

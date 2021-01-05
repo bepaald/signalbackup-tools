@@ -239,6 +239,50 @@ int main(int argc, char *argv[])
                          >= 54: Same, groups have avatar in separate AvatarFrame, linked via groups.group_id == recipient.group_id -> recipient._id == AvatarFrame.recipient()
   */
 
+
+/*
+
+OLD GROUPS STATUS MESSAGES
+
+Signal-Android/libsignal/service/src/main/proto/SignalService.proto:
+
+message AttachmentPointer {
+  enum Flags {
+    VOICE_MESSAGE = 1;
+  }
+
+  optional fixed64 id          = 1;
+  optional string  contentType = 2;
+  optional bytes   key         = 3;
+  optional uint32  size        = 4;
+  optional bytes   thumbnail   = 5;
+  optional bytes   digest      = 6;
+  optional string  fileName    = 7;
+  optional uint32  flags       = 8;
+  optional uint32  width       = 9;
+  optional uint32  height      = 10;
+}
+message GroupContext {
+  enum Type {
+    UNKNOWN      = 0;
+    UPDATE       = 1;
+    DELIVER      = 2;
+    QUIT         = 3;
+    REQUEST_INFO = 4;
+  }
+  optional bytes             id      = 1;
+  optional Type              type    = 2;
+  optional string            name    = 3;
+  repeated string            members = 4;
+  optional AttachmentPointer avatar  = 5;
+}
+
+
+ */
+
+
+
+
   /* Notes on importing attachments
 
      - all values are imported, but
