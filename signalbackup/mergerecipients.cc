@@ -19,43 +19,6 @@
 
 #include "signalbackup.ih"
 
-/*
- * This uses the old(?) V1(?) group status update protobuf
-
-message AttachmentPointer {
-  enum Flags {
-    VOICE_MESSAGE = 1;
-  }
-
-  optional fixed64 id          = 1;
-  optional string  contentType = 2;
-  optional bytes   key         = 3;
-  optional uint32  size        = 4;
-  optional bytes   thumbnail   = 5;
-  optional bytes   digest      = 6;
-  optional string  fileName    = 7;
-  optional uint32  flags       = 8;
-  optional uint32  width       = 9;
-  optional uint32  height      = 10;
-}
-message GroupContext {
-  enum Type {
-    UNKNOWN      = 0;
-    UPDATE       = 1;
-    DELIVER      = 2;
-    QUIT         = 3;
-    REQUEST_INFO = 4;
-  }
-  optional bytes             id      = 1;
-  optional Type              type    = 2;
-  optional string            name    = 3;
-  repeated string            members = 4;
-  optional AttachmentPointer avatar  = 5;
-}
-
-
- */
-
 void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bool editgroupmembers)
 {
   std::cout << __FUNCTION__ << std::endl;
@@ -223,21 +186,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
       long long int type = std::any_cast<long long int>(results2.value(j, "type"));
       long long int msgid = std::any_cast<long long int>(results2.value(j, "_id"));
 
-      ProtoBufParser<protobuffer::optional::BYTES,
-                     protobuffer::optional::ENUM,
-                     protobuffer::optional::STRING,
-                     protobuffer::repeated::STRING,
-                     ProtoBufParser<protobuffer::optional::FIXED64,
-                                    protobuffer::optional::STRING,
-                                    protobuffer::optional::BYTES,
-                                    protobuffer::optional::UINT32,
-                                    protobuffer::optional::BYTES,
-                                    protobuffer::optional::BYTES,
-                                    protobuffer::optional::STRING,
-                                    protobuffer::optional::UINT32,
-                                    protobuffer::optional::UINT32,
-                                    protobuffer::optional::UINT32>> statusmsg(body);
-
+      GroupContext statusmsg(body);
 
       if (Types::isGroupUpdate(type))
         std::cout << "Handling group update " << j + 1 << std::endl;
@@ -280,21 +229,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
       long long int type = std::any_cast<long long int>(results2.value(j, "msg_box"));
       long long int msgid = std::any_cast<long long int>(results2.value(j, "_id"));
 
-      ProtoBufParser<protobuffer::optional::BYTES,
-                     protobuffer::optional::ENUM,
-                     protobuffer::optional::STRING,
-                     protobuffer::repeated::STRING,
-                     ProtoBufParser<protobuffer::optional::FIXED64,
-                                    protobuffer::optional::STRING,
-                                    protobuffer::optional::BYTES,
-                                    protobuffer::optional::UINT32,
-                                    protobuffer::optional::BYTES,
-                                    protobuffer::optional::BYTES,
-                                    protobuffer::optional::STRING,
-                                    protobuffer::optional::UINT32,
-                                    protobuffer::optional::UINT32,
-                                    protobuffer::optional::UINT32>> statusmsg(body);
-
+      GroupContext statusmsg(body);
 
       if (Types::isGroupUpdate(type))
         std::cout << "Handling group update " << j + 1 << std::endl;

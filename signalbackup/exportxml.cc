@@ -49,6 +49,10 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   {
     realtype = results.getValueAs<long long int>(i, "type");
 
+    // skip 'This group was updated to a New Group'
+    if (realtype & Types::GV1_MIGRATION_TYPE)
+      return;
+
     switch (realtype & Types::BASE_TYPE_MASK)
     {
     case 1:

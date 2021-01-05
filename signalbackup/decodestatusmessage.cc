@@ -19,76 +19,22 @@
 
 #include "signalbackup.ih"
 
-
-
-/*
- * This uses the old(?) V1(?) group status update protobuf
-
-Signal-Android/libsignal/service/src/main/proto/SignalService.proto:
-
-message AttachmentPointer {
-  enum Flags {
-    VOICE_MESSAGE = 1;
-  }
-
-  optional fixed64 id          = 1;
-  optional string  contentType = 2;
-  optional bytes   key         = 3;
-  optional uint32  size        = 4;
-  optional bytes   thumbnail   = 5;
-  optional bytes   digest      = 6;
-  optional string  fileName    = 7;
-  optional uint32  flags       = 8;
-  optional uint32  width       = 9;
-  optional uint32  height      = 10;
-}
-message GroupContext {
-  enum Type {
-    UNKNOWN      = 0;
-    UPDATE       = 1;
-    DELIVER      = 2;
-    QUIT         = 3;
-    REQUEST_INFO = 4;
-  }
-  optional bytes             id      = 1;
-  optional Type              type    = 2;
-  optional string            name    = 3;
-  repeated string            members = 4;
-  optional AttachmentPointer avatar  = 5;
-}
-
-
- */
-
-
 std::string SignalBackup::decodeStatusMessage(std::string const &body, long long int expiration, long long int type, std::string const &contactname) const
 {
 
-  //std::cout << "DECODING: " << std::endl << "  " << body << std::endl << "  " << expiration << std::endl
-  //          << "  " << type << std::endl << "  " << contactname << std::endl;
+  // std::cout << "DECODING: " << std::endl << "  " << body << std::endl << "  " << expiration << std::endl
+  //           << "  " << type << std::endl << "  " << contactname << std::endl;
+  // std::cout << Types::isGroupUpdate(type) << std::endl;
+  // std::cout << Types::isGroupV2(type) << std::endl;
 
-  if (Types::isGroupUpdate(type))
+  if (Types::isGroupUpdate(type) && !Types::isGroupV2(type))
   {
     if (Types::isOutgoing(type))
       return "You updated the group.";
 
     std::string result = contactname + " updated the group.";
 
-    // decode msg
-    ProtoBufParser<protobuffer::optional::BYTES,
-                   protobuffer::optional::ENUM,
-                   protobuffer::optional::STRING,
-                   protobuffer::repeated::STRING,
-                   ProtoBufParser<protobuffer::optional::FIXED64,
-                                  protobuffer::optional::STRING,
-                                  protobuffer::optional::BYTES,
-                                  protobuffer::optional::UINT32,
-                                  protobuffer::optional::BYTES,
-                                  protobuffer::optional::BYTES,
-                                  protobuffer::optional::STRING,
-                                  protobuffer::optional::UINT32,
-                                  protobuffer::optional::UINT32,
-                                  protobuffer::optional::UINT32>> statusmsg(body);
+    GroupContext statusmsg(body);
 
     std::string members;
     auto field4 = statusmsg.getField<4>();
@@ -121,7 +67,6 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       result += (!members.empty() ? ' ' : '\n');
       result += "Group name is now '" + title + "'.";
     }
-
     return result;
   }
   if (Types::isGroupQuit(type))

@@ -30,3 +30,5 @@
 #include "../msgtypes/msgtypes.h"
 #include "../protobufparser/protobufparser.h"
 #include "../reactionlist/reactionlist.h"
+#include "../groupstatusmessageproto/groupstatusmessageproto.h"
+#include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
