@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -17,19 +17,4 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.h"
-
-#include <ctime>
-#include <filesystem>
-#include <sstream>
-#include <locale>
-#include <iomanip>
-#include <regex>
-#include <set>
-
-#include "../msgtypes/msgtypes.h"
-#include "../protobufparser/protobufparser.h"
-#include "../reactionlist/reactionlist.h"
-#include "../groupstatusmessageproto/groupstatusmessageproto.h"
-#include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
-#include "../csvreader/csvreader.h"
+#include "csvreader.h"

@@ -93,6 +93,7 @@ class SignalBackup
   inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
   inline std::vector<int> threadIds() const;
+  bool importCSV(std::string const &file, std::map<std::string, std::string> const &fieldmap);
 
   bool hhenkel(std::string const &);
 
