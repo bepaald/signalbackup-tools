@@ -95,6 +95,7 @@ class SignalBackup
   inline std::vector<int> threadIds() const;
   bool importCSV(std::string const &file, std::map<std::string, std::string> const &fieldmap);
   bool importWAChat(std::string const &file, std::string const &fmt);
+  bool summarize() const;
 
   bool hhenkel(std::string const &);
 

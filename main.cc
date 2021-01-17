@@ -103,7 +103,9 @@ int main(int argc, char *argv[])
 
   if (!arg.source().empty())
   {
-
+    std::cout << "Target database info:" << std::endl;
+    sb->summarize();
+    bool sourcesummarized = false;
 
     std::unique_ptr<SignalBackup> source;
     std::vector<int> threads = arg.importthreads();
@@ -111,6 +113,10 @@ int main(int argc, char *argv[])
     {
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
+
+      source->summarize();
+      sourcesummarized = true;
+
       std::cout << "Getting list of thread id's..." << std::flush;
       threads = source->threadIds();
       std::cout << "Got: " << std::flush;
@@ -122,6 +128,11 @@ int main(int argc, char *argv[])
     {
       std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
+      if (!sourcesummarized)
+      {
+        source->summarize();
+        sourcesummarized = true;
+      }
       sb->importThread(source.get(), threads[i]);
     }
   }
