@@ -62,6 +62,9 @@ class Arg
   bool d_verbose;
   std::string d_dumpdesktopdb;
   std::string d_hhenkel;
+  std::string d_importcsv;
+  std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
+  std::pair<std::string,std::string> d_importwachat;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -95,6 +98,9 @@ class Arg
   inline bool verbose() const;
   inline std::string const &dumpdesktopdb() const;
   inline std::string const &hhenkel() const;
+  inline std::string const &importcsv() const;
+  inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
+  inline std::pair<std::string,std::string> const &importwachat() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -249,6 +255,21 @@ inline std::string const &Arg::dumpdesktopdb() const
 inline std::string const &Arg::hhenkel() const
 {
   return d_hhenkel;
+}
+
+inline std::string const &Arg::importcsv() const
+{
+  return d_importcsv;
+}
+
+inline std::vector<std::pair<std::string,std::string>> const &Arg::mapcsvfields() const
+{
+  return d_mapcsvfields;
+}
+
+inline std::pair<std::string,std::string> const &Arg::importwachat() const
+{
+  return d_importwachat;
 }
 
 inline bool Arg::ok() const

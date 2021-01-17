@@ -51,7 +51,10 @@ Arg::Arg(int argc, char *argv[])
   d_stoponbadmac(false),
   d_verbose(false),
   d_dumpdesktopdb(std::string()),
-  d_hhenkel(std::string())
+  d_hhenkel(std::string()),
+  d_importcsv(std::string()),
+  d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
+  d_importwachat(std::pair<std::string,std::string>())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -400,6 +403,53 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
         d_hhenkel = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--importcsv")
+    {
+      if (i < arguments.size() - 1)
+        d_importcsv = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapcsvfields")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapcsvfields, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--importwachat")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::string error;
+        if (!parsePair(arguments[++i], ":", &d_importwachat, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;

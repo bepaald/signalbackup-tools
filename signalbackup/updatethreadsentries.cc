@@ -34,7 +34,12 @@ void SignalBackup::updateThreadsEntries(long long int thread)
     {
       // set message count
       std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, 0));
-      std::cout << "  Dealing with thread id: " << threadid << std::endl;
+
+      if (i == 0)
+        std::cout << "  Dealing with thread id: " << threadid << std::flush;
+      else
+        std::cout << ", " << threadid << std::flush;
+
       //std::cout << "    Updating msgcount" << std::endl;
       d_database.exec("UPDATE thread SET message_count = (SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
                       ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
@@ -153,5 +158,8 @@ void SignalBackup::updateThreadsEntries(long long int thread)
       }
 
     }
+    else
+      std::cout << "Unexpected type in database" << std::endl;
   }
+  std::cout << std::endl;
 }
