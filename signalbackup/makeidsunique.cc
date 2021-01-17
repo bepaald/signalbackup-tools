@@ -71,8 +71,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     // as of writing, remapped_recipients is a new (and currently unused?) table
     if (d_database.containsTable("remapped_recipients"))
     {
-      d_database.exec("UPDATE remapped_recipients SET old_id = oldid + ?", minrecipient);
-      d_database.exec("UPDATE remapped_recipients SET new_id = newid + ?", minrecipient);
+      d_database.exec("UPDATE remapped_recipients SET old_id = old_id + ?", minrecipient);
+      d_database.exec("UPDATE remapped_recipients SET new_id = new_id + ?", minrecipient);
     }
 
     // address is UNIQUE in identities, so we can not simply do the following:
@@ -147,7 +147,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   setMinimumId("sticker", minsticker);
   compactIds("sticker");
 
-  setMinimumId("megaphone", minmegaphone);
-  compactIds("megaphone");
-
+  if (minmegaphone >= 0 && d_database.containsTable("megaphone"))
+  {
+    setMinimumId("megaphone", minmegaphone);
+    compactIds("megaphone");
+  }
 }

@@ -48,7 +48,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
       return;
     }
     std::string recipient_id = results.getValueAs<std::string>(0, 0);
-    targetthread = getThreadIdFromRecipient(recipient_id);
+    targetthread = getThreadIdFromRecipient(recipient_id); // -1 if none found
   }
   else // new database version
   {
@@ -85,10 +85,13 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   }
 
   // the target will have its own job_spec etc...
-  source->d_database.exec("DELETE FROM job_spec");
+  if (d_database.containsTable("job_spec"))
+    source->d_database.exec("DELETE FROM job_spec");
   source->d_database.exec("DELETE FROM push");
-  source->d_database.exec("DELETE FROM constraint_spec"); // has to do with job_spec, references it...
-  source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
+  if (d_database.containsTable("constraint_spec"))
+    source->d_database.exec("DELETE FROM constraint_spec"); // has to do with job_spec, references it...
+  if (d_database.containsTable("dependency_spec"))
+    source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
   source->d_database.exec("VACUUM");
 
   // make sure all id's are unique
@@ -102,7 +105,11 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   long long int offsetgroup_receipts = getMaxUsedId("group_receipts") + 1 - source->getMinUsedId("group_receipts");
   long long int offsetdrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
   long long int offsetsticker = getMaxUsedId("sticker") + 1 - source->getMinUsedId("sticker");
-  long long int offsetmegaphone = getMaxUsedId("megaphone") + 1 - source->getMinUsedId("megaphone");
+
+  long long int offsetmegaphone = -1;
+  if (d_database.containsTable("megaphone"))
+    offsetmegaphone = getMaxUsedId("megaphone") + 1 - source->getMinUsedId("megaphone");
+
   source->makeIdsUnique(offsetthread, offsetsms, offsetmms, offsetpart, offsetrecipient, offsetgroups, offsetidentities, offsetgroup_receipts, offsetdrafts, offsetsticker, offsetmegaphone);
 
   // merge into existing thread, set the id on the sms, mms, and drafts
@@ -118,6 +125,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (d_databaseversion >= 24)
     {
       d_database.exec("SELECT _id, COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "ident"))
           source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
@@ -161,6 +169,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     else
     {
       d_database.exec("SELECT _id,COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "ident"))
         {

@@ -21,8 +21,7 @@
 
 void SignalBackup::updateRecipientId(long long int targetid, std::string ident)
 {
-  std::cout << __FUNCTION__ << std::endl;
-
+  //std::cout << __FUNCTION__ << std::endl;
 
   // CALLED ON SOURCE
   // the targetid should already be guaranteed to not exist in source as this is called

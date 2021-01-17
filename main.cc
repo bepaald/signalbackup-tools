@@ -103,6 +103,8 @@ int main(int argc, char *argv[])
 
   if (!arg.source().empty())
   {
+
+
     std::unique_ptr<SignalBackup> source;
     std::vector<int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
@@ -118,7 +120,7 @@ int main(int argc, char *argv[])
 
     for (uint i = 0; i < threads.size(); ++i)
     {
-      std::cout << std::endl << "Importing thread " << threads[i] << " from source file: " << arg.source() << std::endl;
+      std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
       sb->importThread(source.get(), threads[i]);
     }
@@ -155,6 +157,10 @@ int main(int argc, char *argv[])
     std::cout << "Merging groups..." << std::endl;
     sb->mergeGroups(arg.mergegroups());
   }
+
+  if (!arg.importwachat().first.empty())
+    if (!sb->importWAChat(arg.importwachat().first, arg.importwachat().second))
+      return 1;
 
   if (!arg.runsqlquery().empty())
     for (uint i = 0; i < arg.runsqlquery().size(); ++i)
