@@ -62,6 +62,51 @@ void SignalBackup::updateRecipientId(long long int targetid, std::string ident)
     d_database.exec("UPDATE remapped_recipients SET new_id = ? WHERE new_id = ?", {targetid, sourceid});
   }
 
+  // recipient_id can also mentioned in the body of group v1 -> v2 migration message, when recipient
+  // was thrown out of group.
+  if (d_database.exec("SELECT _id,body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
+  {
+    //results.prettyPrint();
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      if (results.valueHasType<std::string>(i, "body"))
+      {
+        //std::cout << " ** FROM TO **" << std::endl;
+        //std::cout << results.getValueAs<std::string>(i, "body") << std::endl;
+        std::string body = results.getValueAs<std::string>(i, "body");
+        std::string output;
+        std::string tmp; // to hold part of number while reading
+        unsigned int body_idx = 0;
+        while (true)
+        {
+          if (!std::isdigit(body[body_idx]) || i >= body.length())
+          {
+            // deal with any number we have
+            if (tmp.size())
+            {
+              int id = bepaald::toNumber<int>(tmp);
+              if (id == sourceid)
+                id = targetid;
+              output += bepaald::toString(id);
+              tmp.clear();
+            }
+            // add non-digit-char
+            if (body_idx < body.length())
+              output += body[body_idx];
+          }
+          else
+            tmp += body[body_idx];
+          ++body_idx;
+          if (body_idx > body.length())
+            break;
+        }
+        //std::cout << output << std::endl;
+        long long int sms_id = results.getValueAs<long long int>(i, "_id");
+        d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
+      }
+    }
+  }
+
 
   // get group members:
   SqliteDB::QueryResults results2;

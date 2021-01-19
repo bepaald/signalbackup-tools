@@ -245,6 +245,15 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("SELECT * FROM " + table, &results);
     std::cout << results.rows() << " entries..." << std::endl;
 
+    if (results.rows() == 0)
+      continue;
+
+    if (!d_database.containsTable(table))
+    {
+      std::cout << "  NOTE: Skipping table '" << table << "', as it is not present in target database. Data may be missing." << std::endl;
+      continue;
+    }
+
     // check if source contains columns not existing in target
     // even though target is newer, a fresh install would not have
     // created dropped columns that may still be present in
@@ -254,11 +263,20 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     {
       if (!d_database.tableContainsColumn(table, results.headers()[idx]))
       {
-        std::cout << "NOTE: dropping column '" << table << "." << results.headers()[idx] << "' from source : Column not present in target database" << std::endl;
-        if (results.removeColumn(idx++))
+        std::cout << "  NOTE: Dropping column '" << table << "." << results.headers()[idx] << "' from source : Column not present in target database" << std::endl;
+        if (results.removeColumn(idx))
           continue;
       }
+      // else
       ++idx;
+    }
+
+    // if all columns were dropped, the entire table (probably) does not exist in target database, we'll just skip it
+    // for instance, a (newly/currently?) created database wil not have the megaphone table
+    if (results.columns() == 0)
+    {
+      std::cout << "  NOTE: Skipping table '" << table << "', it has no columns left" << std::endl;
+      continue;
     }
 
     for (uint i = 0; i < results.rows(); ++i)

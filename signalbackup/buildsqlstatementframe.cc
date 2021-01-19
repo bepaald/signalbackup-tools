@@ -67,7 +67,6 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
   return newframe;
 }
 
-// not sure if this is ever used...
 SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const
 {
   //std::cout << "Building new frame:" << std::endl;
