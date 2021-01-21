@@ -169,8 +169,8 @@ int main(int argc, char *argv[])
     sb->mergeGroups(arg.mergegroups());
   }
 
-  if (!arg.importwachat().first.empty())
-    if (!sb->importWAChat(arg.importwachat().first, arg.importwachat().second))
+  if (!arg.importwachat().empty())
+    if (!sb->importWAChat(arg.importwachat(), arg.setwatimefmt(), arg.setselfid()))
       return 1;
 
   if (!arg.runsqlquery().empty())

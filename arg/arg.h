@@ -64,7 +64,9 @@ class Arg
   std::string d_hhenkel;
   std::string d_importcsv;
   std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
-  std::pair<std::string,std::string> d_importwachat;
+  std::string d_importwachat;
+  std::string d_setwatimefmt;
+  std::string d_setselfid;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -100,7 +102,9 @@ class Arg
   inline std::string const &hhenkel() const;
   inline std::string const &importcsv() const;
   inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
-  inline std::pair<std::string,std::string> const &importwachat() const;
+  inline std::string const &importwachat() const;
+  inline std::string const &setwatimefmt() const;
+  inline std::string const &setselfid() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -267,9 +271,19 @@ inline std::vector<std::pair<std::string,std::string>> const &Arg::mapcsvfields(
   return d_mapcsvfields;
 }
 
-inline std::pair<std::string,std::string> const &Arg::importwachat() const
+inline std::string const &Arg::importwachat() const
 {
   return d_importwachat;
+}
+
+inline std::string const &Arg::setwatimefmt() const
+{
+  return d_setwatimefmt;
+}
+
+inline std::string const &Arg::setselfid() const
+{
+  return d_setselfid;
 }
 
 inline bool Arg::ok() const

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -54,7 +54,9 @@ Arg::Arg(int argc, char *argv[])
   d_hhenkel(std::string()),
   d_importcsv(std::string()),
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
-  d_importwachat(std::pair<std::string,std::string>())
+  d_importwachat(std::string()),
+  d_setwatimefmt(std::string()),
+  d_setselfid(std::string())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -442,14 +444,29 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--importwachat")
     {
       if (i < arguments.size() - 1)
+        d_importwachat = arguments[++i];
+      else
       {
-        std::string error;
-        if (!parsePair(arguments[++i], ":", &d_importwachat, &error))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
-          ok = false;
-        }
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
       }
+      continue;
+    }
+    if (option == "--setwatimefmt")
+    {
+      if (i < arguments.size() - 1)
+        d_setwatimefmt = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--setselfid")
+    {
+      if (i < arguments.size() - 1)
+        d_setselfid = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;

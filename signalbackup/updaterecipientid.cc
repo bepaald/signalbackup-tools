@@ -61,6 +61,8 @@ void SignalBackup::updateRecipientId(long long int targetid, std::string ident)
     d_database.exec("UPDATE remapped_recipients SET old_id = ? WHERE old_id = ?", {targetid, sourceid});
     d_database.exec("UPDATE remapped_recipients SET new_id = ? WHERE new_id = ?", {targetid, sourceid});
   }
+  if (d_database.containsTable("mention"))
+    d_database.exec("UPDATE mention SET recipient_id = ? WHERE recipient_id = ?", {targetid, sourceid});
 
   // recipient_id can also mentioned in the body of group v1 -> v2 migration message, when recipient
   // was thrown out of group.
