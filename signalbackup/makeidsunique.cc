@@ -67,13 +67,14 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     d_database.exec("UPDATE group_receipts SET address = address + ?", minrecipient);
     d_database.exec("UPDATE thread SET recipient_ids = recipient_ids + ?", minrecipient);
     d_database.exec("UPDATE groups SET recipient_id = recipient_id + ?", minrecipient);
-
     // as of writing, remapped_recipients is a new (and currently unused?) table
     if (d_database.containsTable("remapped_recipients"))
     {
       d_database.exec("UPDATE remapped_recipients SET old_id = old_id + ?", minrecipient);
       d_database.exec("UPDATE remapped_recipients SET new_id = new_id + ?", minrecipient);
     }
+    if (d_database.containsTable("mention"))
+      d_database.exec("UPDATE mention SET recipient_id = recipient_id + ?", minrecipient);
 
     // address is UNIQUE in identities, so we can not simply do the following:
     // d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
