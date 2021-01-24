@@ -71,6 +71,8 @@ struct Types
   static uint64_t constexpr GROUP_V2_BIT                = 0x80000;
 
   static uint64_t constexpr SECURE_MESSAGE_BIT = 0x800000;
+  static uint64_t constexpr END_SESSION_BIT    = 0x400000;
+  static uint64_t constexpr PUSH_MESSAGE_BIT   = 0x200000;
 
  public:
   inline static bool isGroupUpdate(uint64_t type)
