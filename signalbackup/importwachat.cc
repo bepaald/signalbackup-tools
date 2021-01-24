@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-#include <iomanip>
+//#include <iomanip>
 
 /*
   Limitations and requirements
@@ -33,14 +33,58 @@
 
 */
 
-/*
-bool handleWAMessage(long long int time, std::string const &chatname, std::string const &author, std::string const &message)
+
+
+bool SignalBackup::handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author, std::string const &message,
+                                   std::string const &selfid, bool isgroup, std::map<std::string, std::string> *name_to_recipientid)
 {
-  // find thread_id for conversation 'chatname'
+  // std::cout << "Dealing with message:" << std::endl;
+  // std::cout << "Time: '" << time << "'" << std::endl;
+  // std::cout << "Author: '" << author << "'" << std::endl;
+  // std::cout << "Message: '" << message << "'" << std::endl;
 
+  bool outgoing = author == selfid || (!isgroup && author != chatname);
 
+  std::string address;
+  // author's address not in map yet
+  std::string addresstofind = (isgroup && outgoing) ? chatname : author;
+  if (name_to_recipientid->find(addresstofind) == name_to_recipientid->end())
+  {
+    SqliteDB::QueryResults results;
+    if (!d_database.exec("SELECT _id, COALESCE(system_display_name, profile_joined_name, phone) AS 'identifier' "
+                         "FROM recipient WHERE identifier == ?", addresstofind, &results))
+      return false;
+    if (results.rows() != 1)
+      return false;
+
+    (*name_to_recipientid)[addresstofind] = results.valueAsString(0, "_id");
+  }
+  address = name_to_recipientid->at(addresstofind);
+
+  // maybe make (secure_message_bit|pushmessage) an option?
+  long long int type = (outgoing ? Types::BASE_SENT_TYPE : Types::BASE_INBOX_TYPE) | Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT;
+
+  // delivery_receipt_count
+  // 0 for incoming
+  // if outgoing -> 1 for 1-on-1 chats
+  //             -> group size for group chats -> also append to 'group_receipts' table (_id|mms_id|address|status|timestamp|unidentified)
+  long long int delivery_receipt_count = outgoing ? 1 : 0;
+  if (outgoing && isgroup)
+    ;// deal with delivery_receipt_count
+
+  // TODO:
+  // scan message for mentions, edit body, update mentions-table
+
+  // read_receipt_count?     -> 0 default, 1 on option && outgoing
+  std::string statement = "INSERT INTO ";
+  if (isgroup && author == selfid)
+    statement += "mms (thread_id, address, date, date_received, date_server, read, msg_box";
+  else
+    statement += "sms (thread_id, address, date, date_sent, date_server, read, type";
+  statement += ", body, delivery_receipt_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+  return d_database.exec(statement, {thread_id, address, time, time, outgoing ? -1ll : time, 1ll, type, message, delivery_receipt_count});
 }
-*/
 
 bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt, std::string const &self)
 {
@@ -54,16 +98,18 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
 
 
   // get global address (recipient_id of chat partner for 1-on-1, group_id for groupchats
+  std::string chatname = file.substr(0, file.length() - STRLEN(".txt"));
   std::string globaladdress;
   bool isgroup = false;
   SqliteDB::QueryResults results;
+  std::map<std::string, std::string> name_to_recipientid;
 
   std::cout << "Looking for conversation: '" << file.substr(0, file.length() - STRLEN(".txt")) << "'" << std::endl;
 
   if (!d_database.exec("SELECT recipient._id, recipient.group_id, COALESCE(groups.title, recipient.system_display_name, recipient.profile_joined_name, recipient.phone) AS 'identifier' "
                        "FROM recipient "
                        "LEFT JOIN groups ON recipient.group_id == groups.group_id "
-                       "WHERE identifier == ?", file.substr(0, file.length() - STRLEN(".txt")), &results))
+                       "WHERE identifier == ?", chatname, &results))
     return false;
 
   //results.prettyPrint();
@@ -71,6 +117,7 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
   if (results.rows() == 1)
   {
     globaladdress = results.valueAsString(0, "_id");
+    name_to_recipientid[chatname] = globaladdress;
     if (results.valueHasType<std::string>(0, "group_id"))
     {
       isgroup = true;
@@ -133,13 +180,8 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
     {
       // found start of new message, deal with previous
       if (time != 0) // first run
-      {
-        // deal with message
-        std::cout << "Dealing with message:" << std::endl;
-        std::cout << "Time: '" << time << "'" << std::endl;
-        std::cout << "Author: '" << author << "'" << std::endl;
-        std::cout << "Message: '" << message << "'" << std::endl;
-      }
+        if (!handleWAMessage(tid, time, chatname, author, message, self, isgroup, &name_to_recipientid))
+          return false;
 
       // get a unique sequentially later time
       time = std::mktime(&tmb) * 1000;
@@ -167,12 +209,8 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
 
   // deal with last message
   if (time != 0)
-  {
-    std::cout << "Dealing with message:" << std::endl;
-    std::cout << "Time: '" << time << "'" << std::endl;
-    std::cout << "Author: '" << author << "'" << std::endl;
-    std::cout << "Message: '" << message << "'" << std::endl;
-  }
+    if (!handleWAMessage(tid, time, chatname, author, message, self, isgroup, &name_to_recipientid))
+      return false;
 
-  return false;
+  return true;
 }

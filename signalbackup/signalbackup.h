@@ -135,6 +135,8 @@ class SignalBackup
   void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i, bool keepattachmentdatainmemory) const;
   inline std::string getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def = std::string()) const;
   inline long long int getIntOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, long long int def) const;
+  bool handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author,
+                       std::string const &message, std::string const &selfid, bool isgroup, std::map<std::string, std::string> *name_to_recipientid);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
