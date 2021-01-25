@@ -43,7 +43,7 @@ bool SignalBackup::importCSV(std::string const &file, std::map<std::string, std:
   for (uint i = 0; i < csvfile.fields(); ++i)
   {
     std::string fieldname = csvfile.getFieldName(i);
-    if (fieldmap.contains(fieldname))
+    if (fieldmap.find(fieldname) != fieldmap.end())// (fieldmap.contains(fieldname))
       fieldname = fieldmap.at(fieldname);
 
     if (fieldname == "address")
