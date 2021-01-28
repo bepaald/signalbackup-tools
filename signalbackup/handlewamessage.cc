@@ -22,10 +22,10 @@
 bool SignalBackup::handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author, std::string const &message,
                                    std::string const &selfid, bool isgroup, std::map<std::string, std::string> const &name_to_recipientid)
 {
-  // std::cout << "Dealing with message:" << std::endl;
-  // std::cout << "Time: '" << time << "'" << std::endl;
-  // std::cout << "Author: '" << author << "'" << std::endl;
-  // std::cout << "Message: '" << message << "'" << std::endl;
+  //std::cout << "Dealing with message:" << std::endl;
+  //std::cout << "Time: '" << time << "'" << std::endl;
+  //std::cout << "Author: '" << author << "'" << std::endl;
+  //std::cout << "Message: '" << message << "'" << std::endl;
 
   bool mark_as_read = false;
   bool outgoing = author == selfid || (!isgroup && author != chatname);
