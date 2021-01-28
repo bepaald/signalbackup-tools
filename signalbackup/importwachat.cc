@@ -111,7 +111,8 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
       std::getline(ss, author, ':');
       if (ss.eof())
       {
-        std::cout << "No colon => some type of status message?" << std::endl;
+        //std::cout << "No colon => some type of status message?" << std::endl;
+        author.clear();
         continue;
       }
 
@@ -138,6 +139,7 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
   long long int previous_time = 0;
   long long int previous_time_adj = 0;
   std::string message;
+  uint64_t count = 0;
 
   // scan for messages
   while (std::getline(chatfile, line))
@@ -163,9 +165,13 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
     else
     {
       // found start of new message, deal with previous
-      if (time != 0) // first run
+      if (time != 0 && !author.empty())
+      {
         if (!handleWAMessage(tid, time, chatname, author, message, self, isgroup, name_to_recipientid))
           return false;
+        else
+          ++count;
+      }
 
       // get a unique sequentially later time
       time = std::mktime(&tmb) * 1000;
@@ -179,7 +185,8 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
       std::getline(ss, author, ':');
       if (ss.eof())
       {
-        std::cout << "No colon => some type of status message?" << std::endl;
+        std::cout << "No colon => some type of status message? SKIPPING LINE : '" << author << "'" << std::endl;
+        author.clear();
         continue;
       }
       //std::cout << "Author: " << author << std::endl;
@@ -192,9 +199,14 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
   }
 
   // deal with last message
-  if (time != 0)
+  if (time != 0 && !author.empty())
+  {
     if (!handleWAMessage(tid, time, chatname, author, message, self, isgroup, name_to_recipientid))
       return false;
+    else
+      ++count;
+  }
+  std::cout << "Imported " << count << " messages from file '" << file << "'" << std::endl;
 
   return true;
 }
