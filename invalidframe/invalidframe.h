@@ -27,6 +27,7 @@ class InvalidFrame : public BackupFrame
   static Registrar s_registrar;
  public:
   inline InvalidFrame(uint64_t count = 0);
+  inline virtual ~InvalidFrame() = default;
   inline virtual FRAMETYPE frameType() const override;
   inline virtual void printInfo() const override;
 };
