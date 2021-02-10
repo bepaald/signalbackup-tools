@@ -50,7 +50,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
     realtype = results.getValueAs<long long int>(i, "type");
 
     // skip 'This group was updated to a New Group'
-    if (realtype & Types::GV1_MIGRATION_TYPE)
+    if (realtype == Types::GV1_MIGRATION_TYPE)
       return;
 
     switch (realtype & Types::BASE_TYPE_MASK)
@@ -124,7 +124,8 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
       else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address'" << std::endl;
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (sms database, type = "
+                  << realtype << ")" << std::endl;
     }
     else
       address = rid;
@@ -187,7 +188,6 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
 void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i, bool keepattachmentdatainmemory) const
 {
-
   // msg_box - The type of message, 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox
   long long int msg_box = 5;
   long long int realtype = -1;
@@ -255,7 +255,8 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
         address = r2.getValueAs<std::string>(0, "phone");
       else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address'" << std::endl;
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (mms database, type = "
+                  << realtype << ")" << std::endl;
 
     }
     else
@@ -494,7 +495,8 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
   outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << std::endl;
 
   SqliteDB::QueryResults sms_results;
-  d_database.exec("SELECT protocol,subject,service_center,read,status,date_sent,date,address,type,body,expires_in FROM sms", &sms_results);
+  d_database.exec("SELECT protocol,subject,service_center,read,status,date_sent,date,address,type,body,expires_in FROM sms WHERE type != ?",
+                  static_cast<long long int>(Types::GV1_MIGRATION_TYPE), &sms_results);
 
   SqliteDB::QueryResults mms_results;
   if (includemms)
