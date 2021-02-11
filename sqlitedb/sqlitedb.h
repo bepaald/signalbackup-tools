@@ -89,6 +89,9 @@ class SqliteDB
   inline bool exec(std::string const &q, QueryResults *results = nullptr) const;
   inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
   bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
+  inline bool print(std::string const &q) const;
+  inline bool print(std::string const &q, std::any const &param) const;
+  inline bool print(std::string const &q, std::vector<std::any> const &params) const;
   inline bool prettyPrint(std::string const &q) const;
   inline bool prettyPrint(std::string const &q, std::any const &param) const;
   inline bool prettyPrint(std::string const &q, std::vector<std::any> const &params) const;
@@ -153,6 +156,24 @@ inline bool SqliteDB::exec(std::string const &q, QueryResults *results) const
 inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results) const
 {
   return exec(q, std::vector<std::any>{param}, results);
+}
+
+inline bool SqliteDB::print(std::string const &q) const
+{
+  return print(q, std::vector<std::any>());
+}
+
+inline bool SqliteDB::print(std::string const &q, std::any const &param) const
+{
+  return print(q, std::vector<std::any>{param});
+}
+
+inline bool SqliteDB::print(std::string const &q, std::vector<std::any> const &params) const
+{
+  QueryResults results;
+  bool ret = exec(q, params, &results);
+  results.print();
+  return ret;
 }
 
 inline bool SqliteDB::prettyPrint(std::string const &q) const

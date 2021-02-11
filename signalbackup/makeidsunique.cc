@@ -19,7 +19,11 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms, long long int minpart, long long int minrecipient, long long int mingroups, long long int minidentities, long long int mingroup_receipts, long long int mindrafts, long long int minsticker, long long int minmegaphone)
+void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
+                                 long long int minpart, long long int minrecipient, long long int mingroups,
+                                 long long int minidentities, long long int mingroup_receipts, long long int mindrafts,
+                                 long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
+                                 long long int minremapped_threads, long long int minmention)
 {
   std::cout << __FUNCTION__ << std::endl;
 
@@ -195,5 +199,20 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   {
     setMinimumId("megaphone", minmegaphone);
     compactIds("megaphone");
+  }
+  if (minremapped_recipients >= 0 && d_database.containsTable("remapped_recipients"))
+  {
+    setMinimumId("remapped_recipients", minremapped_recipients);
+    compactIds("remapped_recipients");
+  }
+  if (minremapped_threads >= 0 && d_database.containsTable("remapped_threads"))
+  {
+    setMinimumId("remapped_threads", minremapped_threads);
+    compactIds("remapped_threads");
+  }
+  if (minmention >= 0 && d_database.containsTable("mention"))
+  {
+    setMinimumId("mention", minmention);
+    compactIds("mention");
   }
 }

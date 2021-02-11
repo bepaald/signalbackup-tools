@@ -32,6 +32,39 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     return;
   }
 
+  if (source->d_database.containsTable("remapped_recipients"))
+  {
+    SqliteDB::QueryResults r;
+    source->d_database.exec("SELECT * FROM remapped_recipients", &r);
+    if (r.rows())
+    {
+      std::cout << "WARNING: Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!" << std::endl;
+
+      for (uint i = 0; i < r.rows(); ++i)
+      {
+        long long int id = r.getValueAs<long long int>(i, "_id");
+        long long int oldid = r.getValueAs<long long int>(i, "old_id");
+        long long int newid = r.getValueAs<long long int>(i, "new_id");
+        std::cout << id << " : " << oldid << " -> " << newid << std::endl;
+        std::cout << std::endl;
+
+        std::cout << "Old id:" << std::endl;
+        source->d_database.print("SELECT * FROM recipient WHERE _id = ?", oldid);
+        std::cout << std::endl;
+
+        std::cout << "New id: " << std::endl;
+        source->d_database.print("SELECT * FROM recipient WHERE _id = ?", newid);
+        std::cout << std::endl;
+
+      }
+
+      // apply the remapping (probably only some reactions _may_ need to be tranferred?)
+      source->remapRecipients();
+      // now, the remapping was 'applied', old_id should not occur in database anymore, and remapped_recipients can be cleared?
+      source->d_database.exec("DELETE FROM remapped_recipients");
+    }
+  }
+
   // crop the source db to the specified thread
   source->cropToThread(thread);
 
@@ -110,7 +143,44 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (d_database.containsTable("megaphone"))
     offsetmegaphone = getMaxUsedId("megaphone") + 1 - source->getMinUsedId("megaphone");
 
-  source->makeIdsUnique(offsetthread, offsetsms, offsetmms, offsetpart, offsetrecipient, offsetgroups, offsetidentities, offsetgroup_receipts, offsetdrafts, offsetsticker, offsetmegaphone);
+  long long int offsetremapped_recipients = -1;
+  if (d_database.containsTable("remapped_recipients"))
+    offsetremapped_recipients = getMaxUsedId("remapped_recipients") + 1 - source->getMinUsedId("remapped_recipients");
+
+  long long int offsetremapped_threads = -1;
+  if (d_database.containsTable("remapped_threads"))
+    offsetremapped_threads = getMaxUsedId("remapped_threads") + 1 - source->getMinUsedId("remapped_threads");
+
+  long long int offsetmention = -1;
+  if (d_database.containsTable("mention"))
+    offsetmention = getMaxUsedId("mention") + 1 - source->getMinUsedId("mention");
+
+  source->makeIdsUnique(offsetthread, offsetsms, offsetmms,
+                        offsetpart, offsetrecipient, offsetgroups,
+                        offsetidentities, offsetgroup_receipts, offsetdrafts,
+                        offsetsticker, offsetmegaphone, offsetremapped_recipients,
+                        offsetremapped_threads, offsetmention);
+
+  // delete double remapped_recipients
+  if (d_database.containsTable("remapped_recipients") && source->d_database.containsTable("remapped_recipients"))
+  {
+    SqliteDB::QueryResults res;
+    source->d_database.exec("SELECT * FROM remapped_recipients", &res); // get all remapped recipients in source
+
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      long long int id = res.getValueAs<long long int>(i, "_id");
+      long long int oldid = res.getValueAs<long long int>(i, "old_id");
+      long long int newid = res.getValueAs<long long int>(i, "new_id");
+      SqliteDB::QueryResults r2;
+      d_database.exec("SELECT * FROM remapped_recipients WHERE old_id = ? AND new_id = ?", {oldid, newid}, &r2);
+      if (r2.rows()) // this mapping is in target already
+      {
+        std::cout << "Skipping import of remapped_recipient (" << oldid << " -> " << newid << "), mapping alrady in target database" << std::endl;
+        source->d_database.exec("DELETE FROM remapped_recipients WHERE _id = ?", id);
+      }
+    }
+  }
 
   // merge into existing thread, set the id on the sms, mms, and drafts
   // drop the recipient_preferences, identities and thread tables, they are already in the target db

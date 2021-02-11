@@ -118,12 +118,15 @@ class SignalBackup
   template <typename T> inline std::pair<unsigned char*, size_t> numToData(T num) const;
   void setMinimumId(std::string const &table, long long int offset, std::string const &col = "_id") const;
   void cleanDatabaseByMessages();
+  void remapRecipients();
   void compactIds(std::string const &table, std::string const &col = "_id");
-  void makeIdsUnique(long long int thread, long long int sms, long long int mms, long long int part,
-                     long long int recipient_preferences, long long int groups, long long int identies,
-                     long long int group_receipts, long long int drafts, long long int sticker,
-                     long long int megaphone);
+  void makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
+                     long long int minpart, long long int minrecipient, long long int mingroups,
+                     long long int minidentities, long long int mingroup_receipts, long long int mindrafts,
+                     long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
+                     long long int minremapped_threads, long long int minmention);
   void updateRecipientId(long long int targetid, std::string ident);
+  void updateRecipientId(long long int targetid, long long int sourceid, bool verbose = false);
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
