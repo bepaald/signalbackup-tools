@@ -52,14 +52,19 @@ void SignalBackup::cleanDatabaseByMessages()
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
     d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms)");
   }
-  else // untested
+  else
   {
     std::cout << "  Deleting unreferenced recipient entries..." << std::endl;
+
     //runSimpleQuery("SELECT group_concat(_id,',') FROM recipient");
     //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms UNION SELECT DISTINCT recipient_ids FROM thread");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
+
+    // KEEP recipients WITH _id IN remapped_recipients.old_id!?!?
+
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms UNION SELECT DISTINCT recipient_ids FROM thread)");
+
   }
 
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");
@@ -122,12 +127,22 @@ void SignalBackup::cleanDatabaseByMessages()
   else
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
-
   std::cout << "  Deleting group receipts entries from deleted messages..." << std::endl;
   d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM mms)");
 
   std::cout << "  Deleting drafts from deleted threads..." << std::endl;
   d_database.exec("DELETE FROM drafts WHERE thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");
+
+  if (d_database.containsTable("remapped_recipients"))
+  {
+    std::cout << "  Deleting remapped recipients for non existing recipients" << std::endl;
+    //d_database.exec("DELETE FROM remapped_recipients WHERE old_id NOT IN (SELECT DISTINCT _id FROM recipient_preferences) AND new_id NOT IN (SELECT DISTINCT _id FROM recipient_preferences)");
+    d_database.exec("DELETE FROM remapped_recipients WHERE new_id NOT IN (SELECT DISTINCT _id FROM recipient_preferences)");
+  }
+
+
+  // maybe remap recipients?
+
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
 

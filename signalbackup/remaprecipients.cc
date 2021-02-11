@@ -17,9 +17,23 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20210211.170548"
+// called on source!
+void SignalBackup::remapRecipients()
+{
 
-#endif
+  // CALLED ON SOURCE
+
+  std::cout << " REMAP RECIPIENTS! " << std::endl;
+
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT * FROM remapped_recipients", &results);
+
+  for (uint i = 0; i < results.rows(); ++i)
+  {
+    updateRecipientId(results.getValueAs<long long int>(i, "new_id"),
+                      results.getValueAs<long long int>(i, "old_id"), /*verbose = */true);
+  }
+
+}
