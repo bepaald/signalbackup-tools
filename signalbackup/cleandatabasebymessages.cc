@@ -136,13 +136,14 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_database.containsTable("remapped_recipients"))
   {
     std::cout << "  Deleting remapped recipients for non existing recipients" << std::endl;
-    //d_database.exec("DELETE FROM remapped_recipients WHERE old_id NOT IN (SELECT DISTINCT _id FROM recipient_preferences) AND new_id NOT IN (SELECT DISTINCT _id FROM recipient_preferences)");
-    d_database.exec("DELETE FROM remapped_recipients WHERE new_id NOT IN (SELECT DISTINCT _id FROM recipient_preferences)");
+    //d_database.exec("DELETE FROM remapped_recipients WHERE old_id NOT IN (SELECT DISTINCT _id FROM recipient) AND new_id NOT IN (SELECT DISTINCT _id FROM recipient)");
+    d_database.exec("DELETE FROM remapped_recipients WHERE new_id NOT IN (SELECT DISTINCT _id FROM recipient)");
   }
 
-
+  std::cout << "  Vacuuming database" << std::endl;
+  d_database.exec("VACUUM");
+  d_database.freeMemory();
   // maybe remap recipients?
-
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
 

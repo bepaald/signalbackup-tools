@@ -82,6 +82,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
   SqliteDB::QueryResults results;
   d_database.exec(q, &results);
   std::vector<std::string> tables;
+
   for (uint i = 0; i < results.rows(); ++i)
   {
     if (!results.valueHasType<std::nullptr_t>(i, 0))
@@ -91,8 +92,8 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
            STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
+                (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
+                 STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is smsftssecrettable" << std::endl;
       else
       {
@@ -164,7 +165,11 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
           if (!writeEncryptedFrame(outputfile, attachment->second.get()))
             return false;
           if (!keepattachmentdatainmemory)
+          {
+            MEMINFO("BEFORE DROPPING ATTACHMENT DATA");
             attachment->second.get()->clearData();
+            MEMINFO("AFTER DROPPING ATTACHMENT DATA");
+          }
         }
         else
         {

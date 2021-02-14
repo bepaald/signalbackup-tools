@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrite)
+bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory)
 {
   std::cout << std::endl << "Exporting backup into '" << directory << "/'" << std::endl;
 
@@ -70,6 +70,9 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     else
       if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
         return false;
+
+    if (!keepattachmentdatainmemory)
+      a->clearData();
   }
 
   // export avatars

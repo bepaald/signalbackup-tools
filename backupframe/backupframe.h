@@ -133,6 +133,7 @@ inline BackupFrame::BackupFrame(unsigned char *data, size_t l, uint64_t num)
   d_count(num),
   d_constructedsize(l)
 {
+  //std::cout << "CREATING BACKUPFRAME!" << std::endl;
   DEBUGOUT("CREATING BACKUPFRAME!");
   DEBUGOUT("DATA: ", bepaald::bytesToHexString(data, l), " (", l, " bytes)");
   d_ok = init(data, l, &d_framedata);
@@ -207,6 +208,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame const &other)
 
 inline BackupFrame::~BackupFrame()
 {
+  //std::cout << "DESTROYING BACKUPFRAME!" << std::endl;
   for (uint i = 0; i < d_framedata.size(); ++i)
     if (std::get<1>(d_framedata[i]))
       delete[] std::get<1>(d_framedata[i]);
@@ -324,7 +326,7 @@ inline BackupFrame *BackupFrame::instantiate(FRAMETYPE ft, unsigned char *data, 
     return nullptr;
   }
 
-  return (it->second)(data, length, count);
+  return ret;
 }
 
 // maybe check endianness?

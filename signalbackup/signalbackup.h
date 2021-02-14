@@ -71,7 +71,7 @@ class SignalBackup
                                          bool overwrite = false, bool keepattachmentdatainmemory = true);
   [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
                                         bool overwrite = false, bool keepattachmentdatainmemory = true);
-  [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite = false);
+  [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite = false, bool keepattachmentdatainmemory = true);
   bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
@@ -170,7 +170,7 @@ inline bool SignalBackup::exportBackup(std::string const &filename, std::string 
                                        bool keepattachmentdatainmemory)
 {
   if (bepaald::fileOrDirExists(filename) && bepaald::isDir(filename))
-    return exportBackupToDir(filename, overwrite);
+    return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory);
   return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);
 }
 
