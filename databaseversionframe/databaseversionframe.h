@@ -56,7 +56,9 @@ inline DatabaseVersionFrame::DatabaseVersionFrame(uint64_t count)
 inline DatabaseVersionFrame::DatabaseVersionFrame(unsigned char *bytes, size_t length, uint64_t count)
   :
   BackupFrame(bytes, length, count)
-{}
+{
+  //std::cout << "CREATING DATABASEVERSIONFRAME" << std::endl;
+}
 
 inline BackupFrame *DatabaseVersionFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
 {

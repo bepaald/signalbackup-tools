@@ -63,6 +63,7 @@ class SqliteDB
     template <typename T>
     inline bool contains(T const &value) const;
     bool removeColumn(uint idx);
+    inline bool removeRow(uint idx);
 
    private:
     std::wstring wideString(std::string const &narrow) const;
@@ -100,6 +101,7 @@ class SqliteDB
   inline long long int lastInsertRowid() const;
   inline bool containsTable(std::string const &tablename) const;
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
+  inline void freeMemory();
 
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
@@ -262,6 +264,11 @@ inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::str
   return false;
 }
 
+inline void SqliteDB::freeMemory()
+{
+  sqlite3_db_release_memory(d_db);
+}
+
 inline void SqliteDB::QueryResults::emplaceHeader(std::string &&h)
 {
   d_headers.emplace_back(h);
@@ -397,6 +404,15 @@ inline uint64_t SqliteDB::QueryResults::charCount(std::string const &utf8) const
     else if ((utf8[i] & 0b11100000) == 0b11000000)
       --ret;
   return ret;
+}
+
+inline bool SqliteDB::QueryResults::removeRow(uint idx)
+{
+  if (idx >= d_values.size())
+    return false;
+
+  d_values.erase(d_values.begin() + idx);
+  return true;
 }
 
 #endif

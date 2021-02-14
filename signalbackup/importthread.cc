@@ -373,4 +373,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   // update thread snippet and date and count
   updateThreadsEntries();
 
+  d_database.exec("VACUUM");
+  d_database.freeMemory();
+
 }

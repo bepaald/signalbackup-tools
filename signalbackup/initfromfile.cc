@@ -47,10 +47,11 @@ void SignalBackup::initFromFile()
                 << "... " << std::flush;
       [[unlikely]] if (d_verbose)
         std::cout << "\n";
-
     }
 
     //std::cout << frame->frameTypeString() << std::endl;
+
+    //MEMINFO("At frame ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
 
     [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
     {
@@ -68,6 +69,7 @@ void SignalBackup::initFromFile()
     else [[likely]] if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
+
       [[unlikely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
       {
         if (!d_database.exec(s->bindStatement(), s->parameters()))
@@ -78,7 +80,6 @@ void SignalBackup::initFromFile()
       {
         // force early creation of sqlite_sequence table, this is completely unnessecary and only used
         // to get byte-identical backups during testing
-        std::cout << "Forcing early creation of sqlite_sequence table..." << std::endl;
         d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
         d_database.exec("DROP TABLE dummy");
       }

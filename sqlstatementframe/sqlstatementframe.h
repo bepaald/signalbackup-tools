@@ -106,6 +106,7 @@ inline SqlStatementFrame::SqlStatementFrame(unsigned char *data, size_t length, 
   :
   BackupFrame(data, length, count)
 {
+  //std::cout << "CREATING SQLSTATEMENTFRAME" << std::endl;
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::PARAMETERS)
     {
@@ -117,7 +118,6 @@ inline SqlStatementFrame::SqlStatementFrame(unsigned char *data, size_t length, 
       }
     }
 }
-
 
 inline SqlStatementFrame::SqlStatementFrame(SqlStatementFrame &&other)
   :
@@ -183,6 +183,7 @@ inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame const &
 
 inline SqlStatementFrame::~SqlStatementFrame()
 {
+  //std::cout << "DESTROYING SQLSTATEMENTFRAME" << std::endl;
   for (uint i = 0; i < d_parameterdata.size(); ++i)
     if (std::get<1>(d_parameterdata[i]))
       delete[] std::get<1>(d_parameterdata[i]);

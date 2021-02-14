@@ -201,6 +201,8 @@ void SignalBackup::updateRecipientId(long long int targetid, std::string ident)
 
   long long int sourceid = results.getValueAs<long long int>(0, "_id");
 
-  std::cout << "  Mapping " << sourceid << " -> " << targetid << " (" << ident << ")" << std::endl;
+  //std::cout << "  Mapping " << sourceid << " -> " << targetid << " (" << ident << ")" << std::endl;
+
+  updateRecipientId(targetid, sourceid, false);
 
 }

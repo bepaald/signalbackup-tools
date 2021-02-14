@@ -316,4 +316,44 @@ inline std::ostream &bepaald::bold_off(std::ostream &os)
   return os << "\033[0m";
 }
 
+
+#ifdef SIGNALBACKUP_TOOLS_REPORT_MEM
+#define MEMINFO(...) process_mem_usage(__VA_ARGS__)
+
+#include <unistd.h>
+#include <fstream>
+#include <string>
+
+// code adapted from https://stackoverflow.com/questions/669438 by Don Wakefield
+template<typename ...Args>
+void process_mem_usage(Args && ...args)
+{
+  std::cout.copyfmt(std::ios(nullptr));
+  (std::cout << ... << args) << std::endl;
+
+  // the two fields we want
+  unsigned long vsize = 0;
+  long rss = 0;
+  {
+  // dummy vars for leading entries in stat that we don't care about
+  std::string dummy;
+  // 'file' stat seems to give the most reliable results
+  std::ifstream stat_stream("/proc/self/stat", std::ios_base::in);
+  stat_stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
+              >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
+              >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy
+              >> dummy >> dummy >> dummy >> dummy >> vsize >> rss; // don't care about the rest
+  }
+
+  long page_size_kb = sysconf(_SC_PAGE_SIZE) / 1024; // in case x86-64 is configured to use 2MB pages
+  double vm_usage     = vsize / 1024.0;
+  double resident_set = rss * page_size_kb;
+
+  std::cout << "VM: " << std::fixed << std::setprecision(2) << (vm_usage / 1024) << "MB ; RSS: " << (resident_set / 1024) << "MB" << std::endl;
+}
+#else
+#define MEMINFO(...)
+#endif
+
+
 #endif

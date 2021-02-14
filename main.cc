@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  MEMINFO("Start of program, before opening input");
+
   // open input
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(),
                                                     (!arg.source().empty() || arg.listthreads() ||
@@ -90,6 +92,8 @@ int main(int argc, char *argv[])
     std::cout << "Failed to open backup" << std::endl;
     return 1;
   }
+
+  MEMINFO("Input opened");
 
   if (arg.listthreads())
     sb->listThreads();
@@ -111,8 +115,13 @@ int main(int argc, char *argv[])
     std::vector<int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
+
+      MEMINFO("Before first time reading source");
+
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
+
+      MEMINFO("After first time reading source");
 
       source->summarize();
       sourcesummarized = true;
@@ -126,6 +135,9 @@ int main(int argc, char *argv[])
 
     for (uint i = 0; i < threads.size(); ++i)
     {
+
+      MEMINFO("Before reading source: ", i + 1, "/", threads.size());
+
       std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
       if (!sourcesummarized)
@@ -133,7 +145,9 @@ int main(int argc, char *argv[])
         source->summarize();
         sourcesummarized = true;
       }
+      MEMINFO("After reading source: ", i + 1, "/", threads.size(), " before import");
       sb->importThread(source.get(), threads[i]);
+      MEMINFO("After import");
     }
   }
 
@@ -151,7 +165,7 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < arg.croptodates().size(); i += 2)
       dates.push_back({arg.croptodates()[i], arg.croptodates()[i + 1]});
     sb->cropToDates(dates);
-    //sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
+    // e.g.: sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
   }
 
   if (!arg.croptothreads().empty())
@@ -198,6 +212,8 @@ int main(int argc, char *argv[])
     sb->hhenkel(arg.hhenkel());
   }
 
+  MEMINFO("Before output");
+
   // export output
   if (!arg.output().empty())
     if (!sb->exportBackup(arg.output(), arg.opassword(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA))
@@ -206,22 +222,7 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-  //sb->cropToThread({8, 10, 11});
-  //sb->listThreads();
-
-  // std::cout << "Starting export!" << std::endl;
-  // sb.exportBackup("NEWFILE");
-  // std::cout << "Finished" << std::endl;
-
-  // // std::cout << "Starting export!" << std::endl;
-  // // sb2.exportBackup("NEWFILE2");
-  // // std::cout << "Finished" << std::endl;
-
-  //auto itm = arg.importthreadsmanual();
-  //for (uint i = 0; i < itm.size(); ++i)
-  //{
-  //  std::cout << itm[i].first << "  =  " << itm[i].second  << std::endl;
-  //}
+  MEMINFO("After output");
 
   // decode and dump Signal-Desktop database to 'desktop.db'.
   if (!arg.dumpdesktopdb().empty())
@@ -236,6 +237,8 @@ int main(int argc, char *argv[])
 #if defined(_WIN32) || defined(__MINGW64__)
   SetConsoleOutputCP(oldcodepage);
 #endif
+
+  MEMINFO("At program end");
 
   return 0;
 }
