@@ -361,7 +361,7 @@ signalbackup-tools [first_database] [password] --importthreads ALL --source [sec
 
 Always use the backup file with the highest database version as 'first_database' and the older version as source. If not all threads should be imported from the source, a list of thread ids can be supplied (eg `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`.
 
-If you use this option and read this line, I would really appreciate it if you let me know the results. Either send me a mail or feel free to just open an issue on the tracker for feedback.
+If you use this option and read this line, I would really appreciate it if you let me know the results. Either send me a mail (basjetimmer at yahoo-dot-com) or feel free to just open an issue on the tracker for feedback.
 
 **<span id="advanced">Advanced options</span>**
 

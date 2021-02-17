@@ -118,12 +118,12 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   }
 
   // the target will have its own job_spec etc...
-  if (d_database.containsTable("job_spec"))
+  if (source->d_database.containsTable("job_spec"))
     source->d_database.exec("DELETE FROM job_spec");
   source->d_database.exec("DELETE FROM push");
-  if (d_database.containsTable("constraint_spec"))
+  if (source->d_database.containsTable("constraint_spec"))
     source->d_database.exec("DELETE FROM constraint_spec"); // has to do with job_spec, references it...
-  if (d_database.containsTable("dependency_spec"))
+  if (source->d_database.containsTable("dependency_spec"))
     source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
   source->d_database.exec("VACUUM");
 
@@ -140,19 +140,19 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   long long int offsetsticker = getMaxUsedId("sticker") + 1 - source->getMinUsedId("sticker");
 
   long long int offsetmegaphone = -1;
-  if (d_database.containsTable("megaphone"))
+  if (source->d_database.containsTable("megaphone"))
     offsetmegaphone = getMaxUsedId("megaphone") + 1 - source->getMinUsedId("megaphone");
 
   long long int offsetremapped_recipients = -1;
-  if (d_database.containsTable("remapped_recipients"))
+  if (source->d_database.containsTable("remapped_recipients"))
     offsetremapped_recipients = getMaxUsedId("remapped_recipients") + 1 - source->getMinUsedId("remapped_recipients");
 
   long long int offsetremapped_threads = -1;
-  if (d_database.containsTable("remapped_threads"))
+  if (source->d_database.containsTable("remapped_threads"))
     offsetremapped_threads = getMaxUsedId("remapped_threads") + 1 - source->getMinUsedId("remapped_threads");
 
   long long int offsetmention = -1;
-  if (d_database.containsTable("mention"))
+  if (source->d_database.containsTable("mention"))
     offsetmention = getMaxUsedId("mention") + 1 - source->getMinUsedId("mention");
 
   source->makeIdsUnique(offsetthread, offsetsms, offsetmms,

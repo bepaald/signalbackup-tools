@@ -68,10 +68,7 @@ class SignalBackup
                       bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false,
                       std::vector<long long int> editattachments = std::vector<long long int>());
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
-                                         bool overwrite = false, bool keepattachmentdatainmemory = true);
-  [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
-                                        bool overwrite = false, bool keepattachmentdatainmemory = true);
-  [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite = false, bool keepattachmentdatainmemory = true);
+                                         bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
@@ -100,6 +97,9 @@ class SignalBackup
   bool hhenkel(std::string const &);
 
  private:
+  [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
+                                        bool overwrite, bool keepattachmentdatainmemory);
+  [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory, bool onlydb);
   void initFromFile();
   void initFromDir(std::string const &inputdir);
   void updateThreadsEntries(long long int thread = -1);
@@ -167,10 +167,10 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 }
 
 inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
-                                       bool keepattachmentdatainmemory)
+                                       bool keepattachmentdatainmemory, bool onlydb)
 {
   if (bepaald::fileOrDirExists(filename) && bepaald::isDir(filename))
-    return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory);
+    return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
   return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);
 }
 
