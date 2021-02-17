@@ -56,7 +56,8 @@ Arg::Arg(int argc, char *argv[])
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
   d_importwachat(std::string()),
   d_setwatimefmt(std::string()),
-  d_setselfid(std::string())
+  d_setselfid(std::string()),
+  d_onlydb(bool())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -472,6 +473,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--onlydb")
+    {
+      d_onlydb = true;
+      continue;
+    }
+    if (option == "--no-onlydb")
+    {
+      d_onlydb = false;
       continue;
     }
     if (option[0] != '-')

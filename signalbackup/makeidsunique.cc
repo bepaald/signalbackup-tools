@@ -17,6 +17,8 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// CALLED ON SOURCE
+
 #include "signalbackup.ih"
 
 void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
@@ -156,27 +158,33 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     }
 
     // update reaction authors
-    d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &results);
-    for (uint i = 0; i < results.rows(); ++i)
+    if (d_database.tableContainsColumn("sms", "reactions"))
     {
-      ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-      for (uint j = 0; j < reactions.numReactions(); ++j)
+      d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &results);
+      for (uint i = 0; i < results.rows(); ++i)
       {
-        //std::cout << "Updating reaction author (sms) : " << reactions.getAuthor(j) << "..." << std::endl;
-        reactions.setAuthor(j, reactions.getAuthor(j) + minrecipient);
+        ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+        for (uint j = 0; j < reactions.numReactions(); ++j)
+        {
+          //std::cout << "Updating reaction author (sms) : " << reactions.getAuthor(j) << "..." << std::endl;
+          reactions.setAuthor(j, reactions.getAuthor(j) + minrecipient);
+        }
+        d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
       }
-      d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
     }
-    d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
-    for (uint i = 0; i < results.rows(); ++i)
+    if (d_database.tableContainsColumn("mms", "reactions"))
     {
-      ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-      for (uint j = 0; j < reactions.numReactions(); ++j)
+      d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
+      for (uint i = 0; i < results.rows(); ++i)
       {
-        //std::cout << "Updating reaction author (mms) : " << reactions.getAuthor(j) << "..." << std::endl;
-        reactions.setAuthor(j, reactions.getAuthor(j) + minrecipient);
+        ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+        for (uint j = 0; j < reactions.numReactions(); ++j)
+        {
+          //std::cout << "Updating reaction author (mms) : " << reactions.getAuthor(j) << "..." << std::endl;
+          reactions.setAuthor(j, reactions.getAuthor(j) + minrecipient);
+        }
+        d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
       }
-      d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
     }
   }
 

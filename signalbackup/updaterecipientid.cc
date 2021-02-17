@@ -105,7 +105,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 
   // get group members:
   SqliteDB::QueryResults results2;
-  d_database.exec("SELECT _id,members FROM groups", &results2);
+  d_database.exec("SELECT _id, members FROM groups", &results2);
   //d_database.prettyPrint("SELECT _id,members FROM groups");
   for (uint i = 0; i < results2.rows(); ++i)
   {
@@ -133,44 +133,51 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   //d_database.prettyPrint("SELECT _id,members FROM groups");
 
   // UPDATE 'reactions' field in sms and mms tables....
-  SqliteDB::QueryResults res;
-  d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &res);
-  for (uint i = 0; i < res.rows(); ++i)
+  if (d_database.tableContainsColumn("sms", "reactions"))
   {
-    bool changed = false;
-    ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-    for (uint j = 0; j < reactions.numReactions(); ++j)
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &res);
+    for (uint i = 0; i < res.rows(); ++i)
     {
-      //std::cout << "Dealing with SMS reaction author: " << reactions.getAuthor(j) << std::endl;
-      if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))
+      bool changed = false;
+      ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      for (uint j = 0; j < reactions.numReactions(); ++j)
       {
-        reactions.setAuthor(j, targetid);
-        changed = true;
-        if (verbose) std::cout << "    updated sms reaction" << std::endl;
+        //std::cout << "Dealing with SMS reaction author: " << reactions.getAuthor(j) << std::endl;
+        if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))
+        {
+          reactions.setAuthor(j, targetid);
+          changed = true;
+          if (verbose) std::cout << "    updated sms reaction" << std::endl;
+        }
       }
+      if (changed)
+        d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
+                                                                       res.getValueAs<long long int>(i, "_id")});
     }
-    if (changed)
-      d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
-                                                                     res.getValueAs<long long int>(i, "_id")});
   }
-  d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &res);
-  for (uint i = 0; i < res.rows(); ++i)
+  if (d_database.tableContainsColumn("mms", "reactions"))
   {
-    bool changed = false;
-    ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-    for (uint j = 0; j < reactions.numReactions(); ++j)
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &res);
+    for (uint i = 0; i < res.rows(); ++i)
     {
-      //std::cout << "Dealing with MMS reaction author: " << reactions.getAuthor(j) << std::endl;
-      if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))
+      bool changed = false;
+      ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      for (uint j = 0; j < reactions.numReactions(); ++j)
       {
-        reactions.setAuthor(j, targetid);
-        changed = true;
-        if (verbose) std::cout << "    updated mms reaction" << std::endl;
+        //std::cout << "Dealing with MMS reaction author: " << reactions.getAuthor(j) << std::endl;
+        if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))
+        {
+          reactions.setAuthor(j, targetid);
+          changed = true;
+          if (verbose) std::cout << "    updated mms reaction" << std::endl;
+        }
       }
+      if (changed)
+        d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
+                                                                       res.getValueAs<long long int>(i, "_id")});
     }
-    if (changed)
-      d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
-                                                                     res.getValueAs<long long int>(i, "_id")});
   }
 }
 

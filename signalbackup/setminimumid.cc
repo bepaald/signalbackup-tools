@@ -21,7 +21,7 @@
 
 void SignalBackup::setMinimumId(std::string const &table, long long int offset, std::string const &col) const
 {
-  std::cout << __FUNCTION__ << std::endl;
+  std::cout << __FUNCTION__ << " " << table << std::endl;
   if (offset == 0) // no changes requested
     return;
 

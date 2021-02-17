@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 
   // export output
   if (!arg.output().empty())
-    if (!sb->exportBackup(arg.output(), arg.opassword(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA))
+    if (!sb->exportBackup(arg.output(), arg.opassword(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
     {
       std::cout << "Failed to export backup to '" << arg.output() << "'" << std::endl;
       return 1;

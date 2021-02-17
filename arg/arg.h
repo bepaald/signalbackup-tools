@@ -67,6 +67,7 @@ class Arg
   std::string d_importwachat;
   std::string d_setwatimefmt;
   std::string d_setselfid;
+  bool d_onlydb;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -105,6 +106,7 @@ class Arg
   inline std::string const &importwachat() const;
   inline std::string const &setwatimefmt() const;
   inline std::string const &setselfid() const;
+  inline bool onlydb() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -284,6 +286,11 @@ inline std::string const &Arg::setwatimefmt() const
 inline std::string const &Arg::setselfid() const
 {
   return d_setselfid;
+}
+
+inline bool Arg::onlydb() const
+{
+  return d_onlydb;
 }
 
 inline bool Arg::ok() const

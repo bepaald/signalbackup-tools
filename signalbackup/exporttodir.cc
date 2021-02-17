@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory)
+bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory, bool onlydb)
 {
   std::cout << std::endl << "Exporting backup into '" << directory << "/'" << std::endl;
 
@@ -40,115 +40,118 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
   }
 
   // export headerframe:
-  std::cout << "Writing HeaderFrame..." << std::endl;
-  if (!writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe))
-    return false;
-
-  // export databaseversionframe
-  std::cout << "Writing DatabaseVersionFrame..." << std::endl;
-  if (!writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe))
-    return false;
-
-  // export attachments
-  std::cout << "Writing Attachments..." << std::endl;
-  for (auto const &aframe : d_attachments)
+  if (!onlydb)
   {
-    AttachmentFrame *a = aframe.second.get();
-    std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId());
-
-    // write frame
-    if (!writeRawFrameDataToFile(attachment_basefilename + ".sbf", a))
+    std::cout << "Writing HeaderFrame..." << std::endl;
+    if (!writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe))
       return false;
 
-    // write actual attachment:
-    std::ofstream attachmentstream(attachment_basefilename + ".bin", std::ios_base::binary);
-    if (!attachmentstream.is_open())
+    // export databaseversionframe
+    std::cout << "Writing DatabaseVersionFrame..." << std::endl;
+    if (!writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe))
+      return false;
+
+    // export attachments
+    std::cout << "Writing Attachments..." << std::endl;
+    for (auto const &aframe : d_attachments)
     {
-      std::cout << "Failed to open file for writing: " << directory << attachment_basefilename << ".bin" << std::endl;
-      return false;
-    }
-    else
-      if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+      AttachmentFrame *a = aframe.second.get();
+      std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId());
+
+      // write frame
+      if (!writeRawFrameDataToFile(attachment_basefilename + ".sbf", a))
         return false;
 
-    if (!keepattachmentdatainmemory)
-      a->clearData();
-  }
-
-  // export avatars
-  std::cout << "Writing Avatars..." << std::endl;
-#if __cplusplus > 201703L
-  for (int count = 1; auto const &aframe : d_avatars)
-#else
-  int count = 1;
-  for (auto const &aframe : d_avatars)
-#endif
-  {
-    AvatarFrame *a = aframe.second.get();
-    std::string avatar_basefilename = directory + "/Avatar_" +
-      std::string(bepaald::numDigits(d_avatars.size()) - bepaald::numDigits(count), '0') + bepaald::toString(count)
-      + "_" + ((d_databaseversion < 33) ? a->name() : a->recipient());
-    ++count;
-
-    // write frame
-    if (!writeRawFrameDataToFile(avatar_basefilename + ".sbf", a))
-      return false;
-
-    // write actual avatar:
-    std::ofstream avatarstream(avatar_basefilename + ".bin", std::ios_base::binary);
-    if (!avatarstream.is_open())
-    {
-      std::cout << "Failed to open file for writing: " << directory << avatar_basefilename << ".bin" << std::endl;
-      return false;
-    }
-    else
-      if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+      // write actual attachment:
+      std::ofstream attachmentstream(attachment_basefilename + ".bin", std::ios_base::binary);
+      if (!attachmentstream.is_open())
+      {
+        std::cout << "Failed to open file for writing: " << directory << attachment_basefilename << ".bin" << std::endl;
         return false;
-  }
+      }
+      else
+        if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+          return false;
 
-  // export sharedpreferences
-  std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
-#if __cplusplus > 201703L
-  for (int count = 1; auto const &spframe : d_sharedpreferenceframes)
-#else
-  count = 1;
-  for (auto const &spframe : d_sharedpreferenceframes)
-#endif
-    if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
-      return false;
-
-  // export stickers
-  std::cout << "Writing StickerFrames..." << std::endl;
-#if __cplusplus > 201703L
-  for (int count = 1; auto const &sframe : d_stickers)
-#else
-  count = 1;
-  for (auto const &sframe : d_stickers)
-#endif
-  {
-    StickerFrame *s = sframe.second.get();
-    std::string sticker_basefilename = directory + "/Sticker_" + bepaald::toString(count++) + "_" + bepaald::toString(s->rowId());
-
-    // write frame
-    if (!writeRawFrameDataToFile(sticker_basefilename + ".sbf", s))
-      return false;
-
-    // write actual sticker data
-    std::ofstream stickerstream(sticker_basefilename + ".bin", std::ios_base::binary);
-    if (!stickerstream.is_open())
-    {
-      std::cout << "Failed to open file for writing: " << directory << sticker_basefilename << ".bin" << std::endl;
-      return false;
+      if (!keepattachmentdatainmemory)
+        a->clearData();
     }
-    else
-      if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize()))
-        return false;
-  }
 
-  // export endframe
-  std::cout << "Writing EndFrame..." << std::endl;
-  if (!writeRawFrameDataToFile(directory + "/End.sbf", d_endframe))
-    return false;
+    // export avatars
+    std::cout << "Writing Avatars..." << std::endl;
+#if __cplusplus > 201703L
+    for (int count = 1; auto const &aframe : d_avatars)
+#else
+      int count = 1;
+    for (auto const &aframe : d_avatars)
+#endif
+    {
+      AvatarFrame *a = aframe.second.get();
+      std::string avatar_basefilename = directory + "/Avatar_" +
+        std::string(bepaald::numDigits(d_avatars.size()) - bepaald::numDigits(count), '0') + bepaald::toString(count)
+        + "_" + ((d_databaseversion < 33) ? a->name() : a->recipient());
+      ++count;
+
+      // write frame
+      if (!writeRawFrameDataToFile(avatar_basefilename + ".sbf", a))
+        return false;
+
+      // write actual avatar:
+      std::ofstream avatarstream(avatar_basefilename + ".bin", std::ios_base::binary);
+      if (!avatarstream.is_open())
+      {
+        std::cout << "Failed to open file for writing: " << directory << avatar_basefilename << ".bin" << std::endl;
+        return false;
+      }
+      else
+        if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+          return false;
+    }
+
+    // export sharedpreferences
+    std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
+#if __cplusplus > 201703L
+    for (int count = 1; auto const &spframe : d_sharedpreferenceframes)
+#else
+      count = 1;
+    for (auto const &spframe : d_sharedpreferenceframes)
+#endif
+      if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
+        return false;
+
+    // export stickers
+    std::cout << "Writing StickerFrames..." << std::endl;
+#if __cplusplus > 201703L
+    for (int count = 1; auto const &sframe : d_stickers)
+#else
+      count = 1;
+    for (auto const &sframe : d_stickers)
+#endif
+    {
+      StickerFrame *s = sframe.second.get();
+      std::string sticker_basefilename = directory + "/Sticker_" + bepaald::toString(count++) + "_" + bepaald::toString(s->rowId());
+
+      // write frame
+      if (!writeRawFrameDataToFile(sticker_basefilename + ".sbf", s))
+        return false;
+
+      // write actual sticker data
+      std::ofstream stickerstream(sticker_basefilename + ".bin", std::ios_base::binary);
+      if (!stickerstream.is_open())
+      {
+        std::cout << "Failed to open file for writing: " << directory << sticker_basefilename << ".bin" << std::endl;
+        return false;
+      }
+      else
+        if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize()))
+          return false;
+    }
+
+    // export endframe
+    std::cout << "Writing EndFrame..." << std::endl;
+    if (!writeRawFrameDataToFile(directory + "/End.sbf", d_endframe))
+      return false;
+  }
 
   // export database
   std::cout << "Writing database..." << std::endl;
