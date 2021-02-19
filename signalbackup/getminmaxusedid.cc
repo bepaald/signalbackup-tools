@@ -21,6 +21,9 @@
 
 long long int SignalBackup::getMinUsedId(std::string const &table, std::string const &col)
 {
+  if (!d_database.containsTable(table))
+    return 0;
+
   SqliteDB::QueryResults results;
   d_database.exec("SELECT MIN(" + col + ") FROM " + table, &results);
   if (results.rows() != 1 ||
@@ -34,6 +37,9 @@ long long int SignalBackup::getMinUsedId(std::string const &table, std::string c
 
 long long int SignalBackup::getMaxUsedId(std::string const &table, std::string const &col)
 {
+  if (!d_database.containsTable(table))
+    return 0;
+
   SqliteDB::QueryResults results;
   d_database.exec("SELECT MAX(" + col + ") FROM " + table, &results);
   if (results.rows() != 1 ||
