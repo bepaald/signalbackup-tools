@@ -36,6 +36,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   d_database.exec("UPDATE sms SET thread_id = thread_id + ?", minthread);    // update sms.thread_id to new thread._id's
   d_database.exec("UPDATE mms SET thread_id = thread_id + ?", minthread);    // ""
   d_database.exec("UPDATE drafts SET thread_id = thread_id + ?", minthread); // ""
+  if (d_database.containsTable("mention"))
+    d_database.exec("UPDATE mention SET thread_id = thread_id + ?", minthread); // ""
 
   setMinimumId("sms",  minsms);
   compactIds("sms");
@@ -45,6 +47,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   setMinimumId("mms",  minmms);
   d_database.exec("UPDATE part SET mid = mid + ?", minmms); // update part.mid to new mms._id's
   d_database.exec("UPDATE group_receipts SET mms_id = mms_id + ?", minmms); // "
+  if (d_database.containsTable("mention"))
+    d_database.exec("UPDATE mention SET message_id = message_id + ?", minmms);
   compactIds("mms");
 
   setMinimumId("part", minpart);

@@ -48,7 +48,9 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
       if (table == "mms")
       {
         d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {nid, valuetochange}); // update part.mid to new mms._id's
-        d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {nid, valuetochange}); // "
+        d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {nid, valuetochange}); //
+        if (d_database.containsTable("mention"))
+          d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {nid, valuetochange});
       }
       else if (table == "part")
       {

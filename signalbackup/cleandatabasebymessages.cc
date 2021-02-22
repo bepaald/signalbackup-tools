@@ -27,8 +27,14 @@ void SignalBackup::cleanDatabaseByMessages()
   d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM mms)");
 
   std::cout << "  Deleting other threads from 'thread'..." << std::endl;
-  d_database.exec("DELETE FROM thread where _id NOT IN (SELECT DISTINCT thread_id FROM sms) AND _id NOT IN (SELECT DISTINCT thread_id FROM mms)");
+  d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM sms) AND _id NOT IN (SELECT DISTINCT thread_id FROM mms)");
   updateThreadsEntries();
+
+  if (d_database.containsTable("mention"))
+  {
+    std::cout << "  Deleting entries from 'mention' not belonging to remaining mms entries" << std::endl;
+    d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM mms) OR thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
+  }
 
   //std::cout << "Groups left:" << std::endl;
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
@@ -46,7 +52,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
   if (d_databaseversion < 24)
   {
-    std::cout << "  Deleting unreferenced recipient_preferences..." << std::endl;
+    std::cout << "  Deleting unreferenced recipient_preferences entries..." << std::endl;
     //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
@@ -110,7 +116,6 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     reaction_authors_query +
                     " UNION SELECT DISTINCT recipient_ids FROM thread)"s);
-
   }
 
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");
@@ -120,8 +125,8 @@ void SignalBackup::cleanDatabaseByMessages()
   SqliteDB::QueryResults results;
   if (d_databaseversion < 24)
     d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
-  else if (d_databaseversion < 33)
-    d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient", &results); // recipient_preferences does not exist anymore, but d_avatars are still linked to "+316xxxxxxxx" strings
+  else if (d_databaseversion < 33)   // 'recipient_preferences' does not exist anymore, but d_avatars are still linked to "+316xxxxxxxx" strings
+    d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient", &results);
   else
     d_database.exec("SELECT _id FROM recipient", &results); // NOTE! _id is not a string!
   bool erased = true;
@@ -173,8 +178,14 @@ void SignalBackup::cleanDatabaseByMessages()
   else
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
-  std::cout << "  Deleting group receipts entries from deleted messages..." << std::endl;
+  std::cout << "  Deleting group_receipts entries from deleted messages..." << std::endl;
   d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM mms)");
+
+  std::cout << "  Deleting group_receipts from non-existing recipients" << std::endl;
+  if (d_databaseversion < 24)
+    d_database.exec("DELETE FROM group_receipts WHERE address NOT IN (SELECT DISTINCT recipient_ids FROM recipient_preferences)");
+  else
+    d_database.exec("DELETE FROM group_receipts WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
   std::cout << "  Deleting drafts from deleted threads..." << std::endl;
   d_database.exec("DELETE FROM drafts WHERE thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");

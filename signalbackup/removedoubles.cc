@@ -31,5 +31,55 @@ void SignalBackup::removeDoubles()
   d_database.exec("DELETE FROM mms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1.date = t2.date AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1.address = t2.address AND t1.read = t2.read AND t1.msg_box = t2.msg_box AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles ORDER BY date ASC, date_received ASC, body ASC, thread_id ASC, address ASC, read ASC, msg_box ASC, _id ASC) t WHERE RNum%2 = 0)");
   std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
 
-  cleanDatabaseByMessages();
+
+  //cleanDatabaseByMessages();
+  // cleandatabasebymessages is a complicated (risky?) function becuase it messes with recipients.
+  // theoretically, removing doubled messages should not affect the recipient table
+  // here we duplicate the relevant parts of cleanDatabaseByMessages()
+
+  // remove doubled parts
+  std::cout << "  Deleting attachment entries from 'part' not belonging to remaining mms entries" << std::endl;
+  d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM mms)");
+  std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+
+  // remove unused attachments
+  std::cout << "  Deleting unused attachments..." << std::endl;
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT _id,unique_id FROM part", &results);
+  for (auto it = d_attachments.begin(); it != d_attachments.end();)
+  {
+    bool found = false;
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      long long int rowid = -1;
+      if (results.valueHasType<long long int>(i, "_id"))
+        rowid = results.getValueAs<long long int>(i, "_id");
+      long long int uniqueid = -1;
+      if (results.valueHasType<long long int>(i, "unique_id"))
+        uniqueid = results.getValueAs<long long int>(i, "unique_id");
+
+      if (rowid != -1 && uniqueid != -1 &&
+          it->first.first == static_cast<uint64_t>(rowid) && it->first.second == static_cast<uint64_t>(uniqueid))
+      {
+        found = true;
+        break;
+      }
+    }
+    if (!found)
+      it = d_attachments.erase(it);
+    else
+      ++it;
+  }
+
+  // remove unused group_receipts
+  std::cout << "  Deleting group receipts entries from deleted messages..." << std::endl;
+  d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM mms)");
+  std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+
+  // remove unused mentions
+  if (d_database.containsTable("mention"))
+  {
+    std::cout << "  Deleting entries from 'mention' not belonging to remaining mms entries" << std::endl;
+    d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM mms)");
+  }
 }
