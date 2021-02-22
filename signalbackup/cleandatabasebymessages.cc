@@ -62,8 +62,54 @@ void SignalBackup::cleanDatabaseByMessages()
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
 
     // KEEP recipients WITH _id IN remapped_recipients.old_id!?!?
+    // KEEP recipients who authored a reaction somehow?
 
-    d_database.exec("DELETE FROM recipient WHERE _id NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms UNION SELECT DISTINCT recipient_ids FROM thread)");
+    std::set<unsigned int> reaction_authors;
+    if (d_database.tableContainsColumn("sms", "reactions"))
+    {
+      SqliteDB::QueryResults reactionresults;
+      d_database.exec("SELECT DISTINCT reactions FROM sms WHERE reactions IS NOT NULL", &reactionresults);
+      for (uint i = 0; i < reactionresults.rows(); ++i)
+      {
+        ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+        for (uint j = 0; j < reactions.numReactions(); ++j)
+          reaction_authors.insert(reactions.getAuthor(j));
+      }
+    }
+    if (d_database.tableContainsColumn("mms", "reactions"))
+    {
+      SqliteDB::QueryResults reactionresults;
+      d_database.exec("SELECT DISTINCT reactions FROM mms WHERE reactions IS NOT NULL", &reactionresults);
+      for (uint i = 0; i < reactionresults.rows(); ++i)
+      {
+        ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+        for (uint j = 0; j < reactions.numReactions(); ++j)
+          reaction_authors.insert(reactions.getAuthor(j));
+      }
+    }
+
+    std::string reaction_authors_query;
+    if (!reaction_authors.empty())
+    {
+      reaction_authors_query = " UNION SELECT * FROM (VALUES";
+      for (auto const &r : reaction_authors)
+      {
+        //std::cout << "AUTHOR : " << r << std::endl;
+        reaction_authors_query += "(" + bepaald::toString(r) + "),";
+      }
+      reaction_authors_query.pop_back();
+      reaction_authors_query += ")";
+    }
+    //std::cout << "QUERY: " << reaction_authors_query << std::endl;
+
+    using namespace std::string_literals;
+    d_database.exec("DELETE FROM recipient WHERE _id NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!=''"s +
+                    " UNION SELECT DISTINCT address FROM sms"s +
+                    " UNION SELECT DISTINCT address FROM mms"s +
+                    (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
+                    (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
+                    reaction_authors_query +
+                    " UNION SELECT DISTINCT recipient_ids FROM thread)"s);
 
   }
 
