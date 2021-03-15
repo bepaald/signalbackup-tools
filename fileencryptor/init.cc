@@ -38,11 +38,17 @@ bool FileEncryptor::init(unsigned char *salt, uint64_t salt_size, unsigned char 
 
   // generate backup key from salt and passphrase
   if (!getBackupKey(d_passphrase))
+  {
+    std::cout << "Failed to generate backup key from passphrase" << std::endl;
     return false;
+  }
 
   // generate mackey and cipher from backupkey
   if (!getCipherAndMac(32, 64))
+  {
+    std::cout << "Failed to generate mackey and cipher from backupkey" << std::endl;
     return false;
+  }
 
   DEBUGOUT("IV: ", bepaald::bytesToHexString(d_iv, d_iv_size));
   DEBUGOUT("SALT: ", bepaald::bytesToHexString(d_salt, d_salt_size));

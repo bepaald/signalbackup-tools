@@ -24,32 +24,24 @@ Arg::Arg(int argc, char *argv[])
   d_ok(false),
   d_positionals(0),
   d_maxpositional(2),
-  d_importthreads(std::vector<int>()),
   d_input(std::string()),
   d_password(std::string()),
+  d_importthreads(std::vector<int>()),
   d_output(std::string()),
   d_opassword(std::string()),
-  d_overwrite(false),
   d_source(std::string()),
   d_sourcepassword(std::string()),
-  d_listthreads(false),
   d_generatefromtruncated(false),
   d_croptothreads(std::vector<long long int>()),
   d_croptodates(std::vector<std::string>()),
   d_mergerecipients(std::vector<std::string>()),
-  d_editgroupmembers(false),
   d_mergegroups(std::vector<std::string>()),
   d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_exportxml(std::string()),
   d_runsqlquery(std::vector<std::string>()),
   d_runprettysqlquery(std::vector<std::string>()),
-  d_showprogress(true),
-  d_removedoubles(false),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
-  d_fast(false),
-  d_stoponbadmac(false),
-  d_verbose(false),
   d_dumpdesktopdb(std::string()),
   d_hhenkel(std::string()),
   d_importcsv(std::string()),
@@ -57,7 +49,16 @@ Arg::Arg(int argc, char *argv[])
   d_importwachat(std::string()),
   d_setwatimefmt(std::string()),
   d_setselfid(std::string()),
-  d_onlydb(bool())
+  d_onlydb(bool()),
+  d_overwrite(false),
+  d_listthreads(false),
+  d_editgroupmembers(false),
+  d_showprogress(true),
+  d_removedoubles(false),
+  d_fast(false),
+  d_reordermmssmsids(false),
+  d_stoponbadmac(false),
+  d_verbose(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -129,17 +130,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--overwrite")
-    {
-      d_overwrite = true;
-      continue;
-    }
-    if (option == "--no-overwrite")
-    {
-      d_overwrite = false;
-      continue;
-    }
-    if (option == "--source")
+    if (option == "-s" || option == "--source")
     {
       if (i < arguments.size() - 1)
         d_source = arguments[++i];
@@ -150,7 +141,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--sourcepassword")
+    if (option == "-sp" || option == "--sourcepassword")
     {
       if (i < arguments.size() - 1)
         d_sourcepassword = arguments[++i];
@@ -159,16 +150,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
-      continue;
-    }
-    if (option == "--listthreads")
-    {
-      d_listthreads = true;
-      continue;
-    }
-    if (option == "--no-listthreads")
-    {
-      d_listthreads = false;
       continue;
     }
     if (option == "--generatefromtruncated")
@@ -230,16 +211,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
-      continue;
-    }
-    if (option == "--editgroupmembers")
-    {
-      d_editgroupmembers = true;
-      continue;
-    }
-    if (option == "--no-editgroupmembers")
-    {
-      d_editgroupmembers = false;
       continue;
     }
     if (option == "--mergegroups")
@@ -314,26 +285,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--showprogress")
-    {
-      d_showprogress = true;
-      continue;
-    }
-    if (option == "--no-showprogress")
-    {
-      d_showprogress = false;
-      continue;
-    }
-    if (option == "--removedoubles")
-    {
-      d_removedoubles = true;
-      continue;
-    }
-    if (option == "--no-removedoubles")
-    {
-      d_removedoubles = false;
-      continue;
-    }
     if (option == "--assumebadframesizeonbadmac")
     {
       d_assumebadframesizeonbadmac = true;
@@ -359,36 +310,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
-      continue;
-    }
-    if (option == "--fast")
-    {
-      d_fast = true;
-      continue;
-    }
-    if (option == "--no-fast")
-    {
-      d_fast = false;
-      continue;
-    }
-    if (option == "--stoponbadmac")
-    {
-      d_stoponbadmac = true;
-      continue;
-    }
-    if (option == "--no-stoponbadmac")
-    {
-      d_stoponbadmac = false;
-      continue;
-    }
-    if (option == "-v" || option == "--verbose")
-    {
-      d_verbose = true;
-      continue;
-    }
-    if (option == "--no-verbose")
-    {
-      d_verbose = false;
       continue;
     }
     if (option == "--dumpdesktopdb")
@@ -483,6 +404,96 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-onlydb")
     {
       d_onlydb = false;
+      continue;
+    }
+    if (option == "--overwrite")
+    {
+      d_overwrite = true;
+      continue;
+    }
+    if (option == "--no-overwrite")
+    {
+      d_overwrite = false;
+      continue;
+    }
+    if (option == "--listthreads")
+    {
+      d_listthreads = true;
+      continue;
+    }
+    if (option == "--no-listthreads")
+    {
+      d_listthreads = false;
+      continue;
+    }
+    if (option == "--editgroupmembers")
+    {
+      d_editgroupmembers = true;
+      continue;
+    }
+    if (option == "--no-editgroupmembers")
+    {
+      d_editgroupmembers = false;
+      continue;
+    }
+    if (option == "--showprogress")
+    {
+      d_showprogress = true;
+      continue;
+    }
+    if (option == "--no-showprogress")
+    {
+      d_showprogress = false;
+      continue;
+    }
+    if (option == "--removedoubles")
+    {
+      d_removedoubles = true;
+      continue;
+    }
+    if (option == "--no-removedoubles")
+    {
+      d_removedoubles = false;
+      continue;
+    }
+    if (option == "--fast")
+    {
+      d_fast = true;
+      continue;
+    }
+    if (option == "--no-fast")
+    {
+      d_fast = false;
+      continue;
+    }
+    if (option == "--reordermmssmsids")
+    {
+      d_reordermmssmsids = true;
+      continue;
+    }
+    if (option == "--no-reordermmssmsids")
+    {
+      d_reordermmssmsids = false;
+      continue;
+    }
+    if (option == "--stoponbadmac")
+    {
+      d_stoponbadmac = true;
+      continue;
+    }
+    if (option == "--no-stoponbadmac")
+    {
+      d_stoponbadmac = false;
+      continue;
+    }
+    if (option == "-v" || option == "--verbose")
+    {
+      d_verbose = true;
+      continue;
+    }
+    if (option == "--no-verbose")
+    {
+      d_verbose = false;
       continue;
     }
     if (option[0] != '-')

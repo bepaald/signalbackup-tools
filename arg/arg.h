@@ -34,32 +34,24 @@ class Arg
   bool d_ok;
   size_t d_positionals;
   size_t d_maxpositional;
-  std::vector<int> d_importthreads;
   std::string d_input;
   std::string d_password;
+  std::vector<int> d_importthreads;
   std::string d_output;
   std::string d_opassword;
-  bool d_overwrite;
   std::string d_source;
   std::string d_sourcepassword;
-  bool d_listthreads;
   bool d_generatefromtruncated;
   std::vector<long long int> d_croptothreads;
   std::vector<std::string> d_croptodates;
   std::vector<std::string> d_mergerecipients;
-  bool d_editgroupmembers;
   std::vector<std::string> d_mergegroups;
   std::vector<std::pair<std::string,std::string>> d_exportcsv;
   std::string d_exportxml;
   std::vector<std::string> d_runsqlquery;
   std::vector<std::string> d_runprettysqlquery;
-  bool d_showprogress;
-  bool d_removedoubles;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
-  bool d_fast;
-  bool d_stoponbadmac;
-  bool d_verbose;
   std::string d_dumpdesktopdb;
   std::string d_hhenkel;
   std::string d_importcsv;
@@ -68,37 +60,38 @@ class Arg
   std::string d_setwatimefmt;
   std::string d_setselfid;
   bool d_onlydb;
+  bool d_overwrite;
+  bool d_listthreads;
+  bool d_editgroupmembers;
+  bool d_showprogress;
+  bool d_removedoubles;
+  bool d_fast;
+  bool d_reordermmssmsids;
+  bool d_stoponbadmac;
+  bool d_verbose;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
   inline Arg &operator=(Arg const &other) = delete;
   inline bool ok() const;
-  inline std::vector<int> const &importthreads() const;
   inline std::string const &input() const;
   inline std::string const &password() const;
+  inline std::vector<int> const &importthreads() const;
   inline std::string const &output() const;
   inline std::string const &opassword() const;
-  inline bool overwrite() const;
   inline std::string const &source() const;
   inline std::string const &sourcepassword() const;
-  inline bool listthreads() const;
   inline bool generatefromtruncated() const;
   inline std::vector<long long int> const &croptothreads() const;
   inline std::vector<std::string> const &croptodates() const;
   inline std::vector<std::string> const &mergerecipients() const;
-  inline bool editgroupmembers() const;
   inline std::vector<std::string> const &mergegroups() const;
   inline std::vector<std::pair<std::string,std::string>> const &exportcsv() const;
   inline std::string const &exportxml() const;
   inline std::vector<std::string> const &runsqlquery() const;
   inline std::vector<std::string> const &runprettysqlquery() const;
-  inline bool showprogress() const;
-  inline bool removedoubles() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
-  inline bool fast() const;
-  inline bool stoponbadmac() const;
-  inline bool verbose() const;
   inline std::string const &dumpdesktopdb() const;
   inline std::string const &hhenkel() const;
   inline std::string const &importcsv() const;
@@ -107,6 +100,15 @@ class Arg
   inline std::string const &setwatimefmt() const;
   inline std::string const &setselfid() const;
   inline bool onlydb() const;
+  inline bool overwrite() const;
+  inline bool listthreads() const;
+  inline bool editgroupmembers() const;
+  inline bool showprogress() const;
+  inline bool removedoubles() const;
+  inline bool fast() const;
+  inline bool reordermmssmsids() const;
+  inline bool stoponbadmac() const;
+  inline bool verbose() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -123,11 +125,6 @@ class Arg
   void usage() const;
 };
 
-inline std::vector<int> const &Arg::importthreads() const
-{
-  return d_importthreads;
-}
-
 inline std::string const &Arg::input() const
 {
   return d_input;
@@ -136,6 +133,11 @@ inline std::string const &Arg::input() const
 inline std::string const &Arg::password() const
 {
   return d_password;
+}
+
+inline std::vector<int> const &Arg::importthreads() const
+{
+  return d_importthreads;
 }
 
 inline std::string const &Arg::output() const
@@ -148,11 +150,6 @@ inline std::string const &Arg::opassword() const
   return d_opassword;
 }
 
-inline bool Arg::overwrite() const
-{
-  return d_overwrite;
-}
-
 inline std::string const &Arg::source() const
 {
   return d_source;
@@ -161,11 +158,6 @@ inline std::string const &Arg::source() const
 inline std::string const &Arg::sourcepassword() const
 {
   return d_sourcepassword;
-}
-
-inline bool Arg::listthreads() const
-{
-  return d_listthreads;
 }
 
 inline bool Arg::generatefromtruncated() const
@@ -186,11 +178,6 @@ inline std::vector<std::string> const &Arg::croptodates() const
 inline std::vector<std::string> const &Arg::mergerecipients() const
 {
   return d_mergerecipients;
-}
-
-inline bool Arg::editgroupmembers() const
-{
-  return d_editgroupmembers;
 }
 
 inline std::vector<std::string> const &Arg::mergegroups() const
@@ -218,16 +205,6 @@ inline std::vector<std::string> const &Arg::runprettysqlquery() const
   return d_runprettysqlquery;
 }
 
-inline bool Arg::showprogress() const
-{
-  return d_showprogress;
-}
-
-inline bool Arg::removedoubles() const
-{
-  return d_removedoubles;
-}
-
 inline bool Arg::assumebadframesizeonbadmac() const
 {
   return d_assumebadframesizeonbadmac;
@@ -236,21 +213,6 @@ inline bool Arg::assumebadframesizeonbadmac() const
 inline std::vector<long long int> const &Arg::editattachmentsize() const
 {
   return d_editattachmentsize;
-}
-
-inline bool Arg::fast() const
-{
-  return d_fast;
-}
-
-inline bool Arg::stoponbadmac() const
-{
-  return d_stoponbadmac;
-}
-
-inline bool Arg::verbose() const
-{
-  return d_verbose;
 }
 
 inline std::string const &Arg::dumpdesktopdb() const
@@ -291,6 +253,51 @@ inline std::string const &Arg::setselfid() const
 inline bool Arg::onlydb() const
 {
   return d_onlydb;
+}
+
+inline bool Arg::overwrite() const
+{
+  return d_overwrite;
+}
+
+inline bool Arg::listthreads() const
+{
+  return d_listthreads;
+}
+
+inline bool Arg::editgroupmembers() const
+{
+  return d_editgroupmembers;
+}
+
+inline bool Arg::showprogress() const
+{
+  return d_showprogress;
+}
+
+inline bool Arg::removedoubles() const
+{
+  return d_removedoubles;
+}
+
+inline bool Arg::fast() const
+{
+  return d_fast;
+}
+
+inline bool Arg::reordermmssmsids() const
+{
+  return d_reordermmssmsids;
+}
+
+inline bool Arg::stoponbadmac() const
+{
+  return d_stoponbadmac;
+}
+
+inline bool Arg::verbose() const
+{
+  return d_verbose;
 }
 
 inline bool Arg::ok() const

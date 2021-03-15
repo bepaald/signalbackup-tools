@@ -39,8 +39,17 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
   while (j < passphrase.size() && !std::isdigit(passphrase[j])) // also eat any trailing non-digits
     ++j;
 
-  if (i != passlength || j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
+  if (i != passlength)
+  {
+    std::cout << "ERROR : Passphrase too short! Need " << passlength << " digits, " << i << " provided" << std::endl;
     return false;
+  }
+
+  if (j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
+  {
+    std::cout << "ERROR : Passphrase too long! Need " << passlength << " digits" << std::endl;
+    return false;
+  }
 
   //std::cout << "Passphrase: " << bepaald::bytesToHexString(pass, passlength) << std::endl;
 
