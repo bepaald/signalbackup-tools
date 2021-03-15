@@ -76,10 +76,12 @@ inline std::pair<unsigned char *, uint64_t> EndFrame::getData() const
 {
   uint64_t size = dataSize();
   unsigned char *data = new unsigned char[size];
-  uint64_t datapos = 0;
 
-  datapos += setFieldAndWire(FRAMETYPE::END, WIRETYPE::VARINT, data + datapos);
-  datapos += putVarInt(1, data + datapos);
+  //uint64_t datapos = 0;
+  //datapos += setFieldAndWire(FRAMETYPE::END, WIRETYPE::VARINT, data + datapos);
+  //datapos += putVarInt(1, data + datapos);
+  uint64_t datapos = setFieldAndWire(FRAMETYPE::END, WIRETYPE::VARINT, data);
+  putVarInt(1, data + datapos);
 
   return {data, size};
 }

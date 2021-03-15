@@ -38,13 +38,13 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     return false;
   }
 
-  std::ofstream outputfile(filename, std::ios_base::binary);
-
   if (!d_headerframe || !d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length()))
   {
     std::cout << "Error initializing FileEncryptor" << std::endl;
     return false;
   }
+
+  std::ofstream outputfile(filename, std::ios_base::binary);
 
   // HEADER // Note: HeaderFrame is not encrypted.
   std::cout << "Writing HeaderFrame..." << std::endl;

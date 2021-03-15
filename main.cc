@@ -212,6 +212,14 @@ int main(int argc, char *argv[])
     sb->hhenkel(arg.hhenkel());
   }
 
+  if (arg.reordermmssmsids() ||
+      !arg.source().empty()) // reorder mms after messing with mms._id
+    if (!sb->reorderMmsSmsIds())
+    {
+      std::cout << "Error while reordering mms" << std::endl;
+      return 1;
+    }
+
   MEMINFO("Before output");
 
   // export output
