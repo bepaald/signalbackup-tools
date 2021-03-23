@@ -90,6 +90,7 @@ namespace bepaald
   inline constexpr int strlitLength(char const *str, int pos = 0);
   inline bool fileOrDirExists(std::string const &path);
   inline bool isDir(std::string const &path);
+  inline bool createDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
   inline int numDigits(long long int num);
@@ -97,6 +98,9 @@ namespace bepaald
   inline bool isTerminal();
   inline std::ostream &bold_on(std::ostream &os);
   inline std::ostream &bold_off(std::ostream &os);
+
+  template <typename T, typename U>
+  inline int findIdxOf(T const &container, U const &value);
 }
 
 template <typename T>
@@ -232,6 +236,12 @@ inline bool bepaald::isDir(std::string const &path)
   return std::filesystem::is_directory(path, ec);
 }
 
+inline bool bepaald::createDir(std::string const &path)
+{
+  std::error_code ec;
+  return std::filesystem::create_directory(path, ec);
+}
+
 inline bool bepaald::isEmpty(std::string const &path)
 {
   std::error_code ec;
@@ -243,8 +253,9 @@ inline bool bepaald::isEmpty(std::string const &path)
 
 inline bool bepaald::clearDirectory(std::string const &path)
 {
+  std::error_code ec;
   for (auto const &p: std::filesystem::directory_iterator(path))
-    if (!std::filesystem::remove(p.path()))
+    if (std::filesystem::remove_all(p.path(), ec) == static_cast<std::uintmax_t>(-1))
       return false;
   return true;
 }
@@ -316,6 +327,14 @@ inline std::ostream &bepaald::bold_off(std::ostream &os)
   return os << "\033[0m";
 }
 
+template <typename T, typename U>
+inline int bepaald::findIdxOf(T const &container, U const &value)
+{
+  auto it = std::find(container.begin(), container.end(), value);
+  if (it == container.end())
+    return -1;
+  return std::distance(container.begin(), it);
+}
 
 #ifdef SIGNALBACKUP_TOOLS_REPORT_MEM
 #define MEMINFO(...) process_mem_usage(__VA_ARGS__)

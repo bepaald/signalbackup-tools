@@ -421,6 +421,8 @@ If this tool was helpful to you or you appreciate my work and you can spare it, 
 
 BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
 
+ETH: 0xc59892f4E54E3e8Ab285f3C41B396d9E15C8B4aA
+
 Paypal: [![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=U523FZFW3BQBQ&currency_code=USD&source=url)
 
 Donations will help development in that they will put food in my mouth, and I need food to write code :smile:

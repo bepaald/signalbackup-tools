@@ -27,6 +27,7 @@ Arg::Arg(int argc, char *argv[])
   d_input(std::string()),
   d_password(std::string()),
   d_importthreads(std::vector<int>()),
+  d_limittothreads(std::vector<int>()),
   d_output(std::string()),
   d_opassword(std::string()),
   d_source(std::string()),
@@ -43,6 +44,7 @@ Arg::Arg(int argc, char *argv[])
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
   d_dumpdesktopdb(std::string()),
+  d_dumpmedia(std::string()),
   d_hhenkel(std::string()),
   d_importcsv(std::string()),
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
@@ -96,6 +98,36 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           continue;
         }
         if (!parseNumberList(arguments[++i], &d_importthreads))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limittothreads")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
+        {
+          int tmp;
+          if (!ston(&tmp, std::string("-1")))
+          {
+            std::cerr << "Bad special value in argument spec file!" << std::endl;
+            ok = false;
+          }
+          d_limittothreads.clear();
+          d_limittothreads.push_back(tmp);
+          ++i;
+          continue;
+        }
+        if (!parseNumberList(arguments[++i], &d_limittothreads))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -316,6 +348,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
         d_dumpdesktopdb = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--dumpmedia")
+    {
+      if (i < arguments.size() - 1)
+        d_dumpmedia = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;

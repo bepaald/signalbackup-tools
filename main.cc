@@ -84,6 +84,7 @@ int main(int argc, char *argv[])
                                                      !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
                                                      !arg.croptodates().empty() || arg.removedoubles() ||
                                                      !arg.runprettysqlquery().empty() || !arg.mergerecipients().empty() ||
+                                                     !arg.dumpmedia().empty() ||
                                                      arg.fast())
                                                     ? SignalBackup::LOWMEM : false, arg.showprogress(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
@@ -182,6 +183,10 @@ int main(int argc, char *argv[])
     std::cout << "Merging groups..." << std::endl;
     sb->mergeGroups(arg.mergegroups());
   }
+
+  if (!arg.dumpmedia().empty())
+    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittothreads(), arg.overwrite()))
+      return 1;
 
   if (!arg.importwachat().empty())
     if (!sb->importWAChat(arg.importwachat(), arg.setwatimefmt(), arg.setselfid()))

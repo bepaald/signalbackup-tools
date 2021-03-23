@@ -94,6 +94,7 @@ class SignalBackup
   bool importWAChat(std::string const &file, std::string const &fmt, std::string const &self = std::string());
   bool summarize() const;
   bool reorderMmsSmsIds() const;
+  bool dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const;
 
   bool hhenkel(std::string const &);
 
@@ -145,6 +146,8 @@ class SignalBackup
   bool handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author,
                        std::string const &message, std::string const &selfid, bool isgroup,
                        std::map<std::string, std::string> const &name_to_recipientid);
+  bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
+  std::string sanitizeFilename(std::string const &filename) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,

@@ -37,6 +37,7 @@ class Arg
   std::string d_input;
   std::string d_password;
   std::vector<int> d_importthreads;
+  std::vector<int> d_limittothreads;
   std::string d_output;
   std::string d_opassword;
   std::string d_source;
@@ -53,6 +54,7 @@ class Arg
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
   std::string d_dumpdesktopdb;
+  std::string d_dumpmedia;
   std::string d_hhenkel;
   std::string d_importcsv;
   std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
@@ -77,6 +79,7 @@ class Arg
   inline std::string const &input() const;
   inline std::string const &password() const;
   inline std::vector<int> const &importthreads() const;
+  inline std::vector<int> const &limittothreads() const;
   inline std::string const &output() const;
   inline std::string const &opassword() const;
   inline std::string const &source() const;
@@ -93,6 +96,7 @@ class Arg
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
   inline std::string const &dumpdesktopdb() const;
+  inline std::string const &dumpmedia() const;
   inline std::string const &hhenkel() const;
   inline std::string const &importcsv() const;
   inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
@@ -138,6 +142,11 @@ inline std::string const &Arg::password() const
 inline std::vector<int> const &Arg::importthreads() const
 {
   return d_importthreads;
+}
+
+inline std::vector<int> const &Arg::limittothreads() const
+{
+  return d_limittothreads;
 }
 
 inline std::string const &Arg::output() const
@@ -218,6 +227,11 @@ inline std::vector<long long int> const &Arg::editattachmentsize() const
 inline std::string const &Arg::dumpdesktopdb() const
 {
   return d_dumpdesktopdb;
+}
+
+inline std::string const &Arg::dumpmedia() const
+{
+  return d_dumpmedia;
 }
 
 inline std::string const &Arg::hhenkel() const

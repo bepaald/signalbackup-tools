@@ -33,3 +33,4 @@
 #include "../groupstatusmessageproto/groupstatusmessageproto.h"
 #include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
 #include "../csvreader/csvreader.h"
+#include "../mimetypes/mimetypes.h"
