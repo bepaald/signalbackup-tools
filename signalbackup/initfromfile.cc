@@ -70,16 +70,20 @@ void SignalBackup::initFromFile()
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
 
-      [[unlikely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
+      //if (frame->frameNumber() < 500)
+      //  frame->printInfo();
+
+      [[likely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
       {
         if (!d_database.exec(s->bindStatement(), s->parameters()))
           std::cout << "WARNING: Failed to execute statement: " << s->statement() << std::endl;
       }
       #ifdef BUILT_FOR_TESTING
-      else if (s->frameNumber() == 2 && s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
+      else if (s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {
         // force early creation of sqlite_sequence table, this is completely unnessecary and only used
         // to get byte-identical backups during testing
+        std::cout << "BUILT_FOR_TESTING : Forcing early creation of sqlite_sequence" << std::endl;
         d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
         d_database.exec("DROP TABLE dummy");
       }
