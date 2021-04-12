@@ -29,6 +29,7 @@
 #include "../attachmentframe/attachmentframe.h"
 #include "../avatarframe/avatarframe.h"
 #include "../sharedprefframe/sharedprefframe.h"
+#include "../keyvalueframe/keyvalueframe.h"
 #include "../stickerframe/stickerframe.h"
 #include "../endframe/endframe.h"
 #include "../sqlstatementframe/sqlstatementframe.h"
@@ -55,6 +56,7 @@ class SignalBackup
   std::unique_ptr<HeaderFrame> d_headerframe;
   std::unique_ptr<DatabaseVersionFrame> d_databaseversionframe;
   std::vector<std::unique_ptr<SharedPrefFrame>> d_sharedpreferenceframes;
+  std::vector<std::unique_ptr<KeyValueFrame>> d_keyvalueframes;
   std::unique_ptr<EndFrame> d_endframe;
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
@@ -299,16 +301,31 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
         return false;
       newframe->setNewData(field, decdata.first, decdata.second);
     }
-    // else if (type == "uint32")
-    // {
-    //   std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoul(datastr)));
-    //   if (!decdata.first)
-    //     return false;
-    //   newframe->setNewData(field, decdata.first, decdata.second);
-    // }
     else if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
     {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
       std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
+      if (!decdata.first)
+        return false;
+      newframe->setNewData(field, decdata.first, decdata.second);
+    }
+    else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
+    {                                            // (on windows stol would be four bytes and the above if-clause would cause bad data
+      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoll(datastr)));
+      if (!decdata.first)
+        return false;
+      newframe->setNewData(field, decdata.first, decdata.second);
+    }
+    else if (type == "float") // due to possible precision problems, the 4 bytes of float are saved in binary format (base64 encoded)
+    {                         // WANRING untested
+      std::pair<unsigned char *, size_t> decfloat = Base64::base64StringToBytes(datastr);
+      if (!decfloat.first || decfloat.second != 4)
+        return false;
+      newframe->setNewData(field, decfloat.first, decfloat.second);
+    }
+    else if (type == "bool") // since booleans are stored as varints, this is identical to uint64/32 code
+    {
+      std::string val = (datastr == "true") ? "1" : "0";
+      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(val)));
       if (!decdata.first)
         return false;
       newframe->setNewData(field, decdata.first, decdata.second);

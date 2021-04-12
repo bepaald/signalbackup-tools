@@ -119,6 +119,17 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
         return false;
 
+    // export keyvalues
+    std::cout << "Writing KeyValueFrame(s)..." << std::endl;
+#if __cplusplus > 201703L
+    for (int count = 1; auto const &kvframe : d_keyvalueframes)
+#else
+      count = 1;
+    for (auto const &fvframe : d_keyvalueframes)
+#endif
+      if (!writeRawFrameDataToFile(directory + "/KeyValue_" + bepaald::toString(count++) + ".sbf", kvframe))
+        return false;
+
     // export stickers
     std::cout << "Writing StickerFrames..." << std::endl;
 #if __cplusplus > 201703L

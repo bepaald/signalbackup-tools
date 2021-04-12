@@ -215,17 +215,17 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     if (!writeEncryptedFrame(outputfile, d_sharedpreferenceframes[i].get()))
       return false;
 
-  // AVATAR + ATTACHMENTS
+  std::cout << "Writing KeyValueFrame(s)..." << std::endl;
+  // KEYVALUES
+  for (uint i = 0; i < d_keyvalueframes.size(); ++i)
+    if (!writeEncryptedFrame(outputfile, d_keyvalueframes[i].get()))
+      return false;
+
+  // AVATAR
   std::cout << "Writing Avatars..." << std::endl;
   for (auto const &a : d_avatars)
     if (!writeEncryptedFrame(outputfile, a.second.get()))
       return false;
-
-  // // STICKER + ATTACHMENTS
-  // std::cout << "Writing Stickers..." << std::endl;
-  // for (auto const &s : d_stickers)
-  //   if (!writeEncryptedFrame(outputfile, s.second.get()))
-  //     return false;
 
   // END
   std::cout << "Writing EndFrame..." << std::endl;

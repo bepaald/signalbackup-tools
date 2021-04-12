@@ -142,12 +142,6 @@ inline uint64_t AvatarFrame::dataSize() const
     switch (std::get<0>(fd))
     {
     case FIELD::NAME:
-      {
-        uint64_t stringsize = std::get<2>(fd);
-        size += varIntSize(stringsize);
-        size += stringsize + 1; // +1 for fieldtype + wiretype
-        break;
-      }
     case FIELD::RECIPIENT:
       {
         uint64_t stringsize = std::get<2>(fd);

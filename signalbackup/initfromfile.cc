@@ -104,6 +104,11 @@ void SignalBackup::initFromFile()
       //frame->printInfo();
       d_sharedpreferenceframes.emplace_back(reinterpret_cast<SharedPrefFrame *>(frame.release()));
     }
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::KEYVALUE)
+    {
+      //frame->printInfo();
+      d_keyvalueframes.emplace_back(reinterpret_cast<KeyValueFrame *>(frame.release()));
+    }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
     {
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());

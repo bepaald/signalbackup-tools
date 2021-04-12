@@ -43,6 +43,7 @@ class BackupFrame
    END = 6, // bool
    AVATAR = 7,
    STICKER = 8,
+   KEYVALUE = 9,
 
    INVALID = std::numeric_limits<unsigned int>::max()
   };
@@ -99,6 +100,8 @@ class BackupFrame
  protected:
   inline uint32_t bytesToUint32(unsigned char *data, size_t len) const;
   inline uint64_t bytesToUint64(unsigned char *data, size_t len) const;
+  inline int32_t bytesToInt32(unsigned char *data, size_t len) const;
+  inline int64_t bytesToInt64(unsigned char *data, size_t len) const;
   bool init(unsigned char *data, size_t length, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata);
   template <typename T>
   inline void intTypeToBytes(T val, unsigned char *b);
@@ -108,6 +111,7 @@ class BackupFrame
   inline uint64_t setFrameSize(uint64_t totalsize, unsigned char *mem) const;
   inline uint64_t putLengthDelimType(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
   inline uint64_t putVarIntType(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
+  inline uint64_t putFixed32Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
   inline uint64_t putFixed64Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
 
  private:
@@ -278,6 +282,10 @@ inline std::string BackupFrame::frameTypeString() const
   {
    return "StickerFrame";
   }
+  case 9:
+  {
+   return "KeyValueFrame";
+  }
   case std::numeric_limits<unsigned int>::max():
   {
    return "InvalidFrame";
@@ -348,6 +356,26 @@ inline uint64_t BackupFrame::bytesToUint64(unsigned char *data, size_t len) cons
     static_cast<uint64_t>(data[len - 6] & 0xFF) << 40 |
     static_cast<uint64_t>(data[len - 7] & 0xFF) << 48 |
     static_cast<uint64_t>(data[len - 8] & 0xFF) << 56;
+}
+
+inline int32_t BackupFrame::bytesToInt32(unsigned char *data, size_t len) const
+{
+  return static_cast<int32_t>(data[len - 1] & 0xFF) |
+    static_cast<int32_t>(data[len - 2] & 0xFF) << 8 |
+    static_cast<int32_t>(data[len - 3] & 0xFF) << 16 |
+    static_cast<int32_t>(data[len - 4] & 0xFF) << 24;
+}
+
+inline int64_t BackupFrame::bytesToInt64(unsigned char *data, size_t len) const
+{
+  return static_cast<int64_t>(data[len - 1] & 0xFF) |
+    static_cast<int64_t>(data[len - 2] & 0xFF) << 8 |
+    static_cast<int64_t>(data[len - 3] & 0xFF) << 16 |
+    static_cast<int64_t>(data[len - 4] & 0xFF) << 24 |
+    static_cast<int64_t>(data[len - 5] & 0xFF) << 32 |
+    static_cast<int64_t>(data[len - 6] & 0xFF) << 40 |
+    static_cast<int64_t>(data[len - 7] & 0xFF) << 48 |
+    static_cast<int64_t>(data[len - 8] & 0xFF) << 56;
 }
 
 // inline void BackupFrame::printInfo() const // virtual
@@ -487,6 +515,15 @@ inline uint64_t BackupFrame::putVarIntType(std::tuple<unsigned int, unsigned cha
   uint64_t value = bytesToUint64(std::get<1>(data), std::get<2>(data));
   datapos += setFieldAndWire(std::get<0>(data), WIRETYPE::VARINT, mem + datapos);
   datapos += putVarInt(value, mem + datapos);
+  return datapos;
+}
+
+inline uint64_t BackupFrame::putFixed32Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const
+{
+  uint64_t datapos = 0;
+  datapos += setFieldAndWire(std::get<0>(data), WIRETYPE::FIXED32, mem + datapos);
+  std::memcpy(mem + datapos, std::get<1>(data), std::get<2>(data));
+  datapos += std::get<2>(data);
   return datapos;
 }
 

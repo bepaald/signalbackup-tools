@@ -56,6 +56,20 @@ void SignalBackup::initFromDir(std::string const &inputdir)
     ++idx;
   }
 
+  std::cout << "Reading KeyValueFrame(s)" << std::endl;
+  idx = 1;
+  while (true)
+  {
+    d_keyvalueframes.resize(d_keyvalueframes.size() + 1);
+    if (!setFrameFromFile(&d_keyvalueframes.back(), inputdir + "/KeyValue_" + bepaald::toString(idx) + ".sbf", true))
+    {
+      d_keyvalueframes.pop_back();
+      break;
+    }
+    //d_keyvalueframes.back()->printInfo();
+    ++idx;
+  }
+
   std::cout << "Reading EndFrame" << std::endl;
   if (!setFrameFromFile(&d_endframe, inputdir + "/End.sbf"))
   {

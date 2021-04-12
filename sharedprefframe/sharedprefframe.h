@@ -29,7 +29,10 @@ class SharedPrefFrame : public BackupFrame
    INVALID = 0,
    FILE = 1, // string
    KEY = 2,  // string
-   VALUE = 3 // string
+   VALUE = 3, // string
+   BOOLEANVALUE = 4, // bool
+   STRINGSETVALUE = 5, // string (repeated)
+   ISSTRINGSETVALUE = 6 // bool
   };
 
   static Registrar s_registrar;
@@ -72,12 +75,17 @@ inline void SharedPrefFrame::printInfo() const // virtual
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::FILE)
-      std::cout << "         - (file  : \"";
+      std::cout << "         - (file  : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
     else if (std::get<0>(p) == FIELD::KEY)
-      std::cout << "         - (key   : \"";
+      std::cout << "         - (key   : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
     else if (std::get<0>(p) == FIELD::VALUE)
-      std::cout << "         - (value : \"";
-    std::cout << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      std::cout << "         - (value : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+    else if (std::get<0>(p) == FIELD::BOOLEANVALUE)
+      std::cout << "         - (booleanvalue : \"" << std::boolalpha << (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
+    else if (std::get<0>(p) == FIELD::STRINGSETVALUE)
+      std::cout << "         - (stringsetvalue : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+    else if (std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
+      std::cout << "         - (isstringsetvalue : \"" << std::boolalpha << (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
   }
 }
 
@@ -91,10 +99,27 @@ inline uint64_t SharedPrefFrame::dataSize() const
   uint64_t size = 0;
   for (auto const &fd : d_framedata)
   {
-      uint64_t statementsize = std::get<2>(fd); // length of actual data
-      // length of length
-      size += varIntSize(statementsize);
-      size += statementsize + 1; // plus one for fieldtype + wiretype
+    switch (std::get<0>(fd))
+    {
+    case FIELD::FILE:
+    case FIELD::KEY:
+    case FIELD::VALUE:
+    case FIELD::STRINGSETVALUE:
+      {
+        uint64_t stringsize = std::get<2>(fd);
+        size += varIntSize(stringsize);
+        size += stringsize + 1; // +1 for fieldtype + wiretype
+        break;
+      }
+    case FIELD::BOOLEANVALUE:
+    case FIELD::ISSTRINGSETVALUE:
+      {
+        uint64_t value = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
+        size += varIntSize(value);
+        size += 1; // for fieldtype + wiretype
+        break;
+      }
+    }
   }
   // for size of this entire frame.
   size += varIntSize(size);
@@ -111,7 +136,25 @@ inline std::pair<unsigned char *, uint64_t> SharedPrefFrame::getData() const
   datapos += setFrameSize(size, data + datapos);
 
   for (auto const &fd : d_framedata)
-    datapos += putLengthDelimType(fd, data + datapos);
+  {
+    switch (std::get<0>(fd))
+    {
+    case FIELD::FILE:
+    case FIELD::KEY:
+    case FIELD::VALUE:
+    case FIELD::STRINGSETVALUE:
+      {
+        datapos += putLengthDelimType(fd, data + datapos);
+        break;
+      }
+    case FIELD::BOOLEANVALUE:
+    case FIELD::ISSTRINGSETVALUE:
+      {
+        datapos += putVarIntType(fd, data + datapos);
+        break;
+      }
+    }
+  }
 
   return {data, size};
 
@@ -131,7 +174,10 @@ inline bool SharedPrefFrame::validate() const
   {
     if (std::get<0>(p) != FIELD::FILE &&
         std::get<0>(p) != FIELD::KEY &&
-        std::get<0>(p) != FIELD::VALUE)
+        std::get<0>(p) != FIELD::VALUE &&
+        std::get<0>(p) != FIELD::BOOLEANVALUE &&
+        std::get<0>(p) != FIELD::STRINGSETVALUE &&
+        std::get<0>(p) != FIELD::ISSTRINGSETVALUE)
       return false;
 
     if (std::get<0>(p) == FIELD::FILE)
@@ -140,7 +186,10 @@ inline bool SharedPrefFrame::validate() const
     if (std::get<0>(p) == FIELD::KEY)
       ++foundkey;
 
-    if (std::get<0>(p) == FIELD::VALUE)
+    if (std::get<0>(p) == FIELD::VALUE ||
+        std::get<0>(p) == FIELD::BOOLEANVALUE ||
+        std::get<0>(p) == FIELD::STRINGSETVALUE ||
+        std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
       ++foundvalue;
   }
   return (foundfile + foundkey + foundvalue) > 0 && foundkey == foundvalue;
@@ -148,16 +197,23 @@ inline bool SharedPrefFrame::validate() const
 
 inline std::string SharedPrefFrame::getHumanData() const
 {
+  using namespace std::string_literals;
+
   std::string data;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::FILE)
-      data += "FILE";
+      data += "FILE:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
     else if (std::get<0>(p) == FIELD::KEY)
-      data += "KEY";
+      data += "KEY:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
     else if (std::get<0>(p) == FIELD::VALUE)
-      data += "VALUE";
-    data += ":string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
+      data += "VALUE:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
+    else if (std::get<0>(p) == FIELD::BOOLEANVALUE)
+      data += "BOOLEANVALUE:bool:" + (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s) + "\n";
+    else if (std::get<0>(p) == FIELD::STRINGSETVALUE)
+      data += "STRINGSETVALUE:string:" + bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) + "\n";
+    else if (std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
+      data += "ISSTRINGSETVALUE:bool:" + (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s) + "\n";
   }
   return data;
 }
@@ -170,6 +226,12 @@ inline unsigned int SharedPrefFrame::getField(std::string const &str) const
     return FIELD::KEY;
   if (str == "VALUE")
     return FIELD::VALUE;
+  if (str == "BOOLEANVALUE")
+    return FIELD::BOOLEANVALUE;
+  if (str == "STRINGSETVALUE")
+    return FIELD::STRINGSETVALUE;
+  if (str == "ISSTRINGSETVALUE")
+    return FIELD::ISSTRINGSETVALUE;
   return FIELD::INVALID;
 }
 
