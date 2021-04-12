@@ -17,9 +17,6 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "keyvalueframe.ih"
 
-#define VERSIONDATE "20210412.194049"
-
-#endif
+KeyValueFrame::Registrar KeyValueFrame::s_registrar(FRAMETYPE::KEYVALUE, create);

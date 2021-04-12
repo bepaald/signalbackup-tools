@@ -48,7 +48,7 @@ class SqlStatementFrame : public BackupFrame
   enum FIELD
   {
     STATEMENT = 1,  // string
-    PARAMETERS = 2
+    PARAMETERS = 2  // PARAMETER_FILED (repeated)
   };
 
  private:
