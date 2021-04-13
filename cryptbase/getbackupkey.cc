@@ -41,13 +41,13 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
 
   if (i != passlength)
   {
-    std::cout << "ERROR : Passphrase too short! Need " << passlength << " digits, " << i << " provided" << std::endl;
+    std::cout << "ERROR : Failed to parse passphrase from string '" << passphrase << "' : passphrase too short! Need " << passlength << " digits, " << i << " provided" << std::endl;
     return false;
   }
 
   if (j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
   {
-    std::cout << "ERROR : Passphrase too long! Need " << passlength << " digits" << std::endl;
+    std::cout << "ERROR : Failed to parse passphrase from string '" << passphrase << "' : passphrase too long! Need " << passlength << " digits" << std::endl;
     return false;
   }
 
