@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
   // temporary, to import messages from truncated database into older, but complete database
   if (!arg.sleepyh34d().empty())
   {
-    if (!sb->sleepyh34d(arg.sleepyh34d()[0], arg.sleepyh34d()[1]))
+    if (!sb->sleepyh34d(arg.sleepyh34d()[0], (arg.sleepyh34d().size() > 1) ? arg.sleepyh34d()[1] : arg.password()))
     {
       std::cout << "Error during import" << std::endl;
       return 1;
