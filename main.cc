@@ -211,10 +211,20 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-  // temporary, to generate truncated backup's missing data from Signal Desktop database
+  // temporary, to generate truncated backup's missing data from Signal Desktop database INCOMPLETE
   if (!arg.hhenkel().empty())
   {
     sb->hhenkel(arg.hhenkel());
+  }
+
+  // temporary, to import messages from truncated database into older, but complete database
+  if (!arg.sleepyh34d().empty())
+  {
+    if (!sb->sleepyh34d(arg.sleepyh34d()[0], arg.sleepyh34d()[1]))
+    {
+      std::cout << "Error during import" << std::endl;
+      return 1;
+    }
   }
 
   if (arg.reordermmssmsids() ||

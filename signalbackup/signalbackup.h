@@ -98,7 +98,10 @@ class SignalBackup
   bool reorderMmsSmsIds() const;
   bool dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const;
 
+  /* CUSTOMS */
   bool hhenkel(std::string const &);
+  bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
+  /* CUSTOMS */
 
  private:
   [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
@@ -316,7 +319,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
       newframe->setNewData(field, decdata.first, decdata.second);
     }
     else if (type == "float") // due to possible precision problems, the 4 bytes of float are saved in binary format (base64 encoded)
-    {                         // WANRING untested
+    {                         // WARNING untested
       std::pair<unsigned char *, size_t> decfloat = Base64::base64StringToBytes(datastr);
       if (!decfloat.first || decfloat.second != 4)
         return false;

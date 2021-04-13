@@ -37,6 +37,7 @@ Arg::Arg(int argc, char *argv[])
   d_croptodates(std::vector<std::string>()),
   d_mergerecipients(std::vector<std::string>()),
   d_mergegroups(std::vector<std::string>()),
+  d_sleepyh34d(std::vector<std::string>()),
   d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_exportxml(std::string()),
   d_runsqlquery(std::vector<std::string>()),
@@ -250,6 +251,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!parseStringList(arguments[++i], &d_mergegroups))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--sleepyh34d")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_sleepyh34d))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
