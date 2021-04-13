@@ -457,3 +457,128 @@ void SignalBackup::esokrates()
   std::cout << "Deleted " << d_database.changed() << " entries" << std::endl;
 }
 */
+
+
+bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string const &pwd)
+{
+
+  // open truncated
+  std::cout << "Opening truncated backup..." << std::endl;
+  std::unique_ptr<SignalBackup> tf(new SignalBackup(truncatedbackup, pwd, false, SignalBackup::LOWMEM, true, false));
+  if (!tf->ok())
+  {
+    std::cout << "Failed to read truncated backup file" << std::endl;
+    return false;
+  }
+
+  std::cout << "Deleting sms/mms tables from complete backup" << std::endl;
+  if (!d_database.exec("DELETE FROM sms") ||
+      !d_database.exec("DELETE FROM mms") ||
+      !d_database.exec("DELETE FROM part"))
+  {
+    std::cout << "Error deleting contents of sms/mms tables" << std::endl;
+    return false;
+  }
+  d_attachments.clear();
+
+  // in truncated: remove part entries (and d_attachments[i]), then import
+  std::cout << "Cleaning up part table/attachments..." << std::endl;
+  SqliteDB::QueryResults results;
+  tf->d_database.exec("SELECT _id,unique_id FROM part", &results);
+  std::vector<std::pair<long long int, long long int>> missingdata;
+  for (uint i = 0; i < results.rows(); ++i)
+  {
+    uint64_t rowid = results.getValueAs<long long int>(i, "_id");
+    uint64_t uniqid = results.getValueAs<long long int>(i, "unique_id");
+
+    if (tf->d_attachments.find({rowid, uniqid}) == tf->d_attachments.end())
+      missingdata.emplace_back(std::make_pair(rowid, uniqid));
+  }
+
+  for (auto const &a : missingdata)
+  {
+    if (!tf->d_database.exec("DELETE FROM part WHERE _id = ? AND unique_id = ?", {a.first, a.second}))
+      std::cout << "Warning failed to remove part entry with missing data" << std::endl;
+  }
+
+  std::vector<std::string> tables{"sms", "mms", "part"};
+  for (std::string const &table : tables)
+  {
+    std::cout << "Importing " << table << " entries from truncated file ";
+    //SqliteDB::QueryResults results;
+    tf->d_database.exec("SELECT * FROM " + table, &results);
+    // check if tf (which is newer) contains columns not existing in target
+    uint idx = 0;
+    while (idx < results.headers().size())
+    {
+      if (!d_database.tableContainsColumn(table, results.headers()[idx]))
+      {
+        std::cout << "  NOTE: Dropping column '" << table << "." << results.headers()[idx] << "' from truncated : Column not present in target database" << std::endl;
+        if (results.removeColumn(idx))
+          continue;
+      }
+      // else
+      ++idx;
+    }
+    // import
+    std::cout << " " << results.rows() << " entries." << std::endl;
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
+      if (!d_database.exec(newframe.bindStatement(), newframe.parameters()))
+        std::cout << "Warning: Failed to import sqlstatement (" << table << ")" << std::endl;
+    }
+  }
+
+  // check for unreferenced threads
+  d_database.exec("SELECT DISTINCT thread_id FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+  if (results.rows() > 0)
+  {
+    std::cout << "WARNING:" << " Found messages in thread not present in old (complete) database... dropping them!" << std::endl;
+    d_database.exec("DELETE FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
+  }
+  d_database.exec("SELECT DISTINCT thread_id FROM mms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+  if (results.rows() > 0)
+  {
+    std::cout << "WARNING:" << " Found messages in thread not present in old (complete) database... dropping them!" << std::endl;
+    d_database.exec("DELETE FROM mms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
+  }
+
+  // check for unreferenced recipients
+  d_database.exec("SELECT DISTINCT address FROM sms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
+  if (results.rows() > 0)
+  {
+    std::cout << "WARNING:" << " Found messages referencing recipient not present in old (complete) database... dropping them!" << std::endl;
+    d_database.exec("DELETE FROM sms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
+  }
+  d_database.exec("SELECT DISTINCT address FROM mms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
+  if (results.rows() > 0)
+  {
+    std::cout << "WARNING:" << " Found messages referencing recipient not present in old (complete) database... dropping them!" << std::endl;
+    d_database.exec("DELETE FROM mms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
+  }
+
+  // CHECK AND WARN FOR MENTIONS
+  d_database.exec("SELECT mms.address,DATETIME(ROUND(mms.date / 1000), 'unixepoch') AS 'date',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread.recipient_ids LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
+  if (results.rows() > 0)
+  {
+    std::cout << "WARNING" << " Mentions found! Probably a good idea to check these messages:" << std::endl;
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      std::cout << " -  Group: " << results.valueAsString(i, "title") << std::endl;
+      std::cout << "    Date : " << results.valueAsString(i, "date") << std::endl;
+    }
+  }
+
+  // and copy avatars and attachments.
+  for (auto &att : tf->d_attachments)
+    d_attachments.emplace(std::move(att));
+
+  // update thread snippet and date and count
+  updateThreadsEntries();
+
+  d_database.exec("VACUUM");
+  d_database.freeMemory();
+
+  return true;
+}

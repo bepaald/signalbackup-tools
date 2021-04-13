@@ -45,6 +45,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   //  bruteForceFrom(filepos)???
   //}
 
+  [[unlikely]] if (encryptedframelength == 0 && d_file.eof())
+  {
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file!" << std::endl;
+    return std::unique_ptr<BackupFrame>(nullptr);
+  }
+
   DEBUGOUT("Framelength: ", encryptedframelength);
   [[unlikely]] if (d_verbose)
     std::cout << "Framelength: " << encryptedframelength << std::endl;
@@ -195,6 +201,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
        frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
+
+    [[ unlikely ]] if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize))
+      if (!d_assumebadframesize)
+      {
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
+        return std::unique_ptr<BackupFrame>(nullptr);
+      }
+
     uintToFourBytes(d_iv, d_counter++);
 
     reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
@@ -206,7 +220,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
       [[unlikely]] if (d_verbose)
         std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
 
-      int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
+      int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())); // 0 == good, >0 == bad, <0 == bad+badmac
       if (getatt > 0)
       {
         std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;

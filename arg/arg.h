@@ -47,6 +47,7 @@ class Arg
   std::vector<std::string> d_croptodates;
   std::vector<std::string> d_mergerecipients;
   std::vector<std::string> d_mergegroups;
+  std::vector<std::string> d_sleepyh34d;
   std::vector<std::pair<std::string,std::string>> d_exportcsv;
   std::string d_exportxml;
   std::vector<std::string> d_runsqlquery;
@@ -89,6 +90,7 @@ class Arg
   inline std::vector<std::string> const &croptodates() const;
   inline std::vector<std::string> const &mergerecipients() const;
   inline std::vector<std::string> const &mergegroups() const;
+  inline std::vector<std::string> const &sleepyh34d() const;
   inline std::vector<std::pair<std::string,std::string>> const &exportcsv() const;
   inline std::string const &exportxml() const;
   inline std::vector<std::string> const &runsqlquery() const;
@@ -192,6 +194,11 @@ inline std::vector<std::string> const &Arg::mergerecipients() const
 inline std::vector<std::string> const &Arg::mergegroups() const
 {
   return d_mergegroups;
+}
+
+inline std::vector<std::string> const &Arg::sleepyh34d() const
+{
+  return d_sleepyh34d;
 }
 
 inline std::vector<std::pair<std::string,std::string>> const &Arg::exportcsv() const
