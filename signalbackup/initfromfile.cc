@@ -75,6 +75,10 @@ void SignalBackup::initFromFile()
 
       [[likely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
       {
+        // NOTE: in the official import, there are other tables that are skipped (virtual tables for search data)
+        // we lazily do not check for them here, since we are dealing with official exported fiels which do not contain
+        // these tables as they are excluded on the export-side as well. Additionally, the official import should be able
+        // to properly deal with them anyway (that is: ignore them)
         if (!d_database.exec(s->bindStatement(), s->parameters()))
           std::cout << "WARNING: Failed to execute statement: " << s->statement() << std::endl;
       }

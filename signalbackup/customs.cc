@@ -163,9 +163,6 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
   d_database.exec("DELETE FROM sms_fts_idx");
 
 
-
-
-
     /*
 
       recipient._id      := [s|m]ms.address
