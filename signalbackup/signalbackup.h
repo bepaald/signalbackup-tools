@@ -178,8 +178,25 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
                                        bool keepattachmentdatainmemory, bool onlydb)
 {
+  // if output is existing directory
   if (bepaald::fileOrDirExists(filename) && bepaald::isDir(filename))
     return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
+
+  // if output does not exist, but ends in directory delimiter
+  if (!bepaald::fileOrDirExists(filename) &&
+      (filename.back() == '/' || filename.back() == std::filesystem::path::preferred_separator))
+  {
+    // create dir
+    std::error_code ec;
+    if (!std::filesystem::create_directory(filename, ec))
+    {
+      std::cout << "Error: Failed to create directory \"" << filename << "\"" << std::endl;
+      return false;
+    }
+    return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
+  }
+
+  // export to file
   return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);
 }
 

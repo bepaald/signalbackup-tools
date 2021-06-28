@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  // check output exists (file exists OR dir is not empty)
   if (!arg.output().empty() && bepaald::fileOrDirExists(arg.output()) &&
       ((!bepaald::isDir(arg.output()) || (bepaald::isDir(arg.output()) && !bepaald::isEmpty(arg.output()))) &&
        !arg.overwrite()))

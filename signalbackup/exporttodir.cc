@@ -125,7 +125,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     for (int count = 1; auto const &kvframe : d_keyvalueframes)
 #else
       count = 1;
-    for (auto const &fvframe : d_keyvalueframes)
+    for (auto const &kvframe : d_keyvalueframes)
 #endif
       if (!writeRawFrameDataToFile(directory + "/KeyValue_" + bepaald::toString(count++) + ".sbf", kvframe))
         return false;
