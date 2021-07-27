@@ -19,7 +19,7 @@
 
 #include "filedecryptor.ih"
 
-FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool lazy, bool assumebadframesize, std::vector<long long int> editattachments)
+FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool lazy, bool stoponbadmac, bool assumebadframesize, std::vector<long long int> editattachments)
   :
   d_headerframe(nullptr),
   d_file(filename, std::ios_base::binary | std::ios_base::in),
@@ -30,7 +30,8 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   d_badmac(false),
   d_assumebadframesize(assumebadframesize),
   d_editattachments(editattachments),
-  d_verbose(verbose)
+  d_verbose(verbose),
+  d_stoponbadmac(stoponbadmac)
 {
   if (!d_file.is_open())
   {

@@ -68,7 +68,8 @@ class SignalBackup
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false,
-                      std::vector<long long int> editattachments = std::vector<long long int>());
+                      std::vector<long long int> editattachments = std::vector<long long int>(),
+                      bool stoponbadmac = false);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
@@ -156,21 +157,22 @@ class SignalBackup
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                                  bool issource, bool showprogress,
-                                  bool assumebadframesizeonbadmac, std::vector<long long int> editattachments)
+                                  bool issource, bool showprogress, bool assumebadframesizeonbadmac,
+                                  std::vector<long long int> editattachments, bool stoponbadmac)
   :
   d_database(":memory:"),
   d_passphrase(passphrase),
   d_ok(false),
   d_databaseversion(-1),
   d_showprogress(showprogress),
+  d_stoponbadmac(stoponbadmac),
   d_verbose(verbose)
 {
   if (bepaald::isDir(filename))
     initFromDir(filename);
   else // not directory
   {
-    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, issource, assumebadframesizeonbadmac, editattachments));
+    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, issource, stoponbadmac, assumebadframesizeonbadmac, editattachments));
     initFromFile();
   }
 }

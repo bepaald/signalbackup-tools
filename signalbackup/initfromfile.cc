@@ -37,7 +37,11 @@ void SignalBackup::initFromFile()
   while ((frame = d_fd->getFrame())) // deal with bad mac??
   {
     [[unlikely]] if (d_fd->badMac())
+    {
       dumpInfoOnBadFrame(&frame);
+      if (d_stoponbadmac)
+        return;
+    }
 
     [[likely]] if (d_showprogress)
     {
@@ -136,6 +140,12 @@ void SignalBackup::initFromFile()
     dumpInfoOnBadFrames();
   }
   std::cout << "" << std::endl;
+
+  [[unlikely]] if (d_fd->badMac())
+  {
+    if (d_stoponbadmac)
+      return;
+  }
 
   std::cout << "done!" << std::endl;
 
