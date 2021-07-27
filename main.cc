@@ -76,6 +76,15 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  // temporary. REMOVE THIS
+  if (arg.strugee() != -1)
+  {
+    std::cout << "TEMP FUNCTION (#37)" << std::endl;
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    fd.strugee(arg.strugee());
+    return 0;
+  }
+
   MEMINFO("Start of program, before opening input");
 
   // open input
@@ -88,7 +97,8 @@ int main(int argc, char *argv[])
                                                      !arg.dumpmedia().empty() ||
                                                      arg.fast())
                                                     ? SignalBackup::LOWMEM : false, arg.showprogress(),
-                                                    arg.assumebadframesizeonbadmac(), arg.editattachmentsize()));
+                                                    arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
+                                                    arg.stoponbadmac()));
   if (!sb->ok())
   {
     std::cout << "Failed to open backup" << std::endl;

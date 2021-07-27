@@ -78,6 +78,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
     d_badmac = true;
+    if (d_stoponbadmac)
+    {
+      std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+      return std::unique_ptr<BackupFrame>(nullptr);
+    }
   }
   else
   {
@@ -135,6 +140,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
 
     d_badmac = true;
+    if (d_stoponbaadmac)
+    {
+      std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+      return std::unique_ptr<BackupFrame>(nullptr);
+    }
   }
   else
   {
@@ -230,6 +240,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
       if (getatt < 0)
       {
         d_badmac = true;
+        if (d_stoponbadmac)
+        {
+          std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+          return std::unique_ptr<BackupFrame>(nullptr);
+        }
         if (d_assumebadframesize)
         {
           std::unique_ptr<BackupFrame> f = bruteForceFrom(filepos, encryptedframelength);

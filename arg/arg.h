@@ -72,6 +72,7 @@ class Arg
   bool d_reordermmssmsids;
   bool d_stoponbadmac;
   bool d_verbose;
+  int d_strugee;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -115,6 +116,7 @@ class Arg
   inline bool reordermmssmsids() const;
   inline bool stoponbadmac() const;
   inline bool verbose() const;
+  inline int strugee() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -319,6 +321,11 @@ inline bool Arg::stoponbadmac() const
 inline bool Arg::verbose() const
 {
   return d_verbose;
+}
+
+inline int Arg::strugee() const
+{
+  return d_strugee;
 }
 
 inline bool Arg::ok() const

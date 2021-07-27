@@ -61,7 +61,8 @@ Arg::Arg(int argc, char *argv[])
   d_fast(false),
   d_reordermmssmsids(false),
   d_stoponbadmac(false),
-  d_verbose(false)
+  d_verbose(false),
+  d_strugee(-1)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -555,6 +556,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-verbose")
     {
       d_verbose = false;
+      continue;
+    }
+    if (option == "--strugee")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!ston(&d_strugee, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option[0] != '-')
