@@ -1,0 +1,247 @@
+#!/bin/bash
+
+CONFIG="default"
+while [ $# -gt 0 ] ; do
+    if [ "$1" = "--config" ] && [ $# -gt 1 ] ; then
+        CONFIG="$2"
+        shift
+    fi
+    shift
+done
+
+CXX="${CXX:-g++}"
+CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3 -flto}"
+CXXARCH="${CXXARCH:--march=native}"
+CXXSTD="${CXXSTD:--std=c++2a}"
+CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
+LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
+LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
+BIN="${BIN:-signalbackup-tools}"
+
+# CONFIG: clang
+if [ "$CONFIG" = "clang" ] ; then
+  CXX="clang++"
+  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -Wno-unknown-attributes -O3 -flto"
+  LDFLAGS="-Wall -Wextra -Wl,-z,now -Wl,--as-needed -flto -O3 -s"
+fi
+
+# CONFIG: cryptopp
+if [ "$CONFIG" = "cryptopp" ] ; then
+  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -DUSE_CRYPTOPP -O3 -flto"
+  LDLIBS="-lcryptopp -lsqlite3"
+fi
+
+# CONFIG: windows
+if [ "$CONFIG" = "windows" ] ; then
+  CXX="x86_64-w64-mingw32-g++"
+  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -D_WIN32_WINNT=0x600 -I/usr/x86_64-w64-mingw32/include/ -O3 -flto"
+  CXXARCH=""
+  LDFLAGS="-Wall -Wextra -Wl,--as-needed -static-libgcc -static-libstdc++ -static -L/usr/x86_64-w64-mingw32/lib/ -O3 -s -flto=auto"
+  LDLIBS="-lcrypto -lsqlite3 -lssp -luser32 -lcrypt32 -ladvapi32 -lgdi32 -lws2_32"
+  BIN="signalbackup-tools_win.exe"
+fi
+
+SRC=("cryptbase/cryptbase.cc"
+     "cryptbase/getbackupkey.cc"
+     "cryptbase/getcipherandmac.cc"
+     "memfiledb/statics.cc"
+     "endframe/statics.cc"
+     "reactionlist/setauthor.cc"
+     "filedecryptor/getframebrute.cc"
+     "filedecryptor/getframe.cc"
+     "filedecryptor/initbackupframe.cc"
+     "filedecryptor/customs.cc"
+     "filedecryptor/filedecryptor.cc"
+     "csvreader/readrow.cc"
+     "csvreader/read.cc"
+     "arg/arg.cc"
+     "sharedprefframe/statics.cc"
+     "avatarframe/statics.cc"
+     "attachmentframe/statics.cc"
+     "fileencryptor/encryptattachment.cc"
+     "fileencryptor/init.cc"
+     "fileencryptor/encryptframe.cc"
+     "fileencryptor/fileencryptor.cc"
+     "sqlstatementframe/statics.cc"
+     "sqlstatementframe/buildstatement.cc"
+     "signalbackup/fillthreadtablefrommessages.cc"
+     "signalbackup/writeencryptedframe.cc"
+     "signalbackup/reordermmssmsids.cc"
+     "signalbackup/handlewamessage.cc"
+     "signalbackup/exportcsv.cc"
+     "signalbackup/exporttofile.cc"
+     "signalbackup/importthread.cc"
+     "signalbackup/buildsqlstatementframe.cc"
+     "signalbackup/exportxml.cc"
+     "signalbackup/getthreadidfromrecipient.cc"
+     "signalbackup/updaterecipientid.cc"
+     "signalbackup/dumpmedia.cc"
+     "signalbackup/dropbadframes.cc"
+     "signalbackup/remaprecipients.cc"
+     "signalbackup/sanitizefilename.cc"
+     "signalbackup/exporttodir.cc"
+     "signalbackup/removedoubles.cc"
+     "signalbackup/croptothread.cc"
+     "signalbackup/getminmaxusedid.cc"
+     "signalbackup/initfromdir.cc"
+     "signalbackup/setfiletimestamp.cc"
+     "signalbackup/croptodates.cc"
+     "signalbackup/makeidsunique.cc"
+     "signalbackup/cleandatabasebymessages.cc"
+     "signalbackup/importwachat.cc"
+     "signalbackup/customs.cc"
+     "signalbackup/escapexmlstring.cc"
+     "signalbackup/summarize.cc"
+     "signalbackup/dumpinfoonbadframe.cc"
+     "signalbackup/datetomsecssinceepoch.cc"
+     "signalbackup/mergerecipients.cc"
+     "signalbackup/mergegroups.cc"
+     "signalbackup/addsmsmessage.cc"
+     "signalbackup/updatethreadsentries.cc"
+     "signalbackup/compactids.cc"
+     "signalbackup/initfromfile.cc"
+     "signalbackup/setminimumid.cc"
+     "signalbackup/importcsv.cc"
+     "signalbackup/decodestatusmessage.cc"
+     "main.cc"
+     "backupframe/init.cc"
+     "sqlcipherdecryptor/destructor.cc"
+     "sqlcipherdecryptor/getkey.cc"
+     "sqlcipherdecryptor/decryptdata.cc"
+     "sqlcipherdecryptor/gethmackey.cc"
+     "sqlcipherdecryptor/sqlcipherdecryptor.cc"
+     "basedecryptor/getattachment.cc"
+     "keyvalueframe/statics.cc"
+     "sqlitedb/exec.cc"
+     "sqlitedb/removecolumn.cc"
+     "sqlitedb/copydb.cc"
+     "sqlitedb/prettyprint.cc"
+     "sqlitedb/valueasstring.cc"
+     "sqlitedb/print.cc"
+     "sqlitedb/availablewidth.cc"
+     "sqlitedb/widestring.cc"
+     "databaseversionframe/statics.cc"
+     "headerframe/statics.cc"
+     "stickerframe/statics.cc")
+
+OBJ=("cryptbase/o/cryptbase.o"
+     "cryptbase/o/getbackupkey.o"
+     "cryptbase/o/getcipherandmac.o"
+     "memfiledb/o/statics.o"
+     "endframe/o/statics.o"
+     "reactionlist/o/setauthor.o"
+     "filedecryptor/o/getframebrute.o"
+     "filedecryptor/o/getframe.o"
+     "filedecryptor/o/initbackupframe.o"
+     "filedecryptor/o/customs.o"
+     "filedecryptor/o/filedecryptor.o"
+     "csvreader/o/readrow.o"
+     "csvreader/o/read.o"
+     "arg/o/arg.o"
+     "sharedprefframe/o/statics.o"
+     "avatarframe/o/statics.o"
+     "attachmentframe/o/statics.o"
+     "fileencryptor/o/encryptattachment.o"
+     "fileencryptor/o/init.o"
+     "fileencryptor/o/encryptframe.o"
+     "fileencryptor/o/fileencryptor.o"
+     "sqlstatementframe/o/statics.o"
+     "sqlstatementframe/o/buildstatement.o"
+     "signalbackup/o/fillthreadtablefrommessages.o"
+     "signalbackup/o/writeencryptedframe.o"
+     "signalbackup/o/reordermmssmsids.o"
+     "signalbackup/o/handlewamessage.o"
+     "signalbackup/o/exportcsv.o"
+     "signalbackup/o/exporttofile.o"
+     "signalbackup/o/importthread.o"
+     "signalbackup/o/buildsqlstatementframe.o"
+     "signalbackup/o/exportxml.o"
+     "signalbackup/o/getthreadidfromrecipient.o"
+     "signalbackup/o/updaterecipientid.o"
+     "signalbackup/o/dumpmedia.o"
+     "signalbackup/o/dropbadframes.o"
+     "signalbackup/o/remaprecipients.o"
+     "signalbackup/o/sanitizefilename.o"
+     "signalbackup/o/exporttodir.o"
+     "signalbackup/o/removedoubles.o"
+     "signalbackup/o/croptothread.o"
+     "signalbackup/o/getminmaxusedid.o"
+     "signalbackup/o/initfromdir.o"
+     "signalbackup/o/setfiletimestamp.o"
+     "signalbackup/o/croptodates.o"
+     "signalbackup/o/makeidsunique.o"
+     "signalbackup/o/cleandatabasebymessages.o"
+     "signalbackup/o/importwachat.o"
+     "signalbackup/o/customs.o"
+     "signalbackup/o/escapexmlstring.o"
+     "signalbackup/o/summarize.o"
+     "signalbackup/o/dumpinfoonbadframe.o"
+     "signalbackup/o/datetomsecssinceepoch.o"
+     "signalbackup/o/mergerecipients.o"
+     "signalbackup/o/mergegroups.o"
+     "signalbackup/o/addsmsmessage.o"
+     "signalbackup/o/updatethreadsentries.o"
+     "signalbackup/o/compactids.o"
+     "signalbackup/o/initfromfile.o"
+     "signalbackup/o/setminimumid.o"
+     "signalbackup/o/importcsv.o"
+     "signalbackup/o/decodestatusmessage.o"
+     "o/main.o"
+     "backupframe/o/init.o"
+     "sqlcipherdecryptor/o/destructor.o"
+     "sqlcipherdecryptor/o/getkey.o"
+     "sqlcipherdecryptor/o/decryptdata.o"
+     "sqlcipherdecryptor/o/gethmackey.o"
+     "sqlcipherdecryptor/o/sqlcipherdecryptor.o"
+     "basedecryptor/o/getattachment.o"
+     "keyvalueframe/o/statics.o"
+     "sqlitedb/o/exec.o"
+     "sqlitedb/o/removecolumn.o"
+     "sqlitedb/o/copydb.o"
+     "sqlitedb/o/prettyprint.o"
+     "sqlitedb/o/valueasstring.o"
+     "sqlitedb/o/print.o"
+     "sqlitedb/o/availablewidth.o"
+     "sqlitedb/o/widestring.o"
+     "databaseversionframe/o/statics.o"
+     "headerframe/o/statics.o"
+     "stickerframe/o/statics.o")
+
+## "wait -n" was introduced in bash 4.3
+## "${parameter@P}" was introduced in bash 4.4 (2016)
+## both used in parallel for-loop
+# check we are using bash, and it is >= 4.4
+if [ ! -z ${BASH+x} ] && (([ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ]) || [ "${BASH_VERSINFO[0]}" -gt 4 ]) ; then
+  num_jobs=${#SRC[@]}
+  NUMPROCS=$(nproc)
+  RUNNINGJOBS="\j"  # The prompt escape for number of jobs currently running
+                    ### echo "${RUNNINGJOBS}" // parameter expansion
+                    ### \j
+                    ### echo "${RUNNINGJOBS@P}" // prompt expansion
+                    ### 0   // for example)
+
+  for (( i = 0; i < num_jobs; i++ )); do
+      while (( ${RUNNINGJOBS@P} >= $NUMPROCS )); do
+          wait -n
+      done
+      mkdir -p $(dirname "${OBJ[$i]}")
+      if [ ! "${OBJ[$i]}" -nt "${SRC[$i]}" ] ; then
+          echo "$CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
+          $CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}" &
+      fi
+  done
+  wait
+else
+  for (( i = 0; i < num_jobs; i++ )); do
+      mkdir -p $(dirname "${OBJ[$i]}")
+      if [ ! "${OBJ[$i]}" -nt "${SRC[$i]}" ] ; then
+          echo "$CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
+          $CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}"
+      fi
+  done
+fi
+
+echo "$CXX ${OBJ[@]} $LDFLAGS -o $BIN $LDLIBS"
+$CXX "${OBJ[@]}" $LDFLAGS -o "$BIN" $LDLIBS
+
+
