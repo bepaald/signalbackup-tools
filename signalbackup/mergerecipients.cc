@@ -29,28 +29,28 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
     return;
   }
 
-  std::vector<std::string> recipient_ids = addresses;
+  std::vector<std::string> r_ids = addresses;
   std::vector<std::string> phonenumbers = addresses;
 
   // for database version < 24, addresses = recipient_ids, for dataversion >= 24 addresses = recipient.phone
   // so convert to recipient._ids
   if (d_databaseversion >= 24)
   {
-    for (uint i = 0; i < recipient_ids.size(); ++i)
+    for (uint i = 0; i < r_ids.size(); ++i)
     {
       SqliteDB::QueryResults res;
-      d_database.exec("SELECT _id FROM recipient WHERE phone = ?", recipient_ids[i], &res);
+      d_database.exec("SELECT _id FROM recipient WHERE phone = ?", r_ids[i], &res);
       if (res.rows() != 1 || res.columns() != 1 ||
           !res.valueHasType<long long int>(0, 0))
       {
         std::cout << "Failed to find recipient._id matching phone/group_id in target database" << std::endl;
         return;
       }
-      recipient_ids[i] = bepaald::toString(res.getValueAs<long long int>(0, 0));
+      r_ids[i] = bepaald::toString(res.getValueAs<long long int>(0, 0));
     }
   }
 
-  std::string targetaddr = recipient_ids.back();
+  std::string targetaddr = r_ids.back();
   std::string targetphone = phonenumbers.back();
 
   // deal with one-on-one conversations:
@@ -59,33 +59,33 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   if (tid != -1)
   {
 
-    // update all messages from this recipient_ids[i] to belong to that same thread and change address in new number
-    for (uint i = 0; i < recipient_ids.size() - 1; ++i)
+    // update all messages from this r_ids[i] to belong to that same thread and change address in new number
+    for (uint i = 0; i < r_ids.size() - 1; ++i)
     {
-      long long int oldtid = getThreadIdFromRecipient(recipient_ids[i]);
+      long long int oldtid = getThreadIdFromRecipient(r_ids[i]);
       if (oldtid == -1)
       {
-        std::cout << "Failed to find thread for old address: " << recipient_ids[i] << std::endl;
+        std::cout << "Failed to find thread for old address: " << r_ids[i] << std::endl;
         continue;
       }
 
-      std::cout << "Dealing with address: " << recipient_ids[i] << std::endl;
+      std::cout << "Dealing with address: " << r_ids[i] << std::endl;
       d_database.exec("UPDATE sms SET thread_id = ?, address = ? WHERE thread_id = ? AND address = ?",
-                      {tid, targetaddr, oldtid, recipient_ids[i]});
+                      {tid, targetaddr, oldtid, r_ids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
       d_database.exec("UPDATE mms SET thread_id = ?, address = ? WHERE thread_id = ? AND address = ?",
-                      {tid, targetaddr, oldtid, recipient_ids[i]});
+                      {tid, targetaddr, oldtid, r_ids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
 
       if (d_database.containsTable("mention"))
       {
         d_database.exec("UPDATE mention SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
         std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
-        d_database.exec("UPDATE mention SET recipient_id = ? WHERE recipient_id = ?", {targetaddr, recipient_ids[i]});
+        d_database.exec("UPDATE mention SET recipient_id = ? WHERE recipient_id = ?", {targetaddr, r_ids[i]});
         std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
       }
 
-      d_database.exec("DELETE FROM thread WHERE recipient_ids = ?", recipient_ids[i]);
+      d_database.exec("DELETE FROM thread WHERE " + d_thread_recipient_id + " = ?", r_ids[i]);
     }
   }
   else
@@ -94,9 +94,9 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   }
 
   // change quote authors:
-  for (uint i = 0; i < recipient_ids.size() - 1; ++i)
+  for (uint i = 0; i < r_ids.size() - 1; ++i)
   {
-    d_database.exec("UPDATE mms SET quote_author = ? WHERE quote_author = ?", {targetaddr, recipient_ids[i]});
+    d_database.exec("UPDATE mms SET quote_author = ? WHERE quote_author = ?", {targetaddr, r_ids[i]});
     std::cout << "Updated " << d_database.changed() << " quotes in 'mms' table" << std::endl;
   }
 
@@ -143,11 +143,11 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
     }
 
     // for all incoming messages of this group(= this thread), if the (originating) address = oldaddress, change it to target
-    for (uint j = 0; j < recipient_ids.size() - 1; ++j)
+    for (uint j = 0; j < r_ids.size() - 1; ++j)
     {
-      d_database.exec("UPDATE sms SET address = ? WHERE address = ? AND thread_id = ?", {targetaddr, recipient_ids[j], tid});
+      d_database.exec("UPDATE sms SET address = ? WHERE address = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
       std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
-      d_database.exec("UPDATE mms SET address = ? WHERE address = ? AND thread_id = ?", {targetaddr, recipient_ids[j], tid});
+      d_database.exec("UPDATE mms SET address = ? WHERE address = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
     }
 
@@ -155,17 +155,17 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
 
     if (editgroupmembers)
     {
-      for (uint j = 0; j < recipient_ids.size() - 1; ++j)
+      for (uint j = 0; j < r_ids.size() - 1; ++j)
       {
         // change current member list in group database:
         //std::cout << "  GROUP MEMBERS BEFORE: " << members << std::endl;
         std::string::size_type pos = std::string::npos;
-        if ((pos = members.find(recipient_ids[j])) != std::string::npos)
+        if ((pos = members.find(r_ids[j])) != std::string::npos)
         {
           std::cout << "  GROUP MEMBERS BEFORE: " << members << std::endl;
           //std::cout << "  FOUND ADDRESS TO CHANGE" << std::endl;
           // remove address
-          members.erase(pos, recipient_ids[j].length());
+          members.erase(pos, r_ids[j].length());
 
           // remove left over comma
           if (members[0] == ',') // if removed was first

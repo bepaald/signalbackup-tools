@@ -168,7 +168,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
       recipient._id      := [s|m]ms.address
 
       thread._id         := [s|m]ms.thread_id
-      thread.recipient_ids := [s|m]ms.address
+      thread.recipient_ids/thread.thread_recipient_id := [s|m]ms.address
 
 
       recipient.uuid     := conversations.uuid
@@ -206,7 +206,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 
     // add entry in 'thread' database
     //std::cout << "INSERTING : " << std::get<0>(matches[t]) << " " << std::get<1>(matches[t]) << std::endl;
-    d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {std::get<0>(matches[t]), std::get<1>(matches[t])});
+    d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {std::get<0>(matches[t]), std::get<1>(matches[t])});
 
     // add entry in 'recipient' database
     d_database.exec("INSERT INTO recipient (_id, uuid, phone, group_id, system_display_name, signal_profile_name, profile_family_name, profile_joined_name) "
@@ -278,7 +278,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
       group_recipient_id = group_rec.valueAsString(0, "address");
 
     // add entry in 'thread' database
-    d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {std::get<0>(matches[t]), group_recipient_id});
+    d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {std::get<0>(matches[t]), group_recipient_id});
 
     // add entry in 'recipient' database (Skip 'name' for groups, in desktop it is group name, in app it's NULL
     d_database.exec("INSERT INTO recipient (_id, uuid, phone, group_id, signal_profile_name, profile_family_name, profile_joined_name) "
@@ -556,7 +556,7 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
   }
 
   // CHECK AND WARN FOR MENTIONS
-  d_database.exec("SELECT mms.address,DATETIME(ROUND(mms.date / 1000), 'unixepoch') AS 'date',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread.recipient_ids LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
+  d_database.exec("SELECT mms.address,DATETIME(ROUND(mms.date / 1000), 'unixepoch') AS 'date',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread." + d_thread_recipient_id + " LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
   if (results.rows() > 0)
   {
     std::cout << "WARNING" << " Mentions found! Probably a good idea to check these messages:" << std::endl;

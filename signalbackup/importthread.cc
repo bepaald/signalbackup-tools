@@ -73,7 +73,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (d_databaseversion < 24) // old database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->target.thread_id
-    source->d_database.exec("SELECT recipient_ids FROM thread WHERE _id = ?", thread, &results);
+    source->d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", thread, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {
@@ -86,7 +86,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   else // new database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
-    source->d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient WHERE _id IS (SELECT recipient_ids FROM thread WHERE _id = ?)", thread, &results);
+    source->d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient WHERE _id IS (SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {

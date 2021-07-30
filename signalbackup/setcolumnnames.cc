@@ -17,9 +17,14 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20210730.230437"
+bool SignalBackup::setColumnNames()
+{
+  // started at dbv108
+  d_thread_recipient_id = "thread_recipient_id";
+  if (d_database.tableContainsColumn("thread", "recipient_ids"))
+    d_thread_recipient_id = "recipient_ids";
 
-#endif
+  return true;
+}

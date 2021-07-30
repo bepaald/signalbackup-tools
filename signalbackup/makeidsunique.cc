@@ -75,7 +75,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     d_database.exec("UPDATE mms SET quote_author = quote_author + ?", minrecipient);
     d_database.exec("UPDATE sessions SET address = address + ?", minrecipient);
     d_database.exec("UPDATE group_receipts SET address = address + ?", minrecipient);
-    d_database.exec("UPDATE thread SET recipient_ids = recipient_ids + ?", minrecipient);
+    d_database.exec("UPDATE thread SET " + d_thread_recipient_id + " = " + d_thread_recipient_id + " + ?", minrecipient);
     d_database.exec("UPDATE groups SET recipient_id = recipient_id + ?", minrecipient);
     // as of writing, remapped_recipients is a new (and currently unused?) table
     if (d_database.containsTable("remapped_recipients"))

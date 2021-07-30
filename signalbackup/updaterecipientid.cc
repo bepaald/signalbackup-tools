@@ -33,7 +33,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   if (verbose) std::cout << "    update identities, changed: " << d_database.changed() << std::endl;
   d_database.exec("UPDATE group_receipts SET address = ? WHERE address = ?", {targetid, sourceid});
   if (verbose) std::cout << "    update group_receipts, changed: " << d_database.changed() << std::endl;
-  d_database.exec("UPDATE thread SET recipient_ids = ? WHERE recipient_ids = ?", {targetid, sourceid});
+  d_database.exec("UPDATE thread SET " + d_thread_recipient_id + " = ? WHERE " + d_thread_recipient_id + " = ?", {targetid, sourceid});
   if (verbose) std::cout << "    update thread, changed: " << d_database.changed() << std::endl;
   d_database.exec("UPDATE groups SET recipient_id = ? WHERE recipient_id = ?", {targetid, sourceid});
   if (verbose) std::cout << "    update groups, changed: " << d_database.changed() << std::endl;

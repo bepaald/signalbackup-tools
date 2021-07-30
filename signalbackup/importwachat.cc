@@ -82,7 +82,7 @@ bool SignalBackup::importWAChat(std::string const &file, std::string const &fmt,
 
   // get thread id from recipient
   long long int tid = -1;
-  if (!d_database.exec("SELECT _id FROM thread WHERE recipient_ids == ?", globaladdress, &results))
+  if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " == ?", globaladdress, &results))
     return false;
 
   if (results.rows() != 1)
