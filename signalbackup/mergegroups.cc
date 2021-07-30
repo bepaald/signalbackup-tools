@@ -73,7 +73,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       }
 
       // delete old (now empty) thread
-      d_database.exec("DELETE FROM thread WHERE recipient_ids = ?", groupids[i]);
+      d_database.exec("DELETE FROM thread WHERE " + d_thread_recipient_id + " = ?", groupids[i]);
       std::cout << "Removed " << d_database.changed() << " threads from table" << std::endl;
 
       // get members of groupids[i] and merge them into targetgroup

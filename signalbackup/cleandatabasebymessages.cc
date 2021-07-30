@@ -41,9 +41,9 @@ void SignalBackup::cleanDatabaseByMessages()
 
   std::cout << "  Deleting removed groups..." << std::endl;
   if (d_databaseversion < 27)
-    d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT recipient_ids FROM thread)");
+    d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
   else
-    d_database.exec("DELETE FROM groups WHERE recipient_id NOT IN (SELECT DISTINCT recipient_ids FROM thread)");
+    d_database.exec("DELETE FROM groups WHERE recipient_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
 
   //std::cout << "Groups left:" << std::endl;
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
@@ -63,7 +63,7 @@ void SignalBackup::cleanDatabaseByMessages()
     std::cout << "  Deleting unreferenced recipient entries..." << std::endl;
 
     //runSimpleQuery("SELECT group_concat(_id,',') FROM recipient");
-    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms UNION SELECT DISTINCT recipient_ids FROM thread");
+    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
 
@@ -115,7 +115,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     reaction_authors_query +
-                    " UNION SELECT DISTINCT recipient_ids FROM thread)"s);
+                    " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)"s);
   }
 
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");

@@ -50,7 +50,7 @@ void SignalBackup::fillThreadTableFromMessages()
   for (uint i = 0; i < results.rows(); ++i)
     if (results.valueHasType<long long int>(i, 0) &&
         (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
-      d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
+      d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
   //std::cout << "Threadids in mms, not in thread" << std::endl;
   //d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE (msg_box&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   //results.prettyPrint();
@@ -65,7 +65,7 @@ void SignalBackup::fillThreadTableFromMessages()
   for (uint i = 0; i < results.rows(); ++i)
     if (results.valueHasType<long long int>(i, 0) &&
         (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
-      d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
+      d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
   // std::cout << "Threadids in sms, not in thread" << std::endl;
   // d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   // results.prettyPrint();
@@ -87,11 +87,11 @@ void SignalBackup::fillThreadTableFromMessages()
     if (results2.rows() == 1)
     {
       SqliteDB::QueryResults results3;
-      d_database.exec("SELECT DISTINCT recipient_ids FROM thread WHERE recipient_ids = ?", results2.value(0, "union_address"), &results3);
+      d_database.exec("SELECT DISTINCT " + d_thread_recipient_id + " FROM thread WHERE " + d_thread_recipient_id + " = ?", results2.value(0, "union_address"), &results3);
       if (results3.rows() == 0)
       {
         //std::cout << "Creating thread for address " << std::any_cast<std::string>(results2.value(0, "union_address")) << "(id: " << thread << ")" << std::endl;
-        d_database.exec("INSERT INTO thread (_id, recipient_ids) VALUES (?, ?)", {thread, results2.value(0, "union_address")});
+        d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {thread, results2.value(0, "union_address")});
       }
       else
         std::cout << "Thread for this conversation partner already exists. This may be a group with only two members and "
@@ -111,14 +111,14 @@ void SignalBackup::fillThreadTableFromMessages()
 
   updateThreadsEntries();
 
-  // d_database.exec("SELECT _id, date, message_count, recipient_ids, snippet, snippet_cs, type, snippet_type, snippet_uri FROM thread", &results);
+  // d_database.exec("SELECT _id, date, message_count, " + d_thread_recipient_id + " , snippet, snippet_cs, type, snippet_type, snippet_uri FROM thread", &results);
   // std::cout << "THREAD:" << std::endl;
   // results.prettyPrint();
 
   // now for each group, try to determine members:
 
   SqliteDB::QueryResults threadquery;
-  std::string query = "SELECT DISTINCT _id, recipient_ids FROM thread WHERE SUBSTR(recipient_ids, 0, 22) == \"__textsecure_group__!\""; // maybe || SUBSTR == "__signal_mms_group__!"
+  std::string query = "SELECT DISTINCT _id, " + d_thread_recipient_id + " FROM thread WHERE SUBSTR(" + d_thread_recipient_id + ", 0, 22) == \"__textsecure_group__!\""; // maybe || SUBSTR == "__signal_mms_group__!"
   d_database.exec(query, &threadquery);
 
   for (uint i = 0; i < threadquery.rows(); ++i)
@@ -168,7 +168,7 @@ void SignalBackup::fillThreadTableFromMessages()
       }
     }
 
-    std::string groupid = std::any_cast<std::string>(threadquery.value(i, "recipient_ids"));
+    std::string groupid = std::any_cast<std::string>(threadquery.value(i, d_thread_recipient_id));
     std::string members;
     //std::cout << "GROUP MEMBERS " << groupid << " : " << std::endl;
     for (auto it = groupmembers.begin(); it != groupmembers.end(); ++it)

@@ -500,7 +500,13 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
 
   SqliteDB::QueryResults mms_results;
   if (includemms)
-    d_database.exec("SELECT _id,date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms", &mms_results);
+  {
+    // at dbv many columns were removed from the mms table.
+    if (d_databaseversion >= 109)
+      d_database.exec("SELECT _id,date_received,date,address,msg_box,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM mms", &mms_results);
+    else
+      d_database.exec("SELECT _id,date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms", &mms_results);
+  }
 
   outputfile << "<smses count=" << bepaald::toString(sms_results.rows() + mms_results.rows()) << ">" << std::endl;
   uint sms_row = 0;

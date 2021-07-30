@@ -50,6 +50,7 @@ class SignalBackup
   std::unique_ptr<FileDecryptor> d_fd;
   FileEncryptor d_fe;
   std::string d_passphrase;
+  std::string d_thread_recipient_id;
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
   std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
@@ -154,6 +155,7 @@ class SignalBackup
                        std::map<std::string, std::string> const &name_to_recipientid);
   bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
   std::string sanitizeFilename(std::string const &filename) const;
+  bool setColumnNames();
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
@@ -175,6 +177,9 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
     d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, issource, stoponbadmac, assumebadframesizeonbadmac, editattachments));
     initFromFile();
   }
+
+  if (d_ok) // set by initfrom()
+    d_ok = setColumnNames();
 }
 
 inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
@@ -404,12 +409,12 @@ inline void SignalBackup::listThreads() const
   results.prettyPrint();
 
   if (!d_database.containsTable("recipient"))
-    d_database.exec("SELECT thread._id, thread.recipient_ids, thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread.recipient_ids = recipient_preferences.recipient_ids LEFT JOIN groups ON thread.recipient_ids = groups.group_id ORDER BY thread._id ASC", &results);
+    d_database.exec("SELECT thread._id, thread." + d_thread_recipient_id + ", thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread." + d_thread_recipient_id + " = recipient_preferences.recipient_ids LEFT JOIN groups ON thread." + d_thread_recipient_id + " = groups.group_id ORDER BY thread._id ASC", &results);
   else // has recipient table
     if (d_database.tableContainsColumn("recipient", "profile_joined_name"))
-      d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+      d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
     else
-      d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread.recipient_ids = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+      d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
   results.prettyPrint();
 }
 

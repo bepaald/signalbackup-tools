@@ -124,6 +124,11 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         //table == "constraint_spec" ||    // should be ok to export these (if present in source), since we are only
         //table == "dependency_spec" ||    // dealing with exported backups (not from live installations) -> they should
         //table == "emoji_search" ||       // have been excluded + the official import should be able to deal with them
+        //table == "sender_keys" ||
+        //table == "sender_key_shared" ||
+        //table == "pending_retry_receipts" ||
+        //table == "avatar_picker" ||
+        //table == "" ||
         STRING_STARTS_WITH(table, "sms_fts") ||
         STRING_STARTS_WITH(table, "mms_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))

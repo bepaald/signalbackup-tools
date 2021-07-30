@@ -74,10 +74,10 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
 
     SqliteDB::QueryResults results;
 
-    std::string query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms.msg_box, mms.thread_id, thread.recipient_ids, COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM part "
+    std::string query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms.msg_box, mms.thread_id, thread." + d_thread_recipient_id + ", COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM part "
       "LEFT JOIN mms ON part.mid == mms._id "
       "LEFT JOIN thread ON mms.thread_id == thread._id "
-      "LEFT JOIN recipient ON thread.recipient_ids == recipient._id "
+      "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " == recipient._id "
       "LEFT JOIN groups ON recipient.group_id == groups.group_id "
       "WHERE part._id == ? AND part.unique_id == ?";
 
