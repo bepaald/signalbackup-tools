@@ -73,6 +73,7 @@ class Arg
   bool d_stoponbadmac;
   bool d_verbose;
   int d_strugee;
+  bool d_strugee2;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -117,6 +118,7 @@ class Arg
   inline bool stoponbadmac() const;
   inline bool verbose() const;
   inline int strugee() const;
+  inline bool strugee2() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -326,6 +328,11 @@ inline bool Arg::verbose() const
 inline int Arg::strugee() const
 {
   return d_strugee;
+}
+
+inline bool Arg::strugee2() const
+{
+  return d_strugee2;
 }
 
 inline bool Arg::ok() const

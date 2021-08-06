@@ -125,6 +125,62 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("DELETE FROM constraint_spec"); // has to do with job_spec, references it...
   if (source->d_database.containsTable("dependency_spec"))
     source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
+
+  // all emoji_search_* tables are ignored on import, delete from source here to prevent failing unique constraints
+  if (source->d_database.containsTable("emoji_search_data"))
+    source->d_database.exec("DELETE FROM emoji_search_data");
+  if (source->d_database.containsTable("emoji_search_idx"))
+    source->d_database.exec("DELETE FROM emoji_search_idx");
+  if (source->d_database.containsTable("emoji_search_content"))
+    source->d_database.exec("DELETE FROM emoji_search_content");
+  if (source->d_database.containsTable("emoji_search_docsize"))
+    source->d_database.exec("DELETE FROM emoji_search_docsize");
+  if (source->d_database.containsTable("emoji_search_config"))
+    source->d_database.exec("DELETE FROM emoji_search_config");
+
+
+  // untested
+  /*
+    sqlite> SELECT * FROM sqlite_master WHERE name IS "payments";
+    type|name|tbl_name|rootpage|sql
+    table|payments|payments|60|CREATE TABLE payments(_id INTEGER PRIMARY KEY, uuid TEXT DEFAULT NULL, recipient INTEGER DEFAULT 0, recipient_address TEXT DEFAULT NULL, timestamp INTEGER, note TEXT DEFAULT NULL, direction INTEGER, state INTEGER, failure_reason INTEGER, amount BLOB NOT NULL, fee BLOB NOT NULL, transaction_record BLOB DEFAULT NULL, receipt BLOB DEFAULT NULL, payment_metadata BLOB DEFAULT NULL, receipt_public_key TEXT DEFAULT NULL, block_index INTEGER DEFAULT 0, block_timestamp INTEGER DEFAULT 0, seen INTEGER, UNIQUE(uuid) ON CONFLICT ABORT)
+  */
+
+  // NOTE: 'recipient' here is probably recipient._id which should be updated later in updateRecipientId()
+  //       maybe delete completely if recipient is not in this bit of database?
+
+  /*
+  // delete double payments
+  if (d_database.containsTable("payments") && source->d_database.containsTable("payments"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT uuid FROM payments", &res);
+
+    std::cout << "  Deleting " << res.rows() << " existing payments" << std::endl;
+
+    for (uint i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM payments WHERE uuid = ?", res.getValueAs<std::string>(i, 0));
+  }
+  */
+
+  /*
+    sqlite> SELECT * FROM sqlite_master WHERE name IS "chat_colors";
+    table|chat_colors|chat_colors|65|CREATE TABLE chat_colors (_id INTEGER PRIMARY KEY AUTOINCREMENT,chat_colors BLOB)
+  */
+  // untested: I guess chat_colors are in target, or they can be easily recreated
+  if (source->d_database.containsTable("chat_colors"))
+    source->d_database.exec("DELETE FROM chat_colors");
+
+  // TODO deal with 'sender_keys'
+  /*
+    sqlite> SELECT * FROM sqlite_master WHERE name IS "sender_keys";
+table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY KEY AUTOINCREMENT, recipient_id INTEGER NOT NULL, device INTEGER NOT NULL, distribution_id TEXT NOT NULL, record BLOB NOT NULL, created_at INTEGER NOT NULL, UNIQUE(recipient_id, device, distribution_id) ON CONFLICT REPLACE)
+  */
+  // notes:
+  // * there is recipient_id, which probably needs to be adjusted in updateRecipientId(), but it must be unique so it must then be deleted if the adjustment can be made
+  // * there is a created_at, probably a timestamp -> delete the older one?, also use this in croptodate?
+
+
   source->d_database.exec("VACUUM");
 
   // make sure all id's are unique
@@ -138,6 +194,9 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   long long int offsetgroup_receipts = getMaxUsedId("group_receipts") + 1 - source->getMinUsedId("group_receipts");
   long long int offsetdrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
   long long int offsetsticker = getMaxUsedId("sticker") + 1 - source->getMinUsedId("sticker");
+
+  // payments, sender_keys
+
 
   long long int offsetmegaphone = -1;
   if (source->d_database.containsTable("megaphone"))

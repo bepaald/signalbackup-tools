@@ -84,6 +84,13 @@ int main(int argc, char *argv[])
     fd.strugee(arg.strugee());
     return 0;
   }
+  else if (arg.strugee2())
+  {
+    std::cout << "TEMP FUNCTION 2 (#37)" << std::endl;
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    fd.strugee2();
+    return 0;
+  }
 
   MEMINFO("Start of program, before opening input");
 
