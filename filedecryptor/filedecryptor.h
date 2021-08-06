@@ -57,6 +57,8 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
 
   // temporary
   void strugee(uint64_t pos);
+  std::unique_ptr<BackupFrame> getFrameStrugee2();
+  void strugee2();
 
  private:
   inline uint32_t getNextFrameBlockSize();
