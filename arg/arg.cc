@@ -42,10 +42,12 @@ Arg::Arg(int argc, char *argv[])
   d_exportxml(std::string()),
   d_runsqlquery(std::vector<std::string>()),
   d_runprettysqlquery(std::vector<std::string>()),
+  d_limitcontacts(std::vector<std::string>()),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
   d_dumpdesktopdb(std::string()),
   d_dumpmedia(std::string()),
+  d_dumpavatars(std::string()),
   d_hhenkel(std::string()),
   d_importcsv(std::string()),
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
@@ -337,6 +339,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "--limitcontacts")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_limitcontacts))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--assumebadframesizeonbadmac")
     {
       d_assumebadframesizeonbadmac = true;
@@ -379,6 +398,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
         d_dumpmedia = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--dumpavatars")
+    {
+      if (i < arguments.size() - 1)
+        d_dumpavatars = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;

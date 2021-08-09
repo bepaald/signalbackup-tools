@@ -99,6 +99,7 @@ class SignalBackup
   bool summarize() const;
   bool reorderMmsSmsIds() const;
   bool dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const;
+  bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);

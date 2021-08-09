@@ -96,14 +96,14 @@ int main(int argc, char *argv[])
 
   // open input
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(),
-                                                    (!arg.source().empty() || arg.listthreads() ||
+                                                    /*(!arg.source().empty() || arg.listthreads() ||
                                                      !arg.exportcsv().empty() || !arg.exportxml().empty() ||
                                                      !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
                                                      !arg.croptodates().empty() || arg.removedoubles() ||
                                                      !arg.runprettysqlquery().empty() || !arg.mergerecipients().empty() ||
                                                      !arg.dumpmedia().empty() ||
                                                      arg.fast())
-                                                    ? SignalBackup::LOWMEM : false, arg.showprogress(),
+                                                     ? */SignalBackup::LOWMEM /*: false*/, arg.showprogress(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponbadmac()));
   if (!sb->ok())
@@ -204,6 +204,10 @@ int main(int argc, char *argv[])
 
   if (!arg.dumpmedia().empty())
     if (!sb->dumpMedia(arg.dumpmedia(), arg.limittothreads(), arg.overwrite()))
+      return 1;
+
+  if (!arg.dumpavatars().empty())
+    if (!sb->dumpAvatars(arg.dumpavatars(), arg.limitcontacts(), arg.overwrite()))
       return 1;
 
   if (!arg.importwachat().empty())
