@@ -52,10 +52,12 @@ class Arg
   std::string d_exportxml;
   std::vector<std::string> d_runsqlquery;
   std::vector<std::string> d_runprettysqlquery;
+  std::vector<std::string> d_limitcontacts;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
   std::string d_dumpdesktopdb;
   std::string d_dumpmedia;
+  std::string d_dumpavatars;
   std::string d_hhenkel;
   std::string d_importcsv;
   std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
@@ -97,10 +99,12 @@ class Arg
   inline std::string const &exportxml() const;
   inline std::vector<std::string> const &runsqlquery() const;
   inline std::vector<std::string> const &runprettysqlquery() const;
+  inline std::vector<std::string> const &limitcontacts() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
   inline std::string const &dumpdesktopdb() const;
   inline std::string const &dumpmedia() const;
+  inline std::string const &dumpavatars() const;
   inline std::string const &hhenkel() const;
   inline std::string const &importcsv() const;
   inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
@@ -225,6 +229,11 @@ inline std::vector<std::string> const &Arg::runprettysqlquery() const
   return d_runprettysqlquery;
 }
 
+inline std::vector<std::string> const &Arg::limitcontacts() const
+{
+  return d_limitcontacts;
+}
+
 inline bool Arg::assumebadframesizeonbadmac() const
 {
   return d_assumebadframesizeonbadmac;
@@ -243,6 +252,11 @@ inline std::string const &Arg::dumpdesktopdb() const
 inline std::string const &Arg::dumpmedia() const
 {
   return d_dumpmedia;
+}
+
+inline std::string const &Arg::dumpavatars() const
+{
+  return d_dumpavatars;
 }
 
 inline std::string const &Arg::hhenkel() const
