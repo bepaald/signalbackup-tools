@@ -84,6 +84,20 @@ int main(int argc, char *argv[])
     fd.strugee(arg.strugee());
     return 0;
   }
+  if (arg.strugee3() != -1)
+  {
+    std::cout << "TEMP FUNCTION (#37)" << std::endl;
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    fd.strugee3(arg.strugee3());
+    return 0;
+  }
+  if (arg.ashmorgan())
+  {
+    std::cout << "TEMP FUNCTION (#40)" << std::endl;
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    fd.ashmorgan();
+    return 0;
+  }
   else if (arg.strugee2())
   {
     std::cout << "TEMP FUNCTION 2 (#37)" << std::endl;

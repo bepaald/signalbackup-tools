@@ -74,7 +74,9 @@ class Arg
   bool d_reordermmssmsids;
   bool d_stoponbadmac;
   bool d_verbose;
-  int d_strugee;
+  long long int d_strugee;
+  long long int d_strugee3;
+  bool d_ashmorgan;
   bool d_strugee2;
  public:
   Arg(int argc, char *argv[]);
@@ -121,7 +123,9 @@ class Arg
   inline bool reordermmssmsids() const;
   inline bool stoponbadmac() const;
   inline bool verbose() const;
-  inline int strugee() const;
+  inline long long int strugee() const;
+  inline long long int strugee3() const;
+  inline bool ashmorgan() const;
   inline bool strugee2() const;
  private:
   template <typename T>
@@ -339,9 +343,19 @@ inline bool Arg::verbose() const
   return d_verbose;
 }
 
-inline int Arg::strugee() const
+inline long long int Arg::strugee() const
 {
   return d_strugee;
+}
+
+inline long long int Arg::strugee3() const
+{
+  return d_strugee3;
+}
+
+inline bool Arg::ashmorgan() const
+{
+  return d_ashmorgan;
 }
 
 inline bool Arg::strugee2() const

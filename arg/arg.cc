@@ -65,6 +65,8 @@ Arg::Arg(int argc, char *argv[])
   d_stoponbadmac(false),
   d_verbose(false),
   d_strugee(-1),
+  d_strugee3(-1),
+  d_ashmorgan(false),
   d_strugee2(false)
 {
   // vector to hold arguments
@@ -604,6 +606,33 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--strugee3")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!ston(&d_strugee3, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--ashmorgan")
+    {
+      d_ashmorgan = true;
+      continue;
+    }
+    if (option == "--no-ashmorgan")
+    {
+      d_ashmorgan = false;
       continue;
     }
     if (option == "--strugee2")

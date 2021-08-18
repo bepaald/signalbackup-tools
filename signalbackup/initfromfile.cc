@@ -53,6 +53,9 @@ void SignalBackup::initFromFile()
         std::cout << "\n";
     }
 
+    //if (frame->frameNumber() > 73085)
+    //  frame->printInfo();
+
     //std::cout << frame->frameTypeString() << std::endl;
 
     //MEMINFO("At frame ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
@@ -80,7 +83,7 @@ void SignalBackup::initFromFile()
       [[likely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
       {
         // NOTE: in the official import, there are other tables that are skipped (virtual tables for search data)
-        // we lazily do not check for them here, since we are dealing with official exported fiels which do not contain
+        // we lazily do not check for them here, since we are dealing with official exported files which do not contain
         // these tables as they are excluded on the export-side as well. Additionally, the official import should be able
         // to properly deal with them anyway (that is: ignore them)
         if (!d_database.exec(s->bindStatement(), s->parameters()))
@@ -124,6 +127,7 @@ void SignalBackup::initFromFile()
     }
     else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::END)
     {
+      //frame->printInfo();
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
     }
     else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID)
