@@ -56,9 +56,12 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   inline bool badMac() const;
 
   // temporary
+  void ashmorgan();
   void strugee(uint64_t pos);
   std::unique_ptr<BackupFrame> getFrameStrugee2();
   void strugee2();
+  void strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigned char[]>, uint64_t>> *macs_and_positions);
+  void strugee3(uint64_t pos);
 
  private:
   inline uint32_t getNextFrameBlockSize();
