@@ -470,15 +470,29 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
 
   std::cout << "Deleting sms/mms tables from complete backup" << std::endl;
   if (!d_database.exec("DELETE FROM sms") ||
-      !d_database.exec("DELETE FROM mms") ||
-      !d_database.exec("DELETE FROM part"))
+      !d_database.exec("DELETE FROM mms")/* ||
+      !d_database.exec("DELETE FROM part")*/)
   {
     std::cout << "Error deleting contents of sms/mms tables" << std::endl;
     return false;
   }
-  d_attachments.clear();
+  //d_attachments.clear();
 
-  // in truncated: remove part entries (and d_attachments[i]), then import
+  // delete part entries from truncated which are already in target
+  std::cout << "Deleting doubled part entries..." << std::endl;
+  SqliteDB::QueryResults r;
+  d_database.exec("SELECT _id FROM part", &r);
+  std::string q = "DELETE FROM part WHERE _id IN (";
+  for (uint i = 0; i < r.rows(); ++i)
+    q += bepaald::toString(r.getValueAs<long long int>(i, 0)) + ((i == r.rows() - 1) ? ")" : ",");
+  if (!tf->d_database.exec(q))
+  {
+    std::cout << "Error deleting part entries" << std::endl;
+    return false;
+  }
+
+  // in truncated: remove part entries (and d_attachments[i]), that are
+  // missing or are already present in target (complete) db
   std::cout << "Cleaning up part table/attachments..." << std::endl;
   SqliteDB::QueryResults results;
   tf->d_database.exec("SELECT _id,unique_id FROM part", &results);
@@ -488,7 +502,8 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
     uint64_t rowid = results.getValueAs<long long int>(i, "_id");
     uint64_t uniqid = results.getValueAs<long long int>(i, "unique_id");
 
-    if (tf->d_attachments.find({rowid, uniqid}) == tf->d_attachments.end())
+    if (tf->d_attachments.find({rowid, uniqid}) == tf->d_attachments.end()/* ||
+        d_attachments.find({rowid, uniqid}) != d_attachments.end()*/)
       missingdata.emplace_back(std::make_pair(rowid, uniqid));
   }
 
