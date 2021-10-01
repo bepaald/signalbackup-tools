@@ -594,3 +594,11 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
 
   return true;
 }
+
+/*
+  switch sender and recipient in single one-to-one conversation?
+ */
+bool SignalBackup::hiperfall()
+{
+  return false;
+}

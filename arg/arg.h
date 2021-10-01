@@ -78,6 +78,7 @@ class Arg
   long long int d_strugee3;
   bool d_ashmorgan;
   bool d_strugee2;
+  bool d_hiperfall;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -127,6 +128,7 @@ class Arg
   inline long long int strugee3() const;
   inline bool ashmorgan() const;
   inline bool strugee2() const;
+  inline bool hiperfall() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -361,6 +363,11 @@ inline bool Arg::ashmorgan() const
 inline bool Arg::strugee2() const
 {
   return d_strugee2;
+}
+
+inline bool Arg::hiperfall() const
+{
+  return d_hiperfall;
 }
 
 inline bool Arg::ok() const

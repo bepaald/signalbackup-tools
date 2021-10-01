@@ -67,7 +67,8 @@ Arg::Arg(int argc, char *argv[])
   d_strugee(-1),
   d_strugee3(-1),
   d_ashmorgan(false),
-  d_strugee2(false)
+  d_strugee2(false),
+  d_hiperfall(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -643,6 +644,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-strugee2")
     {
       d_strugee2 = false;
+      continue;
+    }
+    if (option == "--hiperfall")
+    {
+      d_hiperfall = true;
+      continue;
+    }
+    if (option == "--no-hiperfall")
+    {
+      d_hiperfall = false;
       continue;
     }
     if (option[0] != '-')

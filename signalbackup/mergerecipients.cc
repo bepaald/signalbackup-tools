@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -8,6 +8,24 @@
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
+    signalbackup-tools is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/*
+    Copyright (C) 2019-2021  Selwin van Dijk
+
+    This file is part of signalbackup-tools.
+
+    signalbackup-tools is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
     signalbackup-tools is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -98,6 +116,50 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   {
     d_database.exec("UPDATE mms SET quote_author = ? WHERE quote_author = ?", {targetaddr, r_ids[i]});
     std::cout << "Updated " << d_database.changed() << " quotes in 'mms' table" << std::endl;
+  }
+
+  // update reaction authors
+  if (d_database.tableContainsColumn("sms", "reactions"))
+  {
+    SqliteDB::QueryResults results;
+    d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &results);
+    bool changed = false;
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      for (uint k = 0; k < reactions.numReactions(); ++k)
+      {
+        for (uint j = 0; j < r_ids.size() - 1; ++j)
+          if (reactions.getAuthor(k) == bepaald::toNumber<uint64_t>(r_ids[j]))
+          {
+            reactions.setAuthor(k, bepaald::toNumber<uint64_t>(targetaddr));
+            changed = true;
+          }
+        if (changed)
+          d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
+      }
+    }
+  }
+  if (d_database.tableContainsColumn("mms", "reactions"))
+  {
+    SqliteDB::QueryResults results;
+    d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
+    bool changed = false;
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      for (uint k = 0; k < reactions.numReactions(); ++k)
+      {
+        for (uint j = 0; j < r_ids.size() - 1; ++j)
+          if (reactions.getAuthor(k) == bepaald::toNumber<uint64_t>(r_ids[j]))
+          {
+            reactions.setAuthor(k, bepaald::toNumber<uint64_t>(targetaddr));
+            changed = true;
+          }
+        if (changed)
+          d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
+      }
+    }
   }
 
   // deal with groups
