@@ -1,23 +1,4 @@
 /*
-    Copyright (C) 2021  Selwin van Dijk
-
-    This file is part of signalbackup-tools.
-
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
-/*
     Copyright (C) 2019-2021  Selwin van Dijk
 
     This file is part of signalbackup-tools.
@@ -26,6 +7,7 @@
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     signalbackup-tools is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -246,10 +228,79 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
       }
     }
 
-    // get status message updates:
+
+
+
+      /*
+
+        NOTE The following two routines only work for old-style (v1) group updates.
+        For groupV2 updates, a group update might look something like this:
+
+
+      GroupContextV2 statusmsg(body);
+      statusmsg.print();
+
+GROUP V2
+Field 1 (optional::bytes): (hex:) 0a 20 f2 f5 8f 60 6e c1 24 [...]
+ERROR REQUESTED TYPE TOO SMALL (2)
+Field 3 (optional::bytes): (hex:) 12 03 57 4c 53 1a 49 67 [...]
+Field 1 (optional::protobuf):
+  Field 1 (optional::bytes): (hex:) f2 f5 8f 60 6e c1 24 99 [...]
+  Field 2 (optional::uint32): 1
+Field 2 (optional::protobuf):
+  Field 1 (optional::bytes): (hex:) 6b 1e 76 87 cc [...]
+  Field 2 (optional::uint32): 1
+  Field 11 (optional::protobuf):
+    Field 1 (optional::string): groups/6KM9eoH7qE6OxmycqQW[...]
+Field 3 (optional::protobuf):
+  Field 2 (optional::string): GROUPTITLE
+  Field 3 (optional::string): groups/6KM9eoH7qE6OxmycqQW[...]
+  Field 4 (optional::protobuf):
+  Field 5 (optional::protobuf):
+    Field 1 (optional::enum): 2
+    Field 2 (optional::enum): 2
+  Field 6 (optional::uint32): 1
+  Field 7 (repeated::protobuf) (1/3):
+    Field 1 (optional::bytes): (hex:) 93 72 22 73 78 [...]
+    Field 2 (optional::enum): 2
+    Field 3 (optional::bytes): (hex:) f6 3f 8f 7b a9 a4 [...]
+  Field 7 (repeated::protobuf) (2/3):
+    Field 1 (optional::bytes): (hex:) 60 f8 08 1b 9f 25 [...]
+    Field 2 (optional::enum): 2
+    Field 3 (optional::bytes): (hex:) 7e 21 ca f8 cb a8 d[...]
+  Field 7 (repeated::protobuf) (3/3):
+    Field 1 (optional::bytes): (hex:) 6b 1e 76 87 cc 0d [...]
+    Field 2 (optional::enum): 2
+    Field 3 (optional::bytes): (hex:) 88 28 52 88 87 2c [...]
+Field 4 (optional::protobuf):
+  Field 2 (optional::string): WLS
+  Field 3 (optional::string): groups/6KM9eoH7qE6OxmycqQW[...]
+  Field 4 (optional::protobuf):
+  Field 5 (optional::protobuf):
+    Field 1 (optional::enum): 2
+    Field 2 (optional::enum): 2
+  Field 7 (repeated::protobuf) (1/3):
+    Field 1 (optional::bytes): (hex:) 93 72 22 73 78 e3 [...]
+    Field 2 (optional::enum): 2
+    Field 3 (optional::bytes): (hex:) f6 3f 8f 7b a9 a4 [...]
+  Field 7 (repeated::protobuf) (2/3):
+    Field 1 (optional::bytes): (hex:) 60 f8 08 1b 9f 25 [...]
+    Field 2 (optional::enum): 2
+    Field 3 (optional::bytes): (hex:) 7e 21 ca f8 cb a8 [...]
+  Field 7 (repeated::protobuf) (3/3):
+    Field 1 (optional::bytes): (hex:) 6b 1e 76 87 cc 0d [...]
+    Field 2 (optional::enum): 2
+    Field 3 (optional::bytes): (hex:) 88 28 52 88 87 2c [...]
+
+        Where the repeating field 3.7.1 corresponds to uuid as found in recipient.uuid
+
+      */
+
+    // get groupV1 status message updates:
     SqliteDB::QueryResults results2;
-    d_database.exec("SELECT type,body,_id FROM 'sms' WHERE thread_id = " + bepaald::toString(tid) + " AND (type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0)", &results2);
-    results2.prettyPrint();
+    d_database.exec("SELECT type,body,_id FROM 'sms' WHERE thread_id = " + bepaald::toString(tid) + " AND (type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND (type & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
+    [[unlikely]] if (d_verbose)
+      results2.prettyPrint();
     for (uint j = 0; j < results2.rows(); ++j)
     {
       std::string body = std::any_cast<std::string>(results2.value(j, "body"));
@@ -289,10 +340,11 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
 
 
 
-    // same for status updates in mms database
-    d_database.exec("SELECT msg_box,body,_id FROM 'mms' WHERE thread_id = " + bepaald::toString(tid) + " AND (msg_box & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0)", &results2);
+    // same for groupV1 status updates in mms database
+    d_database.exec("SELECT msg_box,body,_id FROM 'mms' WHERE thread_id = " + bepaald::toString(tid) + " AND (msg_box & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND (msg_box & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
 
-    results2.prettyPrint();
+    [[unlikely]] if (d_verbose)
+      results2.prettyPrint();
     for (uint j = 0; j < results2.rows(); ++j)
     {
       std::string body = std::any_cast<std::string>(results2.value(j, "body"));

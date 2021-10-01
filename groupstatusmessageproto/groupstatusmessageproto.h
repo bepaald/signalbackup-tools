@@ -73,7 +73,4 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM
                        protobuffer::optional::STRING, protobuffer::repeated::STRING,
                        AttachmentPointer> GroupContext;
 
-
-
-
 #endif
