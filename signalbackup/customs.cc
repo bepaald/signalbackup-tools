@@ -600,5 +600,86 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
  */
 bool SignalBackup::hiperfall()
 {
+  uint64_t t_id = 1;
+
+  // delete other threads
+  d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
+  d_database.exec("DELETE FROM mms WHERE thread_id IS NOT ?", t_id);
+  d_database.exec("DELETE FROM thread WHERE _id IS NOT ?", t_id);
+
+  SqliteDB::QueryResults outgoing_sms_ids;
+  d_database.exec("SELECT _id FROM sms WHERE "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ? OR "
+                  "(type & 0x1f) IS ?",
+                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
+                   Types::OUTGOING_VIDEO_CALL_TYPE}, &outgoing_sms_ids);
+
+  SqliteDB::QueryResults outgoing_mms_ids;
+  d_database.exec("SELECT _id FROM mms WHERE "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ? OR "
+                  "(msg_box & 0x1f) IS ?",
+                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
+                   Types::OUTGOING_VIDEO_CALL_TYPE}, &outgoing_mms_ids);
+
+  SqliteDB::QueryResults incoming_sms_ids;
+  d_database.exec("SELECT _id FROM sms WHERE "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ? AND "
+                  "(type & 0x1f) IS NOT ?",
+                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
+                   Types::OUTGOING_VIDEO_CALL_TYPE}, &incoming_sms_ids);
+
+  SqliteDB::QueryResults incoming_mms_ids;
+  d_database.exec("SELECT _id FROM mms WHERE "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ? AND "
+                  "(msg_box & 0x1f) IS NOT ?",
+                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
+                   Types::OUTGOING_VIDEO_CALL_TYPE}, &incoming_mms_ids);
+
+
+  /*
+    Mapping types:
+    20 (incoming)            ->  23 (sent)
+    23 (sent)                ->  20 (incoming)
+    22 (sending)             ->  ???
+    1 (incoming audio call)  ->  2 (outgoing audio call)
+    2 (outgoind audio call)  ->  1 (incoming audio call)
+    3 (missed call)          ->  2 (outgoing audio call)?
+    7 (profile change)       ->  REMOVE?
+    8 (missed video call)    ->  11 (outgoing video call)?
+    10 (incoming video call) ->  11 (outgoing video call)
+    11 (outgoing video call) ->  10 (incoming video call)?
+    24 (sent_failed)         ->  ???
+  */
+
+
+
   return false;
 }
