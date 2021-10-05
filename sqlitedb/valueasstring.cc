@@ -24,6 +24,15 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
   if (valueHasType<std::string>(row, column))
     return getValueAs<std::string>(row, column);
 
+  if (valueHasType<unsigned int>(row, column))
+    return bepaald::toString(getValueAs<unsigned long>(row, column));
+
+  if (valueHasType<unsigned long long int>(row, column))
+    return bepaald::toString(getValueAs<unsigned long long int>(row, column));
+
+  if (valueHasType<unsigned long>(row, column))
+    return bepaald::toString(getValueAs<unsigned long>(row, column));
+
   if (valueHasType<long long int>(row, column))
     return bepaald::toString(getValueAs<long long int>(row, column));
 
