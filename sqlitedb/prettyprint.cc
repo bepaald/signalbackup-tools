@@ -47,8 +47,14 @@ void SqliteDB::QueryResults::prettyPrint() const
         if ((newline = contents.back().back().find('\n')) != std::string::npos)
           contents.back().back().resize(newline);
       }
+      else if (valueHasType<unsigned int>(i, j))
+        contents.back().emplace_back(bepaald::toString(getValueAs<unsigned int>(i, j)));
       else if (valueHasType<long long int>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<long long int>(i, j)));
+      else if (valueHasType<unsigned long long int>(i, j))
+        contents.back().emplace_back(bepaald::toString(getValueAs<unsigned long long int>(i, j)));
+      else if (valueHasType<unsigned long>(i, j))
+        contents.back().emplace_back(bepaald::toString(getValueAs<unsigned long>(i, j)));
       else if (valueHasType<double>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<double>(i, j)));
       else if (valueHasType<std::nullptr_t>(i, j))

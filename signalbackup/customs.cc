@@ -606,63 +606,93 @@ bool SignalBackup::hiperfall()
   d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM mms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM thread WHERE _id IS NOT ?", t_id);
+  cleanDatabaseByMessages();
 
-  SqliteDB::QueryResults outgoing_sms_ids;
-  d_database.exec("SELECT _id FROM sms WHERE "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ? OR "
-                  "(type & 0x1f) IS ?",
-                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
-                   Types::OUTGOING_VIDEO_CALL_TYPE}, &outgoing_sms_ids);
 
-  SqliteDB::QueryResults outgoing_mms_ids;
-  d_database.exec("SELECT _id FROM mms WHERE "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ? OR "
-                  "(msg_box & 0x1f) IS ?",
-                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
-                   Types::OUTGOING_VIDEO_CALL_TYPE}, &outgoing_mms_ids);
+  // get min and max id from sms
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT MIN(_id),MAX(_id) FROM sms", &results);
+  if (results.rows() != 1 ||
+      !results.valueHasType<long long int>(0, 0) ||
+      !results.getValueAs<long long int>(0, 1))
+  {
+    std::cout << "Unexpected query results" << std::endl;
+    return false;
+  }
 
-  SqliteDB::QueryResults incoming_sms_ids;
-  d_database.exec("SELECT _id FROM sms WHERE "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ? AND "
-                  "(type & 0x1f) IS NOT ?",
-                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
-                   Types::OUTGOING_VIDEO_CALL_TYPE}, &incoming_sms_ids);
+  uint64_t minsmsid = results.getValueAs<long long int>(0, 0);
+  uint64_t maxsmsid = results.getValueAs<long long int>(0, 1);
+  std::cout << minsmsid << " " << maxsmsid << std::endl;
 
-  SqliteDB::QueryResults incoming_mms_ids;
-  d_database.exec("SELECT _id FROM mms WHERE "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ? AND "
-                  "(msg_box & 0x1f) IS NOT ?",
-                  {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                   Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK, Types::OUTGOING_CALL_TYPE,
-                   Types::OUTGOING_VIDEO_CALL_TYPE}, &incoming_mms_ids);
+  for (uint i = minsmsid; i <= maxsmsid ; ++i)
+  {
+    if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
+    {
+      std::cout << "Query failed" << std::endl;
+      return false;
+    }
+    if (results.rows() == 0)
+      continue;
+    if (results.rows() > 1)
+    {
+      std::cout << "Unexpected query results" << std::endl;
+      return false;
+    }
 
+    uint64_t type = results.getValueAs<long long int>(0, "type");
+
+    switch (type & 0x1F)
+    {
+    case Types::INCOMING_CALL_TYPE:
+      break;
+    case Types::OUTGOING_CALL_TYPE:
+      break;
+    case Types::MISSED_CALL_TYPE:
+      break;
+    case Types::JOINED_TYPE:
+      break;
+    case Types::UNSUPPORTED_MESSAGE_TYPE:
+      break;
+    case Types::INVALID_MESSAGE_TYPE:
+      break;
+    case Types::PROFILE_CHANGE_TYPE:
+      break;
+    case Types::MISSED_VIDEO_CALL_TYPE:
+      break;
+    case Types::GV1_MIGRATION_TYPE:
+      break;
+    case Types::INCOMING_VIDEO_CALL_TYPE:
+      break;
+    case Types::OUTGOING_VIDEO_CALL_TYPE:
+      break;
+    case Types::GROUP_CALL_TYPE:
+      break;
+    case Types::BASE_INBOX_TYPE:
+      std::cout << i << " inbox" << std::endl;
+      break;
+    case Types::BASE_OUTBOX_TYPE:
+      break;
+    case Types::BASE_SENDING_TYPE:
+      break;
+    case Types::BASE_SENT_TYPE:
+      std::cout << i << " sent" << std::endl;
+      break;
+    case Types::BASE_SENT_FAILED_TYPE:
+      break;
+    case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
+      break;
+    case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
+      break;
+    case Types::BASE_DRAFT_TYPE:
+      break;
+    default:
+      std::cout << i << " unhandled " << (type &0x1f) << std::endl;
+      break;
+    }
+  }
+
+
+  return false;
 
   /*
     Mapping types:
@@ -678,8 +708,6 @@ bool SignalBackup::hiperfall()
     11 (outgoing video call) ->  10 (incoming video call)?
     24 (sent_failed)         ->  ???
   */
-
-
 
   return false;
 }
