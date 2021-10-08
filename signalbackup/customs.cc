@@ -624,6 +624,8 @@ bool SignalBackup::hiperfall()
   uint64_t maxsmsid = results.getValueAs<long long int>(0, 1);
   std::cout << minsmsid << " " << maxsmsid << std::endl;
 
+  auto setType = [](uint64_t oldtype, uint64_t newtype) { return (oldtype & ~(static_cast<uint64_t> (0x1f))) + newtype; };
+
   for (uint i = minsmsid; i <= maxsmsid ; ++i)
   {
     if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
@@ -643,51 +645,116 @@ bool SignalBackup::hiperfall()
 
     switch (type & 0x1F)
     {
-    case Types::INCOMING_CALL_TYPE:
-      break;
-    case Types::OUTGOING_CALL_TYPE:
-      break;
-    case Types::MISSED_CALL_TYPE:
-      break;
-    case Types::JOINED_TYPE:
-      break;
-    case Types::UNSUPPORTED_MESSAGE_TYPE:
-      break;
-    case Types::INVALID_MESSAGE_TYPE:
-      break;
-    case Types::PROFILE_CHANGE_TYPE:
-      break;
-    case Types::MISSED_VIDEO_CALL_TYPE:
-      break;
-    case Types::GV1_MIGRATION_TYPE:
-      break;
-    case Types::INCOMING_VIDEO_CALL_TYPE:
-      break;
-    case Types::OUTGOING_VIDEO_CALL_TYPE:
-      break;
-    case Types::GROUP_CALL_TYPE:
-      break;
-    case Types::BASE_INBOX_TYPE:
-      std::cout << i << " inbox" << std::endl;
-      break;
-    case Types::BASE_OUTBOX_TYPE:
-      break;
-    case Types::BASE_SENDING_TYPE:
-      break;
-    case Types::BASE_SENT_TYPE:
-      std::cout << i << " sent" << std::endl;
-      break;
-    case Types::BASE_SENT_FAILED_TYPE:
-      break;
-    case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
-      break;
-    case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
-      break;
-    case Types::BASE_DRAFT_TYPE:
-      break;
-    default:
-      std::cout << i << " unhandled " << (type &0x1f) << std::endl;
-      break;
+      case Types::INCOMING_CALL_TYPE:
+      {
+        uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+        d_database.exec("UPDATE sms SET type = ? WHERE thread_id IS ?", {newtype, i});
+        break;
+      }
+      case Types::OUTGOING_CALL_TYPE:
+      {
+        uint64_t newtype = setType(type, Types::INCOMING_CALL_TYPE);
+        d_database.exec("UPDATE sms SET type = ? WHERE thread_id IS ?", {newtype, i});
+        break;
+      }
+      case Types::MISSED_CALL_TYPE:
+      {
+        uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+        d_database.exec("UPDATE sms SET type = ? WHERE thread_id IS ?", {newtype, i});
+        break;
+      }
+      case Types::JOINED_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::UNSUPPORTED_MESSAGE_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::INVALID_MESSAGE_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::PROFILE_CHANGE_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::MISSED_VIDEO_CALL_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::GV1_MIGRATION_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::INCOMING_VIDEO_CALL_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::OUTGOING_VIDEO_CALL_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::GROUP_CALL_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::BASE_INBOX_TYPE:
+      {
+        uint64_t newtype = setType(type, Types::BASE_SENT_TYPE);
+        d_database.exec("UPDATE sms SET type = ? WHERE thread_id IS ?", {newtype, i});
+        break;
+      }
+      case Types::BASE_OUTBOX_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::BASE_SENDING_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::BASE_SENT_TYPE:
+      {
+        uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
+        d_database.exec("UPDATE sms SET type = ? WHERE thread_id IS ?", {newtype, i});
+        break;
+      }
+      case Types::BASE_SENT_FAILED_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      case Types::BASE_DRAFT_TYPE:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
+      default:
+      {
+        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        break;
+      }
     }
   }
 
