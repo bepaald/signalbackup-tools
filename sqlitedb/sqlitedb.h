@@ -105,6 +105,7 @@ class SqliteDB
 
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
+  inline int execParamFiller(sqlite3_stmt *stmt, int count, int param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, unsigned int param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, unsigned long param) const;
@@ -221,6 +222,12 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::pair<un
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
   return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first), param.second, SQLITE_TRANSIENT);
+}
+
+inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, int param) const
+{
+  //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
+  return sqlite3_bind_int64(stmt, count, param);
 }
 
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, unsigned int param) const
