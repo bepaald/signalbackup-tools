@@ -39,6 +39,8 @@ void SqliteDB::QueryResults::print() const
     {
       if (valueHasType<std::string>(i, j))
         std::cout << getValueAs<std::string>(i, j);
+      else if (valueHasType<int>(i, j))
+        std::cout << bepaald::toString(getValueAs<int>(i, j));
       else if (valueHasType<unsigned int>(i, j))
         std::cout << bepaald::toString(getValueAs<unsigned int>(i, j));
       else if (valueHasType<long long int>(i, j))

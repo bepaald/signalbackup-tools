@@ -46,6 +46,14 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
         return false;
       }
     }
+    else if (isType<int>(params[i]))
+    {
+      if (execParamFiller(stmt, i + 1, std::any_cast<int>(params[i])) != SQLITE_OK)
+      {
+        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        return false;
+      }
+    }
     else if (isType<unsigned int>(params[i]))
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned int>(params[i])) != SQLITE_OK)
