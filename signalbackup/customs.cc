@@ -958,7 +958,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       default:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type (default): " << i << (type &0x1f) << std::endl;
         break;
       }
     }
