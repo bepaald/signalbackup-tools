@@ -23,21 +23,6 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   std::cout << __FUNCTION__ << std::endl;
 
-
-  /*
-   */
-
-  using namespace std::string_literals;
-  SqliteDB::QueryResults tempr;
-  source->d_database.exec("SELECT type,name FROM sqlite_master WHERE type IS ?", "table"s, &tempr);
-  tempr.prettyPrint();
-
-  source->d_database.exec("SELECT * FROM emoji_search", &tempr);
-  tempr.prettyPrint();
-
-  /*
-   */
-
   if ((d_databaseversion >= 33 && source->d_databaseversion < 33) ||
       (d_databaseversion < 33 && source->d_databaseversion >= 33) ||
       (d_databaseversion >= 27 && source->d_databaseversion < 27) ||
