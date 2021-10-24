@@ -598,10 +598,8 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
 /*
   switch sender and recipient in single one-to-one conversation?
  */
-bool SignalBackup::hiperfall()
+bool SignalBackup::hiperfall(uint64_t t_id)
 {
-  uint64_t t_id = 1;
-
   // delete other threads
   d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM mms WHERE thread_id IS NOT ?", t_id);
@@ -617,7 +615,7 @@ bool SignalBackup::hiperfall()
       !results.valueHasType<long long int>(0, 0) ||
       !results.getValueAs<long long int>(0, 1))
   {
-    std::cout << "Unexpected query results" << std::endl;
+    std::cout << "Error: Unexpected query results" << std::endl;
     return false;
   }
 
@@ -629,14 +627,14 @@ bool SignalBackup::hiperfall()
   {
     if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
     {
-      std::cout << "Query failed" << std::endl;
+      std::cout << "Error: Query failed" << std::endl;
       return false;
     }
     if (results.rows() == 0)
       continue;
     if (results.rows() > 1)
     {
-      std::cout << "Unexpected query results" << std::endl;
+      std::cout << "Error: Unexpected query results" << std::endl;
       return false;
     }
 
@@ -894,7 +892,7 @@ bool SignalBackup::hiperfall()
       !results.valueHasType<long long int>(0, 0) ||
       !results.getValueAs<long long int>(0, 1))
   {
-    std::cout << "Unexpected query results" << std::endl;
+    std::cout << "Error: Unexpected query results" << std::endl;
     return false;
   }
 
@@ -906,14 +904,14 @@ bool SignalBackup::hiperfall()
   {
     if (!d_database.exec("SELECT * FROM mms WHERE _id = ?", i, &results))
     {
-      std::cout << "Query failed" << std::endl;
+      std::cout << "Error: Query failed" << std::endl;
       return false;
     }
     if (results.rows() == 0)
       continue;
     if (results.rows() > 1)
     {
-      std::cout << "Unexpected query results" << std::endl;
+      std::cout << "Error: Unexpected query results" << std::endl;
       return false;
     }
 

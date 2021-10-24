@@ -254,10 +254,12 @@ int main(int argc, char *argv[])
   }
 
   // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
-  if (arg.hiperfall())
-  {
-    sb->hiperfall();
-  }
+  if (arg.hiperfall() != -1)
+    if (!sb->hiperfall(arg.hiperfall()))
+    {
+      std::cout << "Some error occured..." << std::endl;
+      return 1;
+    }
 
   // temporary, to import messages from truncated database into older, but complete database
   if (!arg.sleepyh34d().empty())
