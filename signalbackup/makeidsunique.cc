@@ -25,7 +25,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
                                  long long int minpart, long long int minrecipient, long long int mingroups,
                                  long long int minidentities, long long int mingroup_receipts, long long int mindrafts,
                                  long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
-                                 long long int minremapped_threads, long long int minmention)
+                                 long long int minremapped_threads, long long int minmention,
+                                 long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
+                                 long long int mingroup_call_ring)
 {
   std::cout << __FUNCTION__ << std::endl;
 
@@ -40,6 +42,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     d_database.exec("UPDATE mention SET thread_id = thread_id + ?", minthread); // ""
 
   setMinimumId("sms",  minsms);
+  if (d_database.containsTable("msl_message"))
+    d_database.exec("UPDATE msl_message SET message_id = message_id + ? WHERE is_mms IS NOT 1", minsms);
   compactIds("sms");
 
   // UPDATE t SET id = (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1) WHERE id = (SELECT MIN(id) FROM t WHERE id > (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1));
@@ -49,6 +53,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   d_database.exec("UPDATE group_receipts SET mms_id = mms_id + ?", minmms); // "
   if (d_database.containsTable("mention"))
     d_database.exec("UPDATE mention SET message_id = message_id + ?", minmms);
+  if (d_database.containsTable("msl_message"))
+    d_database.exec("UPDATE msl_message SET message_id = message_id + ? WHERE is_mms IS 1", minmms);
   compactIds("mms");
 
   setMinimumId("part", minpart);
@@ -85,6 +91,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     }
     if (d_database.containsTable("mention"))
       d_database.exec("UPDATE mention SET recipient_id = recipient_id + ?", minrecipient);
+
+    if (d_database.containsTable("msl_recipient"))
+      d_database.exec("UPDATE msl_recipient SET recipient_id = recipient_id + ?", minrecipient);
 
     // address is UNIQUE in identities, so we can not simply do the following:
     // d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
@@ -207,6 +216,24 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   setMinimumId("sticker", minsticker);
   compactIds("sticker");
 
+  if (minmsl_payload >= 0 && d_database.containsTable("msl_payload"))
+  {
+    setMinimumId("msl_payload", minmsl_payload);
+    d_database.exec("UPDATE msl_recipient SET payload_id = payload_id + ?", minmsl_payload);
+    d_database.exec("UPDATE msl_message SET payload_id = payload_id + ?", minmsl_payload);
+
+    setMinimumId("msl_recipient", minmsl_recipient);
+    compactIds("msl_recipient");
+
+    setMinimumId("msl_message", minmsl_message);
+    compactIds("msl_message");
+  }
+
+  if (mingroup_call_ring >= 0 && d_database.containsTable("group_call_ring"))
+  {
+    setMinimumId("group_call_ring", mingroup_call_ring);
+    compactIds("group_call_ring");
+  }
   if (minmegaphone >= 0 && d_database.containsTable("megaphone"))
   {
     setMinimumId("megaphone", minmegaphone);

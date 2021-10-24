@@ -50,6 +50,23 @@ void SignalBackup::cleanDatabaseByMessages()
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
 
+  if (d_database.containsTable("msl_message") &&
+      d_database.containsTable("msl_recipient") &&
+      d_database.containsTable("msl_payload"))
+  {
+    std::cout << "  Deleting unneeded MessageSendLog entries..." << std::endl;
+
+    // delete from msl_message table if message does not exist anymore
+    d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
+    d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+
+    // now delete all payloads for non existing messages
+    d_database.exec("DELETE FROM msl_payload WHERE _id NOT IN (SELECT DISTINCT payload_id FROM msl_message)");
+
+    // lastly delete recipient for non existing payloads
+    d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
+  }
+
   if (d_databaseversion < 24)
   {
     std::cout << "  Deleting unreferenced recipient_preferences entries..." << std::endl;
