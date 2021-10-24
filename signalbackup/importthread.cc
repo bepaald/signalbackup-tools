@@ -23,6 +23,21 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   std::cout << __FUNCTION__ << std::endl;
 
+
+  /*
+   */
+
+  using namespace std::string_literals;
+  SqliteDB::QueryResults tempr;
+  source->d_database.exec("SELECT type,name FROM sqlite_master WHERE type IS ?", "table"s, &tempr);
+  tempr.prettyPrint();
+
+  source->d_database.exec("SELECT * FROM emoji_search", &tempr);
+  tempr.prettyPrint();
+
+  /*
+   */
+
   if ((d_databaseversion >= 33 && source->d_databaseversion < 33) ||
       (d_databaseversion < 33 && source->d_databaseversion >= 33) ||
       (d_databaseversion >= 27 && source->d_databaseversion < 27) ||
@@ -127,6 +142,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
 
   // all emoji_search_* tables are ignored on import, delete from source here to prevent failing unique constraints
+  /*
   if (source->d_database.containsTable("emoji_search_data"))
     source->d_database.exec("DELETE FROM emoji_search_data");
   if (source->d_database.containsTable("emoji_search_idx"))
@@ -137,7 +153,31 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("DELETE FROM emoji_search_docsize");
   if (source->d_database.containsTable("emoji_search_config"))
     source->d_database.exec("DELETE FROM emoji_search_config");
+  */
 
+  // delete double megaphones
+  if (d_database.containsTable("megaphone") && source->d_database.containsTable("megaphone"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT event FROM megaphone", &res);
+
+    std::cout << "  Deleting " << res.rows() << " existing megaphones" << std::endl;
+
+    for (uint i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.getValueAs<std::string>(i, 0));
+  }
+
+  if (d_database.containsTable("group_call_ring") && source->d_database.containsTable("group_call_ring"))
+  {
+    // not sure what this table is for, but it has a UNIQUE ring_id field,
+    // so let's just delete any double ring_id's
+
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT ring_id FROM group_call_ring", &res);
+
+    for (uint i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM group_call_ring WHERE ring_id = ?", res.getValueAs<long long int>(i, 0));
+  }
 
   // untested
   /*
@@ -180,8 +220,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   // * there is recipient_id, which probably needs to be adjusted in updateRecipientId(), but it must be unique so it must then be deleted if the adjustment can be made
   // * there is a created_at, probably a timestamp -> delete the older one?, also use this in croptodate?
 
-
-  source->d_database.exec("VACUUM");
+  //source->d_database.exec("VACUUM");
 
   // make sure all id's are unique
   long long int offsetthread = getMaxUsedId("thread") + 1 - source->getMinUsedId("thread");
@@ -195,8 +234,24 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   long long int offsetdrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
   long long int offsetsticker = getMaxUsedId("sticker") + 1 - source->getMinUsedId("sticker");
 
+
+  long long int offsetmsl_payload = -1;
+  long long int offsetmsl_message = -1;
+  long long int offsetmsl_recipient = -1;
+  if (source->d_database.containsTable("msl_payload") &&
+      source->d_database.containsTable("msl_message") &&
+      source->d_database.containsTable("msl_recipient"))
+  {
+    offsetmsl_payload = getMaxUsedId("msl_payload") + 1 - source->getMinUsedId("msl_payload");
+    offsetmsl_message = getMaxUsedId("msl_message") + 1 - source->getMinUsedId("msl_message");
+    offsetmsl_recipient = getMaxUsedId("msl_recipient") + 1 - source->getMinUsedId("msl_recipient");
+  }
+
   // payments, sender_keys
 
+  long long int offsetgroup_call_ring = -1;
+  if (source->d_database.containsTable("group_call_ring"))
+    offsetgroup_call_ring = getMaxUsedId("group_call_ring") + 1 - source->getMinUsedId("group_call_ring");
 
   long long int offsetmegaphone = -1;
   if (source->d_database.containsTable("megaphone"))
@@ -218,7 +273,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         offsetpart, offsetrecipient, offsetgroups,
                         offsetidentities, offsetgroup_receipts, offsetdrafts,
                         offsetsticker, offsetmegaphone, offsetremapped_recipients,
-                        offsetremapped_threads, offsetmention);
+                        offsetremapped_threads, offsetmention,
+                        offsetmsl_payload, offsetmsl_message, offsetmsl_recipient,
+                        offsetgroup_call_ring);
 
   // delete double remapped_recipients
   if (d_database.containsTable("remapped_recipients") && source->d_database.containsTable("remapped_recipients"))
@@ -338,6 +395,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   // now import the source tables into target,
 
+
   // get tables
   std::string q("SELECT sql, name, type FROM sqlite_master");
   source->d_database.exec(q, &results);
@@ -346,6 +404,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   {
     if (!results.valueHasType<std::nullptr_t>(i, 0))
     {
+      //std::cout << "Dealing with: " << results.getValueAs<std::string>(i, 1) << std::endl;
       if (results.valueHasType<std::string>(i, 1) &&
           (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
            results.getValueAs<std::string>(i, 1).find("sms_fts") == 0))
@@ -356,11 +415,14 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
-                results.getValueAs<std::string>(i, 1).find("emoij_search") == 0))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is emoji_search_ftssecrettable" << std::endl;
+                results.getValueAs<std::string>(i, 1).find("emoji_search") == 0))
+        ;//std::cout << "Skipping " << results.getValueAs<std::string>(i, 1) << " because it is emoji_search_ftssecrettable" << std::endl;
       else
         if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
+        {
           tables.emplace_back(results.getValueAs<std::string>(i, 1));
+          //std::cout << "Added: " << results.getValueAs<std::string>(i, 1) << std::endl;
+        }
     }
   }
 
