@@ -126,6 +126,8 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (source->d_database.containsTable("dependency_spec"))
     source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
 
+
+  // NOT NECESSARY (these tables are skipped when merging anyway) AND CAUSES BREAKAGE
   // all emoji_search_* tables are ignored on import, delete from source here to prevent failing unique constraints
   /*
   if (source->d_database.containsTable("emoji_search_data"))
