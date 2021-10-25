@@ -598,8 +598,65 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
 /*
   switch sender and recipient in single one-to-one conversation?
  */
-bool SignalBackup::hiperfall(uint64_t t_id)
+bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
 {
+
+  SqliteDB::QueryResults results;
+  // get the recipient id's for the participants in this conversation
+  long long int self_id = -1;
+  if (selfid.empty())
+  {
+    self_id = scanSelf();
+    if (self_id == -1)
+    {
+      std::cout << "Failed to determine recipient, please add option to specify backup owners own phone number, for example: `--setselfid \"+31612345678\"'" << std::endl;
+      return false;
+    }
+  }
+  else
+  {
+    if (!d_database.exec("SELECT _id FROM recipient WHERE phone = ?", selfid, &results))
+    {
+      std::cout << "ERROR. sorry" << std::endl;
+      return false;
+    }
+    if (results.rows() != 1)
+    {
+      std::cout << "Error: Unexpected query results" << std::endl;
+      return false;
+    }
+    self_id = results.getValueAs<long long int>(0, "_id");
+  }
+  long long int partner_id = -1;
+  if (!d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", t_id, &results))
+  {
+    std::cout << "ERROR. sorry" << std::endl;
+    return false;
+  }
+  if (results.rows() != 1)
+  {
+    std::cout << "Error: Unexpected query results" << std::endl;
+    return false;
+  }
+  partner_id = results.getValueAs<long long int>(0, d_thread_recipient_id);
+
+  std::cout << "Got recipients: " << self_id << " & " << partner_id << std::endl;
+
+  // now switch them
+  if (!d_database.exec("UPDATE recipient SET _id = ? WHERE _id = ?", {-partner_id, self_id}) ||
+      !d_database.exec("UPDATE recipient SET _id = ? WHERE _id = ?", {self_id, partner_id}) ||
+      !d_database.exec("UPDATE recipient SET _id = ? WHERE _id = ?", {partner_id, -partner_id}))
+  {
+    std::cout << "Failed to switch recipient id's" << std::endl;
+    return false;
+  }
+
+  // since msl_ tables (messagesendlog) deal with sent messages, we shoudl clear them
+  // (they are received messages now).
+  d_database.exec("DELETE FROM msl_payload");
+  d_database.exec("DELETE FROM msl_recipient");
+  d_database.exec("DELETE FROM msl_message");
+
   // delete other threads
   d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM mms WHERE thread_id IS NOT ?", t_id);
@@ -609,7 +666,6 @@ bool SignalBackup::hiperfall(uint64_t t_id)
   auto setType = [](uint64_t oldtype, uint64_t newtype) { return (oldtype & ~(static_cast<uint64_t> (0x1f))) + newtype; };
 
   // get min and max id from sms
-  SqliteDB::QueryResults results;
   d_database.exec("SELECT MIN(_id),MAX(_id) FROM sms", &results);
   if (results.rows() != 1 ||
       !results.valueHasType<long long int>(0, 0) ||
@@ -623,6 +679,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
   uint64_t maxsmsid = results.getValueAs<long long int>(0, 1);
   std::cout << minsmsid << " " << maxsmsid << std::endl;
 
+  std::cout << "Switching sms entries..." << std::endl;
   for (uint i = minsmsid; i <= maxsmsid ; ++i)
   {
     if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
@@ -698,17 +755,17 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       case Types::JOINED_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'JOINED_TYPE'" << std::endl;
         break;
       }
       case Types::UNSUPPORTED_MESSAGE_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'UNSUPPORTED_MESSAGE_TYPE'" << std::endl;
         break;
       }
       case Types::INVALID_MESSAGE_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'INVALID_MESSAGE_TYPE'" << std::endl;
         break;
       }
       case Types::PROFILE_CHANGE_TYPE:
@@ -731,7 +788,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       case Types::GV1_MIGRATION_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'GV1_MIGRATION_TYPE'" << std::endl;
         // should not be present in 1-on-1 threads
         break;
       }
@@ -749,7 +806,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       case Types::GROUP_CALL_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'GROUP_CALL_TYPE'" << std::endl;
         break;
       }
       case Types::BASE_INBOX_TYPE:
@@ -791,7 +848,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       case Types::BASE_OUTBOX_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_OUTBOX_TYPE'" << std::endl;
         break;
       }
       case Types::BASE_SENDING_TYPE:
@@ -865,22 +922,22 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_PENDING_SECURE_SMS_FALLBACK'" << std::endl;
         break;
       }
       case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_PENDING_INSECURE_SMS_FALLBACK'" << std::endl;
         break;
       }
       case Types::BASE_DRAFT_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_DRAFT_TYPE'" << std::endl;
         break;
       }
       default:
       {
-        std::cout << "Unhandled type: " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << std::endl;
         break;
       }
     }
@@ -900,6 +957,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
   uint64_t maxmmsid = results.getValueAs<long long int>(0, 1);
   std::cout << minmmsid << " " << maxmmsid << std::endl;
 
+  std::cout << "Switching mms entries..." << std::endl;
   for (uint i = minmmsid; i <= maxmmsid ; ++i)
   {
     if (!d_database.exec("SELECT * FROM mms WHERE _id = ?", i, &results))
@@ -958,7 +1016,7 @@ bool SignalBackup::hiperfall(uint64_t t_id)
       }
       default:
       {
-        std::cout << "Unhandled type (default): " << i << (type &0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << (type & 0x1f) << std::endl;
         break;
       }
     }
