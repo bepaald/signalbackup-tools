@@ -104,7 +104,7 @@ class SignalBackup
   /* CUSTOMS */
   bool hhenkel(std::string const &);
   bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
-  bool hiperfall(uint64_t t_id);
+  bool hiperfall(uint64_t t_id, std::string const &selfid);
   /* CUSTOMS */
 
  private:
@@ -160,6 +160,7 @@ class SignalBackup
   bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
   std::string sanitizeFilename(std::string const &filename) const;
   bool setColumnNames();
+  long long int scanSelf() const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,

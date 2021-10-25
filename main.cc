@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
 
   // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
   if (arg.hiperfall() != -1)
-    if (!sb->hiperfall(arg.hiperfall()))
+    if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
     {
       std::cout << "Some error occured..." << std::endl;
       return 1;

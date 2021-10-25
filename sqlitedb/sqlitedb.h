@@ -66,7 +66,7 @@ class SqliteDB
     inline bool removeRow(uint idx);
 
    private:
-    std::wstring wideString(std::string const &narrow) const;
+    //std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
     //bool supportsAnsi() const;
     //bool isTerminal() const;
