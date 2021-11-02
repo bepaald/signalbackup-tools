@@ -640,6 +640,12 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
   }
   partner_id = results.getValueAs<long long int>(0, d_thread_recipient_id);
 
+  if (partner_id == self_id)
+  {
+    std::cout << "ERROR: Got same recipients for sender and receiver: " << self_id << " & " << partner_id << std::endl;
+    return false;
+  }
+
   std::cout << "Got recipients: " << self_id << " & " << partner_id << std::endl;
 
   // now switch them
@@ -755,17 +761,17 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       }
       case Types::JOINED_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'JOINED_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'JOINED_TYPE'" << std::endl;
         break;
       }
       case Types::UNSUPPORTED_MESSAGE_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'UNSUPPORTED_MESSAGE_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'UNSUPPORTED_MESSAGE_TYPE'" << std::endl;
         break;
       }
       case Types::INVALID_MESSAGE_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'INVALID_MESSAGE_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'INVALID_MESSAGE_TYPE'" << std::endl;
         break;
       }
       case Types::PROFILE_CHANGE_TYPE:
@@ -788,7 +794,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       }
       case Types::GV1_MIGRATION_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'GV1_MIGRATION_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'GV1_MIGRATION_TYPE'" << std::endl;
         // should not be present in 1-on-1 threads
         break;
       }
@@ -806,7 +812,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       }
       case Types::GROUP_CALL_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'GROUP_CALL_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'GROUP_CALL_TYPE'" << std::endl;
         break;
       }
       case Types::BASE_INBOX_TYPE:
@@ -848,7 +854,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       }
       case Types::BASE_OUTBOX_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_OUTBOX_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_OUTBOX_TYPE'" << std::endl;
         break;
       }
       case Types::BASE_SENDING_TYPE:
@@ -922,22 +928,22 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       }
       case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_PENDING_SECURE_SMS_FALLBACK'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_PENDING_SECURE_SMS_FALLBACK'" << std::endl;
         break;
       }
       case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_PENDING_INSECURE_SMS_FALLBACK'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_PENDING_INSECURE_SMS_FALLBACK'" << std::endl;
         break;
       }
       case Types::BASE_DRAFT_TYPE:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << " : 'BASE_DRAFT_TYPE'" << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_DRAFT_TYPE'" << std::endl;
         break;
       }
       default:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << std::endl;
         break;
       }
     }
@@ -1014,9 +1020,15 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
           return false;
         break;
       }
+      case Types::BASE_SENT_FAILED_TYPE:
+      {
+        // failed sent message is not present at receiver?
+        d_database.exec("DELETE FROM mms WHERE _id = ?", i);
+        break;
+      }
       default:
       {
-        std::cout << "Unhandled type: " << i << (type & 0x1f) << std::endl;
+        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << std::endl;
         break;
       }
     }
@@ -1029,7 +1041,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
     Mapping types:
     *20 (incoming)            ->  23 (sent)
     *23 (sent)                ->  20 (incoming)
-    22 (sending)             ->  ???
+    22 (sending)              ->  ???
     *1 (incoming audio call)  ->  2 (outgoing audio call)
     *2 (outgoind audio call)  ->  1 (incoming audio call)
     *3 (missed call)          ->  2 (outgoing audio call)?
