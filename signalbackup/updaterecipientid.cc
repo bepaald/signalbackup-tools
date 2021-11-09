@@ -75,7 +75,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
         unsigned int body_idx = 0;
         while (true)
         {
-          if (!std::isdigit(body[body_idx]) || i >= body.length())
+          if (!std::isdigit(body[body_idx]) || body_idx >= body.length())
           {
             // deal with any number we have
             if (tmp.size())
@@ -102,7 +102,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
         //std::cout << output << std::endl;
         long long int sms_id = results.getValueAs<long long int>(i, "_id");
         d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
-        if (verbose) std::cout << "    update sms.body (GV1_MAGRATION), changed: " << d_database.changed() << std::endl;
+        if (verbose) std::cout << "    update sms.body (GV1_MIGRATION), changed: " << d_database.changed() << std::endl;
       }
     }
   }

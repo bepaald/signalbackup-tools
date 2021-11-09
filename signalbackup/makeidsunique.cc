@@ -144,7 +144,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
           unsigned int body_idx = 0;
           while (true)
           {
-            if (!std::isdigit(body[body_idx]) || i >= body.length())
+            if (!std::isdigit(body[body_idx]) || body_idx >= body.length())
             {
               // deal with any number we have
               if (tmp.size())

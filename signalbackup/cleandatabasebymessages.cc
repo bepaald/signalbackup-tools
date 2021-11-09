@@ -87,7 +87,7 @@ void SignalBackup::cleanDatabaseByMessages()
     // KEEP recipients WITH _id IN remapped_recipients.old_id!?!?
     // KEEP recipients who authored a reaction somehow?
 
-    std::set<unsigned int> reaction_authors;
+    std::set<unsigned int> referenced_recipients;
     if (d_database.tableContainsColumn("sms", "reactions"))
     {
       SqliteDB::QueryResults reactionresults;
@@ -96,7 +96,7 @@ void SignalBackup::cleanDatabaseByMessages()
       {
         ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
         for (uint j = 0; j < reactions.numReactions(); ++j)
-          reaction_authors.insert(reactions.getAuthor(j));
+          referenced_recipients.insert(reactions.getAuthor(j));
       }
     }
     if (d_database.tableContainsColumn("mms", "reactions"))
@@ -107,21 +107,56 @@ void SignalBackup::cleanDatabaseByMessages()
       {
         ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
         for (uint j = 0; j < reactions.numReactions(); ++j)
-          reaction_authors.insert(reactions.getAuthor(j));
+          referenced_recipients.insert(reactions.getAuthor(j));
       }
     }
 
-    std::string reaction_authors_query;
-    if (!reaction_authors.empty())
+    SqliteDB::QueryResults results;
+    if (d_database.exec("SELECT body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
     {
-      reaction_authors_query = " UNION SELECT * FROM (VALUES";
-      for (auto const &r : reaction_authors)
+      //results.prettyPrint();
+      for (uint i = 0; i < results.rows(); ++i)
+      {
+        if (results.valueHasType<std::string>(i, "body"))
+        {
+          //std::cout << results.getValueAs<std::string>(i, "body") << std::endl;
+
+          std::string body = results.getValueAs<std::string>(i, "body");
+          std::string tmp; // to hold part of number while reading
+          unsigned int body_idx = 0;
+          while (true)
+          {
+            if (!std::isdigit(body[body_idx]) || body_idx >= body.length()) // we are reading '|', ',' or end of string
+            {
+              // deal with any number we have
+              if (tmp.size())
+              {
+                referenced_recipients.insert(bepaald::toNumber<int>(tmp));
+                [[unlikely ]] if (d_verbose) std::cout << "    Got recipient from GV1_MIGRATION: " << tmp << std::endl;
+                tmp.clear();
+              }
+            }
+            else // we are reading (part of) a number
+              tmp += body[body_idx];
+            ++body_idx;
+            if (body_idx > body.length())
+              break;
+          }
+        }
+      }
+    }
+
+    std::string referenced_recipients_query;
+    if (!referenced_recipients.empty())
+    {
+      referenced_recipients_query = " UNION SELECT * FROM (VALUES";
+      for (auto const &r : referenced_recipients)
       {
         //std::cout << "AUTHOR : " << r << std::endl;
-        reaction_authors_query += "(" + bepaald::toString(r) + "),";
+        referenced_recipients_query += "(" + bepaald::toString(r) + "),";
       }
-      reaction_authors_query.pop_back();
-      reaction_authors_query += ")";
+      referenced_recipients_query.pop_back();
+      referenced_recipients_query += ")";
     }
     //std::cout << "QUERY: " << reaction_authors_query << std::endl;
 
@@ -131,7 +166,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     " UNION SELECT DISTINCT address FROM mms"s +
                     (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
-                    reaction_authors_query +
+                    referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)"s);
   }
 
