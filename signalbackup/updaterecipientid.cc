@@ -56,6 +56,11 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
     d_database.exec("UPDATE msl_recipient SET recipient_id = ? WHERE recipient_id = ?", {targetid, sourceid});
     if (verbose) std::cout << "    update msl_recipient, changed: " << d_database.changed() << std::endl;
   }
+  if (d_database.containsTable("reaction")) // dbv >= 121
+  {
+    d_database.exec("UPDATE reaction SET author_id = ? WHERE author_id = ?", {targetid, sourceid});
+    if (verbose) std::cout << "    update reaction, changed: " << d_database.changed() << std::endl;
+  }
 
   // recipient_id can also mentioned in the body of group v1 -> v2 migration message, when recipient
   // was thrown out of group.

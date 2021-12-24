@@ -27,7 +27,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
                                  long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
                                  long long int minremapped_threads, long long int minmention,
                                  long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
-                                 long long int mingroup_call_ring)
+                                 long long int minreaction, long long int mingroup_call_ring)
 {
   std::cout << __FUNCTION__ << std::endl;
 
@@ -98,6 +98,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
     if (d_database.containsTable("msl_recipient"))
       d_database.exec("UPDATE msl_recipient SET recipient_id = recipient_id + ?", minrecipient);
+
+    if (d_database.containsTable("reaction")) // dbv >= 121
+      d_database.exec("UPDATE reaction SET author_id = author_id + ?", minrecipient);
 
     // address is UNIQUE in identities, so we can not simply do the following:
     // d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
@@ -238,24 +241,34 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     setMinimumId("group_call_ring", mingroup_call_ring);
     compactIds("group_call_ring");
   }
+
   if (minmegaphone >= 0 && d_database.containsTable("megaphone"))
   {
     setMinimumId("megaphone", minmegaphone);
     compactIds("megaphone");
   }
+
   if (minremapped_recipients >= 0 && d_database.containsTable("remapped_recipients"))
   {
     setMinimumId("remapped_recipients", minremapped_recipients);
     compactIds("remapped_recipients");
   }
+
   if (minremapped_threads >= 0 && d_database.containsTable("remapped_threads"))
   {
     setMinimumId("remapped_threads", minremapped_threads);
     compactIds("remapped_threads");
   }
+
   if (minmention >= 0 && d_database.containsTable("mention"))
   {
     setMinimumId("mention", minmention);
     compactIds("mention");
+  }
+
+  if (minreaction >= 0 && d_database.containsTable("reaction")) // dbv >= 121
+  {
+    setMinimumId("reaction", minreaction);
+    compactIds("reaction");
   }
 }
