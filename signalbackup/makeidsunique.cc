@@ -44,6 +44,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   setMinimumId("sms",  minsms);
   if (d_database.containsTable("msl_message"))
     d_database.exec("UPDATE msl_message SET message_id = message_id + ? WHERE is_mms IS NOT 1", minsms);
+  if (d_database.containsTable("reaction")) // dbv >= 121
+    d_database.exec("UPDATE reaction SET message_id = message_id + ? WHERE is_mms IS NOT 1", minsms);
   compactIds("sms");
 
   // UPDATE t SET id = (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1) WHERE id = (SELECT MIN(id) FROM t WHERE id > (SELECT t1.id+1 FROM t t1 LEFT OUTER JOIN t t2 ON t2.id=t1.id+1 WHERE t2.id IS NULL AND t1.id > 0 ORDER BY t1.id LIMIT 1));
@@ -55,6 +57,8 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     d_database.exec("UPDATE mention SET message_id = message_id + ?", minmms);
   if (d_database.containsTable("msl_message"))
     d_database.exec("UPDATE msl_message SET message_id = message_id + ? WHERE is_mms IS 1", minmms);
+  if (d_database.containsTable("reaction")) // dbv >= 121
+    d_database.exec("UPDATE reaction SET message_id = message_id + ? WHERE is_mms IS 1", minmms);
   compactIds("mms");
 
   setMinimumId("part", minpart);

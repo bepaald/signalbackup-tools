@@ -49,6 +49,9 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
       {
         if (d_database.containsTable("msl_message"))
           d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {nid, valuetochange});
+
+        if (d_database.containsTable("reaction")) // dbv >= 121
+          d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {nid, valuetochange});
       }
       else if (table == "mms")
       {
@@ -58,6 +61,8 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
           d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {nid, valuetochange});
         if (d_database.containsTable("msl_message"))
           d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {nid, valuetochange});
+        if (d_database.containsTable("reaction")) // dbv >= 121
+          d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {nid, valuetochange});
       }
       else if (table == "part")
       {
