@@ -38,6 +38,15 @@ bool SignalBackup::reorderMmsSmsIds() const
         !d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {-1 * negative_id_tmp, oldid}) ||
         !d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {-1 * negative_id_tmp, oldid}))
       return false;
+    if (d_database.containsTable("mention"))
+      if (!d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid}))
+        return false;
+    if (d_database.containsTable("msl_message"))
+      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {-1 * negative_id_tmp, oldid}))
+        return false;
+    if (d_database.containsTable("reaction")) // dbv >= 121
+      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {-1 * negative_id_tmp, oldid}))
+        return false;
   }
 
   // now make all id's positve again
@@ -45,6 +54,15 @@ bool SignalBackup::reorderMmsSmsIds() const
       !d_database.exec("UPDATE part SET mid = mid * -1 WHERE mid < 0") ||
       !d_database.exec("UPDATE group_receipts SET mms_id = mms_id * -1 WHERE mms_id < 0"))
     return false;
+  if (d_database.containsTable("mention"))
+    if (!d_database.exec("UPDATE mention SET message_id = message_id * -1 WHERE message_id < 0"))
+      return false;
+  if (d_database.containsTable("msl_message"))
+    if (!d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS 1"))
+      return false;
+  if (d_database.containsTable("reaction")) // dbv >= 121
+    if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS 1"))
+      return false;
 
   // SAME FOR SMS
   if (!d_database.exec("SELECT _id FROM sms ORDER BY date ASC", &res))
@@ -57,10 +75,22 @@ bool SignalBackup::reorderMmsSmsIds() const
     ++negative_id_tmp;
     if (!d_database.exec("UPDATE sms SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid}))
       return false;
+    if (d_database.containsTable("msl_message"))
+      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {-1 * negative_id_tmp, oldid}))
+        return false;
+    if (d_database.containsTable("reaction")) // dbv >= 121
+      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {-1 * negative_id_tmp, oldid}))
+        return false;
   }
 
   if (!d_database.exec("UPDATE sms SET _id = _id * -1 WHERE _id < 0"))
     return false;
+  if (d_database.containsTable("msl_message"))
+    if (!d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS NOT 1"))
+      return false;
+  if (d_database.containsTable("reaction")) // dbv >= 121
+    if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS NOT 1"))
+      return false;
 
   return true;
 }

@@ -67,6 +67,13 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
   }
 
+  if (d_database.containsTable("reaction")) // dbv >= 121
+  {
+    // delete reactions for messages that do not exist
+    d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
+    d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+  }
+
   if (d_databaseversion < 24)
   {
     std::cout << "  Deleting unreferenced recipient_preferences entries..." << std::endl;
