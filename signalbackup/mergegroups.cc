@@ -72,6 +72,12 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
         std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
       }
 
+      if (d_database.containsTable("msl_recipient"))
+        d_database.exec("UPDATE msl_recipient SET recipient_id = ? WHERE recipient_id = ?", {targetgroup, groupids[i]});
+
+      if (d_database.containsTable("reaction")) // dbv >= 121
+        d_database.exec("UPDATE reaction SET author_id = ? WHERE author_id = ?", {targetgroup, groupids[i]});
+
       // delete old (now empty) thread
       d_database.exec("DELETE FROM thread WHERE " + d_thread_recipient_id + " = ?", groupids[i]);
       std::cout << "Removed " << d_database.changed() << " threads from table" << std::endl;

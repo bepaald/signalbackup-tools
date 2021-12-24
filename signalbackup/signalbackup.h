@@ -140,7 +140,7 @@ class SignalBackup
                      long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
                      long long int minremapped_threads, long long int minmention,
                      long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
-                     long long int mingroup_call_ring);
+                     long long int minreaction, long long int mingroup_call_ring);
   void updateRecipientId(long long int targetid, std::string ident);
   void updateRecipientId(long long int targetid, long long int sourceid, bool verbose = false);
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
