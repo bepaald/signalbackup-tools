@@ -79,6 +79,11 @@ class Arg
   bool d_ashmorgan;
   bool d_strugee2;
   long long int d_hiperfall;
+  bool d_deleteattachments;
+  std::vector<long long int> d_limitdeletetothreads;
+  std::vector<std::string> d_limitdeletetodates;
+  long long int d_limitdeletetosize;
+  std::vector<std::string> d_limitdeletetotypes;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -129,6 +134,11 @@ class Arg
   inline bool ashmorgan() const;
   inline bool strugee2() const;
   inline long long int hiperfall() const;
+  inline bool deleteattachments() const;
+  inline std::vector<long long int> const &limitdeletetothreads() const;
+  inline std::vector<std::string> const &limitdeletetodates() const;
+  inline long long int limitdeletetosize() const;
+  inline std::vector<std::string> const &limitdeletetotypes() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -368,6 +378,31 @@ inline bool Arg::strugee2() const
 inline long long int Arg::hiperfall() const
 {
   return d_hiperfall;
+}
+
+inline bool Arg::deleteattachments() const
+{
+  return d_deleteattachments;
+}
+
+inline std::vector<long long int> const &Arg::limitdeletetothreads() const
+{
+  return d_limitdeletetothreads;
+}
+
+inline std::vector<std::string> const &Arg::limitdeletetodates() const
+{
+  return d_limitdeletetodates;
+}
+
+inline long long int Arg::limitdeletetosize() const
+{
+  return d_limitdeletetosize;
+}
+
+inline std::vector<std::string> const &Arg::limitdeletetotypes() const
+{
+  return d_limitdeletetotypes;
 }
 
 inline bool Arg::ok() const

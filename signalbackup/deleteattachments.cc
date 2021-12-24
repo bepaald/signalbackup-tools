@@ -17,9 +17,11 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20211224.085911"
-
-#endif
+bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids,
+                       std::vector<std::pair<std::string, std::string>> const &dateranges,
+                       long long int filesize, std::vector<std::string> const &mimetypes) const
+{
+  return false;
+}

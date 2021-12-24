@@ -68,7 +68,12 @@ Arg::Arg(int argc, char *argv[])
   d_strugee3(-1),
   d_ashmorgan(false),
   d_strugee2(false),
-  d_hiperfall(-1)
+  d_hiperfall(-1),
+  d_deleteattachments(false),
+  d_limitdeletetothreads(std::vector<long long int>()),
+  d_limitdeletetodates(std::vector<std::string>()),
+  d_limitdeletetosize(-1),
+  d_limitdeletetotypes(std::vector<std::string>())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -651,6 +656,97 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         if (!ston(&d_hiperfall, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--deleteattachments")
+    {
+      d_deleteattachments = true;
+      continue;
+    }
+    if (option == "--no-deleteattachments")
+    {
+      d_deleteattachments = false;
+      continue;
+    }
+    if (option == "--limitdeletetothreads")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
+        {
+          long long int tmp;
+          if (!ston(&tmp, std::string("-1")))
+          {
+            std::cerr << "Bad special value in argument spec file!" << std::endl;
+            ok = false;
+          }
+          d_limitdeletetothreads.clear();
+          d_limitdeletetothreads.push_back(tmp);
+          ++i;
+          continue;
+        }
+        if (!parseNumberList(arguments[++i], &d_limitdeletetothreads))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limitdeletetodates")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_limitdeletetodates))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limitdeletetosize")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!ston(&d_limitdeletetosize, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limitdeletetotypes")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_limitdeletetotypes))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
