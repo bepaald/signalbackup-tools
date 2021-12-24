@@ -268,6 +268,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
   if (minreaction >= 0 && d_database.containsTable("reaction")) // dbv >= 121
   {
+    std::cout << "YO!" << std::endl;
     setMinimumId("reaction", minreaction);
     compactIds("reaction");
   }

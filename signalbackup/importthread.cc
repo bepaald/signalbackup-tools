@@ -258,7 +258,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   long long int offsetreaction = -1;
   if (source->d_database.containsTable("reaction")) // dbv >= 121
-    offsetmention = getMaxUsedId("reaction") + 1 - source->getMinUsedId("reaction");
+    offsetreaction = getMaxUsedId("reaction") + 1 - source->getMinUsedId("reaction");
 
   source->makeIdsUnique(offsetthread, offsetsms, offsetmms,
                         offsetpart, offsetrecipient, offsetgroups,
