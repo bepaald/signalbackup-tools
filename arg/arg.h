@@ -81,7 +81,8 @@ class Arg
   long long int d_hiperfall;
   bool d_deleteattachments;
   std::vector<long long int> d_limitdeletetothreads;
-  std::vector<std::string> d_limitdeletetodates;
+  std::string d_onlydeletebefore;
+  std::string d_onlydeleteafter;
   long long int d_limitdeletetosize;
   std::vector<std::string> d_limitdeletetotypes;
  public:
@@ -136,7 +137,8 @@ class Arg
   inline long long int hiperfall() const;
   inline bool deleteattachments() const;
   inline std::vector<long long int> const &limitdeletetothreads() const;
-  inline std::vector<std::string> const &limitdeletetodates() const;
+  inline std::string const &onlydeletebefore() const;
+  inline std::string const &onlydeleteafter() const;
   inline long long int limitdeletetosize() const;
   inline std::vector<std::string> const &limitdeletetotypes() const;
  private:
@@ -390,9 +392,14 @@ inline std::vector<long long int> const &Arg::limitdeletetothreads() const
   return d_limitdeletetothreads;
 }
 
-inline std::vector<std::string> const &Arg::limitdeletetodates() const
+inline std::string const &Arg::onlydeletebefore() const
 {
-  return d_limitdeletetodates;
+  return d_onlydeletebefore;
+}
+
+inline std::string const &Arg::onlydeleteafter() const
+{
+  return d_onlydeleteafter;
 }
 
 inline long long int Arg::limitdeletetosize() const
