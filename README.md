@@ -441,6 +441,8 @@ BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
 
 ETH: 0xc59892f4E54E3e8Ab285f3C41B396d9E15C8B4aA
 
+ZCash: zs1mcr3nsjpewejld9acuqdvhslesck0glmz696wkw2l0mkg926xzegfn2kqhn8fmcz7ld3z4g0w3j
+
 Paypal: [![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=U523FZFW3BQBQ&currency_code=USD&source=url)
 
 Donations will help development in that they will put food in my mouth, and I need food to write code :smile:
