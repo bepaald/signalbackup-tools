@@ -226,15 +226,7 @@ int main(int argc, char *argv[])
 
   if (arg.deleteattachments())
   {
-    if (arg.limitdeletetodates().size() % 2 != 0)
-    {
-      std::cout << "Wrong number of date-strings to limitdeletetodates" << std::endl;
-      return 1;
-    }
-    std::vector<std::pair<std::string, std::string>> dates;
-    for (uint i = 0; i < arg.limitdeletetodates().size(); i += 2)
-      dates.push_back({arg.limitdeletetodates()[i], arg.limitdeletetodates()[i + 1]});
-    if (!sb->deleteAttachments(arg.limitdeletetothreads(), dates, arg.limitdeletetosize(), arg.limitdeletetotypes()))
+    if (!sb->deleteAttachments(arg.limitdeletetothreads(), arg.onlydeletebefore(), arg.onlydeleteafter(), arg.limitdeletetosize(), arg.limitdeletetotypes()))
       return 1;
   }
 

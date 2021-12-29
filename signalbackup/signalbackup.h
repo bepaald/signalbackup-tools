@@ -101,7 +101,7 @@ class SignalBackup
   bool dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const;
   bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
   bool deleteAttachments(std::vector<long long int> const &threadids,
-                         std::vector<std::pair<std::string, std::string>> const &dateranges,
+                         std::string const &before, std::string const &after,
                          long long int filesize, std::vector<std::string> const &mimetypes) const;
 
   /* CUSTOMS */

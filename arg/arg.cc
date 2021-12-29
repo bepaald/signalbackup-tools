@@ -71,7 +71,8 @@ Arg::Arg(int argc, char *argv[])
   d_hiperfall(-1),
   d_deleteattachments(false),
   d_limitdeletetothreads(std::vector<long long int>()),
-  d_limitdeletetodates(std::vector<std::string>()),
+  d_onlydeletebefore(std::string()),
+  d_onlydeleteafter(std::string()),
   d_limitdeletetosize(-1),
   d_limitdeletetotypes(std::vector<std::string>())
 {
@@ -708,16 +709,21 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--limitdeletetodates")
+    if (option == "--onlydeletebefore")
     {
       if (i < arguments.size() - 1)
+        d_onlydeletebefore = arguments[++i];
+      else
       {
-        if (!parseStringList(arguments[++i], &d_limitdeletetodates))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
       }
+      continue;
+    }
+    if (option == "--onlydeleteafter")
+    {
+      if (i < arguments.size() - 1)
+        d_onlydeleteafter = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
