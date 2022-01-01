@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2021  Selwin van Dijk
+    Copyright (C) 2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -20,6 +20,6 @@
 #ifndef VERSION_H_
 #define VERSION_H_
 
-#define VERSIONDATE "20211229.163534"
+#define VERSIONDATE "20220101.180044"
 
 #endif

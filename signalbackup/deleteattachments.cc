@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2021  Selwin van Dijk
+    Copyright (C) 2021-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -20,13 +20,14 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids,
-                       std::string const &before, std::string const &after,
-                       long long int filesize, std::vector<std::string> const &mimetypes) const
+                                     std::string const &before, std::string const &after,
+                                     long long int filesize, std::vector<std::string> const &mimetypes,
+                                     std::vector<std::pair<std::string, std::string>> const &replace)
 {
   using namespace std::string_literals;
 
   std::string query_delete("DELETE FROM part");
-  std::string query_list("SELECT _id,unique_id FROM part");
+  std::string query_list("SELECT _id,mid,unique_id,ct FROM part");
 
   std::string specification;
 
@@ -95,11 +96,54 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
 
   query_delete += specification;
   query_list += specification;
+  //std::cout << query_list << std::endl;
 
-  std::cout << query_list << std::endl;
-  d_database.print(query_list);
+  SqliteDB::QueryResults res;
+  if (!d_database.exec(query_list, &res))
+  {
+    std::cout << "Failed to execute query." << std::endl;
+    return false;
+  }
 
-  // REPLACE INTO part(_id, column1,column2,...) VALUES(_id, val1,val2) ?
+  //res.prettyPrint();
+
+  // just delete the attachments
+  if (replace.empty())
+  {
+
+    if (!d_database.exec(query_delete))
+    {
+      std::cout << "Failed to execute query" << std::endl;
+      return false;
+    }
+    std::cout << "Deleted: " << d_database.changed() << " 'part'-entries." << std::endl;
+
+    // find all mms entries to which the deleted attachments belonged
+    // if no attachments remain and body is empty -> delete mms -> cleanDatabaseByMessages()
+    SqliteDB::QueryResults res2;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      if (!d_database.exec("SELECT _id FROM part WHERE mid = ?", res.getValueAs<long long int>(i, "mid"), &res2))
+        return false;
+
+      if (res2.empty()) // no other attachments for this message
+        if (!d_database.exec("DELETE FROM mms WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
+          return false;
+    }
+    cleanAttachments();
+    cleanDatabaseByMessages();
+    return true;
+  }
+
+  // else replace attachments
+
+  for (uint i = 0; i < res.rows(); ++i)
+  {
+    // get ct (mimetype), if it matches replace[i].first -> replace with replace[i].second
+
+    // replacing -> delete where _id = res[i][_id]
+    //              insert into (_id, mid, unique_id, ct, data_size, ...) values(..., ... ,)
+  }
 
   return false;
 }

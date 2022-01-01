@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2019-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -85,6 +85,7 @@ class Arg
   std::string d_onlydeleteafter;
   long long int d_limitdeletetosize;
   std::vector<std::string> d_limitdeletetotypes;
+  std::vector<std::pair<std::string,std::string>> d_replaceattachments;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -141,6 +142,7 @@ class Arg
   inline std::string const &onlydeleteafter() const;
   inline long long int limitdeletetosize() const;
   inline std::vector<std::string> const &limitdeletetotypes() const;
+  inline std::vector<std::pair<std::string,std::string>> const &replaceattachments() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -410,6 +412,11 @@ inline long long int Arg::limitdeletetosize() const
 inline std::vector<std::string> const &Arg::limitdeletetotypes() const
 {
   return d_limitdeletetotypes;
+}
+
+inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattachments() const
+{
+  return d_replaceattachments;
 }
 
 inline bool Arg::ok() const

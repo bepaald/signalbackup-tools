@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2019-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -102,7 +102,8 @@ class SignalBackup
   bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
   bool deleteAttachments(std::vector<long long int> const &threadids,
                          std::string const &before, std::string const &after,
-                         long long int filesize, std::vector<std::string> const &mimetypes) const;
+                         long long int filesize, std::vector<std::string> const &mimetypes,
+                         std::vector<std::pair<std::string, std::string>> const &replace);
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -164,6 +165,7 @@ class SignalBackup
   std::string sanitizeFilename(std::string const &filename) const;
   bool setColumnNames();
   long long int scanSelf() const;
+  bool cleanAttachments();
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,

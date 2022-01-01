@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2019-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -53,6 +53,7 @@ class SqliteDB
     inline bool valueHasType(size_t row, std::string const &header) const;
     template <typename T>
     inline T getValueAs(size_t row, size_t idx) const;
+    inline bool empty() const;
     inline size_t rows() const;
     inline size_t columns() const;
     inline void clear();
@@ -369,6 +370,11 @@ template <typename T>
 inline T SqliteDB::QueryResults::getValueAs(size_t row, size_t idx) const
 {
   return std::any_cast<T>(d_values[row][idx]);
+}
+
+inline bool SqliteDB::QueryResults::empty() const
+{
+  return d_values.empty();
 }
 
 inline size_t SqliteDB::QueryResults::rows() const
