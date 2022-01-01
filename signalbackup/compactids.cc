@@ -78,6 +78,29 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
           else
             ++att;
         }
+
+
+        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
+        SqliteDB::QueryResults results2;
+        d_database.exec("SELECT _id,previews FROM mms WHERE previews IS NOT NULL", &results2);
+        std::regex rowid_in_json(".*\"rowId\":(" + bepaald::toString(valuetochange) + ")[,}].*");
+        std::smatch sm;
+        for (uint i = 0; i < results2.rows(); ++i)
+        {
+          std::string line = results2.valueAsString(i, "previews");
+          //std::cout << " OLD: " << line << std::endl;
+          if (std::regex_match(line, sm, rowid_in_json))
+            if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
+            {
+              //std::cout << "MATCHED:" << std::endl;
+              //std::cout << sm.size() << std::endl;
+              line.replace(sm.position(1), sm.length(1), bepaald::toString(nid));
+              //std::cout << " NEW: " << line << std::endl;
+
+              d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {line, results2.getValueAs<long long int>(i, "_id")});
+            }
+        }
+
       }
     }
 

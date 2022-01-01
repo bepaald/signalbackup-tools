@@ -72,6 +72,28 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   }
   d_attachments.clear();
   d_attachments = std::move(newattdb);
+
+  // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT _id,previews FROM mms WHERE previews IS NOT NULL", &results);
+  std::regex rowid_in_json(".*\"rowId\":([0-9]*)[,}].*");
+  std::smatch sm;
+  for (uint i = 0; i < results.rows(); ++i)
+  {
+    std::string line = results.valueAsString(i, "previews");
+    //std::cout << " OLD: " << line << std::endl;
+    if (std::regex_match(line, sm, rowid_in_json))
+      if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
+      {
+        //std::cout << "MATCHED:" << std::endl;
+        //std::cout << sm.size() << std::endl;
+        line.replace(sm.position(1), sm.length(1), bepaald::toString(bepaald::toNumber<unsigned long>(sm[1]) + minpart));
+        //std::cout << " NEW: " << line << std::endl;
+
+        d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {line, results.getValueAs<long long int>(i, "_id")});
+
+      }
+  }
   compactIds("part");
 
   //d_database.prettyPrint("SELECT _id, phone FROM recipient");
@@ -108,7 +130,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     setMinimumId("identities", minrecipient, "address");
 
     // get group members:
-    SqliteDB::QueryResults results;
+    //SqliteDB::QueryResults results;
     //std::cout << minrecipient << std::endl;
     d_database.exec("SELECT _id,members FROM groups", &results);
     //d_database.prettyPrint("SELECT _id,members FROM groups");
@@ -268,7 +290,6 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
   if (minreaction >= 0 && d_database.containsTable("reaction")) // dbv >= 121
   {
-    std::cout << "YO!" << std::endl;
     setMinimumId("reaction", minreaction);
     compactIds("reaction");
   }
