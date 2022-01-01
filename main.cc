@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2019-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
 
   if (arg.deleteattachments())
   {
-    if (!sb->deleteAttachments(arg.limitdeletetothreads(), arg.onlydeletebefore(), arg.onlydeleteafter(), arg.limitdeletetosize(), arg.limitdeletetotypes()))
+    if (!sb->deleteAttachments(arg.limitdeletetothreads(), arg.onlydeletebefore(), arg.onlydeleteafter(), arg.limitdeletetosize(), arg.limitdeletetotypes(), arg.replaceattachments()))
       return 1;
   }
 

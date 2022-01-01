@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2021  Selwin van Dijk
+    Copyright (C) 2021-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -74,7 +74,8 @@ Arg::Arg(int argc, char *argv[])
   d_onlydeletebefore(std::string()),
   d_onlydeleteafter(std::string()),
   d_limitdeletetosize(-1),
-  d_limitdeletetotypes(std::vector<std::string>())
+  d_limitdeletetotypes(std::vector<std::string>()),
+  d_replaceattachments(std::vector<std::pair<std::string,std::string>>())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -755,6 +756,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         if (!parseStringList(arguments[++i], &d_limitdeletetotypes))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--replaceattachments")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_replaceattachments, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
         }
       }

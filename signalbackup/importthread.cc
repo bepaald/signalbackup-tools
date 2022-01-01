@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2019-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -297,6 +297,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE mms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
+    if (source->d_database.containsTable("mention"))
+      source->d_database.exec("UPDATE mention SET thread_id = ?", targetthread);
 
     // see below for comment explaing this function
     if (d_databaseversion >= 24)

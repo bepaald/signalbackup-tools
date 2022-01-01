@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021  Selwin van Dijk
+    Copyright (C) 2019-2022  Selwin van Dijk
 
     This file is part of signalbackup-tools.
 
@@ -203,6 +203,7 @@ void SignalBackup::cleanDatabaseByMessages()
     //  ++avit;
   }
 
+  /*
   // remove unused attachments
   std::cout << "  Deleting unused attachments..." << std::endl;
   d_database.exec("SELECT _id,unique_id FROM part", &results);
@@ -230,6 +231,8 @@ void SignalBackup::cleanDatabaseByMessages()
     else
       ++it;
   }
+  */
+  cleanAttachments();
 
   std::cout << "  Delete others from 'identities'" << std::endl;
   if (d_databaseversion < 24)
