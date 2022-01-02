@@ -342,7 +342,11 @@ Where `outputdirectory` is an existing directory.
 
 **<span id="export">Export CSV & XML</span>**
 
+######Export CSV
+
 To export the tables to a file of comma separated values (CSV), use `--exportcsv [table1]=[filename1],[table2]=[filename2],...`. To get all messages from the database, only the 'sms' and 'mms' tables need to be exported.
+
+######Export XML
 
 To export to XML file, use `--exportxml [filename]`. _NOTE: Currently this will only export the messages from the sms table, NOT the mms table. This should be exactly the same data the official Signal app used to output when exporting a plaintext backup. All messages with an attachment, as well as all outgoing group messages are in the mms database, and thus are skipped. Exporting the mms table is being worked on. This option should be considered experimental._
 
@@ -351,6 +355,8 @@ To export to XML file, use `--exportxml [filename]`. _NOTE: Currently this will 
 
 _NOTE: This feature is experimental (even more so than the others). I test it fairly well myself, but I have no knowledge of it being used by other people. If you use it, please let me know if it works for you._
 
+######Crop to threads
+
 To crop a backup file to certain threads, run:
 
 ```
@@ -358,6 +364,8 @@ signalbackup-tools [input] [password] --croptothreads [list-of-threads] --output
 ```
 
 Where the list of threads are the ids as reported by `signalbackup-tools [input] [password] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`.
+
+######Crop to dates
 
 To crop a backup file to certain dates, run:
 
@@ -386,6 +394,8 @@ If you use this option and read this line, I would really appreciate it if you l
 
 _NOTE: This feature is experimental, make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
+######Deleting attachemnts
+
 To remove attachments from the database, while keeping the message bodies (for example to shrink the size of the backup) the option `--deleteattachments` can be used. To further specify precisely which attachments are to be deleted, the following options can be added:
 - `--onlyinthreads [list-of-threads]`. The list supports commas for single ids and hyphens for ranges, for example: `--onlyinthreads 1,2,5-8,10`. To obtain the number-id of threads use `--listthreads`.
 - `--onlyolderthan [date]`/`--onlynewerthan [date]`. Where 'date' supports the same format as the `--croptodates` option ([here](#crop)).
@@ -393,6 +403,8 @@ To remove attachments from the database, while keeping the message bodies (for e
 - `--onlytype [mime type]`. This argument can be repeated. Only selects attachments which match 'mime type*'. For example `--onlytype image/j` will match both 'image/jpg' and 'image/jpeg'. To delete all image type attachments, simply use `--onlytype image`.
 
 When adding this specifying options, only attachments which match _all_ given options are deleted.
+
+######Replacing attachments
 
 Replacing attachment is not yet fully implemented, but will allow you to replace the attachments with a placeholder image instead of deleting them.
 
@@ -441,9 +453,9 @@ If you also need to edit the attachments, dump the backup to directory first ([a
 ## Future plans
 
 - ~~merging existing backups (succesfull tests have been done)~~ _DONE_
-- exporting to other formats (csv, xml, html) _WIP_
+- exporting to other formats (~~csv, xml, ~~html) _WIP_
 - ~~cropping backup to certain conversations and time spans (succesfully done in testing)~~ _DONE_
-- replacing/deleting attachments without changing/deleting messages. For example, replacing with thumbnails or tiny placeholders to save space.
+- replacing/deleting attachments without changing/deleting messages. For example, replacing with thumbnails or tiny placeholders to save space. _WIP_
 - importing databases from the desktop app. I have no experience with that yet. _WIP_
 
 Development will be slow at times.
