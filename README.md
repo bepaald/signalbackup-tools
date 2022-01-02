@@ -400,7 +400,7 @@ To remove attachments from the database, while keeping the message bodies (for e
 - `--onlyinthreads [list-of-threads]`. The list supports commas for single ids and hyphens for ranges, for example: `--onlyinthreads 1,2,5-8,10`. To obtain the number-id of threads use `--listthreads`.
 - `--onlyolderthan [date]`/`--onlynewerthan [date]`. Where 'date' supports the same format as the `--croptodates` option ([here](#crop)).
 - `--onlylargerthan [size]`. The size is specified in bytes.
-- `--onlytype [mime type]`. This argument can be repeated. Only selects attachments which match 'mime type*'. For example `--onlytype image/j` will match both 'image/jpg' and 'image/jpeg'. To delete all image type attachments, simply use `--onlytype image`.
+- `--onlytype [mime type]`. This argument can be repeated. Only selects attachments which match 'mime type*' (note the asterisk). For example `--onlytype image/j` will match both 'image/jpg' and 'image/jpeg'. To delete all image type attachments, simply use `--onlytype image`.
 
 When adding this specifying options, only attachments which match _all_ given options are deleted.
 
