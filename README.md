@@ -365,7 +365,7 @@ signalbackup-tools [input] [password] --croptothreads [list-of-threads] --output
 
 Where the list of threads are the ids as reported by `signalbackup-tools [input] [password] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`.
 
-###### Crop to dates
+##### Crop to dates
 
 To crop a backup file to certain dates, run:
 
