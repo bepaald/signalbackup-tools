@@ -31,6 +31,7 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
 
   // gets first available _id in table
   d_database.exec("SELECT t1." + col + "+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2." + col + "=t1." + col + "+1 WHERE t2." + col + " IS NULL AND t1." + col + " > 0 ORDER BY t1." + col + " LIMIT 1", &results);
+
   while (results.rows() > 0 && results.valueHasType<long long int>(0, 0))
   {
     long long int nid = results.getValueAs<long long int>(0, 0);

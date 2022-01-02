@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
 
   if (arg.deleteattachments())
   {
-    if (!sb->deleteAttachments(arg.limitdeletetothreads(), arg.onlydeletebefore(), arg.onlydeleteafter(), arg.limitdeletetosize(), arg.limitdeletetotypes(), arg.replaceattachments()))
+    if (!sb->deleteAttachments(arg.onlyinthreads(), arg.onlyolderthan(), arg.onlynewerthan(), arg.onlylargerthan(), arg.onlytypes(), arg.replaceattachments()))
       return 1;
   }
 

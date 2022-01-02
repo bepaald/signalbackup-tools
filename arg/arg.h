@@ -80,11 +80,11 @@ class Arg
   bool d_strugee2;
   long long int d_hiperfall;
   bool d_deleteattachments;
-  std::vector<long long int> d_limitdeletetothreads;
-  std::string d_onlydeletebefore;
-  std::string d_onlydeleteafter;
-  long long int d_limitdeletetosize;
-  std::vector<std::string> d_limitdeletetotypes;
+  std::vector<long long int> d_onlyinthreads;
+  std::string d_onlyolderthan;
+  std::string d_onlynewerthan;
+  long long int d_onlylargerthan;
+  std::vector<std::string> d_onlytypes;
   std::vector<std::pair<std::string,std::string>> d_replaceattachments;
  public:
   Arg(int argc, char *argv[]);
@@ -137,11 +137,11 @@ class Arg
   inline bool strugee2() const;
   inline long long int hiperfall() const;
   inline bool deleteattachments() const;
-  inline std::vector<long long int> const &limitdeletetothreads() const;
-  inline std::string const &onlydeletebefore() const;
-  inline std::string const &onlydeleteafter() const;
-  inline long long int limitdeletetosize() const;
-  inline std::vector<std::string> const &limitdeletetotypes() const;
+  inline std::vector<long long int> const &onlyinthreads() const;
+  inline std::string const &onlyolderthan() const;
+  inline std::string const &onlynewerthan() const;
+  inline long long int onlylargerthan() const;
+  inline std::vector<std::string> const &onlytypes() const;
   inline std::vector<std::pair<std::string,std::string>> const &replaceattachments() const;
  private:
   template <typename T>
@@ -389,29 +389,29 @@ inline bool Arg::deleteattachments() const
   return d_deleteattachments;
 }
 
-inline std::vector<long long int> const &Arg::limitdeletetothreads() const
+inline std::vector<long long int> const &Arg::onlyinthreads() const
 {
-  return d_limitdeletetothreads;
+  return d_onlyinthreads;
 }
 
-inline std::string const &Arg::onlydeletebefore() const
+inline std::string const &Arg::onlyolderthan() const
 {
-  return d_onlydeletebefore;
+  return d_onlyolderthan;
 }
 
-inline std::string const &Arg::onlydeleteafter() const
+inline std::string const &Arg::onlynewerthan() const
 {
-  return d_onlydeleteafter;
+  return d_onlynewerthan;
 }
 
-inline long long int Arg::limitdeletetosize() const
+inline long long int Arg::onlylargerthan() const
 {
-  return d_limitdeletetosize;
+  return d_onlylargerthan;
 }
 
-inline std::vector<std::string> const &Arg::limitdeletetotypes() const
+inline std::vector<std::string> const &Arg::onlytypes() const
 {
-  return d_limitdeletetotypes;
+  return d_onlytypes;
 }
 
 inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattachments() const
