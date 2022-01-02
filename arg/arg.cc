@@ -70,11 +70,11 @@ Arg::Arg(int argc, char *argv[])
   d_strugee2(false),
   d_hiperfall(-1),
   d_deleteattachments(false),
-  d_limitdeletetothreads(std::vector<long long int>()),
-  d_onlydeletebefore(std::string()),
-  d_onlydeleteafter(std::string()),
-  d_limitdeletetosize(-1),
-  d_limitdeletetotypes(std::vector<std::string>()),
+  d_onlyinthreads(std::vector<long long int>()),
+  d_onlyolderthan(std::string()),
+  d_onlynewerthan(std::string()),
+  d_onlylargerthan(-1),
+  d_onlytypes(std::vector<std::string>()),
   d_replaceattachments(std::vector<std::pair<std::string,std::string>>())
 {
   // vector to hold arguments
@@ -680,7 +680,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_deleteattachments = false;
       continue;
     }
-    if (option == "--limitdeletetothreads")
+    if (option == "--onlyinthreads")
     {
       if (i < arguments.size() - 1)
       {
@@ -692,12 +692,12 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
             std::cerr << "Bad special value in argument spec file!" << std::endl;
             ok = false;
           }
-          d_limitdeletetothreads.clear();
-          d_limitdeletetothreads.push_back(tmp);
+          d_onlyinthreads.clear();
+          d_onlyinthreads.push_back(tmp);
           ++i;
           continue;
         }
-        if (!parseNumberList(arguments[++i], &d_limitdeletetothreads))
+        if (!parseNumberList(arguments[++i], &d_onlyinthreads))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -710,10 +710,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--onlydeletebefore")
+    if (option == "--onlyolderthan")
     {
       if (i < arguments.size() - 1)
-        d_onlydeletebefore = arguments[++i];
+        d_onlyolderthan = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -721,10 +721,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--onlydeleteafter")
+    if (option == "--onlynewerthan")
     {
       if (i < arguments.size() - 1)
-        d_onlydeleteafter = arguments[++i];
+        d_onlynewerthan = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -732,11 +732,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--limitdeletetosize")
+    if (option == "--onlylargerthan")
     {
       if (i < arguments.size() - 1)
       {
-        if (!ston(&d_limitdeletetosize, arguments[++i]))
+        if (!ston(&d_onlylargerthan, arguments[++i]))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -749,11 +749,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--limitdeletetotypes")
+    if (option == "--onlytypes")
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseStringList(arguments[++i], &d_limitdeletetotypes))
+        if (!parseStringList(arguments[++i], &d_onlytypes))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
