@@ -392,6 +392,8 @@ To remove attachments from the database, while keeping the message bodies (for e
 - `--onlylargerthan [size]`. The size is specified in bytes.
 - `--onlytype [mime type]`. This argument can be repeated. Only selects attachments which match 'mime type*'. For example `--onlytype image/j` will match both 'image/jpg' and 'image/jpeg'. To delete all image type attachments, simply use `--onlytype image`.
 
+When adding this specifying options, only attachments which match _all_ given options are deleted.
+
 Replacing attachment is not yet fully implemented, but will allow you to replace the attachments with a placeholder image instead of deleting them.
 
 **<span id="advanced">Advanced options</span>**

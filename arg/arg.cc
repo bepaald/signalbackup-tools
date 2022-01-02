@@ -74,7 +74,7 @@ Arg::Arg(int argc, char *argv[])
   d_onlyolderthan(std::string()),
   d_onlynewerthan(std::string()),
   d_onlylargerthan(-1),
-  d_onlytypes(std::vector<std::string>()),
+  d_onlytype(std::vector<std::string>()),
   d_replaceattachments(std::vector<std::pair<std::string,std::string>>())
 {
   // vector to hold arguments
@@ -749,11 +749,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--onlytypes")
+    if (option == "--onlytype")
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseStringList(arguments[++i], &d_onlytypes))
+        if (!parseStringList(arguments[++i], &d_onlytype))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;

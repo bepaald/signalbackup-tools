@@ -84,7 +84,7 @@ class Arg
   std::string d_onlyolderthan;
   std::string d_onlynewerthan;
   long long int d_onlylargerthan;
-  std::vector<std::string> d_onlytypes;
+  std::vector<std::string> d_onlytype;
   std::vector<std::pair<std::string,std::string>> d_replaceattachments;
  public:
   Arg(int argc, char *argv[]);
@@ -141,7 +141,7 @@ class Arg
   inline std::string const &onlyolderthan() const;
   inline std::string const &onlynewerthan() const;
   inline long long int onlylargerthan() const;
-  inline std::vector<std::string> const &onlytypes() const;
+  inline std::vector<std::string> const &onlytype() const;
   inline std::vector<std::pair<std::string,std::string>> const &replaceattachments() const;
  private:
   template <typename T>
@@ -409,9 +409,9 @@ inline long long int Arg::onlylargerthan() const
   return d_onlylargerthan;
 }
 
-inline std::vector<std::string> const &Arg::onlytypes() const
+inline std::vector<std::string> const &Arg::onlytype() const
 {
-  return d_onlytypes;
+  return d_onlytype;
 }
 
 inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattachments() const
