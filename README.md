@@ -394,7 +394,7 @@ If you use this option and read this line, I would really appreciate it if you l
 
 _NOTE: This feature is experimental, make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
-###### Deleting attachemnts
+###### Deleting attachments
 
 To remove attachments from the database, while keeping the message bodies (for example to shrink the size of the backup) the option `--deleteattachments` can be used. To further specify precisely which attachments are to be deleted, the following options can be added:
 - `--onlyinthreads [list-of-threads]`. The list supports commas for single ids and hyphens for ranges, for example: `--onlyinthreads 1,2,5-8,10`. To obtain the number-id of threads use `--listthreads`.
