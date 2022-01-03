@@ -396,7 +396,13 @@ _NOTE: This feature is experimental, make sure to always keep a copy of your ori
 
 ##### Deleting attachments
 
-To remove attachments from the database, while keeping the message bodies (for example to shrink the size of the backup) the option `--deleteattachments` can be used. To further specify precisely which attachments are to be deleted, the following options can be added:
+To remove attachments from the database, while keeping the message bodies (for example to shrink the size of the backup) the option `--deleteattachments` can be used:
+
+```
+signalbackup-tools [input] [password] --detelattachments --output [output] (--opassword [newpassword])
+```
+
+To further specify precisely which attachments are to be deleted, the following options can be added:
 - `--onlyinthreads [list-of-threads]`. The list supports commas for single ids and hyphens for ranges, for example: `--onlyinthreads 1,2,5-8,10`. To obtain the number-id of threads use `--listthreads`.
 - `--onlyolderthan [date]`/`--onlynewerthan [date]`. Where 'date' supports the same format as the `--croptodates` option ([here](#crop)).
 - `--onlylargerthan [size]`. The size is specified in bytes.
