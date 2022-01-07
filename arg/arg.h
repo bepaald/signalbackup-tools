@@ -85,6 +85,8 @@ class Arg
   std::string d_onlynewerthan;
   long long int d_onlylargerthan;
   std::vector<std::string> d_onlytype;
+  std::string d_appendbody;
+  std::string d_prependbody;
   std::vector<std::pair<std::string,std::string>> d_replaceattachments;
  public:
   Arg(int argc, char *argv[]);
@@ -142,6 +144,8 @@ class Arg
   inline std::string const &onlynewerthan() const;
   inline long long int onlylargerthan() const;
   inline std::vector<std::string> const &onlytype() const;
+  inline std::string const &appendbody() const;
+  inline std::string const &prependbody() const;
   inline std::vector<std::pair<std::string,std::string>> const &replaceattachments() const;
  private:
   template <typename T>
@@ -412,6 +416,16 @@ inline long long int Arg::onlylargerthan() const
 inline std::vector<std::string> const &Arg::onlytype() const
 {
   return d_onlytype;
+}
+
+inline std::string const &Arg::appendbody() const
+{
+  return d_appendbody;
+}
+
+inline std::string const &Arg::prependbody() const
+{
+  return d_prependbody;
 }
 
 inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattachments() const

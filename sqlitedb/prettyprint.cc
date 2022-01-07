@@ -45,7 +45,10 @@ void SqliteDB::QueryResults::prettyPrint() const
         contents.back().emplace_back(getValueAs<std::string>(i, j));
         std::string::size_type newline = std::string::npos;
         if ((newline = contents.back().back().find('\n')) != std::string::npos)
+        {
           contents.back().back().resize(newline);
+          contents.back().back() += "[\\n...]";
+        }
       }
       else if (valueHasType<int>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<int>(i, j)));

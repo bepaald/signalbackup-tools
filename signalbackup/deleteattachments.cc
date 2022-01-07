@@ -22,6 +22,7 @@
 bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids,
                                      std::string const &before, std::string const &after,
                                      long long int filesize, std::vector<std::string> const &mimetypes,
+                                     std::string const &append, std::string const &prepend,
                                      std::vector<std::pair<std::string, std::string>> const &replace)
 {
   using namespace std::string_literals;
@@ -123,12 +124,33 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     SqliteDB::QueryResults res2;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      if (!d_database.exec("SELECT _id FROM part WHERE mid = ?", res.getValueAs<long long int>(i, "mid"), &res2))
-        return false;
-
-      if (res2.empty()) // no other attachments for this message
-        if (!d_database.exec("DELETE FROM mms WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
+      if (!append.empty() || !prepend.empty())
+      {
+        // update existing message bodies
+        if (!append.empty())
+        {
+          if (!d_database.exec("UPDATE mms SET body = body || ? WHERE _id = ? AND (body IS NOT NULL AND body != '')", {"\n\n" + append, res.getValueAs<long long int>(i, "mid")}))
+            return false;
+          if (!d_database.exec("UPDATE mms SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {append, res.getValueAs<long long int>(i, "mid")}))
+            return false;
+        }
+        if (!prepend.empty())
+        {
+          if (!d_database.exec("UPDATE mms SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, "mid")}))
+            return false;
+          if (!d_database.exec("UPDATE mms SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, "mid")}))
+            return false;
+        }
+      }
+      else // delete message if body empty
+      {
+        if (!d_database.exec("SELECT _id FROM part WHERE mid = ?", res.getValueAs<long long int>(i, "mid"), &res2))
           return false;
+
+        if (res2.empty()) // no other attachments for this message
+          if (!d_database.exec("DELETE FROM mms WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
+            return false;
+      }
     }
     cleanAttachments();
     cleanDatabaseByMessages();

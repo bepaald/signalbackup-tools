@@ -407,6 +407,7 @@ To further specify precisely which attachments are to be deleted, the following 
 - `--onlyolderthan [date]`/`--onlynewerthan [date]`. Where 'date' supports the same format as the `--croptodates` option ([here](#crop)).
 - `--onlylargerthan [size]`. The size is specified in bytes.
 - `--onlytype [mime type]`. This argument can be repeated. Only selects attachments which match 'mime type*' (note the asterisk). For example `--onlytype image/j` will match both 'image/jpg' and 'image/jpeg'. To delete all image type attachments, simply use `--onlytype image`.
+- `--prependbody [string]`/`--appendbody [string]`. Prepend or append the message body with the supplied string. If the message was otherwise empty, the body will equal the supplied string. Otherwise, it will be appended or prepended and a blank line will be inserted automatically. Suggested use: `--prependbody "(One or more media attachments for this message were deleted)"`.
 
 When adding this specifying options, only attachments which match _all_ given options are deleted.
 
