@@ -224,38 +224,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
-
-    if (!d_lazyload) // immediately decrypt i guess...
-    {
-      [[unlikely]] if (d_verbose)
-        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
-
-      int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())); // 0 == good, >0 == bad, <0 == bad+badmac
-      if (getatt > 0)
-      {
-        std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
-        frame->printInfo();
-        return std::unique_ptr<BackupFrame>(nullptr);
-      }
-      if (getatt < 0)
-      {
-        d_badmac = true;
-        if (d_stoponbadmac)
-        {
-          std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
-          return std::unique_ptr<BackupFrame>(nullptr);
-        }
-        if (d_assumebadframesize)
-        {
-          std::unique_ptr<BackupFrame> f = bruteForceFrom(filepos, encryptedframelength);
-          //long long int curfilepos = d_file.tellg();
-          //std::cout << "curpso: " << curfilepos << std::endl;
-          //std::cout << "ATTACHMENT LENGTH SHOULD HAVE BEEN: " << curfilepos - filepos - encryptedframelength - MACSIZE << std::endl;
-          return f;
-        }
-      }
-    }
-
   }
 
   //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;

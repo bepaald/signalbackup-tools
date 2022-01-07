@@ -155,6 +155,7 @@ void FileDecryptor::strugee(uint64_t pos)
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
+    /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
       [[unlikely]] if (d_verbose)
@@ -168,6 +169,7 @@ void FileDecryptor::strugee(uint64_t pos)
         return;
       }
     }
+    */
   }
 
 }
@@ -316,6 +318,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
+    /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
       [[unlikely]] if (d_verbose)
@@ -346,6 +349,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
         }
       }
     }
+    */
 
   }
 
@@ -544,6 +548,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
+    /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
       [[unlikely]] if (d_verbose)
@@ -574,6 +579,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
         }
       }
     }
+    */
   }
 
 
@@ -805,6 +811,7 @@ void FileDecryptor::ashmorgan()
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
 
+    /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
       [[unlikely]] if (d_verbose)
@@ -818,6 +825,7 @@ void FileDecryptor::ashmorgan()
         return;
       }
     }
+    */
   }
 
 }

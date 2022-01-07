@@ -42,7 +42,6 @@
 class SignalBackup
 {
  public:
-  static bool constexpr LOWMEM = true;
   static bool constexpr DROPATTACHMENTDATA = false;
 
  private:
@@ -68,9 +67,10 @@ class SignalBackup
 
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool issource = false, bool showprogress = true, bool assumebadframesizeonbadmac = false,
-                      std::vector<long long int> editattachments = std::vector<long long int>(),
-                      bool stoponbadmac = false);
+                      bool showprogress);
+  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
+                      bool showprogress, bool assumebadframesizeonbadmac,
+                      std::vector<long long int> editattachments, bool stoponbadmac);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
@@ -168,8 +168,14 @@ class SignalBackup
   bool cleanAttachments();
 };
 
+inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
+                                  bool verbose, bool showprogress)
+  :
+  SignalBackup(filename, passphrase, verbose, showprogress, false, std::vector<long long int>(), false)
+{}
+
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                                  bool issource, bool showprogress, bool assumebadframesizeonbadmac,
+                                  bool showprogress, bool assumebadframesizeonbadmac,
                                   std::vector<long long int> editattachments, bool stoponbadmac)
   :
   d_database(":memory:"),
@@ -184,7 +190,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
     initFromDir(filename);
   else // not directory
   {
-    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, issource, stoponbadmac, assumebadframesizeonbadmac, editattachments));
+    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, stoponbadmac, assumebadframesizeonbadmac, editattachments));
     initFromFile();
   }
 

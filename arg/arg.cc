@@ -60,7 +60,6 @@ Arg::Arg(int argc, char *argv[])
   d_editgroupmembers(false),
   d_showprogress(true),
   d_removedoubles(false),
-  d_fast(false),
   d_reordermmssmsids(false),
   d_stoponbadmac(false),
   d_verbose(false),
@@ -559,16 +558,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-removedoubles")
     {
       d_removedoubles = false;
-      continue;
-    }
-    if (option == "--fast")
-    {
-      d_fast = true;
-      continue;
-    }
-    if (option == "--no-fast")
-    {
-      d_fast = false;
       continue;
     }
     if (option == "--reordermmssmsids")

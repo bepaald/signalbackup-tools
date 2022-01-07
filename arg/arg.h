@@ -70,7 +70,6 @@ class Arg
   bool d_editgroupmembers;
   bool d_showprogress;
   bool d_removedoubles;
-  bool d_fast;
   bool d_reordermmssmsids;
   bool d_stoponbadmac;
   bool d_verbose;
@@ -129,7 +128,6 @@ class Arg
   inline bool editgroupmembers() const;
   inline bool showprogress() const;
   inline bool removedoubles() const;
-  inline bool fast() const;
   inline bool reordermmssmsids() const;
   inline bool stoponbadmac() const;
   inline bool verbose() const;
@@ -341,11 +339,6 @@ inline bool Arg::showprogress() const
 inline bool Arg::removedoubles() const
 {
   return d_removedoubles;
-}
-
-inline bool Arg::fast() const
-{
-  return d_fast;
 }
 
 inline bool Arg::reordermmssmsids() const

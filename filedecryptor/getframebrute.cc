@@ -229,20 +229,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint3
     reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
 
     d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
-
-    if (!d_lazyload) // immediately decrypt i guess...
-    {
-      [[unlikely]] if (d_verbose)
-        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
-
-      int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
-      if (getatt != 0)
-      {
-        if (getatt < 0)
-          d_badmac = true;
-        return std::unique_ptr<BackupFrame>(nullptr);
-      }
-    }
   }
 
   //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;
