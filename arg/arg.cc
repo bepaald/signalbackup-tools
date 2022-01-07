@@ -75,6 +75,8 @@ Arg::Arg(int argc, char *argv[])
   d_onlynewerthan(std::string()),
   d_onlylargerthan(-1),
   d_onlytype(std::vector<std::string>()),
+  d_appendbody(std::string()),
+  d_prependbody(std::string()),
   d_replaceattachments(std::vector<std::pair<std::string,std::string>>())
 {
   // vector to hold arguments
@@ -759,6 +761,28 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ok = false;
         }
       }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--appendbody")
+    {
+      if (i < arguments.size() - 1)
+        d_appendbody = arguments[++i];
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--prependbody")
+    {
+      if (i < arguments.size() - 1)
+        d_prependbody = arguments[++i];
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;

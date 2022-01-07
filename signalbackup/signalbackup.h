@@ -100,10 +100,10 @@ class SignalBackup
   bool reorderMmsSmsIds() const;
   bool dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const;
   bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
-  bool deleteAttachments(std::vector<long long int> const &threadids,
-                         std::string const &before, std::string const &after,
-                         long long int filesize, std::vector<std::string> const &mimetypes,
-                         std::vector<std::pair<std::string, std::string>> const &replace);
+  bool deleteAttachments(std::vector<long long int> const &threadids, std::string const &before,
+                         std::string const &after, long long int filesize,
+                         std::vector<std::string> const &mimetypes, std::string const &append,
+                         std::string const &prepend, std::vector<std::pair<std::string, std::string>> const &replace);
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
