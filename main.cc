@@ -80,28 +80,28 @@ int main(int argc, char *argv[])
   if (arg.strugee() != -1)
   {
     std::cout << "TEMP FUNCTION (#37)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
     fd.strugee(arg.strugee());
     return 0;
   }
   if (arg.strugee3() != -1)
   {
     std::cout << "TEMP FUNCTION (#37)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
     fd.strugee3(arg.strugee3());
     return 0;
   }
   if (arg.ashmorgan())
   {
     std::cout << "TEMP FUNCTION (#40)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
     fd.ashmorgan();
     return 0;
   }
   else if (arg.strugee2())
   {
     std::cout << "TEMP FUNCTION 2 (#37)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), true, false, false);
+    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
     fd.strugee2();
     return 0;
   }
@@ -109,15 +109,7 @@ int main(int argc, char *argv[])
   MEMINFO("Start of program, before opening input");
 
   // open input
-  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(),
-                                                    /*(!arg.source().empty() || arg.listthreads() ||
-                                                     !arg.exportcsv().empty() || !arg.exportxml().empty() ||
-                                                     !arg.runsqlquery().empty() || !arg.croptothreads().empty() ||
-                                                     !arg.croptodates().empty() || arg.removedoubles() ||
-                                                     !arg.runprettysqlquery().empty() || !arg.mergerecipients().empty() ||
-                                                     !arg.dumpmedia().empty() ||
-                                                     arg.fast())
-                                                     ? */SignalBackup::LOWMEM /*: false*/, arg.showprogress(),
+  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(), arg.showprogress(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponbadmac()));
   if (!sb->ok())
@@ -152,7 +144,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before first time reading source");
 
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress()));
 
       MEMINFO("After first time reading source");
 
@@ -172,7 +164,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before reading source: ", i + 1, "/", threads.size());
 
       std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), SignalBackup::LOWMEM, arg.showprogress()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress()));
       if (!sourcesummarized)
       {
         source->summarize();
