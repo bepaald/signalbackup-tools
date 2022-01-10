@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::initFromDir(std::string const &inputdir)
+void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments)
 {
 
   std::cout << "Opening from dir!" << std::endl;
@@ -136,6 +136,7 @@ void SignalBackup::initFromDir(std::string const &inputdir)
     std::cout << "Error iterating directory `" << inputdir << "' : " << ec.message() << std::endl;
     return;
   }
+  int replaced_count = 0;
   for (auto const &att : dirit)
   {
     if (att.path().extension() != ".sbf" || !STRING_STARTS_WITH(att.path().filename().string(), "Attachment_"))
@@ -143,19 +144,57 @@ void SignalBackup::initFromDir(std::string const &inputdir)
 
     std::filesystem::path attframe = att.path();
     std::filesystem::path attbin = att.path();
-    attbin.replace_extension(".bin");
+
+    attbin.replace_extension(".new");
+    bool replaced_attachement = false;
+    if (replaceattachments && bepaald::fileOrDirExists(attbin))
+      replaced_attachement = true;
+    else
+      attbin.replace_extension(".bin");
 
     std::unique_ptr<AttachmentFrame> temp;
     if (!setFrameFromFile(&temp, attframe.string()))
       return;
+
+    //if (replaced_attachement)
+    //  temp->printInfo();
+
     if (!temp->setAttachmentData(attbin.string()))
       return;
+
+    if (replaced_attachement)
+    {
+      SqliteDB::QueryResults results;
+      if (!d_database.exec("DELETE FROM part WHERE _id = ? AND unique_id = ? RETURNING mid", {temp->rowId(), temp->attachmentId()}, &results) ||
+          d_database.changed() != 1)
+      {
+        std::cout << "ERROR: Failed to delete existing attachment from database" << std::endl;
+        return;
+      }
+
+      unsigned int mid = results.getValueAs<long long int>(0, "mid");
+      auto [width, height, type, size] = getAttachmentMetaData(attbin.string());
+
+      temp->setLength(size);
+
+      if (!d_database.exec("INSERT INTO part(_id, mid, unique_id, ct, data_size, width, height) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                           {temp->rowId(), mid, temp->attachmentId(), type, size, width, height}))
+      {
+        std::cout << "ERROR: Failed to insert new attachment into database" << std::endl;
+        return;
+      }
+      ++replaced_count;
+    }
 
     uint64_t rowid = temp->rowId();
     uint64_t attachmentid = temp->attachmentId();
     d_attachments.emplace(std::make_pair(rowid, attachmentid), temp.release());
   }
 
+  if (replaced_count)
+    std::cout << " - Replaced " << replaced_count << " attachments" << std::endl;
+
+  std::cout << "Reading StickerFrames" << std::endl;
   //stickers
   dirit = std::filesystem::directory_iterator(inputdir, ec);
   if (ec)
@@ -182,6 +221,6 @@ void SignalBackup::initFromDir(std::string const &inputdir)
     d_stickers.emplace(std::make_pair(rowid, temp.release()));
   }
 
-
+  std::cout << "Done!" << std::endl;
   d_ok = true;
 }
