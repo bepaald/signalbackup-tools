@@ -55,6 +55,7 @@ class FrameWithAttachment : public BackupFrame
   inline uint32_t iv_size() const;
   inline uint64_t filepos() const;
   inline uint32_t length() const;
+  inline void setLength(int32_t l);
   inline unsigned char *mackey() const;
   inline uint64_t mackey_size() const;
   inline unsigned char *cipherkey() const;

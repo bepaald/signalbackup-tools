@@ -65,11 +65,19 @@ class SignalBackup
   bool d_stoponbadmac;
   bool d_verbose;
 
+  struct AttachmentMetadata
+  {
+    int width;
+    int height;
+    std::string filetype;
+    unsigned long filesize;
+  };
+
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool showprogress);
+                      bool showprogress, bool replaceattachments);
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool showprogress, bool assumebadframesizeonbadmac,
+                      bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
                       std::vector<long long int> editattachments, bool stoponbadmac);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
@@ -116,7 +124,7 @@ class SignalBackup
                                         bool overwrite, bool keepattachmentdatainmemory);
   [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory, bool onlydb);
   void initFromFile();
-  void initFromDir(std::string const &inputdir);
+  void initFromDir(std::string const &inputdir, bool replaceattachments);
   void updateThreadsEntries(long long int thread = -1);
   long long int getMaxUsedId(std::string const &table, std::string const &col = "_id");
   long long int getMinUsedId(std::string const &table, std::string const &col = "_id");
@@ -166,16 +174,17 @@ class SignalBackup
   bool setColumnNames();
   long long int scanSelf() const;
   bool cleanAttachments();
+  AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
-                                  bool verbose, bool showprogress)
+                                  bool verbose, bool showprogress, bool replaceattachments)
   :
-  SignalBackup(filename, passphrase, verbose, showprogress, false, std::vector<long long int>(), false)
+  SignalBackup(filename, passphrase, verbose, showprogress, replaceattachments, false, std::vector<long long int>(), false)
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                                  bool showprogress, bool assumebadframesizeonbadmac,
+                                  bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
                                   std::vector<long long int> editattachments, bool stoponbadmac)
   :
   d_database(":memory:"),
@@ -187,7 +196,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   d_verbose(verbose)
 {
   if (bepaald::isDir(filename))
-    initFromDir(filename);
+    initFromDir(filename, replaceattachments);
   else // not directory
   {
     d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, stoponbadmac, assumebadframesizeonbadmac, editattachments));

@@ -47,6 +47,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t length() const;
+  inline void setLength(uint32_t l);
   inline virtual uint32_t attachmentSize() const override;
   inline uint64_t rowId() const;
   inline void setRowId(uint64_t rid);
@@ -130,6 +131,18 @@ inline uint32_t AttachmentFrame::length() const
   return d_attachmentdata_size;
 }
 
+inline void AttachmentFrame::setLength(uint32_t l)
+{
+  for (auto &p : d_framedata)
+    if (std::get<0>(p) == FIELD::LENGTH)
+    {
+      uint64_t val = bepaald::swap_endian(static_cast<uint64_t>(l));
+      std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&val), sizeof(val));
+      d_attachmentdata_size = 0;
+      return;
+    }
+}
+
 inline uint32_t AttachmentFrame::attachmentSize() const // virtual override
 {
   return length();
@@ -148,13 +161,14 @@ inline void AttachmentFrame::setRowId(uint64_t rid)
   for (auto &p : d_framedata)
     if (std::get<0>(p) == FIELD::ROWID)
     {
-      if (sizeof(rid) != std::get<2>(p))
+      [[unlikely]] if (sizeof(rid) != std::get<2>(p))
       {
         //std::cout << "       ************        DAMN!        **********        " << std::endl;
         return;
       }
       uint64_t val = bepaald::swap_endian(rid);
       std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&val), sizeof(val));
+      return;
     }
 }
 

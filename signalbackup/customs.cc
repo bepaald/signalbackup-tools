@@ -461,7 +461,7 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
 
   // open truncated
   std::cout << "Opening truncated backup..." << std::endl;
-  std::unique_ptr<SignalBackup> tf(new SignalBackup(truncatedbackup, pwd, false, false));
+  std::unique_ptr<SignalBackup> tf(new SignalBackup(truncatedbackup, pwd, false, false, false));
   if (!tf->ok())
   {
     std::cout << "Failed to read truncated backup file" << std::endl;

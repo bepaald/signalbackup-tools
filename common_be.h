@@ -89,6 +89,7 @@ namespace bepaald
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
   inline bool fileOrDirExists(std::string const &path);
+  inline bool fileOrDirExists(std::filesystem::path const &path);
   inline bool isDir(std::string const &path);
   inline bool createDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
@@ -225,6 +226,12 @@ inline constexpr int bepaald::strlitLength(char const *str, int pos)
 }
 
 inline bool bepaald::fileOrDirExists(std::string const &path)
+{
+  std::error_code ec;
+  return std::filesystem::exists(path, ec);
+}
+
+inline bool bepaald::fileOrDirExists(std::filesystem::path const &path)
 {
   std::error_code ec;
   return std::filesystem::exists(path, ec);

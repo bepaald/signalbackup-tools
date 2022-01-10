@@ -110,6 +110,7 @@ int main(int argc, char *argv[])
 
   // open input
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(), arg.showprogress(),
+                                                    !arg.replaceattachments().empty(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponbadmac()));
   if (!sb->ok())
@@ -144,7 +145,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before first time reading source");
 
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
 
       MEMINFO("After first time reading source");
 
@@ -164,7 +165,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before reading source: ", i + 1, "/", threads.size());
 
       std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
       if (!sourcesummarized)
       {
         source->summarize();
