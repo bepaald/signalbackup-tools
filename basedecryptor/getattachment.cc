@@ -36,6 +36,21 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
   //std::cout << "Getting attachment: " << frame->filepos() << " + " << frame->length() << std::endl;
   file.seekg(frame->filepos(), std::ios_base::beg);
 
+  // RAW UNENCRYPTED FILE ATTACHMENT
+  if (!frame->cipherkey() ||
+      !frame->mackey() ||
+      !frame->iv())
+  {
+    std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[frame->length()]); // to hold the data
+    if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), frame->length()))
+    {
+      std::cout << "Failed to read raw attachment \"" << frame->filename() << "\"" << std::endl;
+      return 1;
+    }
+    frame->setAttachmentData(decryptedattachmentdata.release());
+    return 0;
+  }
+
   // to decrypt the data
   // create context
   std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
@@ -51,13 +66,30 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
   }
 
   // to calculate the MAC
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
+  std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
+  char digest[] = "SHA256";
+  OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", digest, 0), OSSL_PARAM_construct_end()};
+#else
   std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
+#endif
+
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  if (EVP_MAC_init(hctx.get(), frame->mackey(), frame->mackey_size(), params) != 1)
+#else
   if (HMAC_Init_ex(hctx.get(), frame->mackey(), frame->mackey_size(), EVP_sha256(), nullptr) != 1)
+#endif
   {
     std::cout << "Failed to initialize HMAC context" << std::endl;
     return 1;
   }
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  if (EVP_MAC_update(hctx.get(), frame->iv(), frame->iv_size()) != 1)
+#else
   if (HMAC_Update(hctx.get(), frame->iv(), frame->iv_size()) != 1)
+#endif
   {
     std::cout << "Failed to update HMAC" << std::endl;
     return 1;
@@ -79,7 +111,11 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
     uint32_t read = file.gcount();
 
     // update MAC with read data
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+    if (EVP_MAC_update(hctx.get(), encrypteddatabuffer, read) != 1)
+#else
     if (HMAC_Update(hctx.get(), encrypteddatabuffer, read) != 1)
+#endif
     {
       std::cout << "Failed to update HMAC" << std::endl;
       return 1;
@@ -98,9 +134,15 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
   }
   DEBUGOUT("Read ", processed, " bytes");
 
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  unsigned long int digest_size = SHA256_DIGEST_LENGTH;
+  unsigned char hash[SHA256_DIGEST_LENGTH];
+  if (EVP_MAC_final(hctx.get(), hash, nullptr, digest_size) != 1)
+#else
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
   if (HMAC_Final(hctx.get(), hash, &digest_size) != 1)
+#endif
   {
     std::cout << "Failed to finalize MAC" << std::endl;
     return 1;

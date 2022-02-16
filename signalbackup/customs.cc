@@ -663,6 +663,14 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
   d_database.exec("DELETE FROM msl_recipient");
   d_database.exec("DELETE FROM msl_message");
 
+  // makes no sense to keep this, user should just make new profiles
+  if (d_database.containsTable("notification_profile"))
+  {
+    d_database.exec("DELETE FROM notification_profile");
+    d_database.exec("DELETE FROM notification_profile_schedule");
+    d_database.exec("DELETE FROM notification_profile_allowed_members");
+  }
+
   // delete other threads
   d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM mms WHERE thread_id IS NOT ?", t_id);
@@ -1051,5 +1059,46 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
     *11 (outgoing video call) ->  10 (incoming video call)?
     *24 (sent_failed)         ->  ???
   */
+
+}
+
+void SignalBackup::scanMissingAttachments() const
+{
+
+  // get 'missing' attachments
+  SqliteDB::QueryResults res;
+  d_database.exec("SELECT _id,unique_id FROM part", &res);
+  std::vector<std::pair<long long int, long long int>> missing;
+  for (uint i = 0; i < res.rows(); ++i)
+    if (d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")}) == d_attachments.end())
+      missing.emplace_back(std::make_pair(res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")));
+
+  std::cout << "Got " << missing.size() << " attachments with data not found" << std::endl;
+
+  for (uint i = 0; i < missing.size(); ++i)
+  {
+    std::cout << "Checking " << (i + 1) << " of " << missing.size() << ": " << std::flush << missing[i].first << "," << missing[i].second << "... ";
+
+    d_database.exec("SELECT _id FROM mms WHERE quote_missing = 1 AND _id IN (SELECT mid FROM part WHERE quote IS 1 AND mid = ?)", missing[i].first, &res);
+    if (res.rows())
+    {
+      std::cout << "OK, EXPECTED (quote missing)" << std::endl;
+      continue;
+    }
+
+    d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%'", {missing[i].first, missing[i].second}, &res);
+    if (res.rows())
+    {
+      std::cout << "OK, EXPECTED (type = " << res.valueAsString(0, 0) << ")" << std::endl;
+      continue;
+    }
+
+    std::cout << "UNEXPECTED! details:" << std::endl;
+    d_database.exec("SELECT quote,ct FROM part WHERE _id = ? AND unique_id = ?", {missing[i].first, missing[i].second}, &res);
+    res.prettyPrint();
+
+
+
+  }
 
 }

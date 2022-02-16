@@ -234,6 +234,18 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     offsetmsl_recipient = getMaxUsedId("msl_recipient") + 1 - source->getMinUsedId("msl_recipient");
   }
 
+  long long int offsetnotification_profile = -1;
+  long long int offsetnotification_profile_allowed_members = -1;
+  long long int offsetnotification_profile_schedule = -1;
+  if (source->d_database.containsTable("notification_profile") &&
+      source->d_database.containsTable("notification_profile_allowed_members") &&
+      source->d_database.containsTable("notification_profile_schedule"))
+  {
+    offsetnotification_profile = getMaxUsedId("notification_profile") + 1 - source->getMinUsedId("notification_profile");
+    offsetnotification_profile_allowed_members = getMaxUsedId("notification_profile_allowed_members") + 1 - source->getMinUsedId("notification_profile_allowed_members");
+    offsetnotification_profile_schedule = getMaxUsedId("notification_profile_schedule") + 1 - source->getMinUsedId("notification_profile_schedule");
+  }
+
   // payments, sender_keys
 
   long long int offsetgroup_call_ring = -1;
@@ -266,7 +278,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         offsetsticker, offsetmegaphone, offsetremapped_recipients,
                         offsetremapped_threads, offsetmention,
                         offsetmsl_payload, offsetmsl_message, offsetmsl_recipient,
-                        offsetreaction, offsetgroup_call_ring);
+                        offsetreaction, offsetgroup_call_ring,
+                        offsetnotification_profile, offsetnotification_profile_allowed_members,
+                        offsetnotification_profile_schedule);
 
   // delete double remapped_recipients
   if (d_database.containsTable("remapped_recipients") && source->d_database.containsTable("remapped_recipients"))

@@ -23,12 +23,12 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
                                      std::string const &before, std::string const &after,
                                      long long int filesize, std::vector<std::string> const &mimetypes,
                                      std::string const &append, std::string const &prepend,
-                                     std::vector<std::pair<std::string, std::string>> const &replace)
+                                     std::vector<std::pair<std::string, std::string>> replace)
 {
   using namespace std::string_literals;
 
   std::string query_delete("DELETE FROM part");
-  std::string query_list("SELECT _id,mid,unique_id,ct FROM part");
+  std::string query_list("SELECT _id,mid,unique_id,ct,quote FROM part");
 
   std::string specification;
 
@@ -148,8 +148,35 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
           return false;
 
         if (res2.empty()) // no other attachments for this message
+        {
+          // delete message if body empty
           if (!d_database.exec("DELETE FROM mms WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
             return false;
+          // else, if body is not empty, make sure the 'mms.previews' column does not refeerence non-existing attachment
+          else
+          {
+            SqliteDB::QueryResults res3;
+            if (!d_database.exec("SELECT previews FROM mms WHERE _id = ? AND (previews LIKE '%attachmentId\":{%')", res.getValueAs<long long int>(i, "mid"), &res3))
+              return false;
+            if (!res3.empty())
+            {
+              std::string previews = res3.valueAsString(0, "previews");
+              //std::cout << " OLD: " << previews<< std::endl;
+              std::regex attid_in_json(".*\"attachmentId\":(\\{.*?\\}).*");
+              std::smatch sm;
+              if (std::regex_match(previews, sm, attid_in_json))
+              {
+                if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
+                {
+                  //std::cout << sm.size() << std::endl;
+                  previews.replace(sm.position(1), sm.length(1), "null");
+                  //std::cout << " NEW: " << previews << std::endl;
+                  d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {previews, res.getValueAs<long long int>(i, "mid")});
+                }
+              }
+            }
+          }
+        }
       }
     }
     cleanAttachments();
@@ -159,13 +186,54 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
 
   // else replace attachments
 
+  std::sort(replace.begin(), replace.end(), [](std::pair<std::string, std::string> const &lhs, std::pair<std::string, std::string> const &rhs)
+  {
+    return (lhs.first == "default" ? false : (rhs.first == "default" ? true : lhs.first.length() > rhs.first.length()));
+  });
+
   for (uint i = 0; i < res.rows(); ++i)
   {
     // get ct (mimetype), if it matches replace[i].first -> replace with replace[i].second
+    std::string mimetype = res.valueAsString(i, "ct");
 
+    std::cout << "Checking to replace attachment: "  << mimetype << std::endl;
+
+    for (uint j = 0; j < replace.size(); ++j)
+    {
+      if (STRING_STARTS_WITH(res.valueAsString(i, "ct"), replace[j].first) || replace[j].first == "default")
+      {
+        // replace with replace[j].second
+
+        auto attachment = d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")});
+        if (attachment == d_attachments.end())
+        {
+          std::cout << "WARNING: Failed to find attachment with this part entry" << std::endl;
+          continue;
+        }
+
+        AttachmentMetadata amd = getAttachmentMetaData(replace[j].second);
+        if (!amd)
+        {
+          std::cout << "Failed to get metadata on new attachment: \"" << replace[j].second << "\", skipping..." << std::endl;
+          continue;
+        }
+
+        if (!updatePartTableForReplace(amd, res.getValueAs<long long int>(i, "_id")))
+          //if (!d_database.exec("UPDATE part SET ct = ?, data_size = ?, width = ?, height = ?, data_hash = ? WHERE _id = ?",
+          //                  {newmimetype, newdatasize, newwidth, newheight, newhash, res.getValueAs<long long int>(i, "_id")}) ||
+          //  d_database.changed() != 1)
+          return false;
+
+        attachment->second->setLength(amd.filesize);
+        attachment->second->setLazyDataRAW(amd.filesize, replace[j].second);
+
+        std::cout << "Replaced attachment at " << i + 1 << "/" << res.rows() << " with file \"" << replace[j].second << "\"" << std::endl;
+        break;
+      }
+    }
     // replacing -> delete where _id = res[i][_id]
-    //              insert into (_id, mid, unique_id, ct, data_size, ...) values(..., ... ,)
+    //              insert into (_id, mid, unique_id, ct, data_size, quote, ...) values(..., ... ,)
   }
 
-  return false;
+  return true;
 }

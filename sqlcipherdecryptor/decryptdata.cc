@@ -76,6 +76,24 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     unsigned int page_encrypted_data_size = page_data_to_hash_size - iv_size;
 
     // calculate MAC
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+    std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
+    std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
+    char digest[] = "SHA256";
+    OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", digest, 0), OSSL_PARAM_construct_end()};
+    if (EVP_MAC_init(hctx.get(), d_hmackey, d_hmackeysize, params) != 1)
+    {
+      std::cout << "Failed to initialize HMAC context" << std::endl;
+      return false;
+    }
+    if (EVP_MAC_update(hctx.get(), page_data_to_hash, page_data_to_hash_size) != 1 ||
+        EVP_MAC_update(hctx.ge(), reinterpret_cast<unsigned char *>(&pagenumber), sizeof(pagenumber)) != 1 ||
+        EVP_MAC_final(hctx.get(), calculatedmac.get(), nullptr, d_digestsize) != 1)
+    {
+      std::cout << "Failed to update/finalize hmac" << std::endl;
+      return false;
+    }
+#else
     std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
     if (HMAC_Init_ex(hctx.get(), d_hmackey, d_hmackeysize, d_digest, nullptr) != 1)
     {
@@ -90,6 +108,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
       std::cout << "Failed to update/finalize hmac" << std::endl;
       return false;
     }
+#endif
     if (std::memcmp(page.get() + (real_page_size - (d_digestsize + page_padding)), calculatedmac.get(), d_digestsize) != 0)
     {
       std::cout << "MAC in file: " << bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize) << std::endl;

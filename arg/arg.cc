@@ -24,6 +24,7 @@ Arg::Arg(int argc, char *argv[])
   d_ok(false),
   d_positionals(0),
   d_maxpositional(2),
+  d_progname(argv[0]),
   d_input(std::string()),
   d_password(std::string()),
   d_importthreads(std::vector<int>()),
@@ -76,7 +77,12 @@ Arg::Arg(int argc, char *argv[])
   d_onlytype(std::vector<std::string>()),
   d_appendbody(std::string()),
   d_prependbody(std::string()),
-  d_replaceattachments(std::vector<std::pair<std::string,std::string>>())
+  d_replaceattachments(std::vector<std::pair<std::string,std::string>>()),
+  d_replaceattachments_bool(false),
+  d_help(false),
+  d_scanmissingattachments(false),
+  d_showdbinfo(false),
+  d_scramble(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -96,6 +102,32 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
   {
     std::string option = arguments[i];
 
+    if (option == "-i" || option == "--input")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_input = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "-p" || option == "--password")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_password = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--importthreads")
     {
       if (i < arguments.size() - 1)
@@ -159,7 +191,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "-o" || option == "--output")
     {
       if (i < arguments.size() - 1)
+      {
         d_output = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -170,7 +204,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "-op" || option == "--opassword")
     {
       if (i < arguments.size() - 1)
+      {
         d_opassword = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -181,7 +217,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "-s" || option == "--source")
     {
       if (i < arguments.size() - 1)
+      {
         d_source = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -192,7 +230,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "-sp" || option == "--sourcepassword")
     {
       if (i < arguments.size() - 1)
+      {
         d_sourcepassword = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -316,7 +356,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--exportxml")
     {
       if (i < arguments.size() - 1)
+      {
         d_exportxml = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -397,7 +439,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--dumpdesktopdb")
     {
       if (i < arguments.size() - 1)
+      {
         d_dumpdesktopdb = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -408,7 +452,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--dumpmedia")
     {
       if (i < arguments.size() - 1)
+      {
         d_dumpmedia = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -419,7 +465,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--dumpavatars")
     {
       if (i < arguments.size() - 1)
+      {
         d_dumpavatars = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -430,7 +478,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--hhenkel")
     {
       if (i < arguments.size() - 1)
+      {
         d_hhenkel = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -441,7 +491,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--importcsv")
     {
       if (i < arguments.size() - 1)
+      {
         d_importcsv = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -470,7 +522,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--importwachat")
     {
       if (i < arguments.size() - 1)
+      {
         d_importwachat = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -481,7 +535,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--setwatimefmt")
     {
       if (i < arguments.size() - 1)
+      {
         d_setwatimefmt = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -492,7 +548,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--setselfid")
     {
       if (i < arguments.size() - 1)
+      {
         d_setselfid = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -704,7 +762,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--onlyolderthan")
     {
       if (i < arguments.size() - 1)
+      {
         d_onlyolderthan = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -715,7 +775,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--onlynewerthan")
     {
       if (i < arguments.size() - 1)
+      {
         d_onlynewerthan = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -760,7 +822,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--appendbody")
     {
       if (i < arguments.size() - 1)
+      {
         d_appendbody = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -771,7 +835,9 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--prependbody")
     {
       if (i < arguments.size() - 1)
+      {
         d_prependbody = arguments[++i];
+      }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
@@ -781,7 +847,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--replaceattachments")
     {
-      if (i < arguments.size() - 1)
+      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_replaceattachments, &error))
@@ -789,12 +855,50 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
         }
+        d_replaceattachments_bool = true;
       }
       else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
+        d_replaceattachments_bool = true;
+      continue;
+    }
+    if (option == "-h" || option == "--help")
+    {
+      d_help = true;
+      continue;
+    }
+    if (option == "--no-help")
+    {
+      d_help = false;
+      continue;
+    }
+    if (option == "--scanmissingattachments")
+    {
+      d_scanmissingattachments = true;
+      continue;
+    }
+    if (option == "--no-scanmissingattachments")
+    {
+      d_scanmissingattachments = false;
+      continue;
+    }
+    if (option == "--showdbinfo")
+    {
+      d_showdbinfo = true;
+      continue;
+    }
+    if (option == "--no-showdbinfo")
+    {
+      d_showdbinfo = false;
+      continue;
+    }
+    if (option == "--scramble")
+    {
+      d_scramble = true;
+      continue;
+    }
+    if (option == "--no-scramble")
+    {
+      d_scramble = false;
       continue;
     }
     if (option[0] != '-')
@@ -804,13 +908,20 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Unknown option. ]" << std::endl;
         ok = false;
       }
-      if (d_positionals == 0)
+      if (i == 0)
       {
         d_input = arguments[i];
+        //std::cout << "Got 'input' at pos " << i << std::endl;
       }
-      if (d_positionals == 1)
+      else if (i == 1)
       {
         d_password = arguments[i];
+        //std::cout << "Got 'password' at pos " << i << std::endl;
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Unknown option. ]" << std::endl;
+        ok = false;
       }
       ++d_positionals;
       continue;

@@ -28,12 +28,15 @@
 #include <iterator>
 #include <algorithm>
 #include <utility>
+#include <array>
 
 class Arg
 {
   bool d_ok;
+  std::array<std::string, 65> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponbadmac", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble"};
   size_t d_positionals;
   size_t d_maxpositional;
+  std::string d_progname;
   std::string d_input;
   std::string d_password;
   std::vector<int> d_importthreads;
@@ -87,11 +90,17 @@ class Arg
   std::string d_appendbody;
   std::string d_prependbody;
   std::vector<std::pair<std::string,std::string>> d_replaceattachments;
+  bool d_replaceattachments_bool;
+  bool d_help;
+  bool d_scanmissingattachments;
+  bool d_showdbinfo;
+  bool d_scramble;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
   inline Arg &operator=(Arg const &other) = delete;
   inline bool ok() const;
+  void usage() const;
   inline std::string const &input() const;
   inline std::string const &password() const;
   inline std::vector<int> const &importthreads() const;
@@ -145,6 +154,11 @@ class Arg
   inline std::string const &appendbody() const;
   inline std::string const &prependbody() const;
   inline std::vector<std::pair<std::string,std::string>> const &replaceattachments() const;
+  inline bool replaceattachments_bool() const;
+  inline bool help() const;
+  inline bool scanmissingattachments() const;
+  inline bool showdbinfo() const;
+  inline bool scramble() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -158,7 +172,7 @@ class Arg
   bool parsePair(std::string const &token, std::string const &delim, std::pair<T, U> *pair, std::string *error) const;
   template <typename T>
   bool parseNumberListToken(std::string const &token, std::vector<T> *list) const;
-  void usage() const;
+  inline bool isOption(std::string const &str) const;
 };
 
 inline std::string const &Arg::input() const
@@ -426,6 +440,31 @@ inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattach
   return d_replaceattachments;
 }
 
+inline bool Arg::replaceattachments_bool() const
+{
+  return d_replaceattachments_bool;
+}
+
+inline bool Arg::help() const
+{
+  return d_help;
+}
+
+inline bool Arg::scanmissingattachments() const
+{
+  return d_scanmissingattachments;
+}
+
+inline bool Arg::showdbinfo() const
+{
+  return d_showdbinfo;
+}
+
+inline bool Arg::scramble() const
+{
+  return d_scramble;
+}
+
 inline bool Arg::ok() const
 {
   return d_ok;
@@ -570,6 +609,11 @@ bool Arg::parseNumberListToken(std::string const &token, std::vector<T> *list) c
   }
 
   return true;
+}
+
+inline bool Arg::isOption(std::string const &str) const
+{
+  return std::find(d_alloptions.begin(), d_alloptions.end(), str) != d_alloptions.end();
 }
 
 #endif

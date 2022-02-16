@@ -62,6 +62,7 @@ class FrameWithAttachment : public BackupFrame
   inline uint64_t cipherkey_size() const;
   inline std::string const &filename() const;
   inline void setLazyData(unsigned char *iv, uint32_t iv_size, unsigned char *mackey, uint64_t mackey_size, unsigned char *cipherkey, uint64_t cipherkey_size, uint32_t attsize, std::string const &filename, uint64_t filepos);
+  inline void setLazyDataRAW(uint32_t attsize, std::string const &filename);
   //inline virtual void setLazyData(unsigned char *iv, uint32_t iv_size, uint32_t attsize, uint64_t filepos, BaseDecryptor *dec);
   inline unsigned char *attachmentData();
   inline void clearData();
@@ -325,17 +326,31 @@ inline std::string const &FrameWithAttachment::filename() const
 
 inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size, unsigned char *mackey, uint64_t mackey_size, unsigned char *cipherkey, uint64_t cipherkey_size, uint32_t attsize, std::string const &filename, uint64_t filepos/*, BaseDecryptor *dec*/)
 {
+  bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
+  bepaald::destroyPtr(&d_iv, &d_iv_size);
+  bepaald::destroyPtr(&d_mackey, &d_mackey_size);
+  bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
+
   d_iv_size = iv_size;
-  d_iv = new unsigned char[d_iv_size];
-  std::memcpy(d_iv, iv, d_iv_size);
+  if (iv)
+  {
+    d_iv = new unsigned char[d_iv_size];
+    std::memcpy(d_iv, iv, d_iv_size);
+  }
 
   d_cipherkey_size = cipherkey_size;
-  d_cipherkey = new unsigned char[d_cipherkey_size];
-  std::memcpy(d_cipherkey, cipherkey, d_cipherkey_size);
+  if (cipherkey)
+  {
+    d_cipherkey = new unsigned char[d_cipherkey_size];
+    std::memcpy(d_cipherkey, cipherkey, d_cipherkey_size);
+  }
 
   d_mackey_size = mackey_size;
-  d_mackey = new unsigned char[d_mackey_size];
-  std::memcpy(d_mackey, mackey, d_mackey_size);
+  if (mackey)
+  {
+    d_mackey = new unsigned char[d_mackey_size];
+    std::memcpy(d_mackey, mackey, d_mackey_size);
+  }
 
   d_attachmentdata_size = attsize;
 
@@ -343,6 +358,16 @@ inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size
   d_filepos = filepos;
 
   //d_dec = dec;
+}
+
+inline void FrameWithAttachment::setLazyDataRAW(uint32_t attsize, std::string const &filename)
+{
+  setLazyData(nullptr, 0,
+              nullptr, 0,
+              nullptr, 0,
+              attsize,
+              filename,
+              0);
 }
 
 inline unsigned char *FrameWithAttachment::attachmentData()
