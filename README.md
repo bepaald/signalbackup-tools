@@ -36,7 +36,7 @@ Current stable released versions of
 
 To compile the program, just running `g++ -std=c++2a */*.cc *.cc -lcrypto -lsqlite3` should generally do the trick. Add any compiler flags you feel useful, I personally use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++2a` with `-std=c++17`. 
 
-For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distro's), assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTI.bash44` for a faster build, and let me know if it works).
+For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distro's). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTI.bash44` for a faster build, and let me know if it works).
 
 For Arch users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
 
