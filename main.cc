@@ -60,7 +60,14 @@ int main(int argc, char *argv[])
   if (!arg.ok())
   {
     std::cout << "Error parsing arguments" << std::endl;
+    std::cout << "Try '" << argv[0] << " --help' for available options" << std::endl;
     return 1;
+  }
+
+  if (arg.help())
+  {
+    arg.usage();
+    return 0;
   }
 
   // check output exists (file exists OR dir is not empty)
@@ -110,7 +117,7 @@ int main(int argc, char *argv[])
 
   // open input
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(), arg.showprogress(),
-                                                    !arg.replaceattachments().empty(),
+                                                    arg.replaceattachments_bool(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponbadmac()));
   if (!sb->ok())
@@ -123,6 +130,9 @@ int main(int argc, char *argv[])
 
   if (arg.listthreads())
     sb->listThreads();
+
+  if (arg.showdbinfo())
+    sb->showDBInfo();
 
   if (arg.generatefromtruncated())
   {
@@ -217,7 +227,7 @@ int main(int argc, char *argv[])
     if (!sb->dumpAvatars(arg.dumpavatars(), arg.limitcontacts(), arg.overwrite()))
       return 1;
 
-  if (arg.deleteattachments())
+  if (arg.deleteattachments() || !arg.replaceattachments().empty())
   {
     if (!sb->deleteAttachments(arg.onlyinthreads(), arg.onlyolderthan(), arg.onlynewerthan(), arg.onlylargerthan(), arg.onlytype(), arg.appendbody(), arg.prependbody(), arg.replaceattachments()))
       return 1;
@@ -269,6 +279,12 @@ int main(int argc, char *argv[])
       return 1;
     }
   }
+
+  if (arg.scanmissingattachments())
+    sb->scanMissingAttachments();
+
+  if (arg.scramble())
+    sb->scramble();
 
   if (arg.reordermmssmsids() ||
       !arg.source().empty()) // reorder mms after messing with mms._id

@@ -177,6 +177,15 @@ void SignalBackup::cleanDatabaseByMessages()
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)"s);
   }
 
+
+  if (d_database.containsTable("notification_profile_allowed_members"))
+  {
+    std::cout << "  Deleting unneeded notification profiles entries..." << std::endl;
+
+    // delete from notification profile where recipient no longer in database
+    d_database.exec("DELETE FROM notification_profile_allowed_members WHERE recipient_id NOT IN (SELECT DISTINCT _id FROM recipient)");
+  }
+
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");
 
   // remove avatars not belonging to exisiting recipients

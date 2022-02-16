@@ -24,6 +24,7 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
   sqlite3_stmt *stmt;
   if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
   {
+    std::cout << "Error executing query: \"" << q << "\"" << std::endl;
     std::cout << "SQL error during sqlite3_prepare_v2(): " << sqlite3_errmsg(d_db) << std::endl;
     return false;
   }

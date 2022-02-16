@@ -24,14 +24,15 @@ long long int SignalBackup::scanSelf() const
 
   // only 'works' on 'newer' versions
   if (!d_database.containsTable("recipient") ||
+      !d_database.tableContainsColumn("thread", "thread_recipient_id") ||
       !d_database.tableContainsColumn("mms", "quote_author") ||
-      !d_database.tableContainsColumn("mms", "reactions") ||
-      !d_database.tableContainsColumn("sms", "reactions"))
+      (!d_database.tableContainsColumn("mms", "reactions") || !d_database.containsTable("reaction")))
     return -1;
 
   SqliteDB::QueryResults res;
   // get thread ids of all 1-on-1 conversations
-  if (!d_database.exec("SELECT _id," + d_thread_recipient_id + " FROM thread WHERE " + d_thread_recipient_id + " IN (SELECT _id FROM recipient WHERE group_id IS NULL)", &res))
+
+  if (!d_database.exec("SELECT _id, thread_recipient_id FROM thread WHERE thread_recipient_id IN (SELECT _id FROM recipient WHERE group_id IS NULL)", &res))
     return -1;
   //res.prettyPrint();
 
@@ -40,7 +41,7 @@ long long int SignalBackup::scanSelf() const
   for (uint i = 0; i < res.rows(); ++i)
   {
     long long int tid = res.getValueAs<long long int>(i, "_id");
-    long long int rid = res.getValueAs<long long int>(i, d_thread_recipient_id);
+    long long int rid = res.getValueAs<long long int>(i, "thread_recipient_id");
     //std::cout << "Dealing with thread: " << tid << std::endl;
 
     // try to find other recipient in thread
@@ -54,34 +55,61 @@ long long int SignalBackup::scanSelf() const
       options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "quote_author")));
     }
 
-    if (!d_database.exec("SELECT reactions FROM sms WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
-      continue;
-    for (uint j = 0; j < res2.rows(); ++j)
+    if (d_database.tableContainsColumn("sms", "reactions"))
     {
-      ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
-      for (uint k = 0; k < reactions.numReactions(); ++k)
+      if (!d_database.exec("SELECT reactions FROM sms WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
+        continue;
+      for (uint j = 0; j < res2.rows(); ++j)
       {
-        if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
+        ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
+        for (uint k = 0; k < reactions.numReactions(); ++k)
         {
-          //std::cout << "  From reaction: " << reactions.getAuthor(k) << std::endl;
-          options.insert(reactions.getAuthor(k));
+          if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
+          {
+            //std::cout << "  From reaction (old): " << reactions.getAuthor(k) << std::endl;
+            options.insert(reactions.getAuthor(k));
+          }
         }
       }
     }
-    if (!d_database.exec("SELECT reactions FROM mms WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
-      continue;
-    for (uint j = 0; j < res2.rows(); ++j)
+    if (d_database.tableContainsColumn("mms", "reactions"))
     {
-      ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
-      for (uint k = 0; k < reactions.numReactions(); ++k)
+      if (!d_database.exec("SELECT reactions FROM mms WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
+        continue;
+      for (uint j = 0; j < res2.rows(); ++j)
       {
-        if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
+        ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
+        for (uint k = 0; k < reactions.numReactions(); ++k)
         {
-          //std::cout << "  From reaction: " << reactions.getAuthor(k) << std::endl;
-          options.insert(reactions.getAuthor(k));
+          if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
+          {
+            //std::cout << "  From reaction (old): " << reactions.getAuthor(k) << std::endl;
+            options.insert(reactions.getAuthor(k));
+          }
         }
       }
     }
+
+    if (d_database.containsTable("reaction"))
+    {
+      if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
+        continue;
+      for (uint j = 0; j < res2.rows(); ++j)
+      {
+        //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
+        options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
+      }
+
+      if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 1 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM mms WHERE thread_id = ?)", {rid, tid} , &res2))
+        continue;
+      for (uint j = 0; j < res2.rows(); ++j)
+      {
+        //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
+        options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
+      }
+
+    }
+
   }
 
 

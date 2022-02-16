@@ -27,7 +27,10 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
                                  long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
                                  long long int minremapped_threads, long long int minmention,
                                  long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
-                                 long long int minreaction, long long int mingroup_call_ring)
+                                 long long int minreaction, long long int mingroup_call_ring,
+                                 long long int minnotification_profile, long long int minnotification_profile_allowed_members,
+                                 long long int minnotification_profile_schedule
+                                 )
 {
   std::cout << __FUNCTION__ << std::endl;
 
@@ -123,6 +126,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
     if (d_database.containsTable("reaction")) // dbv >= 121
       d_database.exec("UPDATE reaction SET author_id = author_id + ?", minrecipient);
+
+    if (d_database.containsTable("notfication_profile_allowed_members")) // dbv >= 121
+      d_database.exec("UPDATE notfication_profile_allowed_members SET recipient_id = recipient_id + ?", minrecipient);
 
     // address is UNIQUE in identities, so we can not simply do the following:
     // d_database.exec("UPDATE identities SET address = address + ?", minrecipient);
@@ -292,5 +298,18 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
   {
     setMinimumId("reaction", minreaction);
     compactIds("reaction");
+  }
+
+  if (minreaction >= 0 && d_database.containsTable("notification_profile"))
+  {
+    setMinimumId("notification_profile", minnotification_profile);
+    d_database.exec("UPDATE notification_profile_allowed_members SET notification_profile_id = notification_profile_id + ?", minnotification_profile);
+    d_database.exec("UPDATE notification_profile_schedule SET notification_profile_id = notification_profile_id + ?", minnotification_profile);
+
+    setMinimumId("notification_profile_allowed_members", minnotification_profile_allowed_members);
+    compactIds("notification_profile_allowed_members");
+
+    setMinimumId("notification_profile_schedule", minnotification_profile_schedule);
+    compactIds("notification_profile_schedule");
   }
 }

@@ -85,6 +85,18 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
         std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
       }
 
+      if (d_database.containsTable("reaction"))
+      {
+        d_database.exec("UPDATE reaction SET author_id = ? WHERE author_id = ?", {targetaddr, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'reaction' table" << std::endl;
+      }
+
+      if (d_database.containsTable("notification_profile_allowed_members"))
+      {
+        d_database.exec("UPDATE notification_profile_allowed_members SET recipient_id = ? WHERE recipient_id = ?", {targetaddr, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'notification_profile_allowed_members' table" << std::endl;
+      }
+
       d_database.exec("DELETE FROM thread WHERE " + d_thread_recipient_id + " = ?", r_ids[i]);
     }
   }

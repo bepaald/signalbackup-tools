@@ -19,13 +19,16 @@
 
 #include "signalbackup.ih"
 
+#include <openssl/sha.h>
+#include "../base64/base64.h"
+
 SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file) const
 {
   std::ifstream imagefile(file, std::ios_base::binary | std::ios_base::in);
   if (!imagefile.is_open())
   {
     std::cout << "Failed to open image for reading: " << file << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0};
+          return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
   }
 
   imagefile.seekg(0, std::ios_base::end);
@@ -33,21 +36,49 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   imagefile.seekg(0, std::ios_base::beg);
 
   if (imagefile_size == 0)
-    return AttachmentMetadata{-1, -1, std::string(), 0};
+    return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
 
+  // gethash
+  int buffer_size = std::max(imagefile_size, 1024 * 1024ul);
+  std::unique_ptr<unsigned char> buffer(new unsigned char[buffer_size]);
+  std::string hash;
+  unsigned char rawhash[SHA256_DIGEST_LENGTH];
+  bool fail = true;
+  std::unique_ptr<EVP_MD_CTX, decltype(&::EVP_MD_CTX_free)> sha256(EVP_MD_CTX_new(), &::EVP_MD_CTX_free);
+  if (sha256.get() && EVP_DigestInit_ex(sha256.get(), EVP_sha256(), nullptr) == 1)
+  {
+    fail = false;
+    while (imagefile)
+    {
+      imagefile.read(reinterpret_cast<char *>(buffer.get()), buffer_size);
+      if (EVP_DigestUpdate(sha256.get(), buffer.get(), imagefile.gcount()) != 1)
+      {
+        fail |= true;
+        break;
+      }
+    }
+    fail |= (EVP_DigestFinal_ex(sha256.get(), rawhash, nullptr) != 1);
+  }
+  hash = fail ? std::string() : Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
+  //std::cout << bepaald::bytesToHexString(rawhash, SHA256_DIGEST_LENGTH) << std::endl;
+  //std::cout << "GOT HASH: " << hash << std::endl;
+
+  // rewind and reset
+  imagefile.clear();
+  imagefile.seekg(0, std::ios_base::beg);
   int bufsize = 24;
 
   if (imagefile_size < static_cast<unsigned int>(bufsize))
   {
     std::cout << "File unexpectedly small" << std::endl;
-    return AttachmentMetadata{-1, -1, std::string(), 0};
+    return AttachmentMetadata{-1, -1, std::string(), 0, hash};
   }
 
   std::unique_ptr<unsigned char[]> buf(new unsigned char[bufsize]);
   if (!imagefile.read(reinterpret_cast<char *>(buf.get()), bufsize))
   {
     std::cout << "Failed to read 24 bytes from file" << std::endl;
-    return AttachmentMetadata{-1, -1, std::string(), 0};
+    return AttachmentMetadata{-1, -1, std::string(), 0, hash};
   }
 
   // PNG: the first frame is by definition an IHDR frame, which gives dimensions
@@ -58,7 +89,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0);
     return AttachmentMetadata{(buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0),
       (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0),
-      "image/png", imagefile_size};
+      "image/png", imagefile_size, hash};
   }
 
   // GIF: first three bytes say "GIF", next three give version number. Then dimensions
@@ -68,7 +99,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = buf[8] + (buf[9] << 8);
     return AttachmentMetadata{buf[8] + (buf[9] << 8),
       buf[6] + (buf[7] << 8),
-      "image/gif", imagefile_size};
+      "image/gif", imagefile_size, hash};
   }
 
   // JPEG
@@ -111,7 +142,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       if (buf[pos] != 0xFF)
       {
         std::cout << "Failed to find start of JPEG header frame" << std::endl;
-        return AttachmentMetadata{-1, -1, std::string(), 0};
+        return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
       }
       // skip any extra frame markers
       while (buf[pos + 1] == 0xFF)
@@ -121,7 +152,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (pos >= jpeg_bufsize)
         {
           std::cout << "This could be fixed..." << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0};
+          return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
         }
       }
 
@@ -133,7 +164,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
         return AttachmentMetadata{(buf[pos + 7] << 8) + buf[pos + 8],
           (buf[pos + 5] << 8) + buf[pos + 6],
-          "image/jpeg", imagefile_size};
+          "image/jpeg", imagefile_size, hash};
       }
       else // this was a different frame, skip it
       {
@@ -150,7 +181,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (!imagefile.read(reinterpret_cast<char *>(buf.get()), jpeg_bufsize))
         {
           std::cout << "Failed to read next 24 bytes from file" << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0};
+          return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
         }
 
         //for (int i = 0; i < bufsize; ++i)
@@ -161,5 +192,5 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     }
 
   }
-  return AttachmentMetadata{-1, -1, std::string(), 0};
+  return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
 }

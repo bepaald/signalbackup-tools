@@ -71,6 +71,9 @@ class SignalBackup
     int height;
     std::string filetype;
     unsigned long filesize;
+    std::string hash;
+
+    operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && !filesize == 0); }
   };
 
  public:
@@ -111,12 +114,15 @@ class SignalBackup
   bool deleteAttachments(std::vector<long long int> const &threadids, std::string const &before,
                          std::string const &after, long long int filesize,
                          std::vector<std::string> const &mimetypes, std::string const &append,
-                         std::string const &prepend, std::vector<std::pair<std::string, std::string>> const &replace);
+                         std::string const &prepend, std::vector<std::pair<std::string, std::string>> replace);
+  inline void showDBInfo() const;
+  bool scramble() const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
   bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
   bool hiperfall(uint64_t t_id, std::string const &selfid);
+  void scanMissingAttachments() const;
   /* CUSTOMS */
 
  private:
@@ -149,7 +155,9 @@ class SignalBackup
                      long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
                      long long int minremapped_threads, long long int minmention,
                      long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
-                     long long int minreaction, long long int mingroup_call_ring);
+                     long long int minreaction, long long int mingroup_call_ring,
+                     long long int minnotification_profile, long long int minnotification_profile_allowed_members,
+                     long long int minnotification_profile_schedule);
   void updateRecipientId(long long int targetid, std::string ident);
   void updateRecipientId(long long int targetid, long long int sourceid, bool verbose = false);
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
@@ -175,6 +183,8 @@ class SignalBackup
   long long int scanSelf() const;
   bool cleanAttachments();
   AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
+  inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
+  bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -460,6 +470,11 @@ inline std::vector<int> SignalBackup::threadIds() const
   return res;
 }
 
+inline void SignalBackup::showDBInfo() const
+{
+  d_database.print("SELECT m.name as TABLE_NAME, p.name as COLUMN_NAME FROM sqlite_master m LEFT OUTER JOIN pragma_table_info((m.name)) p ON m.name <> p.name ORDER BY TABLE_NAME, COLUMN_NAME");
+}
+
 inline std::string SignalBackup::getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def) const
 {
   std::string tmp(def);
@@ -478,6 +493,16 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
   if (results.valueHasType<long long int>(i, columnname))
     temp = results.getValueAs<long long int>(i, columnname);
   return temp;
+}
+
+inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &data, long long int id)
+{
+  if (!d_database.exec("UPDATE part SET ct = ?, data_size = ?, width = ?, height = ?, data_hash = ?, "
+                       "video_gif = 0, transform_properties = NULL, voice_note = 0, blur_hash = NULL WHERE _id = ?",
+                       {data.filetype, data.filesize, data.width, data.height, data.hash, id}) ||
+      d_database.changed() != 1)
+    return false;
+  return true;
 }
 
 #endif

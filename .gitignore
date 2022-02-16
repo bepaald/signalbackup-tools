@@ -3,7 +3,6 @@
 !LICENSE
 !BUILDSCRIPT.sh
 !BUILDSCRIPT_MULTIPROC.bash44
-!BUILDWINDOWS.sh
 !*.cc
 !*.h
 !*.ih

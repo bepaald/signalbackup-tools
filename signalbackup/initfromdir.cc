@@ -144,13 +144,17 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
     std::filesystem::path attframe = att.path();
     std::filesystem::path attbin = att.path();
+    attbin.replace_extension(".bin");
 
-    attbin.replace_extension(".new");
     bool replaced_attachement = false;
-    if (replaceattachments && bepaald::fileOrDirExists(attbin))
-      replaced_attachement = true;
-    else
-      attbin.replace_extension(".bin");
+    if (replaceattachments)
+    {
+      attbin.replace_extension(".new");
+      if (bepaald::fileOrDirExists(attbin))
+        replaced_attachement = true;
+      else
+        attbin.replace_extension(".bin");
+    }
 
     std::unique_ptr<AttachmentFrame> temp;
     if (!setFrameFromFile(&temp, attframe.string()))
@@ -164,25 +168,30 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
     if (replaced_attachement)
     {
-      SqliteDB::QueryResults results;
-      if (!d_database.exec("DELETE FROM part WHERE _id = ? AND unique_id = ? RETURNING mid", {temp->rowId(), temp->attachmentId()}, &results) ||
-          d_database.changed() != 1)
+      AttachmentMetadata amd = getAttachmentMetaData(attbin.string());
+
+      if (!amd)
       {
-        std::cout << "ERROR: Failed to delete existing attachment from database" << std::endl;
-        return;
+        std::cout << "Failed to get metadata on new attachment: " << attbin << std::endl;
+        attbin.replace_extension(".bin");
+        if (!temp->setAttachmentData(attbin.string()))
+          return;
+        continue;
       }
 
-      unsigned int mid = results.getValueAs<long long int>(0, "mid");
-      auto [width, height, type, size] = getAttachmentMetaData(attbin.string());
-
-      temp->setLength(size);
-
-      if (!d_database.exec("INSERT INTO part(_id, mid, unique_id, ct, data_size, width, height) VALUES(?, ?, ?, ?, ?, ?, ?)",
-                           {temp->rowId(), mid, temp->attachmentId(), type, size, width, height}))
+      // update database
+      if (!updatePartTableForReplace(amd, temp->rowId()))
+        //if (!d_database.exec("UPDATE part SET ct = ?,  data_size = ?, width = ?, height = ?, data_hash = ? WHERE  _id = ? ",
+        //                   {type, size, width, height, hash, temp->rowId()}) ||
+        //  d_database.changed() != 1)
       {
         std::cout << "ERROR: Failed to insert new attachment into database" << std::endl;
         return;
       }
+
+      // set correct size on AttachmentFrame
+      temp->setLength(amd.filesize);
+
       ++replaced_count;
     }
 
