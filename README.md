@@ -537,7 +537,7 @@ total 3,0G
 
 Note the mime types do not have to be complete, and the longest type will be matched with highest precedence. In the above case, that means all `image/gif` images are replaced with _"GIF.png"_, while all other images are replaced with _"IMAGE.png"_.
 
-(Screenshots will follow)
+![replace_example](https://user-images.githubusercontent.com/38437099/154285515-0ca20937-dab8-436d-a333-7a614060ed37.png)
 
   </p>
 </details>
