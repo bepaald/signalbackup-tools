@@ -200,7 +200,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
 
     for (uint j = 0; j < replace.size(); ++j)
     {
-      if (STRING_STARTS_WITH(res.valueAsString(i, "ct"), replace[j].first) || replace[j].first == "default")
+      if (res.valueAsString(i, "ct").find(replace[j].first) == 0 || replace[j].first == "default")
       {
         // replace with replace[j].second
 

@@ -39,13 +39,13 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   if (verbose) std::cout << "    update groups, changed: " << d_database.changed() << std::endl;
   d_database.exec("UPDATE sessions SET address = ? WHERE address = ?", {targetid, sourceid});
   if (verbose) std::cout << "    update sessions, changed: " << d_database.changed() << std::endl;
-  if (d_database.containsTable("remapped_recipients"))
-  {
-    d_database.exec("UPDATE remapped_recipients SET old_id = ? WHERE old_id = ?", {targetid, sourceid});
-    if (verbose) std::cout << "    update remapped_recipients.old_id, changed: " << d_database.changed() << std::endl;
-    d_database.exec("UPDATE remapped_recipients SET new_id = ? WHERE new_id = ?", {targetid, sourceid});
-    if (verbose) std::cout << "    update remapped_recipient.new_id, changed: " << d_database.changed() << std::endl;
-  }
+  // if (d_database.containsTable("remapped_recipients"))
+  // {
+  //   d_database.exec("UPDATE remapped_recipients SET old_id = ? WHERE old_id = ?", {targetid, sourceid});
+  //   if (verbose) std::cout << "    update remapped_recipients.old_id, changed: " << d_database.changed() << std::endl;
+  //   d_database.exec("UPDATE remapped_recipients SET new_id = ? WHERE new_id = ?", {targetid, sourceid});
+  //   if (verbose) std::cout << "    update remapped_recipient.new_id, changed: " << d_database.changed() << std::endl;
+  // }
   if (d_database.containsTable("mention"))
   {
     d_database.exec("UPDATE mention SET recipient_id = ? WHERE recipient_id = ?", {targetid, sourceid});
@@ -70,6 +70,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   // recipient_id can also mentioned in the body of group v1 -> v2 migration message, when recipient
   // was thrown out of group.
   SqliteDB::QueryResults results;
+  bool changedsomething = false;
   if (d_database.exec("SELECT _id,body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
   {
     //results.prettyPrint();
@@ -110,16 +111,23 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
             break;
         }
         //std::cout << output << std::endl;
-        long long int sms_id = results.getValueAs<long long int>(i, "_id");
-        d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
-        if (verbose) std::cout << "    update sms.body (GV1_MIGRATION), changed: " << d_database.changed() << std::endl;
+        if (body != output)
+        {
+          long long int sms_id = results.getValueAs<long long int>(i, "_id");
+          d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
+          changedsomething = true;
+          if (verbose) std::cout << "    update sms.body (GV1_MIGRATION), changed: " << d_database.changed() << std::endl;
+        }
       }
     }
+    if (!changedsomething)
+      if (verbose) std::cout << "    update sms.body (GV1_MIGRATION), changed: 0" << std::endl;
   }
 
 
   // get group members:
   SqliteDB::QueryResults results2;
+  changedsomething = false;
   d_database.exec("SELECT _id, members FROM groups", &results2);
   //d_database.prettyPrint("SELECT _id,members FROM groups");
   for (uint i = 0; i < results2.rows(); ++i)
@@ -141,9 +149,15 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
         bepaald::toString((membersvec[m] == sourceid) ? targetid : membersvec[m]) :
         ("," + bepaald::toString((membersvec[m] == sourceid) ? targetid : membersvec[m]));
 
-    d_database.exec("UPDATE groups SET members = ? WHERE _id == ?", {newmembers, gid});
-    if (verbose) std::cout << "    update groups.members, changed: " << membersstr << " -> " << newmembers << std::endl;
+    if (membersstr != newmembers)
+    {
+      changedsomething = true;
+      d_database.exec("UPDATE groups SET members = ? WHERE _id == ?", {newmembers, gid});
+      if (verbose) std::cout << "    update groups.members, changed: " << membersstr << " -> " << newmembers << std::endl;
+    }
   }
+  if (!changedsomething)
+    if (verbose) std::cout << "    update groups.members, changed: 0" << std::endl;
 
   //d_database.prettyPrint("SELECT _id,members FROM groups");
 
@@ -154,7 +168,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
     d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &res);
     for (uint i = 0; i < res.rows(); ++i)
     {
-      bool changed = false;
+      changedsomething = false;
       ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
       for (uint j = 0; j < reactions.numReactions(); ++j)
       {
@@ -162,11 +176,11 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
         if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))
         {
           reactions.setAuthor(j, targetid);
-          changed = true;
+          changedsomething = true;
           if (verbose) std::cout << "    updated sms reaction" << std::endl;
         }
       }
-      if (changed)
+      if (changedsomething)
         d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
                                                                        res.getValueAs<long long int>(i, "_id")});
     }
@@ -177,7 +191,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
     d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &res);
     for (uint i = 0; i < res.rows(); ++i)
     {
-      bool changed = false;
+      changedsomething = false;
       ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
       for (uint j = 0; j < reactions.numReactions(); ++j)
       {
@@ -185,11 +199,11 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
         if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))
         {
           reactions.setAuthor(j, targetid);
-          changed = true;
+          changedsomething = true;
           if (verbose) std::cout << "    updated mms reaction" << std::endl;
         }
       }
-      if (changed)
+      if (changedsomething)
         d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
                                                                        res.getValueAs<long long int>(i, "_id")});
     }

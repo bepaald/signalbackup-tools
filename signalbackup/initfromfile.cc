@@ -87,7 +87,7 @@ void SignalBackup::initFromFile()
         // these tables as they are excluded on the export-side as well. Additionally, the official import should be able
         // to properly deal with them anyway (that is: ignore them)
         if (!d_database.exec(s->bindStatement(), s->parameters()))
-          std::cout << "WARNING: Failed to execute statement: " << s->statement() << std::endl;
+          std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Failed to execute statement: " << s->statement() << std::endl;
       }
       #ifdef BUILT_FOR_TESTING
       else if (s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
@@ -132,7 +132,7 @@ void SignalBackup::initFromFile()
     }
     else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID)
     {
-      std::cout << std::endl << "WARNING! SKIPPING INVALID FRAME!" << std::endl;
+      std::cout << std::endl << bepaald::bold_on << "WARNING! SKIPPING INVALID FRAME!" << bepaald::bold_off << std::endl;
     }
   }
 

@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-long long int SignalBackup::getMinUsedId(std::string const &table, std::string const &col)
+long long int SignalBackup::getMinUsedId(std::string const &table, std::string const &col) const
 {
   if (!d_database.containsTable(table))
     return 0;
@@ -35,7 +35,7 @@ long long int SignalBackup::getMinUsedId(std::string const &table, std::string c
   return results.getValueAs<long long int>(0, 0);
 }
 
-long long int SignalBackup::getMaxUsedId(std::string const &table, std::string const &col)
+long long int SignalBackup::getMaxUsedId(std::string const &table, std::string const &col) const
 {
   if (!d_database.containsTable(table))
     return 0;
