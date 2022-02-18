@@ -209,6 +209,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   //source->d_database.exec("VACUUM");
 
+  /*
   // make sure all id's are unique
   long long int offsetthread = getMaxUsedId("thread") + 1 - source->getMinUsedId("thread");
   long long int offsetsms = getMaxUsedId("sms") + 1 - source->getMinUsedId("sms");
@@ -272,15 +273,24 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   if (source->d_database.containsTable("reaction")) // dbv >= 121
     offsetreaction = getMaxUsedId("reaction") + 1 - source->getMinUsedId("reaction");
 
-  source->makeIdsUnique(offsetthread, offsetsms, offsetmms,
-                        offsetpart, offsetrecipient, offsetgroups,
-                        offsetidentities, offsetgroup_receipts, offsetdrafts,
-                        offsetsticker, offsetmegaphone, offsetremapped_recipients,
-                        offsetremapped_threads, offsetmention,
-                        offsetmsl_payload, offsetmsl_message, offsetmsl_recipient,
-                        offsetreaction, offsetgroup_call_ring,
-                        offsetnotification_profile, offsetnotification_profile_allowed_members,
-                        offsetnotification_profile_schedule);
+  // source->makeIdsUnique(offsetthread, offsetsms, offsetmms,
+  //                       offsetpart, offsetrecipient, offsetgroups,
+  //                       offsetidentities, offsetgroup_receipts, offsetdrafts,
+  //                       offsetsticker, offsetmegaphone, offsetremapped_recipients,
+  //                       offsetremapped_threads, offsetmention,
+  //                       offsetmsl_payload, offsetmsl_message, offsetmsl_recipient,
+  //                       offsetreaction, offsetgroup_call_ring,
+  //                       offsetnotification_profile, offsetnotification_profile_allowed_members,
+  //                       offsetnotification_profile_schedule);
+  */
+  makeIdsUnique(source);
+
+  // // export database
+  // std::cout << "Writing database..." << std::endl;
+  // SqliteDB database("NEWSTYLE.sqlite", false);
+  // if (!SqliteDB::copyDb(d_database, database))
+  //   std::cout << "Error exporting sqlite database" << std::endl;
+  // return;
 
   // delete double remapped_recipients
   if (d_database.containsTable("remapped_recipients") && source->d_database.containsTable("remapped_recipients"))

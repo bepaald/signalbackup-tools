@@ -64,7 +64,7 @@ class FrameWithAttachment : public BackupFrame
   inline void setLazyData(unsigned char *iv, uint32_t iv_size, unsigned char *mackey, uint64_t mackey_size, unsigned char *cipherkey, uint64_t cipherkey_size, uint32_t attsize, std::string const &filename, uint64_t filepos);
   inline void setLazyDataRAW(uint32_t attsize, std::string const &filename);
   //inline virtual void setLazyData(unsigned char *iv, uint32_t iv_size, uint32_t attsize, uint64_t filepos, BaseDecryptor *dec);
-  inline unsigned char *attachmentData();
+  inline unsigned char *attachmentData(bool *badmac = nullptr);
   inline void clearData();
 };
 
@@ -370,11 +370,20 @@ inline void FrameWithAttachment::setLazyDataRAW(uint32_t attsize, std::string co
               0);
 }
 
-inline unsigned char *FrameWithAttachment::attachmentData()
+inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac)
 {
   if (!d_attachmentdata)
-    if (BaseDecryptor::getAttachment(this) != 0)
+  {
+    int result = BaseDecryptor::getAttachment(this);
+    [[unlikely]] if (result == -1)
+    {
+      if (badmac)
+        *badmac = true;
       return nullptr;
+    }
+    [[unlikely]] if (result == 1)
+      return nullptr;
+  }
   return d_attachmentdata;
 }
 

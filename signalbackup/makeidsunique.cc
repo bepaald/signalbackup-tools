@@ -17,9 +17,13 @@
     along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-// CALLED ON SOURCE
-
 #include "signalbackup.ih"
+
+/*
+
+OLD VERSION
+
+// CALLED ON SOURCE
 
 void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
                                  long long int minpart, long long int minrecipient, long long int mingroups,
@@ -300,7 +304,7 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
     compactIds("reaction");
   }
 
-  if (minreaction >= 0 && d_database.containsTable("notification_profile"))
+  if (minnotification_profile >= 0 && d_database.containsTable("notification_profile"))
   {
     setMinimumId("notification_profile", minnotification_profile);
     d_database.exec("UPDATE notification_profile_allowed_members SET notification_profile_id = notification_profile_id + ?", minnotification_profile);
@@ -311,5 +315,250 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
     setMinimumId("notification_profile_schedule", minnotification_profile_schedule);
     compactIds("notification_profile_schedule");
+  }
+}
+
+*/
+
+// (NEW VERSION) NOT CALLED ON SOURCE
+
+void SignalBackup::makeIdsUnique(SignalBackup *source)
+{
+  std::cout << __FUNCTION__ << std::endl;
+
+  std::cout << "  Adjusting indexes in tables..." << std::endl;
+
+  for (auto const &dbl : d_databaselinks)
+  {
+    // skip if table/column does not exist, or if skip is set
+    if ((dbl.flags & SKIP) ||
+        !d_database.containsTable(dbl.table) ||
+        !source->d_database.containsTable(dbl.table) ||
+        !source->d_database.tableContainsColumn(dbl.table, dbl.column))
+      continue;
+
+    if (dbl.flags & WARN)
+    {
+      SqliteDB::QueryResults results;
+      if (source->d_database.exec("SELECT * FROM " + dbl.table, &results) &&
+          results.rows() > 0)
+        std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Found entries in a usually empty table. Trying to deal with it, but problems may occur." << std::endl;
+    }
+
+    long long int offsetvalue = getMaxUsedId(dbl.table, dbl.column) + 1 - source->getMinUsedId(dbl.table, dbl.column);
+    source->setMinimumId(dbl.table, offsetvalue, dbl.column);
+
+    for (auto const &c : dbl.connections)
+    {
+      if (!source->d_database.containsTable(c.table) || !source->d_database.tableContainsColumn(c.table, c.column))
+        continue;
+
+      if ((c.flags & SET_UNIQUELY))
+      {
+        // set all values negative
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 " + c.whereclause);
+        // set to wanted value
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 + ? " + c.whereclause, offsetvalue);
+      }
+      else
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? " + c.whereclause, offsetvalue);
+    }
+
+    if (dbl.table == "part")
+    {
+      // update rowid's in attachments
+      std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> newattdb;
+      for (auto &att : source->d_attachments)
+      {
+        AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att.second.release());
+        a->setRowId(a->rowId() + offsetvalue);
+        newattdb.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
+      }
+      source->d_attachments.clear();
+      source->d_attachments = std::move(newattdb);
+
+      // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
+      SqliteDB::QueryResults results;
+      source->d_database.exec("SELECT _id,previews FROM mms WHERE previews IS NOT NULL", &results);
+      std::regex rowid_in_json(".*\"rowId\":([0-9]*)[,}].*");
+      std::smatch sm;
+      for (uint i = 0; i < results.rows(); ++i)
+      {
+        std::string line = results.valueAsString(i, "previews");
+        if (std::regex_match(line, sm, rowid_in_json))
+          if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
+          {
+            line.replace(sm.position(1), sm.length(1), bepaald::toString(bepaald::toNumber<unsigned long>(sm[1]) + offsetvalue));
+            source->d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {line, results.getValueAs<long long int>(i, "_id")});
+          }
+      }
+    }
+
+    if (dbl.table == "recipient")
+    {
+      // get group members:
+      SqliteDB::QueryResults results;
+      source->d_database.exec("SELECT _id,members FROM groups", &results);
+      //source->d_database.prettyPrint("SELECT _id,members FROM groups");
+      for (uint i = 0; i < results.rows(); ++i)
+      {
+        long long int gid = results.getValueAs<long long int>(i, "_id");
+        std::string membersstr = results.getValueAs<std::string>(i, "members");
+        std::vector<int> membersvec;
+        std::stringstream ss(membersstr);
+        while (ss.good())
+        {
+          std::string substr;
+          std::getline(ss, substr, ',');
+          membersvec.emplace_back(bepaald::toNumber<int>(substr) + offsetvalue);
+        }
+
+        std::string newmembers;
+        for (uint m = 0; m < membersvec.size(); ++m)
+          newmembers += (m == 0) ? bepaald::toString(membersvec[m]) : ("," + bepaald::toString(membersvec[m]));
+
+        source->d_database.exec("UPDATE groups SET members = ? WHERE _id == ?", {newmembers, gid});
+        //std::cout << source->d_database.changed() << std::endl;
+      }
+
+
+
+      // in groups, during the v1 -> v2 update, members may have been removed from the group, these messages
+      // are of type "GV1_MIGRATION_TYPE" and have a body that looks like '_id,_id,...|_id,_id,_id,...' (I think, I have
+      // not seen one with more than 1 id). These id_s must also be updated.
+      if (source->d_database.exec("SELECT _id,body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
+      {
+        //results.prettyPrint();
+        for (uint i = 0; i < results.rows(); ++i)
+        {
+          if (results.valueHasType<std::string>(i, "body"))
+          {
+            //std::cout << results.getValueAs<std::string>(i, "body") << std::endl;
+            std::string body = results.getValueAs<std::string>(i, "body");
+            std::string output;
+            std::string tmp; // to hold part of number while reading
+            unsigned int body_idx = 0;
+            while (true)
+            {
+              if (!std::isdigit(body[body_idx]) || body_idx >= body.length())
+              {
+                // deal with any number we have
+                if (tmp.size())
+                {
+                  int id = bepaald::toNumber<int>(tmp) + offsetvalue;
+                  output += bepaald::toString(id);
+                  tmp.clear();
+                }
+                // add non-digit-char
+                if (body_idx < body.length())
+                  output += body[body_idx];
+              }
+              else
+                tmp += body[body_idx];
+              ++body_idx;
+              if (body_idx > body.length())
+                break;
+            }
+            //std::cout << output << std::endl;
+            long long int sms_id = results.getValueAs<long long int>(i, "_id");
+            source->d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
+          }
+        }
+      }
+
+
+      // update reaction authors
+      if (source->d_database.tableContainsColumn("sms", "reactions"))
+      {
+        source->d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &results);
+        for (uint i = 0; i < results.rows(); ++i)
+        {
+          ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+          for (uint j = 0; j < reactions.numReactions(); ++j)
+          {
+            //std::cout << "Updating reaction author (sms) : " << reactions.getAuthor(j) << "..." << std::endl;
+            reactions.setAuthor(j, reactions.getAuthor(j) + offsetvalue);
+          }
+          source->d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?",
+                                  {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
+                                   results.getValueAs<long long int>(i, "_id")});
+        }
+      }
+      if (source->d_database.tableContainsColumn("mms", "reactions"))
+      {
+        source->d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
+        for (uint i = 0; i < results.rows(); ++i)
+        {
+          ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+          for (uint j = 0; j < reactions.numReactions(); ++j)
+          {
+            //std::cout << "Updating reaction author (mms) : " << reactions.getAuthor(j) << "..." << std::endl;
+            reactions.setAuthor(j, reactions.getAuthor(j) + offsetvalue);
+          }
+          source->d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?",
+                                  {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
+                                   results.getValueAs<long long int>(i, "_id")});
+        }
+      }
+    }
+
+    if (!(dbl.flags & NO_COMPACT))
+      source->compactIds(dbl.table, dbl.column);
+  }
+
+
+  /*
+
+    CHECK!
+
+    These are the tables that are imported by importThread(),
+    check if they are all handled proerly
+
+  */
+
+  // get tables
+  std::string q("SELECT sql, name, type FROM sqlite_master");
+  SqliteDB::QueryResults results;
+  source->d_database.exec(q, &results);
+  std::vector<std::string> tables;
+  for (uint i = 0; i < results.rows(); ++i)
+  {
+    if (!results.valueHasType<std::nullptr_t>(i, 0))
+    {
+      //std::cout << "Dealing with: " << results.getValueAs<std::string>(i, 1) << std::endl;
+      if (results.valueHasType<std::string>(i, 1) &&
+          (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
+           results.getValueAs<std::string>(i, 1).find("sms_fts") == 0))
+        ;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
+      else if (results.valueHasType<std::string>(i, 1) &&
+               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
+                results.getValueAs<std::string>(i, 1).find("mms_fts") == 0))
+        ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
+      else if (results.valueHasType<std::string>(i, 1) &&
+               (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
+                results.getValueAs<std::string>(i, 1).find("emoji_search") == 0))
+        ;//std::cout << "Skipping " << results.getValueAs<std::string>(i, 1) << " because it is emoji_search_ftssecrettable" << std::endl;
+      else
+        if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
+          tables.emplace_back(results.getValueAs<std::string>(i, 1));
+    }
+  }
+
+  for (std::string const &table : tables)
+  {
+    if (table == "signed_prekeys" ||
+        table == "one_time_prekeys" ||
+        table == "sessions" ||
+        //table == "job_spec" ||           // this is in the official export. But it makes testing more difficult. it
+        //table == "constraint_spec" ||    // should be ok to export these (if present in source), since we are only
+        //table == "dependency_spec" ||    // dealing with exported backups (not from live installations) -> they should
+        //table == "emoji_search" ||       // have been excluded + the official import should be able to deal with them
+        STRING_STARTS_WITH(table, "sms_fts") ||
+        STRING_STARTS_WITH(table, "mms_fts") ||
+        STRING_STARTS_WITH(table, "sqlite_"))
+      continue;
+
+    if (std::find_if(d_databaselinks.begin(), d_databaselinks.end(), [table](DatabaseLink const &d){ return d.table == table; }) == d_databaselinks.end())
+      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Found table unhandled by " << __FUNCTION__  << " : " << table << std::endl;
   }
 }

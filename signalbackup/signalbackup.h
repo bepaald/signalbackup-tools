@@ -65,6 +65,36 @@ class SignalBackup
   bool d_stoponbadmac;
   bool d_verbose;
 
+  enum DBLinkFlag : int
+  {
+    NO_COMPACT = 0b01, // don't run compactids on this table
+    SKIP = 0b10,       // ignore this table, but don't warn about it not being handled
+    WARN = 0b100,      // this is a somewhat unknown table, warn about it
+  };
+
+  enum LinkFlag : int
+  {
+    SET_UNIQUELY,
+  };
+
+  struct TableConnection
+  {
+    std::string table;
+    std::string column;
+    std::string whereclause;
+    int flags;
+  };
+
+  struct DatabaseLink
+  {
+    std::string table;
+    std::string column;
+    std::vector<TableConnection> const connections;
+    int flags;
+  };
+
+  static std::vector<DatabaseLink> const d_databaselinks;
+
   struct AttachmentMetadata
   {
     int width;
@@ -73,7 +103,7 @@ class SignalBackup
     unsigned long filesize;
     std::string hash;
 
-    operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && !filesize == 0); }
+    operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   };
 
  public:
@@ -132,14 +162,15 @@ class SignalBackup
   void initFromFile();
   void initFromDir(std::string const &inputdir, bool replaceattachments);
   void updateThreadsEntries(long long int thread = -1);
-  long long int getMaxUsedId(std::string const &table, std::string const &col = "_id");
-  long long int getMinUsedId(std::string const &table, std::string const &col = "_id");
+  long long int getMaxUsedId(std::string const &table, std::string const &col = "_id") const;
+  long long int getMinUsedId(std::string const &table, std::string const &col = "_id") const;
   template <typename T>
   [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, T *frame) const;
   template <typename T>
   [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   [[nodiscard]] inline bool writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   [[nodiscard]] bool writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
+  [[nodiscard]] bool writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> framedata);
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers,
                                            std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
@@ -149,15 +180,16 @@ class SignalBackup
   void cleanDatabaseByMessages();
   void remapRecipients();
   void compactIds(std::string const &table, std::string const &col = "_id");
-  void makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
-                     long long int minpart, long long int minrecipient, long long int mingroups,
-                     long long int minidentities, long long int mingroup_receipts, long long int mindrafts,
-                     long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
-                     long long int minremapped_threads, long long int minmention,
-                     long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
-                     long long int minreaction, long long int mingroup_call_ring,
-                     long long int minnotification_profile, long long int minnotification_profile_allowed_members,
-                     long long int minnotification_profile_schedule);
+  // void makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
+  //                    long long int minpart, long long int minrecipient, long long int mingroups,
+  //                    long long int minidentities, long long int mingroup_receipts, long long int mindrafts,
+  //                    long long int minsticker, long long int minmegaphone, long long int minremapped_recipients,
+  //                    long long int minremapped_threads, long long int minmention,
+  //                    long long int minmsl_payload, long long int minmsl_message, long long int minmsl_recipient,
+  //                    long long int minreaction, long long int mingroup_call_ring,
+  //                    long long int minnotification_profile, long long int minnotification_profile_allowed_members,
+  //                    long long int minnotification_profile_schedule);
+  void makeIdsUnique(SignalBackup *source);
   void updateRecipientId(long long int targetid, std::string ident);
   void updateRecipientId(long long int targetid, long long int sourceid, bool verbose = false);
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
