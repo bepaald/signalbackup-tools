@@ -86,8 +86,9 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
       std::cout << "Failed to initialize HMAC context" << std::endl;
       return false;
     }
+    std::unique_ptr<unsigned char[]> calculatedmac(new unsigned char[d_digestsize]);
     if (EVP_MAC_update(hctx.get(), page_data_to_hash, page_data_to_hash_size) != 1 ||
-        EVP_MAC_update(hctx.ge(), reinterpret_cast<unsigned char *>(&pagenumber), sizeof(pagenumber)) != 1 ||
+        EVP_MAC_update(hctx.get(), reinterpret_cast<unsigned char *>(&pagenumber), sizeof(pagenumber)) != 1 ||
         EVP_MAC_final(hctx.get(), calculatedmac.get(), nullptr, d_digestsize) != 1)
     {
       std::cout << "Failed to update/finalize hmac" << std::endl;
