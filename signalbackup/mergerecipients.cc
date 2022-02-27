@@ -211,6 +211,9 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
 
     if (editgroupmembers)
     {
+
+      // maybe former_v1_members needs to be adjusted similarly?
+
       for (uint j = 0; j < r_ids.size() - 1; ++j)
       {
         // change current member list in group database:
