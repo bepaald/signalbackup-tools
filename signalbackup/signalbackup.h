@@ -81,8 +81,9 @@ class SignalBackup
   {
     std::string table;
     std::string column;
-    std::string whereclause;
-    int flags;
+    std::string whereclause = std::string();
+    std::string json_path = std::string();
+    int flags = 0;
   };
 
   struct DatabaseLink

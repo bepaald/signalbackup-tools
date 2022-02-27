@@ -353,7 +353,15 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       if (!source->d_database.containsTable(c.table) || !source->d_database.tableContainsColumn(c.table, c.column))
         continue;
 
-      if ((c.flags & SET_UNIQUELY))
+      std::cout << "  Adjusting '" << c.table << "." << c.column << "' to match changes in '" << dbl.table << "'" << std::endl;
+
+      if (!c.json_path.empty())
+      {
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
+                                " = json_replace(" + c.column + ", " + c.json_path + ", json_extract(" + c.column + ", " + c.json_path + ") + ?) "
+                                "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL");
+      }
+      else if ((c.flags & SET_UNIQUELY))
       {
         // set all values negative
         source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 " + c.whereclause);
@@ -363,6 +371,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       else
         source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? " + c.whereclause, offsetvalue);
     }
+
 
     if (dbl.table == "part")
     {
@@ -377,7 +386,10 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       source->d_attachments.clear();
       source->d_attachments = std::move(newattdb);
 
-      // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
+      /*
+        REPLACED WITH JSON OPTION IN DatabaseConnections
+
+        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
       SqliteDB::QueryResults results;
       source->d_database.exec("SELECT _id,previews FROM mms WHERE previews IS NOT NULL", &results);
       std::regex rowid_in_json(".*\"rowId\":([0-9]*)[,}].*");
@@ -392,40 +404,50 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
             source->d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {line, results.getValueAs<long long int>(i, "_id")});
           }
       }
+      */
     }
 
     if (dbl.table == "recipient")
     {
-      // get group members:
-      SqliteDB::QueryResults results;
-      source->d_database.exec("SELECT _id,members FROM groups", &results);
-      //source->d_database.prettyPrint("SELECT _id,members FROM groups");
-      for (uint i = 0; i < results.rows(); ++i)
+      using namespace std::string_literals;
+
+      // update groups.members & groups.former_v1_members
+      for (auto const &members : {"members", "former_v1_members"})
       {
-        long long int gid = results.getValueAs<long long int>(i, "_id");
-        std::string membersstr = results.getValueAs<std::string>(i, "members");
-        std::vector<int> membersvec;
-        std::stringstream ss(membersstr);
-        while (ss.good())
+        if (!source->d_database.tableContainsColumn("recipient", members))
+          continue;
+
+        // get group members:
+        SqliteDB::QueryResults results;
+        source->d_database.exec("SELECT _id,members FROM groups", &results);
+        //source->d_database.prettyPrint("SELECT _id,members FROM groups");
+        for (uint i = 0; i < results.rows(); ++i)
         {
-          std::string substr;
-          std::getline(ss, substr, ',');
-          membersvec.emplace_back(bepaald::toNumber<int>(substr) + offsetvalue);
+          long long int gid = results.getValueAs<long long int>(i, "_id");
+          std::string membersstr = results.getValueAs<std::string>(i, members);
+          std::vector<int> membersvec;
+          std::stringstream ss(membersstr);
+          while (ss.good())
+          {
+            std::string substr;
+            std::getline(ss, substr, ',');
+            membersvec.emplace_back(bepaald::toNumber<int>(substr) + offsetvalue);
+          }
+
+          std::string newmembers;
+          for (uint m = 0; m < membersvec.size(); ++m)
+            newmembers += (m == 0) ? bepaald::toString(membersvec[m]) : ("," + bepaald::toString(membersvec[m]));
+
+          source->d_database.exec("UPDATE groups SET "s + members + " = ? WHERE _id == ?", {newmembers, gid});
+          //std::cout << source->d_database.changed() << std::endl;
         }
-
-        std::string newmembers;
-        for (uint m = 0; m < membersvec.size(); ++m)
-          newmembers += (m == 0) ? bepaald::toString(membersvec[m]) : ("," + bepaald::toString(membersvec[m]));
-
-        source->d_database.exec("UPDATE groups SET members = ? WHERE _id == ?", {newmembers, gid});
-        //std::cout << source->d_database.changed() << std::endl;
       }
-
 
 
       // in groups, during the v1 -> v2 update, members may have been removed from the group, these messages
       // are of type "GV1_MIGRATION_TYPE" and have a body that looks like '_id,_id,...|_id,_id,_id,...' (I think, I have
       // not seen one with more than 1 id). These id_s must also be updated.
+      SqliteDB::QueryResults results;
       if (source->d_database.exec("SELECT _id,body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
       {
         //results.prettyPrint();
@@ -466,24 +488,27 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
         }
       }
 
-
-      // update reaction authors
-      if (source->d_database.tableContainsColumn("sms", "reactions"))
+      // update (old-style)reaction authors
+      for (auto const &msgtable : {"sms", "mms"})
       {
-        source->d_database.exec("SELECT _id, reactions FROM sms WHERE reactions IS NOT NULL", &results);
-        for (uint i = 0; i < results.rows(); ++i)
+        if (source->d_database.tableContainsColumn(msgtable, "reactions"))
         {
-          ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-          for (uint j = 0; j < reactions.numReactions(); ++j)
+          source->d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
+          for (uint i = 0; i < results.rows(); ++i)
           {
-            //std::cout << "Updating reaction author (sms) : " << reactions.getAuthor(j) << "..." << std::endl;
-            reactions.setAuthor(j, reactions.getAuthor(j) + offsetvalue);
+            ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+            for (uint j = 0; j < reactions.numReactions(); ++j)
+            {
+              //std::cout << "Updating reaction author (" << msgtable << ") : " << reactions.getAuthor(j) << "..." << std::endl;
+              reactions.setAuthor(j, reactions.getAuthor(j) + offsetvalue);
+            }
+            source->d_database.exec("UPDATE "s + msgtable + " SET reactions = ? WHERE _id = ?",
+                                    {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
+                                     results.getValueAs<long long int>(i, "_id")});
           }
-          source->d_database.exec("UPDATE sms SET reactions = ? WHERE _id = ?",
-                                  {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
-                                   results.getValueAs<long long int>(i, "_id")});
         }
       }
+      /*
       if (source->d_database.tableContainsColumn("mms", "reactions"))
       {
         source->d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
@@ -500,12 +525,14 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
                                    results.getValueAs<long long int>(i, "_id")});
         }
       }
+      */
     }
 
+
+    // compact table if requested
     if (!(dbl.flags & NO_COMPACT))
       source->compactIds(dbl.table, dbl.column);
   }
-
 
   /*
 

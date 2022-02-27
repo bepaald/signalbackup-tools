@@ -75,8 +75,13 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   [[unlikely]] if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0)
   {
     std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
-    std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Bad MAC in frame: theirMac: "
+              << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+
+    [[unlikely]] if (d_framecount == 1)
+      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSWORD WAS PROVIDED ***" << bepaald::bold_off << std::endl;
+
     d_badmac = true;
     if (d_stoponbadmac)
     {

@@ -25,10 +25,10 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "thread",
     "_id",
     {
-      {"sms", "thread_id", "", 0},
-      {"mms", "thread_id", "", 0},
-      {"drafts", "thread_id", "", 0},
-      {"mention", "thread_id", "", 0}
+      {"sms", "thread_id"},
+      {"mms", "thread_id"},
+      {"drafts", "thread_id"},
+      {"mention", "thread_id"}
     },
     NO_COMPACT
   },
@@ -36,8 +36,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "sms",
     "_id",
     {
-      {"msl_message", "message_id", "WHERE is_mms IS NOT 1", 0},
-      {"reaction", "message_id", "WHERE is_mms IS NOT 1", 0}
+      {"msl_message", "message_id", "WHERE is_mms IS NOT 1"},
+      {"reaction", "message_id", "WHERE is_mms IS NOT 1"}
     },
     0
   },
@@ -45,18 +45,20 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "mms",
     "_id",
     {
-      {"part", "mid", "", 0},
-      {"group_receipts", "mms_id", "", 0},
-      {"mention", "message_id", "", 0},
-      {"msl_message", "message_id", "WHERE is_mms IS 1", 0},
-      {"reaction", "message_id", "WHERE is_mms IS 1", 0}
+      {"part", "mid"},
+      {"group_receipts", "mms_id"},
+      {"mention", "message_id"},
+      {"msl_message", "message_id", "WHERE is_mms IS 1"},
+      {"reaction", "message_id", "WHERE is_mms IS 1"}
     },
     0
   },
   {
     "part",
     "_id",
-    {},
+    {
+      {"mms", "previews", "", "'$[0].attachmentId.rowId'"}
+    },
     0
   },
   {
@@ -69,22 +71,25 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "recipient", // for (very) old databases
     "_id",
     {
-      {"sms", "address", "", 0},
-      {"mms", "address", "", 0},
-      {"mms", "quote_author", "", 0},
-      {"sessions", "address", "", 0},
-      {"group_receipts", "address", "", 0},
-      {"thread", "recipient_ids", "", 0},        //----> Only one of these will exist
-      {"thread", "thread_recipient_id", "", 0},  //___/
-      {"groups", "recipient_id", "", 0},
-      {"remapped_recipients", "old_id", "", 0},
-      {"remapped_recipients", "new_id", "", 0},
-      {"mention", "recipient_id", "", 0},
-      {"msl_recipient", "recipient_id", "", 0},
-      {"reaction", "author_id", "", 0},
-      {"notification_profile_allowed_members", "recipient_id", "", 0},
-      {"payments", "recipient", "", 0},
-      {"identities", "address", "", SET_UNIQUELY}
+      {"sms", "address"},
+      {"mms", "address"},
+      {"mms", "quote_author"},
+      {"sessions", "address"},
+      {"group_receipts", "address"},
+      {"thread", "recipient_ids"},        //----> Only one of these will exist
+      {"thread", "thread_recipient_id"},  //___/
+      {"groups", "recipient_id"},
+      {"remapped_recipients", "old_id"},
+      {"remapped_recipients", "new_id"},
+      {"mention", "recipient_id"},
+      {"msl_recipient", "recipient_id"},
+      {"reaction", "author_id"},
+      {"notification_profile_allowed_members", "recipient_id"},
+      {"payments", "recipient"},
+      {"identities", "address", "", "", SET_UNIQUELY}   // when I can assume c++20, sometime in the future, change this to
+                                                        // {.table = "identities", .column = "address', .flags = SET_UNIQUELY}
+                                                        // this is much more explicit and looks cleaner without the empty
+                                                        // fields. (give missing fields default init in header)
     },
     NO_COMPACT
   },
@@ -122,8 +127,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "msl_payload",
     "_id",
     {
-      {"msl_recipient", "payload_id", "", 0},
-      {"msl_message", "payload_id", "", 0}
+      {"msl_recipient", "payload_id"},
+      {"msl_message", "payload_id"}
     },
     0
   },
@@ -179,8 +184,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "notification_profile",
     "_id",
     {
-      {"notification_profile_allowed_members", "notification_profile_id", "", 0},
-      {"notification_profile_schedule", "notification_profile_id", "", 0}
+      {"notification_profile_allowed_members", "notification_profile_id"},
+      {"notification_profile_schedule", "notification_profile_id"}
     },
     0
   },
@@ -249,6 +254,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "",
     {},
     SKIP // not sure, but i think this is skipped anyway, also does not seem to have any unique fields
+  },
+  {
+    "remapped_recipients",
+    "",
+    {},
+    SKIP // cleared in importthread
   },
   {
     "job_spec",

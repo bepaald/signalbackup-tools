@@ -287,7 +287,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   // // export database
   // std::cout << "Writing database..." << std::endl;
-  // SqliteDB database("NEWSTYLE.sqlite", false);
+  // SqliteDB database("NEWSTYLE_NEW.sqlite", false);
   // if (!SqliteDB::copyDb(d_database, database))
   //   std::cout << "Error exporting sqlite database" << std::endl;
   // return;
