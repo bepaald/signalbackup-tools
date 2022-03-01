@@ -192,7 +192,10 @@ class SignalBackup
   //                    long long int minnotification_profile_schedule);
   void makeIdsUnique(SignalBackup *source);
   void updateRecipientId(long long int targetid, std::string ident);
-  void updateRecipientId(long long int targetid, long long int sourceid, bool verbose = false);
+  void updateRecipientId(long long int targetid, long long int sourceid);
+  void updateGroupMembers(long long int id1, long long int id2 = -1) const; // id2 == -1 -> id1 = offset, else transform 1 into 2
+  void updateReactionAuthors(long long int id1, long long int id2 = -1) const; // idem.
+  void updateGV1MigrationMessage(long long int id1, long long int id2 = -1) const; // idem.
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);

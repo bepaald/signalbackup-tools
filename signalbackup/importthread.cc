@@ -284,11 +284,10 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   //                       offsetnotification_profile_schedule);
   */
   makeIdsUnique(source);
-
   // // export database
   // std::cout << "Writing database..." << std::endl;
-  // SqliteDB database("NEWSTYLE_NEW.sqlite", false);
-  // if (!SqliteDB::copyDb(d_database, database))
+  // SqliteDB database1("NEWSTYLE.1.sqlite", false);
+  // if (!SqliteDB::copyDb(source->d_database, database1))
   //   std::cout << "Error exporting sqlite database" << std::endl;
   // return;
 
@@ -324,7 +323,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     if (source->d_database.containsTable("mention"))
       source->d_database.exec("UPDATE mention SET thread_id = ?", targetthread);
 
-    // see below for comment explaing this function
+    // see below for comment explaining this function
     if (d_databaseversion >= 24)
     {
       d_database.exec("SELECT _id, COALESCE(phone,group_id) AS ident FROM recipient", &results);
@@ -409,6 +408,13 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       }
     }
   }
+
+  // // export database
+  // std::cout << "Writing database..." << std::endl;
+  // SqliteDB database("NEWSTYLE.2.sqlite", false);
+  // if (!SqliteDB::copyDb(source->d_database, database))
+  //   std::cout << "Error exporting sqlite database" << std::endl;
+  // return;
 
   // now import the source tables into target,
 

@@ -79,14 +79,15 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"thread", "recipient_ids"},        //----> Only one of these will exist
       {"thread", "thread_recipient_id"},  //___/
       {"groups", "recipient_id"},
-      {"remapped_recipients", "old_id"},
-      {"remapped_recipients", "new_id"},
+      {"remapped_recipients", "old_id"}, // should actually be cleared, but ...
+      {"remapped_recipients", "new_id"}, // this can't hurt
       {"mention", "recipient_id"},
       {"msl_recipient", "recipient_id"},
       {"reaction", "author_id"},
       {"notification_profile_allowed_members", "recipient_id"},
       {"payments", "recipient"},
-      {"identities", "address", "", "", SET_UNIQUELY}   // when I can assume c++20, sometime in the future, change this to
+      {"identities", "address", "", "", SET_UNIQUELY}   // identities.address has UNIQUE constraint
+                                                        // when I can assume c++20, sometime in the future, change this to
                                                         // {.table = "identities", .column = "address', .flags = SET_UNIQUELY}
                                                         // this is much more explicit and looks cleaner without the empty
                                                         // fields. (give missing fields default init in header)
@@ -254,12 +255,6 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "",
     {},
     SKIP // not sure, but i think this is skipped anyway, also does not seem to have any unique fields
-  },
-  {
-    "remapped_recipients",
-    "",
-    {},
-    SKIP // cleared in importthread
   },
   {
     "job_spec",

@@ -33,7 +33,7 @@ void SignalBackup::remapRecipients()
   for (uint i = 0; i < results.rows(); ++i)
   {
     updateRecipientId(results.getValueAs<long long int>(i, "new_id"),
-                      results.getValueAs<long long int>(i, "old_id"), /*verbose = */true);
+                      results.getValueAs<long long int>(i, "old_id"));
   }
 
 }

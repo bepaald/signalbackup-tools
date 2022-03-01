@@ -37,7 +37,7 @@ changes, you must provide one of the output options.
                                argument, you can use this option anywhere in the list of arguments
 -p, --password <PASSWORD>      If for whatever reason you do not wish to pass the input as the second
                                argument, you can use this option anywhere in the list of arguments
---noshowprogress               Do not output the progress percentage. Especially useful when redirecting
+--no-showprogress              Do not output the progress percentage. Especially useful when redirecting
                                output to file.
 --listthreads                  List the threads in the database with their `_id' numbers. These id's are
                                required intput for various other options.
