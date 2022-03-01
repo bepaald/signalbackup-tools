@@ -409,105 +409,108 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
     if (dbl.table == "recipient")
     {
-      using namespace std::string_literals;
+      // using namespace std::string_literals;
 
-      // update groups.members & groups.former_v1_members
-      for (auto const &members : {"members", "former_v1_members"})
-      {
-        if (!source->d_database.tableContainsColumn("recipient", members))
-          continue;
+      // // update groups.members & groups.former_v1_members
+      // for (auto const &members : {"members", "former_v1_members"})
+      // {
+      //   if (!source->d_database.tableContainsColumn("recipient", members))
+      //     continue;
 
-        // get group members:
-        SqliteDB::QueryResults results;
-        source->d_database.exec("SELECT _id,members FROM groups", &results);
-        //source->d_database.prettyPrint("SELECT _id,members FROM groups");
-        for (uint i = 0; i < results.rows(); ++i)
-        {
-          long long int gid = results.getValueAs<long long int>(i, "_id");
-          std::string membersstr = results.getValueAs<std::string>(i, members);
-          std::vector<int> membersvec;
-          std::stringstream ss(membersstr);
-          while (ss.good())
-          {
-            std::string substr;
-            std::getline(ss, substr, ',');
-            membersvec.emplace_back(bepaald::toNumber<int>(substr) + offsetvalue);
-          }
+      //   // get group members:
+      //   SqliteDB::QueryResults results;
+      //   source->d_database.exec("SELECT _id,"s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
+      //   //source->d_database.prettyPrint("SELECT _id,members FROM groups");
+      //   for (uint i = 0; i < results.rows(); ++i)
+      //   {
+      //     long long int gid = results.getValueAs<long long int>(i, "_id");
+      //     std::string membersstr = results.getValueAs<std::string>(i, members);
+      //     std::vector<int> membersvec;
+      //     std::stringstream ss(membersstr);
+      //     while (ss.good())
+      //     {
+      //       std::string substr;
+      //       std::getline(ss, substr, ',');
+      //       membersvec.emplace_back(bepaald::toNumber<int>(substr) + offsetvalue);
+      //     }
 
-          std::string newmembers;
-          for (uint m = 0; m < membersvec.size(); ++m)
-            newmembers += (m == 0) ? bepaald::toString(membersvec[m]) : ("," + bepaald::toString(membersvec[m]));
+      //     std::string newmembers;
+      //     for (uint m = 0; m < membersvec.size(); ++m)
+      //       newmembers += (m == 0) ? bepaald::toString(membersvec[m]) : ("," + bepaald::toString(membersvec[m]));
 
-          source->d_database.exec("UPDATE groups SET "s + members + " = ? WHERE _id == ?", {newmembers, gid});
-          //std::cout << source->d_database.changed() << std::endl;
-        }
-      }
-
+      //     source->d_database.exec("UPDATE groups SET "s + members + " = ? WHERE _id == ?", {newmembers, gid});
+      //     //std::cout << source->d_database.changed() << std::endl;
+      //   }
+      // }
+      source->updateGroupMembers(offsetvalue);
 
       // in groups, during the v1 -> v2 update, members may have been removed from the group, these messages
       // are of type "GV1_MIGRATION_TYPE" and have a body that looks like '_id,_id,...|_id,_id,_id,...' (I think, I have
       // not seen one with more than 1 id). These id_s must also be updated.
-      SqliteDB::QueryResults results;
-      if (source->d_database.exec("SELECT _id,body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
-      {
-        //results.prettyPrint();
-        for (uint i = 0; i < results.rows(); ++i)
-        {
-          if (results.valueHasType<std::string>(i, "body"))
-          {
-            //std::cout << results.getValueAs<std::string>(i, "body") << std::endl;
-            std::string body = results.getValueAs<std::string>(i, "body");
-            std::string output;
-            std::string tmp; // to hold part of number while reading
-            unsigned int body_idx = 0;
-            while (true)
-            {
-              if (!std::isdigit(body[body_idx]) || body_idx >= body.length())
-              {
-                // deal with any number we have
-                if (tmp.size())
-                {
-                  int id = bepaald::toNumber<int>(tmp) + offsetvalue;
-                  output += bepaald::toString(id);
-                  tmp.clear();
-                }
-                // add non-digit-char
-                if (body_idx < body.length())
-                  output += body[body_idx];
-              }
-              else
-                tmp += body[body_idx];
-              ++body_idx;
-              if (body_idx > body.length())
-                break;
-            }
-            //std::cout << output << std::endl;
-            long long int sms_id = results.getValueAs<long long int>(i, "_id");
-            source->d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
-          }
-        }
-      }
+      // SqliteDB::QueryResults results;
+      // if (source->d_database.exec("SELECT _id,body FROM sms WHERE type == ? AND body IS NOT NULL",
+      //                             bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
+      // {
+      //   //results.prettyPrint();
+      //   for (uint i = 0; i < results.rows(); ++i)
+      //   {
+      //     if (results.valueHasType<std::string>(i, "body"))
+      //     {
+      //       //std::cout << results.getValueAs<std::string>(i, "body") << std::endl;
+      //       std::string body = results.getValueAs<std::string>(i, "body");
+      //       std::string output;
+      //       std::string tmp; // to hold part of number while reading
+      //       unsigned int body_idx = 0;
+      //       while (true)
+      //       {
+      //         if (!std::isdigit(body[body_idx]) || body_idx >= body.length())
+      //         {
+      //           // deal with any number we have
+      //           if (tmp.size())
+      //           {
+      //             int id = bepaald::toNumber<int>(tmp) + offsetvalue;
+      //             output += bepaald::toString(id);
+      //             tmp.clear();
+      //           }
+      //           // add non-digit-char
+      //           if (body_idx < body.length())
+      //             output += body[body_idx];
+      //         }
+      //         else
+      //           tmp += body[body_idx];
+      //         ++body_idx;
+      //         if (body_idx > body.length())
+      //           break;
+      //       }
+      //       //std::cout << output << std::endl;
+      //       long long int sms_id = results.getValueAs<long long int>(i, "_id");
+      //       source->d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
+      //     }
+      //   }
+      // }
+      source->updateGV1MigrationMessage(offsetvalue);
 
-      // update (old-style)reaction authors
-      for (auto const &msgtable : {"sms", "mms"})
-      {
-        if (source->d_database.tableContainsColumn(msgtable, "reactions"))
-        {
-          source->d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
-          for (uint i = 0; i < results.rows(); ++i)
-          {
-            ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-            for (uint j = 0; j < reactions.numReactions(); ++j)
-            {
-              //std::cout << "Updating reaction author (" << msgtable << ") : " << reactions.getAuthor(j) << "..." << std::endl;
-              reactions.setAuthor(j, reactions.getAuthor(j) + offsetvalue);
-            }
-            source->d_database.exec("UPDATE "s + msgtable + " SET reactions = ? WHERE _id = ?",
-                                    {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
-                                     results.getValueAs<long long int>(i, "_id")});
-          }
-        }
-      }
+      //update (old-style)reaction authors
+      // for (auto const &msgtable : {"sms", "mms"})
+      // {
+      //   if (source->d_database.tableContainsColumn(msgtable, "reactions"))
+      //   {
+      //     source->d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
+      //     for (uint i = 0; i < results.rows(); ++i)
+      //     {
+      //       ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+      //       for (uint j = 0; j < reactions.numReactions(); ++j)
+      //       {
+      //         //std::cout << "Updating reaction author (" << msgtable << ") : " << reactions.getAuthor(j) << "..." << std::endl;
+      //         reactions.setAuthor(j, reactions.getAuthor(j) + offsetvalue);
+      //       }
+      //       source->d_database.exec("UPDATE "s + msgtable + " SET reactions = ? WHERE _id = ?",
+      //                               {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
+      //                                results.getValueAs<long long int>(i, "_id")});
+      //     }
+      //   }
+      // }
+      source->updateReactionAuthors(offsetvalue);
       /*
       if (source->d_database.tableContainsColumn("mms", "reactions"))
       {
