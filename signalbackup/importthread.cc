@@ -68,6 +68,24 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   // crop the source db to the specified thread
   source->cropToThread(thread);
 
+  // if target contains releasechannel recipient, make sure to remove it from source
+  bool hasreleasechannel = false;
+  for (auto const &kv : d_keyvalueframes)
+    if (kv->key() == "releasechannel.recipient_id" && !kv->value().empty())
+    {
+      hasreleasechannel = true;
+      break;
+    }
+  if (hasreleasechannel)
+    for (auto const &skv : source->d_keyvalueframes)
+      if (skv->key() == "releasechannel.recipient_id")
+      {
+        int rcrid = bepaald::toNumber<int>(skv->value());
+        source->d_database.exec("DELETE FROM recipient WHERE _id = ?", rcrid);
+        std::cout << "Deleted double releasechannel recipient from source database (_id: " << rcrid << ")" << std::endl;
+        break;
+      }
+
   long long int targetthread = -1;
   SqliteDB::QueryResults results;
   if (d_databaseversion < 24) // old database version
@@ -326,11 +344,11 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     // see below for comment explaining this function
     if (d_databaseversion >= 24)
     {
-      d_database.exec("SELECT _id, COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      d_database.exec("SELECT _id, COALESCE(phone,group_id,uuid) AS identifier FROM recipient", &results);
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
-        if (results.valueHasType<std::string>(i, "ident"))
-          source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
+        if (results.valueHasType<std::string>(i, "identifier"))
+          source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
     }
 
     source->d_database.exec("DROP TABLE thread");
@@ -370,7 +388,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
     else
     {
-      d_database.exec("SELECT _id,COALESCE(phone,group_id) AS ident FROM recipient", &results);
+      d_database.exec("SELECT _id,COALESCE(phone,group_id,uuid) AS ident FROM recipient", &results);
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "ident"))
@@ -521,6 +539,16 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   for (auto &av : source->d_avatars)
     d_avatars.emplace_back(std::move(av));
+
+  // if target has no release channel, but source does
+  // it is copied over, we need the pref
+  if (!hasreleasechannel)
+    for (auto &skv : source->d_keyvalueframes)
+      if (skv->key() == "releasechannel.recipient_id")
+      {
+        d_keyvalueframes.emplace_back(std::move(skv));
+        break;
+      }
 
   // update thread snippet and date and count
   updateThreadsEntries();
