@@ -49,6 +49,8 @@ class KeyValueFrame : public BackupFrame
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
+  inline std::string key() const;
+  inline std::string value() const;
  private:
   inline uint64_t dataSize() const;
 };
@@ -242,6 +244,35 @@ inline unsigned int KeyValueFrame::getField(std::string const &str) const
   if (str == "STRINGVALUE")
     return FIELD::STRINGVALUE;
   return FIELD::INVALID;
+}
+
+inline std::string KeyValueFrame::key() const
+{
+  for (auto const &p : d_framedata)
+    if (std::get<0>(p) == FIELD::KEY)
+      return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
+  return std::string();
+}
+
+inline std::string KeyValueFrame::value() const
+{
+  using namespace std::string_literals;
+
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::STRINGVALUE)
+      return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
+
+    if (std::get<0>(p) == FIELD::INTEGERVALUE || std::get<0>(p) == FIELD::LONGVALUE)
+      return bepaald::toString(bytesToInt64(std::get<1>(p), std::get<2>(p)));
+
+    if (std::get<0>(p) == FIELD::BLOBVALUE || std::get<0>(p) == FIELD::FLOATVALUE) // float is untested
+      return Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p));
+
+    if (std::get<0>(p) == FIELD::BOOLEANVALUE)
+      return (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s);
+  }
+  return std::string();
 }
 
 #endif

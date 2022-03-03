@@ -70,6 +70,7 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_database.containsTable("reaction")) // dbv >= 121
   {
     // delete reactions for messages that do not exist
+    std::cout << "  Deleting reactions to non-existing messages" << std::endl;
     d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
     d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
   }
@@ -92,7 +93,6 @@ void SignalBackup::cleanDatabaseByMessages()
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
 
     // KEEP recipients WITH _id IN remapped_recipients.old_id!?!?
-    // KEEP recipients who authored a reaction somehow?
 
     std::set<unsigned int> referenced_recipients;
     if (d_database.tableContainsColumn("sms", "reactions"))
@@ -153,6 +153,34 @@ void SignalBackup::cleanDatabaseByMessages()
       }
     }
 
+    using namespace std::string_literals;
+
+    // get (former)group members
+    for (auto const &members : {"members", "former_v1_members"})
+    {
+      if (!d_database.tableContainsColumn("groups", members))
+        continue;
+
+      d_database.exec("SELECT "s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
+      for (uint i = 0; i < results.rows(); ++i)
+      {
+        std::string membersstr = results.getValueAs<std::string>(i, members);
+        std::stringstream ss(membersstr);
+        while (ss.good())
+        {
+          std::string substr;
+          std::getline(ss, substr, ',');
+          //std::cout << "ADDING " << members << " MEMBER: " << substr << std::endl;
+          referenced_recipients.insert(bepaald::toNumber<int>(substr));
+        }
+      }
+    }
+
+    // get recipient_id of releasechannel
+    for (auto const &kv : d_keyvalueframes)
+      if (kv->key() == "releasechannel.recipient_id")
+        referenced_recipients.insert(bepaald::toNumber<int>(kv->value()));
+
     std::string referenced_recipients_query;
     if (!referenced_recipients.empty())
     {
@@ -167,16 +195,15 @@ void SignalBackup::cleanDatabaseByMessages()
     }
     //std::cout << "QUERY: " << reaction_authors_query << std::endl;
 
-    using namespace std::string_literals;
-    d_database.exec("DELETE FROM recipient WHERE _id NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!=''"s +
-                    " UNION SELECT DISTINCT address FROM sms"s +
+    d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
+                    " (SELECT DISTINCT address FROM sms"
                     " UNION SELECT DISTINCT address FROM mms"s +
                     (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
+                    (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)"s);
   }
-
 
   if (d_database.containsTable("notification_profile_allowed_members"))
   {
