@@ -145,7 +145,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
 
     d_badmac = true;
-    if (d_stoponbaadmac)
+    if (d_stoponbadmac)
     {
       std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);

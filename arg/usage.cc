@@ -91,6 +91,9 @@ changes, you must provide one of the output options.
                                         which to import threads (see `--importthreads'). The input can be
                                         a file or directory. When it is a file, a password is required
    -sp, --sourcepassword <PASSWORD>     The 30 digit password for the backup file specified by `--source'.
+//--importfromdesktop [DIR]               Import messages from Signal Desktop. If the program fails to find
+//                                        you Desktop installation or it is in a non-standard location,
+//                                        the optional [DIR] can be provided.
 --deleteattachments                     Delete attachments from backup file.
    --onlyinthreads <LIST_OF_THREADS>    Optional modifier for `--deleteattachments' and
                                         `--replaceattachments'. Only deal with attachments within these

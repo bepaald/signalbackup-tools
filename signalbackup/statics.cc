@@ -86,11 +86,13 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"reaction", "author_id"},
       {"notification_profile_allowed_members", "recipient_id"},
       {"payments", "recipient"},
-      {"identities", "address", "", "", SET_UNIQUELY}   // identities.address has UNIQUE constraint
+      {"identities", "address", "", "", SET_UNIQUELY},  // identities.address has UNIQUE constraint
                                                         // when I can assume c++20, sometime in the future, change this to
                                                         // {.table = "identities", .column = "address', .flags = SET_UNIQUELY}
                                                         // this is much more explicit and looks cleaner without the empty
                                                         // fields. (give missing fields default init in header)
+      {"distribution_list", "recipient_id"},
+      {"distribution_list_member", "recipient_id"}
     },
     NO_COMPACT
   },
@@ -273,5 +275,26 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "",
     {},
     SKIP // cleared in importthread
+  },
+  {
+    "distribution_list",   /// WORK IN PROGRESS? All other fields of distr_list are also unique.
+    "_id",
+    {
+      {"recipient", "distribution_list_id"},
+      {"distribution_list_member", "list_id"}
+    },
+    0
+  },
+  {
+    "distribution_list_member",
+    "_id",
+    {},
+    0
+  },
+  {
+    "donation_receipt",
+    "_id",
+    {},
+    0
   }
 };
