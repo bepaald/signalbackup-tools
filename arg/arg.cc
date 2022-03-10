@@ -82,7 +82,9 @@ Arg::Arg(int argc, char *argv[])
   d_help(false),
   d_scanmissingattachments(false),
   d_showdbinfo(false),
-  d_scramble(false)
+  d_scramble(false),
+  d_importfromdesktop(std::string()),
+  d_importfromdesktop_bool(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -899,6 +901,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-scramble")
     {
       d_scramble = false;
+      continue;
+    }
+    if (option == "--importfromdesktop")
+    {
+      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      {
+        d_importfromdesktop = arguments[++i];
+        d_importfromdesktop_bool = true;
+      }
+      else
+        d_importfromdesktop_bool = true;
       continue;
     }
     if (option[0] != '-')

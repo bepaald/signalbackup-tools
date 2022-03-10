@@ -148,6 +148,7 @@ class SignalBackup
                          std::string const &prepend, std::vector<std::pair<std::string, std::string>> replace);
   inline void showDBInfo() const;
   bool scramble() const;
+  bool importFromDesktop(std::string const &dir);
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);

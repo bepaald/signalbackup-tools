@@ -19,11 +19,16 @@
 
 #include "signalbackup.ih"
 
+#ifndef USE_CRYPTOPP
 #include <openssl/sha.h>
+#endif
+
 #include "../base64/base64.h"
 
 SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file) const
 {
+  #ifndef USE_CRYPTOPP
+
   std::ifstream imagefile(file, std::ios_base::binary | std::ios_base::in);
   if (!imagefile.is_open())
   {
@@ -193,4 +198,8 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
   }
   return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+  #else
+  // todo, maybe? write this function for cryptopp
+  return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+  #endif
 }

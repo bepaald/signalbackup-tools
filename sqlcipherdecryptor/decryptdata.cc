@@ -123,7 +123,6 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     int decodedframelength = d_pagesize;
     if (pagenumber == 1)
       decodedframelength -= d_saltsize;
-    int actualdecodedframelength = 0;
 
     // init decryptor
     if (EVP_DecryptInit_ex(dctx.get(), EVP_aes_256_cbc(), nullptr, d_key, iv) != 1)
@@ -136,6 +135,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     EVP_CIPHER_CTX_set_padding(dctx.get(), 0);
 
     //std::cout << "INIT OK!" << std::endl;
+    int actualdecodedframelength = 0;
     if (EVP_DecryptUpdate(dctx.get(), d_decrypteddata + pos, &actualdecodedframelength, page_encrypted_data, page_encrypted_data_size) != 1)
     {
       std::cout << "Failed to update decryption context" << std::endl;
