@@ -135,6 +135,18 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
       source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.getValueAs<std::string>(i, 0));
   }
 
+  // delete double distribution lists?
+  if (d_database.containsTable("distribution_list") && source->d_database.containsTable("distribution_list"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT distribution_id FROM distribution_list", &res);
+
+    std::cout << "  Deleting " << res.rows() << " existing distribution lists" << std::endl;
+
+    for (uint i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.getValueAs<std::string>(i, 0));
+  }
+
   // the target will have its own job_spec etc...
   if (source->d_database.containsTable("job_spec"))
     source->d_database.exec("DELETE FROM job_spec");
