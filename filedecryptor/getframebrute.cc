@@ -19,10 +19,10 @@
 
 #include "filedecryptor.ih"
 
-std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos, uint32_t previousframelength)
+std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint64_t filepos, uint32_t previousframelength)
 {
   std::cout << "Starting bruteforcing offset to next valid frame... starting after: " << filepos << std::endl;
-  uint32_t skip = 1;
+  uint64_t skip = 1;
   std::unique_ptr<BackupFrame> ret(nullptr);
   while (filepos + skip < d_filesize)
   {
@@ -40,7 +40,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint32_t filepos, uin
   return ret;
 }
 
-std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint32_t offset, uint32_t previousframelength)
+std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint64_t offset, uint32_t previousframelength)
 {
   if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
   {

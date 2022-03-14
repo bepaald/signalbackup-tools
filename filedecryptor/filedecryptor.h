@@ -68,8 +68,8 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   BackupFrame *initBackupFrame(unsigned char *data, size_t length, uint64_t count = 0) const;
   //virtual int getAttachment(FrameWithAttachment *frame) override;
 
-  std::unique_ptr<BackupFrame> bruteForceFrom(uint32_t filepos, uint32_t previousframelength);
-  std::unique_ptr<BackupFrame> getFrameBrute(uint32_t offset, uint32_t previousframelength);
+  std::unique_ptr<BackupFrame> bruteForceFrom(uint64_t filepos, uint32_t previousframelength);
+  std::unique_ptr<BackupFrame> getFrameBrute(uint64_t offset, uint32_t previousframelength);
 };
 
 inline bool FileDecryptor::ok() const
