@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 66> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponbadmac", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop"};
+  std::array<std::string, 66> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -74,7 +74,7 @@ class Arg
   bool d_showprogress;
   bool d_removedoubles;
   bool d_reordermmssmsids;
-  bool d_stoponbadmac;
+  bool d_stoponerror;
   bool d_verbose;
   long long int d_strugee;
   long long int d_strugee3;
@@ -140,7 +140,7 @@ class Arg
   inline bool showprogress() const;
   inline bool removedoubles() const;
   inline bool reordermmssmsids() const;
-  inline bool stoponbadmac() const;
+  inline bool stoponerror() const;
   inline bool verbose() const;
   inline long long int strugee() const;
   inline long long int strugee3() const;
@@ -364,9 +364,9 @@ inline bool Arg::reordermmssmsids() const
   return d_reordermmssmsids;
 }
 
-inline bool Arg::stoponbadmac() const
+inline bool Arg::stoponerror() const
 {
-  return d_stoponbadmac;
+  return d_stoponerror;
 }
 
 inline bool Arg::verbose() const

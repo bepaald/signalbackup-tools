@@ -39,7 +39,7 @@ void SignalBackup::initFromFile()
     [[unlikely]] if (d_fd->badMac())
     {
       dumpInfoOnBadFrame(&frame);
-      if (d_stoponbadmac)
+      if (d_stoponerror)
         return;
     }
 
@@ -147,7 +147,7 @@ void SignalBackup::initFromFile()
 
   [[unlikely]] if (d_fd->badMac())
   {
-    if (d_stoponbadmac)
+    if (d_stoponerror)
       return;
   }
 

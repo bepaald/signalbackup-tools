@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(), arg.showprogress(),
                                                     arg.replaceattachments_bool(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
-                                                    arg.stoponbadmac()));
+                                                    arg.stoponerror()));
   if (!sb->ok())
   {
     std::cout << "Failed to open backup" << std::endl;

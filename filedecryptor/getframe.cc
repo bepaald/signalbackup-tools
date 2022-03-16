@@ -60,10 +60,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   {
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
 
-    // maybe hide this behind option
-    return bruteForceFrom(filepos, encryptedframelength);
 
-    return std::unique_ptr<BackupFrame>(nullptr);
+    if (d_stoponerror)
+      return std::unique_ptr<BackupFrame>(nullptr);
+
+    return bruteForceFrom(filepos, encryptedframelength);
   }
 
 #ifndef USE_CRYPTOPP
@@ -83,7 +84,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
       std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSWORD WAS PROVIDED ***" << bepaald::bold_off << std::endl;
 
     d_badmac = true;
-    if (d_stoponbadmac)
+    if (d_stoponerror)
     {
       std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);
@@ -145,7 +146,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(ourMac, CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE) << std::endl;
 
     d_badmac = true;
-    if (d_stoponbadmac)
+    if (d_stoponerror)
     {
       std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);

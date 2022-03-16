@@ -62,7 +62,7 @@ class SignalBackup
   bool d_ok;
   unsigned int d_databaseversion;
   bool d_showprogress;
-  bool d_stoponbadmac;
+  bool d_stoponerror;
   bool d_verbose;
 
   enum DBLinkFlag : int
@@ -112,7 +112,7 @@ class SignalBackup
                       bool showprogress, bool replaceattachments);
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
-                      std::vector<long long int> editattachments, bool stoponbadmac);
+                      std::vector<long long int> editattachments, bool stoponerror);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
@@ -232,21 +232,21 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                                   bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
-                                  std::vector<long long int> editattachments, bool stoponbadmac)
+                                  std::vector<long long int> editattachments, bool stoponerror)
   :
   d_database(":memory:"),
   d_passphrase(passphrase),
   d_ok(false),
   d_databaseversion(-1),
   d_showprogress(showprogress),
-  d_stoponbadmac(stoponbadmac),
+  d_stoponerror(stoponerror),
   d_verbose(verbose)
 {
   if (bepaald::isDir(filename))
     initFromDir(filename, replaceattachments);
   else // not directory
   {
-    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, stoponbadmac, assumebadframesizeonbadmac, editattachments));
+    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, stoponerror, assumebadframesizeonbadmac, editattachments));
     initFromFile();
   }
 

@@ -153,7 +153,7 @@ be removed.
                                               in the database. This option exists for backups edited by
                                               this program before this was done automatically (as it is
                                               now)
---stoponbadmac                                Do not try to recover automatically when encountering bad
+--stoponerror                                 Do not try to recover automatically when encountering bad
                                               data.
 -v, --verbose                                 Makes the output even more verbose than it is already.
 --mergerecipients <OLDNUMBER,NEWNUMBER>       Can be used to change a contacts number (for example when

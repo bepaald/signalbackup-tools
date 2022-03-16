@@ -233,7 +233,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
     std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
     d_badmac = true;
-    if (d_stoponbadmac)
+    if (d_stoponerror)
     {
       std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
       return std::unique_ptr<BackupFrame>(nullptr);
@@ -336,7 +336,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
       if (getatt < 0)
       {
         d_badmac = true;
-        if (d_stoponbadmac)
+        if (d_stoponerror)
         {
           std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
           return std::unique_ptr<BackupFrame>(nullptr);
@@ -365,7 +365,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 void FileDecryptor::strugee2()
 {
 
-  d_stoponbadmac = true;
+  d_stoponerror = true;
 
   std::vector<std::string> tables;
   std::string lastmsg;
@@ -566,7 +566,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
       if (getatt < 0)
       {
         d_badmac = true;
-        if (d_stoponbadmac)
+        if (d_stoponerror)
         {
           std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
           return;

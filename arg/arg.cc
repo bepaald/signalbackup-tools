@@ -62,7 +62,7 @@ Arg::Arg(int argc, char *argv[])
   d_showprogress(true),
   d_removedoubles(false),
   d_reordermmssmsids(false),
-  d_stoponbadmac(false),
+  d_stoponerror(false),
   d_verbose(false),
   d_strugee(-1),
   d_strugee3(-1),
@@ -630,14 +630,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_reordermmssmsids = false;
       continue;
     }
-    if (option == "--stoponbadmac")
+    if (option == "--stoponerror")
     {
-      d_stoponbadmac = true;
+      d_stoponerror = true;
       continue;
     }
-    if (option == "--no-stoponbadmac")
+    if (option == "--no-stoponerror")
     {
-      d_stoponbadmac = false;
+      d_stoponerror = false;
       continue;
     }
     if (option == "-v" || option == "--verbose")
