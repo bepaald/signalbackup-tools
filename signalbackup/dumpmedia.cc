@@ -23,9 +23,9 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
 {
   std::cout << "Dumping media to dir '" << dir << "'" << std::endl;
 
-  if (!d_database.containsTable("recipient"))
+  if (!d_database.containsTable("part") || !d_database.tableContainsColumn("part", "display_order"))
   {
-    std::cout << "Database too old, dumping media is not (yet) supported, consider a full decrypt by just passing a directory as output" << std::endl;
+    std::cout << "Database too badly damaged or too old, dumping media is not (yet) supported, consider a full decrypt by just passing a directory as output" << std::endl;
     return false;
   }
 
@@ -74,12 +74,22 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
 
     SqliteDB::QueryResults results;
 
-    std::string query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms.msg_box, mms.thread_id, thread." + d_thread_recipient_id + ", COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM part "
-      "LEFT JOIN mms ON part.mid == mms._id "
-      "LEFT JOIN thread ON mms.thread_id == thread._id "
-      "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " == recipient._id "
-      "LEFT JOIN groups ON recipient.group_id == groups.group_id "
-      "WHERE part._id == ? AND part.unique_id == ?";
+    // minimal query, for incomplete database
+    bool fullbackup = false;
+    std::string query = "SELECT part.mid, part.ct, part.file_name, part.display_order FROM part WHERE part._id == ? AND part.unique_id == ?";
+    // if all tables for detailed info are present...
+    if (d_database.containsTable("mms") && d_database.containsTable("thread") &&
+        d_database.containsTable("groups") && d_database.containsTable("recipient"))
+    {
+      fullbackup = true;
+      query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms.msg_box, mms.thread_id, thread." + d_thread_recipient_id +
+        ", COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM part "
+        "LEFT JOIN mms ON part.mid == mms._id "
+        "LEFT JOIN thread ON mms.thread_id == thread._id "
+        "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " == recipient._id "
+        "LEFT JOIN groups ON recipient.group_id == groups.group_id "
+        "WHERE part._id == ? AND part.unique_id == ?";
+    }
 
     if (!threads.empty())
     {
@@ -104,8 +114,12 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
     }
 
     std::string filename;
-    long long int datum = results.getValueAs<long long int>(0, "date_received");
+    long long int datum = a->attachmentId();
+
+    if (fullbackup && !results.valueHasType<std::nullptr_t>(0, "date_received"))
+      datum = results.getValueAs<long long int>(0, "date_received");
     long long int order = results.getValueAs<long long int>(0, "display_order");
+
     if (!results.valueHasType<std::nullptr_t>(0, "file_name")) // file name IS SET in database
       filename = sanitizeFilename(results.valueAsString(0, "file_name"));
 
@@ -131,56 +145,60 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
     }
 
     // std::cout << "FILENAME: " << filename << std::endl;
-
-    long long int tid = results.getValueAs<long long int>(0, "thread_id");
-    std::string chatpartner = sanitizeFilename(results.valueAsString(0, "chatpartner"));
-    if (chatpartner.empty())
-      chatpartner = "Contact " + bepaald::toString(tid);
-
-    int idx_of_thread = -1;
-    if ((idx_of_thread = bepaald::findIdxOf(conversations.first, tid)) == -1) // idx not found
+    std::string targetdir = dir;
+    if (fullbackup && !results.valueHasType<std::nullptr_t>(0, "thread_id") && !results.valueHasType<std::nullptr_t>(0, "chatpartner")
+        && !results.valueHasType<std::nullptr_t>(0, "msg_box"))
     {
-      if (std::find(conversations.second.begin(), conversations.second.end(), chatpartner) == conversations.second.end()) // chatpartner not used yet
+      long long int tid = results.getValueAs<long long int>(0, "thread_id");
+      std::string chatpartner = sanitizeFilename(results.valueAsString(0, "chatpartner"));
+      if (chatpartner.empty())
+        chatpartner = "Contact " + bepaald::toString(tid);
+
+      int idx_of_thread = -1;
+      if ((idx_of_thread = bepaald::findIdxOf(conversations.first, tid)) == -1) // idx not found
       {
-        // add it
-        conversations.first.push_back(tid);
-        conversations.second.push_back(chatpartner);
-        idx_of_thread = conversations.second.size() - 1;
-      }
-      else // new conversation, but anther conversation with same name already exists!
-      {
-        // get unique conversation name
-        chatpartner += "(2)";
-        while (std::find(conversations.second.begin(), conversations.second.end(), chatpartner) != conversations.second.end())
+        if (std::find(conversations.second.begin(), conversations.second.end(), chatpartner) == conversations.second.end()) // chatpartner not used yet
+        {
+          // add it
+          conversations.first.push_back(tid);
+          conversations.second.push_back(chatpartner);
+          idx_of_thread = conversations.second.size() - 1;
+        }
+        else // new conversation, but anther conversation with same name already exists!
+        {
+          // get unique conversation name
           chatpartner += "(2)";
-        conversations.first.push_back(tid);
-        conversations.second.push_back(chatpartner);
-        idx_of_thread = conversations.second.size() - 1;
-      }
-    } // else, thread was found, use the name that was used before
+          while (std::find(conversations.second.begin(), conversations.second.end(), chatpartner) != conversations.second.end())
+            chatpartner += "(2)";
+          conversations.first.push_back(tid);
+          conversations.second.push_back(chatpartner);
+          idx_of_thread = conversations.second.size() - 1;
+        }
+      } // else, thread was found, use the name that was used before
 
-    // create dir if not exists
-    if (!bepaald::isDir(dir + "/" + conversations.second[idx_of_thread]))
-    {
-      // std::cout << " Creating subdirectory '" << conversations.second[idx_of_thread] << "' for conversation..." << std::endl;
-      if (!bepaald::createDir(dir + "/" + conversations.second[idx_of_thread]))
+      // create dir if not exists
+      if (!bepaald::isDir(dir + "/" + conversations.second[idx_of_thread]))
       {
-        std::cout << " ERROR creating directory '" << dir << "/" << conversations.second[idx_of_thread] << "'" << std::endl;
-        continue;
+        // std::cout << " Creating subdirectory '" << conversations.second[idx_of_thread] << "' for conversation..." << std::endl;
+        if (!bepaald::createDir(dir + "/" + conversations.second[idx_of_thread]))
+        {
+          std::cout << " ERROR creating directory '" << dir << "/" << conversations.second[idx_of_thread] << "'" << std::endl;
+          continue;
+        }
       }
-    }
 
-    long long int msg_box = results.getValueAs<long long int>(0, "msg_box");
-    std::string targetdir = dir + "/" + conversations.second[idx_of_thread] + "/" + (Types::isOutgoing(msg_box) ? "sent" : "received");
+      long long int msg_box = results.getValueAs<long long int>(0, "msg_box");
+      targetdir = dir + "/" + conversations.second[idx_of_thread] + "/" + (Types::isOutgoing(msg_box) ? "sent" : "received");
 
-    // create dir if not exists
-    if (!bepaald::isDir(targetdir))
-    {
-      //std::cout << " Creating subdirectory '" << targetdir << "' for conversation..." << std::endl;
-      if (!bepaald::createDir(targetdir))
+      // create dir if not exists
+      if (!bepaald::isDir(targetdir))
       {
-        std::cout << " ERROR creating directory '" << targetdir << "'" << std::endl;
-        continue;
+        //std::cout << " Creating subdirectory '" << targetdir << "' for conversation..." << std::endl;
+        if (!bepaald::createDir(targetdir))
+        {
+          std::cout << " ERROR creating directory '" << targetdir << "'" << std::endl;
+          continue;
+        }
       }
     }
 
