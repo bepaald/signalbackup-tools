@@ -18,29 +18,6 @@ LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
 LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
 BIN="${BIN:-signalbackup-tools}"
 
-# CONFIG: clang
-if [ "$CONFIG" = "clang" ] ; then
-  CXX="clang++"
-  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -Wno-unknown-attributes -O3 -flto"
-  LDFLAGS="-Wall -Wextra -Wl,-z,now -Wl,--as-needed -flto -O3 -s"
-fi
-
-# CONFIG: cryptopp
-if [ "$CONFIG" = "cryptopp" ] ; then
-  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -DUSE_CRYPTOPP -O3 -flto"
-  LDLIBS="-lcryptopp -lsqlite3"
-fi
-
-# CONFIG: windows
-if [ "$CONFIG" = "windows" ] ; then
-  CXX="x86_64-w64-mingw32-g++"
-  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -D_WIN32_WINNT=0x600 -I/usr/x86_64-w64-mingw32/include/ -O3 -flto"
-  CXXARCH=""
-  LDFLAGS="-Wall -Wextra -Wl,--as-needed -static-libgcc -static-libstdc++ -static -L/usr/x86_64-w64-mingw32/lib/ -O3 -s -flto=auto"
-  LDLIBS="-lcrypto -lsqlite3 -lssp -luser32 -lcrypt32 -ladvapi32 -lgdi32 -lws2_32"
-  BIN="signalbackup-tools_win.exe"
-fi
-
 SRC=("cryptbase/cryptbase.cc"
      "cryptbase/getbackupkey.cc"
      "cryptbase/getcipherandmac.cc"
