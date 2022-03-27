@@ -84,7 +84,8 @@ Arg::Arg(int argc, char *argv[])
   d_showdbinfo(false),
   d_scramble(false),
   d_importfromdesktop(std::string()),
-  d_importfromdesktop_bool(false)
+  d_importfromdesktop_bool(false),
+  d_ignorewal(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -912,6 +913,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         d_importfromdesktop_bool = true;
+      continue;
+    }
+    if (option == "--ignorewal")
+    {
+      d_ignorewal = true;
+      continue;
+    }
+    if (option == "--no-ignorewal")
+    {
+      d_ignorewal = false;
       continue;
     }
     if (option[0] != '-')

@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
   }
 
   if (arg.importfromdesktop_bool())
-    if (!sb->importFromDesktop(arg.importfromdesktop()))
+    if (!sb->importFromDesktop(arg.importfromdesktop(), arg.ignorewal()))
       return 1;
 
   if (arg.removedoubles())

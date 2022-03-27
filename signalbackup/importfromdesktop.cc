@@ -21,11 +21,19 @@
 
 #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
 
-bool SignalBackup::importFromDesktop(std::string const &dir)
+bool SignalBackup::importFromDesktop(std::string const &dir, bool ignorewal)
 {
   if (dir.empty())
   {
     // try to set dir automatically
+  }
+
+  // check if a wal (Write-Ahead Logging) file is present in path, and warn user to (cleanly) shut Signal Desktop down
+  if (!ignorewal &&
+      bepaald::fileOrDirExists(dir + "/db.sqlite-wal"))
+  {
+    // warn
+    return false;
   }
 
   SqlCipherDecryptor sqlcipherdecryptor(dir);
@@ -36,6 +44,14 @@ bool SignalBackup::importFromDesktop(std::string const &dir)
   }
 
   auto [data, size] = sqlcipherdecryptor.data(); // unsigned char *, uint64_t
+
+  // disable WAL (Write-Ahead Logging) on database, reading from memory otherwise will not work
+  // see https://www.sqlite.org/fileformat.html
+  if (data[0x12] == 2)
+    data[0x12] = 1;
+  if (data[0x13] == 2)
+    data[0x13] = 1;
+
   std::pair<unsigned char *, uint64_t> desktopdata = {data, size};
   SqliteDB ddb(&desktopdata);
   if (!ddb.ok())
@@ -43,7 +59,6 @@ bool SignalBackup::importFromDesktop(std::string const &dir)
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to open database" << std::endl;
     return false;
   }
-
 
   // actual functionality comes here :)
   // ...
