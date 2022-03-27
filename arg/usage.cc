@@ -94,6 +94,8 @@ changes, you must provide one of the output options.
 //--importfromdesktop [DIR]               Import messages from Signal Desktop. If the program fails to find
 //                                        you Desktop installation or it is in a non-standard location,
 //                                        the optional [DIR] can be provided.
+//   --ignorewal                          Optional modifier for `--importfromdesktop'. Ignores an exising WAL
+//                                        file when opening the Signal Desktop database.
 --deleteattachments                     Delete attachments from backup file.
    --onlyinthreads <LIST_OF_THREADS>    Optional modifier for `--deleteattachments' and
                                         `--replaceattachments'. Only deal with attachments within these
