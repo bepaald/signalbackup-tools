@@ -62,8 +62,52 @@ bool SignalBackup::importFromDesktop(std::string const &dir, bool ignorewal)
 
   // actual functionality comes here :)
   // ...
-  sqlcipherdecryptor.writeToFile("desktop.sqlite", true);
-  ddb.print("SELECT id,type,body,hasAttachments,source,sourceDevice,conversationId,sent_at FROM messages");
+
+  // get all conversations (conversationpartners) from ddb
+  SqliteDB::QueryResults results;
+  if (!ddb.exec("SELECT id,uuid,groupId FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results))
+    return false;
+
+  results.prettyPrint();
+
+  // for each conversation
+  for (uint i = 0; i < results.rows(); ++i)
+  {
+    // get the actual id
+    std::string person_or_group_id = results.valueAsString(i, "uuid");
+    if (person_or_group_id.empty())
+    {
+      auto [groupid_data, groupid_data_length] = Base64::base64StringToBytes(results.valueAsString(i, "groupId"));
+      if (groupid_data && groupid_data_length != 0)
+      {
+        //std::cout << bepaald::bytesToHexString(groupid_data, groupid_data_length, true) << std::endl;
+        person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, groupid_data_length, true);
+        bepaald::destroyPtr(&groupid_data, &groupid_data_length);
+      }
+    }
+
+    if (person_or_group_id.empty())
+    {
+      //std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << "Useful error message" << std::endl;
+      continue;
+    }
+
+    // get matching thread id from android database
+    SqliteDB::QueryResults results2;
+    if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE (uuid = ? OR group_id = ?))",
+                         {person_or_group_id, person_or_group_id}, &results2) ||
+        results2.rows() != 1)
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Failed to find matching thread for conversation, skipping. (id: " << person_or_group_id << ")" << std::endl;
+      continue;
+    }
+
+    std::cout << "Match for " << person_or_group_id << std::endl;
+    results2.prettyPrint();
+
+    long long int ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
+    std::cout << ttid << std::endl;
+  }
 
   return false;
 }

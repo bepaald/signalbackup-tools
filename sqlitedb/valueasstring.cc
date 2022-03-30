@@ -55,5 +55,5 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const 
   int i = idxOfHeader(header);
   if (i > -1)
     return valueAsString(row, i);
-  return "(unhandled type)";
+  return "(column not found)";
 }
