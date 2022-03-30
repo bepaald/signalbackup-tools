@@ -75,7 +75,8 @@ inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(std::string
   std::unique_ptr<unsigned char[]> output(new unsigned char[binarylength]);
   if (EVP_DecodeBlock(output.get(), reinterpret_cast<unsigned const char *>(str.data()), str.size()) == -1)
   {
-    std::cout << "failed to base64dec data" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << " : Failed to base64 decode data: " << str << std::endl;
     return {nullptr, 0};
   }
   if (str.back() != '=')

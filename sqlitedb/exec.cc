@@ -24,8 +24,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
   sqlite3_stmt *stmt;
   if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
   {
-    std::cout << "Error executing query: \"" << q << "\"" << std::endl;
-    std::cout << "SQL error during sqlite3_prepare_v2(): " << sqlite3_errmsg(d_db) << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+      "During sqlite3_prepare_v2(): " << sqlite3_errmsg(d_db) << std::endl <<
+      "  Query: \"" << q << "\"" << std::endl;
     return false;
   }
 
@@ -35,7 +36,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, nullptr) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -43,7 +46,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<double>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -51,7 +56,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<int>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -59,7 +66,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned int>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -67,7 +76,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<long long int>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -75,7 +86,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned long>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -83,7 +96,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned long long int>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -91,7 +106,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::string>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -99,7 +116,9 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
@@ -107,13 +126,17 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<unsigned char *, size_t>>(params[i])) != SQLITE_OK)
       {
-        std::cout << "SQL error during sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
         return false;
       }
     }
     else
     {
-      std::cout << "Error : Unhandled parameter type " << params[i].type().name() << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+        "Unhandled parameter type " << params[i].type().name() << std::endl <<
+        "  Query: \"" << q << "\"" << std::endl;
       return false;
     }
   }
@@ -155,13 +178,17 @@ bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, Q
   }
   if (rc != SQLITE_DONE)
   {
-    std::cout << "SQL error after sqlite3_step(): " << sqlite3_errmsg(d_db) << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+      "After sqlite3_step(): " << sqlite3_errmsg(d_db) << std::endl <<
+      "  Query: \"" << q << "\"" << std::endl;
     return false;
   }
 
   if (sqlite3_finalize(stmt) != SQLITE_OK)
   {
-    std::cout << "SQL error during sqlite3_finalize(): " << sqlite3_errmsg(d_db) << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+      "During sqlite3_finalize(): " << sqlite3_errmsg(d_db) << std::endl <<
+      "  Query: \"" << q << "\"" << std::endl;
     return false;
   }
 
