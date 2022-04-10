@@ -164,7 +164,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
           conversations.second.push_back(chatpartner);
           idx_of_thread = conversations.second.size() - 1;
         }
-        else // new conversation, but anther conversation with same name already exists!
+        else // new conversation, but another conversation with same name already exists!
         {
           // get unique conversation name
           chatpartner += "(2)";
