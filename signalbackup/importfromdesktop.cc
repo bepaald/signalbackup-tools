@@ -107,6 +107,107 @@ bool SignalBackup::importFromDesktop(std::string const &dir, bool ignorewal)
 
     long long int ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
     std::cout << ttid << std::endl;
+
+    // now lets get all messages for this conversation
+    SqliteDB::QueryResults results3;
+    /*
+      EXAMPLE
+
+      DESKTOP DB:
+                     rowid = 56
+                        id = 845bff95-[...]-4b53efcba27b
+                      json = {"timestamp":1643874290360,"attachments":[{"contentType":"application/pdf","fileName":"qrcode.pdf","path":"21/21561db325667446c84702bc2af2cb779aaaeb32c6b3d190d41f86d12e8bf5f0","size":38749,"pending":false,"url":"/home/svandijk/.config/Signal/drafts.noindex/4b/4bb11cd1be7c718ae8ed57dc28f34d57a1032d4ab0595128527466e876ddde9d"}],"type":"outgoing","body":"qrcode","conversationId":"d6b93b26-[...]-b949d4de0aba","preview":[],"sent_at":1643874290360,"received_at":1623335267006,"received_at_ms":1643874290360,"recipients":["93722273-[...]-c8261969714c"],"bodyRanges":[],"sendHQImages":false,"sendStateByConversationId":{"d6b93b26-[...]-b949d4de0aba":{"status":"Delivered","updatedAt":1643874294845},"87e8067b-[...]-011b5c5ee23a":{"status":"Sent","updatedAt":1643874291830}},"schemaVersion":10,"hasAttachments":1,"hasFileAttachments":1,"contact":[],"destination":"93722273-[...]-c8261969714c","id":"845bff95-[...]-4b53efcba27b","readStatus":0,"expirationStartTimestamp":1643874291546,"unidentifiedDeliveries":["93722273-[...]-c8261969714c"],"errors":[],"synced":true}
+                readStatus = 0
+                expires_at =
+                   sent_at = 1643874290360
+             schemaVersion = 10
+            conversationId = d6b93b26-[...]-b949d4de0aba
+               received_at = 1623335267006
+                    source =
+    deprecatedSourceDevice =
+            hasAttachments = 1
+        hasFileAttachments = 1
+ hasVisualMediaAttachments = 0
+               expireTimer =
+  expirationStartTimestamp = 1643874291546
+                      type = outgoing
+                      body = qrcode
+              messageTimer =
+         messageTimerStart =
+     messageTimerExpiresAt =
+                  isErased = 0
+                isViewOnce = 0
+                sourceUuid =
+                serverGuid =
+                 expiresAt =
+              sourceDevice =
+                   storyId =
+                   isStory = 0
+       isChangeCreatedByUs = 0
+      shouldAffectActivity = 1
+       shouldAffectPreview = 1
+    isUserInitiatedMessage = 1
+     isTimerChangeFromSync = 0
+         isGroupLeaveEvent = 0
+isGroupLeaveEventFromOther = 0
+
+
+     ANDROID DB:
+                        _id = 631
+             thread_id = 1
+                  date = 1643874290360
+         date_received = 1643874294496
+           date_server = -1
+               msg_box = 10485783
+                  read = 1
+                  body = qrcode
+            part_count = 1
+                  ct_l =
+               address = 2
+     address_device_id =
+                   exp =
+                m_type = 128
+                m_size =
+                    st =
+                 tr_id =
+delivery_receipt_count = 1
+ mismatched_identities =
+      network_failures =
+       subscription_id = -1
+            expires_in = 0
+        expire_started = 0
+              notified = 0
+    read_receipt_count = 0
+              quote_id = 0
+          quote_author =
+            quote_body =
+      quote_attachment = -1
+         quote_missing = 0
+        quote_mentions =
+       shared_contacts =
+          unidentified = 1
+              previews =
+       reveal_duration = 0
+             reactions =
+      reactions_unread = 0
+   reactions_last_seen = -1
+        remote_deleted = 0
+         mentions_self = 0
+    notified_timestamp = 0
+  viewed_receipt_count = 0
+           server_guid =
+     receipt_timestamp = 1643874295302
+                ranges =
+              is_story = 0
+       parent_story_id = 0
+     */
+
+    if (!ddb.exec("SELECT body FROM messages WHERE converation_id = ?",
+                  results.getValueAs<long long int>(i, "id"), &results3))
+      return false;
+
+
+
   }
 
   return false;
