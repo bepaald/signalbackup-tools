@@ -129,6 +129,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
       std::time_t epoch = datum / 1000;
       std::ostringstream tmp;
       tmp << std::put_time(std::localtime(&epoch), "signal-%Y-%m-%d-%H%M%S");
+      //tmp << "." << datum % 1000;
 
       // get file ext
       std::string mime = results.valueAsString(0, "ct");
@@ -204,7 +205,26 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
 
     // make filename unique
     while (bepaald::fileOrDirExists(targetdir + "/" + filename))
-      filename += "(2)";
+    {
+      //std::cout << std::endl << "File exists: " << targetdir << "/" << filename << " -> ";
+
+      std::filesystem::path p(filename);
+      std::regex numberedfile(".*( \\(([0-9]*)\\))$");
+      std::smatch sm;
+      std::string filestem = p.stem();
+      std::string ext = p.extension();
+      int counter = 2;
+      if (regex_match(filestem, sm, numberedfile) && sm.size() >= 3 && sm[2].matched)
+      {
+        // increase the counter
+        counter = bepaald::toNumber<int>(sm[2]) + 1;
+        // remove " (xx)" part from stem
+        filestem.erase(sm[1].first, sm[1].second);
+      }
+      filename = filestem + " (" + bepaald::toString(counter) + ")" + p.extension().string();
+
+      //std::cout << filename << std::endl;
+    }
 
     std::ofstream attachmentstream(targetdir + "/" + filename, std::ios_base::binary);
 
