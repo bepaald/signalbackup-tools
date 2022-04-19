@@ -156,6 +156,18 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (source->d_database.containsTable("dependency_spec"))
     source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
 
+  // we wil delete any notification_profile data, these are specific not to any threads,
+  // but to the phone owner. The notification profiles will probably already exist on the
+  // target, or can be easily recreated. They are difficult to import (they contain multiple
+  // UNIQUE fields and should only be imported once, while this function will otherwise
+  // do it for each thread imported....
+  if (source->d_database.containsTable("notification_profile_allowed_members"))
+    source->d_database.exec("DELETE FROM notification_profile_allowed_members");
+  if (source->d_database.containsTable("notification_profile_schedule"))
+    source->d_database.exec("DELETE FROM notification_profile_schedule");
+  if (source->d_database.containsTable("notification_profile"))
+    source->d_database.exec("DELETE FROM notification_profile");
+
 
   // NOT NECESSARY (these tables are skipped when merging anyway) AND CAUSES BREAKAGE
   // all emoji_search_* tables are ignored on import, delete from source here to prevent failing unique constraints
