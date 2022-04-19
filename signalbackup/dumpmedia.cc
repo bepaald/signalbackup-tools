@@ -211,8 +211,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
       std::filesystem::path p(filename);
       std::regex numberedfile(".*( \\(([0-9]*)\\))$");
       std::smatch sm;
-      std::string filestem = p.stem();
-      std::string ext = p.extension();
+      std::string filestem(p.stem().string());
+      std::string ext(p.extension().string());
       int counter = 2;
       if (regex_match(filestem, sm, numberedfile) && sm.size() >= 3 && sm[2].matched)
       {
