@@ -105,7 +105,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients() const
 
   if (uuids.size())
   {
-    std::string q = "SELECT DISTINCT _id FROM recipient WHERE uuid IN (";
+    std::string q = "SELECT DISTINCT _id FROM recipient WHERE LOWER(uuid) IN (";
 #if __cplusplus > 201703L
     for (int pos = 0; std::string uuid : uuids)
 #else
@@ -117,10 +117,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients() const
         q += ", ";
 
       uuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-      std::transform(uuid.begin(), uuid.end(), uuid.begin(), [](unsigned char c){ return std::tolower(c); });
-      q += "'" + uuid + "', ";
-      std::transform(uuid.begin(), uuid.end(), uuid.begin(), [](unsigned char c){ return std::toupper(c); });
-      q+= "'" + uuid + "'";
+      q += "LOWER('" + uuid + "')";
       ++pos;
     }
     q += ")";
