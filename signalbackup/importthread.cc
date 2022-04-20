@@ -156,7 +156,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (source->d_database.containsTable("dependency_spec"))
     source->d_database.exec("DELETE FROM dependency_spec"); // has to do with job_spec, references it...
 
-  // we wil delete any notification_profile data, these are specific not to any threads,
+  // we will delete any notification_profile data, these are specific not to any threads,
   // but to the phone owner. The notification profiles will probably already exist on the
   // target, or can be easily recreated. They are difficult to import (they contain multiple
   // UNIQUE fields and should only be imported once, while this function will otherwise
