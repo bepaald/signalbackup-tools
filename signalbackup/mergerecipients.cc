@@ -307,7 +307,7 @@ Field 4 (optional::protobuf):
     Field 2 (optional::enum): 2
     Field 3 (optional::bytes): (hex:) 88 28 52 88 87 2c [...]
 
-        Where the repeating field 3.7.1 corresponds to uuid as found in recipient.uuid
+        Where the repeating fields 3.7.1 & 4.7.1 corresponds to uuid as found in recipient.uuid
 
       */
 

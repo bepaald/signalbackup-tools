@@ -155,6 +155,7 @@ class SignalBackup
   bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
   bool hiperfall(uint64_t t_id, std::string const &selfid);
   void scanMissingAttachments() const;
+  void devCustom() const;
   /* CUSTOMS */
 
  private:
@@ -222,6 +223,7 @@ class SignalBackup
   AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
+  std::vector<long long int> getGroupUpdateRecipients() const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 67> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--ignorewal"};
+  std::array<std::string, 68> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--ignorewal"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -62,6 +62,7 @@ class Arg
   std::string d_dumpmedia;
   std::string d_dumpavatars;
   std::string d_hhenkel;
+  bool d_devcustom;
   std::string d_importcsv;
   std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
   std::string d_importwachat;
@@ -129,6 +130,7 @@ class Arg
   inline std::string const &dumpmedia() const;
   inline std::string const &dumpavatars() const;
   inline std::string const &hhenkel() const;
+  inline bool devcustom() const;
   inline std::string const &importcsv() const;
   inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
   inline std::string const &importwachat() const;
@@ -304,6 +306,11 @@ inline std::string const &Arg::dumpavatars() const
 inline std::string const &Arg::hhenkel() const
 {
   return d_hhenkel;
+}
+
+inline bool Arg::devcustom() const
+{
+  return d_devcustom;
 }
 
 inline std::string const &Arg::importcsv() const

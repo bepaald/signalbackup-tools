@@ -168,7 +168,6 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (source->d_database.containsTable("notification_profile"))
     source->d_database.exec("DELETE FROM notification_profile");
 
-
   // NOT NECESSARY (these tables are skipped when merging anyway) AND CAUSES BREAKAGE
   // all emoji_search_* tables are ignored on import, delete from source here to prevent failing unique constraints
   /*
@@ -381,7 +380,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     source->d_database.exec("DROP TABLE groups");
     source->d_avatars.clear();
   }
-  else
+  else // no matching thread in target (but recipient may still exist)
   {
     // check identities and recepient prefs for presence of values, they may be there (even though no
     // thread was found (for example via a group chat or deleted thread))

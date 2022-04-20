@@ -49,7 +49,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"group_receipts", "mms_id"},
       {"mention", "message_id"},
       {"msl_message", "message_id", "WHERE is_mms IS 1"},
-      {"reaction", "message_id", "WHERE is_mms IS 1"}
+      {"reaction", "message_id", "WHERE is_mms IS 1"},
+      {"story_sends", "message_id"}
     },
     0
   },
@@ -92,7 +93,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
                                                         // this is much more explicit and looks cleaner without the empty
                                                         // fields. (give missing fields default init in header)
       {"distribution_list", "recipient_id"},
-      {"distribution_list_member", "recipient_id"}
+      {"distribution_list_member", "recipient_id"},
+      {"story_sends", "recipient_id"}
     },
     NO_COMPACT
   },
@@ -294,6 +296,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
   },
   {
     "donation_receipt",
+    "_id",
+    {},
+    0
+  },
+  {
+    "story_sends",
     "_id",
     {},
     0

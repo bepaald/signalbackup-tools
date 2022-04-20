@@ -75,6 +75,12 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
   }
 
+  // delete story_sends entries that no longer refer to an existing message?
+  if (d_database.tableContainsColumn("story_sends", "message_id"))
+  {
+    d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT _id FROM mms)");
+  }
+
   if (d_databaseversion < 24)
   {
     std::cout << "  Deleting unreferenced recipient_preferences entries..." << std::endl;
@@ -176,6 +182,11 @@ void SignalBackup::cleanDatabaseByMessages()
       }
     }
 
+    // get recipients mentioned in group updates (by uuid)
+    std::vector<long long int> mentioned_in_group_updates = getGroupUpdateRecipients();
+    for (long long int id : mentioned_in_group_updates)
+      referenced_recipients.insert(id);
+
     // get recipient_id of releasechannel
     for (auto const &kv : d_keyvalueframes)
       if (kv->key() == "releasechannel.recipient_id")
@@ -201,6 +212,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
+                    (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)"s);
   }

@@ -53,7 +53,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 #if __cplusplus > 201703L
   for (int count = 0; auto const &avframe : d_avatars)
 #else
-    int count = 0;
+  int count = 0;
   for (auto const &avframe : d_avatars)
 #endif
   {

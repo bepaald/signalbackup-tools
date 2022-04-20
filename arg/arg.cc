@@ -50,6 +50,7 @@ Arg::Arg(int argc, char *argv[])
   d_dumpmedia(std::string()),
   d_dumpavatars(std::string()),
   d_hhenkel(std::string()),
+  d_devcustom(false),
   d_importcsv(std::string()),
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
   d_importwachat(std::string()),
@@ -489,6 +490,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--devcustom")
+    {
+      d_devcustom = true;
+      continue;
+    }
+    if (option == "--no-devcustom")
+    {
+      d_devcustom = false;
       continue;
     }
     if (option == "--importcsv")
