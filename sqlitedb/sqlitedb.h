@@ -102,6 +102,8 @@ class SqliteDB
   inline long long int lastInsertRowid() const;
   inline bool containsTable(std::string const &tablename) const;
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
+  template <typename... columnnames>
+  inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const;
   inline void freeMemory();
 
  private:
@@ -291,6 +293,12 @@ inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::str
   if (exec("SELECT 1 FROM PRAGMA_TABLE_INFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp))
     return (tmp.rows() > 0);
   return false;
+}
+
+template <typename... columnnames>
+inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const
+{
+  return tableContainsColumn(tablename, columnname) && tableContainsColumn(tablename, list...);
 }
 
 inline void SqliteDB::freeMemory()

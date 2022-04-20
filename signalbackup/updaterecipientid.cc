@@ -21,7 +21,20 @@
 
 void SignalBackup::updateRecipientId(long long int targetid, long long int sourceid)
 {
-  std::cout << "  Mapping " << sourceid << " -> " << targetid << std::endl;
+  std::cout << "  Mapping " << sourceid << " -> " << targetid;
+  if (d_database.tableContainsColumn("recipient", "uuid", "phone", "group_id", "notification_channel", "distribution_list_id"))
+  {
+    SqliteDB::QueryResults r;
+    if (d_database.exec("SELECT CASE WHEN uuid IS NULL THEN '' ELSE 'u' END || "
+                        "CASE WHEN phone IS NULL THEN '' ELSE 'p' END || "
+                        "CASE WHEN group_id IS NULL THEN '' ELSE 'g' END || "
+                        "CASE WHEN distribution_list_id IS NULL THEN '' ELSE 'd' END || "
+                        "CASE WHEN notification_channel IS NULL THEN '' ELSE 'n' END "
+                        "AS recipient_type FROM recipient", &r))
+      std::cout << " (" << r.valueAsString(0, "recipient_type") << ")";
+  }
+
+  std::cout << std::endl;
 
   for (auto const &dbl : d_databaselinks)
   {

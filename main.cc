@@ -298,6 +298,12 @@ int main(int argc, char *argv[])
       return 1;
     }
 
+  if (arg.devcustom())
+  {
+    sb->devCustom();
+    return 0;
+  }
+
   MEMINFO("Before output");
 
   // export output
