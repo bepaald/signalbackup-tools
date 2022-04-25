@@ -206,6 +206,7 @@ void SignalBackup::cleanDatabaseByMessages()
     }
     //std::cout << "QUERY: " << reaction_authors_query << std::endl;
 
+    SqliteDB::QueryResults deleted_recipients;
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
                     " (SELECT DISTINCT address FROM sms"
                     " UNION SELECT DISTINCT address FROM mms"s +
@@ -214,7 +215,30 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     referenced_recipients_query +
-                    " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)"s);
+                    " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
+                    (d_database.containsTable("distribution_list") ? ",distribution_list_id"s : ""s), &deleted_recipients);
+    if (deleted_recipients.rows())
+    {
+      std::cout << "  Deleted " << deleted_recipients.rows() << " unreferenced recipients" << std::endl;
+      if (d_database.containsTable("distribution_list"))
+      {
+        int count = 0;
+        for (uint i = 0; i < deleted_recipients.rows(); ++i)
+        {
+          if (!deleted_recipients.valueHasType<std::nullptr_t>(i, "distribution_list_id"))
+          {
+            d_database.exec("DELETE FROM distribution_list WHERE _id = ?", deleted_recipients.getValueAs<long long int>(i, "distribution_list_id"));
+            count += d_database.changed();
+          }
+        }
+        if (count)
+          std::cout << "Deleted " << count << " unneeded distribution_lists" << std::endl;
+
+        // clean up the member table
+        d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
+      }
+    }
+
   }
 
   if (d_database.containsTable("notification_profile_allowed_members"))

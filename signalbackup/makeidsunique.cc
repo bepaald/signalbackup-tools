@@ -542,7 +542,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
     CHECK!
 
     These are the tables that are imported by importThread(),
-    check if they are all handled proerly
+    check if they are all handled properly
 
   */
 

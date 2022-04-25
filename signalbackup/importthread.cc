@@ -141,10 +141,17 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     SqliteDB::QueryResults res;
     d_database.exec("SELECT distribution_id FROM distribution_list", &res);
 
-    std::cout << "  Deleting " << res.rows() << " existing distribution lists" << std::endl;
-
+    int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
+    {
       source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing distribution lists" << std::endl;
+
+    // clean up the member table
+    source->d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
   }
 
   // the target will have its own job_spec etc...
