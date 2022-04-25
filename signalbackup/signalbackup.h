@@ -511,6 +511,7 @@ inline std::vector<int> SignalBackup::threadIds() const
 
 inline void SignalBackup::showDBInfo() const
 {
+  std::cout << "Database version: " << d_databaseversion << std::endl;
   d_database.print("SELECT m.name as TABLE_NAME, p.name as COLUMN_NAME FROM sqlite_master m LEFT OUTER JOIN pragma_table_info((m.name)) p ON m.name <> p.name ORDER BY TABLE_NAME, COLUMN_NAME");
 }
 
