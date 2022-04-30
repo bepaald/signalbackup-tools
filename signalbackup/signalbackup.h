@@ -125,8 +125,8 @@ class SignalBackup
                             long long int thread, bool incoming);
   void addSMSMessage(std::string const &body, std::string const &address, long long int timestamp,
                      long long int thread, bool incoming);
-  void importThread(SignalBackup *source, long long int thread);
-  void importThread(SignalBackup *source, std::vector<long long int> const &threads);
+  bool importThread(SignalBackup *source, long long int thread);
+  //bool importThread(SignalBackup *source, std::vector<long long int> const &threads);
   inline bool ok() const;
   bool dropBadFrames();
   void fillThreadTableFromMessages();

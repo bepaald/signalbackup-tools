@@ -69,11 +69,19 @@ namespace bepaald
 #endif
   template <typename T>
   T toNumber(std::string const &str);
-  //std::wstring bytesToHexWString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
-  //std::wstring bytesToHexWString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
-  //std::wstring bytesToHexWString(unsigned char const *data, unsigned int length, bool unformatted = false);
-  //std::wstring bytesToWString(unsigned char const *data, unsigned int length);
-  //std::wstring bytesToPrintableWString(unsigned char const *data, unsigned int length);
+// #if (__has_builtin(__builtin_bswap16))
+//   template <>
+//   inline uint16_t swap_endian(uint16_t u);
+// #endif
+// #if (__has_builtin(__builtin_bswap32))
+//   template <>
+//   inline uint32_t swap_endian(uint32_t u);
+// #endif
+// #if (__has_builtin(__builtin_bswap64))
+//   template <>
+//   inline uint64_t swap_endian(uint64_t u);
+// #endif
+
   std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
@@ -81,9 +89,6 @@ namespace bepaald
   std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
   template <typename T>
   void destroyPtr(unsigned char **p, T *psize);
-  //template <typename T>
-  //inline std::wstring toWString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
-  //inline std::wstring toWString(double num);
   template <typename T>
   inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
   inline std::string toString(double num);
@@ -104,6 +109,7 @@ namespace bepaald
   inline int findIdxOf(T const &container, U const &value);
 }
 
+// generic endian swap
 template <typename T>
 inline T bepaald::swap_endian(T u)
 {
@@ -122,6 +128,30 @@ inline T bepaald::swap_endian(T u)
 
   return dest.u;
 }
+
+// #if (__has_builtin(__builtin_bswap16))
+// template <>
+// inline uint16_t bepaald::swap_endian(uint16_t u)
+// {
+//   return __builtin_bswap16(u);
+// }
+// #endif
+
+// #if (__has_builtin(__builtin_bswap32))
+// template <>
+// inline uint32_t bepaald::swap_endian(uint32_t u)
+// {
+//   return __builtin_bswap32(u);
+// }
+// #endif
+
+// #if (__has_builtin(__builtin_bswap64))
+// template <>
+// inline uint64_t bepaald::swap_endian(uint64_t u)
+// {
+//   return __builtin_bswap64(u);
+// }
+// #endif
 
 #ifdef DEBUG
 template<typename ...Args>

@@ -46,6 +46,29 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
 
     [[ likely ]] if (col == "_id")
     {
+      for (auto const &dbl : d_databaselinks)
+      {
+        if (dbl.flags & SKIP)
+          continue;
+        if (table == dbl.table)
+        {
+          for (auto const &c : dbl.connections)
+          {
+            if (d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
+            {
+              if (!c.json_path.empty())
+              {
+                if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = json_replace(" + c.column + ", " + c.json_path + ", ?) "
+                                     "WHERE json_extract(" + c.column + ", " + c.json_path + ") = ?", {nid, valuetochange}))
+                  std::cout << "ERROR: compacting table '" << table << "'" << std::endl;
+              }
+              else if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?" + (c.whereclause.empty() ? "" : " AND " + c.whereclause), {nid, valuetochange}))
+                std::cout << "ERROR: compacting table '" << table << "'" << std::endl;
+            }
+          }
+        }
+      }
+      /*
       if (table == "sms")
       {
         if (d_database.containsTable("msl_message"))
@@ -64,8 +87,10 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
           d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {nid, valuetochange});
         if (d_database.containsTable("reaction")) // dbv >= 121
           d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {nid, valuetochange});
+        if (d_database.containsTable("story_sends"))
+          d_database.exec("UPDATE story_sends SET message_id = ? WHERE message_id = ?", {nid, valuetochange});
       }
-      else if (table == "part")
+      else */if (table == "part")
       {
         for (auto att = d_attachments.begin(); att != d_attachments.end(); )
         {
@@ -80,12 +105,14 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
             ++att;
         }
 
-        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
-        if (d_database.containsTable("previews"))
-          d_database.exec("UPDATE mms SET previews = json_replace(previews, '$[0].attachmentId.rowId', json_extract(previews,'$[0].attachmentId.rowId') + ?) "
-                          "WHERE json_extract(previews, '$[0].attachmentId.rowId') = ?", {nid, valuetochange});
         /*
-          REPLACED WITH ABOVE
+        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
+        if (d_database.tableContainsColumn("mms", "previews"))
+          d_database.exec("UPDATE mms SET previews = json_replace(previews, '$[0].attachmentId.rowId', ?) "
+                          "WHERE json_extract(previews, '$[0].attachmentId.rowId') = ?", {nid, valuetochange});
+        */
+        /*
+        //  REPLACED WITH ABOVE
 
         // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
         SqliteDB::QueryResults results2;
@@ -109,6 +136,23 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
         }
         */
       }
+      /*
+      else if (table == "msl_payload")
+      {
+        d_database.exec("UPDATE msl_message SET payload_id = ? WHERE payload_id = ?", {nid, valuetochange});
+        d_database.exec("UPDATE msl_recipient SET payload_id = ? WHERE payload_id = ?", {nid, valuetochange});
+      }
+      else if (table == "notification_profile") // should actually be cleared at this point...
+      {
+        d_database.exec("UPDATE notification_profile_allowed_members SET notification_profile_id = ? WHERE notification_profile_id = ?", {nid, valuetochange});
+        d_database.exec("UPDATE notification_profile_schedule SET notification_profile_id = ? WHERE notification_profile_id = ?", {nid, valuetochange});
+      }
+      else if (table == "distribution_list")
+      {
+        d_database.exec("UPDATE recipient SET distribution_list_id = ? WHERE distribution_list_id = ?", {nid, valuetochange});
+        d_database.exec("UPDATE distribution_list_member SET list_id = ? WHERE list_id = ?", {nid, valuetochange});
+      }
+      */
     }
 
     // gets first available _id in table

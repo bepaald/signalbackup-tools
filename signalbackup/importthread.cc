@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::importThread(SignalBackup *source, long long int thread)
+bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   std::cout << __FUNCTION__ << std::endl;
 
@@ -29,7 +29,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
       (d_databaseversion < 27 && source->d_databaseversion >= 27))
   {
     std::cout << "Source and target database at incompatible versions" << std::endl;
-    return;
+    return false;
   }
 
   if (source->d_database.containsTable("remapped_recipients"))
@@ -65,24 +65,22 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
   }
 
-  // crop the source db to the specified thread
-  source->cropToThread(thread);
-
   // if target contains releasechannel recipient, make sure to remove it from source
-  bool hasreleasechannel = false;
+  int target_releasechannel = -1;
+  int source_releasechannel = -1;
   for (auto const &kv : d_keyvalueframes)
     if (kv->key() == "releasechannel.recipient_id" && !kv->value().empty())
     {
-      hasreleasechannel = true;
+      target_releasechannel = bepaald::toNumber<int>(kv->value());
       break;
     }
-  if (hasreleasechannel)
+  if (target_releasechannel >= 0)
     for (auto const &skv : source->d_keyvalueframes)
       if (skv->key() == "releasechannel.recipient_id")
       {
-        int rcrid = bepaald::toNumber<int>(skv->value());
-        source->d_database.exec("DELETE FROM recipient WHERE _id = ?", rcrid);
-        std::cout << "Deleted double releasechannel recipient from source database (_id: " << rcrid << ")" << std::endl;
+        source_releasechannel = bepaald::toNumber<int>(skv->value());
+        source->d_database.exec("DELETE FROM recipient WHERE _id = ?", source_releasechannel);
+        std::cout << "Deleted double releasechannel recipient from source database (_id: " << source_releasechannel << ")" << std::endl;
         break;
       }
 
@@ -96,7 +94,7 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
         !results.valueHasType<std::string>(0, 0))
     {
       std::cout << "Failed to get recipient id from source database" << std::endl;
-      return;
+      return false;
     }
     std::string recipient_id = results.getValueAs<std::string>(0, 0);
     targetthread = getThreadIdFromRecipient(recipient_id); // -1 if none found
@@ -108,8 +106,22 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {
+
+      // skip current thread if it is the releasechannel-thread
+      // maybe I should deal with this in the future
+      SqliteDB::QueryResults res2;
+      source->d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", thread, &res2);
+      if (res2.rows() &&
+          ((res2.valueHasType<long long int>(0, 0) && res2.getValueAs<long long int>(0, 0) == source_releasechannel) ||
+           (res2.valueHasType<std::string>(0, 0) && bepaald::toNumber<int>(res2.getValueAs<std::string>(0, 0)) == source_releasechannel)))
+      {
+        std::cout << "Skipping releasechannel..." << std::endl;
+        return true; // when this channel is actually active, maybe remove this return statement and
+                     // manually set targetthread with the help of target_releasechannel (if != -1)
+      }
+
       std::cout << "Failed to get phone/group_id from source database" << std::endl;
-      return;
+      return false;
     }
     std::string phone_or_group = results.getValueAs<std::string>(0, 0);
     d_database.exec("SELECT _id FROM recipient WHERE COALESCE(phone,group_id) = ?", phone_or_group, &results);
@@ -123,16 +135,39 @@ void SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
   }
 
+  // crop the source db to the specified thread
+  source->cropToThread(thread);
+
   // delete double megaphones
   if (d_database.containsTable("megaphone") && source->d_database.containsTable("megaphone"))
   {
     SqliteDB::QueryResults res;
     d_database.exec("SELECT event FROM megaphone", &res);
 
-    std::cout << "  Deleting " << res.rows() << " existing megaphones" << std::endl;
-
+    int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
+    {
       source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleting " << count << " existing megaphones" << std::endl;
+  }
+
+  // delete double key_value entries (this table does not exist anymore currently)
+  if (d_database.containsTable("key_value") && source->d_database.containsTable("key_value"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT key FROM key_value", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM key_value WHERE key = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing key values" << std::endl;
   }
 
   // delete double distribution lists?
@@ -572,7 +607,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   // if target has no release channel, but source does
   // it is copied over, we need the pref
-  if (!hasreleasechannel)
+  if (target_releasechannel == -1)
     for (auto &skv : source->d_keyvalueframes)
       if (skv->key() == "releasechannel.recipient_id")
       {
@@ -586,4 +621,15 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   d_database.exec("VACUUM");
   d_database.freeMemory();
 
+  // CHECKING DATA
+  std::cout << "Checking database integrity..." << std::endl;
+  d_database.exec("SELECT DISTINCT [table],[parent] FROM pragma_foreign_key_check", &results);
+  if (results.rows())
+  {
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Foreign key constraint violated. This will not end well, aborting." << std::endl
+              <<                     "     "                         " Please report this error to the program author." << std::endl;
+    results.prettyPrint();
+    return false;
+  }
+  return true;
 }
