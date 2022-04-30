@@ -359,17 +359,20 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       {
         source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
                                 " = json_replace(" + c.column + ", " + c.json_path + ", json_extract(" + c.column + ", " + c.json_path + ") + ?) "
-                                "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL");
+                                "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL", offsetvalue);
       }
       else if ((c.flags & SET_UNIQUELY))
       {
         // set all values negative
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 " + c.whereclause);
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1" +
+                                (c.whereclause.empty() ? "" : " WHERE " + c.whereclause));
         // set to wanted value
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 + ? " + c.whereclause, offsetvalue);
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 + ?"
+                                + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
       }
       else
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? " + c.whereclause, offsetvalue);
+        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? "
+                                + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
     }
 
 

@@ -182,7 +182,11 @@ int main(int argc, char *argv[])
         sourcesummarized = true;
       }
       MEMINFO("After reading source: ", i + 1, "/", threads.size(), " before import");
-      sb->importThread(source.get(), threads[i]);
+      if (!sb->importThread(source.get(), threads[i]))
+      {
+        std::cout << "A fatal error occurred while trying to import thread " << threads[i] << ". Aborting" << std::endl;
+        return 1;
+      }
       MEMINFO("After import");
     }
   }

@@ -36,8 +36,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "sms",
     "_id",
     {
-      {"msl_message", "message_id", "WHERE is_mms IS NOT 1"},
-      {"reaction", "message_id", "WHERE is_mms IS NOT 1"}
+      {"msl_message", "message_id", "is_mms IS NOT 1"},
+      {"reaction", "message_id", "is_mms IS NOT 1"}
     },
     0
   },
@@ -48,8 +48,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"part", "mid"},
       {"group_receipts", "mms_id"},
       {"mention", "message_id"},
-      {"msl_message", "message_id", "WHERE is_mms IS 1"},
-      {"reaction", "message_id", "WHERE is_mms IS 1"},
+      {"msl_message", "message_id", "is_mms IS 1"},
+      {"reaction", "message_id", "is_mms IS 1"},
       {"story_sends", "message_id"}
     },
     0
@@ -302,6 +302,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
   },
   {
     "story_sends",
+    "_id",
+    {},
+    0
+  },
+  {
+    "key_value",
     "_id",
     {},
     0
