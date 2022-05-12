@@ -86,7 +86,8 @@ Arg::Arg(int argc, char *argv[])
   d_scramble(false),
   d_importfromdesktop(std::string()),
   d_importfromdesktop_bool(false),
-  d_ignorewal(false)
+  d_ignorewal(false),
+  d_includemms(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -934,6 +935,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-ignorewal")
     {
       d_ignorewal = false;
+      continue;
+    }
+    if (option == "--includemms")
+    {
+      d_includemms = true;
+      continue;
+    }
+    if (option == "--no-includemms")
+    {
+      d_includemms = false;
       continue;
     }
     if (option[0] != '-')

@@ -26,6 +26,7 @@
 #include <iomanip>
 #include <regex>
 #include <set>
+#include <iterator>
 
 #include "../msgtypes/msgtypes.h"
 #include "../protobufparser/protobufparser.h"

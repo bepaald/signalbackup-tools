@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const
+void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const
 {
   /* protocol - Protocol used by the message, its mostly 0 in case of SMS messages. */
   /* OPTIONAL */
@@ -186,7 +186,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
              << "/>" << std::endl;
 }
 
-void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i, bool keepattachmentdatainmemory) const
+void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const
 {
   // msg_box - The type of message, 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox
   long long int msg_box = 5;
@@ -242,46 +242,101 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     readable_date = tmp.str();
   }
 
+
+  // this needs to be redone:
+  // get thread.thread_recipient_id from thread where _id = mms.thread_id
+  // -> then get address/group_id from recipient table
+
   /* address - The phone number of the sender/recipient. */
+  /* for (outgoing) group messages, address is all phone numbers concatenated with ~'s in between */
+  bool isgroup = false;
+  std::set<std::string> memberphones;
+  std::string thread_address;
   std::string address;
-  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
+
   {
-    std::string rid = results.valueAsString(i, "address");
+  SqliteDB::QueryResults r2;
+  if (d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", results.value(i, "thread_id"), &r2) &&
+      r2.rows() == 1)
+  {
+    //r2.prettyPrint();
+    thread_address = r2.valueAsString(0, d_thread_recipient_id);
 
-    if (d_databaseversion >= 24)
+    SqliteDB::QueryResults r3;
+    d_database.exec("SELECT phone,group_id FROM recipient WHERE _id = " + thread_address, &r3);
+    //r3.prettyPrint();
+
+    if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "group_id"))
     {
-      SqliteDB::QueryResults r2;
-      d_database.exec("SELECT phone FROM recipient WHERE _id = " + rid, &r2);
-      if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "phone"))
-        address = r2.getValueAs<std::string>(0, "phone");
-      else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (mms database, type = "
-                  << realtype << ")" << std::endl;
-
+      isgroup = true;
+      std::vector<long long int> members;
+      if (!getGroupMembers(&members, r3.getValueAs<std::string>(0, "group_id")))
+      {
+        std::cout << "Failed to get group members" << std::endl;
+        return;
+      }
+      for (auto const &id : members)
+      {
+        if (!d_database.exec("SELECT phone FROM recipient WHERE _id = ?", id, &r3) ||
+            r3.rows() != 1)
+        {
+          std::cout << "Failed to get phone number for recipient: " << id << std::endl;
+          r3.prettyPrint();
+          return;
+        }
+        memberphones.insert(r3.valueAsString(0, "phone"));
+      }
+      for (int count = memberphones.size(); auto const &p : memberphones)
+      {
+        --count;
+        address += p + (count ? "~" : "");
+      }
+      //std::cout << "Got addres: " << address << std::endl;
+    }
+    else if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "phone"))
+    {
+      address = r3.getValueAs<std::string>(0, "phone");
     }
     else
-      address = rid;
-
-    escapeXmlString(&address);
+    {
+      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (mms database, type = "
+                << realtype << ")" << std::endl;
+      return;
+    }
   }
   else
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Type mismatch while retrieving required field 'address'" << std::endl;
+  {
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to set field 'address'" << std::endl;
+    return;
+  }
+  }
+  escapeXmlString(&address);
 
   // contact_name - Optional field that has the name of the contact.
   std::string contact_name;
-  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
+  if (!isgroup)
   {
-    std::string rid = results.valueAsString(i, "address");
+    if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
+    {
+      std::string rid = results.valueAsString(i, "address");
 
-    SqliteDB::QueryResults r2;
-    if (d_databaseversion >= 24)
-      d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
-    else
-      d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
-    if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
+      SqliteDB::QueryResults r2;
+      if (d_databaseversion >= 24)
+        d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+      else
+        d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
+      if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
       contact_name = r2.getValueAs<std::string>(0, "contact_name");
-    escapeXmlString(&contact_name);
+    }
   }
+  else
+  {
+    SqliteDB::QueryResults r2;
+    if (d_database.exec("SELECT title FROM groups WHERE group_id IS (SELECT group_id FROM recipient WHERE _id = ?)", thread_address, &r2) &&
+        r2.rows() == 1)
+      contact_name = r2.valueAsString(0, "title");
+  }
+  escapeXmlString(&contact_name);
 
   // sub - The subject of the message, if present.
   std::string sub = getStringOr(results, i, "sub");
@@ -396,20 +451,22 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     escapeXmlString(&text);
   }
 
+  outputfile << "    <parts>" << std::endl;
+
   if (!text.empty())
   {
-    outputfile << "    <part "
+    outputfile << "      <part "
                << "seq=\"0\" "
                << "ct=\"text/plain\" "
                << "name=\"null\" "
-               << "chset=\"null\" " // 106 ???
+               << "chset=\"106\" "
                << "cd=\"null\" "
                << "fn=\"null\" "
-               << "cid=\"null\" "
-               << "cl=\"txt" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << ".txt\" "
+               << "cl=\"&lt;text" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << "&gt;\" "
+               << "cl=\"text" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << ".txt\" "
                << "ctt_s=\"null\" "
                << "ctt_t=\"null\" "
-               << "text=\"" << text << "\" "
+               << "text=\"" << text << "\" " // maybe this string needs to be escaped?
                << "></part>" << std::endl;
   }
 
@@ -450,7 +507,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     //                         <xs:attribute name="text" type="xs:string" use="required" />
     //                         <xs:attribute name="data" type="xs:string" use="optional" />
 
-    outputfile << "    <part "
+    outputfile << "      <part "
                << "seq=\"" << seq << "\" "
                << "ct=\"" << ct << "\" "
                << "name=\"" << name << "\" "
@@ -468,18 +525,73 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     auto attachment = d_attachments.find({rowid, uniqueid});
     if (attachment != d_attachments.end())
     {
-      outputfile << "data=\"" << Base64::bytesToBase64String(attachment->second->attachmentData(), attachment->second->attachmentSize()) << "\" ";
+      outputfile << " data=\"" << Base64::bytesToBase64String(attachment->second->attachmentData(), attachment->second->attachmentSize()) << "\" ";
       if (!keepattachmentdatainmemory)
         attachment->second.get()->clearData();
     }
     outputfile << "></part>" << std::endl;
   }
-  //outputfile << "    <addr....." << std::endl;
+  outputfile << "    </parts>" << std::endl;
+
+  // ADDR
+
+  outputfile << "    <addrs>" << std::endl;
+  // 1-on-1 chat -> get conversation partners phone: <addr address="[PHONE]" type="151(outgoing)/137(incoming)" charset="106" />
+  if (!isgroup)
+    outputfile << "      <addr address=\"" << address << "\" type=\"" << ((msg_box == 1) ? "137" : "151") << "\" charset=\"106\" />" << std::endl;
+  // group chat -> for each phone number: above. Mark sender with 137, all others 151
+  else
+  {
+    for (auto const &mp : memberphones)
+    {
+
+      // get message originator
+      // incoming message: mms.address
+      // outgoing message: self
+      std::string sender = self;
+      if (msg_box == 1) // incoming message
+      {
+        SqliteDB::QueryResults r2;
+        if (d_database.exec("SELECT phone FROM recipient WHERE _id = ?", results.valueAsString(i, "address"), &r2) &&
+            r2.rows() == 1)
+          sender = r2.valueAsString(0, "phone");
+      }
+
+      outputfile << "      <addr address=\"" << mp << "\" type=\""
+                 << ((mp == sender) ? "137" : "151") << "\" charset=\"106\" />" << std::endl;
+    }
+  }
+  outputfile << "    </addrs>" << std::endl;
+
   outputfile << "  </mms>" << std::endl;
+
 }
 
-bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool includemms, bool keepattachmentdatainmemory) const
+bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms, bool keepattachmentdatainmemory) const
 {
+  if (d_databaseversion < 24)
+  {
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unsupported database version (" << d_databaseversion << "). Please upgrade first." << std::endl;
+    return false;
+  }
+
+  if (self.empty())
+  {
+    long long int selfid = scanSelf();
+    if (selfid != -1)
+    {
+      SqliteDB::QueryResults r;
+      if (d_database.exec("SELECT phone FROM recipient WHERE _id = ?", selfid, &r) && r.rows() == 1)
+        self = r.valueAsString(0, "phone");
+    }
+
+    if (self.empty())
+    {
+      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
+                << " Failed to determine own phone number. Please add it on the command line with `--setselfid`." << std::endl;
+      return false;
+    }
+  }
 
   std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
 
@@ -495,20 +607,27 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
   outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << std::endl;
 
   SqliteDB::QueryResults sms_results;
-  d_database.exec("SELECT protocol,subject,service_center,read,status,date_sent,date,address,type,body,expires_in FROM sms WHERE type != ?",
-                  static_cast<long long int>(Types::GV1_MIGRATION_TYPE), &sms_results);
+  d_database.exec("SELECT _id,thread_id,protocol,subject,service_center,read,status,date_sent,date,address,type,body,expires_in FROM sms WHERE "
+                  "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
+                  {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
 
   SqliteDB::QueryResults mms_results;
   if (includemms)
   {
     // at dbv many columns were removed from the mms table.
     if (d_databaseversion >= 109)
-      d_database.exec("SELECT _id,date_received,date,address,msg_box,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM mms", &mms_results);
+      d_database.exec("SELECT _id,thread_id,date_received,date,address,msg_box,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM mms WHERE "
+                      "(msg_box & ?) == 0 AND ((msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ?)",
+                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
     else
-      d_database.exec("SELECT _id,date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms", &mms_results);
+      d_database.exec("SELECT _id,thread_id,date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms WHERE "
+                      "(msg_box & ?) == 0 AND ((msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ?)",
+                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
   }
 
-  outputfile << "<smses count=" << bepaald::toString(sms_results.rows() + mms_results.rows()) << ">" << std::endl;
+  std::string date;
+  outputfile << "<smses count=" << bepaald::toString(sms_results.rows() + mms_results.rows())
+             << " backup_date=\"" << date << "\" type=\"full\">" << std::endl;
   uint sms_row = 0;
   uint mms_row = 0;
   while (sms_row < sms_results.rows() ||
@@ -518,9 +637,9 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
         (sms_row < sms_results.rows() &&
          (sms_results.getValueAs<long long int>(sms_row, "date") <
           mms_results.getValueAs<long long int>(mms_row, "date"))))
-      handleSms(sms_results, outputfile, sms_row++);
+      handleSms(sms_results, outputfile, self, sms_row++);
     else if (mms_row < mms_results.rows())
-      handleMms(mms_results, outputfile, mms_row++, keepattachmentdatainmemory);
+      handleMms(mms_results, outputfile, self, mms_row++, keepattachmentdatainmemory);
 
     //std::cout << "Handled row! Indeces now: " << sms_row << "/" << sms_results.rows() << " " << mms_row << "/" << mms_results.rows() << std::endl;
   }
@@ -543,9 +662,6 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
     // status - None = -1, Complete = 0, Pending = 32, Failed = 64.
     // readable_date - Optional field that has the date in a human readable format.
     // contact_name - Optional field that has the name of the contact.
-
-
-
 
 
     // mms
@@ -586,8 +702,6 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, bool i
     // presentation - caller id presentation info. 1 = Allowed, 2 = Restricted, 3 = Unknown, 4 = Payphone.
     // readable_date - Optional field that has the date in a human readable format.
     // contact_name - Optional field that has the name of the contact.
-
-
 
     //           <xs:complexType>
     //             <xs:sequence>

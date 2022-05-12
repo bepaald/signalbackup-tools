@@ -89,7 +89,6 @@ long long int SignalBackup::scanSelf() const
         }
       }
     }
-
     if (d_database.containsTable("reaction"))
     {
       if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
@@ -107,13 +106,8 @@ long long int SignalBackup::scanSelf() const
         //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
         options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
       }
-
     }
-
   }
-
-
-
 
   // get thread ids of all group conversations
   if (!d_database.exec("SELECT _id,active FROM groups", &res))
@@ -144,7 +138,7 @@ long long int SignalBackup::scanSelf() const
 
     //std::cout << "Dealing with group: " << gid << std::endl;
 
-    // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id aas address)
+    // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
     if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT address FROM mms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?)))) AND word NOT IN (SELECT DISTINCT address FROM sms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid, gid}, &res2))
       continue;
 

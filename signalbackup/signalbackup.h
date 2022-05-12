@@ -115,7 +115,7 @@ class SignalBackup
                       std::vector<long long int> editattachments, bool stoponerror);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
-  bool exportXml(std::string const &filename, bool overwrite, bool includemms = false, bool keepattachmentdatainmemory = true) const;
+  bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   inline void listThreads() const;
   void cropToThread(long long int threadid);
@@ -206,8 +206,8 @@ class SignalBackup
   std::string decodeStatusMessage(std::string const &body, long long int expiration, long long int type,
                                   std::string const &contactname) const;
   void escapeXmlString(std::string *s) const;
-  void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i) const;
-  void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, int i, bool keepattachmentdatainmemory) const;
+  void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const;
+  void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const;
   inline std::string getStringOr(SqliteDB::QueryResults const &results, int i,
                                  std::string const &columnname, std::string const &def = std::string()) const;
   inline long long int getIntOr(SqliteDB::QueryResults const &results, int i,
@@ -224,6 +224,7 @@ class SignalBackup
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients() const;
+  bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
