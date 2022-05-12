@@ -68,7 +68,11 @@ changes, you must provide one of the output options.
                                          2(,...)", where each name is exactly as it appears in Signal's
                                          conversation overview or from this program's `--listhtreads'
                                          output.
---exportxml <FILE>                       Export the messages from the internal sms table to xml file FILE.
+--exportxml <FILE>                       Export the messages from the internal sms table to xml file FILE.)*"
+//   --includemms
+//   --includeattachmentdata
+//   --setselfid
+R"*(
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --overwrite                              Optional modifier for all output operations. Overwrite output
