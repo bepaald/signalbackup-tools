@@ -10,9 +10,9 @@ while [ $# -gt 0 ] ; do
 done
 
 CXX="${CXX:-g++}"
-CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -flto}"
+CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3 -flto}"
 CXXARCH="${CXXARCH:--march=native}"
-CXXSTD="${CXXSTD:--std=c++2b}"
+CXXSTD="${CXXSTD:--std=c++2a}"
 CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
 LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
 LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
