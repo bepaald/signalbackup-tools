@@ -89,7 +89,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (d_databaseversion < 24) // old database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->target.thread_id
-    source->d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", thread, &results);
+    source->d_database.exec("SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?", thread, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {
@@ -110,7 +110,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       // skip current thread if it is the releasechannel-thread
       // maybe I should deal with this in the future
       SqliteDB::QueryResults res2;
-      source->d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", thread, &res2);
+      source->d_database.exec("SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?", thread, &res2);
       if (res2.rows() &&
           ((res2.valueHasType<long long int>(0, 0) && res2.getValueAs<long long int>(0, 0) == source_releasechannel) ||
            (res2.valueHasType<std::string>(0, 0) && bepaald::toNumber<int>(res2.getValueAs<std::string>(0, 0)) == source_releasechannel)))
