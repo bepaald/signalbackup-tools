@@ -34,7 +34,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
 {
   if (!d_file.is_open())
   {
-    std::cout << "Failed to open file: '" << filename << "'" << std::endl;
+    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to open file: '" << filename << "'" << std::endl;
     return;
   }
 

@@ -311,5 +311,17 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "_id",
     {},
     0
+  },
+  {         // NOTE e164 is also UNIQUE, remove doubles (oldeest?) beforehand
+    "cds",  // 'Caontact Discovery Service (v2)??'
+    "_id",
+    {},
+    0
+  },
+  {         // Remove double (UNIQUE) uuid beforehand
+    "remote_megaphone",
+    "_id",
+    {},
+    0
   }
 };

@@ -156,6 +156,11 @@ int main(int argc, char *argv[])
 
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
+      if (!source->ok())
+      {
+        std::cout << "Error opening source database" << std::endl;
+        return 1;
+      }
 
       MEMINFO("After first time reading source");
 
@@ -176,6 +181,11 @@ int main(int argc, char *argv[])
 
       std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
+      if (!source->ok())
+      {
+        std::cout << "Error opening source database" << std::endl;
+        return 1;
+      }
       if (!sourcesummarized)
       {
         source->summarize();
