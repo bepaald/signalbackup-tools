@@ -151,7 +151,39 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleting " << count << " existing megaphones" << std::endl;
+      std::cout << "  Deleted " << count << " existing megaphones" << std::endl;
+  }
+
+  // delete double remote_megaphones
+  if (d_database.containsTable("remote_megaphone") && source->d_database.containsTable("remote_megaphone"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT uuid FROM remote_megaphone", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM remote_megaphone WHERE uuid = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing remote_megaphone's" << std::endl;
+  }
+
+  // delete double cds (contact discovery service entries)
+  if (d_database.containsTable("cds") && source->d_database.containsTable("cds"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT e164 FROM cds", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM cds WHERE e164 = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing cds's" << std::endl;
   }
 
   // delete double key_value entries (this table does not exist anymore currently)
@@ -224,18 +256,6 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   if (source->d_database.containsTable("emoji_search_config"))
     source->d_database.exec("DELETE FROM emoji_search_config");
   */
-
-  // delete double megaphones
-  if (d_database.containsTable("megaphone") && source->d_database.containsTable("megaphone"))
-  {
-    SqliteDB::QueryResults res;
-    d_database.exec("SELECT event FROM megaphone", &res);
-
-    std::cout << "  Deleting " << res.rows() << " existing megaphones" << std::endl;
-
-    for (uint i = 0; i < res.rows(); ++i)
-      source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.getValueAs<std::string>(i, 0));
-  }
 
   if (d_database.containsTable("group_call_ring") && source->d_database.containsTable("group_call_ring"))
   {
