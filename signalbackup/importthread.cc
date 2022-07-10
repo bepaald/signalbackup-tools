@@ -642,14 +642,15 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   d_database.freeMemory();
 
   // CHECKING DATA
-  std::cout << "Checking database integrity..." << std::endl;
+  std::cout << "Checking database integrity..." << std::flush;
   d_database.exec("SELECT DISTINCT [table],[parent] FROM pragma_foreign_key_check", &results);
   if (results.rows())
   {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Foreign key constraint violated. This will not end well, aborting." << std::endl
+    std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Foreign key constraint violated. This will not end well, aborting." << std::endl
               <<                     "     "                         " Please report this error to the program author." << std::endl;
     results.prettyPrint();
     return false;
   }
+  std::cout << " ok" << std::endl;
   return true;
 }

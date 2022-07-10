@@ -1093,12 +1093,16 @@ void SignalBackup::scanMissingAttachments() const
       continue;
     }
 
+    d_database.exec("SELECT pending_push FROM part WHERE pending_push IS NOT 0 AND _id = ? AND unique_id = ?", {missing[i].first, missing[i].second}, &res);
+    if (res.rows())
+    {
+      std::cout << "OK, EXPECTED (pending_push = " << res.valueAsString(0, 0) << ")" << std::endl;
+      continue;
+    }
+
     std::cout << "UNEXPECTED! details:" << std::endl;
     d_database.exec("SELECT quote,ct FROM part WHERE _id = ? AND unique_id = ?", {missing[i].first, missing[i].second}, &res);
     res.prettyPrint();
-
-
-
   }
 
 }
