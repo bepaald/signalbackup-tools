@@ -187,3 +187,6 @@ be removed.
 --ashmorgan                                   See https://github.com/bepaald/signalbackup-tools/issues/40
 )*";
 }
+
+
+// checkdbintegrity

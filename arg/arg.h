@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 69> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--ignorewal", "--includemms"};
+  std::array<std::string, 70> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--ignorewal", "--includemms", "--checkdbintegrity"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -100,6 +100,7 @@ class Arg
   bool d_importfromdesktop_bool;
   bool d_ignorewal;
   bool d_includemms;
+  bool d_checkdbintegrity;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -169,6 +170,7 @@ class Arg
   inline bool importfromdesktop_bool() const;
   inline bool ignorewal() const;
   inline bool includemms() const;
+  inline bool checkdbintegrity() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -498,6 +500,11 @@ inline bool Arg::ignorewal() const
 inline bool Arg::includemms() const
 {
   return d_includemms;
+}
+
+inline bool Arg::checkdbintegrity() const
+{
+  return d_checkdbintegrity;
 }
 
 inline bool Arg::ok() const

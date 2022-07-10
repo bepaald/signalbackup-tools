@@ -149,6 +149,7 @@ class SignalBackup
   inline void showDBInfo() const;
   bool scramble() const;
   bool importFromDesktop(std::string const &dir, bool ignorewal);
+  bool checkDbIntegrity() const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
