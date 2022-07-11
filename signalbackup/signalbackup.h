@@ -226,6 +226,7 @@ class SignalBackup
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients() const;
   bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const;
+  bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
