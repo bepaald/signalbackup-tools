@@ -183,9 +183,12 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         }
         else
         {
-          std::cout << "Warning: attachment data not found (rowid: " << rowid << ", uniqueid: " << uniqueid << ")" << std::endl;
-          if (d_showprogress)
-            std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+          if (!missingAttachmentExpected(rowid, uniqueid))
+          {
+            std::cout << "Warning: attachment data not found (rowid: " << rowid << ", uniqueid: " << uniqueid << ")" << std::endl;
+            if (d_showprogress)
+              std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+          }
         }
       }
       else if (table == "sticker") // find corresponding sticker
