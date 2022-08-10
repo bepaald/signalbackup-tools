@@ -22,7 +22,7 @@
 
 #include <string>
 
-#if defined(__linux__) && !defined(__MINGW64__)
+#if (defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__MINGW64__)
 #include <unistd.h>
 #include <termios.h>
 #endif
@@ -37,7 +37,7 @@ inline bool getPassword(std::string *pw)
   if (!pw)
     return false;
 
-#if defined(__linux__) && !defined(__MINGW64__)
+#if (defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__MINGW64__)
   // disable character echoing and line buffering
   struct termios tty_attr;
   if (tcgetattr(STDIN_FILENO, &tty_attr) < 0)
@@ -94,7 +94,7 @@ inline bool getPassword(std::string *pw)
   }
   PUTCHAR('\n');
 
-#if defined(__linux__) && !defined(__MINGW64__)
+#if (defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__MINGW64__)
   // restore terminal settings
   tty_attr.c_lflag = c_lflag;
 

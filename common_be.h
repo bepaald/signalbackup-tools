@@ -32,7 +32,7 @@
 #include <cstring>
 #include <algorithm>
 
-#if defined(__linux__) && !defined(__MINGW64__)
+#if (defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__MINGW64__)
 #include <sys/ioctl.h>
   #if __has_include("unistd.h")
   #define HAS_UNISTD_H_

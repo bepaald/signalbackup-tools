@@ -21,7 +21,7 @@
 
 int SqliteDB::QueryResults::availableWidth() const
 {
-#if defined(__linux__) && !defined(__MINGW64__)
+#if (defined(__linux__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__MINGW64__)
   struct winsize ts;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ts) != -1)
     return (ts.ws_col < 40) ? 40 : ts.ws_col;
