@@ -1101,7 +1101,7 @@ void SignalBackup::scanMissingAttachments() const
     }
 
     std::cout << "UNEXPECTED! details:" << std::endl;
-    d_database.exec("SELECT quote,ct FROM part WHERE _id = ? AND unique_id = ?", {missing[i].first, missing[i].second}, &res);
+    d_database.exec("SELECT quote,ct,pending_push FROM part WHERE _id = ? AND unique_id = ?", {missing[i].first, missing[i].second}, &res);
     res.prettyPrint();
   }
 
