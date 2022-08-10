@@ -56,6 +56,8 @@ For the most recent Windows executable, check [the releases page](https://github
 
 ### Running
 
+_NOTE_: In all examples below, one or more passwords are provided on the command line. If so desired, these can be omitted in which case you are prompted for the password at runtime.
+
 **<span id="fix">Fixing broken backups</span>**
 
 At the moment it has been used succesfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
