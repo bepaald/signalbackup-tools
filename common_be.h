@@ -32,15 +32,14 @@
 #include <cstring>
 #include <algorithm>
 
-#if defined(__linux__) && !defined(__MINGW64__)
+#if defined(_WIN32) || defined(__MINGW64__)
+#include <windows.h>
+#else // !windows
 #include <sys/ioctl.h>
   #if __has_include("unistd.h")
   #define HAS_UNISTD_H_
   #include <unistd.h>
   #endif
-#endif
-#if defined(_WIN32) || defined(__MINGW64__)
-#include <windows.h>
 #endif
 
 #ifdef DEBUGMSG

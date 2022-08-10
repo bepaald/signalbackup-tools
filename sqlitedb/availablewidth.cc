@@ -21,20 +21,16 @@
 
 int SqliteDB::QueryResults::availableWidth() const
 {
-#if defined(__linux__) && !defined(__MINGW64__)
-  struct winsize ts;
-  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ts) != -1)
-    return (ts.ws_col < 40) ? 40 : ts.ws_col;
-  return 80; // some random default;
-#else
 #if defined(_WIN32) || defined(__MINGW64__) // this is untested, I don't have windows
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   int ret = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
   if (ret)
     return (csbi.dwSize.X - 1 < 40) ? 40 : csbi.dwSize.X - 1;
   return 80;
-#else
-return 80;
-#endif
+#else // !windows
+  struct winsize ts;
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ts) != -1)
+    return (ts.ws_col < 40) ? 40 : ts.ws_col;
+  return 80; // some random default;
 #endif
 }
