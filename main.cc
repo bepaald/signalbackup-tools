@@ -23,6 +23,7 @@
 
 #include "arg/arg.h"
 #include "common_be.h"
+#include "main.h"
 #include "signalbackup/signalbackup.h"
 #include "sqlcipherdecryptor/sqlcipherdecryptor.h"
 
@@ -68,6 +69,53 @@ int main(int argc, char *argv[])
   {
     arg.usage();
     return 0;
+  }
+
+  bool ipw_interactive = false;
+  if (arg.password().empty() || arg.interactive()) // prompt for input password
+  {
+    std::string pw;
+    std::cout << "Please provide passphrase for input file '" << arg.input() << "': "  << std::flush;
+    if (!getPassword(&pw))
+    {
+      std::cout << "Failed to set password" << std::endl;
+      return 1;
+    }
+    arg.setpassword(pw);
+    ipw_interactive = true;
+  }
+
+  if (!arg.source().empty() && (arg.interactive() || arg.sourcepassword().empty()))
+  {
+    std::string spw;
+    std::cout << "Please provide passphrase for source file '" << arg.source() << "': "  << std::flush;
+    if (!getPassword(&spw))
+    {
+      std::cout << "Failed to set password" << std::endl;
+      return 1;
+    }
+    arg.setsourcepassword(spw);
+  }
+
+  // Ask for output password if
+  // output is written
+  // AND its a regular file (not dir)
+  // AND input password was not _initially_ set
+  // AND either interactive is requested, output password was not provided
+  if (!arg.output().empty() &&
+      ((bepaald::fileOrDirExists(arg.output()) && !bepaald::isDir(arg.output())) ||
+       (!bepaald::fileOrDirExists(arg.output()) && (arg.output().back() != '/' && arg.output().back() != std::filesystem::path::preferred_separator))) &&
+      ipw_interactive &&
+      (arg.interactive() || arg.opassword().empty()))
+  {
+    std::string opw;
+    std::cout << "Please provide passphrase for output file '" << arg.output() << "' (leave empty to use input passphrase): "  << std::flush;
+    if (!getPassword(&opw))
+    {
+      std::cout << "Failed to set password" << std::endl;
+      return 1;
+    }
+    arg.setopassword(opw);
   }
 
   // check output exists (file exists OR dir is not empty)

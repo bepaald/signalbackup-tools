@@ -40,6 +40,8 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id)
       return true;
 
   // if the attachment is in a quote, but required no preview (is not an image or video), attachment is expected to be missing
+  // NOTE
+  // I have seen this fail for a 'image/webp' type, maybe because that particular image type was not supported? (for that phone??)
   if (d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%'",
                       {rowid, unique_id}, &results))
     if (results.rows())

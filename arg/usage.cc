@@ -25,8 +25,9 @@ void Arg::usage() const
 Usage: )*" + d_progname + R"*( <INPUT> [<PASSWORD>] [OPTIONS]
 
 <INPUT> must be either a regular file, a backup file as exported by the Signal Android app, or a
-directory containing an unpacked backup as createed by this program. In the first case, <PASSWORD> is a
-required argument consisting of exactly 30 digits.
+directory containing an unpacked backup as createed by this program. In case the input, <PASSWORD> is
+a regular file, a <PASSWORD> is required. If it is omitted from the command line, a prompt is
+presented during runtime.
 Be sure to read the README at https://github.com/bepaald/signalbackup-tools/ for more detailed
 instructions for the core functions and examples.
 Note: this program never modifies the input, if you wish to alter the backup in any way and save your
@@ -36,12 +37,15 @@ changes, you must provide one of the output options.
 -i, --input <INPUT>            If for whatever reason you do not wish to pass the input as the first
                                argument, you can use this option anywhere in the list of arguments
 -p, --password <PASSWORD>      If for whatever reason you do not wish to pass the input as the second
-                               argument, you can use this option anywhere in the list of arguments
+                               argument, you can use this option anywhere in the list of arguments. If
+                               this option is omitted, but <INPUT> is a regular file, a prompt is
+                               presented to enter the password at runtime (also see `--interactive').
 --no-showprogress              Do not output the progress percentage. Especially useful when redirecting
                                output to file.
 --listthreads                  List the threads in the database with their `_id' numbers. These id's are
                                required intput for various other options.
 -h, --help                     Show this help message
+--interactive                  Prompt for all passwords
 --runsqlquery <QUERY>          Run <QUERY> against the backup's internal SQL database.
 --runprettysqlquery <QUERY>    As above, but try show output in a pretty table. If the output is not too
                                large for your terminal, this is often much more readable.

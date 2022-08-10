@@ -335,7 +335,7 @@ inline bool bepaald::supportsAnsi()
 
 inline bool bepaald::isTerminal()
 {
-#ifdef HAS_UNISTD_H_ // defined in .ih if unistd.h is available
+#ifdef HAS_UNISTD_H_ // defined if unistd.h is available
   static const bool result = []
   {
     return isatty(STDOUT_FILENO);

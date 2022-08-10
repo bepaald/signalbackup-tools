@@ -88,7 +88,8 @@ Arg::Arg(int argc, char *argv[])
   d_importfromdesktop_bool(false),
   d_ignorewal(false),
   d_includemms(false),
-  d_checkdbintegrity(false)
+  d_checkdbintegrity(false),
+  d_interactive(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -956,6 +957,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-checkdbintegrity")
     {
       d_checkdbintegrity = false;
+      continue;
+    }
+    if (option == "--interactive")
+    {
+      d_interactive = true;
+      continue;
+    }
+    if (option == "--no-interactive")
+    {
+      d_interactive = false;
       continue;
     }
     if (option[0] != '-')
