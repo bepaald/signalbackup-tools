@@ -22,14 +22,12 @@
 
 #include <string>
 
-#if defined(__linux__) && !defined(__MINGW64__)
-#include <unistd.h>
-#include <termios.h>
-#endif
-
 #if defined(_WIN32) || defined(__MINGW64__)
 #include <windows.h>
 #include <conio.h>
+#else // !windows
+#include <unistd.h>
+#include <termios.h>
 #endif
 
 inline bool getPassword(std::string *pw)
@@ -37,8 +35,12 @@ inline bool getPassword(std::string *pw)
   if (!pw)
     return false;
 
-#if defined(__linux__) && !defined(__MINGW64__)
-  // disable character echoing and line buffering
+#if defined(_WIN32) || defined(__MINGW64__)
+  int constexpr backspace = 8;
+  int constexpr enter = 13;
+  #define GETCHAR _getch // we're using _getch instead of getchar because then we'd need to disable line buffering
+  #define PUTCHAR _putch // but windows then still (incorrectly?) buffers the enter key breaking things.
+#else
   struct termios tty_attr;
   if (tcgetattr(STDIN_FILENO, &tty_attr) < 0)
     return false;
@@ -53,12 +55,6 @@ inline bool getPassword(std::string *pw)
   int constexpr enter = 10;
   #define GETCHAR getchar
   #define PUTCHAR putchar
-#endif
-#if defined(_WIN32) || defined(__MINGW64__)
-  int constexpr backspace = 8;
-  int constexpr enter = 13;
-  #define GETCHAR _getch // we're using _getch instead of getchar because then we'd need to disable line buffering
-  #define PUTCHAR _putch // but windows then still (incorrectly?) buffers the enter key breaking things.
 #endif
 
   char replacement = '*';
@@ -94,7 +90,8 @@ inline bool getPassword(std::string *pw)
   }
   PUTCHAR('\n');
 
-#if defined(__linux__) && !defined(__MINGW64__)
+#if defined(_WIN32) || defined(__MINGW64__)
+#else // !windows
   // restore terminal settings
   tty_attr.c_lflag = c_lflag;
 
