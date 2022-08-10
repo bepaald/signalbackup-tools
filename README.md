@@ -56,7 +56,7 @@ For the most recent Windows executable, check [the releases page](https://github
 
 ### Running
 
-_NOTE_: In all examples below, one or more passwords are provided on the command line. If so desired, these can be omitted in which case you are prompted for the password at runtime.
+_NOTE: In all examples below, one or more passwords are provided on the command line. If so desired, these can be omitted in which case you are prompted for the password at runtime._
 
 **<span id="fix">Fixing broken backups</span>**
 
@@ -66,7 +66,7 @@ At the moment it has been used succesfully to fix backups that were corrupted fo
 signalbackups-tools [input] [password] --output [outputfile] (--opassword [newpassword])
 ```
 
-_NOTE_: if the corruption happens outside of attachment data, which is usually unlikely, chances of recovery are much lower.
+_NOTE: if the corruption happens outside of attachment data, which is usually unlikely, chances of recovery are much lower._
 
 If the output password is omitted, the input password is used to encrypt the new backup file. If the 'input' is a directory, it is assumed to contain an unencrypted dump of the backup (as made by this tool) and the input password can be omitted. In this case the output password is required, unless 'output' is also a directory.
 
@@ -327,7 +327,7 @@ Files are identical
 [~/programming/signalbackup-tools] $
 ```
 
-_NOTE_ The original and new files are not actually guaranteed to be identical, it just so happens that in this case the AvatarFrames are read from the filesystem in the order they appeared in the original.
+_NOTE The original and new files are not actually guaranteed to be identical, it just so happens that in this case the AvatarFrames are read from the filesystem in the order they appeared in the original._
 
   </p>
 </details>
