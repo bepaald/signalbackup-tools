@@ -11,3 +11,4 @@
 !*/*.h
 !*/*.ih
 !.gitignore
+.ccls-cache/
