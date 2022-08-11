@@ -1,20 +1,13 @@
 #!/bin/bash
 
-CONFIG="default"
-while [ $# -gt 0 ] ; do
-    if [ "$1" = "--config" ] && [ $# -gt 1 ] ; then
-        CONFIG="$2"
-        shift
-    fi
-    shift
-done
-
 CXX="${CXX:-g++}"
-CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3 -flto}"
+CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3}"
+CXXLTOFLAGS="${CXXLTOFLAGS:--flto}"
 CXXARCH="${CXXARCH:--march=native}"
 CXXSTD="${CXXSTD:--std=c++2a}"
 CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
-LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
+if [[ $OSTYPE != "darwin"* ]]; then LDPLATFORMFLAGS="-Wl,-z,now -Wl,--as-needed -s"; fi
+LDFLAGS="${LDFLAGS:--Wall -Wextra -O3 -flto $LDPLATFORMFLAGS}"
 LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
 BIN="${BIN:-signalbackup-tools}"
 
@@ -216,12 +209,13 @@ OBJ=("cryptbase/o/cryptbase.o"
      "headerframe/o/statics.o"
      "stickerframe/o/statics.o")
 
+num_jobs=${#SRC[@]}
+
 ## "wait -n" was introduced in bash 4.3
 ## "${parameter@P}" was introduced in bash 4.4 (2016)
 ## both used in parallel for-loop
 # check we are using bash, and it is >= 4.4
-if [ ! -z ${BASH+x} ] && (([ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ]) || [ "${BASH_VERSINFO[0]}" -gt 4 ]) ; then
-  num_jobs=${#SRC[@]}
+if { [ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ] ;} || [ "${BASH_VERSINFO[0]}" -gt 4 ]; then
   NUMPROCS=$(nproc)
   RUNNINGJOBS="\j"  # The prompt escape for number of jobs currently running
                     ### echo "${RUNNINGJOBS}" // parameter expansion
@@ -230,13 +224,13 @@ if [ ! -z ${BASH+x} ] && (([ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO
                     ### 0   // for example)
 
   for (( i = 0; i < num_jobs; i++ )); do
-      while (( ${RUNNINGJOBS@P} >= $NUMPROCS )); do
+      while (( ${RUNNINGJOBS@P} >= NUMPROCS )); do
           wait -n
       done
       mkdir -p $(dirname "${OBJ[$i]}")
       if [ ! "${OBJ[$i]}" -nt "${SRC[$i]}" ] ; then
-          echo "$CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
-          $CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}" &
+          echo "$CXX -c $CXXFLAGS $CXXLTOFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
+          $CXX -c $CXXFLAGS $CXXLTOFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}" &
       fi
   done
   wait
@@ -244,8 +238,8 @@ else
   for (( i = 0; i < num_jobs; i++ )); do
       mkdir -p $(dirname "${OBJ[$i]}")
       if [ ! "${OBJ[$i]}" -nt "${SRC[$i]}" ] ; then
-          echo "$CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
-          $CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}"
+          echo "$CXX -c $CXXFLAGS $CXXLTOFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
+          $CXX -c $CXXFLAGS $CXXLTOFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}"
       fi
   done
 fi
