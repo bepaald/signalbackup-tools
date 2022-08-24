@@ -386,8 +386,10 @@ _NOTE: Although this feature generally seems to work quite well, it requires con
 To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [password] --listthreads`. Either both backups need to have database version <= 27, both >= 33, or both in between 27 and 33. If needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
 
 ```
-signalbackup-tools [first_database] [password] --importthreads ALL --source [second_database] --sourcepassword [password] --output [output_file] (--opassword [output password])
+signalbackup-tools [first_database] [password] --importthreads ALL --source [second_database] --sourcepassword [password] --output [output_file] (--opassword [newpassword])
 ```
+
+> Note: if a new password is not specified with `--opassword`, then the password will be the same as for `second_database`
 
 Always use the backup file with the highest database version as 'first_database' and the older version as source. If not all threads should be imported from the source, a list of thread ids can be supplied (eg `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`.
 
