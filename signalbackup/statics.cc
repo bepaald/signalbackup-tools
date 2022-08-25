@@ -228,7 +228,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "storage_key",
     "_id",
     {},
-    WARN // I have never seen this table not-empty, this link definition may be incomplete (has 'key TEXT UNIQUE' field)
+    0 //WARN // I have never seen this table not-empty, this link definition may be incomplete (has 'key TEXT UNIQUE' field)
+    // see #76, should be fixed (existing 'key' entries are deleted in importThread()
   },
   {
     "sender_key_shared",
