@@ -138,6 +138,22 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   // crop the source db to the specified thread
   source->cropToThread(thread);
 
+  // remove any storage_key entries that are already in target...
+  if (d_database.containsTable("storage_key") && source->d_database.containsTable("storage_key"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT key FROM storage_key", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM storage_key WHERE key = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing storage_keys" << std::endl;
+  }
+
   // delete double megaphones
   if (d_database.containsTable("megaphone") && source->d_database.containsTable("megaphone"))
   {
