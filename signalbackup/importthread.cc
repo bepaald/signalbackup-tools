@@ -58,7 +58,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 
       }
 
-      // apply the remapping (probably only some reactions _may_ need to be tranferred?)
+      // apply the remapping (probably only some reactions _may_ need to be transferred?)
       source->remapRecipients();
       // now, the remapping was 'applied', old_id should not occur in database anymore, and remapped_recipients can be cleared?
       source->d_database.exec("DELETE FROM remapped_recipients");
@@ -425,7 +425,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.exec("SELECT * FROM remapped_recipients WHERE old_id = ? AND new_id = ?", {oldid, newid}, &r2);
       if (r2.rows()) // this mapping is in target already
       {
-        std::cout << "Skipping import of remapped_recipient (" << oldid << " -> " << newid << "), mapping alrady in target database" << std::endl;
+        std::cout << "Skipping import of remapped_recipient (" << oldid << " -> " << newid << "), mapping already in target database" << std::endl;
         source->d_database.exec("DELETE FROM remapped_recipients WHERE _id = ?", id);
       }
     }
@@ -460,7 +460,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   }
   else // no matching thread in target (but recipient may still exist)
   {
-    // check identities and recepient prefs for presence of values, they may be there (even though no
+    // check identities and recipient prefs for presence of values, they may be there (even though no
     // thread was found (for example via a group chat or deleted thread))
     // get identities from target, drop all rows from source that are already present
     if (d_databaseversion < 24)
@@ -479,7 +479,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
           source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
     }
 
-    // get recipient(_preferences) from target, drop all rows from source that are allready present
+    // get recipient(_preferences) from target, drop all rows from source that are already present
     if (d_databaseversion < 24)
     {
       d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
@@ -613,7 +613,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
 
     // if all columns were dropped, the entire table (probably) does not exist in target database, we'll just skip it
-    // for instance, a (newly/currently?) created database wil not have the megaphone table
+    // for instance, a (newly/currently?) created database will not have the megaphone table
     if (results.columns() == 0)
     {
       std::cout << "  NOTE: Skipping table '" << table << "', it has no columns left" << std::endl;

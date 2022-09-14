@@ -18,6 +18,33 @@ LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
 LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
 BIN="${BIN:-signalbackup-tools}"
 
+# CONFIG: cryptopp
+if [ "$CONFIG" = "cryptopp" ] ; then
+  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -DUSE_CRYPTOPP -O3 -flto"
+  LDLIBS="-lcryptopp -lsqlite3"
+fi
+
+# CONFIG: darwin
+if [ "$CONFIG" = "darwin" ] ; then
+  LDFLAGS="-Wall -Wextra -flto -O3"
+fi
+
+# CONFIG: nixpkgs
+if [ "$CONFIG" = "nixpkgs" ] ; then
+  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3"
+  LDFLAGS="-Wall -Wextra -O3"
+fi
+
+# CONFIG: windows
+if [ "$CONFIG" = "windows" ] ; then
+  CXX="x86_64-w64-mingw32-g++"
+  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -D_WIN32_WINNT=0x600 -I/usr/x86_64-w64-mingw32/include/ -O3 -flto"
+  CXXARCH=""
+  LDFLAGS="-Wall -Wextra -Wl,--as-needed -static-libgcc -static-libstdc++ -static -L/usr/x86_64-w64-mingw32/lib/ -O3 -s -flto=auto"
+  LDLIBS="-lcrypto -lsqlite3 -lssp -luser32 -lcrypt32 -ladvapi32 -lgdi32 -lws2_32"
+  BIN="signalbackup-tools_win.exe"
+fi
+
 SRC=("cryptbase/cryptbase.cc"
      "cryptbase/getbackupkey.cc"
      "cryptbase/getcipherandmac.cc"
@@ -216,12 +243,13 @@ OBJ=("cryptbase/o/cryptbase.o"
      "headerframe/o/statics.o"
      "stickerframe/o/statics.o")
 
+num_jobs=${#SRC[@]}
+
 ## "wait -n" was introduced in bash 4.3
 ## "${parameter@P}" was introduced in bash 4.4 (2016)
 ## both used in parallel for-loop
 # check we are using bash, and it is >= 4.4
-if [ ! -z ${BASH+x} ] && (([ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ]) || [ "${BASH_VERSINFO[0]}" -gt 4 ]) ; then
-  num_jobs=${#SRC[@]}
+if [ ! -z ${BASH+x} ] && ( { [ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ] ; } || [ "${BASH_VERSINFO[0]}" -gt 4 ]) ; then
   NUMPROCS=$(nproc)
   RUNNINGJOBS="\j"  # The prompt escape for number of jobs currently running
                     ### echo "${RUNNINGJOBS}" // parameter expansion
@@ -230,7 +258,7 @@ if [ ! -z ${BASH+x} ] && (([ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO
                     ### 0   // for example)
 
   for (( i = 0; i < num_jobs; i++ )); do
-      while (( ${RUNNINGJOBS@P} >= $NUMPROCS )); do
+      while (( ${RUNNINGJOBS@P} >= NUMPROCS )); do
           wait -n
       done
       mkdir -p $(dirname "${OBJ[$i]}")
@@ -250,6 +278,7 @@ else
   done
 fi
 
+# Linking
 echo "$CXX ${OBJ[@]} $LDFLAGS -o $BIN $LDLIBS"
 $CXX "${OBJ[@]}" $LDFLAGS -o "$BIN" $LDLIBS
 

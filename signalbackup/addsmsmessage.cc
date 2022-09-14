@@ -76,7 +76,7 @@ sub_cs INTEGER,
 part_count INTEGER,
 ct_t TEXT,
 ct_l TEXT,
-** address TEXT,  -> for goup messages, this is '__textsecure_group__!xxxxx...' for outgoing, +316xxxxxxxx for incoming
+** address TEXT,  -> for group messages, this is '__textsecure_group__!xxxxx...' for outgoing, +316xxxxxxxx for incoming
 address_device_id INTEGER,
 exp INTEGER,
 m_cls TEXT,

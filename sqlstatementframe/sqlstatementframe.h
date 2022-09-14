@@ -110,7 +110,7 @@ inline SqlStatementFrame::SqlStatementFrame(unsigned char *data, size_t length, 
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::PARAMETERS)
     {
-      //std::cout << "INITIALIZING PARAMATERS: " << std::get<2>(p) << " bytes" << std::endl;
+      //std::cout << "INITIALIZING PARAMETERS: " << std::get<2>(p) << " bytes" << std::endl;
       [[unlikely]]if (!init(std::get<1>(p), std::get<2>(p), &d_parameterdata))
       {
         d_ok = false;
@@ -589,7 +589,7 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
     case PARAMETER_FIELD::STRING:
       {
         //if ()
-        //std::cout << "Retunring string paramter: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << std::endl;
+        //std::cout << "Retunring string parameter: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << std::endl;
         parameters.emplace_back(bepaald::bytesToString(std::get<1>(p), std::get<2>(p)));
         /*
           std::string rep = bepaald::bytesToString(std::get<1>(p), std::get<2>(p));

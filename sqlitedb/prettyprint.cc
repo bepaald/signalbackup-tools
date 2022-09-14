@@ -72,7 +72,7 @@ void SqliteDB::QueryResults::prettyPrint() const
     }
   }
 
-  // calulate widths
+  // calculate widths
   std::vector<uint> widths(contents[0].size(), 0);
   for (uint col = 0; col < contents[0].size(); ++col)
     for (uint row = 0; row < contents.size(); ++row)
@@ -91,7 +91,7 @@ void SqliteDB::QueryResults::prettyPrint() const
     std::vector<int> oversizedcols;
     uint widestcol = 0;
     uint maxwidth = 0;
-    // each column has availableWidth() / nCols (- tableedges) avaliable by fairness.
+    // each column has availableWidth() / nCols (- tableedges) available by fairness.
     // add to this all the space not needed by the columns that are
     // less wide than availableWidth() / nCols anyway.
     for (uint i = 0; i < widths.size(); ++i)
@@ -252,7 +252,7 @@ void SqliteDB::QueryResults::prettyPrint() const
 //     }
 //   }
 
-//   // calulate widths
+//   // calculate widths
 //   std::vector<uint> widths(contents[0].size(), 0);
 //   for (uint col = 0; col < contents[0].size(); ++col)
 //     for (uint row = 0; row < contents.size(); ++row)
@@ -271,7 +271,7 @@ void SqliteDB::QueryResults::prettyPrint() const
 //     std::vector<int> oversizedcols;
 //     uint widestcol = 0;
 //     uint maxwidth = 0;
-//     // each column has availableWidth() / nCols (- tableedges) avaliable by fairness.
+//     // each column has availableWidth() / nCols (- tableedges) available by fairness.
 //     // add to this all the space not needed by the columns that are
 //     // less wide than availableWidth() / nCols anyway.
 //     for (uint i = 0; i < widths.size(); ++i)
