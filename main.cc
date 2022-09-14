@@ -72,7 +72,8 @@ int main(int argc, char *argv[])
   }
 
   bool ipw_interactive = false;
-  if (arg.password().empty() || arg.interactive()) // prompt for input password
+  if ((arg.password().empty() || arg.interactive()) && // prompt for input password
+      !bepaald::isDir(arg.input()))
   {
     std::string pw;
     std::cout << "Please provide passphrase for input file '" << arg.input() << "': "  << std::flush;
