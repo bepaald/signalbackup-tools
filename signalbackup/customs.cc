@@ -183,7 +183,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 
       group.group_id := recipient.group_id ( == conversations.groupId)
            .title    := conversations.name
-           .members  := CONVERT(convertations.members FROM conversation.id -> recipient._id)
+           .members  := CONVERT(conversations.members FROM conversation.id -> recipient._id)
            .recipient_ids := [s|m]ms.recipient_ids
 
 
@@ -657,7 +657,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
     return false;
   }
 
-  // since msl_ tables (messagesendlog) deal with sent messages, we shoudl clear them
+  // since msl_ tables (messagesendlog) deal with sent messages, we should clear them
   // (they are received messages now).
   d_database.exec("DELETE FROM msl_payload");
   d_database.exec("DELETE FROM msl_recipient");
@@ -718,7 +718,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       /*
 
         For incoming and outgoing calls, mostly only the type changes, but (at least on
-        new entries) an incoming call that was not succesful (not picked up), the
+        new entries) an incoming call that was not successful (not picked up), the
         notified_timestamp and reactions_last_seen are filled in. For incoming calls that
         do connect, these are empty (as with outgoing).
 
@@ -727,14 +727,14 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
 
         SELECT * from sms WHERE type BETWEEN 1 AND 3 ORDER BY date ASC;
         _id|thread_id|address|address_device_id|person|date|date_sent|date_server|protocol|read|status|type|reply_path_present|delivery_receipt_count|subject|body|mismatched_identities|service_center|subscription_id|expires_in|expire_started|notified|read_receipt_count|unidentified|reactions|reactions_unread|reactions_last_seen|remote_deleted|notified_timestamp|server_guid|receipt_timestamp
-        (outgoing, unsuccesful) 30|1|2|1||1633872620815|1633872620813|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-        (outgoing, succesful)   31|1|2|1||1633872637225|1633872637221|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+        (outgoing, unsuccessful) 30|1|2|1||1633872620815|1633872620813|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+        (outgoing, successful)   31|1|2|1||1633872637225|1633872637221|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
         (incoming, missed)      32|1|2|1||1633872653837|1633872649947|-1||1|-1|3||0|||||-1|0|0|0|0|0||0|1633872655142|0|1633872654248||-1
         (incoming, accepted)    33|1|2|1||1633872661166|1633872661164|-1||1|-1|1||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
 
         SIMILAR GOES FOR VIDEO CALLS
-        (outgoing, unsuccesful) 35|1|2|1||1633873910158|1633873910157|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-        (outgoing, succesful)   36|1|2|1||1633873922647|1633873922644|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+        (outgoing, unsuccessful) 35|1|2|1||1633873910158|1633873910157|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+        (outgoing, successful)   36|1|2|1||1633873922647|1633873922644|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
         (incoming, missed)      37|1|2|1||1633873937640|1633873934877|-1||1|-1| 8||0|||||-1|0|0|0|0|0||0|1633873939058|0|1633873937835||-1
         (incoming, rejected)    38|1|2|1||1633873946618|1633873946615|-1||1|-1| 8||0|||||-1|0|0|0|0|0||0|1633873947990|0|            0||-1
         (incoming, accepted)    39|1|2|1||1633873954061|1633873954058|-1||1|-1|10||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
@@ -868,7 +868,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       case Types::BASE_SENDING_TYPE:
       {
         /*
-          Not sure what to do with this. Lets say it was eventually succesfully sent
+          Not sure what to do with this. Lets say it was eventually successfully sent
           sometime after this backup was made...
 
           not sure about all the fields, I don't have this type in my db's
@@ -904,7 +904,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
           service_center -> GCM
           reactions_last_seen -> -1(old) ~(date+40000)(new)
           notified_timestamp -> 0(old) ~(date+150)(new)
-          server_guid -> NULL(old) Somthing(new)
+          server_guid -> NULL(old) Something(new)
           receipt_timestamp -> -1
 
           NOTE, I use the old values where available. All messages that were in the db before these fields existed are -1 (or 0)

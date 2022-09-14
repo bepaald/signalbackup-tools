@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
   if (arg.hiperfall() != -1)
     if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
     {
-      std::cout << "Some error occured..." << std::endl;
+      std::cout << "Some error occurred..." << std::endl;
       return 1;
     }
 

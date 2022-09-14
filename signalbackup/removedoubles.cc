@@ -33,7 +33,7 @@ void SignalBackup::removeDoubles()
 
 
   //cleanDatabaseByMessages();
-  // cleandatabasebymessages is a complicated (risky?) function becuase it messes with recipients.
+  // cleandatabasebymessages is a complicated (risky?) function because it messes with recipients.
   // theoretically, removing doubled messages should not affect the recipient table
   // here we duplicate the relevant parts of cleanDatabaseByMessages()
 

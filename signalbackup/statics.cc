@@ -94,7 +94,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
                                                         // fields. (give missing fields default init in header)
       {"distribution_list", "recipient_id"},
       {"distribution_list_member", "recipient_id"},
-      {"story_sends", "recipient_id"}
+      {"story_sends", "recipient_id"},
+      {"pending_pni_signature_message", "recipient_id"}
     },
     NO_COMPACT
   },
@@ -235,25 +236,25 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "sender_key_shared",
     "_id",
     {},
-    WARN // I have never seen this table not-empty, this link defenition may be incomplete (has 'address' field + multiple UNIQUE)
+    WARN // I have never seen this table not-empty, this link definition may be incomplete (has 'address' field + multiple UNIQUE)
   },
   {
     "sender_keys",
     "_id",
     {},
-    WARN // I have never seen this table not-empty, this link defenition may be incomplete (has UNIQUE 'address' field)
+    WARN // I have never seen this table not-empty, this link definition may be incomplete (has UNIQUE 'address' field)
   },
   {
     "pending_retry_receipts",
     "_id",
     {},
-    WARN // I have never seen this table not-empty, this link defenition may be incomplete (has UNIQUE 'author' field + more)
+    WARN // I have never seen this table not-empty, this link definition may be incomplete (has UNIQUE 'author' field + more)
   },
   {
     "avatar_picker",
     "_id",
     {},
-    WARN // I have never seen this table not-emptyy, this link defenition may be incomplete (has 'group_id' field)
+    WARN // I have never seen this table not-emptyy, this link definition may be incomplete (has 'group_id' field)
   },
   {
     "emoji_search",
@@ -323,6 +324,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
   },
   {         // Remove double (UNIQUE) uuid beforehand
     "remote_megaphone",
+    "_id",
+    {},
+    0
+  },
+  {
+    "pending_pni_signature_message",
     "_id",
     {},
     0

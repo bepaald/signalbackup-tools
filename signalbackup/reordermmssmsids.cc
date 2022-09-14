@@ -49,7 +49,7 @@ bool SignalBackup::reorderMmsSmsIds() const
         return false;
   }
 
-  // now make all id's positve again
+  // now make all id's positive again
   if (!d_database.exec("UPDATE mms SET _id = _id * -1 WHERE _id < 0") ||
       !d_database.exec("UPDATE part SET mid = mid * -1 WHERE mid < 0") ||
       !d_database.exec("UPDATE group_receipts SET mms_id = mms_id * -1 WHERE mms_id < 0"))

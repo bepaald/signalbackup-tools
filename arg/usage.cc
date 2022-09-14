@@ -43,7 +43,7 @@ changes, you must provide one of the output options.
 --no-showprogress              Do not output the progress percentage. Especially useful when redirecting
                                output to file.
 --listthreads                  List the threads in the database with their `_id' numbers. These id's are
-                               required intput for various other options.
+                               required input for various other options.
 -h, --help                     Show this help message
 --interactive                  Prompt for all passwords
 --runsqlquery <QUERY>          Run <QUERY> against the backup's internal SQL database.
@@ -102,7 +102,7 @@ R"*(
 //--importfromdesktop [DIR]               Import messages from Signal Desktop. If the program fails to find
 //                                        you Desktop installation or it is in a non-standard location,
 //                                        the optional [DIR] can be provided.
-//   --ignorewal                          Optional modifier for `--importfromdesktop'. Ignores an exising WAL
+//   --ignorewal                          Optional modifier for `--importfromdesktop'. Ignores an existing WAL
 //                                        file when opening the Signal Desktop database.
 R"*(
 --deleteattachments                     Delete attachments from backup file.
@@ -135,7 +135,7 @@ R"*(
 The following options are also supported in this program, and listed here for completeness. Some of them
 are mostly useful for the developer, others were custom functions for specific problems that are not
 expected to be very useful to other people. Most of these functions are poorly tested (if at all) and
-possibly outdated. Some will probably eventually be renamed and more thouroughly documented others will
+possibly outdated. Some will probably eventually be renamed and more thoroughly documented others will
 be removed.
 --showdbinfo                                  Prints list of all tables and columns in the backups Sqlite
                                               database.
@@ -152,7 +152,7 @@ be removed.
    --setwatimefmt <TIMEFMT>                   Required modifier for `--importwachat'.
 --dumpdesktopdb <PATH>                        Decrypts the Signal Desktop database and saves it to the
                                               file `desktop.db'. PATH is the base path of Signal
-                                              Desktop's data (eg `~/.config/Signal' on Linux. The porgram
+                                              Desktop's data (eg `~/.config/Signal' on Linux. The program
                                               stupidly still needs an <INPUT> and <PASSWORD> parameter to
                                               actually run.
 --assumebadframesizeonbadmac                  Used to fix a specific (long fixed) bug in Signal. See

@@ -291,7 +291,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
         --count;
         address += p + (count ? "~" : "");
       }
-      //std::cout << "Got addres: " << address << std::endl;
+      //std::cout << "Got address: " << address << std::endl;
     }
     else if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "phone"))
     {
@@ -641,7 +641,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     else if (mms_row < mms_results.rows())
       handleMms(mms_results, outputfile, self, mms_row++, keepattachmentdatainmemory);
 
-    //std::cout << "Handled row! Indeces now: " << sms_row << "/" << sms_results.rows() << " " << mms_row << "/" << mms_results.rows() << std::endl;
+    //std::cout << "Handled row! Indices now: " << sms_row << "/" << sms_results.rows() << " " << mms_row << "/" << mms_results.rows() << std::endl;
   }
 
   outputfile << "</smses>" << std::endl;

@@ -76,7 +76,7 @@ bool SignalBackup::importCSV(std::string const &file, std::map<std::string, std:
       statement += csvfile.get(f, msg) + ',';
     }
 
-    // determin thread_id
+    // determine thread_id
     long long int tid = getThreadIdFromRecipient(csvfile.get(idx_of_address, msg));
     if (tid == -1)
     {

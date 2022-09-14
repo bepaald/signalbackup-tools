@@ -251,7 +251,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");
 
-  // remove avatars not belonging to exisiting recipients
+  // remove avatars not belonging to existing recipients
   std::cout << "  Deleting unused avatars..." << std::endl;
   SqliteDB::QueryResults results;
   if (d_databaseversion < 24)

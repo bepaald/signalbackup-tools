@@ -68,7 +68,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
       "WHERE recipient._id == ?";
 
     // if ! limit.empty()
-    // query += " AND _id == somehting, or chatpartner == ''
+    // query += " AND _id == something, or chatpartner == ''
 
     if (!d_database.exec(query, af->recipient(),  &results))
       return false;

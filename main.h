@@ -63,7 +63,7 @@ inline bool getPassword(std::string *pw)
 
 #if defined(_WIN32) || defined(__MINGW64__)
     // windows _getch() swallows C-c and C-z (even though docs say it
-    // doesnt). So we check for them here. Not sure what the proper
+    // doesn't). So we check for them here. Not sure what the proper
     // response to C-z actually is...
     if (c == 3) // C-c
       GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0);
