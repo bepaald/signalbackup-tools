@@ -29,8 +29,8 @@ if [ "$CONFIG" = "darwin" ] ; then
   LDFLAGS="-Wall -Wextra -flto -O3"
 fi
 
-# CONFIG: nixpkgs
-if [ "$CONFIG" = "nixpkgs" ] ; then
+# CONFIG: nixpkgs-darwin
+if [ "$CONFIG" = "nixpkgs-darwin" ] ; then
   CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3"
   LDFLAGS="-Wall -Wextra -O3"
 fi
