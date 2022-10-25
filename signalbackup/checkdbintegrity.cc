@@ -19,19 +19,47 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::checkDbIntegrity() const
+bool SignalBackup::checkDbIntegrity(bool onlyforeignkeys) const
 {
-  // CHECKING DATA
-  std::cout << "Checking database integrity..." << std::flush;
   SqliteDB::QueryResults results;
+
+  // CHECKING FOREIGN KEY CONSTRAINTS
+  std::cout << "Checking foreign key constraints..." << std::flush;
   d_database.exec("SELECT DISTINCT [table],[parent] FROM pragma_foreign_key_check", &results);
   if (results.rows())
   {
     std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Foreign key constraint violated. This will not end well, aborting." << std::endl
+              <<                                  "     "                         " Please report this error to the program author." << std::endl;
+    results.prettyPrint();
+    return false;
+  }
+  std::cout << " ok" << std::endl;
+
+  if (onlyforeignkeys)
+    return true;
+
+  // std::cout << "Checking database integrity (quick)..." << std::flush;
+  // d_database.exec("SELECT * FROM pragma_quick_check", &results);
+  // if (results.rows() && results.valueAsString(0, "quick_check") != "ok")
+  // {
+  //   std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Database integrity check failed. This will not end well, aborting." << std::endl
+  //             <<                                  "     "                         " Please report this error to the program author." << std::endl;
+  //   results.prettyPrint();
+  //   return false;
+  // }
+  // std::cout << " ok" << std::endl;
+
+  // CHECKING DATABASE
+  std::cout << "Checking database integrity (full)..." << std::flush;
+  d_database.exec("SELECT * FROM pragma_integrity_check", &results);
+  if (results.rows() && results.valueAsString(0, "integrity_check") != "ok")
+  {
+    std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Database integrity check failed. This will not end well, aborting." << std::endl
               <<                     "     "                         " Please report this error to the program author." << std::endl;
     results.prettyPrint();
     return false;
   }
   std::cout << " ok" << std::endl;
+
   return true;
 }
