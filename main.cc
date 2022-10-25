@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
     }
 
   if (arg.checkdbintegrity())
-    sb->checkDbIntegrity();
+    sb->checkDbIntegrity(false);
 
   if (arg.devcustom())
   {
