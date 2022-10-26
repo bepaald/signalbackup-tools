@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CONFIG="default"
+CONFIG="${CONFIG:-default}"
 while [ $# -gt 0 ] ; do
     if [ "$1" = "--config" ] && [ $# -gt 1 ] ; then
         CONFIG="$2"
