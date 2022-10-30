@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef PROTOBUFPARSER_H_
@@ -404,7 +404,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       return fielddata;
     else // some numerical type (double / float / (u)int32/64 / bool / Enum)
     {
-      [[likely]] if (varint) // wiretype was varint -> raw data needs to be decoded into the actual number
+      if (varint) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
       {
         if constexpr (std::is_same<T, ZigZag32>::value || std::is_same<T, ZigZag64>::value)
         {
@@ -422,7 +422,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
         if constexpr (std::is_same<T, Fixed32>::value || std::is_same<T, Fixed64>::value ||
                       std::is_same<T, SFixed32>::value || std::is_same<T, SFixed64>::value)
         {
-          [[likely]] if (sizeof(T) == fielddata.second)
+          if (sizeof(T) == fielddata.second) [[likely]]
           {
             typename ProtoBufParserReturn::item_return<T, false>::type::value_type result; // ie.: uint32_t result; (stripped off std::optional
             std::memcpy(reinterpret_cast<char *>(&result), reinterpret_cast<char *>(fielddata.first), fielddata.second);
@@ -436,7 +436,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
         }
         else if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value)
         {
-          [[likely]] if (sizeof(T) == fielddata.second)
+          if (sizeof(T) == fielddata.second) [[likely]]
           {
             T result;
             std::memcpy(reinterpret_cast<char *>(&result), reinterpret_cast<char *>(fielddata.first), fielddata.second);
@@ -476,7 +476,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
         result.emplace_back(fielddata);
       else // maybe check return type is numerical? if constexpr (typename ProtoBufParserReturn::item_return<T, true>::type::value_type == numerical type);
       {
-        [[likely]] if (varint) // wiretype was varint -> raw data needs to be decoded into the actual number
+        if (varint) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
         {
           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
                         std::is_same<typename T::value_type, ZigZag64>::value)
@@ -492,7 +492,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
         }
         else
         {
-          [[likely]] if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second)
+          if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second) [[likely]]
           {
             typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
             std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);
@@ -914,7 +914,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
 
     switch (wiretype)
     {
-    case WIRETYPE::LENGTH_DELIMITED:
+      case WIRETYPE::LENGTH_DELIMITED:
       {
         uint64_t localfieldlength = readVarInt(&nextpos, d_data, d_size);
         if (field == num)
@@ -926,7 +926,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         localpos = nextpos + localfieldlength;
         break;
       }
-    case WIRETYPE::VARINT:
+      case WIRETYPE::VARINT:
       {
         uint64_t localfieldlength = getVarIntFieldLength(nextpos, d_data, d_size);
         if (field == num)
@@ -938,7 +938,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         localpos = nextpos + localfieldlength;
         break;
       }
-    case WIRETYPE::FIXED64:
+      case WIRETYPE::FIXED64:
       {
         uint64_t localfieldlength = 8;
         if (field == num)
@@ -950,7 +950,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         localpos = nextpos + localfieldlength;
         break;
       }
-    case WIRETYPE::FIXED32:
+      case WIRETYPE::FIXED32:
       {
         uint64_t localfieldlength = 4;
         if (field == num)
@@ -962,19 +962,19 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         localpos = nextpos + localfieldlength;
         break;
       }
-    case WIRETYPE::STARTGROUP:
+      case WIRETYPE::STARTGROUP:
       {
         if (field == num)
           std::cout << "Skipping startgroup for now" << std::endl;
         break;
       }
-    case WIRETYPE::ENDGROUP:
+      case WIRETYPE::ENDGROUP:
       {
         if (field == num)
           std::cout << "Skipping endgroup for now" << std::endl;
         break;
       }
-    default:
+      default:
       {
         std::cout << "Unknown wiretype: " << wiretype << std::endl;
         return;
@@ -1001,7 +1001,7 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
     ++(*pos);
     switch (wiretype)
     {
-    case WIRETYPE::LENGTH_DELIMITED:
+      case WIRETYPE::LENGTH_DELIMITED:
       {
         uint64_t fieldlength = readVarInt(pos, d_data, d_size);
         if (field == num)
@@ -1009,7 +1009,7 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
         *pos += fieldlength;
         break;
       }
-    case WIRETYPE::VARINT:
+      case WIRETYPE::VARINT:
       {
         *isvarint = true;
         uint64_t fieldlength = getVarIntFieldLength(*pos, d_data, d_size);
@@ -1018,27 +1018,27 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
         *pos += fieldlength;
         break;
       }
-    case WIRETYPE::FIXED64:
+      case WIRETYPE::FIXED64:
       {
         if (field == num)
           return std::make_pair(d_data + *pos, 8);
         *pos += 8;
         break;
       }
-    case WIRETYPE::FIXED32:
+      case WIRETYPE::FIXED32:
       {
         if (field == num)
           return std::make_pair(d_data + *pos, 4);
         *pos += 4;
         break;
       }
-    case WIRETYPE::STARTGROUP:
+      case WIRETYPE::STARTGROUP:
       {
         if (field == num)
           std::cout << "Skipping startgroup for now" << std::endl;
         break;
       }
-    case WIRETYPE::ENDGROUP:
+      case WIRETYPE::ENDGROUP:
       {
         if (field == num)
           std::cout << "Skipping endgroup for now" << std::endl;
@@ -1065,33 +1065,33 @@ bool ProtoBufParser<Spec...>::fieldExists(int num) const
 
     switch (wiretype)
     {
-    case WIRETYPE::LENGTH_DELIMITED:
+      case WIRETYPE::LENGTH_DELIMITED:
       {
         uint64_t fieldlength = readVarInt(&pos, d_data, d_size);
         pos += fieldlength;
         break;
       }
-    case WIRETYPE::VARINT:
+      case WIRETYPE::VARINT:
       {
         uint64_t fieldlength = getVarIntFieldLength(pos, d_data, d_size);
         pos += fieldlength;
         break;
       }
-    case WIRETYPE::FIXED64:
+      case WIRETYPE::FIXED64:
       {
         pos += 8;
         break;
       }
-    case WIRETYPE::FIXED32:
+      case WIRETYPE::FIXED32:
       {
         pos += 4;
         break;
       }
-    case WIRETYPE::STARTGROUP: // deprecated/not implemented yet
+      case WIRETYPE::STARTGROUP: // deprecated/not implemented yet
       {
         break;
       }
-    case WIRETYPE::ENDGROUP: // deprecated/not implemented yet
+      case WIRETYPE::ENDGROUP: // deprecated/not implemented yet
       {
         break;
       }

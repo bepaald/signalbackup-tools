@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef SHAREDPREFFRAME_H_
@@ -26,13 +26,13 @@ class SharedPrefFrame : public BackupFrame
 {
   enum FIELD
   {
-   INVALID = 0,
-   FILE = 1, // string
-   KEY = 2,  // string
-   VALUE = 3, // string
-   BOOLEANVALUE = 4, // bool
-   STRINGSETVALUE = 5, // string (repeated)
-   ISSTRINGSETVALUE = 6 // bool
+    INVALID = 0,
+    FILE = 1, // string
+    KEY = 2,  // string
+    VALUE = 3, // string
+    BOOLEANVALUE = 4, // bool
+    STRINGSETVALUE = 5, // string (repeated)
+    ISSTRINGSETVALUE = 6 // bool
   };
 
   static Registrar s_registrar;
@@ -101,18 +101,18 @@ inline uint64_t SharedPrefFrame::dataSize() const
   {
     switch (std::get<0>(fd))
     {
-    case FIELD::FILE:
-    case FIELD::KEY:
-    case FIELD::VALUE:
-    case FIELD::STRINGSETVALUE:
+      case FIELD::FILE:
+      case FIELD::KEY:
+      case FIELD::VALUE:
+      case FIELD::STRINGSETVALUE:
       {
         uint64_t stringsize = std::get<2>(fd);
         size += varIntSize(stringsize);
         size += stringsize + 1; // +1 for fieldtype + wiretype
         break;
       }
-    case FIELD::BOOLEANVALUE:
-    case FIELD::ISSTRINGSETVALUE:
+      case FIELD::BOOLEANVALUE:
+      case FIELD::ISSTRINGSETVALUE:
       {
         uint64_t value = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
         size += varIntSize(value);
@@ -139,16 +139,16 @@ inline std::pair<unsigned char *, uint64_t> SharedPrefFrame::getData() const
   {
     switch (std::get<0>(fd))
     {
-    case FIELD::FILE:
-    case FIELD::KEY:
-    case FIELD::VALUE:
-    case FIELD::STRINGSETVALUE:
+      case FIELD::FILE:
+      case FIELD::KEY:
+      case FIELD::VALUE:
+      case FIELD::STRINGSETVALUE:
       {
         datapos += putLengthDelimType(fd, data + datapos);
         break;
       }
-    case FIELD::BOOLEANVALUE:
-    case FIELD::ISSTRINGSETVALUE:
+      case FIELD::BOOLEANVALUE:
+      case FIELD::ISSTRINGSETVALUE:
       {
         datapos += putVarIntType(fd, data + datapos);
         break;

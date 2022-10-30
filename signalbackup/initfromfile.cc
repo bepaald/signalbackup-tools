@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "signalbackup.ih"
@@ -36,20 +36,20 @@ void SignalBackup::initFromFile()
 
   while ((frame = d_fd->getFrame())) // deal with bad mac??
   {
-    [[unlikely]] if (d_fd->badMac())
+    if (d_fd->badMac()) [[unlikely]]
     {
       dumpInfoOnBadFrame(&frame);
       if (d_stoponerror)
         return;
     }
 
-    [[likely]] if (d_showprogress)
+    if (d_showprogress) [[likely]]
     {
       std::cout << (d_verbose ? "" : "\33[2K\r") << "FRAME " << frame->frameNumber() << " ("
                 << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
                 << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
                 << "... " << std::flush;
-      [[unlikely]] if (d_verbose)
+      if (d_verbose) [[unlikely]]
         std::cout << "\n";
     }
 
@@ -60,27 +60,27 @@ void SignalBackup::initFromFile()
 
     //MEMINFO("At frame ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
 
-    [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
+    if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
     {
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
       //d_headerframe->printInfo();
     }
-    else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION) [[unlikely]]
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       d_databaseversion = d_databaseversionframe->version();
 
-      [[unlikely]] if (d_verbose)
+      if (d_verbose) [[unlikely]]
         std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
     }
-    else [[likely]] if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT) [[likely]]
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
 
       //if (frame->frameNumber() < 500)
       //  frame->printInfo();
 
-      [[likely]] if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) // skip creation of sqlite_ internal db's
+      if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) [[likely]] // skip creation of sqlite_ internal db's
       {
         // NOTE: in the official import, there are other tables that are skipped (virtual tables for search data)
         // we lazily do not check for them here, since we are dealing with official exported files which do not contain
@@ -125,12 +125,12 @@ void SignalBackup::initFromFile()
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
       d_stickers.emplace(s->rowId(), s);
     }
-    else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::END)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::END) [[unlikely]]
     {
       //frame->printInfo();
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
     }
-    else [[unlikely]] if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID) [[unlikely]]
     {
       std::cout << std::endl << bepaald::bold_on << "WARNING! SKIPPING INVALID FRAME!" << bepaald::bold_off << std::endl;
     }
@@ -145,7 +145,7 @@ void SignalBackup::initFromFile()
   }
   std::cout << "" << std::endl;
 
-  [[unlikely]] if (d_fd->badMac())
+  if (d_fd->badMac()) [[unlikely]]
   {
     if (d_stoponerror)
       return;

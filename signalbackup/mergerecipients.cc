@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "signalbackup.ih"
@@ -314,7 +314,7 @@ Field 4 (optional::protobuf):
     // get groupV1 status message updates:
     SqliteDB::QueryResults results2;
     d_database.exec("SELECT type,body,_id FROM 'sms' WHERE thread_id = " + bepaald::toString(tid) + " AND (type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND (type & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
-    [[unlikely]] if (d_verbose)
+    if (d_verbose) [[unlikely]]
       results2.prettyPrint();
     for (uint j = 0; j < results2.rows(); ++j)
     {
@@ -358,7 +358,7 @@ Field 4 (optional::protobuf):
     // same for groupV1 status updates in mms database
     d_database.exec("SELECT msg_box,body,_id FROM 'mms' WHERE thread_id = " + bepaald::toString(tid) + " AND (msg_box & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND (msg_box & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
 
-    [[unlikely]] if (d_verbose)
+    if (d_verbose) [[unlikely]]
       results2.prettyPrint();
     for (uint j = 0; j < results2.rows(); ++j)
     {

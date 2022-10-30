@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef BACKUPFRAME_H_
@@ -35,27 +35,27 @@ class BackupFrame
  public:
   enum FRAMETYPE : unsigned int
   {
-   HEADER = 1,
-   SQLSTATEMENT = 2,
-   SHAREDPREFERENCE = 3,
-   ATTACHMENT = 4,
-   DATABASEVERSION = 5,
-   END = 6, // bool
-   AVATAR = 7,
-   STICKER = 8,
-   KEYVALUE = 9,
+    HEADER = 1,
+    SQLSTATEMENT = 2,
+    SHAREDPREFERENCE = 3,
+    ATTACHMENT = 4,
+    DATABASEVERSION = 5,
+    END = 6, // bool
+    AVATAR = 7,
+    STICKER = 8,
+    KEYVALUE = 9,
 
-   INVALID = std::numeric_limits<unsigned int>::max()
+    INVALID = std::numeric_limits<unsigned int>::max()
   };
 
   enum WIRETYPE : unsigned int
   {
-   VARINT = 0,
-   FIXED64 = 1,
-   LENGTHDELIM = 2,
-   STARTTYPE = 3,
-   ENDTYPE = 4,
-   FIXED32 = 5
+    VARINT = 0,
+    FIXED64 = 1,
+    LENGTHDELIM = 2,
+    STARTTYPE = 3,
+    ENDTYPE = 4,
+    FIXED32 = 5
   };
 
  protected:
@@ -250,46 +250,46 @@ inline std::string BackupFrame::frameTypeString() const
 {
   switch (frameType())
   {
-  case 1:
-  {
-   return "HeaderFrame";
-  }
-  case 2:
-  {
-   return "SqlStatementFrame";
-  }
-  case 3:
-  {
-   return "SharedPreferenceFrame";
-  }
-  case 4:
-  {
-   return "AttachmentFrame";
-  }
-  case 5:
-  {
-   return "DatabaseVersionFrame";
-  }
-  case 6:
-  {
-   return "EndFrame";
-  }
-  case 7:
-  {
-   return "AvatarFrame";
-  }
-  case 8:
-  {
-   return "StickerFrame";
-  }
-  case 9:
-  {
-   return "KeyValueFrame";
-  }
-  case std::numeric_limits<unsigned int>::max():
-  {
-   return "InvalidFrame";
-  }
+    case 1:
+    {
+      return "HeaderFrame";
+    }
+    case 2:
+    {
+      return "SqlStatementFrame";
+    }
+    case 3:
+    {
+      return "SharedPreferenceFrame";
+    }
+    case 4:
+    {
+      return "AttachmentFrame";
+    }
+    case 5:
+    {
+      return "DatabaseVersionFrame";
+    }
+    case 6:
+    {
+      return "EndFrame";
+    }
+    case 7:
+    {
+      return "AvatarFrame";
+    }
+    case 8:
+    {
+      return "StickerFrame";
+    }
+    case 9:
+    {
+      return "KeyValueFrame";
+    }
+    case std::numeric_limits<unsigned int>::max():
+    {
+      return "InvalidFrame";
+    }
   }
   return "Unknown frame type";
 }
@@ -323,13 +323,17 @@ inline BackupFrame *BackupFrame::instantiate(FRAMETYPE ft, unsigned char *data, 
   }
   */
 
-  [[unlikely]] if (it == s_registry().end())
+  if (it == s_registry().end()) [[unlikely]]
+  {
+    //std::cout << "ERROR: Incorrect or unknown frametype (" << static_cast<unsigned int>(ft) << ")" << std::endl;
     return nullptr;
+  }
 
   BackupFrame *ret = (it->second)(data, length, count);
 
-  [[unlikely]] if (!ret->ok())
+  if (!ret->ok()) [[unlikely]]
   {
+    //std::cout << "ERROR: BackupFrame::ok() failed" << std::endl;
     delete ret;
     return nullptr;
   }

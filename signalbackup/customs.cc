@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 /*
@@ -740,7 +740,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         (incoming, accepted)    39|1|2|1||1633873954061|1633873954058|-1||1|-1|10||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
 
 
-       */
+      */
 
 
       case Types::INCOMING_CALL_TYPE:
@@ -1014,7 +1014,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       {
 
         /*
-        */
+         */
 
         uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
         if (!d_database.exec("UPDATE mms SET"
@@ -1058,7 +1058,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
     *10 (incoming video call) ->  11 (outgoing video call)
     *11 (outgoing video call) ->  10 (incoming video call)?
     *24 (sent_failed)         ->  ???
-  */
+    */
 
 }
 

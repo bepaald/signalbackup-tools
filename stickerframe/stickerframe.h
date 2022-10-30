@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef STICKERFRAME_H_
@@ -26,9 +26,9 @@ class StickerFrame : public FrameWithAttachment
 {
   enum FIELD
   {
-   INVALID = 0,
-   ROWID = 1, // uint64
-   LENGTH = 2, // uint32
+    INVALID = 0,
+    ROWID = 1, // uint64
+    LENGTH = 2, // uint32
   };
 
   static Registrar s_registrar;
@@ -118,14 +118,14 @@ inline uint64_t StickerFrame::dataSize() const
   {
     switch (std::get<0>(fd))
     {
-    case FIELD::ROWID:
+      case FIELD::ROWID:
       {
         uint64_t value = bytesToUint64(std::get<1>(fd), std::get<2>(fd));
         size += varIntSize(value);
         size += 1; // +1 for fieldtype + wiretype
         break;
       }
-    case FIELD::LENGTH:
+      case FIELD::LENGTH:
       {
         uint32_t value = bytesToUint32(std::get<1>(fd), std::get<2>(fd));
         size += varIntSize(value);
@@ -153,12 +153,12 @@ inline std::pair<unsigned char *, uint64_t> StickerFrame::getData() const
   {
     switch (std::get<0>(fd))
     {
-    case FIELD::ROWID:
-      datapos += putVarIntType(fd, data + datapos);
-      break;
-    case FIELD::LENGTH:
-      datapos += putVarIntType(fd, data + datapos);
-      break;
+      case FIELD::ROWID:
+        datapos += putVarIntType(fd, data + datapos);
+        break;
+      case FIELD::LENGTH:
+        datapos += putVarIntType(fd, data + datapos);
+        break;
     }
   }
   return {data, size};

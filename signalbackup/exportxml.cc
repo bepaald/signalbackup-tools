@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "signalbackup.ih"
@@ -55,32 +55,32 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {
-    case 1:
-    case 20:
-      type = 1;
-      break;
-    case 2:
-    case 23:
-      type = 2;
-      break;
-    case 3:
-    case 27:
-      type = 3;
-      break;
-    case 4:
-    case 21:
-      type = 4;
-      break;
-    case 5:
-    case 24:
-      type = 5;
-      break;
-    case 6:
-    case 22:
-    case 25:
-    case 26:
-      type = 6;
-      break;
+      case 1:
+      case 20:
+        type = 1;
+        break;
+      case 2:
+      case 23:
+        type = 2;
+        break;
+      case 3:
+      case 27:
+        type = 3;
+        break;
+      case 4:
+      case 21:
+        type = 4;
+        break;
+      case 5:
+      case 24:
+        type = 5;
+        break;
+      case 6:
+      case 22:
+      case 25:
+      case 26:
+        type = 6;
+        break;
     }
   }
 
@@ -197,32 +197,32 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {
-    case 1:
-    case 20:
-      msg_box = 1;
-      break;
-    case 2:
-    case 23:
-      msg_box = 2;
-      break;
-    case 3:
-    case 27:
-      msg_box = 3;
-      break;
-    case 4:
-    case 21:
-      msg_box = 4;
-      break;
-    case 5:
-    case 24:
-      msg_box = 5; // INVALID?
-      break;
-    case 6:
-    case 22:
-    case 25:
-    case 26:
-      msg_box = 7; // INVALID?
-      break;
+      case 1:
+      case 20:
+        msg_box = 1;
+        break;
+      case 2:
+      case 23:
+        msg_box = 2;
+        break;
+      case 3:
+      case 27:
+        msg_box = 3;
+        break;
+      case 4:
+      case 21:
+        msg_box = 4;
+        break;
+      case 5:
+      case 24:
+        msg_box = 5; // INVALID?
+        break;
+      case 6:
+      case 22:
+      case 25:
+      case 26:
+        msg_box = 7; // INVALID?
+        break;
     }
   }
 
@@ -255,60 +255,60 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string address;
 
   {
-  SqliteDB::QueryResults r2;
-  if (d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", results.value(i, "thread_id"), &r2) &&
-      r2.rows() == 1)
-  {
-    //r2.prettyPrint();
-    thread_address = r2.valueAsString(0, d_thread_recipient_id);
-
-    SqliteDB::QueryResults r3;
-    d_database.exec("SELECT phone,group_id FROM recipient WHERE _id = " + thread_address, &r3);
-    //r3.prettyPrint();
-
-    if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "group_id"))
+    SqliteDB::QueryResults r2;
+    if (d_database.exec("SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?", results.value(i, "thread_id"), &r2) &&
+        r2.rows() == 1)
     {
-      isgroup = true;
-      std::vector<long long int> members;
-      if (!getGroupMembers(&members, r3.getValueAs<std::string>(0, "group_id")))
+      //r2.prettyPrint();
+      thread_address = r2.valueAsString(0, d_thread_recipient_id);
+
+      SqliteDB::QueryResults r3;
+      d_database.exec("SELECT phone,group_id FROM recipient WHERE _id = " + thread_address, &r3);
+      //r3.prettyPrint();
+
+      if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "group_id"))
       {
-        std::cout << "Failed to get group members" << std::endl;
-        return;
-      }
-      for (auto const &id : members)
-      {
-        if (!d_database.exec("SELECT phone FROM recipient WHERE _id = ?", id, &r3) ||
-            r3.rows() != 1)
+        isgroup = true;
+        std::vector<long long int> members;
+        if (!getGroupMembers(&members, r3.getValueAs<std::string>(0, "group_id")))
         {
-          std::cout << "Failed to get phone number for recipient: " << id << std::endl;
-          r3.prettyPrint();
+          std::cout << "Failed to get group members" << std::endl;
           return;
         }
-        memberphones.insert(r3.valueAsString(0, "phone"));
+        for (auto const &id : members)
+        {
+          if (!d_database.exec("SELECT phone FROM recipient WHERE _id = ?", id, &r3) ||
+              r3.rows() != 1)
+          {
+            std::cout << "Failed to get phone number for recipient: " << id << std::endl;
+            r3.prettyPrint();
+            return;
+          }
+          memberphones.insert(r3.valueAsString(0, "phone"));
+        }
+        for (int count = memberphones.size(); auto const &p : memberphones)
+        {
+          --count;
+          address += p + (count ? "~" : "");
+        }
+        //std::cout << "Got address: " << address << std::endl;
       }
-      for (int count = memberphones.size(); auto const &p : memberphones)
+      else if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "phone"))
       {
-        --count;
-        address += p + (count ? "~" : "");
+        address = r3.getValueAs<std::string>(0, "phone");
       }
-      //std::cout << "Got address: " << address << std::endl;
-    }
-    else if (r3.rows() == 1 && r3.valueHasType<std::string>(0, "phone"))
-    {
-      address = r3.getValueAs<std::string>(0, "phone");
+      else
+      {
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (mms database, type = "
+                  << realtype << ")" << std::endl;
+        return;
+      }
     }
     else
     {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (mms database, type = "
-                << realtype << ")" << std::endl;
+      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to set field 'address'" << std::endl;
       return;
     }
-  }
-  else
-  {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to set field 'address'" << std::endl;
-    return;
-  }
   }
   escapeXmlString(&address);
 
@@ -326,7 +326,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       else
         d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
-      contact_name = r2.getValueAs<std::string>(0, "contact_name");
+        contact_name = r2.getValueAs<std::string>(0, "contact_name");
     }
   }
   else
@@ -429,7 +429,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
              << "resp_txt=\"" << resp_txt << "\" "
              << "resp_st=\"" << resp_st << "\" "
              << "text_only=\"" << text_only << "\">" << std::endl;
-    // << "=\"" <<  << "\" "
+  // << "=\"" <<  << "\" "
 
 
   /* PART */

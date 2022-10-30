@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2021-2022  Selwin van Dijk
+  Copyright (C) 2021-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef KEYVALUEFRAME_H_
@@ -151,21 +151,21 @@ inline std::pair<unsigned char *, uint64_t> KeyValueFrame::getData() const
   {
     switch (std::get<0>(fd))
     {
-    case FIELD::KEY:
-    case FIELD::STRINGVALUE:
-    case FIELD::BLOBVALUE:
+      case FIELD::KEY:
+      case FIELD::STRINGVALUE:
+      case FIELD::BLOBVALUE:
       {
         datapos += putLengthDelimType(fd, data + datapos);
         break;
       }
-    case FIELD::INTEGERVALUE:
-    case FIELD::LONGVALUE:
-    case FIELD::BOOLEANVALUE:
+      case FIELD::INTEGERVALUE:
+      case FIELD::LONGVALUE:
+      case FIELD::BOOLEANVALUE:
       {
         datapos += putVarIntType(fd, data + datapos);
         break;
       }
-    case FIELD::FLOATVALUE:
+      case FIELD::FLOATVALUE:
       {
         datapos += putFixed32Type(fd, data + datapos); // untested
         break;

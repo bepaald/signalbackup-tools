@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2021-2022  Selwin van Dijk
+  Copyright (C) 2021-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "csvreader.ih"
@@ -45,10 +45,10 @@ bool CSVReader::read()
       std::cout << std::endl;
 
       // extra check: all rows must have same number of fields
-      [[unlikely]] if (d_results.size() == 1)
+      if (d_results.size() == 1) [[unlikely]]
         d_fields = d_results.back().size();
       else //
-        [[unlikely]] if (d_results.back().size() != d_fields)
+        if (d_results.back().size() != d_fields) [[unlikely]]
         {
           std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
                     << ": invalid csv" << std::endl;
