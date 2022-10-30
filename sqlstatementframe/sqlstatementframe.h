@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef SQLSTATEMENTFRAME_H_
@@ -111,7 +111,7 @@ inline SqlStatementFrame::SqlStatementFrame(unsigned char *data, size_t length, 
     if (std::get<0>(p) == FIELD::PARAMETERS)
     {
       //std::cout << "INITIALIZING PARAMETERS: " << std::get<2>(p) << " bytes" << std::endl;
-      [[unlikely]]if (!init(std::get<1>(p), std::get<2>(p), &d_parameterdata))
+      if (!init(std::get<1>(p), std::get<2>(p), &d_parameterdata)) [[unlikely]]
       {
         d_ok = false;
         break;
@@ -223,21 +223,21 @@ inline void SqlStatementFrame::printInfo() const
       {
         switch (std::get<0>(d_parameterdata[param_ctr]))
         {
-        case PARAMETER_FIELD::STRING:
-          std::cout << "         - (string parameter): \"" << bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
-          break;
-        case PARAMETER_FIELD::INT:
-          std::cout << "         - (uint64 parameter): \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
-          break;
-        case PARAMETER_FIELD::DOUBLE:
-          std::cout << "         - (double parameter): \"" << bepaald::toString(*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))) << "\" " << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << std::endl;
-          break;
-        case PARAMETER_FIELD::BLOB:
-          std::cout << "         - (binary parameter): \"" << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
-          break;
-        case PARAMETER_FIELD::NULLPARAMETER:
-          std::cout << "         - (bool parameter)  : \"" << std::boolalpha << (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false) << "\" (value: \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\")" << std::endl;
-          break;
+          case PARAMETER_FIELD::STRING:
+            std::cout << "         - (string parameter): \"" << bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            break;
+          case PARAMETER_FIELD::INT:
+            std::cout << "         - (uint64 parameter): \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            break;
+          case PARAMETER_FIELD::DOUBLE:
+            std::cout << "         - (double parameter): \"" << bepaald::toString(*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))) << "\" " << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << std::endl;
+            break;
+          case PARAMETER_FIELD::BLOB:
+            std::cout << "         - (binary parameter): \"" << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            break;
+          case PARAMETER_FIELD::NULLPARAMETER:
+            std::cout << "         - (bool parameter)  : \"" << std::boolalpha << (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false) << "\" (value: \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\")" << std::endl;
+            break;
         }
         ++param_ctr;
       }
@@ -274,27 +274,27 @@ inline void SqlStatementFrame::printInfo(std::vector<std::string> const &paramet
       {
         switch (std::get<0>(d_parameterdata[param_ctr]))
         {
-        case PARAMETER_FIELD::STRING:
-          std::cout << "         - " << parameternames[param_ctr] << " (string parameter): \""
-                    << bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
-          break;
-        case PARAMETER_FIELD::INT:
-          std::cout << "         - " << parameternames[param_ctr] << " (uint64 parameter): \""
-                    << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
-          break;
-        case PARAMETER_FIELD::DOUBLE:
-          std::cout << "         - " << parameternames[param_ctr] << " (double parameter): \""
-                    << *reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))<< "\" " << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << std::endl;
-          break;
-        case PARAMETER_FIELD::BLOB:
-          std::cout << "         - " << parameternames[param_ctr] << " (binary parameter): \""
-                    << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
-          break;
-        case PARAMETER_FIELD::NULLPARAMETER:
-          std::cout << "         - " << parameternames[param_ctr] << " (bool parameter): \""
-                    << std::boolalpha << (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false)
-                    << "\" (value: \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\")" << std::endl;
-          break;
+          case PARAMETER_FIELD::STRING:
+            std::cout << "         - " << parameternames[param_ctr] << " (string parameter): \""
+                      << bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            break;
+          case PARAMETER_FIELD::INT:
+            std::cout << "         - " << parameternames[param_ctr] << " (uint64 parameter): \""
+                      << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            break;
+          case PARAMETER_FIELD::DOUBLE:
+            std::cout << "         - " << parameternames[param_ctr] << " (double parameter): \""
+                      << *reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))<< "\" " << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << std::endl;
+            break;
+          case PARAMETER_FIELD::BLOB:
+            std::cout << "         - " << parameternames[param_ctr] << " (binary parameter): \""
+                      << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            break;
+          case PARAMETER_FIELD::NULLPARAMETER:
+            std::cout << "         - " << parameternames[param_ctr] << " (bool parameter): \""
+                      << std::boolalpha << (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false)
+                      << "\" (value: \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\")" << std::endl;
+            break;
         }
         ++param_ctr;
       }
@@ -326,7 +326,7 @@ inline uint64_t SqlStatementFrame::dataSize() const
   {
     switch (std::get<0>(pd))
     {
-    case PARAMETER_FIELD::STRING:
+      case PARAMETER_FIELD::STRING:
       {
         uint64_t stringsize = std::get<2>(pd);
         size += varIntSize(stringsize);
@@ -336,7 +336,7 @@ inline uint64_t SqlStatementFrame::dataSize() const
 
         break;
       }
-    case PARAMETER_FIELD::INT:
+      case PARAMETER_FIELD::INT:
       {
         uint64_t value = bytesToUint64(std::get<1>(pd), std::get<2>(pd));
         size += varIntSize(value);
@@ -344,13 +344,13 @@ inline uint64_t SqlStatementFrame::dataSize() const
         size += varIntSize(varIntSize(value) + 1); // to write size of parameter field into
         break;
       }
-    case PARAMETER_FIELD::DOUBLE:
+      case PARAMETER_FIELD::DOUBLE:
       {
         size += 9; // fixed64 + 1 for field and wiretype?
         size += varIntSize(9 + 1); // for parameter_field + type
         break;
       }
-    case PARAMETER_FIELD::BLOB:
+      case PARAMETER_FIELD::BLOB:
       {
         uint64_t stringsize = std::get<2>(pd);
         size += varIntSize(stringsize);
@@ -358,7 +358,7 @@ inline uint64_t SqlStatementFrame::dataSize() const
         size += varIntSize(stringsize + 2); // to write size of parameter field into
         break;
       }
-    case PARAMETER_FIELD::NULLPARAMETER:
+      case PARAMETER_FIELD::NULLPARAMETER:
       {
         uint64_t value = bytesToUint64(std::get<1>(pd), std::get<2>(pd));
         size += varIntSize(value);
@@ -401,35 +401,35 @@ inline std::pair<unsigned char *, uint64_t> SqlStatementFrame::getData() const
       {
         switch (std::get<0>(d_parameterdata[param_ctr]))
         {
-        case PARAMETER_FIELD::STRING:
-        case PARAMETER_FIELD::BLOB:
-        {
-          datapos += setFieldAndWire(FIELD::PARAMETERS, WIRETYPE::LENGTHDELIM, data + datapos);
-          //                                     size of string    field+wire   number of bytes for length of string
-          //                                           v                 v       v                    v
-          datapos += putVarInt(std::get<2>(d_parameterdata[param_ctr]) + 1 + varIntSize(std::get<2>(d_parameterdata[param_ctr])), data + datapos);
+          case PARAMETER_FIELD::STRING:
+          case PARAMETER_FIELD::BLOB:
+          {
+            datapos += setFieldAndWire(FIELD::PARAMETERS, WIRETYPE::LENGTHDELIM, data + datapos);
+            //                                     size of string    field+wire   number of bytes for length of string
+            //                                           v                 v       v                    v
+            datapos += putVarInt(std::get<2>(d_parameterdata[param_ctr]) + 1 + varIntSize(std::get<2>(d_parameterdata[param_ctr])), data + datapos);
 
-          datapos += putLengthDelimType(d_parameterdata[param_ctr], data + datapos);
-          break;
-        }
-        case PARAMETER_FIELD::INT:
-        case PARAMETER_FIELD::NULLPARAMETER:
-        {
-          uint64_t value = bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr]));
-          datapos += setFieldAndWire(FIELD::PARAMETERS, WIRETYPE::LENGTHDELIM, data + datapos);
-          datapos += putVarInt(varIntSize(value) + 1, data + datapos);
+            datapos += putLengthDelimType(d_parameterdata[param_ctr], data + datapos);
+            break;
+          }
+          case PARAMETER_FIELD::INT:
+          case PARAMETER_FIELD::NULLPARAMETER:
+          {
+            uint64_t value = bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr]));
+            datapos += setFieldAndWire(FIELD::PARAMETERS, WIRETYPE::LENGTHDELIM, data + datapos);
+            datapos += putVarInt(varIntSize(value) + 1, data + datapos);
 
-          datapos += putVarIntType(d_parameterdata[param_ctr], data + datapos);
-          break;
-        }
-        case PARAMETER_FIELD::DOUBLE:
-        {
-          datapos += setFieldAndWire(FIELD::PARAMETERS, WIRETYPE::LENGTHDELIM, data + datapos);
-          datapos += putVarInt(8 + 1, data + datapos);
+            datapos += putVarIntType(d_parameterdata[param_ctr], data + datapos);
+            break;
+          }
+          case PARAMETER_FIELD::DOUBLE:
+          {
+            datapos += setFieldAndWire(FIELD::PARAMETERS, WIRETYPE::LENGTHDELIM, data + datapos);
+            datapos += putVarInt(8 + 1, data + datapos);
 
-          datapos += putFixed64Type(d_parameterdata[param_ctr], data + datapos);
-          break;
-        }
+            datapos += putFixed64Type(d_parameterdata[param_ctr], data + datapos);
+            break;
+          }
         }
       }
       ++param_ctr;
@@ -497,8 +497,8 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
 {
   switch (field)
   {
-  case PARAMETER_FIELD::STRING:
-  case PARAMETER_FIELD::BLOB:
+    case PARAMETER_FIELD::STRING:
+    case PARAMETER_FIELD::BLOB:
     {
       unsigned char *temp = new unsigned char[val.length()];
       std::memcpy(temp, val.c_str(), val.length());
@@ -506,8 +506,8 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
       d_framedata.emplace_back(std::make_tuple(FIELD::PARAMETERS, nullptr, 0));
       break;
     }
-  case PARAMETER_FIELD::INT:
-  case PARAMETER_FIELD::NULLPARAMETER:
+    case PARAMETER_FIELD::INT:
+    case PARAMETER_FIELD::NULLPARAMETER:
     {
       uint64_t num = std::stoull(val);
       num = bepaald::swap_endian(num);
@@ -517,7 +517,7 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
       d_framedata.emplace_back(std::make_tuple(FIELD::PARAMETERS, nullptr, 0));
       break;
     }
-  case PARAMETER_FIELD::DOUBLE:
+    case PARAMETER_FIELD::DOUBLE:
     {
       double num = std::stod(val);
       unsigned char *temp = new unsigned char[sizeof(num)];
@@ -581,12 +581,12 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
   {
     switch (std::get<0>(p))
     {
-    case PARAMETER_FIELD::INT:
+      case PARAMETER_FIELD::INT:
       {
         parameters.emplace_back(static_cast<long long int>(bytesToUint64(std::get<1>(p), std::get<2>(p))));
         break;
       }
-    case PARAMETER_FIELD::STRING:
+      case PARAMETER_FIELD::STRING:
       {
         //if ()
         //std::cout << "Retunring string parameter: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << std::endl;
@@ -606,19 +606,19 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
         */
         break;
       }
-    case PARAMETER_FIELD::DOUBLE:
+      case PARAMETER_FIELD::DOUBLE:
       {
         parameters.emplace_back(*reinterpret_cast<double *>(std::get<1>(p)));
         break;
       }
-    case PARAMETER_FIELD::BLOB:
+      case PARAMETER_FIELD::BLOB:
       {
         std::pair<std::shared_ptr<unsigned char []>, size_t> data{new unsigned char[std::get<2>(p)], std::get<2>(p)};
         std::memcpy(data.first.get(), std::get<1>(p), std::get<2>(p));
         parameters.emplace_back(std::move(data));
         break;
       }
-    case PARAMETER_FIELD::NULLPARAMETER:
+      case PARAMETER_FIELD::NULLPARAMETER:
       {
         //parameters.emplace_back(static_cast<long long int>(bytesToUint64(std::get<1>(p), std::get<2>(p))));
         parameters.emplace_back(nullptr);

@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "sqlstatementframe.ih"
@@ -41,7 +41,7 @@ void SqlStatementFrame::buildStatement()
   for (auto const &p : d_parameterdata)
   {
     pos = d_statement.find('?', pos);
-    [[unlikely]] if (pos == std::string::npos)
+    if (pos == std::string::npos) [[unlikely]]
     {
       DEBUGOUT("Fail to find '?'");
       d_statement.clear();
@@ -50,12 +50,12 @@ void SqlStatementFrame::buildStatement()
 
     switch (std::get<0>(p))
     {
-    case PARAMETER_FIELD::INT:
+      case PARAMETER_FIELD::INT:
       {
         d_statement.replace(pos, 1, std::to_string(static_cast<int64_t>(bytesToUint64(std::get<1>(p), std::get<2>(p)))));
         break;
       }
-    case PARAMETER_FIELD::STRING:
+      case PARAMETER_FIELD::STRING:
       {
         std::string rep = bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
         std::string::size_type pos2 = 0;
@@ -70,7 +70,7 @@ void SqlStatementFrame::buildStatement()
         pos += rep.length();
         break;
       }
-    case PARAMETER_FIELD::DOUBLE:
+      case PARAMETER_FIELD::DOUBLE:
       {
         std::stringstream ss;
         ss.imbue(std::locale(std::locale(), new Period)); // make sure we get periods as decimal indicators
@@ -78,12 +78,12 @@ void SqlStatementFrame::buildStatement()
         d_statement.replace(pos, 1, ss.str());
         break;
       }
-    case PARAMETER_FIELD::BLOB:
+      case PARAMETER_FIELD::BLOB:
       {
         d_statement.replace(pos, 1, "X'" + bepaald::bytesToHexString(std::get<1>(p), std::get<2>(p), true) + '\'');
         break;
       }
-    case PARAMETER_FIELD::NULLPARAMETER:
+      case PARAMETER_FIELD::NULLPARAMETER:
       {
         d_statement.replace(pos, 1, "NULL");
         break;

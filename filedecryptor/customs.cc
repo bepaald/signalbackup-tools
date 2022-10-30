@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2021-2022  Selwin van Dijk
+  Copyright (C) 2021-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "filedecryptor.ih"
@@ -148,7 +148,7 @@ void FileDecryptor::strugee(uint64_t pos)
        frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
-    [[unlikely]] if (d_verbose)
+    if (d_verbose) [[unlikely]]
       std::cout << "Trying to read attachment (bruteforce)" << std::endl;
 
     uintToFourBytes(d_iv, d_counter++);
@@ -160,7 +160,7 @@ void FileDecryptor::strugee(uint64_t pos)
     /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      [[unlikely]] if (d_verbose)
+      if (d_verbose) [[unlikely]]
         std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
@@ -184,10 +184,10 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 {
   long long int filepos = d_file.tellg();
 
-  [[unlikely]] if (d_verbose)
+  if (d_verbose) [[unlikely]]
     std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
 
-  [[unlikely]] if (static_cast<uint64_t>(filepos) == d_filesize)
+  if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
     std::cout << "Read entire backup file..." << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -206,18 +206,18 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   //  bruteForceFrom(filepos)???
   //}
 
-  [[unlikely]] if (encryptedframelength == 0 && d_file.eof())
+  if (encryptedframelength == 0 && d_file.eof()) [[unlikely]]
   {
     std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file!" << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
   DEBUGOUT("Framelength: ", encryptedframelength);
-  [[unlikely]] if (d_verbose)
+  if (d_verbose) [[unlikely]]
     std::cout << "Framelength: " << encryptedframelength << std::endl;
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
-  [[unlikely]] if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength))
+  if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -227,7 +227,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
-  [[unlikely]] if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0)
+  if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0) [[unlikely]]
   {
     std::cout << "" << std::endl;
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
@@ -242,7 +242,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   else
   {
     d_badmac = false;
-    [[unlikely]] if (d_verbose)
+    if (d_verbose) [[unlikely]]
     {
       std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
       std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
@@ -258,7 +258,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   // disable padding
   EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
 
-  [[unlikely]] if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
     std::cout << "CTX INIT FAILED" << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -267,7 +267,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   int decodedframelength = encryptedframelength - MACSIZE;
   unsigned char *decodedframe = new unsigned char[decodedframelength];
 
-  [[unlikely]] if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
+  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
     std::cout << "Failed to decrypt data" << std::endl;
     delete[] decodedframe;
@@ -278,7 +278,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
-  [[unlikely]] if (!frame)
+  if (!frame) [[unlikely]]
   {
     std::cout << "Failed to get valid frame from decoded data..." << std::endl;
     if (d_badmac)
@@ -307,7 +307,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
 
-    [[ unlikely ]] if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize))
+    if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[unlikely]]
       if (!d_assumebadframesize)
       {
         std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
@@ -323,7 +323,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
     /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      [[unlikely]] if (d_verbose)
+      if (d_verbose) [[unlikely]]
         std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())); // 0 == good, >0 == bad, <0 == bad+badmac
@@ -413,10 +413,10 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   //std::cout << "FILEPOS: " << filepos << std::endl;
 
 
-  [[unlikely]] if (d_verbose)
+  if (d_verbose) [[unlikely]]
     std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
 
-  [[unlikely]] if (static_cast<uint64_t>(filepos) == d_filesize)
+  if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
     std::cout << "Read entire backup file..." << std::endl;
     return;
@@ -436,18 +436,18 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   //  bruteForceFrom(filepos)???
   //}
 
-  [[unlikely]] if (encryptedframelength == 0 && d_file.eof())
+  if (encryptedframelength == 0 && d_file.eof()) [[unlikely]]
   {
     std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file!" << std::endl;
     return;
   }
 
   DEBUGOUT("Framelength: ", encryptedframelength);
-  [[unlikely]] if (d_verbose)
+  if (d_verbose) [[unlikely]]
     std::cout << "Framelength: " << encryptedframelength << std::endl;
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
-  [[unlikely]] if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength))
+  if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
     return;
@@ -457,7 +457,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
-  [[unlikely]] if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0)
+  if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0) [[unlikely]]
   {
     std::cout << "" << std::endl;
     std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
@@ -471,7 +471,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
     std::memcpy(macs_and_positions->back().first.get(), hash, SHA256_DIGEST_LENGTH);
 
     d_badmac = false;
-    [[unlikely]] if (d_verbose)
+    if (d_verbose) [[unlikely]]
     {
       std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
       std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
@@ -488,7 +488,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   // disable padding
   EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
 
-  [[unlikely]] if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
     std::cout << "CTX INIT FAILED" << std::endl;
     return;
@@ -497,7 +497,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   int decodedframelength = encryptedframelength - MACSIZE;
   unsigned char *decodedframe = new unsigned char[decodedframelength];
 
-  [[unlikely]] if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
+  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
     std::cout << "Failed to decrypt data" << std::endl;
     delete[] decodedframe;
@@ -508,7 +508,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
-  [[unlikely]] if (!frame)
+  if (!frame) [[unlikely]]
   {
     std::cout << "Failed to get valid frame from decoded data..." << std::endl;
     if (d_badmac)
@@ -537,7 +537,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
 
-    [[ unlikely ]] if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize))
+    if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[ unlikely ]]
       if (!d_assumebadframesize)
       {
         std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
@@ -553,7 +553,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
     /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      [[unlikely]] if (d_verbose)
+      if (d_verbose) [[unlikely]]
         std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())); // 0 == good, >0 == bad, <0 == bad+badmac
@@ -804,7 +804,7 @@ void FileDecryptor::ashmorgan()
        frame->frameType() == BackupFrame::FRAMETYPE::AVATAR ||
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
-    [[unlikely]] if (d_verbose)
+    if (d_verbose) [[unlikely]]
       std::cout << "Trying to read attachment (bruteforce)" << std::endl;
 
     uintToFourBytes(d_iv, d_counter++);
@@ -816,7 +816,7 @@ void FileDecryptor::ashmorgan()
     /*
     if (!d_lazyload) // immediately decrypt i guess...
     {
-      [[unlikely]] if (d_verbose)
+      if (d_verbose) [[unlikely]]
         std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));

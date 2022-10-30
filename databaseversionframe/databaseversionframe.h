@@ -1,20 +1,20 @@
 /*
-    Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2022  Selwin van Dijk
 
-    This file is part of signalbackup-tools.
+  This file is part of signalbackup-tools.
 
-    signalbackup-tools is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    signalbackup-tools is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #ifndef DATABASEVERSIONFRAME_H_
@@ -26,8 +26,8 @@ class DatabaseVersionFrame : public BackupFrame
 {
   enum FIELD: unsigned int
   {
-   INVALID = 0,
-   VERSION = 1 // uint32
+    INVALID = 0,
+    VERSION = 1 // uint32
   };
 
   static Registrar s_registrar;
@@ -95,7 +95,7 @@ inline uint64_t DatabaseVersionFrame::dataSize() const
   {
     switch (std::get<0>(p))
     {
-    case FIELD::VERSION:
+      case FIELD::VERSION:
       {
         uint32_t value = bytesToUint32(std::get<1>(p), std::get<2>(p));
         size += varIntSize(value);
