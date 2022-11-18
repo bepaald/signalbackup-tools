@@ -226,7 +226,7 @@ void SignalBackup::cleanDatabaseByMessages()
         int count = 0;
         for (uint i = 0; i < deleted_recipients.rows(); ++i)
         {
-          if (!deleted_recipients.valueHasType<std::nullptr_t>(i, "distribution_list_id"))
+          if (!deleted_recipients.isNull(i, "distribution_list_id"))
           {
             d_database.exec("DELETE FROM distribution_list WHERE _id = ?", deleted_recipients.getValueAs<long long int>(i, "distribution_list_id"));
             count += d_database.changed();

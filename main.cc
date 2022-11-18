@@ -251,7 +251,7 @@ int main(int argc, char *argv[])
   }
 
   if (arg.importfromdesktop_bool())
-    if (!sb->importFromDesktop(arg.importfromdesktop(), arg.ignorewal()))
+    if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.ignorewal()))
       return 1;
 
   if (arg.removedoubles())
@@ -383,9 +383,9 @@ int main(int argc, char *argv[])
   MEMINFO("After output");
 
   // decode and dump Signal-Desktop database to 'desktop.db'.
-  if (!arg.dumpdesktopdb().empty())
+  if (!arg.dumpdesktopdb_1().empty())
   {
-    SqlCipherDecryptor db(arg.dumpdesktopdb());
+    SqlCipherDecryptor db(arg.dumpdesktopdb_1(), arg.dumpdesktopdb_2());
     if (!db.ok() || !db.writeToFile("desktop.db", arg.overwrite()))
       std::cout << "Failed to dump desktop database" << std::endl;
   }
@@ -404,17 +404,16 @@ int main(int argc, char *argv[])
 
 /* Database version notes
 
-
    In database versions <= 23: recipients_ids were phone numbers (eg "+31601513210" or "__textsecure_group__!...")
-   Avatars were linked to these contacts by AvatarFrame::name() which was also phone number -> "+31601513210"
-   Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
-   23 < dbv <= 27: recipient ids were just id (eg "4")
-   Avatars were still identified by AvatarFrame::name() -> phone number
-   Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
-   27 < dbv < 54: recipient ids were just id (eg "4")
-   Avatars were identified by AvatarFrame::recipient() -> "4"
-   Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
-   >= 54: Same, groups have avatar in separate AvatarFrame, linked via groups.group_id == recipient.group_id -> recipient._id == AvatarFrame.recipient()
+                               Avatars were linked to these contacts by AvatarFrame::name() which was also phone number -> "+31601513210"
+                               Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
+               23 < dbv <= 27: recipient ids were just id (eg "4")
+                               Avatars were still identified by AvatarFrame::name() -> phone number
+                               Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
+                27 < dbv < 54: recipient ids were just id (eg "4")
+                               Avatars were identified by AvatarFrame::recipient() -> "4"
+                               Groups had avatar data inside sqltable (groups.avatar, groups.group_id == "__textsecure_group__!...")
+                        >= 54: Same, groups have avatar in separate AvatarFrame, linked via groups.group_id == recipient.group_id -> recipient._id == AvatarFrame.recipient()
 */
 
 

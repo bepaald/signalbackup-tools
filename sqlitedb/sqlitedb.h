@@ -51,6 +51,8 @@ class SqliteDB
     inline bool valueHasType(size_t row, size_t idx) const;
     template <typename T>
     inline bool valueHasType(size_t row, std::string const &header) const;
+    inline bool isNull(size_t row, size_t idx) const;
+    inline bool isNull(size_t row, std::string const &header) const;
     template <typename T>
     inline T getValueAs(size_t row, size_t idx) const;
     inline bool empty() const;
@@ -58,7 +60,7 @@ class SqliteDB
     inline size_t columns() const;
     inline void clear();
     void prettyPrint() const;
-    void print() const;
+    void print(bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
     std::string valueAsString(size_t row, std::string const &header) const;
     template <typename T>
@@ -136,11 +138,11 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
 inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   :
   d_db(nullptr),
-  d_vfs(MemFileDB::sqlite3_demovfs(data)),
+  d_vfs(MemFileDB::sqlite3_memfilevfs(data)),
   d_ok(false)
 {
   if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
-    d_ok = (sqlite3_open_v2("dummy", &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+    d_ok = (sqlite3_open_v2("memfiledb", &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
 }
 
 inline SqliteDB::~SqliteDB()
@@ -149,7 +151,8 @@ inline SqliteDB::~SqliteDB()
     sqlite3_close(d_db);
 
   if (d_vfs)
-    sqlite3_vfs_unregister(d_vfs);
+    if (!sqlite3_vfs_unregister(d_vfs) == SQLITE_OK)
+      std::cout << "Failed to unregister vfs" << std::endl;
 }
 
 inline bool SqliteDB::ok() const
@@ -372,6 +375,16 @@ template <typename T>
 inline bool SqliteDB::QueryResults::valueHasType(size_t row, size_t idx) const
 {
   return (d_values[row][idx].type() == typeid(T));
+}
+
+inline bool SqliteDB::QueryResults::isNull(size_t row, size_t idx) const
+{
+  return valueHasType<std::nullptr_t>(row, idx);
+}
+
+inline bool SqliteDB::QueryResults::isNull(size_t row, std::string const &header) const
+{
+  return valueHasType<std::nullptr_t>(row, header);
 }
 
 template <typename T>

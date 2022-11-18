@@ -23,10 +23,10 @@ bool SqlCipherDecryptor::getKey()
 {
   // read key from config.json
 
-  std::fstream config(d_path + "/config.json", std::ios_base::in | std::ios_base::binary);
+  std::fstream config(d_configpath + "/config.json", std::ios_base::in | std::ios_base::binary);
   if (!config.is_open())
   {
-    std::cout << "Failed to open input: " << d_path << "/config.json" << std::endl;
+    std::cout << "Failed to open input: " << d_configpath << "/config.json" << std::endl;
     return false;
   }
   std::string line;

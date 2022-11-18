@@ -85,7 +85,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
 
   for (uint i = 0; i < results.rows(); ++i)
   {
-    if (!results.valueHasType<std::nullptr_t>(i, 0))
+    if (!results.isNull(i, 0))
     {
       if (results.valueHasType<std::string>(i, 1) &&
           (results.getValueAs<std::string>(i, 1) != "sms_fts" &&

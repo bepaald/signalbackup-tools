@@ -27,10 +27,11 @@
   - Pagesize: 1024 -> 4096
 */
 
-SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
+SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version)
   :
   d_ok(false),
-  d_path(path),
+  d_configpath(configpath),
+  d_apppath(apppath),
   d_key(nullptr),
   d_keysize(0),
   d_hmackey(nullptr),
@@ -38,18 +39,18 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
   d_salt(nullptr),
   d_saltsize(0),
 #ifndef USE_CRYPTOPP
-  d_digest(version == 4 ? EVP_sha512() : EVP_sha1()),
+  d_digest(version >= 4 ? EVP_sha512() : EVP_sha1()),
   d_digestsize(EVP_MD_size(d_digest)),
 #else
-  d_pbkdf(version == 4 ?
+  d_pbkdf(version >= 4 ?
           static_cast<CryptoPP::PasswordBasedKeyDerivationFunction *>(new CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA512>) :
           static_cast<CryptoPP::PasswordBasedKeyDerivationFunction *>(new CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA1>)),
-  d_hmac(version == 4 ?
+  d_hmac(version >= 4 ?
          static_cast<CryptoPP::HMAC_Base *>(new CryptoPP::HMAC<CryptoPP::SHA512>) :
          static_cast<CryptoPP::HMAC_Base *>(new CryptoPP::HMAC<CryptoPP::SHA1>)),
   d_digestsize(d_hmac->DigestSize()),
 #endif
-  d_pagesize(version == 4 ? 4096 : 1024),
+  d_pagesize(version >= 4 ? 4096 : 1024),
   d_decrypteddata(nullptr),
   d_decrypteddatasize(0)
 {
@@ -57,10 +58,10 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &path, int version)
     return;
 
   // open database file
-  std::ifstream dbfile(d_path + "/sql/db.sqlite", std::ios_base::in | std::ios_base::binary);
+  std::ifstream dbfile(d_apppath + "/sql/db.sqlite", std::ios_base::in | std::ios_base::binary);
   if (!dbfile.is_open())
   {
-    std::cout << "Failed to open database file '" << d_path + "/sql/db.sqlite" << "'" << std::endl;
+    std::cout << "Failed to open database file '" << d_apppath + "/sql/db.sqlite" << "'" << std::endl;
     return;
   }
 

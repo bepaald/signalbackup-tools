@@ -103,7 +103,7 @@ class SignalBackup
     std::string filetype;
     unsigned long filesize;
     std::string hash;
-
+    std::string filename;
     operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   };
 
@@ -148,7 +148,8 @@ class SignalBackup
                          std::string const &prepend, std::vector<std::pair<std::string, std::string>> replace);
   inline void showDBInfo() const;
   bool scramble() const;
-  bool importFromDesktop(std::string const &dir, bool ignorewal);
+  std::pair<std::string, std::string> getDesktopDir() const;
+  bool importFromDesktop(std::string configdir, std::string appdir, bool ignorewal);
   bool checkDbIntegrity(bool onlyforeignkeys = true) const;
 
   /* CUSTOMS */
@@ -178,7 +179,10 @@ class SignalBackup
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers,
                                            std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
-  template <class T> inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
+  template <typename T>
+  inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
+  template <typename T>
+  inline bool setFrameFromStrings(std::unique_ptr<T> *frame, std::vector<std::string> const &lines) const;
   template <typename T> inline std::pair<unsigned char*, size_t> numToData(T num) const;
   void setMinimumId(std::string const &table, long long int offset, std::string const &col = "_id") const;
   void cleanDatabaseByMessages();
@@ -227,6 +231,9 @@ class SignalBackup
   std::vector<long long int> getGroupUpdateRecipients() const;
   bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const;
   bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
+  long long int getRecipientIdFromUuid(std::string const &uuid) const;
+  template <typename T>
+  inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -345,6 +352,79 @@ inline std::pair<unsigned char*, size_t> SignalBackup::numToData(T num) const
   return {data, sizeof(T)};
 }
 
+template <typename T>
+inline bool SignalBackup::setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const
+{
+  std::string::size_type pos = line.find(":", 0);
+  if (pos == std::string::npos)
+  {
+    std::cout << "Failed to read frame data line '" << line << "'" << std::endl;
+    return false;
+  }
+  unsigned int field = (*newframe)->getField(line.substr(0, pos));
+  if (!field)
+  {
+    std::cout << "Failed to get field number" << std::endl;
+    return false;
+  }
+
+  ++pos;
+  std::string::size_type pos2 = line.find(":", pos);
+  if (pos2 == std::string::npos)
+  {
+    std::cout << "Failed to read frame data from line '" << line << "'" << std::endl;
+    return false;
+  }
+  std::string type = line.substr(pos, pos2 - pos);
+  std::string datastr = line.substr(pos2 + 1);
+
+  if (type == "bytes")
+  {
+    std::pair<unsigned char *, size_t> decdata = Base64::base64StringToBytes(datastr);
+    if (!decdata.first)
+      return false;
+    (*newframe)->setNewData(field, decdata.first, decdata.second);
+  }
+  else if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
+  {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
+    if (!decdata.first)
+      return false;
+    (*newframe)->setNewData(field, decdata.first, decdata.second);
+  }
+  else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
+  {                                            // (on windows stol would be four bytes and the above if-clause would cause bad data
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoll(datastr)));
+    if (!decdata.first)
+      return false;
+    (*newframe)->setNewData(field, decdata.first, decdata.second);
+  }
+  else if (type == "float") // due to possible precision problems, the 4 bytes of float are saved in binary format (base64 encoded)
+  {                         // WARNING untested
+    std::pair<unsigned char *, size_t> decfloat = Base64::base64StringToBytes(datastr);
+    if (!decfloat.first || decfloat.second != 4)
+      return false;
+    (*newframe)->setNewData(field, decfloat.first, decfloat.second);
+  }
+  else if (type == "bool") // since booleans are stored as varints, this is identical to uint64/32 code
+  {
+    std::string val = (datastr == "true") ? "1" : "0";
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(val)));
+    if (!decdata.first)
+      return false;
+    (*newframe)->setNewData(field, decdata.first, decdata.second);
+  }
+  else if (type == "string")
+  {
+    unsigned char *data = new unsigned char[datastr.size()];
+    std::memcpy(data, datastr.data(), datastr.size());
+    (*newframe)->setNewData(field, data, datastr.size());
+  }
+  else
+    return false;
+  return true;
+}
+
 template <>
 inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std::string const &file, bool quiet) const
 {
@@ -371,78 +451,22 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
   }
 
   std::unique_ptr<T> newframe(new T);
-
   std::string line;
   while (std::getline(datastream, line))
-  {
-    std::string::size_type pos = line.find(":", 0);
-    if (pos == std::string::npos)
-    {
-      std::cout << "Failed to read frame data from '" << file << "'" << std::endl;
+    if (!setFrameFromLine(&newframe, line))
       return false;
-    }
-    unsigned int field = newframe->getField(line.substr(0, pos));
-    if (!field)
-    {
-      std::cout << "Failed to get field number" << std::endl;
-      return false;
-    }
+  frame->reset(newframe.release());
 
-    ++pos;
-    std::string::size_type pos2 = line.find(":", pos);
-    if (pos2 == std::string::npos)
-    {
-      std::cout << "Failed to read frame data from '" << file << "'" << std::endl;
-      return false;
-    }
-    std::string type = line.substr(pos, pos2 - pos);
-    std::string datastr = line.substr(pos2 + 1);
+  return true;
+}
 
-    if (type == "bytes")
-    {
-      std::pair<unsigned char *, size_t> decdata = Base64::base64StringToBytes(datastr);
-      if (!decdata.first)
-        return false;
-      newframe->setNewData(field, decdata.first, decdata.second);
-    }
-    else if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
-    {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
-      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
-      if (!decdata.first)
-        return false;
-      newframe->setNewData(field, decdata.first, decdata.second);
-    }
-    else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
-    {                                            // (on windows stol would be four bytes and the above if-clause would cause bad data
-      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoll(datastr)));
-      if (!decdata.first)
-        return false;
-      newframe->setNewData(field, decdata.first, decdata.second);
-    }
-    else if (type == "float") // due to possible precision problems, the 4 bytes of float are saved in binary format (base64 encoded)
-    {                         // WARNING untested
-      std::pair<unsigned char *, size_t> decfloat = Base64::base64StringToBytes(datastr);
-      if (!decfloat.first || decfloat.second != 4)
-        return false;
-      newframe->setNewData(field, decfloat.first, decfloat.second);
-    }
-    else if (type == "bool") // since booleans are stored as varints, this is identical to uint64/32 code
-    {
-      std::string val = (datastr == "true") ? "1" : "0";
-      std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(val)));
-      if (!decdata.first)
-        return false;
-      newframe->setNewData(field, decdata.first, decdata.second);
-    }
-    else if (type == "string")
-    {
-      unsigned char *data = new unsigned char[datastr.size()];
-      std::memcpy(data, datastr.data(), datastr.size());
-      newframe->setNewData(field, data, datastr.size());
-    }
-    else
+template <typename T>
+inline bool SignalBackup::setFrameFromStrings(std::unique_ptr<T> *frame, std::vector<std::string> const &lines) const
+{
+  std::unique_ptr<T> newframe(new T);
+  for (auto const &l : lines)
+    if (!setFrameFromLine(&newframe, l))
       return false;
-  }
   frame->reset(newframe.release());
 
   return true;

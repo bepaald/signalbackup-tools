@@ -79,7 +79,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
     std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
     std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
-    char digest[] = "SHA256";
+    char digest[] = "SHA512";
     OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", digest, 0), OSSL_PARAM_construct_end()};
     if (EVP_MAC_init(hctx.get(), d_hmackey, d_hmackeysize, params) != 1)
     {

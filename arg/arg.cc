@@ -46,7 +46,8 @@ Arg::Arg(int argc, char *argv[])
   d_limitcontacts(std::vector<std::string>()),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
-  d_dumpdesktopdb(std::string()),
+  d_dumpdesktopdb_1(std::string()),
+  d_dumpdesktopdb_2(std::string()),
   d_dumpmedia(std::string()),
   d_dumpavatars(std::string()),
   d_hhenkel(std::string()),
@@ -84,7 +85,8 @@ Arg::Arg(int argc, char *argv[])
   d_scanmissingattachments(false),
   d_showdbinfo(false),
   d_scramble(false),
-  d_importfromdesktop(std::string()),
+  d_importfromdesktop_1(std::string()),
+  d_importfromdesktop_2(std::string()),
   d_importfromdesktop_bool(false),
   d_ignorewal(false),
   d_includemms(false),
@@ -445,9 +447,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--dumpdesktopdb")
     {
-      if (i < arguments.size() - 1)
+      if (i < arguments.size() - 2)
       {
-        d_dumpdesktopdb = arguments[++i];
+        d_dumpdesktopdb_1 = arguments[++i];
+        d_dumpdesktopdb_2 = arguments[++i];
       }
       else
       {
@@ -920,9 +923,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importfromdesktop")
     {
-      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      if (i < arguments.size() - 2 && !isOption(arguments[i + 1]))
       {
-        d_importfromdesktop = arguments[++i];
+        d_importfromdesktop_1 = arguments[++i];
+        d_importfromdesktop_2 = arguments[++i];
         d_importfromdesktop_bool = true;
       }
       else

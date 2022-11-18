@@ -445,7 +445,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     text = decodeStatusMessage(text, expiration, realtype, contact_name);
     escapeXmlString(&text);
   }
-  else if (results.valueHasType<std::nullptr_t>(i, "body"))
+  else if (results.isNull(i, "body"))
   {
     text = decodeStatusMessage(text, expiration, realtype, contact_name);
     escapeXmlString(&text);

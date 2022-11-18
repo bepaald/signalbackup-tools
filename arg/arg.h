@@ -58,7 +58,8 @@ class Arg
   std::vector<std::string> d_limitcontacts;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
-  std::string d_dumpdesktopdb;
+  std::string d_dumpdesktopdb_1;
+  std::string d_dumpdesktopdb_2;
   std::string d_dumpmedia;
   std::string d_dumpavatars;
   std::string d_hhenkel;
@@ -96,7 +97,8 @@ class Arg
   bool d_scanmissingattachments;
   bool d_showdbinfo;
   bool d_scramble;
-  std::string d_importfromdesktop;
+  std::string d_importfromdesktop_1;
+  std::string d_importfromdesktop_2;
   bool d_importfromdesktop_bool;
   bool d_ignorewal;
   bool d_includemms;
@@ -132,7 +134,8 @@ class Arg
   inline std::vector<std::string> const &limitcontacts() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
-  inline std::string const &dumpdesktopdb() const;
+  inline std::string const &dumpdesktopdb_1() const;
+  inline std::string const &dumpdesktopdb_2() const;
   inline std::string const &dumpmedia() const;
   inline std::string const &dumpavatars() const;
   inline std::string const &hhenkel() const;
@@ -170,7 +173,8 @@ class Arg
   inline bool scanmissingattachments() const;
   inline bool showdbinfo() const;
   inline bool scramble() const;
-  inline std::string const &importfromdesktop() const;
+  inline std::string const &importfromdesktop_1() const;
+  inline std::string const &importfromdesktop_2() const;
   inline bool importfromdesktop_bool() const;
   inline bool ignorewal() const;
   inline bool includemms() const;
@@ -312,9 +316,14 @@ inline std::vector<long long int> const &Arg::editattachmentsize() const
   return d_editattachmentsize;
 }
 
-inline std::string const &Arg::dumpdesktopdb() const
+inline std::string const &Arg::dumpdesktopdb_1() const
 {
-  return d_dumpdesktopdb;
+  return d_dumpdesktopdb_1;
+}
+
+inline std::string const &Arg::dumpdesktopdb_2() const
+{
+  return d_dumpdesktopdb_2;
 }
 
 inline std::string const &Arg::dumpmedia() const
@@ -502,9 +511,14 @@ inline bool Arg::scramble() const
   return d_scramble;
 }
 
-inline std::string const &Arg::importfromdesktop() const
+inline std::string const &Arg::importfromdesktop_1() const
 {
-  return d_importfromdesktop;
+  return d_importfromdesktop_1;
+}
+
+inline std::string const &Arg::importfromdesktop_2() const
+{
+  return d_importfromdesktop_2;
 }
 
 inline bool Arg::importfromdesktop_bool() const

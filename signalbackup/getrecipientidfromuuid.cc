@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2022  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -17,6 +17,14 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "memfiledb.h"
+#include "signalbackup.ih"
 
-sqlite3_vfs MemFileDB::s_memfilevfs; // static
+long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid) const
+{
+  SqliteDB::QueryResults res;
+  if (!d_database.exec("SELECT _id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
+      res.rows() != 1 ||
+      !res.valueHasType<long long int>(0, 0))
+    return -1;
+  return res.getValueAs<long long int>(0, 0);
+}
