@@ -261,7 +261,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::any mmsquote_body;
         long long int mmsquote_attachment = -1; // always -1???
         long long int mmsquote_missing = 0;
-        std::pair<std::shared_ptr<unsigned char []>, unsigned int> mmsquote_mentions{nullptr, 0};
+        std::pair<std::shared_ptr<unsigned char []>, size_t> mmsquote_mentions{nullptr, 0};
         long long int mmsquote_type = 0; // 0 == NORMAL, 1 == GIFT_BADGE (src/main/java/org/thoughtcrime/securesms/mms/QuoteModel.java)
         if (hasquote)
         {
@@ -417,12 +417,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                              //"expire_started = 0
                              //"notified,"// =  = 0
                              //"read_receipt_count,"// =  = 0
-                             //"quote_id,"//  corresponds to 'messages.date' of quoted message
-                             //"quote_author,"// =  =
-                             //"quote_body,"// =  =
-                             //"quote_attachment,"// =  = -1
-                             //"quote_missing,"// =  = 0
-                             //"quote_mentions,"// =  =
+                             "quote_id,"//  corresponds to 'messages.date' of quoted message
+                             "quote_author,"// =  =
+                             "quote_body,"// =  =
+                             "quote_attachment,"// =  = -1
+                             "quote_missing,"// =  = 0
+                             "quote_mentions,"// =  =
                              //"shared_contacts,"// =  =
                              //"unidentified,"// =  = 0
                              //"previews,"// =  =
@@ -430,7 +430,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                              //"reactions,"// =  =
                              //"reactions_unread,"// =  = 0
                              //"reactions_last_seen,"// =  = -1
-                             "remote_deleted"// =  = 0
+                             "remote_deleted,"// =  = 0
                              //"mentions_self,"// =  = 0
                              //"notified_timestamp,"// =  = 0
                              //"viewed_receipt_count,"// =  = 0
@@ -439,8 +439,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                              //"ranges,"// =  =
                              //"is_story,"// =  = 0
                              //"parent_story_id,"// =  = 0
-                             //"quote_type"// =  = 0
-                             ") VALUES (?, ?, ?, ?, ? ,? ,? , ?) "
+                             "quote_type"// =  = 0
+                             ") VALUES (?, ?, ?, ?, ? ,? ,?, ?, ?, ?, ?, ? ,? ,?, ?) "
                              "RETURNING _id", {
                                ttid, // thread_id
                                results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date
