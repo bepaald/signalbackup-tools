@@ -39,7 +39,8 @@ namespace CryptoPP
 class SqlCipherDecryptor
 {
   bool d_ok;
-  std::string d_path;
+  std::string d_configpath;
+  std::string d_apppath;
   unsigned char *d_key;
   unsigned int d_keysize;
   unsigned char *d_hmackey;
@@ -69,7 +70,7 @@ class SqlCipherDecryptor
   };
 
  public:
-  explicit SqlCipherDecryptor(std::string const &path, int version = 4);
+  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version = 4);
   SqlCipherDecryptor(SqlCipherDecryptor const &other) = delete;
   SqlCipherDecryptor &operator=(SqlCipherDecryptor const &other) = delete;
   ~SqlCipherDecryptor();

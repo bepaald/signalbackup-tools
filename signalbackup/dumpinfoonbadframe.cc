@@ -44,7 +44,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
       for (uint j = 0; j < results.columns(); ++j)
       {
         std::cout << " - " << results.header(j) << " : ";
-        if (results.valueHasType<std::nullptr_t>(i, j))
+        if (results.isNull(i, j))
           std::cout << "(NULL)" << std::endl;
         else if (results.valueHasType<std::string>(i, j))
           std::cout << results.getValueAs<std::string>(i, j) << std::endl;
@@ -71,7 +71,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
       for (uint j = 0; j < results.columns(); ++j)
       {
         std::cout << " - " << results.header(j) << " : ";
-        if (results.valueHasType<std::nullptr_t>(i, j))
+        if (results.isNull(i, j))
           std::cout << "(NULL)" << std::endl;
         else if (results.valueHasType<std::string>(i, j))
           std::cout << results.getValueAs<std::string>(i, j) << std::endl;

@@ -116,11 +116,11 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
     std::string filename;
     long long int datum = a->attachmentId();
 
-    if (fullbackup && !results.valueHasType<std::nullptr_t>(0, "date_received"))
+    if (fullbackup && !results.isNull(0, "date_received"))
       datum = results.getValueAs<long long int>(0, "date_received");
     long long int order = results.getValueAs<long long int>(0, "display_order");
 
-    if (!results.valueHasType<std::nullptr_t>(0, "file_name")) // file name IS SET in database
+    if (!results.isNull(0, "file_name")) // file name IS SET in database
       filename = sanitizeFilename(results.valueAsString(0, "file_name"));
 
     if (filename.empty()) // filename was not set in database or was not impossible
@@ -147,8 +147,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
 
     // std::cout << "FILENAME: " << filename << std::endl;
     std::string targetdir = dir;
-    if (fullbackup && !results.valueHasType<std::nullptr_t>(0, "thread_id") && !results.valueHasType<std::nullptr_t>(0, "chatpartner")
-        && !results.valueHasType<std::nullptr_t>(0, "msg_box"))
+    if (fullbackup && !results.isNull(0, "thread_id") && !results.isNull(0, "chatpartner")
+        && !results.isNull(0, "msg_box"))
     {
       long long int tid = results.getValueAs<long long int>(0, "thread_id");
       std::string chatpartner = sanitizeFilename(results.valueAsString(0, "chatpartner"));

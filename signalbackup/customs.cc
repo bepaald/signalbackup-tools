@@ -33,7 +33,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 
 
   // open signal desktop database
-  SqlCipherDecryptor db(signaldesktoplocation);
+  SqlCipherDecryptor db(signaldesktoplocation, signaldesktoplocation + "/sql");
   if (!db.ok())
   {
     std::cout << "Error reading signal desktop database" << std::endl;
@@ -371,7 +371,7 @@ void SignalBackup::esokrates()
     bool body_is_null = false;
     if (res.valueHasType<std::string>(i, "body"))
       body = std::any_cast<std::string>(res.value(i, "body"));
-    else if (res.valueHasType<std::nullptr_t>(i, "body"))
+    else if (res.isNull(i, "body"))
       body_is_null = true;
 
     std::string address = std::any_cast<std::string>(res.value(i, "address"));

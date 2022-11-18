@@ -33,7 +33,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   if (!imagefile.is_open())
   {
     std::cout << "Failed to open image for reading: " << file << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+          return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
   }
 
   imagefile.seekg(0, std::ios_base::end);
@@ -41,12 +41,12 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   imagefile.seekg(0, std::ios_base::beg);
 
   if (imagefile_size == 0)
-    return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+    return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
 
   // gethash
-  int buffer_size = std::max(imagefile_size, 1024 * 1024ul);
-  std::unique_ptr<unsigned char> buffer(new unsigned char[buffer_size]);
   std::string hash;
+  int buffer_size = std::max(imagefile_size, 1024 * 1024ul);
+  std::unique_ptr<unsigned char[]> buffer(new unsigned char[buffer_size]);
   unsigned char rawhash[SHA256_DIGEST_LENGTH];
   bool fail = true;
   std::unique_ptr<EVP_MD_CTX, decltype(&::EVP_MD_CTX_free)> sha256(EVP_MD_CTX_new(), &::EVP_MD_CTX_free);
@@ -76,14 +76,14 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   if (imagefile_size < static_cast<unsigned int>(bufsize))
   {
     std::cout << "File unexpectedly small" << std::endl;
-    return AttachmentMetadata{-1, -1, std::string(), 0, hash};
+    return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
   }
 
   std::unique_ptr<unsigned char[]> buf(new unsigned char[bufsize]);
   if (!imagefile.read(reinterpret_cast<char *>(buf.get()), bufsize))
   {
     std::cout << "Failed to read 24 bytes from file" << std::endl;
-    return AttachmentMetadata{-1, -1, std::string(), 0, hash};
+    return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
   }
 
   // PNG: the first frame is by definition an IHDR frame, which gives dimensions
@@ -94,7 +94,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0);
     return AttachmentMetadata{(buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0),
       (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0),
-      "image/png", imagefile_size, hash};
+      "image/png", imagefile_size, hash, std::string()};
   }
 
   // GIF: first three bytes say "GIF", next three give version number. Then dimensions
@@ -104,7 +104,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = buf[8] + (buf[9] << 8);
     return AttachmentMetadata{buf[8] + (buf[9] << 8),
       buf[6] + (buf[7] << 8),
-      "image/gif", imagefile_size, hash};
+      "image/gif", imagefile_size, hash, std::string()};
   }
 
   // JPEG
@@ -147,7 +147,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       if (buf[pos] != 0xFF)
       {
         std::cout << "Failed to find start of JPEG header frame" << std::endl;
-        return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+        return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
       }
       // skip any extra frame markers
       while (buf[pos + 1] == 0xFF)
@@ -157,7 +157,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (pos >= jpeg_bufsize)
         {
           std::cout << "This could be fixed..." << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+          return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
         }
       }
 
@@ -169,7 +169,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
         return AttachmentMetadata{(buf[pos + 7] << 8) + buf[pos + 8],
           (buf[pos + 5] << 8) + buf[pos + 6],
-          "image/jpeg", imagefile_size, hash};
+          "image/jpeg", imagefile_size, hash, std::string()};
       }
       else // this was a different frame, skip it
       {
@@ -186,7 +186,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (!imagefile.read(reinterpret_cast<char *>(buf.get()), jpeg_bufsize))
         {
           std::cout << "Failed to read next 24 bytes from file" << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+          return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
         }
 
         //for (int i = 0; i < bufsize; ++i)
@@ -197,9 +197,9 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     }
 
   }
-  return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+  return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
   #else
   // todo, maybe? write this function for cryptopp
-  return AttachmentMetadata{-1, -1, std::string(), 0, std::string()};
+  return AttachmentMetadata{-1, -1, std::string(), 0, hash, std::string()};
   #endif
 }

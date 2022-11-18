@@ -556,7 +556,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
   std::vector<std::string> tables;
   for (uint i = 0; i < results.rows(); ++i)
   {
-    if (!results.valueHasType<std::nullptr_t>(i, 0))
+    if (!results.isNull(i, 0))
     {
       //std::cout << "Dealing with: " << results.getValueAs<std::string>(i, 1) << std::endl;
       if (results.valueHasType<std::string>(i, 1) &&

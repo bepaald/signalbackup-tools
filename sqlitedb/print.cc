@@ -19,7 +19,7 @@
 
 #include "sqlitedb.ih"
 
-void SqliteDB::QueryResults::print() const
+void SqliteDB::QueryResults::print(bool printheader) const
 {
 
   if (rows() == 0 && columns() == 0)
@@ -28,10 +28,12 @@ void SqliteDB::QueryResults::print() const
     return;
   }
 
-
-  for (unsigned int i = 0; i < d_headers.size(); ++i)
-    std::cout << d_headers[i] << ((i < d_headers.size() - 1) ? "|" : "");
-  std::cout << std::endl;
+  if (printheader)
+  {
+    for (unsigned int i = 0; i < d_headers.size(); ++i)
+      std::cout << d_headers[i] << ((i < d_headers.size() - 1) ? "|" : "");
+    std::cout << std::endl;
+  }
 
   for (unsigned int i = 0; i < rows(); ++i)
   {
