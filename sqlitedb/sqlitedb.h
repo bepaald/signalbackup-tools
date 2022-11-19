@@ -142,7 +142,7 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   d_ok(false)
 {
   if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
-    d_ok = (sqlite3_open_v2("memfiledb", &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+    d_ok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
 }
 
 inline SqliteDB::~SqliteDB()
@@ -151,8 +151,7 @@ inline SqliteDB::~SqliteDB()
     sqlite3_close(d_db);
 
   if (d_vfs)
-    if (!sqlite3_vfs_unregister(d_vfs) == SQLITE_OK)
-      std::cout << "Failed to unregister vfs" << std::endl;
+    sqlite3_vfs_unregister(d_vfs);
 }
 
 inline bool SqliteDB::ok() const
