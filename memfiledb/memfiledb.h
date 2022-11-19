@@ -38,7 +38,7 @@ class MemFileDB
     uint64_t datasize;
   };
   static sqlite3_vfs s_memfilevfs;
-  static char constexpr s_name[] = {'M', 'e', 'm', 'f', 'i', 'l', 'e', 'V', 'F', 'S'};
+  static char constexpr s_name[] = {'M', 'e', 'm', 'f', 'i', 'l', 'e', 'V', 'F', 'S', '\0'};
  public:
   static sqlite3_vfs *sqlite3_memfilevfs(std::pair<unsigned char *, uint64_t> *data);
   static char const *vfsName()
@@ -90,13 +90,13 @@ class MemFileDB
 
 inline int MemFileDB::ioClose(sqlite3_file *pFile [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   return SQLITE_OK;
 }
 
 inline int MemFileDB::ioRead(sqlite3_file *pFile, void *zBuf, int iAmt, sqlite_int64 iOfst)
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   if (static_cast<uint64_t>(iOfst) >= reinterpret_cast<MemFile *>(pFile)->datasize ||
       !reinterpret_cast<MemFile *>(pFile)->data)
   {
@@ -123,66 +123,66 @@ inline int MemFileDB::ioRead(sqlite3_file *pFile, void *zBuf, int iAmt, sqlite_i
 
 inline int MemFileDB::ioWrite(sqlite3_file *pFile [[maybe_unused]], void const *, int, sqlite_int64)
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   //std::cout << " !!! ERROR_WRITE !!!" << std::endl;
   return SQLITE_READONLY;
 }
 
 inline int MemFileDB::ioTruncate(sqlite3_file *pFile [[maybe_unused]], sqlite_int64 size [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   //std::cout << " !!! ERROR_TRUNC !!!" << std::endl;
   return SQLITE_IOERR_TRUNCATE;
 }
 
 inline int MemFileDB::ioSync(sqlite3_file *pFile [[maybe_unused]], int flags [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   //return SQLITE_OK; // read only, there's never anything to sync
   return SQLITE_IOERR_FSYNC;
 }
 
 inline int MemFileDB::ioFileSize(sqlite3_file *pFile, sqlite_int64 *pSize)
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   *pSize = reinterpret_cast<MemFile *>(pFile)->datasize;
   return SQLITE_OK;
 }
 
 inline int MemFileDB::ioLock(sqlite3_file *pFile [[maybe_unused]], int eLock [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   return SQLITE_OK;
 }
 
 inline int MemFileDB::ioUnlock(sqlite3_file *pFile [[maybe_unused]], int eLock [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   return SQLITE_OK;
 }
 
 inline int MemFileDB::ioCheckReservedLock(sqlite3_file *pFile [[maybe_unused]], int *pResOut)
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   *pResOut = 0;
   return SQLITE_OK;
 }
 
 inline int MemFileDB::ioFileControl(sqlite3_file *pFile [[maybe_unused]], int op [[maybe_unused]], void *pArg [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   return SQLITE_NOTFOUND;
 }
 
 inline int MemFileDB::ioSectorSize(sqlite3_file *pFile [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   return 0;
 }
 
 inline int MemFileDB::ioDeviceCharacteristics(sqlite3_file *pFile [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   return 0;
 }
 
@@ -191,13 +191,14 @@ inline int MemFileDB::fullPathname(sqlite3_vfs *pVfs [[maybe_unused]],   /* VFS 
                                    int nPathOut [[maybe_unused]],        /* Size of output buffer in bytes */
                                    char *zPathOut)                       /* Pointer to output buffer */
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
-
-  //if (nPathOut >= strlen(zPath))
-  //  std::strcpy(zPathOut, zPath);
-  zPathOut[0] = '\0';
-
-  return SQLITE_OK;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
+  if (nPathOut >= static_cast<int>(strlen(zPath)))
+  {
+    std::strcpy(zPathOut, zPath);
+    return SQLITE_OK;
+  }
+  else
+    return SQLITE_CANTOPEN;
 }
 
 inline int MemFileDB::open(sqlite3_vfs *pVfs,                        /* VFS */
@@ -206,14 +207,13 @@ inline int MemFileDB::open(sqlite3_vfs *pVfs,                        /* VFS */
                            int flags [[maybe_unused]],               /* Input SQLITE_OPEN_XXX flags */
                            int *pOutFlags)                           /* Output SQLITE_OPEN_XXX flags (or NULL) */
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   MemFile *p = reinterpret_cast<MemFile *>(pFile); /* Populate this structure */
-  //std::memset(p, 0, sizeof(MemFile));
+  std::memset(p, 0, sizeof(MemFile));
   if (pOutFlags)
-    *pOutFlags = SQLITE_READONLY;
+    *pOutFlags = flags | SQLITE_READONLY | SQLITE_OPEN_MEMORY;
 
   p->base.pMethods = &s_io;
-
   p->data = reinterpret_cast<std::pair<unsigned char *, uint64_t> const *>(pVfs->pAppData)->first;
   p->datasize = reinterpret_cast<std::pair<unsigned char *, uint64_t> const *>(pVfs->pAppData)->second;
 
@@ -222,7 +222,7 @@ inline int MemFileDB::open(sqlite3_vfs *pVfs,                        /* VFS */
 
 inline int MemFileDB::del(sqlite3_vfs *pVfs [[maybe_unused]], const char *zPath [[maybe_unused]], int dirSync [[maybe_unused]])
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   //return SQLITE_OK;
   //std::cout << " !!! ERROR_DEL !!!" << std::endl;
   return SQLITE_IOERR_DELETE;
@@ -230,8 +230,7 @@ inline int MemFileDB::del(sqlite3_vfs *pVfs [[maybe_unused]], const char *zPath 
 
 inline int MemFileDB::access(sqlite3_vfs *pVfs, char const *zPath [[maybe_unused]], int flags [[maybe_unused]], int *pResOut)
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
-
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   if (reinterpret_cast<std::pair<unsigned char *, uint64_t> const *>(pVfs->pAppData)->first &&
       reinterpret_cast<std::pair<unsigned char *, uint64_t> const *>(pVfs->pAppData)->second > 0)
   {
@@ -244,13 +243,14 @@ inline int MemFileDB::access(sqlite3_vfs *pVfs, char const *zPath [[maybe_unused
 
 inline sqlite3_vfs *MemFileDB::sqlite3_memfilevfs(std::pair<unsigned char *, uint64_t> *data)
 {
-  std::cout << "Called: " << __FUNCTION__ << std::endl;
-
+  //std::cout << "Called: " << __FUNCTION__ << std::endl;
   std::memset(&s_memfilevfs, 0, sizeof(s_memfilevfs));
 
   s_memfilevfs = {1,                     /* iVersion */
                   sizeof(MemFile),       /* szOsFile */
-                  8,                     /* mxPathname */ // set this to 7 and it fails
+                  sizeof(s_name) + 8,    /* mxPathname // needs enough room for 'path' (I set it to filename used in
+                                                          sqlite3_open() call in fullPathname()) + 8 for '-journal'
+                                                          (and other) suffix added by sqlite*/
                   0,                     /* pNext */
                   vfsName(),             /* zName */
                   data,                  /* pAppData */
