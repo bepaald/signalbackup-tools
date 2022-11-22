@@ -150,7 +150,7 @@ class SignalBackup
   bool scramble() const;
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, bool ignorewal);
-  bool checkDbIntegrity(bool onlyforeignkeys = true) const;
+  bool checkDbIntegrity() const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -231,11 +231,13 @@ class SignalBackup
   std::vector<long long int> getGroupUpdateRecipients() const;
   bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const;
   bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
-  long long int getRecipientIdFromUuid(std::string const &uuid) const;
+  long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> const &data,
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr);
+  bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, SqliteDB const &ddb,
+                         std::string const &where, std::string const &databasedir, bool isquote);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
