@@ -373,7 +373,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               bodyrange.addField<3>(qbrres.valueAsString(0, "qbr_uuid"));
               bodyrangelist.addField<1>(bodyrange);
             }
+#if __cplusplus > 201703L
             mmsquote_mentions.first = std::make_shared<unsigned char []>(bodyrangelist.size());
+#else
+            mmsquote_mentions.first = std::shared_ptr<unsigned char []>(new unsigned char[bodyrangelist.size()],
+                                                                        [](unsigned char *p) { delete[] p; } );
+#endif
             mmsquote_mentions.second = bodyrangelist.size();
             std::memcpy(mmsquote_mentions.first.get(), bodyrangelist.data(), bodyrangelist.size());
           }
@@ -389,79 +394,100 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           quote_results.prettyPrint();
         }
 
-        // insert into mms
-        SqliteDB::QueryResults new_message_id;
-        if (!d_database.exec("INSERT INTO mms ("
-                             //"_id,"// AUTO VALUE
-                             "thread_id,"
-                             "date,"// =  = 1474184079794
-                             "date_received,"// =  = 1474184079855
-                             "date_server,"// =  = -1
-                             "msg_box,"// =  = 10485783
-                             //"read,"// =  = 1
-                             "body,"//
-                             //"part_count,"// don't know what this is... not number of attachments
-                             //"ct_l,"// =  =
-                             "address,"// =  = 53
-                             //"address_device_id,"// =  =
-                             //"exp,"// =  =
-                             //"m_type,"// =  = 128
-                             //"m_size,"// =  =
-                             //"st,"// =  =
-                             //"tr_id,"// =  =
-                             //"delivery_receipt_count,"// =  = 2
-                             //"mismatched_identities,"// =  =
-                             //"network_failures,"// =  =
-                             //"subscription_id,"// =  = -1
-                             //"expires_in,"// =  = 0
-                             //"expire_started = 0
-                             //"notified,"// =  = 0
-                             //"read_receipt_count,"// =  = 0
-                             "quote_id,"//  corresponds to 'messages.date' of quoted message
-                             "quote_author,"// =  =
-                             "quote_body,"// =  =
-                             "quote_attachment,"// =  = -1
-                             "quote_missing,"// =  = 0
-                             "quote_mentions,"// =  =
-                             //"shared_contacts,"// =  =
-                             //"unidentified,"// =  = 0
-                             //"previews,"// =  =
-                             //"reveal_duration,"// =  = 0
-                             //"reactions,"// =  =
-                             //"reactions_unread,"// =  = 0
-                             //"reactions_last_seen,"// =  = -1
-                             "remote_deleted,"// =  = 0
-                             //"mentions_self,"// =  = 0
-                             //"notified_timestamp,"// =  = 0
-                             //"viewed_receipt_count,"// =  = 0
-                             //"server_guid,"// =
-                             //"receipt_timestamp,"// =  = -1
-                             //"ranges,"// =  =
-                             //"is_story,"// =  = 0
-                             //"parent_story_id,"// =  = 0
-                             "quote_type"// =  = 0
-                             ") VALUES (?, ?, ?, ?, ? ,? ,?, ?, ?, ?, ?, ? ,? ,?, ?) "
-                             "RETURNING _id", {
-                               ttid, // thread_id
-                               results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date
-                               results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date_received
-                               results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date_server
-                               Types::SECURE_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE), // msg_box
-                               results_all_messages_from_conversation.value(j, "body"), // body
-                               address, // address
-                               hasquote ? mmsquote_id : 0, // quote_id
-                               hasquote ? std::any(mmsquote_author) : std::any(nullptr), // quote_author
-                               hasquote ? mmsquote_body : nullptr, // quote_body
-                               hasquote ? mmsquote_attachment : -1, // quote_attachment
-                               hasquote ? mmsquote_missing : 0, // quote_missing
-                               hasquote ? std::any(mmsquote_mentions) : std::any(nullptr), // quote_mentions
-                               results_all_messages_from_conversation.value(j, "isErased"), // remote_deleted
-                               hasquote ? mmsquote_type : 0 // quote_type
-                             }, &new_message_id))
+        std::any retval;
+        if (!insertRow("mms", {{"thread_id", ttid},
+                               {"date", results_all_messages_from_conversation.value(j, "sent_at")},
+                               {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                               {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
+                               {"msg_box", Types::SECURE_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                               {"body", results_all_messages_from_conversation.value(j, "body")},
+                               {"address", address},
+                               {"quote_id", hasquote ? mmsquote_id : 0},
+                               {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+                               {"quote_body", hasquote ? mmsquote_body : nullptr},
+                               {"quote_attachment", hasquote ? mmsquote_attachment : -1},
+                               {"quote_missing", hasquote ? mmsquote_missing : 0},
+                               {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                               {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                               {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
         {
-          std::cout << "mms error" << std::endl;
+          std::cout << "Error" << std::endl;
         }
-        long long int new_mms_id = new_message_id.getValueAs<long long int>(0, "_id");
+        long long int new_mms_id = std::any_cast<long long int>(retval);
+
+        // insert into mms
+        // SqliteDB::QueryResults new_message_id;
+        // if (!d_database.exec("INSERT INTO mms ("
+        //                      //"_id,"// AUTO VALUE
+        //                      "thread_id,"
+        //                      "date,"// =  = 1474184079794
+        //                      "date_received,"// =  = 1474184079855
+        //                      "date_server,"// =  = -1
+        //                      "msg_box,"// =  = 10485783
+        //                      //"read,"// =  = 1
+        //                      "body,"//
+        //                      //"part_count,"// don't know what this is... not number of attachments
+        //                      //"ct_l,"// =  =
+        //                      "address,"// =  = 53
+        //                      //"address_device_id,"// =  =
+        //                      //"exp,"// =  =
+        //                      //"m_type,"// =  = 128
+        //                      //"m_size,"// =  =
+        //                      //"st,"// =  =
+        //                      //"tr_id,"// =  =
+        //                      //"delivery_receipt_count,"// =  = 2
+        //                      //"mismatched_identities,"// =  =
+        //                      //"network_failures,"// =  =
+        //                      //"subscription_id,"// =  = -1
+        //                      //"expires_in,"// =  = 0
+        //                      //"expire_started = 0
+        //                      //"notified,"// =  = 0
+        //                      //"read_receipt_count,"// =  = 0
+        //                      "quote_id,"//  corresponds to 'messages.date' of quoted message
+        //                      "quote_author,"// =  =
+        //                      "quote_body,"// =  =
+        //                      "quote_attachment,"// =  = -1
+        //                      "quote_missing,"// =  = 0
+        //                      "quote_mentions,"// =  =
+        //                      //"shared_contacts,"// =  =
+        //                      //"unidentified,"// =  = 0
+        //                      //"previews,"// =  =
+        //                      //"reveal_duration,"// =  = 0
+        //                      //"reactions,"// =  =
+        //                      //"reactions_unread,"// =  = 0
+        //                      //"reactions_last_seen,"// =  = -1
+        //                      "remote_deleted,"// =  = 0
+        //                      //"mentions_self,"// =  = 0
+        //                      //"notified_timestamp,"// =  = 0
+        //                      //"viewed_receipt_count,"// =  = 0
+        //                      //"server_guid,"// =
+        //                      //"receipt_timestamp,"// =  = -1
+        //                      //"ranges,"// =  =
+        //                      //"is_story,"// =  = 0
+        //                      //"parent_story_id,"// =  = 0
+        //                      "quote_type"// =  = 0
+        //                      ") VALUES (?, ?, ?, ?, ? ,? ,?, ?, ?, ?, ?, ? ,? ,?, ?) "
+        //                      "RETURNING _id", {
+        //                        ttid, // thread_id
+        //                        results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date
+        //                        results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date_received
+        //                        results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), // date_server
+        //                        Types::SECURE_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE), // msg_box
+        //                        results_all_messages_from_conversation.value(j, "body"), // body
+        //                        address, // address
+        //                        hasquote ? mmsquote_id : 0, // quote_id
+        //                        hasquote ? std::any(mmsquote_author) : std::any(nullptr), // quote_author
+        //                        hasquote ? mmsquote_body : nullptr, // quote_body
+        //                        hasquote ? mmsquote_attachment : -1, // quote_attachment
+        //                        hasquote ? mmsquote_missing : 0, // quote_missing
+        //                        hasquote ? std::any(mmsquote_mentions) : std::any(nullptr), // quote_mentions
+        //                        results_all_messages_from_conversation.value(j, "isErased"), // remote_deleted
+        //                        hasquote ? mmsquote_type : 0 // quote_type
+        //                      }, &new_message_id))
+        // {
+        //   std::cout << "mms error" << std::endl;
+        // }
+        // long long int new_mms_id = new_message_id.getValueAs<long long int>(0, "_id");
         std::cout << "Inserted message, new id: " << new_mms_id << std::endl;
 
         std::cout << "  " << numattachments << " attachments." << std::endl;
@@ -518,7 +544,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                //"ctt_s," // =
                                //"ctt_t," // =
                                //"encrypted," // =
-                               //"pending_push," // = 0
+                               "pending_push," // MUST BE ZERO (i think)
                                //"_data," // = /data/user/0/org.thoughtcrime.securesms/app_parts/part7685241378172293912.mms
                                "data_size," // = 421
                                "file_name," // =
@@ -547,10 +573,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                //"borderless," // = 0
                                //"sticker_emoji," // =
                                //"video_gif" // = 0
-                               ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                               ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
                                "RETURNING _id", {
                                  new_mms_id, // mid
                                  results_attachment_data.value(0, "content_type"), // ct
+                                 0, // pending_push
                                  results_attachment_data.value(0, "data_size"), // data_size
                                  results_attachment_data.value(0, "file_name"), // file_name
                                  unique_id, // unique_id
@@ -570,7 +597,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
                                                                                   "ATTACHMENTID:uint64:" + bepaald::toString(unique_id),
                                                                                   "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+          {
+            new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
             d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
+          }
           else
             std::cout << "Failed to create AttachmentFrame for data" << std::endl;
         }
@@ -718,6 +748,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                              }, &new_message_id))
           {
             std::cout << "sms error" << std::endl;
+            return false;
           }
         long long int new_sms_id = new_message_id.getValueAs<long long int>(0, "_id");
         std::cout << "Inserted message, new id: " << new_sms_id << std::endl;
@@ -781,7 +812,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
     // insert into thread ttid
   }
-  return false;
+  return true;
 }
 
   /*

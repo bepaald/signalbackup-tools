@@ -286,7 +286,12 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
           }
           memberphones.insert(r3.valueAsString(0, "phone"));
         }
+#if __cplusplus > 201703L
         for (int count = memberphones.size(); auto const &p : memberphones)
+#else
+        int count = memberphones.size();
+        for (auto const &p : memberphones)
+#endif
         {
           --count;
           address += p + (count ? "~" : "");
