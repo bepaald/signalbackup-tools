@@ -32,7 +32,7 @@ std::pair<std::string, std::string> SignalBackup::getDesktopDir() const
   std::string home = std::string(homedrive_cs) + std::string(homepath_cs);
   if (home.empty())
     return {std::string(), std::string()};
-  return {home + "/AppData/Signal", home + "/AppData/Roaming/Signal"};
+  return {home + "/AppData/Roaming/Signal", home + "/AppData/Roaming/Signal"};
 #else
   char const *homedir_cs = getenv("HOME");
   if (homedir_cs == nullptr)
