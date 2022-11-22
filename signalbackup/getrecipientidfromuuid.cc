@@ -22,11 +22,11 @@
 long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
                                                    std::map<std::string, long long int> *savedmap) const
 {
-
-  std::cout << "Finding recipient for uuid: " << uuid << std::endl;
-
   if (savedmap->find(uuid) == savedmap->end())
   {
+
+    std::cout << "Finding recipient for uuid: " << uuid << std::endl;
+
     SqliteDB::QueryResults res;
     if (!d_database.exec("SELECT recipient._id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
         res.rows() != 1 ||
