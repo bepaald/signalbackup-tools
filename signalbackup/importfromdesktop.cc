@@ -373,7 +373,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               bodyrange.addField<3>(qbrres.valueAsString(0, "qbr_uuid"));
               bodyrangelist.addField<1>(bodyrange);
             }
-#if __cplusplus > 201703L
+#if __cpp_lib_shared_ptr_arrays >= 201707L
             mmsquote_mentions.first = std::make_shared<unsigned char []>(bodyrangelist.size());
 #else
             mmsquote_mentions.first = std::shared_ptr<unsigned char []>(new unsigned char[bodyrangelist.size()],
