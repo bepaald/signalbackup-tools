@@ -232,8 +232,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   if (!ddb.exec("SELECT id,type,uuid,groupId FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results))
     return false;
 
-  std::cout << "Conversations in desktop:" << std::endl;
-  results.prettyPrint();
+  //std::cout << "Conversations in desktop:" << std::endl;
+  //results.prettyPrint();
 
   // this map will map desktop-recipient-uuid's to android recipient._id's
   std::map<std::string, long long int> recipientmap;
@@ -277,8 +277,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       continue;
     }
 
-    std::cout << "Match for " << person_or_group_id << std::endl;
-    results2.prettyPrint();
+    //std::cout << "Match for " << person_or_group_id << std::endl;
+    //results2.prettyPrint();
 
     long long int ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
     std::cout << "ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
@@ -304,8 +304,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "isStory"
                   " FROM messages WHERE conversationId = ?",
                   results.value(i, "id"), &results_all_messages_from_conversation))
-      return false;
-    results_all_messages_from_conversation.prettyPrint();
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to retrieve message from this conversation." << std::endl;
+      continue;
+    }
+    //results_all_messages_from_conversation.prettyPrint();
 
     for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
     {
@@ -330,7 +333,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       // get emoji reactions
       std::vector<std::vector<std::string>> reactions;
       SqliteDB::QueryResults results_emoji_reactions;
-      std::cout << "  " << numreactions << " reactions." << std::endl;
+      if (numreactions)
+        std::cout << "  " << numreactions << " reactions." << std::endl;
       for (uint k = 0; k < numreactions; ++k)
       {
         if (!ddb.exec("SELECT "
@@ -401,7 +405,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         long long int mmsquote_type = 0; // 0 == NORMAL, 1 == GIFT_BADGE (src/main/java/org/thoughtcrime/securesms/mms/QuoteModel.java)
         if (hasquote)
         {
-          std::cout << "Message has quote!" << std::endl;
+          std::cout << "  Message has quote" << std::endl;
           SqliteDB::QueryResults quote_results;
           if (!ddb.exec("SELECT "
                         "json_extract(json, '$.quote.id') AS quote_id,"
@@ -490,8 +494,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                             " FROM messages WHERE rowid = ?", rowid, &qbrres))
               {
                 std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Retrieving quote bodyranges" << std::endl;
+                continue;
               }
-              qbrres.prettyPrint();
+              //qbrres.prettyPrint();
 
               ProtoBufParser<protobuffer::optional::INT32, // int32 start
                              protobuffer::optional::INT32, // int32 length
@@ -521,7 +526,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                {"date", results_all_messages_from_conversation.value(j, "sent_at")},
                                {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
                                {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
-                               {"msg_box", Types::SECURE_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                               {"msg_box", Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                {"body", results_all_messages_from_conversation.value(j, "body")},
                                //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
                                //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
@@ -539,9 +544,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         long long int new_mms_id = std::any_cast<long long int>(retval);
 
-        std::cout << "Inserted message, new id: " << new_mms_id << std::endl;
+        std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
 
-        std::cout << "  " << numattachments << " attachments." << std::endl;
         // insert message attachments
         insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments,
                           ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false);
@@ -611,7 +615,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mention" << std::endl;
           }
           else
-            std::cout << "Inserted mention" << std::endl;
+            std::cout << "  Inserted mention" << std::endl;
         }
 
       }
@@ -625,7 +629,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                         {"date", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
                         {"date_sent", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
                         {"date_server", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
-                        {"type", Types::SECURE_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                        {"type", Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                         {"body", results_all_messages_from_conversation.value(j, "body")},
                         //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
                         //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
@@ -637,7 +641,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           continue;
         }
         long long int new_sms_id = std::any_cast<long long int>(retval);
-        std::cout << "Inserted message, new id: " << new_sms_id << std::endl;
+        std::cout << "  Inserted sms message, new id: " << new_sms_id << std::endl;
 
         // insert into reactions
         for (auto const &r : reactions)

@@ -35,6 +35,9 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     numattachments = res.getValueAs<long long int>(0, "numattachments");
   }
 
+  if (numattachments)
+    std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
+
   SqliteDB::QueryResults results_attachment_data;
   for (int k = 0; k < numattachments; ++k)
   {
