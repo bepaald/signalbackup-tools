@@ -77,8 +77,8 @@ void SignalBackup::initFromFile()
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
 
-      //if (frame->frameNumber() < 500)
-      //  frame->printInfo();
+      // if (frame->frameNumber() > 110)
+      //   frame->printInfo();
 
       if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) [[likely]] // skip creation of sqlite_ internal db's
       {

@@ -29,7 +29,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
   std::ifstream file(frame->filename(), std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
   {
-    std::cout << "Failed to open backup file for reading attachment" << std::endl;
+    std::cout << "Failed to open backup file '" << frame->filename() << "' for reading attachment" << std::endl;
     return 1;
   }
 

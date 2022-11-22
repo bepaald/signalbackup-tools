@@ -234,6 +234,8 @@ class SignalBackup
   long long int getRecipientIdFromUuid(std::string const &uuid) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
+  bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> const &data,
+                 std::string const &returnfield = std::string(), std::any *returnvalue = nullptr);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
