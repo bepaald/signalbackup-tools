@@ -19,12 +19,24 @@
 
 #include "signalbackup.ih"
 
-long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid) const
+long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
+                                                   std::map<std::string, long long int> *savedmap) const
 {
-  SqliteDB::QueryResults res;
-  if (!d_database.exec("SELECT _id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
-      res.rows() != 1 ||
-      !res.valueHasType<long long int>(0, 0))
-    return -1;
-  return res.getValueAs<long long int>(0, 0);
+
+  std::cout << "Finding recipient for uuid: " << uuid << std::endl;
+
+  if (savedmap->find(uuid) == savedmap->end())
+  {
+    SqliteDB::QueryResults res;
+    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
+        res.rows() != 1 ||
+        !res.valueHasType<long long int>(0, 0))
+    {
+      return -1;
+    }
+    //res.prettyPrint();
+    (*savedmap)[uuid] = res.getValueAs<long long int>(0, 0);
+  }
+  //std::cout << "RETURNING " << (*savedmap)[uuid] << std::endl;
+  return (*savedmap)[uuid];
 }

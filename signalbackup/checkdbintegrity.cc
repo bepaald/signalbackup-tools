@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::checkDbIntegrity(bool onlyforeignkeys) const
+bool SignalBackup::checkDbIntegrity() const
 {
   SqliteDB::QueryResults results;
 
@@ -34,9 +34,6 @@ bool SignalBackup::checkDbIntegrity(bool onlyforeignkeys) const
     return false;
   }
   std::cout << " ok" << std::endl;
-
-  if (onlyforeignkeys)
-    return true;
 
   // std::cout << "Checking database integrity (quick)..." << std::flush;
   // d_database.exec("SELECT * FROM pragma_quick_check", &results);
