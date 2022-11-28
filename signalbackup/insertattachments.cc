@@ -35,13 +35,13 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     numattachments = res.getValueAs<long long int>(0, "numattachments");
   }
 
-  if (numattachments)
-    std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
+  //if (numattachments)
+  //  std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
 
   SqliteDB::QueryResults results_attachment_data;
   for (int k = 0; k < numattachments; ++k)
   {
-    std::cout << "  Attachment " << k + 1 << "/" << numattachments << ": " << std::flush;
+    //std::cout << "  Attachment " << k + 1 << "/" << numattachments << ": " << std::flush;
 
     if (!ddb.exec("SELECT "
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].contentType') AS content_type,"
@@ -90,7 +90,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       continue;
     }
     long long int new_part_id = std::any_cast<long long int>(retval);
-    std::cout << "Inserted part, new id: " << new_part_id << std::endl;
+    //std::cout << "Inserted part, new id: " << new_part_id << std::endl;
 
     std::unique_ptr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),

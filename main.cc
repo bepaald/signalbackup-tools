@@ -251,7 +251,8 @@ int main(int argc, char *argv[])
   }
 
   if (arg.importfromdesktop_bool())
-    if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.ignorewal()))
+    if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.limittodates(),
+                               arg.autolimitdates(), arg.ignorewal()))
       return 1;
 
   if (arg.removedoubles())

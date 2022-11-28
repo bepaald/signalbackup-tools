@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 71> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive"};
+  std::array<std::string, 73> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -100,6 +100,8 @@ class Arg
   std::string d_importfromdesktop_1;
   std::string d_importfromdesktop_2;
   bool d_importfromdesktop_bool;
+  std::vector<std::string> d_limittodates;
+  bool d_autolimitdates;
   bool d_ignorewal;
   bool d_includemms;
   bool d_checkdbintegrity;
@@ -176,6 +178,8 @@ class Arg
   inline std::string const &importfromdesktop_1() const;
   inline std::string const &importfromdesktop_2() const;
   inline bool importfromdesktop_bool() const;
+  inline std::vector<std::string> const &limittodates() const;
+  inline bool autolimitdates() const;
   inline bool ignorewal() const;
   inline bool includemms() const;
   inline bool checkdbintegrity() const;
@@ -524,6 +528,16 @@ inline std::string const &Arg::importfromdesktop_2() const
 inline bool Arg::importfromdesktop_bool() const
 {
   return d_importfromdesktop_bool;
+}
+
+inline std::vector<std::string> const &Arg::limittodates() const
+{
+  return d_limittodates;
+}
+
+inline bool Arg::autolimitdates() const
+{
+  return d_autolimitdates;
 }
 
 inline bool Arg::ignorewal() const

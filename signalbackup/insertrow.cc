@@ -24,7 +24,7 @@
 #endif
 
 bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> const &data,
-                             std::string const &returnfield, std::any *returnvalue)
+                             std::string const &returnfield, std::any *returnvalue) const
 {
   using namespace std::string_literals;
 
