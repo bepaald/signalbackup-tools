@@ -88,6 +88,8 @@ Arg::Arg(int argc, char *argv[])
   d_importfromdesktop_1(std::string()),
   d_importfromdesktop_2(std::string()),
   d_importfromdesktop_bool(false),
+  d_limittodates(std::vector<std::string>()),
+  d_autolimitdates(false),
   d_ignorewal(false),
   d_includemms(false),
   d_checkdbintegrity(false),
@@ -931,6 +933,33 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         d_importfromdesktop_bool = true;
+      continue;
+    }
+    if (option == "--limittodates")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_limittodates))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--autolimitdates")
+    {
+      d_autolimitdates = true;
+      continue;
+    }
+    if (option == "--no-autolimitdates")
+    {
+      d_autolimitdates = false;
       continue;
     }
     if (option == "--ignorewal")

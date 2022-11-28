@@ -23,14 +23,24 @@
 #include "../msgtypes/msgtypes.h"
 
 /*
+  TODO
+  - limit timeframe
+    - AUTO timeframe
+    DONE? - fix address for call messages
+  - implement call messages (group video done?)
+  - implement group-v2- stuff
+
   Known missing things:
    - messages for conversation that is not in thread table (-> create new thread for recipient)
      - when recipient is not present in backup?
    - message types other than 'incoming' and 'outgoing'
      - 'group-v2-change' (group member add/remove/change group name/picture
+     - other status messages, like disappearing msgs timer change
    - inserting into group-v1-type groups
    - all received/read receipts
    - voice_note flag in part table?
+   - any group-v1 stuff
+   - stories?
    -
    - more...
  */
@@ -185,7 +195,9 @@
 
 */
 
-bool SignalBackup::importFromDesktop(std::string configdir, std::string databasedir, bool ignorewal)
+bool SignalBackup::importFromDesktop(std::string configdir, std::string databasedir,
+                                     std::vector<std::string> const &daterangelist,
+                                     bool autodates, bool ignorewal)
 {
   if (configdir.empty() || databasedir.empty())
   {
@@ -225,6 +237,43 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to open database" << std::endl;
     return false;
+  }
+
+  std::vector<std::pair<std::string, std::string>> dateranges;
+  if (daterangelist.size() % 2 == 0)
+    for (uint i = 0; i < daterangelist.size(); i+=2)
+      dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
+
+  // set daterange automatically
+  if (dateranges.empty() && autodates)
+  {
+    SqliteDB::QueryResults res;
+    if (!d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms.date, mms.date) AS mindate FROM sms LEFT JOIN mms WHERE sms.date IS NOT NULL AND mms.date IS NOT NULL)", &res))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << "Failed to automatically determine data-range" << std::endl;
+      return false;
+    }
+    dateranges.push_back({"0", res.valueAsString(0, 0)});
+  }
+
+  std::string datewhereclause;
+  for (uint i = 0; i < dateranges.size(); ++i)
+  {
+    bool needrounding = false;
+    long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
+    long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
+    if (startrange == -1 || endrange == -1 || endrange < startrange)
+    {
+      std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
+      continue;
+    }
+    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second << std::endl;
+    std::cout << "               " << startrange << " - " << endrange << std::endl;
+
+    if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
+      endrange += 999; // to get everything in the second specified...
+
+    datewhereclause += " AND sent_at BETWEEN " + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
   }
 
   // get all conversations (conversationpartners) from ddb
@@ -281,7 +330,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     //results2.prettyPrint();
 
     long long int ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
-    std::cout << "ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
+    //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
 
     // now lets get all messages for this conversation
     SqliteDB::QueryResults results_all_messages_from_conversation;
@@ -291,6 +340,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments,"
                   "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
                   "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS nummentions,"
+                  "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
                   "body,"
                   "type,"
                   "sent_at,"
@@ -302,7 +352,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "sourceUuid,"
                   "seenStatus,"
                   "isStory"
-                  " FROM messages WHERE conversationId = ?",
+                  " FROM messages WHERE conversationId = ?" + datewhereclause,
                   results.value(i, "id"), &results_all_messages_from_conversation))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to retrieve message from this conversation." << std::endl;
@@ -310,74 +360,37 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     }
     //results_all_messages_from_conversation.prettyPrint();
 
+    std::cout << " - Importing " << results_all_messages_from_conversation.rows() << " messages into thread._id " << ttid << std::endl;
     for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
     {
-      std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
+      //std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
-      bool outgoing = results_all_messages_from_conversation.valueAsString(j, "type") == "outgoing";
-      bool incoming = results_all_messages_from_conversation.valueAsString(j, "type") == "incoming";
+      std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
+      bool outgoing = type == "outgoing";
+      bool incoming = type == "incoming";
       long long int numattachments = results_all_messages_from_conversation.getValueAs<long long int>(j, "numattachments");
       long long int numreactions = results_all_messages_from_conversation.getValueAs<long long int>(j, "numreactions");
       long long int nummentions = results_all_messages_from_conversation.getValueAs<long long int>(j, "nummentions");
       bool hasquote = !results_all_messages_from_conversation.isNull(j, "quote");
 
-      if (!outgoing && !incoming)
-      {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported messagetype '"
-                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Skipping message." << std::endl;
-        continue;
-      }
-
-      // get emoji reactions
-      std::vector<std::vector<std::string>> reactions;
-      SqliteDB::QueryResults results_emoji_reactions;
-      if (numreactions)
-        std::cout << "  " << numreactions << " reactions." << std::endl;
-      for (uint k = 0; k < numreactions; ++k)
-      {
-        if (!ddb.exec("SELECT "
-                      "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].emoji') AS emoji,"
-
-                      // not present in android database
-                      //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].remove') AS remove,"
-
-                      // THIS IS THE AUTHOR OF THE MESSAGE THATS REACTED TO
-                      //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetAuthorUuid') AS target_author_uuid,"
-
-                      //timestamp of message that reaction belongs to, dont know why this exists
-                      //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetTimestamp') AS target_timestamp,"
-
-                      "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].timestamp') AS timestamp,"
-
-                      // THE ID OF THE CONVERSATION OF THE REACTION AUTHOR (conversation somewhat doubles android's recipient table)
-                      "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId') AS from_id,"
-
-                      //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].source') AS source" // ???
-                      "conversations.uuid AS uuid"
-                      " FROM messages LEFT JOIN conversations ON conversations.id IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId')"
-                      " WHERE rowid = ?", rowid, &results_emoji_reactions))
-        {
-          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get reaction data from desktop database. Skipping." << std::endl;
-          continue;
-        }
-        std::cout << "  Reaction " << k + 1 << "/" << numreactions << ": " << std::flush;
-        results_emoji_reactions.print(false);
-
-        reactions.emplace_back(std::vector{results_emoji_reactions.valueAsString(0, "emoji"),
-                                           results_emoji_reactions.valueAsString(0, "timestamp"),
-                                           results_emoji_reactions.valueAsString(0, "uuid")});
-      }
-
       // get address (needed in both mms and sms databases)
       // for 1-on-1 messages, address is conversation partner (with uuid 'person_or_group_id')
       // for group messages, incoming: address is person originating the message (sourceUuid)
       //                     outgoing: address is id of group (with group_id 'person_or_group_id')
+      // for group calls
       long long int address = -1;
-      if (isgroupconversation && incoming)
+      if (!results_all_messages_from_conversation.isNull(j, "group_call_init"))
+      {
+        // group calls always have address set to the one initiating the call
+        address = getRecipientIdFromUuid(results_all_messages_from_conversation.valueAsString(j, "group_call_init"), &recipientmap);
+      }
+      else if (isgroupconversation && incoming)
+        //if (isgroupconversation && (incoming || (type == "call-history" & something)))
       {
         // incoming group messages have 'address' set to the group member who sent the message
+        // note this might fail on messages sent from a desktop app, those may have sourceuuid == NULL (only verified on outgoing though)
         std::string source_uuid = results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
         address = getRecipientIdFromUuid(source_uuid, &recipientmap);
       }
@@ -389,9 +402,29 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         continue;
       }
 
+      if (type == "call-history")
+      {
+        handleDTCallTypeMessage(ddb, rowid, ttid, address);
+        continue;
+      }
+      else if (type == "group-v2-change")
+      {
+        handleDTGroupChangeMessage(ddb, rowid, ttid);
+        continue;
+      }
+      else if (!outgoing && !incoming)
+      {
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported messagetype '"
+                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Skipping message." << std::endl;
+        continue;
+      }
+
+      // get emoji reactions
+      std::vector<std::vector<std::string>> reactions;
+      getDTReactions(ddb, rowid, numreactions, &reactions);
 
       // insert the collected data in the correct tables
-      if ((numattachments > 0 || nummentions > 0 || hasquote || (isgroupconversation && outgoing)))
+      if ((numattachments > 0 || nummentions > 0 || hasquote || (isgroupconversation && outgoing))) // this goed in mms table
       {
         // get quote stuff
         // if message has quote attachments, find the original message (the quote json does not contain all info)
@@ -405,7 +438,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         long long int mmsquote_type = 0; // 0 == NORMAL, 1 == GIFT_BADGE (src/main/java/org/thoughtcrime/securesms/mms/QuoteModel.java)
         if (hasquote)
         {
-          std::cout << "  Message has quote" << std::endl;
+          //std::cout << "  Message has quote" << std::endl;
           SqliteDB::QueryResults quote_results;
           if (!ddb.exec("SELECT "
                         "json_extract(json, '$.quote.id') AS quote_id,"
@@ -544,7 +577,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         long long int new_mms_id = std::any_cast<long long int>(retval);
 
-        std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
+        //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
 
         // insert message attachments
         insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments,
@@ -553,35 +586,17 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         {
           // insert quotes attachments
           insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, ddb,
-                            "WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true);
+                            //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
+                            "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true);
         }
 
         if (isgroupconversation)
         {
-          //insert into group_reciepts?d_database.exec
+          //insert into group_reciepts?
         }
 
         // insert into reactions
-        for (auto const &r : reactions)
-        {
-          long long int author = getRecipientIdFromUuid(r[2], &recipientmap);
-          if (author == -1)
-          {
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to determine reaction author. skipping." << std::endl;
-            continue;
-          }
-
-          if (!insertRow("reaction",
-                         {{"message_id", new_mms_id},
-                          {"is_mms", 1},
-                          {"author_id", author},
-                          {"emoji", r[0]},
-                          {"date_sent", bepaald::toNumber<long long int>(r[1])},
-                          {"date_received", bepaald::toNumber<long long int>(r[1])}}))
-          {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into reaction" << std::endl;
-          }
-        }
+        insertReactions(new_mms_id, reactions, true, &recipientmap);
 
         // insert into mentions
         for (uint k = 0; k < nummentions; ++k)
@@ -596,7 +611,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to retrieve mentions. Skipping." << std::endl;
             continue;
           }
-          std::cout << "  Mention " << k + 1 << "/" << nummentions << ": " << std::endl;
+          //std::cout << "  Mention " << k + 1 << "/" << nummentions << std::endl;
 
           long long int rec_id = getRecipientIdFromUuid(results_mentions.valueAsString(0, "mention_uuid"), &recipientmap);
           if (rec_id == -1)
@@ -614,8 +629,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mention" << std::endl;
           }
-          else
-            std::cout << "  Inserted mention" << std::endl;
+          //else
+          //  std::cout << "  Inserted mention" << std::endl;
         }
 
       }
@@ -641,28 +656,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           continue;
         }
         long long int new_sms_id = std::any_cast<long long int>(retval);
-        std::cout << "  Inserted sms message, new id: " << new_sms_id << std::endl;
+        //std::cout << "  Inserted sms message, new id: " << new_sms_id << std::endl;
 
         // insert into reactions
-        for (auto const &r : reactions)
-        {
-          long long int author = getRecipientIdFromUuid(r[2], &recipientmap);
-          if (author == -1)
-          {
-            std::cout << "warning" << std::endl;
-            continue;
-          }
-          if (!insertRow("reaction",
-                         {{"message_id", new_sms_id},
-                          {"is_mms", 0},
-                          {"author_id", author},
-                          {"emoji", r[0]},
-                          {"date_sent", bepaald::toNumber<long long int>(r[1])},
-                          {"date_received", bepaald::toNumber<long long int>(r[1])}}))
-          {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into reaction" << std::endl;
-          }
-        }
+        insertReactions(new_sms_id, reactions, false, &recipientmap);
       }
     }
   }

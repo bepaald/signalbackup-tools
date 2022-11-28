@@ -75,11 +75,12 @@ message DecryptedMember {
   Member.Role role             = 2;
   bytes       profileKey       = 3;
   uint32      joinedAtRevision = 5;
+  bytes       pni              = 6;
 }
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM,
                        protobuffer::optional::BYTES, protobuffer::optional::DUMMY,
-                       protobuffer::optional::UINT32> DecryptedMember;
+                       protobuffer::optional::UINT32, protobuffer::optional::BYTES> DecryptedMember;
 
 /*
 message DecryptedPendingMember {
@@ -103,6 +104,16 @@ message DecryptedRequestingMember {
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES,
                        protobuffer::optional::DUMMY, protobuffer::optional::UINT64> DecryptedRequestingMember;
+
+
+/*
+message DecryptedBannedMember {
+  bytes  uuid      = 1;
+  uint64 timestamp = 2;
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT64> DecryptedBannedMember;
+
 
 /*
 message DecryptedPendingMemberRemoval {
@@ -145,26 +156,38 @@ typedef ProtoBufParser<protobuffer::optional::UINT32> DecryptedTimer;
 
 /*
 message DecryptedGroupChange {
-           bytes                         editor                   = 1;
-           uint32                        revision                 = 2;
-  repeated DecryptedMember               newMembers               = 3;
-  repeated bytes                         deleteMembers            = 4;
-  repeated DecryptedModifyMemberRole     modifyMemberRoles        = 5;
-  repeated DecryptedMember               modifiedProfileKeys      = 6;
-  repeated DecryptedPendingMember        newPendingMembers        = 7;
-  repeated DecryptedPendingMemberRemoval deletePendingMembers     = 8;
-  repeated DecryptedMember               promotePendingMembers    = 9;
-           DecryptedString               newTitle                 = 10;
-           DecryptedString               newAvatar                = 11;
-           DecryptedTimer                newTimer                 = 12;
-           AccessControl.AccessRequired  newAttributeAccess       = 13;
-           AccessControl.AccessRequired  newMemberAccess          = 14;
-           AccessControl.AccessRequired  newInviteLinkAccess      = 15;
-  repeated DecryptedRequestingMember     newRequestingMembers     = 16;
-  repeated bytes                         deleteRequestingMembers  = 17;
-  repeated DecryptedApproveMember        promoteRequestingMembers = 18;
-           bytes                         newInviteLinkPassword    = 19;
+           bytes                         editor                      = 1;
+           uint32                        revision                    = 2;
+  repeated DecryptedMember               newMembers                  = 3;
+  repeated bytes                         deleteMembers               = 4;
+  repeated DecryptedModifyMemberRole     modifyMemberRoles           = 5;
+  repeated DecryptedMember               modifiedProfileKeys         = 6;
+  repeated DecryptedPendingMember        newPendingMembers           = 7;
+  repeated DecryptedPendingMemberRemoval deletePendingMembers        = 8;
+  repeated DecryptedMember               promotePendingMembers       = 9;
+           DecryptedString               newTitle                    = 10;
+           DecryptedString               newAvatar                   = 11;
+           DecryptedTimer                newTimer                    = 12;
+           AccessControl.AccessRequired  newAttributeAccess          = 13;
+           AccessControl.AccessRequired  newMemberAccess             = 14;
+           AccessControl.AccessRequired  newInviteLinkAccess         = 15;
+  repeated DecryptedRequestingMember     newRequestingMembers        = 16;
+  repeated bytes                         deleteRequestingMembers     = 17;
+  repeated DecryptedApproveMember        promoteRequestingMembers    = 18;
+           bytes                         newInviteLinkPassword       = 19;
+           DecryptedString               newDescription              = 20;
+           EnabledState                  newIsAnnouncementGroup      = 21;
+  repeated DecryptedBannedMember         newBannedMembers            = 22;
+  repeated DecryptedBannedMember         deleteBannedMembers         = 23;
+  repeated DecryptedMember               promotePendingPniAciMembers = 24;
 }
+
+enum EnabledState {
+  UNKNOWN  = 0;
+  ENABLED  = 1;
+  DISABLED = 2;
+}
+
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT32,
                        std::vector<DecryptedMember>, protobuffer::repeated::BYTES,
@@ -175,7 +198,9 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT
                        protobuffer::optional::ENUM, protobuffer::optional::ENUM,
                        protobuffer::optional::ENUM, std::vector<DecryptedRequestingMember>,
                        protobuffer::repeated::BYTES, std::vector<DecryptedApproveMember>,
-                       protobuffer::optional::BYTES> DecryptedGroupChange;
+                       protobuffer::optional::BYTES, DecryptedString, protobuffer::optional::ENUM,
+                       std::vector<DecryptedBannedMember>, std::vector<DecryptedBannedMember>,
+                       std::vector<DecryptedMember>> DecryptedGroupChange;
 
 /*
 message DecryptedGroup {
@@ -188,13 +213,25 @@ message DecryptedGroup {
   repeated DecryptedPendingMember    pendingMembers            = 8;
   repeated DecryptedRequestingMember requestingMembers         = 9;
            bytes                     inviteLinkPassword        = 10;
+           string                    description               = 11;
+           EnabledState              isAnnouncementGroup       = 12;
+  repeated DecryptedBannedMember     bannedMembers             = 13;
 }
+
+enum EnabledState {
+  UNKNOWN  = 0;
+  ENABLED  = 1;
+  DISABLED = 2;
+}
+
 */
 typedef ProtoBufParser<protobuffer::optional::DUMMY, protobuffer::optional::STRING,
                        protobuffer::optional::STRING, DecryptedTimer,
                        AccessControl, protobuffer::optional::UINT32,
                        std::vector<DecryptedMember>, std::vector<DecryptedPendingMember>,
-                       std::vector<DecryptedRequestingMember>, protobuffer::optional::BYTES> DecryptedGroup;
+                       std::vector<DecryptedRequestingMember>, protobuffer::optional::BYTES,
+                       protobuffer::optional::STRING, protobuffer::optional::ENUM,
+                       std::vector<DecryptedBannedMember>> DecryptedGroup;
 
 /*
 message GroupContextV2 {

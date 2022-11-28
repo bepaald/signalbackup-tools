@@ -149,7 +149,7 @@ class SignalBackup
   inline void showDBInfo() const;
   bool scramble() const;
   std::pair<std::string, std::string> getDesktopDir() const;
-  bool importFromDesktop(std::string configdir, std::string appdir, bool ignorewal);
+  bool importFromDesktop(std::string configdir, std::string appdir, std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity() const;
 
   /* CUSTOMS */
@@ -231,13 +231,19 @@ class SignalBackup
   std::vector<long long int> getGroupUpdateRecipients() const;
   bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const;
   bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
-  long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> const &data,
-                 std::string const &returnfield = std::string(), std::any *returnvalue = nullptr);
+                 std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, SqliteDB const &ddb,
                          std::string const &where, std::string const &databasedir, bool isquote);
+  bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
+  void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id) const;
+  void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
+                      std::vector<std::vector<std::string>> *reactions) const;
+  void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
+                       std::map<std::string, long long int> *savedmap) const;
+  long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
