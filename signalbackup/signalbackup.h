@@ -244,6 +244,7 @@ class SignalBackup
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
                        std::map<std::string, long long int> *savedmap) const;
   long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
+  void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap, long long int msg_id, bool is_mms, bool isgroup) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

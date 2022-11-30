@@ -48,6 +48,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].fileName') AS file_name,"
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].size') AS size,"
                   "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].cdnNumber'), 0) AS cdn_number,"
+                  "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].flags') AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
                   //"json_extract(json, '$.attachments[" + bepaald::toString(k) + "].cdnKey') AS cdn_key,"
                   "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].uploadTimestamp'), 0) AS upload_timestamp,"
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].path') AS path"
@@ -78,6 +79,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                     {"data_size", results_attachment_data.value(0, "size")},
                     {"file_name", results_attachment_data.value(0, "file_name")},
                     {"unique_id", unique_id},
+                    {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.getValueAs<long long int>(0, "flags") == 1 ? 1 : 0)},
                     {"width", amd.width == -1 ? 0 : amd.width},
                     {"height", amd.height == -1 ? 0 : amd.height},
                     {"quote", isquote ? 1 : 0},
