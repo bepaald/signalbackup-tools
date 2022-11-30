@@ -24,24 +24,25 @@
 
 /*
   TODO
-  - limit timeframe
-    - AUTO timeframe
-    DONE? - fix address for call messages
-  - implement call messages (group video done?)
+  DONE? - limit timeframe
+  DONE? - AUTO timeframe
+  DONE? - fix address for call messages
+  DONE? - implement call messages (group video done?)
   - implement group-v2- stuff
 
   Known missing things:
-   - messages for conversation that is not in thread table (-> create new thread for recipient)
-     - when recipient is not present in backup?
+  DONE ? - messages for conversation that is not in thread table (-> create new thread for recipient)
+  - when recipient is not present in backup?
    - message types other than 'incoming' and 'outgoing'
      - 'group-v2-change' (group member add/remove/change group name/picture
-     - other status messages, like disappearing msgs timer change
+     - other status messages, like disappearing msgs timer change, profile key change etc
    - inserting into group-v1-type groups
-   - all received/read receipts
-   - voice_note flag in part table?
+  DONE? - all received/read receipts
+  DONE? - voice_note flag in part table?
    - any group-v1 stuff
    - stories?
-   -
+   - payments
+   - badges
    - more...
  */
 
@@ -94,7 +95,7 @@
 "address,"// =  = 53
 //"address_device_id,"// =  =
 //"exp,"// =  =
-//"m_type,"// =  = 128
+"m_type,"// =  = 128
 //"m_size,"// =  =
 //"st,"// =  =
 //"tr_id,"// =  =
@@ -153,7 +154,7 @@
 "unique_id," // = 1630950584787
 //"digest," // = (binary)
 //"fast_preflight_id," // =
-//"voice_note," // = 0
+"voice_note," // = 0
 //"data_random," // = FILLED IN ON RESTORE? (binary)
 //"thumbnail_random," // =
 "width," // = 16
@@ -316,20 +317,28 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       continue;
     }
 
-    // get matching thread id from android database
+    // get/create matching thread id from android database
     SqliteDB::QueryResults results2;
+    long long int ttid = -1;
     if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE (uuid = ? OR group_id = ?))",
                          {person_or_group_id, person_or_group_id}, &results2) ||
         results2.rows() != 1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Failed to find matching thread for conversation, skipping. (id: " << person_or_group_id << ")" << std::endl;
-      continue;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Failed to find matching thread for conversation, creating. (id: " << person_or_group_id << ")" << std::endl;
+      std::any new_thread_id;
+      if (!insertRow("thread",
+                     {{d_thread_recipient_id, person_or_group_id}},
+                     "_id", &new_thread_id))
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to create thread for desktop conversation. (id: " << person_or_group_id << "), skipping." << std::endl;
+        continue;
+      }
+      ttid = std::any_cast<long long int>(new_thread_id);
     }
+    else
+      ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
 
     //std::cout << "Match for " << person_or_group_id << std::endl;
-    //results2.prettyPrint();
-
-    long long int ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
 
     // now lets get all messages for this conversation
@@ -564,6 +573,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
                                //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                                {"address", address},
+                               {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
                                {"quote_id", hasquote ? mmsquote_id : 0},
                                {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
                                {"quote_body", hasquote ? mmsquote_body : nullptr},
@@ -590,10 +600,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                             "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true);
         }
 
-        if (isgroupconversation)
-        {
-          //insert into group_reciepts?
-        }
+        if (outgoing)
+          setMessageDeliveryReceipts(ddb, rowid, &recipientmap, new_mms_id, true/*mms*/, isgroupconversation);
 
         // insert into reactions
         insertReactions(new_mms_id, reactions, true, &recipientmap);
@@ -657,6 +665,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         long long int new_sms_id = std::any_cast<long long int>(retval);
         //std::cout << "  Inserted sms message, new id: " << new_sms_id << std::endl;
+
+        // set delivery/read counts
+        if (outgoing)
+          setMessageDeliveryReceipts(ddb, rowid, &recipientmap, new_sms_id, false/*mms*/, isgroupconversation);
 
         // insert into reactions
         insertReactions(new_sms_id, reactions, false, &recipientmap);
