@@ -49,8 +49,8 @@ class FrameWithAttachment : public BackupFrame
   inline FrameWithAttachment(FrameWithAttachment const &other);
   inline FrameWithAttachment &operator=(FrameWithAttachment const &other);
   inline virtual ~FrameWithAttachment();
-  inline bool setAttachmentData(unsigned char *data) override;
-  inline bool setAttachmentData(std::string const &filename);
+  bool setAttachmentData(unsigned char *data) override;
+  bool setAttachmentData(std::string const &filename);
   inline unsigned char *iv() const;
   inline uint32_t iv_size() const;
   inline uint64_t filepos() const;
@@ -247,44 +247,6 @@ inline FrameWithAttachment::~FrameWithAttachment()
   bepaald::destroyPtr(&d_iv, &d_iv_size);
   bepaald::destroyPtr(&d_mackey, &d_mackey_size);
   bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
-}
-
-inline bool FrameWithAttachment::setAttachmentData(unsigned char *data) // override
-{
-  if (!data)
-    return false;
-  d_attachmentdata = data;
-  d_attachmentdata_size = length();
-  return true;
-}
-
-inline bool FrameWithAttachment::setAttachmentData(std::string const &filename) // override
-{
-  std::ifstream file(filename, std::ios_base::binary | std::ios_base::in);
-  if (!file.is_open())
-  {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Setting attachment data. Failed to open '" << filename << "' for reading" << std::endl;
-    return false;
-  }
-  file.seekg(0, std::ios_base::end);
-  d_attachmentdata_size = file.tellg();
-  if (d_attachmentdata == 0)
-  {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Setting attachment data for file '" << filename << "'. Filesize 0." << std::endl;
-    return false;
-  }
-  file.seekg(0);
-  d_attachmentdata = new unsigned char[d_attachmentdata_size];
-  if (!file.read(reinterpret_cast<char *>(d_attachmentdata), d_attachmentdata_size))
-  {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to read data from '" << filename << "'" << std::endl;
-    bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
-    return false;
-  }
-  return true;
 }
 
 inline unsigned char *FrameWithAttachment::iv() const
