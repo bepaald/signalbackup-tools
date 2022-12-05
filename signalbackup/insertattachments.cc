@@ -70,6 +70,12 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     // if (!results_attachment_data.isNull(0, "file_name"))
     //   attachmentdata.back().filename = results_attachment_data.valueAsString(0, "file_name");
 
+    if (amd.filename.empty() || amd.filesize == 0)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
+      continue;
+    }
+
     //insert into part
     std::any retval;
     if (!insertRow("part",
@@ -101,16 +107,16 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     {
       new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
       d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
-
-
-      //std::cout << "APPENDED ATTACHMENT FRAME[" << new_part_id << "," << unique_id <<  "]. FILE NAME: '" << d_attachments[{new_part_id, unique_id}]->filename() << "'" << std::endl;
-
     }
     else
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create AttachmentFrame for data" << std::endl;
-      return false; // we did already insert into part... cant just continue probably
+      // try to remove the inserted part entry:
+      d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);
+      continue;
     }
+
+    //std::cout << "APPENDED ATTACHMENT FRAME[" << new_part_id << "," << unique_id <<  "]. FILE NAME: '" << d_attachments[{new_part_id, unique_id}]->filename() << "'" << std::endl;
   }
   return true;
 }
