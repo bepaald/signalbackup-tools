@@ -103,14 +103,18 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     std::unique_ptr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
                                                                             "ATTACHMENTID:uint64:" + bepaald::toString(unique_id),
-                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}) &&
+      new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path")))
     {
-      new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
       d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
     }
     else
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create AttachmentFrame for data" << std::endl;
+      std::cout << "       rowid       : " << new_part_id << std::endl;
+      std::cout << "       attachmentid: " << unique_id << std::endl;
+      std::cout << "       length      : " << amd.filesize << std::endl;
+      std::cout << "       path        : " << databasedir << "/attachments.noindex/" << results_attachment_data.valueAsString(0, "path") << std::endl;
       // try to remove the inserted part entry:
       d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);
       continue;
