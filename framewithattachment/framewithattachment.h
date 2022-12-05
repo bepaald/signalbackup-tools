@@ -263,16 +263,24 @@ inline bool FrameWithAttachment::setAttachmentData(std::string const &filename) 
   std::ifstream file(filename, std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
   {
-    std::cout << "Failed to open '" << filename << "' for reading" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": Setting attachment data. Failed to open '" << filename << "' for reading" << std::endl;
     return false;
   }
   file.seekg(0, std::ios_base::end);
   d_attachmentdata_size = file.tellg();
+  if (d_attachmentdata == 0)
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": Setting attachment data for file '" << filename << "'. Filesize 0." << std::endl;
+    return false;
+  }
   file.seekg(0);
   d_attachmentdata = new unsigned char[d_attachmentdata_size];
   if (!file.read(reinterpret_cast<char *>(d_attachmentdata), d_attachmentdata_size))
   {
-    std::cout << "Failed to read data from '" << filename << "'" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": Failed to read data from '" << filename << "'" << std::endl;
     bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
     return false;
   }
