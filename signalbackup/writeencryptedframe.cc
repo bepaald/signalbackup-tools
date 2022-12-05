@@ -53,6 +53,7 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
     FrameWithAttachment *f = reinterpret_cast<FrameWithAttachment *>(frame);
 
     bool badmac = false;
+
     unsigned char *attachmentdata = f->attachmentData(&badmac);
 
     if (!attachmentdata)

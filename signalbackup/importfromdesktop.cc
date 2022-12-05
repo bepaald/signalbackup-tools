@@ -455,10 +455,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                         "json_extract(json, '$.quote.text') AS quote_text,"
                         "IFNULL(json_array_length(json, '$.quote.attachments'), 0) AS num_quote_attachments,"
                         "IFNULL(json_array_length(json, '$.quote.bodyRanges'), 0) AS num_quote_bodyranges,"
-                        "json_extract(json, '$.quote.type') AS quote_type,"
+                        "IFNULL(json_extract(json, '$.quote.type'), 0) AS quote_type,"
                         "json_extract(json, '$.quote.referencedMessageNotFound') AS quote_referencedmessagenotfound,"
-                        "json_extract(json, '$.quote.isGiftBadge') AS quote_isgiftbadge,"
-                        "json_extract(json, '$.quote.isViewOnce') AS quote_isviewonce"
+                        "IFNULL(json_extract(json, '$.quote.isGiftBadge'), 0) AS quote_isgiftbadge,"  // if null because it probably does not exist in older databases
+                        "IFNULL(json_extract(json, '$.quote.isViewOnce'), 0) AS quote_isviewonce"
                         " FROM messages WHERE rowid = ?", rowid, &quote_results))
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Quote error msg" << std::endl;
