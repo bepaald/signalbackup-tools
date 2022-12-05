@@ -54,7 +54,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   filestream.seekg(0, std::ios_base::beg);
 
   if (file_size == 0)
-    return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
+    return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
 
   // gethash
   std::string hash;
@@ -89,14 +89,14 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   if (file_size < static_cast<unsigned int>(bufsize))
   {
     std::cout << "File unexpectedly small" << std::endl;
-    return AttachmentMetadata{-1, -1, std::string(), file_size, hash, std::string()};
+    return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
   }
 
   std::unique_ptr<unsigned char[]> buf(new unsigned char[bufsize]);
   if (!filestream.read(reinterpret_cast<char *>(buf.get()), bufsize))
   {
     std::cout << "Failed to read 24 bytes from file" << std::endl;
-    return AttachmentMetadata{-1, -1, std::string(), file_size, hash, std::string()};
+    return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
   }
 
   // PNG: the first frame is by definition an IHDR frame, which gives dimensions
@@ -107,7 +107,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0);
     return AttachmentMetadata{(buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0),
       (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0),
-      "image/png", file_size, hash, std::string()};
+      "image/png", file_size, hash, file};
   }
 
   // GIF: first three bytes say "GIF", next three give version number. Then dimensions
@@ -117,7 +117,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = buf[8] + (buf[9] << 8);
     return AttachmentMetadata{buf[8] + (buf[9] << 8),
       buf[6] + (buf[7] << 8),
-      "image/gif", file_size, hash, std::string()};
+      "image/gif", file_size, hash, file};
   }
 
   // JPEG
@@ -160,7 +160,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       if (buf[pos] != 0xFF)
       {
         std::cout << "Failed to find start of JPEG header frame" << std::endl;
-        return AttachmentMetadata{-1, -1, std::string(), file_size, hash, std::string()};
+        return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
       }
       // skip any extra frame markers
       while (buf[pos + 1] == 0xFF)
@@ -170,7 +170,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (pos >= jpeg_bufsize)
         {
           std::cout << "This could be fixed..." << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), file_size, hash, std::string()};
+          return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
         }
       }
 
@@ -182,7 +182,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
         return AttachmentMetadata{(buf[pos + 7] << 8) + buf[pos + 8],
           (buf[pos + 5] << 8) + buf[pos + 6],
-          "image/jpeg", file_size, hash, std::string()};
+          "image/jpeg", file_size, hash, file};
       }
       else // this was a different frame, skip it
       {
@@ -199,7 +199,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (!filestream.read(reinterpret_cast<char *>(buf.get()), jpeg_bufsize))
         {
           std::cout << "Failed to read next 24 bytes from file" << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), file_size, hash, std::string()};
+          return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
         }
 
         //for (int i = 0; i < bufsize; ++i)
@@ -210,9 +210,9 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     }
 
   }
-  return AttachmentMetadata{-1, -1, std::string(), file_size, hash, std::string()};
+  return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
   #else
   // todo, maybe? write this function for cryptopp
-  return AttachmentMetadata{-1, -1, std::string(), file_size, std::string, std::string()};
+  return AttachmentMetadata{-1, -1, std::string(), file_size, std::string, file};
   #endif
 }

@@ -101,6 +101,10 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     {
       new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
       d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
+
+
+      //std::cout << "APPENDED ATTACHMENT FRAME[" << new_part_id << "," << unique_id <<  "]. FILE NAME: '" << d_attachments[{new_part_id, unique_id}]->filename() << "'" << std::endl;
+
     }
     else
     {
