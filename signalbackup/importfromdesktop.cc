@@ -318,15 +318,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     }
 
     // get/create matching thread id from android database
-    SqliteDB::QueryResults results2;
-    long long int recipientid_for_thread = -1;
-    if (!d_database.exec("SELECT _id FROM recipient WHERE (uuid = ? OR group_id = ?)", {person_or_group_id, person_or_group_id}, &results2))
+    long long int recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap);
+    if (recipientid_for_thread == -1)
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Chat partner was not found in recipient-table, creating is not (yet?) supported. Skipping. (id: " << person_or_group_id << ")" << std::endl;
+                << ": Chat partner was not found in recipient-table. Creating is not (yet?) supported. Skipping. (id: " << person_or_group_id << ")" << std::endl;
       continue;
     }
-    recipientid_for_thread = results2.getValueAs<long long int>(0, "_id");
+    SqliteDB::QueryResults results2;
     long long int ttid = -1;
     if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", recipientid_for_thread, &results2))
     {
