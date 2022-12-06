@@ -313,30 +313,46 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
     if (person_or_group_id.empty())
     {
-      //std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << "Useful error message" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to determine uuid. Skipping." << std::endl;
       continue;
     }
 
     // get/create matching thread id from android database
     SqliteDB::QueryResults results2;
-    long long int ttid = -1;
-    if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE (uuid = ? OR group_id = ?))",
-                         {person_or_group_id, person_or_group_id}, &results2) ||
-        results2.rows() != 1)
+    long long int recipientid_for_thread = -1;
+    if (!d_database.exec("SELECT _id FROM recipient WHERE (uuid = ? OR group_id = ?)", {person_or_group_id, person_or_group_id}, &results2))
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Failed to find matching thread for conversation, creating. (id: " << person_or_group_id << ")" << std::endl;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Chat partner was not found in recipient-table, creating is not (yet?) supported. Skipping. (id: " << person_or_group_id << ")" << std::endl;
+      continue;
+    }
+    recipientid_for_thread = results2.getValueAs<long long int>(0, "_id");
+    long long int ttid = -1;
+    if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", recipientid_for_thread, &results2))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Executing query." << std::endl;
+      continue;
+    }
+    if (results2.rows() == 1) // we have found our matching thread
+      ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
+    else if (results2.rows() == 0) // the query was succesful, but yielded no results -> create thread
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. (id: " << person_or_group_id << ")" << std::endl;
       std::any new_thread_id;
       if (!insertRow("thread",
-                     {{d_thread_recipient_id, person_or_group_id}},
+                     {{d_thread_recipient_id, recipientid_for_thread}},
                      "_id", &new_thread_id))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to create thread for desktop conversation. (id: " << person_or_group_id << "), skipping." << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. (id: " << person_or_group_id << "), skipping." << std::endl;
         continue;
       }
       ttid = std::any_cast<long long int>(new_thread_id);
     }
-    else
-      ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
+    if (ttid < 0)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": No thread for this conversation was found or created. Skipping." << std::endl;
+      continue;
+    }
 
     //std::cout << "Match for " << person_or_group_id << std::endl;
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
