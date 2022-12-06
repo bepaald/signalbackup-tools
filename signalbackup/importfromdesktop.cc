@@ -678,6 +678,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   reorderMmsSmsIds();
 
+  updateThreadsEntries();
+
   return checkDbIntegrity();
 }
 

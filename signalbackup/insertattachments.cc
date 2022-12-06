@@ -115,6 +115,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       std::cout << "       attachmentid: " << unique_id << std::endl;
       std::cout << "       length      : " << amd.filesize << std::endl;
       std::cout << "       path        : " << databasedir << "/attachments.noindex/" << results_attachment_data.valueAsString(0, "path") << std::endl;
+
       // try to remove the inserted part entry:
       d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);
       continue;
