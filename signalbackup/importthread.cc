@@ -65,6 +65,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
   }
 
+  /*
   // if target contains releasechannel recipient, make sure to remove it from source
   int target_releasechannel = -1;
   int source_releasechannel = -1;
@@ -83,6 +84,17 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
         std::cout << "Deleted double releasechannel recipient from source database (_id: " << source_releasechannel << ")" << std::endl;
         break;
       }
+  */
+  // do not import release_channel from source. Target will either have its own, or be too old for one
+  int source_releasechannel = -1;
+  for (auto const &skv : source->d_keyvalueframes)
+    if (skv->key() == "releasechannel.recipient_id")
+    {
+      source_releasechannel = bepaald::toNumber<int>(skv->value());
+      source->d_database.exec("DELETE FROM recipient WHERE _id = ?", source_releasechannel);
+      std::cout << "Deleted releasechannel recipient from source database (_id: " << source_releasechannel << ")" << std::endl;
+      break;
+    }
 
   long long int targetthread = -1;
   SqliteDB::QueryResults results;
@@ -641,8 +653,14 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   for (auto &av : source->d_avatars)
     d_avatars.emplace_back(std::move(av));
 
-  // if target has no release channel, but source does
-  // it is copied over, we need the pref
+  /*
+    THIS IS NOT TRUE, CURRENTLY THE RELEASECHANNEL
+    THREAD FROM SOURCE IS SKIPPED UNCONDITIONALLY
+    AND THE RELEASECHANNEL RECIPIENT FROM SOURCE
+    IS REMOVED. ADDING THIS KEY WILL CAUSE TROUBLE
+
+  // if target has no release channel-recipient, but
+  // source does, it is copied over, we need the pref
   if (target_releasechannel == -1)
     for (auto &skv : source->d_keyvalueframes)
       if (skv->key() == "releasechannel.recipient_id")
@@ -650,6 +668,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         d_keyvalueframes.emplace_back(std::move(skv));
         break;
       }
+  */
 
   // update thread snippet and date and count
   updateThreadsEntries();
