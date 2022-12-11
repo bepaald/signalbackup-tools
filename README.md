@@ -399,7 +399,7 @@ _NOTE: This feature is highly experimental, problems may occur. Make sure to alw
 
 To import conversations from a Signal-Desktop installation, run:
 ```
-signal-backup-tools [input] [password] --importfromdesktop --output [output] (--opassword [newpassword])
+signalbackup-tools [input] [password] --importfromdesktop --output [output] (--opassword [newpassword])
 ```
 
 Make sure your Signal-Desktop instance is cleanly shut down before running, if this fails for some reason the option `--ignorewal` can be added (the program will warn about this and exit if necessary), but this may cause the database appears in an out-of-date state. `--importfromdesktop` optionally takes two arguments specifying the locations of the `config.json` and `sql/db.sqlite` files respectively. Again, the program will warn and exit if it fails to find them at their default locations (Linux: `~/.config/Signal/`, macOS: `~/Library/Application Support/Signal/`, Windows: `C:/Users/<Username>/AppData/Roaming/Signal/`).
