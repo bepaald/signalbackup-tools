@@ -98,13 +98,19 @@ R"*(
    -s, --source <SOURCE>                Required modifier for `--importthreads'. The source backup from
                                         which to import threads (see `--importthreads'). The input can be
                                         a file or directory. When it is a file, a password is required
-   -sp, --sourcepassword <PASSWORD>     The 30 digit password for the backup file specified by `--source'.)*"
-//--importfromdesktop [DIR]               Import messages from Signal Desktop. If the program fails to find
-//                                        you Desktop installation or it is in a non-standard location,
-//                                        the optional [DIR] can be provided.
-//   --ignorewal                          Optional modifier for `--importfromdesktop'. Ignores an existing WAL
-//                                        file when opening the Signal Desktop database.
-R"*(
+   -sp, --sourcepassword <PASSWORD>     The 30 digit password for the backup file specified by `--source'.
+--importfromdesktop [DIR1][DIR2]        Import messages from Signal Desktop. If the program fails to find
+                                        your Signal-Desktop installation or it is in a non-standard location,
+                                        the optional [DIR1] and [DIR2] can be provided. See the README for
+                                        more information.
+   --ignorewal                          Optional modifier for `--importfromdesktop'. Ignores an existing WAL
+                                        file when opening the Signal Desktop database.
+   --limittodates <LIST_OF_DATES>       Optional modifier for `--importfromdesktop'. Limit the messages
+                                        imported to the specified date ranges. The format of the list of
+                                        list of dates is the same as `--croptodates'.
+   --autolimitdates                     Optional modifier for `--importfromdesktop'. Automatically limit
+                                        the import of messages to those older than the first message in the
+                                        INPUT backup file.
 --deleteattachments                     Delete attachments from backup file.
    --onlyinthreads <LIST_OF_THREADS>    Optional modifier for `--deleteattachments' and
                                         `--replaceattachments'. Only deal with attachments within these
@@ -150,7 +156,7 @@ be removed.
 --importwachat <FILE>                         Import whatsapp data. See
                                               https://github.com/bepaald/signalbackup-tools/issues/19
    --setwatimefmt <TIMEFMT>                   Required modifier for `--importwachat'.
---dumpdesktopdb <PATH>                        Decrypts the Signal Desktop database and saves it to the
+--dumpdesktopdb <DIR1><DIR2>                  Decrypts the Signal Desktop database and saves it to the
                                               file `desktop.db'. PATH is the base path of Signal
                                               Desktop's data (eg `~/.config/Signal' on Linux. The program
                                               stupidly still needs an <INPUT> and <PASSWORD> parameter to
