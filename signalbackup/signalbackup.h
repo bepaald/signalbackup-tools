@@ -524,6 +524,9 @@ inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
 
 inline void SignalBackup::listThreads() const
 {
+
+  using namespace std::string_literals;
+
   std::cout << "Database version: " << d_databaseversion << std::endl;
 
   SqliteDB::QueryResults results;
@@ -536,10 +539,17 @@ inline void SignalBackup::listThreads() const
   if (!d_database.containsTable("recipient"))
     d_database.exec("SELECT thread._id, thread." + d_thread_recipient_id + ", thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread." + d_thread_recipient_id + " = recipient_preferences.recipient_ids LEFT JOIN groups ON thread." + d_thread_recipient_id + " = groups.group_id ORDER BY thread._id ASC", &results);
   else // has recipient table
-    if (d_database.tableContainsColumn("recipient", "profile_joined_name"))
-      d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
-    else
-      d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+  {
+    bool uuid = d_database.tableContainsColumn("recipient", "uuid");
+    bool profile_joined_name = d_database.tableContainsColumn("recipient", "profile_joined_name");
+
+    d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id" + (uuid ? ", recipient.uuid"s : ""s) + ") AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+
+    // if (d_database.tableContainsColumn("recipient", "profile_joined_name"))
+    //   d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id, recipient.uuid) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+    // else
+    //   d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id, recipient.uuid) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+  }
   results.prettyPrint();
 }
 

@@ -26,7 +26,7 @@ bool SignalBackup::setColumnNames()
   // from dbv 108
   if (!d_database.tableContainsColumn("thread", "recipient_id") &&
       d_database.tableContainsColumn("thread", "thread_recipient_id"))
-    d_thread_recipient_id = "thread_recipient_ids";
+    d_thread_recipient_id = "thread_recipient_id";
   //earliest
   if (!d_database.tableContainsColumn("thread", "recipient_id") &&
       !d_database.tableContainsColumn("thread", "thread_recipient_id") &&
