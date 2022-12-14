@@ -75,7 +75,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"sms", "address"},      // \ These are one
       {"sms", "recipient_id"}, // /
       {"mms", "address"},      // \ These are one
-      {"sms", "recipient_id"}, // /
+      {"mms", "recipient_id"}, // /
       {"mms", "quote_author"},
       {"sessions", "address"},
       {"group_receipts", "address"},

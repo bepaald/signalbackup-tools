@@ -25,7 +25,6 @@ void SignalBackup::setMinimumId(std::string const &table, long long int offset, 
   if (offset == 0) // no changes requested
     return;
 
-
   // change sign on all values:
   d_database.exec("UPDATE " + table + " SET " + col + " = " + col + " * -1");
 
