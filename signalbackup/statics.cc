@@ -58,7 +58,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "part",
     "_id",
     {
-      {"mms", "previews", "", "'$[0].attachmentId.rowId'"}
+      {"mms", "previews", "", "'$[0].attachmentId.rowId'"},     //       \ These are the same
+      {"mms", "link_previews", "", "'$[0].attachmentId.rowId'"} //       /
     },
     0
   },

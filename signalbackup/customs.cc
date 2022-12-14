@@ -846,20 +846,40 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         */
 
         uint64_t newtype = setType(type, Types::BASE_SENT_TYPE);
-        if (!d_database.exec("UPDATE sms SET"
-                             " date_server = ?,"
-                             " protocol = ?,"
-                             " type = ?,"
-                             " reply_path_present = ?,"
-                             " delivery_receipt_count = ?,"
-                             " service_center = ?,"
-                             " reactions_last_seen = ?,"
-                             " notified_timestamp = ?,"
-                             " server_guid = ?"
-                             //" receipt_timestamp = ?"
-                             " WHERE _id = ?",
-                             {-1, nullptr, newtype, nullptr, 1, nullptr, -1, -1, nullptr, i}))
-          return false;
+
+        if (d_database.tableContainsColumn("sms", "protocol") &&
+            d_database.tableContainsColumn("sms", "service_center") &&
+            d_database.tableContainsColumn("sms", "reply_path_present"))        // REMOVED IN DBV166
+        {
+          if (!d_database.exec("UPDATE sms SET"
+                               " date_server = ?,"
+                               " protocol = ?,"
+                               " type = ?,"
+                               " reply_path_present = ?,"
+                               " delivery_receipt_count = ?,"
+                               " service_center = ?,"
+                               " reactions_last_seen = ?,"
+                               " notified_timestamp = ?,"
+                               " server_guid = ?"
+                               //" receipt_timestamp = ?"
+                               " WHERE _id = ?",
+                               {-1, nullptr, newtype, nullptr, 1, nullptr, -1, -1, nullptr, i}))
+            return false;
+        }
+        else
+        {
+          if (!d_database.exec("UPDATE sms SET"
+                               " date_server = ?,"
+                               " type = ?,"
+                               " delivery_receipt_count = ?,"
+                               " reactions_last_seen = ?,"
+                               " notified_timestamp = ?,"
+                               " server_guid = ?"
+                               //" receipt_timestamp = ?"
+                               " WHERE _id = ?",
+                               {-1, newtype, 1, -1, -1, nullptr, i}))
+            return false;
+        }
         break;
       }
       case Types::BASE_OUTBOX_TYPE:
@@ -877,20 +897,39 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         */
 
         uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
-        if (!d_database.exec("UPDATE sms SET"
-                             //" date_server = ?,"
-                             " protocol = ?,"
-                             " type = ?,"
-                             " reply_path_present = ?,"
-                             " delivery_receipt_count = ?,"
-                             //" reactions_last_seen = ?,"
-                             //" notified_timestamp = ?,"
-                             //" server_guid = ?,"
-                             //" receipt_timestamp = ?,"
-                             " service_center = ?"
-                             " WHERE _id = ?",
-                             {31337, newtype, 1, 0, "GCM"s, i}))
-          return false;
+        if (d_database.tableContainsColumn("sms", "protocol") &&
+            d_database.tableContainsColumn("sms", "service_center") &&
+            d_database.tableContainsColumn("sms", "reply_path_present"))        // REMOVED IN DBV166
+        {
+          if (!d_database.exec("UPDATE sms SET"
+                               //" date_server = ?,"
+                               " protocol = ?,"
+                               " type = ?,"
+                               " reply_path_present = ?,"
+                               " delivery_receipt_count = ?,"
+                               //" reactions_last_seen = ?,"
+                               //" notified_timestamp = ?,"
+                               //" server_guid = ?,"
+                               //" receipt_timestamp = ?,"
+                               " service_center = ?"
+                               " WHERE _id = ?",
+                               {31337, newtype, 1, 0, "GCM"s, i}))
+            return false;
+        }
+        else
+        {
+          if (!d_database.exec("UPDATE sms SET"
+                               //" date_server = ?,"
+                               " type = ?,"
+                               " delivery_receipt_count = ?,"
+                               //" reactions_last_seen = ?,"
+                               //" notified_timestamp = ?,"
+                               //" server_guid = ?,"
+                               //" receipt_timestamp = ?,"
+                               " WHERE _id = ?",
+                               {newtype, 0, i}))
+            return false;
+        }
         break;
       }
       case Types::BASE_SENT_TYPE:
@@ -914,20 +953,34 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         */
 
         uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
-        if (!d_database.exec("UPDATE sms SET"
-                             //" date_server = ?,"
-                             " protocol = ?,"
-                             " type = ?,"
-                             " reply_path_present = ?,"
-                             " delivery_receipt_count = ?,"
-                             //" reactions_last_seen = ?,"
-                             //" notified_timestamp = ?,"
-                             //" server_guid = ?,"
-                             //" receipt_timestamp = ?,"
-                             " service_center = ?"
-                             " WHERE _id = ?",
-                             {31337, newtype, 1, 0, "GCM"s, i}))
-          return false;
+        if (d_database.tableContainsColumn("sms", "protocol") &&
+            d_database.tableContainsColumn("sms", "reply_path_present") &&
+            d_database.tableContainsColumn("sms", "service_center")) // removed in dbv 166
+        {
+          if (!d_database.exec("UPDATE sms SET"
+                               //" date_server = ?,"
+                               " protocol = ?,"
+                               " type = ?,"
+                               " reply_path_present = ?,"
+                               " delivery_receipt_count = ?,"
+                               //" reactions_last_seen = ?,"
+                               //" notified_timestamp = ?,"
+                               //" server_guid = ?,"
+                               //" receipt_timestamp = ?,"
+                               " service_center = ?"
+                               " WHERE _id = ?",
+                               {31337, newtype, 1, 0, "GCM"s, i}))
+            return false;
+        }
+        else
+        {
+          if (!d_database.exec("UPDATE sms SET"
+                               " type = ?,"
+                               " delivery_receipt_count = ?,"
+                               " WHERE _id = ?",
+                               {newtype, 0, i}))
+            return false;
+        }
         break;
       }
       case Types::BASE_SENT_FAILED_TYPE:

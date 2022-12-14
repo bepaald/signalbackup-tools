@@ -90,7 +90,7 @@
 "msg_box,"// =  = 10485783
 //"read,"// =  = 1
 "body,"//
-//"part_count,"// don't know what this is... not number of attachments
+//"part_count,"// don't know what this is... not number of attachments // REMOVED IN DBV166
 //"ct_l,"// =  =
 "address,/recipient_id"// =  = 53
 //"address_device_id/recipient_device_id,"// =  =
