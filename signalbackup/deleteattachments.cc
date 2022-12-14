@@ -156,11 +156,12 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
           else
           {
             SqliteDB::QueryResults res3;
-            if (!d_database.exec("SELECT previews FROM mms WHERE _id = ? AND (previews LIKE '%attachmentId\":{%')", res.getValueAs<long long int>(i, "mid"), &res3))
+            // rewrite this with sqlites json_extract
+            if (!d_database.exec("SELECT " + d_mms_previews + " FROM mms WHERE _id = ? AND (" + d_mms_previews + " LIKE '%attachmentId\":{%')", res.getValueAs<long long int>(i, "mid"), &res3))
               return false;
             if (!res3.empty())
             {
-              std::string previews = res3.valueAsString(0, "previews");
+              std::string previews = res3.valueAsString(0, d_mms_previews);
               //std::cout << " OLD: " << previews<< std::endl;
               std::regex attid_in_json(".*\"attachmentId\":(\\{.*?\\}).*");
               std::smatch sm;
@@ -171,7 +172,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
                   //std::cout << sm.size() << std::endl;
                   previews.replace(sm.position(1), sm.length(1), "null");
                   //std::cout << " NEW: " << previews << std::endl;
-                  d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {previews, res.getValueAs<long long int>(i, "mid")});
+                  d_database.exec("UPDATE mms SET " + d_mms_previews + " = ? WHERE _id = ?", {previews, res.getValueAs<long long int>(i, "mid")});
                 }
               }
             }

@@ -21,6 +21,8 @@
 
 void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, long long int timestamp, long long int thread, bool incoming)
 {
+  using namespace std::string_literals;
+
   //get address automatically -> msg partner for normal thread, sender for incoming group, groupid (__textsecure__!xxxxx) for outgoing
   // maybe do something with 'notified'? it is almost always 0, but a few times it is 1 on incoming msgs in my db
 
@@ -29,8 +31,14 @@ void SignalBackup::addSMSMessage(std::string const &body, std::string const &add
 
   if (incoming)
   {
-    d_database.exec("INSERT INTO sms(thread_id, body, " + d_sms_date_received + ", date_sent, " + d_sms_recipient_id + ", type, protocol, read, reply_path_present, service_center) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    {thread, body, timestamp, timestamp, address, 10485780ll, 31337ll, 1ll, 1ll, std::string("GCM")});
+    if (d_database.tableContainsColumn("sms", "protocol") &&
+        d_database.tableContainsColumn("sms", "reply_path_present") &&
+        d_database.tableContainsColumn("sms", "service_center")) // removed in dbv166
+      d_database.exec("INSERT INTO sms(thread_id, body, " + d_sms_date_received + ", date_sent, " + d_sms_recipient_id + ", type, protocol, read, reply_path_present, service_center) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                      {thread, body, timestamp, timestamp, address, 10485780ll, 31337ll, 1ll, 1ll, std::string("GCM")});
+    else
+      d_database.exec("INSERT INTO sms(thread_id, body, " + d_sms_date_received + ", date_sent, " + d_sms_recipient_id + ", type, read) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                      {thread, body, timestamp, timestamp, address, 10485780ll, 1ll});
   }
   else
   {

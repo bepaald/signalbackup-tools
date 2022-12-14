@@ -60,6 +60,7 @@ class SignalBackup
   std::string d_mms_recipient_id;
   std::string d_mms_recipient_device_id;
   std::string d_mms_type;
+  std::string d_mms_previews;
 
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment

@@ -97,5 +97,12 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn("mms", "msg_box"))
     d_mms_type = "msg_box";
 
+  // started at dbv166
+  d_mms_previews = "link_previews";
+  // before 166
+  if (!d_database.tableContainsColumn("mms", "link_previews") &&
+      d_database.tableContainsColumn("mms", "previews"))
+    d_mms_previews = "previews";
+
   return true;
 }
