@@ -29,12 +29,12 @@ void SignalBackup::addSMSMessage(std::string const &body, std::string const &add
 
   if (incoming)
   {
-    d_database.exec("INSERT INTO sms(thread_id, body, date, date_sent, address, type, protocol, read, reply_path_present, service_center) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    d_database.exec("INSERT INTO sms(thread_id, body, " + d_sms_date_received + ", date_sent, " + d_sms_recipient_id + ", type, protocol, read, reply_path_present, service_center) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     {thread, body, timestamp, timestamp, address, 10485780ll, 31337ll, 1ll, 1ll, std::string("GCM")});
   }
   else
   {
-    d_database.exec("INSERT INTO sms(thread_id, body, date, date_sent, address, type, read, delivery_receipt_count) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
+    d_database.exec("INSERT INTO sms(thread_id, body, " + d_sms_date_received + ", date_sent, " + d_sms_recipient_id + ", type, read, delivery_receipt_count) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
                     {thread, body, timestamp, timestamp, address, 10485783ll, 1ll, 1ll});
   }
 

@@ -50,7 +50,7 @@
 
 #define STRLEN( STR ) (std::integral_constant<int, bepaald::strlitLength(STR)>::value)
 
-#if __cplusplus > 201703L
+#if __cpp_lib_starts_ends_with >= 201711L
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.starts_with(SUB) )
 #else
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
@@ -68,19 +68,6 @@ namespace bepaald
 #endif
   template <typename T>
   T toNumber(std::string const &str);
-// #if (__has_builtin(__builtin_bswap16))
-//   template <>
-//   inline uint16_t swap_endian(uint16_t u);
-// #endif
-// #if (__has_builtin(__builtin_bswap32))
-//   template <>
-//   inline uint32_t swap_endian(uint32_t u);
-// #endif
-// #if (__has_builtin(__builtin_bswap64))
-//   template <>
-//   inline uint64_t swap_endian(uint64_t u);
-// #endif
-
   std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
@@ -89,7 +76,7 @@ namespace bepaald
   template <typename T>
   void destroyPtr(unsigned char **p, T *psize);
   template <typename T>
-  inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value >::type *dummy = nullptr);
+  inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
   inline bool fileOrDirExists(std::string const &path);
@@ -108,10 +95,12 @@ namespace bepaald
   inline int findIdxOf(T const &container, U const &value);
 }
 
-// generic endian swap
 template <typename T>
 inline T bepaald::swap_endian(T u)
 {
+#if __cpp_lib_byteswap >= 202110L
+  return std::byteswap(u);
+#else
   static_assert(CHAR_BIT == 8, "CHAR_BIT != 8");
 
   union
@@ -126,31 +115,8 @@ inline T bepaald::swap_endian(T u)
     dest.u8[k] = source.u8[sizeof(T) - k - 1];
 
   return dest.u;
+#endif
 }
-
-// #if (__has_builtin(__builtin_bswap16))
-// template <>
-// inline uint16_t bepaald::swap_endian(uint16_t u)
-// {
-//   return __builtin_bswap16(u);
-// }
-// #endif
-
-// #if (__has_builtin(__builtin_bswap32))
-// template <>
-// inline uint32_t bepaald::swap_endian(uint32_t u)
-// {
-//   return __builtin_bswap32(u);
-// }
-// #endif
-
-// #if (__has_builtin(__builtin_bswap64))
-// template <>
-// inline uint64_t bepaald::swap_endian(uint64_t u)
-// {
-//   return __builtin_bswap64(u);
-// }
-// #endif
 
 #ifdef DEBUG
 template<typename ...Args>

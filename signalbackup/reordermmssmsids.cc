@@ -65,7 +65,7 @@ bool SignalBackup::reorderMmsSmsIds() const
       return false;
 
   // SAME FOR SMS
-  if (!d_database.exec("SELECT _id FROM sms ORDER BY date ASC", &res))
+  if (!d_database.exec("SELECT _id FROM sms ORDER BY " + d_sms_date_received + " ASC", &res))
     return false;
 
   negative_id_tmp = 0;

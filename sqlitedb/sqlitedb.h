@@ -25,7 +25,7 @@
 #include <vector>
 #include <iostream>
 #include <any>
-#if __cpp_lib_ranges > 201911L
+#if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
 
@@ -95,7 +95,7 @@ class SqliteDB
   inline bool ok() const;
   inline bool exec(std::string const &q, QueryResults *results = nullptr) const;
   inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
-#if __cpp_lib_ranges > 201911L
+#if __cpp_lib_ranges >= 201911L
   template <typename R> requires std::ranges::input_range<R> && std::is_same<std::any, std::ranges::range_value_t<R>>::value
   inline bool exec(std::string const &q, R &&params, QueryResults *results = nullptr) const;
 #endif
@@ -176,7 +176,7 @@ inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryRes
   return exec(q, std::vector<std::any>{param}, results);
 }
 
-#if __cpp_lib_ranges > 201911L
+#if __cpp_lib_ranges >= 201911L
 template <typename R> requires std::ranges::input_range<R> && std::is_same<std::any, std::ranges::range_value_t<R>>::value
 inline bool SqliteDB::exec(std::string const &q, R &&params, QueryResults *results) const
 #else
@@ -363,7 +363,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   return true;
 }
 
-#if __cpp_lib_ranges > 201911L
+#if __cpp_lib_ranges >= 201911L
 inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results) const
 {
   return exec(q, std::views::all(params), results);

@@ -56,7 +56,7 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
       mmsq += "AND ";
       megaphoneq += "AND ";
     }
-    smsq += "date NOT BETWEEN ? AND ?";
+    smsq += d_sms_date_received + " NOT BETWEEN ? AND ?";
     mmsq += "date_received NOT BETWEEN ? AND ?";
     megaphoneq += "first_visible >= ?";
     if (i < dateranges.size() - 1)

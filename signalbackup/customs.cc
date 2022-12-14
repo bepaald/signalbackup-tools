@@ -58,7 +58,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
   for (long long int i = 0; i < static_cast<long long int>(list_of_threads.rows()); ++i)
   {
     SqliteDB::QueryResults message_data;
-    d_database.exec("SELECT body,date,address FROM mms WHERE thread_id = ?",
+    d_database.exec("SELECT body," + d_mms_date_sent + "," + d_mms_recipient_id + " FROM mms WHERE thread_id = ?",
                     list_of_threads.value(i, 0), &message_data);
     //message_data.prettyPrint();
 
@@ -66,11 +66,11 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
     for (uint j = 0; j < message_data.rows(); ++j)
     {
       SqliteDB::QueryResults r2;
-      desktopdb.exec("SELECT conversationId FROM messages WHERE sent_at == ? AND body == ?", {message_data.value(j, "date"), message_data.value(j, "body")}, &r2);
+      desktopdb.exec("SELECT conversationId FROM messages WHERE sent_at == ? AND body == ?", {message_data.value(j, d_mms_date_sent), message_data.value(j, "body")}, &r2);
       if (r2.rows() == 1)
       {
         matched = true;
-        matches.emplace_back(std::make_tuple(list_of_threads.getValueAs<long long int>(i, 0), message_data.valueAsString(j, "address"), r2.getValueAs<std::string>(0, "conversationId")));
+        matches.emplace_back(std::make_tuple(list_of_threads.getValueAs<long long int>(i, 0), message_data.valueAsString(j, d_mms_recipient_id), r2.getValueAs<std::string>(0, "conversationId")));
       }
 
       if (matched)
@@ -78,7 +78,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
     }
     if (!matched)
     {
-      d_database.exec("SELECT body,date_sent,address FROM sms WHERE thread_id = ?",
+      d_database.exec("SELECT body,date_sent," + d_sms_recipient_id + " FROM sms WHERE thread_id = ?",
                       list_of_threads.value(i, 0), &message_data);
       //message_data.prettyPrint();
       for (uint j = 0; j < static_cast<long long int>(message_data.rows()); ++j)
@@ -88,7 +88,8 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
         if (r2.rows() == 1)
         {
           matched = true;
-          matches.emplace_back(std::make_tuple(list_of_threads.getValueAs<long long int>(i, 0), message_data.valueAsString(j, "address"), r2.getValueAs<std::string>(0, "conversationId")));
+          matches.emplace_back(std::make_tuple(list_of_threads.getValueAs<long long int>(i, 0), message_data.valueAsString(j, d_sms_recipient_id),
+                                               r2.getValueAs<std::string>(0, "conversationId")));
         }
 
         if (matched)
@@ -103,7 +104,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 
       std::string q =
         "SELECT "
-        "sms.date AS union_date, "
+        "sms." + d_sms_date_received + " AS union_date, "
         "sms.date_sent AS union_display_date, "
         "sms.type AS union_type, "
         "sms.body AS union_body "
@@ -111,8 +112,8 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
         "UNION "
         "SELECT "
         "mms.date_received AS union_date, " // not sure for outgoing
-        "mms.date AS union_display_date, "
-        "mms.msg_box AS union_type, "
+        "mms." + d_mms_date_sent + " AS union_display_date, "
+        "mms." + d_mms_type + " AS union_type, "
         "mms.body AS union_body "
         "FROM mms WHERE " + list_of_threads.valueAsString(i, 0) + " = mms.thread_id "
         "ORDER BY union_date DESC, union_display_date ASC LIMIT 10";
@@ -234,7 +235,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
     // on incoming message it is the recip_id of the specific group member sending the message
     SqliteDB::QueryResults group_rec;
     std::string group_recipient_id; // could be string or int, depending on age of database
-    if (!d_database.exec("SELECT DISTINCT address FROM mms WHERE (msg_box & " + bepaald::toString(Types::BASE_TYPE_MASK) +
+    if (!d_database.exec("SELECT DISTINCT " + d_mms_recipient_id + " FROM mms WHERE (" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) +
                          ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " +
                          bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
                          " AND thread_id == ?", std::get<0>(matches[t]), &group_rec))
@@ -247,7 +248,8 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
       std::cout << "WARNING : No outgoing messages found in this group, this is unusual but I'm guessing i can just use any unused recipient_id" << std::endl;
 
       SqliteDB::QueryResults list_of_addresses;
-      d_database.exec("SELECT DISTINCT mms.address FROM mms UNION SELECT DISTINCT sms.address FROM sms", &list_of_addresses);
+      d_database.exec("SELECT DISTINCT mms." + d_mms_recipient_id + " AS union_rec_id FROM mms "
+                      "UNION SELECT DISTINCT sms." + d_sms_recipient_id + " AS union_rec_id FROM sms", &list_of_addresses);
       // this is a stupid and naive way of looking for a free id, but it's quick to write :P
       long long int free_address = 1;
       bool done = false;
@@ -256,7 +258,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
         bool found = false;
         for (uint i = 0; i < list_of_addresses.rows(); ++i)
         {
-          if (list_of_addresses.valueAsString(i, "address") == bepaald::toString(free_address))
+          if (list_of_addresses.valueAsString(i, "union_rec_id") == bepaald::toString(free_address))
           {
             ++free_address;
             found = true;
@@ -275,7 +277,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
       continue;
     }
     else
-      group_recipient_id = group_rec.valueAsString(0, "address");
+      group_recipient_id = group_rec.valueAsString(0, d_mms_recipient_id);
 
     // add entry in 'thread' database
     d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {std::get<0>(matches[t]), group_recipient_id});
@@ -557,28 +559,28 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
   }
 
   // check for unreferenced recipients
-  d_database.exec("SELECT DISTINCT address FROM sms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
+  d_database.exec("SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE " + d_sms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
   if (results.rows() > 0)
   {
     std::cout << "WARNING:" << " Found messages referencing recipient not present in old (complete) database... dropping them!" << std::endl;
-    d_database.exec("DELETE FROM sms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
+    d_database.exec("DELETE FROM sms WHERE " + d_sms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)");
   }
-  d_database.exec("SELECT DISTINCT address FROM mms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
+  d_database.exec("SELECT DISTINCT " + d_mms_recipient_id + " FROM mms WHERE " + d_mms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
   if (results.rows() > 0)
   {
     std::cout << "WARNING:" << " Found messages referencing recipient not present in old (complete) database... dropping them!" << std::endl;
-    d_database.exec("DELETE FROM mms WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
+    d_database.exec("DELETE FROM mms WHERE " + d_mms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)");
   }
 
   // CHECK AND WARN FOR MENTIONS
-  d_database.exec("SELECT mms.address,DATETIME(ROUND(mms.date / 1000), 'unixepoch') AS 'date',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread." + d_thread_recipient_id + " LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
+  d_database.exec("SELECT mms." + d_mms_recipient_id + ",DATETIME(ROUND(mms." + d_mms_date_sent + " / 1000), 'unixepoch') AS 'date_sent',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread." + d_thread_recipient_id + " LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
   if (results.rows() > 0)
   {
     std::cout << "WARNING" << " Mentions found! Probably a good idea to check these messages:" << std::endl;
     for (uint i = 0; i < results.rows(); ++i)
     {
       std::cout << " -  Group: " << results.valueAsString(i, "title") << std::endl;
-      std::cout << "    Date : " << results.valueAsString(i, "date") << std::endl;
+      std::cout << "    Date : " << results.valueAsString(i, "date_sent") << std::endl;
     }
   }
 
@@ -725,7 +727,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         When switching, I leave them unchanged (-1 and 0) as older entries, before these fields existed
         have this anyway, so the app should be able to deal with them.
 
-        SELECT * from sms WHERE type BETWEEN 1 AND 3 ORDER BY date ASC;
+        SELECT * from sms WHERE type BETWEEN 1 AND 3 ORDER BY  + d_sms_date_received  + ASC;
         _id|thread_id|address|address_device_id|person|date|date_sent|date_server|protocol|read|status|type|reply_path_present|delivery_receipt_count|subject|body|mismatched_identities|service_center|subscription_id|expires_in|expire_started|notified|read_receipt_count|unidentified|reactions|reactions_unread|reactions_last_seen|remote_deleted|notified_timestamp|server_guid|receipt_timestamp
         (outgoing, unsuccessful) 30|1|2|1||1633872620815|1633872620813|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
         (outgoing, successful)   31|1|2|1||1633872637225|1633872637221|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
@@ -987,7 +989,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
       return false;
     }
 
-    uint64_t type = results.getValueAs<long long int>(0, "msg_box");
+    uint64_t type = results.getValueAs<long long int>(0, d_mms_type);
     using namespace std::string_literals;
 
     switch (type & 0x1F)
@@ -997,7 +999,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         uint64_t newtype = setType(type, Types::BASE_SENT_TYPE);
         if (!d_database.exec("UPDATE mms SET"
                              " date_server = ?,"
-                             " msg_box = ?,"
+                             " " + d_mms_type + " = ?,"
                              " m_type = ?,"
                              " st = ?,"
                              " delivery_receipt_count = ?,"
@@ -1018,7 +1020,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
 
         uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
         if (!d_database.exec("UPDATE mms SET"
-                             " msg_box = ?,"
+                             " " + d_mms_type + " = ?,"
                              " m_type = ?,"
                              " st = ?,"
                              " delivery_receipt_count = ?,"
@@ -1117,7 +1119,7 @@ void SignalBackup::devCustom() const
   std::set<std::string> uuids;
 
   using namespace std::string_literals;
-  for (auto const &q : {"SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s, "SELECT body FROM mms WHERE (msg_box & ?) != 0 AND (msg_box & ?) != 0"s})
+  for (auto const &q : {"SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s, "SELECT body FROM mms WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s})
   {
     //d_database.exec("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0",
     d_database.exec(q, {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT}, &res);

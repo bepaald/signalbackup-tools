@@ -49,7 +49,18 @@ class SignalBackup
   std::unique_ptr<FileDecryptor> d_fd;
   FileEncryptor d_fe;
   std::string d_passphrase;
+
+  // column names
   std::string d_thread_recipient_id;
+  std::string d_thread_message_count;
+  std::string d_sms_date_received;
+  std::string d_sms_recipient_id;
+  std::string d_sms_recipient_device_id;
+  std::string d_mms_date_sent;
+  std::string d_mms_recipient_id;
+  std::string d_mms_recipient_device_id;
+  std::string d_mms_type;
+
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
   std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
@@ -517,7 +528,9 @@ inline void SignalBackup::listThreads() const
 
   SqliteDB::QueryResults results;
 
-  d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM (SELECT MIN(sms.date) AS mindate, MAX(sms.date) AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
+  d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM "
+                  "(SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms "
+                  "UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
   results.prettyPrint();
 
   if (!d_database.containsTable("recipient"))
