@@ -128,7 +128,7 @@ class SignalBackup
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
-  inline void listThreads() const;
+  void listThreads() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
   void cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
@@ -520,37 +520,6 @@ inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
     res.prettyPrint();
   else
     res.print();
-}
-
-inline void SignalBackup::listThreads() const
-{
-
-  using namespace std::string_literals;
-
-  std::cout << "Database version: " << d_databaseversion << std::endl;
-
-  SqliteDB::QueryResults results;
-
-  d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM "
-                  "(SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms "
-                  "UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
-  results.prettyPrint();
-
-  if (!d_database.containsTable("recipient"))
-    d_database.exec("SELECT thread._id, thread." + d_thread_recipient_id + ", thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread." + d_thread_recipient_id + " = recipient_preferences.recipient_ids LEFT JOIN groups ON thread." + d_thread_recipient_id + " = groups.group_id ORDER BY thread._id ASC", &results);
-  else // has recipient table
-  {
-    bool uuid = d_database.tableContainsColumn("recipient", "uuid");
-    bool profile_joined_name = d_database.tableContainsColumn("recipient", "profile_joined_name");
-
-    d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id" + (uuid ? ", recipient.uuid"s : ""s) + ") AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
-
-    // if (d_database.tableContainsColumn("recipient", "profile_joined_name"))
-    //   d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id, recipient.uuid) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
-    // else
-    //   d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id, recipient.uuid) AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
-  }
-  results.prettyPrint();
 }
 
 inline void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp, long long int thread, bool incoming)

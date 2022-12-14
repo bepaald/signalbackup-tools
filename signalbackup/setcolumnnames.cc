@@ -38,7 +38,7 @@ bool SignalBackup::setColumnNames()
   // before 166
   if (!d_database.tableContainsColumn("thread", "meaningful_messages") &&
       d_database.tableContainsColumn("thread", "message_count"))
-    d_thread_recipient_id = "message_count";
+    d_thread_message_count = "message_count";
 
 
 
