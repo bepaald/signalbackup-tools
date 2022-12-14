@@ -69,9 +69,9 @@ bool SignalBackup::handleWAMessage(long long int thread_id, long long int time, 
   // read_receipt_count?     -> 0 default, 1 on option && outgoing
   std::string statement = "INSERT INTO ";
   if (isgroup && author == selfid)
-    statement += "mms (thread_id, address, date, date_received, date_server, read, msg_box";
+    statement += "mms (thread_id, " + d_mms_recipient_id + ", " + d_mms_date_sent + ", date_received, date_server, read, " + d_mms_type;
   else
-    statement += "sms (thread_id, address, date, date_sent, date_server, read, type";
+    statement += "sms (thread_id, " + d_sms_recipient_id + ", " + d_sms_date_received + ", date_sent, date_server, read, type";
   statement += ", body, delivery_receipt_count, read_receipt_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
   if (!d_database.exec(statement, {thread_id, address, time, time, outgoing ? -1ll : time, 1ll, type, message, delivery_receipt_count, read_receipt_count}))

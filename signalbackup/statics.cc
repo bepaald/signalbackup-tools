@@ -72,13 +72,16 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "recipient", // for (very) old databases
     "_id",
     {
-      {"sms", "address"},
-      {"mms", "address"},
+      {"sms", "address"},      // \ These are one
+      {"sms", "recipient_id"}, // /
+      {"mms", "address"},      // \ These are one
+      {"sms", "recipient_id"}, // /
       {"mms", "quote_author"},
       {"sessions", "address"},
       {"group_receipts", "address"},
-      {"thread", "recipient_ids"},        //----> Only one of these will exist
-      {"thread", "thread_recipient_id"},  //___/
+      {"thread", "recipient_ids"},        //---\ Only one of these will exist
+      {"thread", "thread_recipient_id"},  //   /
+      {"thread", "recipient_id"},         //__/
       {"groups", "recipient_id"},
       {"remapped_recipients", "old_id"}, // should actually be cleared, but ...
       {"remapped_recipients", "new_id"}, // this can't hurt

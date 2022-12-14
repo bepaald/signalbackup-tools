@@ -29,7 +29,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients() const
   std::set<std::string> uuids;
 
   using namespace std::string_literals;
-  for (auto const &q : {"SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s, "SELECT body FROM mms WHERE (msg_box & ?) != 0 AND (msg_box & ?) != 0"s})
+  for (auto const &q : {"SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s, "SELECT body FROM mms WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s})
   {
     //d_database.exec("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0",
     d_database.exec(q, {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT}, &res);

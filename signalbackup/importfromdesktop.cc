@@ -50,8 +50,8 @@
 ///////////////////////////////  SMS COLUMNS:
 //_id // this is an AUTO value
 "thread_id,"
-"address,"
-//"address_device_id,"
+"address/recipient_id,"
+//"address_device_id/recipient_device_id,"
 //"person,"// =
 "date,"// = 1663067790169
 "date_sent,"// = 1663067792779
@@ -92,8 +92,8 @@
 "body,"//
 //"part_count,"// don't know what this is... not number of attachments
 //"ct_l,"// =  =
-"address,"// =  = 53
-//"address_device_id,"// =  =
+"address,/recipient_id"// =  = 53
+//"address_device_id/recipient_device_id,"// =  =
 //"exp,"// =  =
 "m_type,"// =  = 128
 //"m_size,"// =  =
@@ -249,7 +249,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   if (dateranges.empty() && autodates)
   {
     SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms.date, mms.date) AS mindate FROM sms LEFT JOIN mms WHERE sms.date IS NOT NULL AND mms.date IS NOT NULL)", &res))
+    if (!d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", mms.date_received) AS mindate FROM sms "
+                         "LEFT JOIN mms WHERE sms." + d_sms_date_received + " IS NOT NULL AND mms.date_received IS NOT NULL)", &res))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << "Failed to automatically determine data-range" << std::endl;
       return false;
@@ -278,8 +279,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   }
 
   // get all conversations (conversationpartners) from ddb
-  SqliteDB::QueryResults results;
-  if (!ddb.exec("SELECT id,type,uuid,groupId FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results))
+  SqliteDB::QueryResults results_all_conversations;
+  if (!ddb.exec("SELECT id,type,uuid,groupId FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
 
   //std::cout << "Conversations in desktop:" << std::endl;
@@ -289,17 +290,17 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   std::map<std::string, long long int> recipientmap;
 
   // for each conversation
-  for (uint i = 0; i < results.rows(); ++i)
+  for (uint i = 0; i < results_all_conversations.rows(); ++i)
   {
 
-    std::cout << "Trying to match conversation (" << i + 1 << "/" << results.rows() << ")" << std::endl;
+    std::cout << "Trying to match conversation (" << i + 1 << "/" << results_all_conversations.rows() << ")" << std::endl;
 
     // get the actual id
     bool isgroupconversation = false;
     std::string person_or_group_id;
-    if (results.valueAsString(i, "type") == "group")
+    if (results_all_conversations.valueAsString(i, "type") == "group")
     {
-      auto [groupid_data, groupid_data_length] = Base64::base64StringToBytes(results.valueAsString(i, "groupId"));
+      auto [groupid_data, groupid_data_length] = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "groupId"));
       if (groupid_data && groupid_data_length != 0)
       {
         //std::cout << bepaald::bytesToHexString(groupid_data, groupid_data_length, true) << std::endl;
@@ -309,7 +310,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
     }
     else
-      person_or_group_id = results.valueAsString(i, "uuid"); // single person id, if group, this is empty
+      person_or_group_id = results_all_conversations.valueAsString(i, "uuid"); // single person id, if group, this is empty
 
     if (person_or_group_id.empty())
     {
@@ -377,7 +378,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "seenStatus,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
-                  results.value(i, "id"), &results_all_messages_from_conversation))
+                  results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to retrieve message from this conversation." << std::endl;
       continue;
@@ -456,7 +457,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::string mmsquote_author_uuid;
         long long int mmsquote_author = -1;
         std::any mmsquote_body;
-        long long int mmsquote_attachment = -1; // always -1???
+        //long long int mmsquote_attachment = -1; // always -1???
         long long int mmsquote_missing = 0;
         std::pair<std::shared_ptr<unsigned char []>, size_t> mmsquote_mentions{nullptr, 0};
         long long int mmsquote_type = 0; // 0 == NORMAL, 1 == GIFT_BADGE (src/main/java/org/thoughtcrime/securesms/mms/QuoteModel.java)
@@ -580,19 +581,19 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         std::any retval;
         if (!insertRow("mms", {{"thread_id", ttid},
-                               {"date", results_all_messages_from_conversation.value(j, "sent_at")},
+                               {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
                                {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
                                {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
-                               {"msg_box", Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                               {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                {"body", results_all_messages_from_conversation.value(j, "body")},
                                //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
                                //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
-                               {"address", address},
+                               {d_mms_recipient_id, address},
                                {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
                                {"quote_id", hasquote ? mmsquote_id : 0},
                                {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
                                {"quote_body", hasquote ? mmsquote_body : nullptr},
-                               {"quote_attachment", hasquote ? mmsquote_attachment : -1},
+                               //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
                                {"quote_missing", hasquote ? mmsquote_missing : 0},
                                {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
@@ -663,8 +664,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::any retval;
         if (!insertRow("sms",
                        {{"thread_id", ttid},
-                        {"address", address},
-                        {"date", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
+                        {d_sms_recipient_id, address},
+                        {d_sms_date_received, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
                         {"date_sent", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
                         {"date_server", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
                         {"type", Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
@@ -689,12 +690,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         insertReactions(new_sms_id, reactions, false, &recipientmap);
       }
     }
+    //updateThreadsEntries(ttid);
   }
 
   reorderMmsSmsIds();
-
   updateThreadsEntries();
-
   return checkDbIntegrity();
 }
 

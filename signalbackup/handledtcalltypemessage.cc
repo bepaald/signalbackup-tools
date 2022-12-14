@@ -129,8 +129,8 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, long long int ro
 
   if (!insertRow("sms",
                  {{"thread_id", ttid},
-                  {"address", address},
-                  {"date", calldetails.value(0, "sent_at")},
+                  {d_sms_recipient_id, address},
+                  {d_sms_date_received, calldetails.value(0, "sent_at")},
                   {"date_sent", calldetails.value(0, "sent_at")},
                   {"type", calltype},
                   {"body", body}}))

@@ -84,17 +84,17 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_databaseversion < 24)
   {
     std::cout << "  Deleting unreferenced recipient_preferences entries..." << std::endl;
-    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms");
+    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
-    d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms)");
+    d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms)");
   }
   else
   {
     std::cout << "  Deleting unreferenced recipient entries..." << std::endl;
 
     //runSimpleQuery("SELECT group_concat(_id,',') FROM recipient");
-    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT address FROM sms UNION SELECT DISTINCT address FROM mms UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread");
+    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id FROM mms UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
 
@@ -209,8 +209,8 @@ void SignalBackup::cleanDatabaseByMessages()
 
     SqliteDB::QueryResults deleted_recipients;
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
-                    " (SELECT DISTINCT address FROM sms"
-                    " UNION SELECT DISTINCT address FROM mms"s +
+                    " (SELECT DISTINCT " + d_sms_recipient_id + " FROM sms"
+                    " UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms"s +
                     (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +

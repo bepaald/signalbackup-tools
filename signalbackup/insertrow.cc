@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-#if __cpp_lib_ranges > 201911L
+#if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
 
@@ -39,7 +39,7 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
 
 
   SqliteDB::QueryResults res;
-#if __cpp_lib_ranges > 201911L
+#if __cpp_lib_ranges >= 201911L
   bool ret = d_database.exec(query, std::views::values(data), &res);
 #else
   std::vector<std::any> values;

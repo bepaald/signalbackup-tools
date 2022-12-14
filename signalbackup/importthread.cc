@@ -480,7 +480,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.exec("SELECT address FROM identities", &results); // address == phonenumber/__text_secure_group
       for (uint i = 0; i < results.rows(); ++i)
         if (results.header(0) == "address" && results.valueHasType<std::string>(i, 0))
-          source->d_database.exec("DELETE FROM identities WHERE ADDRESS = '" + results.getValueAs<std::string>(i, 0) + "'");
+          source->d_database.exec("DELETE FROM identities WHERE address = '" + results.getValueAs<std::string>(i, 0) + "'");
     }
     else
     {

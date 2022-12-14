@@ -31,7 +31,7 @@ bool SignalBackup::summarize() const
   SqliteDB::QueryResults results;
 
   // daterange
-  if (d_database.exec("SELECT DATETIME(ROUND((MIN(mindate)) / 1000), 'unixepoch') AS 'Min Date', DATETIME(ROUND(MAX(maxdate) / 1000), 'unixepoch') AS 'Max Date' FROM (SELECT MIN(sms.date) AS mindate, MAX(sms.date) AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results))
+  if (d_database.exec("SELECT DATETIME(ROUND((MIN(mindate)) / 1000), 'unixepoch') AS 'Min Date', DATETIME(ROUND(MAX(maxdate) / 1000), 'unixepoch') AS 'Max Date' FROM (SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results))
     std::cout << "Period: " << results.valueAsString(0, "Min Date") << " - " << results.valueAsString(0, "Max Date") << std::endl;
 
   // tables + counts

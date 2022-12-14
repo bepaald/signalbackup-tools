@@ -79,7 +79,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
           std::cout << results.getValueAs<double>(i, j) << std::endl;
         else if (results.valueHasType<long long int>(i, j))
         {
-          if (results.header(j) == "date" ||
+          if (results.header(j) == d_mms_date_sent ||
               results.header(j) == "date_received")
           {
             long long int datum = results.getValueAs<long long int>(i, j);
@@ -144,9 +144,9 @@ void SignalBackup::dumpInfoOnBadFrames() const
         {
           if (results.header(j) == "thread_id")
             thread_id = results.getValueAs<long long int>(i, j);
-          if (results.header(j) == "msg_box")
+          if (results.header(j) == d_mms_type)
             type = results.getValueAs<long long int>(i, j);
-          if (results.header(j) == "date")
+          if (results.header(j) == d_mms_date_sent)
           {
             long long int datum = results.getValueAs<long long int>(i, j);
             std::time_t epoch = datum / 1000;
@@ -181,7 +181,7 @@ void SignalBackup::dumpInfoOnBadFrames() const
     if (results.header(0) == "convpartner" && results.valueHasType<std::string>(0, 0))
       partner = results.getValueAs<std::string>(0, 0);
 
-    std::cout << "Date          : " << date << std::endl;
+    std::cout << "Date sent     : " << date << std::endl;
     std::cout << "Date received : " << date_received << std::endl;
     std::cout << "Sent " << (Types::isInboxType(type) ? "by       : " : "to       : ") << partner << std::endl;
     std::cout << "Message body  : " << body << std::endl;

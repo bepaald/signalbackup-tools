@@ -94,16 +94,16 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   }
   else // incoming message
   {
-    if (results.valueHasType<long long int>(i, "date"))
-      date = results.getValueAs<long long int>(i, "date");
+    if (results.valueHasType<long long int>(i, d_sms_date_received))
+      date = results.getValueAs<long long int>(i, d_sms_date_received);
   }
 
   /* readable_date - Optional field that has the date in a human readable format. */
   /* OPTIONAL */
   std::string readable_date;
-  if (results.valueHasType<long long int>(i, "date"))
+  if (results.valueHasType<long long int>(i, d_sms_date_received))
   {
-    long long int datum = results.getValueAs<long long int>(i, "date");
+    long long int datum = results.getValueAs<long long int>(i, d_sms_date_received);
     std::time_t epoch = datum / 1000;
     std::ostringstream tmp;
     tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %T");
@@ -113,9 +113,9 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   /* address - The phone number of the sender/recipient. */
   /* REQUIRED */
   std::string address;
-  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
+  if (results.valueHasType<std::string>(i, d_sms_recipient_id) || results.valueHasType<long long int>(i, d_sms_recipient_id))
   {
-    std::string rid = results.valueAsString(i, "address");
+    std::string rid = results.valueAsString(i, d_sms_recipient_id);
 
     if (d_databaseversion >= 24)
     {
@@ -138,9 +138,9 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   /* contact_name - Optional field that has the name of the contact. */
   /* OPTIONAL */
   std::string contact_name;
-  if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
+  if (results.valueHasType<std::string>(i, d_sms_recipient_id) || results.valueHasType<long long int>(i, d_sms_recipient_id))
   {
-    std::string rid = results.valueAsString(i, "address");
+    std::string rid = results.valueAsString(i, d_sms_recipient_id);
 
     SqliteDB::QueryResults r2;
     if (d_databaseversion >= 24)
@@ -191,9 +191,9 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   // msg_box - The type of message, 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox
   long long int msg_box = 5;
   long long int realtype = -1;
-  if (results.valueHasType<long long int>(i, "msg_box"))
+  if (results.valueHasType<long long int>(i, d_mms_type))
   {
-    realtype = results.getValueAs<long long int>(i, "msg_box");
+    realtype = results.getValueAs<long long int>(i, d_mms_type);
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {
@@ -229,7 +229,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   // date - The Java date representation (including millisecond) of the time when the message was sent/received. Check out www.epochconverter.com for information on how to do the conversion from other languages to Java.
   long long int date = getIntOr(results, i, "date_received", 0);
 
-  long long int date_sent = getIntOr(results, i, "date", 0) / 1000;
+  long long int date_sent = getIntOr(results, i, d_mms_date_sent, 0) / 1000;
 
   // readable_date - Optional field that has the date in a human readable format.
   std::string readable_date;
@@ -321,9 +321,9 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string contact_name;
   if (!isgroup)
   {
-    if (results.valueHasType<std::string>(i, "address") || results.valueHasType<long long int>(i, "address"))
+    if (results.valueHasType<std::string>(i, d_mms_recipient_id) || results.valueHasType<long long int>(i, d_mms_recipient_id))
     {
-      std::string rid = results.valueAsString(i, "address");
+      std::string rid = results.valueAsString(i, d_mms_recipient_id);
 
       SqliteDB::QueryResults r2;
       if (d_databaseversion >= 24)
@@ -558,7 +558,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (msg_box == 1) // incoming message
       {
         SqliteDB::QueryResults r2;
-        if (d_database.exec("SELECT phone FROM recipient WHERE _id = ?", results.valueAsString(i, "address"), &r2) &&
+        if (d_database.exec("SELECT phone FROM recipient WHERE _id = ?", results.valueAsString(i, d_mms_recipient_id), &r2) &&
             r2.rows() == 1)
           sender = r2.valueAsString(0, "phone");
       }
@@ -613,22 +613,29 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << std::endl;
 
   SqliteDB::QueryResults sms_results;
-  d_database.exec("SELECT _id,thread_id,protocol,subject,service_center,read,status,date_sent,date,address,type,body,expires_in FROM sms WHERE "
+  d_database.exec("SELECT _id,thread_id,protocol,subject,service_center,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms WHERE "
                   "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
                   {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
 
   SqliteDB::QueryResults mms_results;
   if (includemms)
   {
-    // at dbv many columns were removed from the mms table.
+    // at dbv 109 many columns were removed from the mms table.
     if (d_databaseversion >= 109)
-      d_database.exec("SELECT _id,thread_id,date_received,date,address,msg_box,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM mms WHERE "
-                      "(msg_box & ?) == 0 AND ((msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ?)",
-                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
+      d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
+                      "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM mms WHERE "
+                      "(" + d_mms_type + " & ?) == 0 AND "
+                      "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
+                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                       Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
     else
-      d_database.exec("SELECT _id,thread_id,date_received,date,address,msg_box,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms WHERE "
-                      "(msg_box & ?) == 0 AND ((msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ? OR (msg_box & 0x1F) == ?)",
-                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
+      d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
+                      "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,"
+                      "m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM mms WHERE "
+                      "(" + d_mms_type + " & ?) == 0 AND "
+                      "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
+                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                       Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
   }
 
   std::string date;
@@ -641,8 +648,8 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   {
     if (mms_row >= mms_results.rows() ||
         (sms_row < sms_results.rows() &&
-         (sms_results.getValueAs<long long int>(sms_row, "date") <
-          mms_results.getValueAs<long long int>(mms_row, "date"))))
+         (sms_results.getValueAs<long long int>(sms_row, d_sms_date_received) <
+          mms_results.getValueAs<long long int>(mms_row, "date_received"))))
       handleSms(sms_results, outputfile, self, sms_row++);
     else if (mms_row < mms_results.rows())
       handleMms(mms_results, outputfile, self, mms_row++, keepattachmentdatainmemory);

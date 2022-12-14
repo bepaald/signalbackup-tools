@@ -82,7 +82,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
         d_database.containsTable("groups") && d_database.containsTable("recipient"))
     {
       fullbackup = true;
-      query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms.msg_box, mms.thread_id, thread." + d_thread_recipient_id +
+      query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms." + d_mms_type + ", mms.thread_id, thread." + d_thread_recipient_id +
         ", COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM part "
         "LEFT JOIN mms ON part.mid == mms._id "
         "LEFT JOIN thread ON mms.thread_id == thread._id "
@@ -148,7 +148,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
     // std::cout << "FILENAME: " << filename << std::endl;
     std::string targetdir = dir;
     if (fullbackup && !results.isNull(0, "thread_id") && !results.isNull(0, "chatpartner")
-        && !results.isNull(0, "msg_box"))
+        && !results.isNull(0, d_mms_type))
     {
       long long int tid = results.getValueAs<long long int>(0, "thread_id");
       std::string chatpartner = sanitizeFilename(results.valueAsString(0, "chatpartner"));
@@ -188,7 +188,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
         }
       }
 
-      long long int msg_box = results.getValueAs<long long int>(0, "msg_box");
+      long long int msg_box = results.getValueAs<long long int>(0, d_mms_type);
       targetdir = dir + "/" + conversations.second[idx_of_thread] + "/" + (Types::isOutgoing(msg_box) ? "sent" : "received");
 
       // create dir if not exists

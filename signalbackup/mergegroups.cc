@@ -60,11 +60,13 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       std::cout << "Dealing with group: " << groupids[i] << std::endl;
       d_database.exec("UPDATE sms SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
       std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
-      d_database.exec("UPDATE sms SET address = ? WHERE address = ?", {targetgroup, groupids[i]});
+      d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? WHERE " + d_sms_recipient_id + " = ?",
+                      {targetgroup, groupids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
       d_database.exec("UPDATE mms SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
-      d_database.exec("UPDATE mms SET address = ? WHERE address = ?", {targetgroup, groupids[i]});
+      d_database.exec("UPDATE mms SET " + d_mms_recipient_id + " = ? WHERE " + d_mms_recipient_id + " = ?",
+                      {targetgroup, groupids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
       if (d_database.containsTable("mention"))
       {

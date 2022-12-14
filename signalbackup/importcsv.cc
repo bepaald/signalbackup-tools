@@ -46,12 +46,12 @@ bool SignalBackup::importCSV(std::string const &file, std::map<std::string, std:
     if (fieldmap.find(fieldname) != fieldmap.end())// (fieldmap.contains(fieldname))
       fieldname = fieldmap.at(fieldname);
 
-    if (fieldname == "address")
+    if (fieldname == d_sms_recipient_id)
       idx_of_address = i;
     else if (fieldname == "type")
       ;//idx_of_type = i;
-    else if (fieldname.find("date") != std::string::npos)
-      date_indeces.push_back(i);
+    else if (fieldname.find("date") != std::string::npos) /// not sure what this does, and if it works as intended
+      date_indeces.push_back(i);                          // with d_sms_date_received
 
     statementstub += fieldname + ',';
   }
