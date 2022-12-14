@@ -534,7 +534,6 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       */
     }
 
-
     // compact table if requested
     if (!(dbl.flags & NO_COMPACT))
       source->compactIds(dbl.table, dbl.column);
