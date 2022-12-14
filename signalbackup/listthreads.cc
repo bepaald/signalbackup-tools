@@ -39,7 +39,9 @@ void SignalBackup::listThreads() const
     bool uuid = d_database.tableContainsColumn("recipient", "uuid");
     bool profile_joined_name = d_database.tableContainsColumn("recipient", "profile_joined_name");
 
-    std::cout << d_thread_recipient_id << std::endl;
+    // std::cout << d_thread_recipient_id << std::endl;
+    // std::cout << d_sms_recipient_id << std::endl;
+    // std::cout << d_mms_recipient_id << std::endl;
 
     d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id" + (uuid ? ", recipient.uuid"s : ""s) + ") AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
 

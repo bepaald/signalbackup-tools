@@ -56,14 +56,14 @@ bool SignalBackup::setColumnNames()
   // before 166
   if (!d_database.tableContainsColumn("sms", "recipient_id") &&
       d_database.tableContainsColumn("sms", "address"))
-    d_sms_date_received = "address";
+    d_sms_recipient_id = "address";
 
   // started at dbv166
   d_sms_recipient_device_id = "recipient_device_id";
   // before 166
   if (!d_database.tableContainsColumn("sms", "recipient_device_id") &&
       d_database.tableContainsColumn("sms", "address_device_id"))
-    d_sms_date_received = "address_device_id";
+    d_sms_recipient_device_id = "address_device_id";
 
 
 
@@ -95,7 +95,7 @@ bool SignalBackup::setColumnNames()
   // before 166
   if (!d_database.tableContainsColumn("mms", "type") &&
       d_database.tableContainsColumn("mms", "msg_box"))
-    d_mms_recipient_device_id = "msg_box";
+    d_mms_type = "msg_box";
 
   return true;
 }
