@@ -90,27 +90,39 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
       if (results.valueHasType<std::string>(i, 1) &&
           (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
            STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
-      else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
-      else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
-                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "emoji_search")))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is emoji_search_ftssecrettable" << std::endl;
-      else
+        continue;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
+
+      if (results.valueHasType<std::string>(i, 1) &&
+          (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
+           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
+        continue;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
+
+      if (results.valueHasType<std::string>(i, 1) &&
+          (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
+           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "emoji_search")))
+        continue;//std::cout << "Skipping " << results[i][1].second << " because it is emoji_search_ftssecrettable" << std::endl;
+
+      if (results.valueHasType<std::string>(i, 1) &&
+          STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sqlite_"))
       {
-        if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
-          tables.emplace_back(results.getValueAs<std::string>(i, 1));
-
-        SqlStatementFrame newframe;
-        newframe.setStatementField(results.getValueAs<std::string>(i, 0));
-
-        //std::cout << "Writing SqlStatementFrame..." << std::endl;
-        if (!writeEncryptedFrame(outputfile, &newframe))
-          return false;
+        // this is normally skipped, but for testing purposes we won't skip if it was found in input
+#ifdef BUILT_FOR_TESTING
+        if (d_found_sqlite_sequence_in_backup)
+          ;
+        else
+#endif
+          continue;
       }
+
+      if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
+        tables.emplace_back(results.getValueAs<std::string>(i, 1));
+
+      SqlStatementFrame newframe;
+      newframe.setStatementField(results.getValueAs<std::string>(i, 0));
+
+      //std::cout << "Writing SqlStatementFrame..." << std::endl;
+      if (!writeEncryptedFrame(outputfile, &newframe))
+        return false;
     }
   }
 

@@ -230,6 +230,14 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     d_stickers.emplace(std::make_pair(rowid, temp.release()));
   }
 
+#ifdef BUILT_FOR_TESTING
+  // check for file 'BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE'
+  // set d_found_sqlite_sequence_in_backup
+  if (bepaald::fileOrDirExists(inputdir + "/BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE"))
+    d_found_sqlite_sequence_in_backup = true;
+#endif
+
+
   std::cout << "Done!" << std::endl;
   d_ok = true;
 }

@@ -1141,6 +1141,16 @@ void SignalBackup::scanMissingAttachments() const
       continue;
     }
 
+    // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check
+    d_database.exec("SELECT _id FROM mms WHERE remote_deleted IS 1 AND " + d_mms_date_sent + " IN (SELECT quote_id FROM mms WHERE _id IN "
+                    "(SELECT mid FROM part WHERE _id = ? AND unique_id = ? AND quote = 1))",
+                    {missing[i].first, missing[i].second}, &res);
+    if (res.rows())
+    {
+      std::cout << "OK, EXPECTED (original message missing)" << std::endl;
+      continue;
+    }
+
     d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%'", {missing[i].first, missing[i].second}, &res);
     if (res.rows())
     {

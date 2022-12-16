@@ -173,6 +173,16 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     return false;
   }
 
+#ifdef BUILT_FOR_TESTING
+  // if d_found_sqlite_sequence_in_database
+  //   write('BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE');
+  if (d_found_sqlite_sequence_in_backup)
+  {
+    std::ofstream bft(directory + "/BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE");
+    bft.close();
+  }
+#endif
+
   std::cout << "Done!" << std::endl;
   return true;
 }

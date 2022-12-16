@@ -346,6 +346,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. (id: " << person_or_group_id << "), skipping." << std::endl;
         continue;
       }
+      //std::cout << "Raw any_cast 1" << std::endl;
       ttid = std::any_cast<long long int>(new_thread_id);
     }
     if (ttid < 0)
@@ -601,6 +602,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         {
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
         }
+        //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
 
         //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
@@ -679,6 +681,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into sms" << std::endl;
           continue;
         }
+        //std::cout << "Raw any_cast 3" << std::endl;
         long long int new_sms_id = std::any_cast<long long int>(retval);
         //std::cout << "  Inserted sms message, new id: " << new_sms_id << std::endl;
 

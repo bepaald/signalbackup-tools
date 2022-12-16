@@ -46,14 +46,14 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
     return Base64::bytesToBase64String(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).first.get(),
                                        getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).second);
 
-  else
+  else [[unlikely]]
     return "(unhandled type)";
 }
 
 std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1)
+  if (i > -1) [[likely]]
     return valueAsString(row, i);
   return "(column not found)";
 }

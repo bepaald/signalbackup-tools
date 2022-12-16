@@ -560,16 +560,19 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       //std::cout << "Dealing with: " << results.getValueAs<std::string>(i, 1) << std::endl;
       if (results.valueHasType<std::string>(i, 1) &&
           (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
-           results.getValueAs<std::string>(i, 1).find("sms_fts") == 0))
+           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                results.getValueAs<std::string>(i, 1).find("mms_fts") == 0))
+                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
-                results.getValueAs<std::string>(i, 1).find("emoji_search") == 0))
+                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "emoji_search")))
         ;//std::cout << "Skipping " << results.getValueAs<std::string>(i, 1) << " because it is emoji_search_ftssecrettable" << std::endl;
+      else if (results.valueHasType<std::string>(i, 1) &&
+               STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sqlite_"))
+        ;
       else
         if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
           tables.emplace_back(results.getValueAs<std::string>(i, 1));
