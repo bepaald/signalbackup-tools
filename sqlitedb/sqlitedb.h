@@ -542,13 +542,13 @@ inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
   for (uint i = 0; i < d_headers.size(); ++i)
     if (d_headers[i] == header)
       return i;
-  return -1;
+  [[unlikely]] return -1;
 }
 
 inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1)
+  if (i > -1) [[likely]]
     return d_values[row][i];
   return std::any{nullptr};
 }
@@ -557,7 +557,9 @@ template <typename T>
 inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1)
+  // std::cout << "Getting value of field '" << header << "' (" << i << ")" << std::endl;
+  // std::cout << "Type: " << d_values[row][i].type().name() << " Requested type: " << typeid(T).name() << std::endl;
+  if (i > -1) [[likely]]
     return std::any_cast<T>(d_values[row][i]);
   return T{};
 }
@@ -566,7 +568,7 @@ template <typename T>
 inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1)
+  if (i > -1) [[likely]]
     return (d_values[row][i].type() == typeid(T));
   return false;
 }

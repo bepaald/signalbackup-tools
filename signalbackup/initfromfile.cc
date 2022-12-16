@@ -56,8 +56,6 @@ void SignalBackup::initFromFile()
     //if (frame->frameNumber() > 73085)
     //  frame->printInfo();
 
-    //std::cout << frame->frameTypeString() << std::endl;
-
     //MEMINFO("At frame ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
 
     if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
@@ -80,6 +78,8 @@ void SignalBackup::initFromFile()
       // if (frame->frameNumber() > 110)
       //   frame->printInfo();
 
+      //std::cout << s->statement() << std::endl;
+
       if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) [[likely]] // skip creation of sqlite_ internal db's
       {
         // NOTE: in the official import, there are other tables that are skipped (virtual tables for search data)
@@ -97,6 +97,7 @@ void SignalBackup::initFromFile()
         std::cout << "BUILT_FOR_TESTING : Forcing early creation of sqlite_sequence" << std::endl;
         d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
         d_database.exec("DROP TABLE dummy");
+        d_found_sqlite_sequence_in_backup = true;
       }
       #endif
     }

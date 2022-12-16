@@ -39,6 +39,13 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id)
     if (results.rows())
       return true;
 
+  // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check
+  if (d_database.exec("SELECT _id FROM mms WHERE remote_deleted IS 1 AND " + d_mms_date_sent + " IN (SELECT quote_id FROM mms WHERE _id IN "
+                      "(SELECT mid FROM part WHERE _id = ? AND unique_id = ? AND quote = 1))",
+                      {rowid, unique_id}, &results))
+    if (results.rows())
+      return true;
+
   // if the attachment is in a quote, but required no preview (is not an image or video), attachment is expected to be missing
   // NOTE
   // I have seen this fail for a 'image/webp' type, maybe because that particular image type was not supported? (for that phone??)

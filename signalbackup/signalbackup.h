@@ -50,6 +50,9 @@ class SignalBackup
   FileEncryptor d_fe;
   std::string d_passphrase;
 
+  // only used in testing
+  bool d_found_sqlite_sequence_in_backup;
+
   // column names
   std::string d_thread_recipient_id;
   std::string d_thread_message_count;
@@ -271,6 +274,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   :
   d_database(":memory:"),
   d_passphrase(passphrase),
+  d_found_sqlite_sequence_in_backup(false),
   d_ok(false),
   d_databaseversion(-1),
   d_showprogress(showprogress),
