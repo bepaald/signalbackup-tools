@@ -248,7 +248,7 @@ void SignalBackup::updateRecipientId(long long int targetid, std::string identif
 
   // get the current (to be deleted) recipient._id for this identifier (=phone,group_id,possibly uuid)
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT _id FROM recipient WHERE COALESCE(phone,group_id,uuid) = '" + identifier + "'", &results);
+  d_database.exec("SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + identifier + "'", &results);
 
   if (results.rows() > 1)
   {

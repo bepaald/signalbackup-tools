@@ -114,7 +114,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   else // new database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
-    source->d_database.exec("SELECT COALESCE(phone,group_id) FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
+    source->d_database.exec("SELECT COALESCE(uuid,phone,group_id) FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {
@@ -132,14 +132,14 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
                      // manually set targetthread with the help of target_releasechannel (if != -1)
       }
 
-      std::cout << "Failed to get phone/group_id from source database" << std::endl;
+      std::cout << "Failed to get uuid/phone/group_id from source database" << std::endl;
       return false;
     }
     std::string phone_or_group = results.getValueAs<std::string>(0, 0);
-    d_database.exec("SELECT _id FROM recipient WHERE COALESCE(phone,group_id) = ?", phone_or_group, &results);
+    d_database.exec("SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = ?", phone_or_group, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<long long int>(0, 0))
-      std::cout << "Failed to find recipient._id matching phone/group_id in target database" << std::endl;
+      std::cout << "Failed to find recipient._id matching uuid/phone/group_id in target database" << std::endl;
     else
     {
       long long int recipient_id = results.getValueAs<long long int>(0, 0);
@@ -457,7 +457,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     // see below for comment explaining this function
     if (d_databaseversion >= 24)
     {
-      d_database.exec("SELECT _id, COALESCE(phone,group_id,uuid) AS identifier FROM recipient", &results);
+      d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "identifier"))
@@ -485,10 +485,10 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       // get all phonenums/groups_ids for all in identities
-      d_database.exec("SELECT COALESCE(phone,group_id) AS ident FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
+      d_database.exec("SELECT COALESCE(uuid,phone,group_id) AS ident FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
         if (results.header(0) == "ident" && results.valueHasType<std::string>(i, 0))
-          source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
+          source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
     }
 
     // get recipient(_preferences) from target, drop all rows from source that are already present
@@ -501,7 +501,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
     else
     {
-      d_database.exec("SELECT _id,COALESCE(phone,group_id,uuid) AS ident FROM recipient", &results);
+      d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "ident"))
@@ -514,7 +514,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
           source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
           // now drop the already present recipient from source.
-          source->d_database.exec("DELETE FROM recipient WHERE COALESCE(phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
+          source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
         }
     }
 
