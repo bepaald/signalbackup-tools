@@ -26,13 +26,13 @@ Arg::Arg(int argc, char *argv[])
   d_maxpositional(2),
   d_progname(argv[0]),
   d_input(std::string()),
-  d_password(std::string()),
+  d_passphrase(std::string()),
   d_importthreads(std::vector<int>()),
   d_limittothreads(std::vector<int>()),
   d_output(std::string()),
-  d_opassword(std::string()),
+  d_opassphrase(std::string()),
   d_source(std::string()),
-  d_sourcepassword(std::string()),
+  d_sourcepassphrase(std::string()),
   d_generatefromtruncated(false),
   d_croptothreads(std::vector<long long int>()),
   d_croptodates(std::vector<std::string>()),
@@ -126,11 +126,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "-p" || option == "--password")
+    if (option == "-p" || option == "--passphrase" || option == "--password")
     {
       if (i < arguments.size() - 1)
       {
-        d_password = arguments[++i];
+        d_passphrase = arguments[++i];
       }
       else
       {
@@ -212,11 +212,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "-op" || option == "--opassword")
+    if (option == "-op" || option == "--opassphrase" || option == "--opassword")
     {
       if (i < arguments.size() - 1)
       {
-        d_opassword = arguments[++i];
+        d_opassphrase = arguments[++i];
       }
       else
       {
@@ -238,11 +238,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "-sp" || option == "--sourcepassword")
+    if (option == "-sp" || option == "--sourcepassphrase" || option == "--sourcepassword")
     {
       if (i < arguments.size() - 1)
       {
-        d_sourcepassword = arguments[++i];
+        d_sourcepassphrase = arguments[++i];
       }
       else
       {
@@ -1016,8 +1016,8 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else if (i == 1)
       {
-        d_password = arguments[i];
-        //std::cout << "Got 'password' at pos " << i << std::endl;
+        d_passphrase = arguments[i];
+        //std::cout << "Got 'passphrase' at pos " << i << std::endl;
       }
       else
       {

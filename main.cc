@@ -72,30 +72,30 @@ int main(int argc, char *argv[])
   }
 
   bool ipw_interactive = false;
-  if ((arg.password().empty() || arg.interactive()) && // prompt for input password
+  if ((arg.passphrase().empty() || arg.interactive()) && // prompt for input passphrase
       !bepaald::isDir(arg.input()))
   {
     std::string pw;
     std::cout << "Please provide passphrase for input file '" << arg.input() << "': "  << std::flush;
     if (!getPassword(&pw))
     {
-      std::cout << "Failed to set password" << std::endl;
+      std::cout << "Failed to set passphrase" << std::endl;
       return 1;
     }
-    arg.setpassword(pw);
+    arg.setpassphrase(pw);
     ipw_interactive = true;
   }
 
-  if (!arg.source().empty() && (arg.interactive() || arg.sourcepassword().empty()))
+  if (!arg.source().empty() && (arg.interactive() || arg.sourcepassphrase().empty()))
   {
     std::string spw;
     std::cout << "Please provide passphrase for source file '" << arg.source() << "': "  << std::flush;
     if (!getPassword(&spw))
     {
-      std::cout << "Failed to set password" << std::endl;
+      std::cout << "Failed to set passphrase" << std::endl;
       return 1;
     }
-    arg.setsourcepassword(spw);
+    arg.setsourcepassphrase(spw);
   }
 
   // Ask for output password if
@@ -107,16 +107,16 @@ int main(int argc, char *argv[])
       ((bepaald::fileOrDirExists(arg.output()) && !bepaald::isDir(arg.output())) ||
        (!bepaald::fileOrDirExists(arg.output()) && (arg.output().back() != '/' && arg.output().back() != std::filesystem::path::preferred_separator))) &&
       ipw_interactive &&
-      (arg.interactive() || arg.opassword().empty()))
+      (arg.interactive() || arg.opassphrase().empty()))
   {
     std::string opw;
     std::cout << "Please provide passphrase for output file '" << arg.output() << "' (leave empty to use input passphrase): "  << std::flush;
     if (!getPassword(&opw))
     {
-      std::cout << "Failed to set password" << std::endl;
+      std::cout << "Failed to set passphrase" << std::endl;
       return 1;
     }
-    arg.setopassword(opw);
+    arg.setopassphrase(opw);
   }
 
   // check output exists (file exists OR dir is not empty)
@@ -136,28 +136,28 @@ int main(int argc, char *argv[])
   if (arg.strugee() != -1)
   {
     std::cout << "TEMP FUNCTION (#37)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
+    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.strugee(arg.strugee());
     return 0;
   }
   if (arg.strugee3() != -1)
   {
     std::cout << "TEMP FUNCTION (#37)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
+    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.strugee3(arg.strugee3());
     return 0;
   }
   if (arg.ashmorgan())
   {
     std::cout << "TEMP FUNCTION (#40)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
+    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.ashmorgan();
     return 0;
   }
   else if (arg.strugee2())
   {
     std::cout << "TEMP FUNCTION 2 (#37)" << std::endl;
-    FileDecryptor fd(arg.input(), arg.password(), arg.verbose(), false, false);
+    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.strugee2();
     return 0;
   }
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
   MEMINFO("Start of program, before opening input");
 
   // open input
-  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.password(), arg.verbose(), arg.showprogress(),
+  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.passphrase(), arg.verbose(), arg.showprogress(),
                                                     arg.replaceattachments_bool(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponerror()));
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before first time reading source");
 
       std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
       if (!source->ok())
       {
         std::cout << "Error opening source database" << std::endl;
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before reading source: ", i + 1, "/", threads.size());
 
       std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassword(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
+      source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
       if (!source->ok())
       {
         std::cout << "Error opening source database" << std::endl;
@@ -341,7 +341,7 @@ int main(int argc, char *argv[])
   // temporary, to import messages from truncated database into older, but complete database
   if (!arg.sleepyh34d().empty())
   {
-    if (!sb->sleepyh34d(arg.sleepyh34d()[0], (arg.sleepyh34d().size() > 1) ? arg.sleepyh34d()[1] : arg.password()))
+    if (!sb->sleepyh34d(arg.sleepyh34d()[0], (arg.sleepyh34d().size() > 1) ? arg.sleepyh34d()[1] : arg.passphrase()))
     {
       std::cout << "Error during import" << std::endl;
       return 1;
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 
   // export output
   if (!arg.output().empty())
-    if (!sb->exportBackup(arg.output(), arg.opassword(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
+    if (!sb->exportBackup(arg.output(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
     {
       std::cout << "Failed to export backup to '" << arg.output() << "'" << std::endl;
       return 1;
