@@ -57,19 +57,19 @@ For the most recent Windows executable, check [the releases page](https://github
 
 ### Running
 
-_NOTE: In all examples below, one or more passwords are provided on the command line. If so desired, these can be omitted in which case you are prompted for the password at runtime._
+_NOTE: In all examples below, one or more passphrases are provided on the command line. If so desired, these can be omitted in which case you are prompted for the passphrase at runtime._
 
 **<span id="fix">Fixing broken backups</span>**
 
 At the moment it has been used successfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
 
 ```
-signalbackups-tools [input] [password] --output [outputfile] (--opassword [newpassword])
+signalbackups-tools [input] [passphrase] --output [outputfile] (--opassphrase [newpassphrase])
 ```
 
 _NOTE: if the corruption happens outside of attachment data, which is usually unlikely, chances of recovery are much lower._
 
-If the output password is omitted, the input password is used to encrypt the new backup file. If the 'input' is a directory, it is assumed to contain a decrypted dump of the backup (as made by this tool) and the input password can be omitted. In this case the output password is required, unless 'output' is also a directory.
+If the output passphrase is omitted, the input passphrase is used to encrypt the new backup file. If the 'input' is a directory, it is assumed to contain a decrypted dump of the backup (as made by this tool) and the input passphrase can be omitted. In this case the output passphrase is required, unless 'output' is also a directory.
 
 If the 'output' is omitted only the scan is done, and the broken message is identified, giving you the option to delete it from the phone. The corrupted attachment data is dumped to file.
 
@@ -78,7 +78,7 @@ If the 'output' is omitted only the scan is done, and the broken message is iden
   <p>
     
 ```
-[~/programming/signalbackup-tools] $ ./signalbackup-tools CORRUPTEDSIGNALBACKUPS/signal-2019-05-20-05-29-06.backup3 949543593573534240555368549437 --output NEWBACKUPFILE --opassword 949543593573534240555368549437
+[~/programming/signalbackup-tools] $ ./signalbackup-tools CORRUPTEDSIGNALBACKUPS/signal-2019-05-20-05-29-06.backup3 949543593573534240555368549437 --output NEWBACKUPFILE --opassphrase 949543593573534240555368549437
 signalbackup-tools source version 20190926.164320
 IV: (hex:) 12 16 72 95 7a 00 68 44 7e cf 7d 20 26 f9 d3 7d (size: 16)
 SALT: (hex:) cc 03 85 02 61 97 eb 5b ed 3e 05 00 c4 a8 77 40 28 08 aa 9f e5 a8 00 74 b4 f8 56 aa 24 57 a9 5d (size: 32)
@@ -259,7 +259,7 @@ The program can also dump the decrypted backup components to a directory, or rea
 
 
 ```
-signalbackups-tools [input] [password] --output [outputdirectory]
+signalbackups-tools [input] [passphrase] --output [outputdirectory]
 ```
 
 To skip exporting media (like message attachments, avatars and stickers), add the option `--onlydb`.
@@ -301,7 +301,7 @@ total 2204384
 -rw-r--r-- 1 bepaald bepaald        54 jul 19 15:40 Header.sbf
 -rw-r--r-- 1 bepaald bepaald        96 jul 19 15:40 SharedPreference_0.sbf
 -rw-r--r-- 1 bepaald bepaald        97 jul 19 15:40 SharedPreference_1.sbf
-[~/programming/signalbackup-tools] $ ./signalbackup-tools  RAWBACKUP/ --output NEWBACKUPFILE --opassword 949023591444534240555368549425
+[~/programming/signalbackup-tools] $ ./signalbackup-tools  RAWBACKUP/ --output NEWBACKUPFILE --opassphrase 949023591444534240555368549425
 Exporting backup to 'NEWBACKUPFILE'
 Writing HeaderFrame...
 Writing DatabaseVersionFrame...
@@ -338,7 +338,7 @@ _NOTE The original and new files are not actually guaranteed to be identical, it
 To only export all media (like message attachments and avatars) from a backup, run as follows:
 
 ```
-signalbackups-tools [input] [password] --dumpmedia [outputdirectory]
+signalbackups-tools [input] [passphrase] --dumpmedia [outputdirectory]
 ```
 
 Where `outputdirectory` is an existing directory.
@@ -364,17 +364,17 @@ _NOTE: This feature is experimental (even more so than the others). I test it fa
 To crop a backup file to certain threads, run:
 
 ```
-signalbackup-tools [input] [password] --croptothreads [list-of-threads] --output [output] (--password [newpassword])
+signalbackup-tools [input] [passphrase] --croptothreads [list-of-threads] --output [output] (--passphrase [newpassphrase])
 ```
 
-Where the list of threads are the ids as reported by `signalbackup-tools [input] [password] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`.
+Where the list of threads are the ids as reported by `signalbackup-tools [input] [passphrase] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`.
 
 ##### Crop to dates
 
 To crop a backup file to certain dates, run:
 
 ```
-signalbackup-tools [input] [password] --croptodates begindate1,enddate2(,begindate2,enddate2(,...)) --output [output] (--opassword [newpassword])
+signalbackup-tools [input] [passphrase] --croptodates begindate1,enddate2(,begindate2,enddate2(,...)) --output [output] (--opassphrase [newpassphrase])
 ```
 
 The 'begindate' and 'enddate' must always appear in pairs and can be either in "YYYY-MM-DD hh:mm:ss" format or as a single number of [milliseconds since epoch](https://en.wikipedia.org/wiki/Unix_time). For example, the following commands are equivalent (in my time zone) and both crop the database to the messages between Sept. 18 2019 and Sept 18 2020: `--croptodates "2019-09-18 00:00:00","2020-09-18 00:00:00"` or `--croptodates 1568761200000,1600383600000`.
@@ -383,10 +383,10 @@ The 'begindate' and 'enddate' must always appear in pairs and can be either in "
 
 _NOTE: Although this feature generally seems to work quite well, it requires constant maintenance to keep up with changes in Signal's internal database. You may encounter problems if this program happens to be slightly out of date when you run it. As always, feel free to open an issue to notify me of problems._
 
-To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [password] --listthreads`. Either both backups need to have database version <= 27, both >= 33, or both in between 27 and 33. If needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
+To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [passphrase] --listthreads`. Either both backups need to have database version <= 27, both >= 33, or both in between 27 and 33. If needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
 
 ```
-signalbackup-tools [first_database] [password] --importthreads ALL --source [second_database] --sourcepassword [password] --output [output_file] (--opassword [output password])
+signalbackup-tools [first_database] [passphrase] --importthreads ALL --source [second_database] --sourcepassphrase [passphrase] --output [output_file] (--opassphrase [output passphrase])
 ```
 
 Always use the backup file with the highest database version as 'first_database' and the older version as source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`.
@@ -399,7 +399,7 @@ _NOTE: This feature is highly experimental, problems may occur. Make sure to alw
 
 To import conversations from a Signal-Desktop installation, run:
 ```
-signalbackup-tools [input] [password] --importfromdesktop --output [output] (--opassword [newpassword])
+signalbackup-tools [input] [passphrase] --importfromdesktop --output [output] (--opassphrase [newpassphrase])
 ```
 
 Make sure your Signal-Desktop instance is cleanly shut down before running, if this fails for some reason the option `--ignorewal` can be added (the program will warn about this and exit if necessary), but this may cause the database appears in an out-of-date state. `--importfromdesktop` optionally takes two arguments specifying the locations of the `config.json` and `sql/db.sqlite` files respectively. Again, the program will warn and exit if it fails to find them at their default locations (Linux: `~/.config/Signal/`, macOS: `~/Library/Application Support/Signal/`, Windows: `C:/Users/<Username>/AppData/Roaming/Signal/`).
@@ -417,7 +417,7 @@ _NOTE: This feature is highly experimental, problems may occur. Make sure to alw
 To remove attachments from the database, while keeping the message bodies (for example to shrink the size of the backup) the option `--deleteattachments` can be used:
 
 ```
-signalbackup-tools [input] [password] --deleteattachments --output [output] (--opassword [newpassword])
+signalbackup-tools [input] [passphrase] --deleteattachments --output [output] (--opassphrase [newpassphrase])
 ```
 
 To further specify precisely which attachments are to be deleted, the following options can be added:
@@ -662,12 +662,12 @@ The program can run any sql queries on the database in the backup file and save 
 
 ```
 # delete all sms and mms messages from one thread:
-signalbackup-tools [input] [password] --runsqlquery "DELETE * FROM sms WHERE thread_id = 1" --runsqlquery "DELETE * FROM mms WHERE thread_id = 1" --output [output] (--opassword [newpassword])
+signalbackup-tools [input] [passphrase] --runsqlquery "DELETE * FROM sms WHERE thread_id = 1" --runsqlquery "DELETE * FROM mms WHERE thread_id = 1" --output [output] (--opassphrase [newpassphrase])
 ```
 
 ```
 # list all messages in the sms database where the message body was 'Yes'
-$ ./signalbackup-tools [input] [password] --runprettysqlquery "SELECT _id,body,DATETIME(ROUND(date / 1000), 'unixepoch') AS isodate,date FROM sms WHERE body == 'yes' COLLATE NOCASE"
+$ ./signalbackup-tools [input] [passphrase] --runprettysqlquery "SELECT _id,body,DATETIME(ROUND(date / 1000), 'unixepoch') AS isodate,date FROM sms WHERE body == 'yes' COLLATE NOCASE"
 signalbackup-tools source version 20191219.175337
 IV: (hex:) 12 16 72 95 7a 00 68 44 7e cf 7d 20 26 f9 d3 7d (size: 16)
 SALT: (hex:) cc 03 85 02 61 97 eb 5b ed 3e 05 00 c4 a8 77 40 28 08 aa 9f e5 a8 00 74 b4 f8 56 aa 24 57 a9 5d (size: 32)
@@ -692,7 +692,7 @@ done!
 ------------------------------------------------------
 
 # now change a specific message:
-[~/programming/signalbackup-tools] $ ./signalbackup-tools [input] [password] --runsqlquery "UPDATE sms SET body = 'No' WHERE _id == 21300" --ouput [output]
+[~/programming/signalbackup-tools] $ ./signalbackup-tools [input] [passphrase] --runsqlquery "UPDATE sms SET body = 'No' WHERE _id == 21300" --ouput [output]
 ```
 
 If you also need to edit the attachments, dump the backup to directory first ([as described above](#dump)) and do whatever you want, but realize when editing the .bin file, it will usually require changes to also be made to the .sbf file and the sql database to end up with a valid database.

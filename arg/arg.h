@@ -33,18 +33,18 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 73> const d_alloptions{"-i", "--input", "-p", "--password", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassword", "-s", "--source", "-sp", "--sourcepassword", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive"};
+  std::array<std::string, 73> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
   std::string d_input;
-  std::string d_password;
+  std::string d_passphrase;
   std::vector<int> d_importthreads;
   std::vector<int> d_limittothreads;
   std::string d_output;
-  std::string d_opassword;
+  std::string d_opassphrase;
   std::string d_source;
-  std::string d_sourcepassword;
+  std::string d_sourcepassphrase;
   bool d_generatefromtruncated;
   std::vector<long long int> d_croptothreads;
   std::vector<std::string> d_croptodates;
@@ -113,16 +113,16 @@ class Arg
   inline bool ok() const;
   void usage() const;
   inline std::string const &input() const;
-  inline std::string const &password() const;
-  inline void setpassword(std::string const &val);
+  inline std::string const &passphrase() const;
+  inline void setpassphrase(std::string const &val);
   inline std::vector<int> const &importthreads() const;
   inline std::vector<int> const &limittothreads() const;
   inline std::string const &output() const;
-  inline std::string const &opassword() const;
-  inline void setopassword(std::string const &val);
+  inline std::string const &opassphrase() const;
+  inline void setopassphrase(std::string const &val);
   inline std::string const &source() const;
-  inline std::string const &sourcepassword() const;
-  inline void setsourcepassword(std::string const &val);
+  inline std::string const &sourcepassphrase() const;
+  inline void setsourcepassphrase(std::string const &val);
   inline bool generatefromtruncated() const;
   inline std::vector<long long int> const &croptothreads() const;
   inline std::vector<std::string> const &croptodates() const;
@@ -205,14 +205,14 @@ inline std::string const &Arg::input() const
   return d_input;
 }
 
-inline std::string const &Arg::password() const
+inline std::string const &Arg::passphrase() const
 {
-  return d_password;
+  return d_passphrase;
 }
 
-inline void Arg::setpassword(std::string const &val)
+inline void Arg::setpassphrase(std::string const &val)
 {
-  d_password = val;
+  d_passphrase = val;
 }
 
 inline std::vector<int> const &Arg::importthreads() const
@@ -230,14 +230,14 @@ inline std::string const &Arg::output() const
   return d_output;
 }
 
-inline std::string const &Arg::opassword() const
+inline std::string const &Arg::opassphrase() const
 {
-  return d_opassword;
+  return d_opassphrase;
 }
 
-inline void Arg::setopassword(std::string const &val)
+inline void Arg::setopassphrase(std::string const &val)
 {
-  d_opassword = val;
+  d_opassphrase = val;
 }
 
 inline std::string const &Arg::source() const
@@ -245,14 +245,14 @@ inline std::string const &Arg::source() const
   return d_source;
 }
 
-inline std::string const &Arg::sourcepassword() const
+inline std::string const &Arg::sourcepassphrase() const
 {
-  return d_sourcepassword;
+  return d_sourcepassphrase;
 }
 
-inline void Arg::setsourcepassword(std::string const &val)
+inline void Arg::setsourcepassphrase(std::string const &val)
 {
-  d_sourcepassword = val;
+  d_sourcepassphrase = val;
 }
 
 inline bool Arg::generatefromtruncated() const
