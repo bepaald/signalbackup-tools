@@ -22,11 +22,11 @@
 void Arg::usage() const
 {
   std::cout << R"*(
-Usage: )*" + d_progname + R"*( <INPUT> [<PASSWORD>] [OPTIONS]
+Usage: )*" + d_progname + R"*( <INPUT> [<PASSPHRASE>] [OPTIONS]
 
 <INPUT> must be either a regular file, a backup file as exported by the Signal Android app, or a
-directory containing an unpacked backup as createed by this program. In case the input, <PASSWORD> is
-a regular file, a <PASSWORD> is required. If it is omitted from the command line, a prompt is
+directory containing an unpacked backup as createed by this program. In case the input <INPUT> is
+a regular file, a <PASSPHRASE> is required. If it is omitted from the command line, a prompt is
 presented during runtime.
 Be sure to read the README at https://github.com/bepaald/signalbackup-tools/ for more detailed
 instructions for the core functions and examples.
@@ -36,16 +36,16 @@ changes, you must provide one of the output options.
  = COMMON OPTIONS =
 -i, --input <INPUT>            If for whatever reason you do not wish to pass the input as the first
                                argument, you can use this option anywhere in the list of arguments
--p, --password <PASSWORD>      If for whatever reason you do not wish to pass the input as the second
+-p, --passphrase <PASSPHRASE>  If for whatever reason you do not wish to pass the input as the second
                                argument, you can use this option anywhere in the list of arguments. If
                                this option is omitted, but <INPUT> is a regular file, a prompt is
-                               presented to enter the password at runtime (also see `--interactive').
+                               presented to enter the passphrase at runtime (also see `--interactive').
 --no-showprogress              Do not output the progress percentage. Especially useful when redirecting
                                output to file.
 --listthreads                  List the threads in the database with their `_id' numbers. These id's are
                                required input for various other options.
 -h, --help                     Show this help message
---interactive                  Prompt for all passwords
+--interactive                  Prompt for all passphrases
 --runsqlquery <QUERY>          Run <QUERY> against the backup's internal SQL database.
 --runprettysqlquery <QUERY>    As above, but try show output in a pretty table. If the output is not too
                                large for your terminal, this is often much more readable.
@@ -57,8 +57,8 @@ changes, you must provide one of the output options.
                                          SQL database and media) are written to that directory
                                          unencrypted. This directory can later be used as <INPUT> to
                                          create a working backup file.
--op, --opassword <PASSWORD>              When output is a file, this will be the backups password. May be
-                                         omitted (in which case the <INPUT> password is used.
+-op, --opassphrase <PASSPHRASE>          When output is a file, this will be the backups passphrase. May
+                                         be omitted (in which case the <INPUT> passphrase is used.
    --onlydb                              Optional modifier for `--output', when <OUTPUT> is a directory.
                                          This causes only the SQlite database to be written to disk.
 --dumpmedia <DIRECTORY>                  Save all media attachments to DIRECTORY. An attempt is made to
@@ -84,58 +84,58 @@ R"*(
                                          delete all directory contents.
 
  = EDITING OPTIONS =
---croptothreads <LIST_OF_THREADS>       Crop database to list of threads. The list supports comma
-                                        separated numbers or ranges (for example: "1,3,4-8,13") or the
-                                        special keyword `ALL'. Threads are specified by their id (see:
-                                        `--listthreads').
---croptodates <LIST_OF_DATES>           Crop database to certain time periods. The list of dates is
-                                        structured as `begindate1,enddate1(,begindate2,enddate2,...)',
-                                        where a date is either "YYYY-MM-DD hh:mm:ss" or a date in
-                                        milliseconds since epoch
---importthreads <LIST_OF_THREADS>       Import LIST_OF_THREADS into <INPUT> database, the list format is
-                                        the same as `--croptothreads'. This operation requires the
-                                        `--source' option to be passed as well.
-   -s, --source <SOURCE>                Required modifier for `--importthreads'. The source backup from
-                                        which to import threads (see `--importthreads'). The input can be
-                                        a file or directory. When it is a file, a password is required
-   -sp, --sourcepassword <PASSWORD>     The 30 digit password for the backup file specified by `--source'.
---importfromdesktop [DIR1][DIR2]        Import messages from Signal Desktop. If the program fails to find
-                                        your Signal-Desktop installation or it is in a non-standard location,
-                                        the optional [DIR1] and [DIR2] can be provided. See the README for
-                                        more information.
-   --ignorewal                          Optional modifier for `--importfromdesktop'. Ignores an existing WAL
-                                        file when opening the Signal Desktop database.
-   --limittodates <LIST_OF_DATES>       Optional modifier for `--importfromdesktop'. Limit the messages
-                                        imported to the specified date ranges. The format of the list of
-                                        list of dates is the same as `--croptodates'.
-   --autolimitdates                     Optional modifier for `--importfromdesktop'. Automatically limit
-                                        the import of messages to those older than the first message in the
-                                        INPUT backup file.
---deleteattachments                     Delete attachments from backup file.
-   --onlyinthreads <LIST_OF_THREADS>    Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. Only deal with attachments within these
-                                        threads. For list format see `--croptothreads'.
-   --onlyolderthan <DATE>               Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. Only deal with attachments for messages
-                                        older than DATE. Date format is same as with `--croptodates'.
-   --onlynewerthan <DATE>               Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. Only deal with attachments for messages
-                                        newer than DATE. Date format is same as with `--croptodates'.
-   --onlylargerthan <SIZE>              Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. Delete attachments only if larger than
-                                        SIZE bytes.
-   --onlytype <FILETYPE>                Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. Delete attachments only if matching mime
-                                        type FILETYPE. The type is need not be complete (ie. `video/m'
-                                        will match both `video/mp4' and `video/mpeg'
-   --appendbody <STRING>                Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. For each message whose attachment is
-                                        deleted/replaced, append STRING to the message body.
-   --prependbody <STRING>               Optional modifier for `--deleteattachments' and
-                                        `--replaceattachments'. For each message whose attachment is
-                                        deleted/replaced, prepend STRING to the message body.
---replaceattachments [LIST]             Replace attachments of type with placeholder image. Argument:
-                                        "default=filename,mimetype1=filename1,mimetype2=filename2,.."
+--croptothreads <LIST_OF_THREADS>        Crop database to list of threads. The list supports comma
+                                         separated numbers or ranges (for example: "1,3,4-8,13") or the
+                                         special keyword `ALL'. Threads are specified by their id (see:
+                                         `--listthreads').
+--croptodates <LIST_OF_DATES>            Crop database to certain time periods. The list of dates is
+                                         structured as `begindate1,enddate1(,begindate2,enddate2,...)',
+                                         where a date is either "YYYY-MM-DD hh:mm:ss" or a date in
+                                         milliseconds since epoch
+--importthreads <LIST_OF_THREADS>        Import LIST_OF_THREADS into <INPUT> database, the list format is
+                                         the same as `--croptothreads'. This operation requires the
+                                         `--source' option to be passed as well.
+   -s, --source <SOURCE>                 Required modifier for `--importthreads'. The source backup from
+                                         which to import threads (see `--importthreads'). The input can be
+                                         a file or directory. When it is a file, a passphrase is required
+   -sp, --sourcepassphrase <PASSPHRASE>  The 30 digit passphrase for the backup file specified by `--source'.
+--importfromdesktop [DIR1][DIR2]         Import messages from Signal Desktop. If the program fails to find
+                                         your Signal-Desktop installation or it is in a non-standard location,
+                                         the optional [DIR1] and [DIR2] can be provided. See the README for
+                                         more information.
+   --ignorewal                           Optional modifier for `--importfromdesktop'. Ignores an existing WAL
+                                         file when opening the Signal Desktop database.
+   --limittodates <LIST_OF_DATES>        Optional modifier for `--importfromdesktop'. Limit the messages
+                                         imported to the specified date ranges. The format of the list of
+                                         list of dates is the same as `--croptodates'.
+   --autolimitdates                      Optional modifier for `--importfromdesktop'. Automatically limit
+                                         the import of messages to those older than the first message in the
+                                         INPUT backup file.
+--deleteattachments                      Delete attachments from backup file.
+   --onlyinthreads <LIST_OF_THREADS>     Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. Only deal with attachments within these
+                                         threads. For list format see `--croptothreads'.
+   --onlyolderthan <DATE>                Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. Only deal with attachments for messages
+                                         older than DATE. Date format is same as with `--croptodates'.
+   --onlynewerthan <DATE>                Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. Only deal with attachments for messages
+                                         newer than DATE. Date format is same as with `--croptodates'.
+   --onlylargerthan <SIZE>               Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. Delete attachments only if larger than
+                                         SIZE bytes.
+   --onlytype <FILETYPE>                 Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. Delete attachments only if matching mime
+                                         type FILETYPE. The type is need not be complete (ie. `video/m'
+                                         will match both `video/mp4' and `video/mpeg'
+   --appendbody <STRING>                 Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. For each message whose attachment is
+                                         deleted/replaced, append STRING to the message body.
+   --prependbody <STRING>                Optional modifier for `--deleteattachments' and
+                                         `--replaceattachments'. For each message whose attachment is
+                                         deleted/replaced, prepend STRING to the message body.
+--replaceattachments [LIST]              Replace attachments of type with placeholder image. Argument:
+                                         "default=filename,mimetype1=filename1,mimetype2=filename2,.."
 
  = VARIOUS =
 The following options are also supported in this program, and listed here for completeness. Some of them
@@ -159,8 +159,8 @@ be removed.
 --dumpdesktopdb <DIR1><DIR2>                  Decrypts the Signal Desktop database and saves it to the
                                               file `desktop.db'. PATH is the base path of Signal
                                               Desktop's data (eg `~/.config/Signal' on Linux. The program
-                                              stupidly still needs an <INPUT> and <PASSWORD> parameter to
-                                              actually run.
+                                              stupidly still needs an <INPUT> and <PASSPHRASE> parameter
+                                              to actually run.
 --assumebadframesizeonbadmac                  Used to fix a specific (long fixed) bug in Signal. See
                                               https://github.com/signalapp/Signal-Android/issues/9154
 --editattachmentsize                          Modifier for `--assumebadframesizeonbadmac'
