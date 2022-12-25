@@ -473,7 +473,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                         "IFNULL(json_array_length(json, '$.quote.attachments'), 0) AS num_quote_attachments,"
                         "IFNULL(json_array_length(json, '$.quote.bodyRanges'), 0) AS num_quote_bodyranges,"
                         "IFNULL(json_extract(json, '$.quote.type'), 0) AS quote_type,"
-                        "json_extract(json, '$.quote.referencedMessageNotFound') AS quote_referencedmessagenotfound,"
+                        "IFNULL(json_extract(json, '$.quote.referencedMessageNotFound'), 0) AS quote_referencedmessagenotfound,"
                         "IFNULL(json_extract(json, '$.quote.isGiftBadge'), 0) AS quote_isgiftbadge,"  // if null because it probably does not exist in older databases
                         "IFNULL(json_extract(json, '$.quote.isViewOnce'), 0) AS quote_isviewonce"
                         " FROM messages WHERE rowid = ?", rowid, &quote_results))
