@@ -29,11 +29,12 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
   unsigned char pass[passlength];
   uint i = 0;
   uint j = 0;
-  for (i = 0, j = 0; i < passlength && j < passphrase.size(); ++i, ++j)
+  while (i < passlength && j < passphrase.size())
   {
-    while (!std::isdigit(passphrase[j])) // skip non digits
+    if (!std::isdigit(passphrase[j])) // skip non digits
       ++j;
-    pass[i] = passphrase[j];
+    else
+      pass[i++] = passphrase[j++];
   }
 
   while (j < passphrase.size() && !std::isdigit(passphrase[j])) // also eat any trailing non-digits
