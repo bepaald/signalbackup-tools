@@ -22,13 +22,20 @@
 void SignalBackup::insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions,
                                    bool mms, std::map<std::string, long long int> *savedmap) const
 {
+  if (reactions.size())
+    std::cout << "Inserting " << reactions.size() << " message reactions." << std::endl;
+
   // insert into reactions
   for (auto const &r : reactions)
   {
+    // r[0] : emoji
+    // r[1] : timestamp
+    // r[2] : author uuid
+
     long long int author = getRecipientIdFromUuid(r[2], savedmap);
     if (author == -1)
     {
-      std::cout << "warning" << std::endl;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << "Reaction author not found. Skipping" << std::endl;
       continue;
     }
     if (!insertRow("reaction",
@@ -39,7 +46,7 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
                     {"date_sent", bepaald::toNumber<long long int>(r[1])},
                     {"date_received", bepaald::toNumber<long long int>(r[1])}}))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into reaction" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert into reaction table" << std::endl;
     }
   }
 }

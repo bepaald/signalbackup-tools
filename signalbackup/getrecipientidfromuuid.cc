@@ -22,10 +22,23 @@
 long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
                                                    std::map<std::string, long long int> *savedmap) const
 {
+  if (uuid.empty())
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Asked to find recipient._id for empty uuid. Refusing" << std::endl;
+    return -1;
+  }
+
   if (savedmap->find(uuid) == savedmap->end())
   {
 
-    std::cout << "Finding recipient for uuid: " << uuid << std::endl;
+    std::string printable_uuid(uuid);
+    unsigned int offset = (STRING_STARTS_WITH(uuid, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
+                           (STRING_STARTS_WITH(uuid, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
+    if (offset < uuid.size()) [[likely]]
+      std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
+    else
+      printable_uuid = "xxx";
+    std::cout << "Finding recipient for uuid: " << printable_uuid << std::endl;
 
     SqliteDB::QueryResults res;
     if (!d_database.exec("SELECT recipient._id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
