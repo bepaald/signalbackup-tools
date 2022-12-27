@@ -557,8 +557,13 @@ template <typename T>
 inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  // std::cout << "Getting value of field '" << header << "' (" << i << ")" << std::endl;
-  // std::cout << "Type: " << d_values[row][i].type().name() << " Requested type: " << typeid(T).name() << std::endl;
+
+  if (d_values[row][i].type() != typeid(T)) [[unlikely]]
+  {
+    std::cout << "Getting value of field '" << header << "' (idx " << i << "). Value as string: " << valueAsString(row, i) << std::endl;
+    std::cout << "Type: " << d_values[row][i].type().name() << " Requested type: " << typeid(T).name() << std::endl;
+    //return T{};
+  }
   if (i > -1) [[likely]]
     return std::any_cast<T>(d_values[row][i]);
   return T{};

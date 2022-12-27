@@ -280,7 +280,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
-  if (!ddb.exec("SELECT id,type,uuid,groupId FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
+  if (!ddb.exec("SELECT id,type,uuid,groupId,IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
 
   //std::cout << "Conversations in desktop:" << std::endl;
@@ -300,13 +300,38 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::string person_or_group_id;
     if (results_all_conversations.valueAsString(i, "type") == "group")
     {
-      auto [groupid_data, groupid_data_length] = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "groupId"));
-      if (groupid_data && groupid_data_length != 0)
+      if (results_all_conversations.getValueAs<long long int>(i, "groupVersion") > 1)
       {
-        //std::cout << bepaald::bytesToHexString(groupid_data, groupid_data_length, true) << std::endl;
-        person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, groupid_data_length, true);
-        isgroupconversation = true;
-        bepaald::destroyPtr(&groupid_data, &groupid_data_length);
+        auto [groupid_data, groupid_data_length] = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "groupId"));
+        if (groupid_data && groupid_data_length != 0)
+        {
+          //std::cout << bepaald::bytesToHexString(groupid_data, groupid_data_length, true) << std::endl;
+          person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, groupid_data_length, true);
+          isgroupconversation = true;
+          bepaald::destroyPtr(&groupid_data, &groupid_data_length);
+        }
+        else
+        {
+          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Conversation is 'group'-type, but groupId "
+                  << "unexpectedly was not base64 data. Maybe this is a groupV1 group? Here is the data: " << std::endl;
+          std::cout << results_all_conversations.valueAsString(i, "groupId") << std::endl;
+          continue;
+        }
+      }
+      else
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Group V1 type not yet supported" << std::endl;
+        std::cout << "ID AS STRING: " << results_all_conversations.valueAsString(i, "groupId") << std::endl;
+        std::string giddata = results_all_conversations.valueAsString(i, "groupId");
+        std::cout << "ID IN HEX: " << bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size(), true) << std::endl;
+
+        // lets just for fun try to find an old-style group with this id:
+        std::string gid = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size(), true);
+        d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?))", gid);
+
+        continue;
+        // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
+        // isgroupconversation = true;
       }
     }
     else
@@ -486,14 +511,20 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (mmsquote_author == -1)
           {
             std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find quote author. skipping" << std::endl;
+
+            // DEBUG
+            std::cout << "Additional info:" << std::endl;
+            ddb.print("SELECT json_extract(json, '$.quote') FROM messages WHERE rowid = ?", rowid);
             hasquote = false;
           }
 
           mmsquote_body = quote_results.valueAsString(0, "quote_text"); // check if this can be null (if quote exists, dont think so)
           mmsquote_missing = (quote_results.getValueAs<long long int>(0, "quote_referencedmessagenotfound") == false ? 0 : 1);
           mmsquote_type = (quote_results.getValueAs<long long int>(0, "quote_isgiftbadge") == false ? 0 : 1);
+          //if (quote_results.valueHasType<long long int>(0, quote_id))
           mmsquote_id = quote_results.getValueAs<long long int>(0, "quote_id"); // this is the messages.json.$timestamp or messages.sent_at. In the android db,
                                                                                 // it should be mms.date, but this should be set by this import anyway
+          //else // type is string
 
           if (quote_results.getValueAs<long long int>(0, "num_quote_bodyranges") > 0)
           {
