@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2022  Selwin van Dijk
+  Copyright (C) 2019-2023  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -921,7 +921,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
           if (!d_database.exec("UPDATE sms SET"
                                //" date_server = ?,"
                                " type = ?,"
-                               " delivery_receipt_count = ?,"
+                               " delivery_receipt_count = ?"
                                //" reactions_last_seen = ?,"
                                //" notified_timestamp = ?,"
                                //" server_guid = ?,"
@@ -976,7 +976,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         {
           if (!d_database.exec("UPDATE sms SET"
                                " type = ?,"
-                               " delivery_receipt_count = ?,"
+                               " delivery_receipt_count = ?"
                                " WHERE _id = ?",
                                {newtype, 0, i}))
             return false;
