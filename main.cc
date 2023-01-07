@@ -375,11 +375,14 @@ int main(int argc, char *argv[])
 
   // export output
   if (!arg.output().empty())
+  {
+    sb->checkDbIntegrity(true);
     if (!sb->exportBackup(arg.output(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
     {
       std::cout << "Failed to export backup to '" << arg.output() << "'" << std::endl;
       return 1;
     }
+  }
 
   MEMINFO("After output");
 
