@@ -19,17 +19,23 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::checkDbIntegrity() const
+bool SignalBackup::checkDbIntegrity(bool warn) const
 {
   SqliteDB::QueryResults results;
 
   // CHECKING FOREIGN KEY CONSTRAINTS
   std::cout << "Checking foreign key constraints..." << std::flush;
-  d_database.exec("SELECT DISTINCT [table],[parent] FROM pragma_foreign_key_check", &results);
+  d_database.exec("SELECT DISTINCT [table],[parent],[fkid] FROM pragma_foreign_key_check", &results);
   if (results.rows())
   {
-    std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Foreign key constraint violated. This will not end well, aborting." << std::endl
-              <<                                  "     "                         " Please report this error to the program author." << std::endl;
+    if (!warn)
+      std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off
+                << " Foreign key constraint violated. This will not end well, aborting." << std::endl
+                <<                                  "     "
+                << " Please report this error to the program author." << std::endl;
+    else
+      std::cout << std::endl << bepaald::bold_on << "WARNING" << bepaald::bold_off
+                << " Foreign key constraint violated." << std::endl;
     results.prettyPrint();
     return false;
   }
@@ -51,8 +57,14 @@ bool SignalBackup::checkDbIntegrity() const
   d_database.exec("SELECT * FROM pragma_integrity_check", &results);
   if (results.rows() && results.valueAsString(0, "integrity_check") != "ok")
   {
-    std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Database integrity check failed. This will not end well, aborting." << std::endl
-              <<                     "     "                         " Please report this error to the program author." << std::endl;
+    if (!warn)
+      std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off
+                << " Database integrity check failed. This will not end well, aborting." << std::endl
+                <<                                  "     "
+                << " Please report this error to the program author." << std::endl;
+    else
+      std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off
+                << " Database integrity check failed." << std::endl;
     results.prettyPrint();
     return false;
   }

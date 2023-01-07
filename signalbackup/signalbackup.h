@@ -165,7 +165,7 @@ class SignalBackup
   bool scramble() const;
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
-  bool checkDbIntegrity() const;
+  bool checkDbIntegrity(bool warn = false) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -291,6 +291,8 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 
   if (d_ok) // set by initfrom()
     d_ok = setColumnNames();
+
+  checkDbIntegrity(true);
 }
 
 inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
