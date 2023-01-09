@@ -64,8 +64,9 @@ bool SignalBackup::scrambleHelper(std::string const &table, std::vector<std::str
 
 bool SignalBackup::scramble() const
 {
-  if (!scrambleHelper("sms", {"body"}))
-    return false;
+  if (d_database.containsTable("sms"))
+    if (!scrambleHelper("sms", {"body"}))
+      return false;
 
   if (!scrambleHelper("mms", {"body", "quote_body"}))
     return false;

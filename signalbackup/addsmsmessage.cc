@@ -21,6 +21,17 @@
 
 void SignalBackup::addSMSMessage(std::string const &body, std::string const &address, long long int timestamp, long long int thread, bool incoming)
 {
+
+  /*
+    DEPRECATED, unused and almost useless anyway...
+  */
+
+  if (d_databaseversion >= 168)
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Unsupported database version" << std::endl;
+    return;
+  }
+
   using namespace std::string_literals;
 
   //get address automatically -> msg partner for normal thread, sender for incoming group, groupid (__textsecure__!xxxxx) for outgoing

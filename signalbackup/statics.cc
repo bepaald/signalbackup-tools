@@ -36,8 +36,10 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "sms",
     "_id",
     {
-      {"msl_message", "message_id", "is_mms IS NOT 1"},
-      {"reaction", "message_id", "is_mms IS NOT 1"}
+      {"msl_message", "message_id", "is_mms IS NOT 1", "", 0, 0, 167}, // is_mms is 'removed' from table (dbv 168?)
+      {"msl_message", "message_id", "", "", 0, 168},
+      {"reaction", "message_id", "is_mms IS NOT 1", "", 0, 0, 167},
+      {"reaction", "message_id", "", "", 0, 168}
     },
     0
   },
@@ -48,9 +50,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"part", "mid"},
       {"group_receipts", "mms_id"},
       {"mention", "message_id"},
-      {"msl_message", "message_id", "is_mms IS 1"},
-      {"reaction", "message_id", "is_mms IS 1"},
-      {"story_sends", "message_id"}
+      {"msl_message", "message_id", "is_mms IS 1", "", 0, 0, 167}, // is_mms is 'removed' from table (dbv 168?)
+      {"msl_message", "message_id", "", "", 0, 168},
+      {"reaction", "message_id", "is_mms IS 1", "", 0, 0, 167},
+      {"reaction", "message_id", "", "", 0, 168},
+      {"story_sends", "message_id"},
+      {"call", "message_id"}
     },
     0
   },
@@ -99,7 +104,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"distribution_list", "recipient_id"},
       {"distribution_list_member", "recipient_id"},
       {"story_sends", "recipient_id"},
-      {"pending_pni_signature_message", "recipient_id"}
+      {"pending_pni_signature_message", "recipient_id"},
+      {"call", "peer"}
     },
     NO_COMPACT
   },
@@ -334,6 +340,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
   },
   {
     "pending_pni_signature_message",
+    "_id",
+    {},
+    0
+  },
+  {
+    "call",
     "_id",
     {},
     0

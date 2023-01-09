@@ -42,7 +42,8 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
       continue;
 
     for (auto const &c : dbl.connections)
-      if (d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
+      if (d_databaseversion >= c.mindbvversion && d_databaseversion <= c.maxdbvversion &&
+          d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
       {
         d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?", {targetid, sourceid});
         if (d_verbose) std::cout << "    update table '" + c.table + "', changed: " << d_database.changed() << std::endl;

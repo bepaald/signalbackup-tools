@@ -26,7 +26,8 @@ void SignalBackup::updateGV1MigrationMessage(long long int id1, long long int id
 {                                                                                        // else, change id1 into id2
   SqliteDB::QueryResults results;
   int changed = 0;
-  if (d_database.exec("SELECT _id,body FROM sms WHERE type == ? AND body IS NOT NULL",
+  std::string table = d_database.containsTable("sms") ? "sms" : "mms";
+  if (d_database.exec("SELECT _id,body FROM " + table + " WHERE type == ? AND body IS NOT NULL",
                       bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
   {
     //results.prettyPrint();
@@ -70,12 +71,12 @@ void SignalBackup::updateGV1MigrationMessage(long long int id1, long long int id
         if (body != output)
         {
           long long int sms_id = results.getValueAs<long long int>(i, "_id");
-          d_database.exec("UPDATE sms SET body = ? WHERE _id == ?", {output, sms_id});
+          d_database.exec("UPDATE " + table + " SET body = ? WHERE _id == ?", {output, sms_id});
           ++changed;
         }
       }
     }
   }
   if (d_verbose && changed > 0)
-    std::cout << "    update sms.body (GV1_MIGRATION), changed: " << changed << std::endl;
+    std::cout << "    update " << table << ".body (GV1_MIGRATION), changed: " << changed << std::endl;
 }

@@ -23,7 +23,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   std::cout << __FUNCTION__ << std::endl;
 
-  if ((d_databaseversion >= 33 && source->d_databaseversion < 33) ||
+  if ((d_databaseversion >= 168 && source->d_databaseversion < 168) ||
+      (d_databaseversion >= 33 && source->d_databaseversion < 33) ||
       (d_databaseversion < 33 && source->d_databaseversion >= 33) ||
       (d_databaseversion >= 27 && source->d_databaseversion < 27) ||
       (d_databaseversion < 27 && source->d_databaseversion >= 27))
@@ -448,7 +449,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   if (targetthread > -1)
   {
     std::cout << "  Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
-    source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
+    if (source->d_database.containsTable("sms"))
+      source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE mms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
     if (source->d_database.containsTable("mention"))

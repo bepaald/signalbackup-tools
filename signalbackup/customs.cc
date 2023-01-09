@@ -28,9 +28,16 @@
 
 bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 {
+  /*
+    DEPRECATED
+  */
+
+  using namespace std::string_literals;
+
+  if (d_databaseversion >= 168)
+    return false;
 
   // args
-
 
   // open signal desktop database
   SqlCipherDecryptor db(signaldesktoplocation, signaldesktoplocation + "/sql");
@@ -49,7 +56,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 
   // all threads in messages
   SqliteDB::QueryResults list_of_threads;
-  d_database.exec("SELECT DISTINCT mms.thread_id FROM mms UNION SELECT DISTINCT sms.thread_id FROM sms", &list_of_threads);
+  d_database.exec("SELECT DISTINCT mms.thread_id FROM mms"s + (d_database.containsTable("sms") ? " UNION SELECT DISTINCT sms.thread_id FROM sms" : ""), &list_of_threads);
   list_of_threads.prettyPrint();
   std::cout << std::endl;
 
@@ -189,8 +196,6 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 
 
      */
-
-
 
   // SKIP GROUPS FOR SECOND PASS
   for (uint t = 0; t < matches.size(); ++t)
@@ -471,7 +476,7 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
   }
 
   std::cout << "Deleting sms/mms tables from complete backup" << std::endl;
-  if (!d_database.exec("DELETE FROM sms") ||
+  if ((!d_database.containsTable("sms") || !d_database.exec("DELETE FROM sms")) ||
       !d_database.exec("DELETE FROM mms")/* ||
       !d_database.exec("DELETE FROM part")*/)
   {
@@ -515,7 +520,9 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
       std::cout << "Warning failed to remove part entry with missing data" << std::endl;
   }
 
-  std::vector<std::string> tables{"sms", "mms", "part"};
+  std::vector<std::string> tables{"mms", "part"};
+  if (d_database.containsTable("sms"))
+    tables.emplace_back("sms");
   for (std::string const &table : tables)
   {
     std::cout << "Importing " << table << " entries from truncated file ";
@@ -545,11 +552,14 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
   }
 
   // check for unreferenced threads
-  d_database.exec("SELECT DISTINCT thread_id FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  if (results.rows() > 0)
+  if (d_database.containsTable("sms"))
   {
-    std::cout << "WARNING:" << " Found messages in thread not present in old (complete) database... dropping them!" << std::endl;
-    d_database.exec("DELETE FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
+    d_database.exec("SELECT DISTINCT thread_id FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+    if (results.rows() > 0)
+    {
+      std::cout << "WARNING:" << " Found messages in thread not present in old (complete) database... dropping them!" << std::endl;
+      d_database.exec("DELETE FROM sms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
+    }
   }
   d_database.exec("SELECT DISTINCT thread_id FROM mms WHERE thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   if (results.rows() > 0)
@@ -559,11 +569,14 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
   }
 
   // check for unreferenced recipients
-  d_database.exec("SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE " + d_sms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
-  if (results.rows() > 0)
+  if (d_database.containsTable("sms"))
   {
-    std::cout << "WARNING:" << " Found messages referencing recipient not present in old (complete) database... dropping them!" << std::endl;
-    d_database.exec("DELETE FROM sms WHERE " + d_sms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)");
+    d_database.exec("SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE " + d_sms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
+    if (results.rows() > 0)
+    {
+      std::cout << "WARNING:" << " Found messages referencing recipient not present in old (complete) database... dropping them!" << std::endl;
+      d_database.exec("DELETE FROM sms WHERE " + d_sms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)");
+    }
   }
   d_database.exec("SELECT DISTINCT " + d_mms_recipient_id + " FROM mms WHERE " + d_mms_recipient_id + " NOT IN (SELECT DISTINCT _id FROM recipient)", &results);
   if (results.rows() > 0)
@@ -674,340 +687,342 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
   }
 
   // delete other threads
-  d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
+  if (d_database.containsTable("sms"))
+    d_database.exec("DELETE FROM sms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM mms WHERE thread_id IS NOT ?", t_id);
   d_database.exec("DELETE FROM thread WHERE _id IS NOT ?", t_id);
   cleanDatabaseByMessages();
 
   auto setType = [](uint64_t oldtype, uint64_t newtype) { return (oldtype & ~(static_cast<uint64_t> (0x1f))) + newtype; };
 
-  // get min and max id from sms
-  d_database.exec("SELECT MIN(_id),MAX(_id) FROM sms", &results);
-  if (results.rows() != 1 ||
-      !results.valueHasType<long long int>(0, 0) ||
-      !results.getValueAs<long long int>(0, 1))
+  if (d_database.containsTable("sms"))
   {
-    std::cout << "Error: Unexpected query results" << std::endl;
-    return false;
-  }
-
-  uint64_t minsmsid = results.getValueAs<long long int>(0, 0);
-  uint64_t maxsmsid = results.getValueAs<long long int>(0, 1);
-  std::cout << minsmsid << " " << maxsmsid << std::endl;
-
-  std::cout << "Switching sms entries..." << std::endl;
-  for (uint i = minsmsid; i <= maxsmsid ; ++i)
-  {
-    if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
-    {
-      std::cout << "Error: Query failed" << std::endl;
-      return false;
-    }
-    if (results.rows() == 0)
-      continue;
-    if (results.rows() > 1)
+    // get min and max id from sms
+    d_database.exec("SELECT MIN(_id),MAX(_id) FROM sms", &results);
+    if (results.rows() != 1 ||
+        !results.valueHasType<long long int>(0, 0) ||
+        !results.getValueAs<long long int>(0, 1))
     {
       std::cout << "Error: Unexpected query results" << std::endl;
       return false;
     }
 
-    uint64_t type = results.getValueAs<long long int>(0, "type");
-    using namespace std::string_literals;
+    uint64_t minsmsid = results.getValueAs<long long int>(0, 0);
+    uint64_t maxsmsid = results.getValueAs<long long int>(0, 1);
+    std::cout << minsmsid << " " << maxsmsid << std::endl;
 
-    switch (type & 0x1F)
+    std::cout << "Switching sms entries..." << std::endl;
+    for (uint i = minsmsid; i <= maxsmsid ; ++i)
     {
+      if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
+      {
+        std::cout << "Error: Query failed" << std::endl;
+        return false;
+      }
+      if (results.rows() == 0)
+        continue;
+      if (results.rows() > 1)
+      {
+        std::cout << "Error: Unexpected query results" << std::endl;
+        return false;
+      }
 
-      /*
+      uint64_t type = results.getValueAs<long long int>(0, "type");
+      using namespace std::string_literals;
 
-        For incoming and outgoing calls, mostly only the type changes, but (at least on
-        new entries) an incoming call that was not successful (not picked up), the
-        notified_timestamp and reactions_last_seen are filled in. For incoming calls that
-        do connect, these are empty (as with outgoing).
-
-        When switching, I leave them unchanged (-1 and 0) as older entries, before these fields existed
-        have this anyway, so the app should be able to deal with them.
-
-        SELECT * from sms WHERE type BETWEEN 1 AND 3 ORDER BY  + d_sms_date_received  + ASC;
-        _id|thread_id|address|address_device_id|person|date|date_sent|date_server|protocol|read|status|type|reply_path_present|delivery_receipt_count|subject|body|mismatched_identities|service_center|subscription_id|expires_in|expire_started|notified|read_receipt_count|unidentified|reactions|reactions_unread|reactions_last_seen|remote_deleted|notified_timestamp|server_guid|receipt_timestamp
-        (outgoing, unsuccessful) 30|1|2|1||1633872620815|1633872620813|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-        (outgoing, successful)   31|1|2|1||1633872637225|1633872637221|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-        (incoming, missed)      32|1|2|1||1633872653837|1633872649947|-1||1|-1|3||0|||||-1|0|0|0|0|0||0|1633872655142|0|1633872654248||-1
-        (incoming, accepted)    33|1|2|1||1633872661166|1633872661164|-1||1|-1|1||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-
-        SIMILAR GOES FOR VIDEO CALLS
-        (outgoing, unsuccessful) 35|1|2|1||1633873910158|1633873910157|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-        (outgoing, successful)   36|1|2|1||1633873922647|1633873922644|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-        (incoming, missed)      37|1|2|1||1633873937640|1633873934877|-1||1|-1| 8||0|||||-1|0|0|0|0|0||0|1633873939058|0|1633873937835||-1
-        (incoming, rejected)    38|1|2|1||1633873946618|1633873946615|-1||1|-1| 8||0|||||-1|0|0|0|0|0||0|1633873947990|0|            0||-1
-        (incoming, accepted)    39|1|2|1||1633873954061|1633873954058|-1||1|-1|10||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
-
-
-      */
-
-
-      case Types::INCOMING_CALL_TYPE:
-      {
-        uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
-        d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
-        break;
-      }
-      case Types::OUTGOING_CALL_TYPE:
-      {
-        uint64_t newtype = setType(type, Types::INCOMING_CALL_TYPE);
-        d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
-        break;
-      }
-      case Types::MISSED_CALL_TYPE:
-      {
-        uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
-        if (!d_database.exec("UPDATE sms SET"
-                             " type = ?,"
-                             " reactions_last_seen = ?,"
-                             " notified_timestamp = ?"
-                             " WHERE _id = ?",
-                             {newtype, -1, 0, i}))
-          return false;
-        break;
-      }
-      case Types::JOINED_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'JOINED_TYPE'" << std::endl;
-        break;
-      }
-      case Types::UNSUPPORTED_MESSAGE_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'UNSUPPORTED_MESSAGE_TYPE'" << std::endl;
-        break;
-      }
-      case Types::INVALID_MESSAGE_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'INVALID_MESSAGE_TYPE'" << std::endl;
-        break;
-      }
-      case Types::PROFILE_CHANGE_TYPE:
-      {
-        // incoming profile change messages are not present for sender
-        d_database.exec("DELETE FROM sms WHERE _id = ?", i);
-        break;
-      }
-      case Types::MISSED_VIDEO_CALL_TYPE:
-      {
-        uint64_t newtype = setType(type, Types::OUTGOING_VIDEO_CALL_TYPE);
-        if (!d_database.exec("UPDATE sms SET"
-                             " type = ?,"
-                             " reactions_last_seen = ?,"
-                             " notified_timestamp = ?"
-                             " WHERE _id = ?",
-                             {newtype, -1, 0, i}))
-          return false;
-        break;
-      }
-      case Types::GV1_MIGRATION_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'GV1_MIGRATION_TYPE'" << std::endl;
-        // should not be present in 1-on-1 threads
-        break;
-      }
-      case Types::INCOMING_VIDEO_CALL_TYPE:
-      {
-        uint64_t newtype = setType(type, Types::OUTGOING_VIDEO_CALL_TYPE);
-        d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
-        break;
-      }
-      case Types::OUTGOING_VIDEO_CALL_TYPE:
-      {
-        uint64_t newtype = setType(type, Types::INCOMING_VIDEO_CALL_TYPE);
-        d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
-        break;
-      }
-      case Types::GROUP_CALL_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'GROUP_CALL_TYPE'" << std::endl;
-        break;
-      }
-      case Types::BASE_INBOX_TYPE:
+      switch (type & 0x1F)
       {
 
         /*
-          incoming to outgoing message changes:
-          date_server -> -1
-          protocol    -> NULL
-          type        -> |0x1f -> 23
-          reply_path_present -> NULL
-          delivery_receipt_count -> 1
-          service_center -> NULL
-          reactions_last_seen -> -1
-          notified_timestamp -> -1
-          server_guid -> NULL
-          receipt_timestamp -> -1(old) ~(date+300)(new)
 
-          NOTE, I use the old value for receipt_timestamp of -1. All messages that were in the db before this field existed are -1
-          so the app should be able to deal with this properly
+          For incoming and outgoing calls, mostly only the type changes, but (at least on
+          new entries) an incoming call that was not successful (not picked up), the
+          notified_timestamp and reactions_last_seen are filled in. For incoming calls that
+          do connect, these are empty (as with outgoing).
+
+          When switching, I leave them unchanged (-1 and 0) as older entries, before these fields existed
+          have this anyway, so the app should be able to deal with them.
+
+          SELECT * from sms WHERE type BETWEEN 1 AND 3 ORDER BY  + d_sms_date_received  + ASC;
+          _id|thread_id|address|address_device_id|person|date|date_sent|date_server|protocol|read|status|type|reply_path_present|delivery_receipt_count|subject|body|mismatched_identities|service_center|subscription_id|expires_in|expire_started|notified|read_receipt_count|unidentified|reactions|reactions_unread|reactions_last_seen|remote_deleted|notified_timestamp|server_guid|receipt_timestamp
+          (outgoing, unsuccessful) 30|1|2|1||1633872620815|1633872620813|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+          (outgoing, successful)   31|1|2|1||1633872637225|1633872637221|-1||1|-1|2||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+          (incoming, missed)      32|1|2|1||1633872653837|1633872649947|-1||1|-1|3||0|||||-1|0|0|0|0|0||0|1633872655142|0|1633872654248||-1
+          (incoming, accepted)    33|1|2|1||1633872661166|1633872661164|-1||1|-1|1||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+
+          SIMILAR GOES FOR VIDEO CALLS
+          (outgoing, unsuccessful) 35|1|2|1||1633873910158|1633873910157|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+          (outgoing, successful)   36|1|2|1||1633873922647|1633873922644|-1||1|-1|11||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
+          (incoming, missed)      37|1|2|1||1633873937640|1633873934877|-1||1|-1| 8||0|||||-1|0|0|0|0|0||0|1633873939058|0|1633873937835||-1
+          (incoming, rejected)    38|1|2|1||1633873946618|1633873946615|-1||1|-1| 8||0|||||-1|0|0|0|0|0||0|1633873947990|0|            0||-1
+          (incoming, accepted)    39|1|2|1||1633873954061|1633873954058|-1||1|-1|10||0|||||-1|0|0|0|0|0||0|           -1|0|            0||-1
         */
 
-        uint64_t newtype = setType(type, Types::BASE_SENT_TYPE);
 
-        if (d_database.tableContainsColumn("sms", "protocol") &&
-            d_database.tableContainsColumn("sms", "service_center") &&
-            d_database.tableContainsColumn("sms", "reply_path_present"))        // REMOVED IN DBV166
+        case Types::INCOMING_CALL_TYPE:
         {
+          uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+          d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
+          break;
+        }
+        case Types::OUTGOING_CALL_TYPE:
+        {
+          uint64_t newtype = setType(type, Types::INCOMING_CALL_TYPE);
+          d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
+          break;
+        }
+        case Types::MISSED_CALL_TYPE:
+        {
+          uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
           if (!d_database.exec("UPDATE sms SET"
-                               " date_server = ?,"
-                               " protocol = ?,"
                                " type = ?,"
-                               " reply_path_present = ?,"
-                               " delivery_receipt_count = ?,"
-                               " service_center = ?,"
                                " reactions_last_seen = ?,"
-                               " notified_timestamp = ?,"
-                               " server_guid = ?"
-                               //" receipt_timestamp = ?"
+                               " notified_timestamp = ?"
                                " WHERE _id = ?",
-                               {-1, nullptr, newtype, nullptr, 1, nullptr, -1, -1, nullptr, i}))
+                               {newtype, -1, 0, i}))
             return false;
+          break;
         }
-        else
+        case Types::JOINED_TYPE:
         {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'JOINED_TYPE'" << std::endl;
+          break;
+        }
+        case Types::UNSUPPORTED_MESSAGE_TYPE:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'UNSUPPORTED_MESSAGE_TYPE'" << std::endl;
+          break;
+        }
+        case Types::INVALID_MESSAGE_TYPE:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'INVALID_MESSAGE_TYPE'" << std::endl;
+          break;
+        }
+        case Types::PROFILE_CHANGE_TYPE:
+        {
+          // incoming profile change messages are not present for sender
+          d_database.exec("DELETE FROM sms WHERE _id = ?", i);
+          break;
+        }
+        case Types::MISSED_VIDEO_CALL_TYPE:
+        {
+          uint64_t newtype = setType(type, Types::OUTGOING_VIDEO_CALL_TYPE);
           if (!d_database.exec("UPDATE sms SET"
-                               " date_server = ?,"
                                " type = ?,"
-                               " delivery_receipt_count = ?,"
                                " reactions_last_seen = ?,"
-                               " notified_timestamp = ?,"
-                               " server_guid = ?"
-                               //" receipt_timestamp = ?"
+                               " notified_timestamp = ?"
                                " WHERE _id = ?",
-                               {-1, newtype, 1, -1, -1, nullptr, i}))
+                               {newtype, -1, 0, i}))
             return false;
+          break;
         }
-        break;
-      }
-      case Types::BASE_OUTBOX_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_OUTBOX_TYPE'" << std::endl;
-        break;
-      }
-      case Types::BASE_SENDING_TYPE:
-      {
-        /*
-          Not sure what to do with this. Lets say it was eventually successfully sent
-          sometime after this backup was made...
-
-          not sure about all the fields, I don't have this type in my db's
-        */
-
-        uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
-        if (d_database.tableContainsColumn("sms", "protocol") &&
-            d_database.tableContainsColumn("sms", "service_center") &&
-            d_database.tableContainsColumn("sms", "reply_path_present"))        // REMOVED IN DBV166
+        case Types::GV1_MIGRATION_TYPE:
         {
-          if (!d_database.exec("UPDATE sms SET"
-                               //" date_server = ?,"
-                               " protocol = ?,"
-                               " type = ?,"
-                               " reply_path_present = ?,"
-                               " delivery_receipt_count = ?,"
-                               //" reactions_last_seen = ?,"
-                               //" notified_timestamp = ?,"
-                               //" server_guid = ?,"
-                               //" receipt_timestamp = ?,"
-                               " service_center = ?"
-                               " WHERE _id = ?",
-                               {31337, newtype, 1, 0, "GCM"s, i}))
-            return false;
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'GV1_MIGRATION_TYPE'" << std::endl;
+          // should not be present in 1-on-1 threads
+          break;
         }
-        else
+        case Types::INCOMING_VIDEO_CALL_TYPE:
         {
-          if (!d_database.exec("UPDATE sms SET"
-                               //" date_server = ?,"
-                               " type = ?,"
-                               " delivery_receipt_count = ?"
-                               //" reactions_last_seen = ?,"
-                               //" notified_timestamp = ?,"
-                               //" server_guid = ?,"
-                               //" receipt_timestamp = ?,"
-                               " WHERE _id = ?",
-                               {newtype, 0, i}))
-            return false;
+          uint64_t newtype = setType(type, Types::OUTGOING_VIDEO_CALL_TYPE);
+          d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
+          break;
         }
-        break;
-      }
-      case Types::BASE_SENT_TYPE:
-      {
-
-        /*
-          outgoing to incoming message changes:
-          date_server -> -1(old) ~(date-1000)(new)
-          protocol -> 31337
-          type -> |0x1f -> 20
-          reply_path_present -> 1
-          delivery_receipt_count -> 0
-          service_center -> GCM
-          reactions_last_seen -> -1(old) ~(date+40000)(new)
-          notified_timestamp -> 0(old) ~(date+150)(new)
-          server_guid -> NULL(old) Something(new)
-          receipt_timestamp -> -1
-
-          NOTE, I use the old values where available. All messages that were in the db before these fields existed are -1 (or 0)
-          so the app should be able to deal with this properly
-        */
-
-        uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
-        if (d_database.tableContainsColumn("sms", "protocol") &&
-            d_database.tableContainsColumn("sms", "reply_path_present") &&
-            d_database.tableContainsColumn("sms", "service_center")) // removed in dbv 166
+        case Types::OUTGOING_VIDEO_CALL_TYPE:
         {
-          if (!d_database.exec("UPDATE sms SET"
-                               //" date_server = ?,"
-                               " protocol = ?,"
-                               " type = ?,"
-                               " reply_path_present = ?,"
-                               " delivery_receipt_count = ?,"
-                               //" reactions_last_seen = ?,"
-                               //" notified_timestamp = ?,"
-                               //" server_guid = ?,"
-                               //" receipt_timestamp = ?,"
-                               " service_center = ?"
-                               " WHERE _id = ?",
-                               {31337, newtype, 1, 0, "GCM"s, i}))
-            return false;
+          uint64_t newtype = setType(type, Types::INCOMING_VIDEO_CALL_TYPE);
+          d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
+          break;
         }
-        else
+        case Types::GROUP_CALL_TYPE:
         {
-          if (!d_database.exec("UPDATE sms SET"
-                               " type = ?,"
-                               " delivery_receipt_count = ?"
-                               " WHERE _id = ?",
-                               {newtype, 0, i}))
-            return false;
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'GROUP_CALL_TYPE'" << std::endl;
+          break;
         }
-        break;
-      }
-      case Types::BASE_SENT_FAILED_TYPE:
-      {
-        // failed sent message is not present at receiver?
-        d_database.exec("DELETE FROM sms WHERE _id = ?", i);
-        break;
-      }
-      case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_PENDING_SECURE_SMS_FALLBACK'" << std::endl;
-        break;
-      }
-      case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_PENDING_INSECURE_SMS_FALLBACK'" << std::endl;
-        break;
-      }
-      case Types::BASE_DRAFT_TYPE:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_DRAFT_TYPE'" << std::endl;
-        break;
-      }
-      default:
-      {
-        std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << std::endl;
-        break;
+        case Types::BASE_INBOX_TYPE:
+        {
+
+          /*
+            incoming to outgoing message changes:
+            date_server -> -1
+            protocol    -> NULL
+            type        -> |0x1f -> 23
+            reply_path_present -> NULL
+            delivery_receipt_count -> 1
+            service_center -> NULL
+            reactions_last_seen -> -1
+            notified_timestamp -> -1
+            server_guid -> NULL
+            receipt_timestamp -> -1(old) ~(date+300)(new)
+
+            NOTE, I use the old value for receipt_timestamp of -1. All messages that were in the db before this field existed are -1
+            so the app should be able to deal with this properly
+          */
+
+          uint64_t newtype = setType(type, Types::BASE_SENT_TYPE);
+
+          if (d_database.tableContainsColumn("sms", "protocol") &&
+              d_database.tableContainsColumn("sms", "service_center") &&
+              d_database.tableContainsColumn("sms", "reply_path_present"))        // REMOVED IN DBV166
+          {
+            if (!d_database.exec("UPDATE sms SET"
+                                 " date_server = ?,"
+                                 " protocol = ?,"
+                                 " type = ?,"
+                                 " reply_path_present = ?,"
+                                 " delivery_receipt_count = ?,"
+                                 " service_center = ?,"
+                                 " reactions_last_seen = ?,"
+                                 " notified_timestamp = ?,"
+                                 " server_guid = ?"
+                                 //" receipt_timestamp = ?"
+                                 " WHERE _id = ?",
+                                 {-1, nullptr, newtype, nullptr, 1, nullptr, -1, -1, nullptr, i}))
+              return false;
+          }
+          else
+          {
+            if (!d_database.exec("UPDATE sms SET"
+                                 " date_server = ?,"
+                                 " type = ?,"
+                                 " delivery_receipt_count = ?,"
+                                 " reactions_last_seen = ?,"
+                                 " notified_timestamp = ?,"
+                                 " server_guid = ?"
+                                 //" receipt_timestamp = ?"
+                                 " WHERE _id = ?",
+                                 {-1, newtype, 1, -1, -1, nullptr, i}))
+              return false;
+          }
+          break;
+        }
+        case Types::BASE_OUTBOX_TYPE:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_OUTBOX_TYPE'" << std::endl;
+          break;
+        }
+        case Types::BASE_SENDING_TYPE:
+        {
+          /*
+            Not sure what to do with this. Lets say it was eventually successfully sent
+            sometime after this backup was made...
+
+            not sure about all the fields, I don't have this type in my db's
+          */
+
+          uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
+          if (d_database.tableContainsColumn("sms", "protocol") &&
+              d_database.tableContainsColumn("sms", "service_center") &&
+              d_database.tableContainsColumn("sms", "reply_path_present"))        // REMOVED IN DBV166
+          {
+            if (!d_database.exec("UPDATE sms SET"
+                                 //" date_server = ?,"
+                                 " protocol = ?,"
+                                 " type = ?,"
+                                 " reply_path_present = ?,"
+                                 " delivery_receipt_count = ?,"
+                                 //" reactions_last_seen = ?,"
+                                 //" notified_timestamp = ?,"
+                                 //" server_guid = ?,"
+                                 //" receipt_timestamp = ?,"
+                                 " service_center = ?"
+                                 " WHERE _id = ?",
+                                 {31337, newtype, 1, 0, "GCM"s, i}))
+              return false;
+          }
+          else
+          {
+            if (!d_database.exec("UPDATE sms SET"
+                                 //" date_server = ?,"
+                                 " type = ?,"
+                                 " delivery_receipt_count = ?"
+                                 //" reactions_last_seen = ?,"
+                                 //" notified_timestamp = ?,"
+                                 //" server_guid = ?,"
+                                 //" receipt_timestamp = ?,"
+                                 " WHERE _id = ?",
+                                 {newtype, 0, i}))
+              return false;
+          }
+          break;
+        }
+        case Types::BASE_SENT_TYPE:
+        {
+
+          /*
+            outgoing to incoming message changes:
+            date_server -> -1(old) ~(date-1000)(new)
+            protocol -> 31337
+            type -> |0x1f -> 20
+            reply_path_present -> 1
+            delivery_receipt_count -> 0
+            service_center -> GCM
+            reactions_last_seen -> -1(old) ~(date+40000)(new)
+            notified_timestamp -> 0(old) ~(date+150)(new)
+            server_guid -> NULL(old) Something(new)
+            receipt_timestamp -> -1
+
+            NOTE, I use the old values where available. All messages that were in the db before these fields existed are -1 (or 0)
+            so the app should be able to deal with this properly
+          */
+
+          uint64_t newtype = setType(type, Types::BASE_INBOX_TYPE);
+          if (d_database.tableContainsColumn("sms", "protocol") &&
+              d_database.tableContainsColumn("sms", "reply_path_present") &&
+              d_database.tableContainsColumn("sms", "service_center")) // removed in dbv 166
+          {
+            if (!d_database.exec("UPDATE sms SET"
+                                 //" date_server = ?,"
+                                 " protocol = ?,"
+                                 " type = ?,"
+                                 " reply_path_present = ?,"
+                                 " delivery_receipt_count = ?,"
+                                 //" reactions_last_seen = ?,"
+                                 //" notified_timestamp = ?,"
+                                 //" server_guid = ?,"
+                                 //" receipt_timestamp = ?,"
+                                 " service_center = ?"
+                                 " WHERE _id = ?",
+                                 {31337, newtype, 1, 0, "GCM"s, i}))
+              return false;
+          }
+          else
+          {
+            if (!d_database.exec("UPDATE sms SET"
+                                 " type = ?,"
+                                 " delivery_receipt_count = ?"
+                                 " WHERE _id = ?",
+                                 {newtype, 0, i}))
+              return false;
+          }
+          break;
+        }
+        case Types::BASE_SENT_FAILED_TYPE:
+        {
+          // failed sent message is not present at receiver?
+          d_database.exec("DELETE FROM sms WHERE _id = ?", i);
+          break;
+        }
+        case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_PENDING_SECURE_SMS_FALLBACK'" << std::endl;
+          break;
+        }
+        case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_PENDING_INSECURE_SMS_FALLBACK'" << std::endl;
+          break;
+        }
+        case Types::BASE_DRAFT_TYPE:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << " : 'BASE_DRAFT_TYPE'" << std::endl;
+          break;
+        }
+        default:
+        {
+          std::cout << "Unhandled type: " << i << " " << (type & 0x1f) << std::endl;
+          break;
+        }
       }
     }
   }
@@ -1182,8 +1197,12 @@ void SignalBackup::devCustom() const
   std::set<std::string> uuids;
 
   using namespace std::string_literals;
-  for (auto const &q : {"SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s, "SELECT body FROM mms WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s})
+  for (auto const &q : {d_database.containsTable("sms") ? "SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s : ""s,
+                        "SELECT body FROM mms WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s})
   {
+    if (q.empty())
+      continue;
+
     //d_database.exec("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0",
     d_database.exec(q, {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT}, &res);
 

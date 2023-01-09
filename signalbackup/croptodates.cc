@@ -75,7 +75,8 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
     return;
   }
 
-  d_database.exec(smsq, params);
+  if (d_database.containsTable("sms"))
+    d_database.exec(smsq, params);
   d_database.exec(mmsq, params);
   if (d_database.containsTable("megaphone"))
   {

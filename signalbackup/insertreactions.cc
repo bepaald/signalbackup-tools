@@ -38,15 +38,28 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << "Reaction author not found. Skipping" << std::endl;
       continue;
     }
-    if (!insertRow("reaction",
-                   {{"message_id", message_id},
-                    {"is_mms", mms ? 1 : 0},
-                    {"author_id", author},
-                    {"emoji", r[0]},
-                    {"date_sent", bepaald::toNumber<long long int>(r[1])},
-                    {"date_received", bepaald::toNumber<long long int>(r[1])}}))
+    if (d_database.tableContainsColumn("reaction", "is_mms")) // not actually removed yet? just unused...
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert into reaction table" << std::endl;
+      if (!insertRow("reaction",
+                     {{"message_id", message_id},
+                      {"is_mms", mms ? 1 : 0},
+                      {"author_id", author},
+                      {"emoji", r[0]},
+                      {"date_sent", bepaald::toNumber<long long int>(r[1])},
+                      {"date_received", bepaald::toNumber<long long int>(r[1])}}))
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert into reaction table" << std::endl;
+      }
+    }
+    else
+    {
+      if (!insertRow("reaction",
+                     {{"message_id", message_id},
+                      {"author_id", author},
+                      {"emoji", r[0]},
+                      {"date_sent", bepaald::toNumber<long long int>(r[1])},
+                      {"date_received", bepaald::toNumber<long long int>(r[1])}}))
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert into reaction table" << std::endl;
     }
   }
 }

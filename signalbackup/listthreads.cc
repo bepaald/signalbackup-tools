@@ -27,9 +27,12 @@ void SignalBackup::listThreads() const
 
   SqliteDB::QueryResults results;
 
-  d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM "
-                  "(SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms "
-                  "UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
+  if (d_database.containsTable("sms"))
+    d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM "
+                    "(SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms "
+                    "UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
+  else
+    d_database.exec("SELECT MIN(mms.date_received) AS 'Min Date', MAX(mms.date_received) AS 'Max Date' FROM mms", &results);
   results.prettyPrint();
 
   if (!d_database.containsTable("recipient"))

@@ -350,29 +350,32 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
     for (auto const &c : dbl.connections)
     {
-      if (!source->d_database.containsTable(c.table) || !source->d_database.tableContainsColumn(c.table, c.column))
-        continue;
-
-      std::cout << "  Adjusting '" << c.table << "." << c.column << "' to match changes in '" << dbl.table << "'" << std::endl;
-
-      if (!c.json_path.empty())
+      if (source->d_databaseversion >= c.mindbvversion && source->d_databaseversion <= c.maxdbvversion)
       {
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
-                                " = json_replace(" + c.column + ", " + c.json_path + ", json_extract(" + c.column + ", " + c.json_path + ") + ?) "
-                                "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL", offsetvalue);
+        if (!source->d_database.containsTable(c.table) || !source->d_database.tableContainsColumn(c.table, c.column))
+          continue;
+
+        std::cout << "  Adjusting '" << c.table << "." << c.column << "' to match changes in '" << dbl.table << "'" << std::endl;
+
+        if (!c.json_path.empty())
+        {
+          source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
+                                  " = json_replace(" + c.column + ", " + c.json_path + ", json_extract(" + c.column + ", " + c.json_path + ") + ?) "
+                                  "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL", offsetvalue);
+        }
+        else if ((c.flags & SET_UNIQUELY))
+        {
+          // set all values negative
+          source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1" +
+                                  (c.whereclause.empty() ? "" : " WHERE " + c.whereclause));
+          // set to wanted value
+          source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 + ?"
+                                  + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
+        }
+        else
+          source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? "
+                                  + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
       }
-      else if ((c.flags & SET_UNIQUELY))
-      {
-        // set all values negative
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1" +
-                                (c.whereclause.empty() ? "" : " WHERE " + c.whereclause));
-        // set to wanted value
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " * -1 + ?"
-                                + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
-      }
-      else
-        source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? "
-                                + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
     }
 
 

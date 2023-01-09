@@ -21,13 +21,15 @@
 
 void SignalBackup::cleanDatabaseByMessages()
 {
+  using namespace std::string_literals;
+
   std::cout << __FUNCTION__ << std::endl;
 
   std::cout << "  Deleting attachment entries from 'part' not belonging to remaining mms entries" << std::endl;
   d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM mms)");
 
   std::cout << "  Deleting other threads from 'thread'..." << std::endl;
-  d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM sms) AND _id NOT IN (SELECT DISTINCT thread_id FROM mms)");
+  d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM mms)"s + (d_database.containsTable("sms") ? " AND _id NOT IN (SELECT DISTINCT thread_id FROM sms)" : ""));
   updateThreadsEntries();
 
   if (d_database.containsTable("mention"))
@@ -57,8 +59,13 @@ void SignalBackup::cleanDatabaseByMessages()
     std::cout << "  Deleting unneeded MessageSendLog entries..." << std::endl;
 
     // delete from msl_message table if message does not exist anymore
-    d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
-    d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+    if (d_database.containsTable("sms"))
+    {
+      d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
+      d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+    }
+    else
+      d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT _id FROM mms)");
 
     // now delete all payloads for non existing messages
     d_database.exec("DELETE FROM msl_payload WHERE _id NOT IN (SELECT DISTINCT payload_id FROM msl_message)");
@@ -71,8 +78,14 @@ void SignalBackup::cleanDatabaseByMessages()
   {
     // delete reactions for messages that do not exist
     std::cout << "  Deleting reactions to non-existing messages" << std::endl;
-    d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
-    d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+
+    if (d_database.containsTable("sms"))
+    {
+      d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
+      d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+    }
+    else
+      d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT _id FROM mms)");
   }
 
   // delete story_sends entries that no longer refer to an existing message?
@@ -125,7 +138,7 @@ void SignalBackup::cleanDatabaseByMessages()
     }
 
     SqliteDB::QueryResults results;
-    if (d_database.exec("SELECT body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
+    if (d_database.exec("SELECT body FROM "s + (d_database.containsTable("sms") ? "sms" : "mms") + " WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
     {
       //results.prettyPrint();
       for (uint i = 0; i < results.rows(); ++i)
@@ -209,8 +222,8 @@ void SignalBackup::cleanDatabaseByMessages()
 
     SqliteDB::QueryResults deleted_recipients;
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
-                    " (SELECT DISTINCT " + d_sms_recipient_id + " FROM sms"
-                    " UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms"s +
+                    " (SELECT DISTINCT " + d_mms_recipient_id + " FROM mms" +
+                    (d_database.containsTable("sms") ? " UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms"s : "") +
                     (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
@@ -323,7 +336,9 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM group_receipts WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
   std::cout << "  Deleting drafts from deleted threads..." << std::endl;
-  d_database.exec("DELETE FROM drafts WHERE thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");
+  d_database.exec("DELETE FROM drafts WHERE "s +
+                  (d_database.containsTable("sms") ? "thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND " : "")
+                  + "thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");
 
   if (d_database.containsTable("remapped_recipients"))
   {

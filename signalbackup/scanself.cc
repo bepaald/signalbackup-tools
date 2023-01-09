@@ -22,6 +22,8 @@
 long long int SignalBackup::scanSelf() const
 {
 
+  using namespace std::string_literals;
+
   // only 'works' on 'newer' versions
   if (!d_database.containsTable("recipient") ||
       !d_database.tableContainsColumn("thread", "thread_recipient_id") ||
@@ -91,16 +93,22 @@ long long int SignalBackup::scanSelf() const
     }
     if (d_database.containsTable("reaction"))
     {
-      if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
-        continue;
-      for (uint j = 0; j < res2.rows(); ++j)
+      if (d_database.containsTable("sms"))
       {
-        //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
-        options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
+        if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
+          continue;
+        for (uint j = 0; j < res2.rows(); ++j)
+        {
+          //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
+          options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
+        }
       }
 
-      if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 1 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM mms WHERE thread_id = ?)", {rid, tid} , &res2))
-        continue;
+      if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE "s +
+                           (d_database.tableContainsColumn("reaction", "is_mms") ? "is_mms IS 1 AND " : "") +
+                           "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM mms WHERE thread_id = ?)", {rid, tid} , &res2))
+          continue;
+
       for (uint j = 0; j < res2.rows(); ++j)
       {
         //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
@@ -139,13 +147,20 @@ long long int SignalBackup::scanSelf() const
     //std::cout << "Dealing with group: " << gid << std::endl;
 
     // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
-    if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM mms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?)))) AND word NOT IN (SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid, gid}, &res2))
-      continue;
-
-    for (uint j = 0; j < res2.rows(); ++j)
+    SqliteDB::QueryResults res3;
+    if (d_database.containsTable("sms"))
     {
-      //std::cout << "  From group membership:" << res2.valueAsString(j, "word") << std::endl;
-      options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "word")));
+      if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM mms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?)))) AND word NOT IN (SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid, gid}, &res3))
+        continue;
+    }
+    else
+      if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM mms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid}, &res3))
+        continue;
+
+    for (uint j = 0; j < res3.rows(); ++j)
+    {
+      //std::cout << "  From group membership:" << res3.valueAsString(j, "word") << std::endl;
+      options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "word")));
     }
   }
 
