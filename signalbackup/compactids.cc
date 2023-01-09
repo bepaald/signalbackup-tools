@@ -54,12 +54,13 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
         {
           for (auto const &c : dbl.connections)
           {
-            if (d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
+            if (d_databaseversion >= c.mindbvversion && d_databaseversion <= c.maxdbvversion &&
+                d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
             {
               if (!c.json_path.empty())
               {
                 if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = json_replace(" + c.column + ", " + c.json_path + ", ?) "
-                                     "WHERE json_extract(" + c.column + ", " + c.json_path + ") = ?", {nid, valuetochange}))
+                                       "WHERE json_extract(" + c.column + ", " + c.json_path + ") = ?", {nid, valuetochange}))
                   std::cout << "ERROR: compacting table '" << table << "'" << std::endl;
               }
               else if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?" + (c.whereclause.empty() ? "" : " AND " + c.whereclause), {nid, valuetochange}))

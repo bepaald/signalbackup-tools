@@ -99,6 +99,8 @@ class SignalBackup
     std::string whereclause = std::string();
     std::string json_path = std::string();
     int flags = 0;
+    unsigned int mindbvversion = 0;
+    unsigned int maxdbvversion = std::numeric_limits<unsigned int>::max();
   };
 
   struct DatabaseLink

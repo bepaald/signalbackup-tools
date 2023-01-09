@@ -58,26 +58,30 @@ void SignalBackup::fillThreadTableFromMessages()
   //d_database.exec("SELECT DISTINCT thread_id,address FROM mms WHERE (msg_box&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   //results.prettyPrint();
 
-  std::cout << "Creating threads from 'sms' table data" << std::endl;
-  //std::cout << "Threadids in sms, not in thread" << std::endl;
-  d_database.exec("SELECT DISTINCT thread_id," + d_sms_recipient_id + " FROM sms WHERE (type & " + bepaald::toString(Types::BASE_TYPE_MASK) +
-                  ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " +
-                  bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
-                  " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  //results.prettyPrint();
-  for (uint i = 0; i < results.rows(); ++i)
-    if (results.valueHasType<long long int>(i, 0) &&
-        (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
-      d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
-  // std::cout << "Threadids in sms, not in thread" << std::endl;
-  // d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
-  // results.prettyPrint();
+  if (d_database.containsTable("sms"))
+  {
+    std::cout << "Creating threads from 'sms' table data" << std::endl;
+    //std::cout << "Threadids in sms, not in thread" << std::endl;
+    d_database.exec("SELECT DISTINCT thread_id," + d_sms_recipient_id + " FROM sms WHERE (type & " + bepaald::toString(Types::BASE_TYPE_MASK) +
+                    ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " +
+                    bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
+                    " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+    //results.prettyPrint();
+    for (uint i = 0; i < results.rows(); ++i)
+      if (results.valueHasType<long long int>(i, 0) &&
+          (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
+        d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
+    // std::cout << "Threadids in sms, not in thread" << std::endl;
+    // d_database.exec("SELECT DISTINCT thread_id,address FROM sms WHERE (type&0x1f) BETWEEN 21 AND 26 AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+    // results.prettyPrint();
+  }
 
   // deal with threads without outgoing messages
   // get all thread_ids not yet in thread table, if there is only one recipient in that thread AND
   // there is no other thread with that recipient, add it (though it COULD be a 2 person group with only incoming messages)
-  d_database.exec("SELECT sms.thread_id AS union_thread_id, sms." + d_sms_recipient_id + " FROM 'sms' WHERE sms.thread_id NOT IN (SELECT DISTINCT _id FROM thread) UNION "
+  d_database.exec((d_database.containsTable("sms") ? "SELECT sms.thread_id AS union_thread_id, sms." + d_sms_recipient_id + " FROM 'sms' WHERE sms.thread_id NOT IN (SELECT DISTINCT _id FROM thread) UNION " : "") +
                   "SELECT mms.thread_id AS union_thread_id, mms." + d_mms_recipient_id + " FROM 'mms' WHERE mms.thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+
   //std::cout << "Orphan threads in db: " << std::endl;
   //results.prettyPrint();
   for (uint i = 0; i < results.rows(); ++i)
@@ -85,8 +89,11 @@ void SignalBackup::fillThreadTableFromMessages()
     long long int thread = std::any_cast<long long int>(results.value(i, "union_thread_id"));
     //std::cout << "Dealing with thread: " << thread << std::endl;
     SqliteDB::QueryResults results2;
-    d_database.exec("SELECT DISTINCT sms." + d_sms_recipient_id + " AS union_address FROM 'sms' WHERE sms.thread_id == ? UNION "
-                    "SELECT DISTINCT mms." + d_mms_recipient_id + " AS union_address FROM 'mms' WHERE mms.thread_id == ?", {thread, thread}, &results2);
+    if (d_database.containsTable("sms"))
+      d_database.exec("SELECT DISTINCT sms." + d_sms_recipient_id + " AS union_address FROM 'sms' WHERE sms.thread_id == ? UNION "
+                      "SELECT DISTINCT mms." + d_mms_recipient_id + " AS union_address FROM 'mms' WHERE mms.thread_id == ?", {thread, thread}, &results2);
+    else
+      d_database.exec("SELECT DISTINCT mms." + d_mms_recipient_id + " AS union_address FROM 'mms' WHERE mms.thread_id == ?", thread, &results2);
     if (results2.rows() == 1)
     {
       SqliteDB::QueryResults results3;
@@ -104,7 +111,7 @@ void SignalBackup::fillThreadTableFromMessages()
       std::cout << "Too many addresses in orphaned thread, it appears to be group conversation without outgoing messages. This case is not supported." << std::endl;
  }
 
-  d_database.exec("SELECT sms.thread_id AS union_thread_id, sms." + d_sms_recipient_id + " FROM 'sms' WHERE sms.thread_id NOT IN (SELECT DISTINCT _id FROM thread) UNION "
+  d_database.exec((d_database.containsTable("sms") ? "SELECT sms.thread_id AS union_thread_id, sms." + d_sms_recipient_id + " FROM 'sms' WHERE sms.thread_id NOT IN (SELECT DISTINCT _id FROM thread) UNION " : "") +
                   "SELECT mms.thread_id AS union_thread_id, mms." + d_mms_recipient_id + " FROM 'mms' WHERE mms.thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   if (results.rows() > 0)
   {
@@ -132,10 +139,11 @@ void SignalBackup::fillThreadTableFromMessages()
     if (threadquery.valueHasType<long long int>(i, 0))
     {
       std::string threadid = bepaald::toString(threadquery.getValueAs<long long int>(i, 0));
-      d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms." + d_sms_recipient_id + " AS union_address, sms._id AS [sms._id], '' AS [mms._id] "
+      d_database.exec(d_database.containsTable("sms") ?
+                      "SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms." + d_sms_recipient_id + " AS union_address, sms._id AS [sms._id], '' AS [mms._id] "
                       "FROM 'sms' WHERE sms.thread_id = " + threadid +
                       " AND (sms.type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"
-                      " OR sms.type & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) UNION "
+                      " OR sms.type & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) UNION " : ""
                       "SELECT mms." + d_mms_date_sent + " AS union_display_date, mms." + d_mms_type + " AS union_type, mms.body AS union_body, mms." + d_mms_recipient_id + " AS union_address, '' AS [sms._id], mms._id AS [mms._id] "
                       "FROM mms WHERE mms.thread_id = " + threadid +
                       " AND (mms." + d_mms_type + " & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"

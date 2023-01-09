@@ -41,15 +41,26 @@ void SignalBackup::updateThreadsEntries(long long int thread)
         std::cout << ", " << threadid << std::flush;
 
       //std::cout << "    Updating msgcount" << std::endl;
-      d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
-                      "(SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
-                      ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
-
       SqliteDB::QueryResults results2;
-      d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = "
-                      + threadid
-                      + " UNION SELECT mms." + d_mms_date_sent + " AS union_display_date, mms." + d_mms_date_sent + " AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
-                      + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
+      if (d_database.containsTable("sms"))
+      {
+        d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
+                        "(SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
+                        ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
+
+        d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = "
+                        + threadid
+                        + " UNION SELECT mms." + d_mms_date_sent + " AS union_date, mms." + d_mms_date_sent + " AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
+                        + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
+      }
+      else // dbv >= 168
+      {
+        d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
+                        "(SELECT count(*) FROM mms WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
+
+        d_database.exec("SELECT mms." + d_mms_date_sent + " AS union_date, mms." + d_mms_date_sent + " AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
+                        + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
+      }
 
       std::any date = results2.value(0, "union_date");
       if (date.type() == typeid(long long int))

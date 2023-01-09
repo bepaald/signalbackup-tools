@@ -24,7 +24,8 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
   SqliteDB::QueryResults results;
 
   // CHECKING FOREIGN KEY CONSTRAINTS
-  std::cout << "Checking foreign key constraints..." << std::flush;
+  if (!warn)
+    std::cout << "Checking foreign key constraints..." << std::flush;
   d_database.exec("SELECT DISTINCT [table],[parent],[fkid] FROM pragma_foreign_key_check", &results);
   if (results.rows())
   {
@@ -39,7 +40,8 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
     results.prettyPrint();
     return false;
   }
-  std::cout << " ok" << std::endl;
+  if (!warn)
+    std::cout << " ok" << std::endl;
 
   // std::cout << "Checking database integrity (quick)..." << std::flush;
   // d_database.exec("SELECT * FROM pragma_quick_check", &results);
@@ -53,7 +55,8 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
   // std::cout << " ok" << std::endl;
 
   // CHECKING DATABASE
-  std::cout << "Checking database integrity (full)..." << std::flush;
+  if (!warn)
+    std::cout << "Checking database integrity (full)..." << std::flush;
   d_database.exec("SELECT * FROM pragma_integrity_check", &results);
   if (results.rows() && results.valueAsString(0, "integrity_check") != "ok")
   {
@@ -63,12 +66,13 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
                 <<                                  "     "
                 << " Please report this error to the program author." << std::endl;
     else
-      std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off
+      std::cout << std::endl << bepaald::bold_on << "WARNING" << bepaald::bold_off
                 << " Database integrity check failed." << std::endl;
     results.prettyPrint();
     return false;
   }
-  std::cout << " ok" << std::endl;
+  if (!warn)
+    std::cout << " ok" << std::endl;
 
   return true;
 }

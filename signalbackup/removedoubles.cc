@@ -21,18 +21,32 @@
 
 void SignalBackup::removeDoubles()
 {
+  using namespace std::string_literals;
+
   std::cout << __FUNCTION__  << std::endl;
 
-  std::cout << "  Removing duplicate entries from sms table..." << std::endl;
+  if (d_database.containsTable("sms"))
+  {
+    std::cout << "  Removing duplicate entries from sms table..." << std::endl;
 
-  if (d_database.tableContainsColumn("sms", "protocol")) // removed in dbv166
-    d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, protocol ASC,_id ASC) t WHERE RNum%2 = 0)");
-  else
-    d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, _id ASC) t WHERE RNum%2 = 0)");
-  std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+    // if (d_database.tableContainsColumn("sms", "protocol")) // removed in dbv166
+    //   d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, protocol ASC,_id ASC) t WHERE RNum%2 = 0)");
+    // else
+    //   d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, _id ASC) t WHERE RNum%2 = 0)");
+
+    d_database.exec("DELETE FROM sms WHERE _id IN "
+                    "(SELECT _id FROM sms GROUP BY " + d_sms_date_received + ", body, thread_id, CAST(" + d_sms_recipient_id + " AS INTEGER), read, type, " +
+                    (d_database.tableContainsColumn("sms", "protocol") ? "protocol, " : "") + "date_sent HAVING COUNT(*) IS 2)");
+
+    std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+  }
 
   std::cout << "  Removing duplicate entries from mms table..." << std::endl;
-  d_database.exec("DELETE FROM mms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1." + d_mms_date_sent + " = t2." + d_mms_date_sent + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_mms_recipient_id + " = t2." +d_mms_recipient_id + " AND t1.read = t2.read AND t1." + d_mms_type + " = t2." + d_mms_type + " AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles ORDER BY " + d_mms_date_sent +" ASC, date_received ASC, body ASC, thread_id ASC, " + d_mms_recipient_id + " ASC, read ASC, " + d_mms_type + " ASC, _id ASC) t WHERE RNum%2 = 0)");
+  //d_database.exec("DELETE FROM mms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1." + d_mms_date_sent + " = t2." + d_mms_date_sent + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_mms_recipient_id + " = t2." +d_mms_recipient_id + " AND t1.read = t2.read AND t1." + d_mms_type + " = t2." + d_mms_type + " AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles ORDER BY " + d_mms_date_sent +" ASC, date_received ASC, body ASC, thread_id ASC, " + d_mms_recipient_id + " ASC, read ASC, " + d_mms_type + " ASC, _id ASC) t WHERE RNum%2 = 0)");
+
+  d_database.exec("DELETE FROM mms WHERE _id IN "
+                  "(SELECT _id FROM mms GROUP BY body, " + d_mms_date_sent + ", thread_id, CAST(" + d_mms_recipient_id + " AS INTEGER), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
+
   std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
 
 
@@ -85,5 +99,38 @@ void SignalBackup::removeDoubles()
   {
     std::cout << "  Deleting entries from 'mention' not belonging to remaining mms entries" << std::endl;
     d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM mms)");
+  }
+
+  // remove unreferencing reactions
+  if (d_database.containsTable("reaction"))
+  {
+    if (d_database.containsTable("sms"))
+    {
+      std::cout << "  Deleting entries from 'reaction' not belonging to remaining sms entries" << std::endl;
+      d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT DISTINCT _id FROM sms)");
+    }
+    std::cout << "  Deleting entries from 'reaction' not belonging to remaining mms entries" << std::endl;
+    d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT DISTINCT _id FROM mms)"s +
+                    (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : ""));
+  }
+
+  // remove msl_message
+  if (d_database.containsTable("msl_message"))
+  {
+    if (d_database.containsTable("sms"))
+    {
+      std::cout << "  Deleting entries from 'msl_message' not belonging to remaining sms entries" << std::endl;
+      d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT DISTINCT _id FROM sms)");
+    }
+    std::cout << "  Deleting entries from 'msl_message' not belonging to remaining mms entries" << std::endl;
+    d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT DISTINCT _id FROM mms)"s +
+                    (d_database.tableContainsColumn("msl_message", "is_mms") ? " AND is_mms IS 1" : ""));
+
+
+    // now delete msl_payloads from non-existing msl_messages ?
+    d_database.exec("DELETE FROM msl_payload WHERE _id NOT IN (SELECT DISTINCT payload_id FROM msl_message)");
+
+    // now delete msl_recipients from non existing payloads?
+    d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
   }
 }

@@ -70,10 +70,13 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
       }
 
       std::cout << "Dealing with address: " << r_ids[i] << std::endl;
-      d_database.exec("UPDATE sms SET thread_id = ?, " + d_sms_recipient_id + " = ?"
-                      " WHERE thread_id = ? AND " + d_sms_recipient_id + " = ?",
-                      {tid, targetaddr, oldtid, r_ids[i]});
-      std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+      if (d_database.containsTable("sms"))
+      {
+        d_database.exec("UPDATE sms SET thread_id = ?, " + d_sms_recipient_id + " = ?"
+                        " WHERE thread_id = ? AND " + d_sms_recipient_id + " = ?",
+                        {tid, targetaddr, oldtid, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+      }
       d_database.exec("UPDATE mms SET thread_id = ?, " + d_mms_recipient_id + " = ? "
                       "WHERE thread_id = ? AND " + d_mms_recipient_id + " = ?",
                       {tid, targetaddr, oldtid, r_ids[i]});
@@ -203,9 +206,12 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
     // for all incoming messages of this group(= this thread), if the (originating) address = oldaddress, change it to target
     for (uint j = 0; j < r_ids.size() - 1; ++j)
     {
-      d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? "
-                      "WHERE " + d_sms_recipient_id + " = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
-      std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+      if (d_database.containsTable("sms"))
+      {
+        d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? "
+                        "WHERE " + d_sms_recipient_id + " = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
+        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+      }
       d_database.exec("UPDATE mms SET " + d_mms_recipient_id + " = ? "
                       "WHERE " +d_mms_recipient_id + " = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
@@ -317,47 +323,48 @@ Field 4 (optional::protobuf):
 
     // get groupV1 status message updates:
     SqliteDB::QueryResults results2;
-    d_database.exec("SELECT type,body,_id FROM 'sms' WHERE thread_id = " + bepaald::toString(tid) + " AND (type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND (type & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
-    if (d_verbose) [[unlikely]]
-      results2.prettyPrint();
-    for (uint j = 0; j < results2.rows(); ++j)
+    if (d_database.containsTable("sms"))
     {
-      std::string body = std::any_cast<std::string>(results2.value(j, "body"));
-      long long int type = std::any_cast<long long int>(results2.value(j, "type"));
-      long long int msgid = std::any_cast<long long int>(results2.value(j, "_id"));
-
-      GroupContext statusmsg(body);
-
-      if (Types::isGroupUpdate(type))
-        std::cout << "Handling group update " << j + 1 << std::endl;
-
-      bool targetpresent = false;
-      auto field4 = statusmsg.getField<4>();
-      for (uint k = 0; k < field4.size(); ++k)
+      d_database.exec("SELECT type,body,_id FROM 'sms' WHERE thread_id = " + bepaald::toString(tid) + " AND (type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND (type & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
+      if (d_verbose) [[unlikely]]
+        results2.prettyPrint();
+      for (uint j = 0; j < results2.rows(); ++j)
       {
-        std::cout << "memberlist: " << field4[k] << std::endl;
-        if (field4[k] == targetphone)
-          targetpresent = true;
-      }
+        std::string body = std::any_cast<std::string>(results2.value(j, "body"));
+        long long int type = std::any_cast<long long int>(results2.value(j, "type"));
+        long long int msgid = std::any_cast<long long int>(results2.value(j, "_id"));
 
-      int removed = 0;
-      for (uint k = 0; k < phonenumbers.size() - 1; ++k)
-      {
-        removed = statusmsg.deleteFields(4, &phonenumbers[k]);
-        std::cout << "deleted " << removed << " members from group update message" << std::endl;
-      }
+        GroupContext statusmsg(body);
 
-      if (removed)
-      {
-        if (!targetpresent) // add target if not present
-          statusmsg.addField<4>(targetphone);
-        // set body
-        d_database.exec("UPDATE sms SET body = ? WHERE _id = ?", {statusmsg.getDataString(), msgid});
-        std::cout << "Updated " << d_database.changed() << " group updates in 'sms' table" << std::endl;
+        if (Types::isGroupUpdate(type))
+          std::cout << "Handling group update " << j + 1 << std::endl;
+
+        bool targetpresent = false;
+        auto field4 = statusmsg.getField<4>();
+        for (uint k = 0; k < field4.size(); ++k)
+        {
+          std::cout << "memberlist: " << field4[k] << std::endl;
+          if (field4[k] == targetphone)
+            targetpresent = true;
+        }
+
+        int removed = 0;
+        for (uint k = 0; k < phonenumbers.size() - 1; ++k)
+        {
+          removed = statusmsg.deleteFields(4, &phonenumbers[k]);
+          std::cout << "deleted " << removed << " members from group update message" << std::endl;
+        }
+
+        if (removed)
+        {
+          if (!targetpresent) // add target if not present
+            statusmsg.addField<4>(targetphone);
+          // set body
+          d_database.exec("UPDATE sms SET body = ? WHERE _id = ?", {statusmsg.getDataString(), msgid});
+          std::cout << "Updated " << d_database.changed() << " group updates in 'sms' table" << std::endl;
+        }
       }
     }
-
-
 
     // same for groupV1 status updates in mms database
     d_database.exec("SELECT " + d_mms_type + ",body,_id FROM 'mms' "

@@ -21,6 +21,8 @@
 
 bool SignalBackup::reorderMmsSmsIds() const
 {
+  using namespace std::string_literals;
+
   std::cout << __FUNCTION__ << std::endl;
 
   // get all mms in the correct order
@@ -42,10 +44,10 @@ bool SignalBackup::reorderMmsSmsIds() const
       if (!d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid}))
         return false;
     if (d_database.containsTable("msl_message"))
-      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {-1 * negative_id_tmp, oldid}))
+      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ?"s + (d_database.tableContainsColumn("msl_message", "is_mms") ? " AND is_mms IS 1" : ""), {-1 * negative_id_tmp, oldid}))
         return false;
     if (d_database.containsTable("reaction")) // dbv >= 121
-      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {-1 * negative_id_tmp, oldid}))
+      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ?"s + (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : ""), {-1 * negative_id_tmp, oldid}))
         return false;
   }
 
@@ -58,39 +60,41 @@ bool SignalBackup::reorderMmsSmsIds() const
     if (!d_database.exec("UPDATE mention SET message_id = message_id * -1 WHERE message_id < 0"))
       return false;
   if (d_database.containsTable("msl_message"))
-    if (!d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS 1"))
+    if (!d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0"s + (d_database.tableContainsColumn("msl_message", "is_mms") ? " AND is_mms IS 1" : "")))
       return false;
   if (d_database.containsTable("reaction")) // dbv >= 121
-    if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS 1"))
+    if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0"s + (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : "")))
       return false;
 
   // SAME FOR SMS
-  if (!d_database.exec("SELECT _id FROM sms ORDER BY " + d_sms_date_received + " ASC", &res))
-    return false;
-
-  negative_id_tmp = 0;
-  for (uint i = 0; i < res.rows(); ++i)
+  if (d_database.containsTable("sms")) // removed in 168
   {
-    long long int oldid = res.getValueAs<long long int>(i, 0);
+    if (!d_database.exec("SELECT _id FROM sms ORDER BY " + d_sms_date_received + " ASC", &res))
+      return false;
+
+    negative_id_tmp = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      long long int oldid = res.getValueAs<long long int>(i, 0);
     ++negative_id_tmp;
     if (!d_database.exec("UPDATE sms SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid}))
       return false;
     if (d_database.containsTable("msl_message"))
-      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {-1 * negative_id_tmp, oldid}))
+      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ?"s + (d_database.tableContainsColumn("msl_message", "is_mms") ? " AND is_mms IS NOT 1" : ""), {-1 * negative_id_tmp, oldid}))
         return false;
     if (d_database.containsTable("reaction")) // dbv >= 121
-      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {-1 * negative_id_tmp, oldid}))
+      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ?"s + (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS NOT 1" : ""), {-1 * negative_id_tmp, oldid}))
+        return false;
+    }
+
+    if (!d_database.exec("UPDATE sms SET _id = _id * -1 WHERE _id < 0"))
+      return false;
+    if (d_database.containsTable("msl_message"))
+      if (!d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0"s + (d_database.tableContainsColumn("msl_message", "is_mms") ? " AND is_mms IS NOT 1" : "")))
+        return false;
+    if (d_database.containsTable("reaction")) // dbv >= 121
+      if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0"s + (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS NOT 1" : "")))
         return false;
   }
-
-  if (!d_database.exec("UPDATE sms SET _id = _id * -1 WHERE _id < 0"))
-    return false;
-  if (d_database.containsTable("msl_message"))
-    if (!d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS NOT 1"))
-      return false;
-  if (d_database.containsTable("reaction")) // dbv >= 121
-    if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0 AND is_mms IS NOT 1"))
-      return false;
-
   return true;
 }

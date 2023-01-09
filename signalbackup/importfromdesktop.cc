@@ -249,8 +249,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   if (dateranges.empty() && autodates)
   {
     SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", mms.date_received) AS mindate FROM sms "
-                         "LEFT JOIN mms WHERE sms." + d_sms_date_received + " IS NOT NULL AND mms.date_received IS NOT NULL)", &res))
+    if ((d_database.containsTable("sms") && !d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", mms.date_received) AS mindate FROM sms "
+                                                             "LEFT JOIN mms WHERE sms." + d_sms_date_received + " IS NOT NULL AND mms.date_received IS NOT NULL)", &res)) ||
+        (!d_database.containsTable("sms") && !d_database.exec("SELECT MIN(mms.date_received) AS mindate FROM mms WHERE mms.date_received IS NOT NULL", &res)))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << "Failed to automatically determine data-range" << std::endl;
       return false;
@@ -475,7 +476,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       getDTReactions(ddb, rowid, numreactions, &reactions);
 
       // insert the collected data in the correct tables
-      if ((numattachments > 0 || nummentions > 0 || hasquote || (isgroupconversation && outgoing))) // this goed in mms table
+      if (!d_database.containsTable("sms") || // starting at dbv168, the sms table is removed altogether
+          (numattachments > 0 || nummentions > 0 || hasquote || (isgroupconversation && outgoing))) // this goes in mms table on older database versions
       {
         // get quote stuff
         // if message has quote attachments, find the original message (the quote json does not contain all info)
@@ -691,7 +693,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
 
       }
-      else
+      else // database contains sms-table and message has no attachment/quote/mention and is not group
       {
         // insert into sms
         std::any retval;
