@@ -49,7 +49,7 @@ If for any reason you need to compile against cryptopp instead of openssl, run `
 
 **<span id="macos">macOs</span>**
 
-It should be possible to compile and run the program under macOS as well, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9). macOs users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
+It should be possible to compile and run the program under macOS as well, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9), or more recently [here](https://github.com/bepaald/signalbackup-tools/issues/85). macOs users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
 
 **<span id="windows">Windows binary</span>**
 
