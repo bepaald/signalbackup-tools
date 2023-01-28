@@ -352,7 +352,7 @@ _NOTE: As of writing, this feature is very new. I expect some bugs, please open 
 
 To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-file wil be rewritten.
 
-At the moment, this function will only work with current database versions (version 170 and up). If there is demand, support older databases may be added in the future.
+At the moment, this function will only work with current database versions (version 170 and up). If there is demand, support for older databases may be added in the future.
 
 A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
 
