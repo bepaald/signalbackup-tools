@@ -71,7 +71,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       #message-header {
         text-align: center;
         color: white;
-        font-family: Roboto, Noto Sans, Liberation Sans, OpenSans, sans-serif;
+        font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         padding-top: 30px;
         padding-bottom: 30px;
       }
@@ -89,7 +89,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding-right: 30px;
         background-color: #1B1C1F;
         color: white;
-        font-family: Roboto, Noto Sans, Liberation Sans, OpenSans, sans-serif;
+        font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         border-radius: 10px;
       }
 
@@ -194,7 +194,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg pre {
-        font-family: Roboto, Noto Sans, Liberation Sans, OpenSans, sans-serif;
+        font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         white-space: pre-wrap;
         margin-top: 0px;
         margin-bottom: 5px;
@@ -242,7 +242,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-emoji {
-        font-family: Noto Color Emoji, sans-serif;
+        font-family: "Noto Color Emoji", sans-serif;
       }
 
       .msg-all-emoji {
@@ -492,7 +492,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         opacity: 50%;
         margin: 0 auto;
         filter: invert(100%);
-        -webkit-filter: invert(100%);
       }
 
       .msg-call-missed .msg-icon {
@@ -505,12 +504,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .msg-call-outgoing .msg-icon {
         background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-outgoing"><polyline points="23 7 23 1 17 1"></polyline><line x1="16" y1="8" x2="23" y2="1"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
-        -moz-transform: scaleX(-1);
-        -o-transform: scaleX(-1);
-        -webkit-transform: scaleX(-1);
-        transform: scaleX(-1);
-        filter: FlipH;
-        -ms-filter: "FlipH";
+        transform: scale(-1, 1);
       }
 
       .msg-video-call-missed .msg-icon {
@@ -541,8 +535,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << R"(
       <input type="checkbox" id="zoomCheck-avatar">
       <label for="zoomCheck-avatar">
-        <div class="avatar avatar-)" << thread_recipient_id
-         << R"( header-avatar msg-sender-)" << thread_recipient_id << R"("></div>
+        <img class="avatar avatar-)" << thread_recipient_id
+         << R"( header-avatar msg-sender-)" << thread_recipient_id << R"(" src="media/Avatar_)" << thread_recipient_id << R"(.bin" alt="thread avatar">
       </label>)";
   }
   file << R"(
@@ -615,8 +609,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
   {
     htmloutput << "      <div class=\"incoming-group-msg\">" << std::endl;
-    htmloutput << "        <div id=\"avatar-" << msg_info.msg_recipient_id
-               << "\" class=\"avatar avatar-" << msg_info.msg_recipient_id
+    htmloutput << "        <div class=\"avatar avatar-" << msg_info.msg_recipient_id
                << " convo-avatar msg-sender-" << msg_info.msg_recipient_id << "\">";
     if (!recipient_info->at(msg_info.msg_recipient_id).hasavatar)
     {
