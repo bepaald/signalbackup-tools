@@ -31,7 +31,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
 
   if (d_databaseversion < 170)
   {
-    std::cout << "Error, currently unsupported database version. upgrade your database" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": currently unsupported database version. Please upgrade your database" << std::endl;
     return false;
   }
 
@@ -41,7 +42,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     // try to create
     if (!bepaald::createDir(directory))
     {
-      std::cout << "error Failed to create directory `" << directory << "'" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to create directory `" << directory << "'" << std::endl;
       return false;
     }
   }
@@ -50,7 +52,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
   // is it a dir?
   if (!bepaald::isDir(directory))
   {
-    std::cout << "error" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": `" << directory << "' is not a directory." << std::endl;
     return false;
   }
 
@@ -59,13 +62,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
   {
     if (!overwrite)
     {
-      std::cout << "Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export, " << std::endl
+                << "or --append to only write new files." << std::endl;
       return false;
     }
     std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
     if (!bepaald::clearDirectory(directory))
     {
-      std::cout << "Failed to empty directory '" << directory << "'" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to empty directory '" << directory << "'" << std::endl;
       return false;
     }
   }
@@ -96,8 +102,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     if (!d_database.exec("SELECT _id," + d_thread_recipient_id + " FROM thread WHERE _id = ?", t, &recid) ||
         recid.rows() != 1 || !recid.valueHasType<long long int>(0, d_thread_recipient_id))
     {
-      std::cout << "ERROR recid" << std::endl;
-      return false;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to find recipient_id for thread (" << t << ")... skipping" << std::endl;
+      continue;
     }
     long long int thread_id = recid.getValueAs<long long int>(0, "_id");
     long long int thread_recipient_id = recid.getValueAs<long long int>(0, d_thread_recipient_id);
@@ -118,8 +125,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     // get conversation name, sanitize it and create dir
     if (recipient_info.find(thread_recipient_id) == recipient_info.end())
     {
-      std::cout << "ERROR recid" << std::endl;
-      return false;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed set recipient info for thread (" << t << ")... skipping" << std::endl;
+      continue;
     }
 
     std::string threaddir = sanitizeFilename(recipient_info[thread_recipient_id].display_name) + " (_id" + bepaald::toString(thread_id) + ")";
@@ -130,18 +138,21 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     {
       if (!bepaald::isDir(directory + "/" + threaddir))
       {
-        std::cout << "Error dir is regular file" << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                  << ": dir is regular file" << std::endl;
         return false;
       }
-      if (!append && !overwrite)
+      if (!append && !overwrite) // should be impossible at this point....
       {
-        std::cout << "Refusing to overwrite existing directory" << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                  << ": Refusing to overwrite existing directory" << std::endl;
         return false;
       }
     }
     else if (!bepaald::createDir(directory + "/" + threaddir)) // try to create it
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create directory `" << directory << "/" << threaddir << "'" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to create directory `" << directory << "/" << threaddir << "'" << std::endl;
       return false;
     }
 
@@ -336,5 +347,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     htmloutput << "</html>" << std::endl;
 
   }
-  return false;
+
+  std::cout << "All done!" << std::endl;
+  return true;
 }
