@@ -204,6 +204,12 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
     }
 
     // make filename unique
+    if (!makeFilenameUnique(targetdir, &filename))
+    {
+      std::cout << " ERROR getting unique filename for '" << targetdir << "/" << filename << "'" << std::endl;
+      continue;
+    }
+    /*
     while (bepaald::fileOrDirExists(targetdir + "/" + filename))
     {
       //std::cout << std::endl << "File exists: " << targetdir << "/" << filename << " -> ";
@@ -225,7 +231,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
 
       //std::cout << filename << std::endl;
     }
-
+    */
     std::ofstream attachmentstream(targetdir + "/" + filename, std::ios_base::binary);
 
     if (!attachmentstream.is_open())

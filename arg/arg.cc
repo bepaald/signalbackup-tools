@@ -93,7 +93,9 @@ Arg::Arg(int argc, char *argv[])
   d_ignorewal(false),
   d_includemms(false),
   d_checkdbintegrity(false),
-  d_interactive(false)
+  d_interactive(false),
+  d_exporthtml(std::string()),
+  d_append(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -1000,6 +1002,29 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-interactive")
     {
       d_interactive = false;
+      continue;
+    }
+    if (option == "--exporthtml")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_exporthtml = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--append")
+    {
+      d_append = true;
+      continue;
+    }
+    if (option == "--no-append")
+    {
+      d_append = false;
       continue;
     }
     if (option[0] != '-')

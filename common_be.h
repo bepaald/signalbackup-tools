@@ -31,6 +31,7 @@
 #include <filesystem>
 #include <cstring>
 #include <algorithm>
+#include <ctime>
 
 #if defined(_WIN32) || defined(__MINGW64__)
 #include <windows.h>
@@ -90,6 +91,7 @@ namespace bepaald
   inline bool isTerminal();
   inline std::ostream &bold_on(std::ostream &os);
   inline std::ostream &bold_off(std::ostream &os);
+  inline std::string toDateString(std::time_t epoch, std::string const &format);
 
   template <typename T, typename U>
   inline int findIdxOf(T const &container, U const &value);
@@ -327,6 +329,13 @@ inline std::ostream &bepaald::bold_off(std::ostream &os)
   if (!supportsAnsi() || !isTerminal()) [[unlikely]]
     return os;
   return os << "\033[0m";
+}
+
+inline std::string bepaald::toDateString(std::time_t epoch, std::string const &format)
+{
+  std::ostringstream tmp;
+  tmp << std::put_time(std::localtime(&epoch), format.c_str());
+  return tmp.str();
 }
 
 template <typename T, typename U>

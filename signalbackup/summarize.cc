@@ -33,12 +33,12 @@ bool SignalBackup::summarize() const
   // daterange
   if (d_database.containsTable("sms"))
   {
-    if (d_database.exec("SELECT DATETIME(ROUND((MIN(mindate)) / 1000), 'unixepoch') AS 'Min Date', DATETIME(ROUND(MAX((maxdate) / 1000)), 'unixepoch') AS 'Max Date' FROM (SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results))
+    if (d_database.exec("SELECT DATETIME(ROUND((MIN(mindate)) / 1000), 'unixepoch', 'localtime') AS 'Min Date', DATETIME(ROUND(MAX((maxdate) / 1000)), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results))
       std::cout << "Period: " << results.valueAsString(0, "Min Date") << " - " << results.valueAsString(0, "Max Date") << std::endl;
   }
   else
   {
-    if (d_database.exec("SELECT DATETIME(ROUND(mindate / 1000), 'unixepoch') AS 'Min Date', DATETIME(ROUND(maxdate / 1000), 'unixepoch') AS 'Max Date' FROM (SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results))
+    if (d_database.exec("SELECT DATETIME(ROUND(mindate / 1000), 'unixepoch', 'localtime') AS 'Min Date', DATETIME(ROUND(maxdate / 1000), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results))
       std::cout << "Period: " << results.valueAsString(0, "Min Date") << " - " << results.valueAsString(0, "Max Date") << std::endl;
   }
 

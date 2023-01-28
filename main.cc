@@ -313,6 +313,10 @@ int main(int argc, char *argv[])
     for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
+  if (!arg.exporthtml().empty())
+    if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.overwrite(), arg.append()))
+      return 1;
+
   if (!arg.exportcsv().empty())
     for (uint i = 0; i < arg.exportcsv().size(); ++i)
       sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first);

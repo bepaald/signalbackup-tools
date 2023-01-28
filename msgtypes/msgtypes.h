@@ -105,6 +105,22 @@ struct Types
     return (type & BASE_TYPE_MASK) == BASE_INBOX_TYPE;
   }
 
+  inline static bool isCallType(uint64_t type)
+  {
+    return isIncomingCall(type) ||
+      isOutgoingCall(type) ||
+      isMissedCall(type) ||
+      isIncomingVideoCall(type) ||
+      isOutgoingVideoCall(type) ||
+      isMissedVideoCall(type) ||
+      isGroupCall(type);
+  }
+
+  inline static bool isGroupCall(uint64_t type)
+  {
+    return type == GROUP_CALL_TYPE;
+  }
+
   inline static bool isIncomingCall(uint64_t type)
   {
     return type == INCOMING_CALL_TYPE;
@@ -120,6 +136,21 @@ struct Types
     return type == MISSED_CALL_TYPE;
   }
 
+  inline static bool isIncomingVideoCall(uint64_t type)
+  {
+    return type == INCOMING_VIDEO_CALL_TYPE;
+  }
+
+  inline static bool isOutgoingVideoCall(uint64_t type)
+  {
+    return type == OUTGOING_VIDEO_CALL_TYPE;
+  }
+
+  inline static bool isMissedVideoCall(uint64_t type)
+  {
+    return type == MISSED_VIDEO_CALL_TYPE;
+  }
+
   inline static bool isJoined(long type)
   {
     return (type & BASE_TYPE_MASK) == JOINED_TYPE;
@@ -132,22 +163,35 @@ struct Types
 
   inline static bool isIdentityUpdate(long type)
   {
-    return (type & KEY_EXCHANGE_IDENTITY_UPDATE_BIT) != 0;
+    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_UPDATE_BIT; // or & KEY_EXCHANGE... ?
   }
 
   inline static bool isIdentityVerified(long type)
   {
-    return (type & KEY_EXCHANGE_IDENTITY_VERIFIED_BIT) != 0;
+    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_VERIFIED_BIT; // or & KEY_EXCHANGE... ?
   }
 
   inline static bool isIdentityDefault(long type)
   {
-    return (type & KEY_EXCHANGE_IDENTITY_DEFAULT_BIT) != 0;
+    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_DEFAULT_BIT; // or & KEY_EXCHANGE... ?
   }
 
   inline static bool isSecureType(long type)
   {
     return (type & SECURE_MESSAGE_BIT) != 0;
+  }
+
+  inline static bool isProfileChange(long type)
+  {
+    return (type & BASE_TYPE_MASK) == PROFILE_CHANGE_TYPE;
+  }
+
+  inline static bool isStatusMessage(long type)
+  {
+    return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
+      isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
+      isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
+      isProfileChange(type);
   }
 
 };

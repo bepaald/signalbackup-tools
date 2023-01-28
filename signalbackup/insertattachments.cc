@@ -75,7 +75,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
       //results_attachment_data.prettyPrint();
       std::cout << "Corresponding message:" << std::endl;
-      ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id" + where);
+      ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id" + where);
       continue;
     }
 

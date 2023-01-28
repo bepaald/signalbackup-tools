@@ -19,19 +19,26 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const
+bool SignalBackup::getGroupMembers(std::vector<long long int> *members, std::string const &group_id,
+                                   std::string const &column) const
 {
   if (!members)
     return false;
   SqliteDB::QueryResults r;
-  d_database.exec("SELECT members FROM groups WHERE group_id = ?", group_id, &r);
+  if (!d_database.tableContainsColumn("groups", column))
+    return false;
+
+  d_database.exec("SELECT " + column + " FROM groups WHERE group_id = ? AND " + column + " IS NOT NULL", group_id, &r);
   //r.prettyPrint();
 
-  if (r.rows() != 1 || r.valueHasType<std::string>(0, "group_id"))
+  if (r.rows() == 0) // no results
+    return true;
+
+  if (r.rows() > 1 || r.valueHasType<std::string>(0, "group_id"))
     return false;
 
   // tokenize
-  std::string membersstring(r.valueAsString(0, "members"));
+  std::string membersstring(r.valueAsString(0, column));
   std::regex comma(",");
   std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
 
