@@ -586,7 +586,7 @@ bool SignalBackup::sleepyh34d(std::string const &truncatedbackup, std::string co
   }
 
   // CHECK AND WARN FOR MENTIONS
-  d_database.exec("SELECT mms." + d_mms_recipient_id + ",DATETIME(ROUND(mms." + d_mms_date_sent + " / 1000), 'unixepoch') AS 'date_sent',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread." + d_thread_recipient_id + " LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
+  d_database.exec("SELECT mms." + d_mms_recipient_id + ",DATETIME(ROUND(mms." + d_mms_date_sent + " / 1000), 'unixepoch', 'localtime') AS 'date_sent',mms.thread_id,groups.title FROM mms LEFT JOIN thread ON thread._id == mms.thread_id LEFT JOIN recipient ON recipient._id == thread." + d_thread_recipient_id + " LEFT JOIN groups ON groups.group_id == recipient.group_id WHERE HEX(mms.body) LIKE '%EFBFBC%'", &results);
   if (results.rows() > 0)
   {
     std::cout << "WARNING" << " Mentions found! Probably a good idea to check these messages:" << std::endl;

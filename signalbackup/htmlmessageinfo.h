@@ -17,9 +17,33 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.h"
 
-#define VERSIONDATE "20230128.143710"
+struct HTMLMessageInfo
+{
+  bool only_emoji;
+  bool is_deleted;
+  bool isgroup;
+  bool incoming;
+  bool isgroupupdatev1;
+  bool nobackground;
+  bool hasquote;
+  bool overwrite;
+  bool append;
+  long long int type;
+  long long int msg_id;
+  long long int msg_recipient_id;
+  unsigned int idx;
 
-#endif
+  SqliteDB::QueryResults *messages;
+  SqliteDB::QueryResults *quote_attachment_results;
+  SqliteDB::QueryResults *attachment_results;
+  SqliteDB::QueryResults *reaction_results;
+
+  std::string body;
+  std::string quote_body;
+  std::string readable_date;
+  std::string directory;
+  std::string threaddir;
+
+};

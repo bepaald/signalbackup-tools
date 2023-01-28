@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-std::vector<long long int> SignalBackup::getGroupUpdateRecipients() const
+std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) const
 {
   SqliteDB::QueryResults res;
   // d_database.exec("SELECT body FROM sms where _id = 120", &res);
@@ -29,9 +29,11 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients() const
   std::set<std::string> uuids;
 
   using namespace std::string_literals;
-  std::vector<std::string> queries{"SELECT body FROM mms WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s};
+  std::vector<std::string> queries{"SELECT body FROM mms WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s +
+                                   (thread != -1 ? " AND thread_id = " + bepaald::toString(thread) : "")};
   if (d_database.containsTable("sms"))
-    queries.emplace_back("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s);
+    queries.emplace_back("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s +
+                         (thread != -1 ? " AND thread_id = " + bepaald::toString(thread) : ""));
   for (auto const &q : queries)
   {
     //d_database.exec("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0",

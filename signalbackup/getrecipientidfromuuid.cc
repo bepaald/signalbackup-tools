@@ -28,9 +28,8 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
     return -1;
   }
 
-  if (savedmap->find(uuid) == savedmap->end())
+  if (!savedmap || savedmap->find(uuid) == savedmap->end())
   {
-
     std::string printable_uuid(uuid);
     unsigned int offset = (STRING_STARTS_WITH(uuid, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
                            (STRING_STARTS_WITH(uuid, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
@@ -48,8 +47,10 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
       return -1;
     }
     //res.prettyPrint();
-    (*savedmap)[uuid] = res.getValueAs<long long int>(0, 0);
+    if (savedmap)
+      (*savedmap)[uuid] = res.getValueAs<long long int>(0, 0);
+
+    return res.getValueAs<long long int>(0, 0);
   }
-  //std::cout << "RETURNING " << (*savedmap)[uuid] << std::endl;
   return (*savedmap)[uuid];
 }

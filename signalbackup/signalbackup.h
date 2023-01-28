@@ -35,9 +35,13 @@
 #include "../sqlstatementframe/sqlstatementframe.h"
 
 #include <map>
+#include <set>
+#include <unordered_set>
 #include <string>
 #include <iostream>
 #include <algorithm>
+
+struct HTMLMessageInfo;
 
 class SignalBackup
 {
@@ -124,6 +128,22 @@ class SignalBackup
     operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   };
 
+  struct RecipientInfo
+  {
+    std::string display_name;
+    std::string initial;
+    std::string uuid;
+    std::string phone;
+    std::string username;
+    std::string color; // "RRGGBB"
+    bool hasavatar;
+  };
+
+  static char const *const s_emoji_unicode_list[3655];
+  static std::unordered_set<char> const s_emoji_first_bytes;
+  static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
+  static std::map<std::string, std::string> const s_html_colormap;
+
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool showprogress, bool replaceattachments);
@@ -168,6 +188,7 @@ class SignalBackup
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
+  bool exportHtml(std::string const &directory, std::vector<int> const &threads, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -203,6 +224,7 @@ class SignalBackup
   template <typename T> inline std::pair<unsigned char*, size_t> numToData(T num) const;
   void setMinimumId(std::string const &table, long long int offset, std::string const &col = "_id") const;
   void cleanDatabaseByMessages();
+  void getGroupV1MigrationRecipients(std::set<long long int> *referenced_recipients, long long int = -1) const;
   void remapRecipients();
   void compactIds(std::string const &table, std::string const &col = "_id");
   // void makeIdsUnique(long long int minthread, long long int minsms, long long int minmms,
@@ -245,8 +267,9 @@ class SignalBackup
   AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
-  std::vector<long long int> getGroupUpdateRecipients() const;
-  bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id) const;
+  std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
+  bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id,
+                       std::string const &column = "members") const;
   bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
@@ -261,7 +284,25 @@ class SignalBackup
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
                        std::map<std::string, long long int> *savedmap) const;
   long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
-  void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap, long long int msg_id, bool is_mms, bool isgroup) const;
+  void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
+                                  long long int msg_id, bool is_mms, bool isgroup) const;
+  bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
+                      std::string const &threaddir, bool isgroup, std::set<long long int> const &recipients,
+                      std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const;
+  void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
+                              std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const;
+  bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
+                           long long int uniqueid, bool overwrite, bool append) const;
+  std::set<long long int> getAllThreadRecipients(long long int t) const;
+  void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
+  bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
+                       std::map<long long int, RecipientInfo> const &recipients_info, bool incoming, bool isquote) const;
+  std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
+  bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
+  std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
+  std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
+                              bool overwrite, bool append) const;
+  void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

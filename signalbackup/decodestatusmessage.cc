@@ -82,7 +82,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   if (Types::isMissedCall(type))
     return "Missed call";
   if (Types::isJoined(type))
-    return contactname + "is on Signal!";
+    return contactname + " is on Signal!";
   if (Types::isExpirationTimerUpdate(type))
   {
     if (expiration <= 0)
@@ -122,6 +122,11 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       return "You marked your safety number with " + contactname + " unverified";
     return "You marked your safety number with " + contactname + " verified from another device";
   }
+  if (Types::isProfileChange(type))
+  {
+    return decodeProfileChangeMessage(body, contactname);
+  }
+
 
   return body;
 }

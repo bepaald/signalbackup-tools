@@ -113,7 +113,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
     // KEEP recipients WITH _id IN remapped_recipients.old_id!?!?
 
-    std::set<unsigned int> referenced_recipients;
+    std::set<long long int> referenced_recipients;
     if (d_database.tableContainsColumn("sms", "reactions"))
     {
       SqliteDB::QueryResults reactionresults;
@@ -137,6 +137,8 @@ void SignalBackup::cleanDatabaseByMessages()
       }
     }
 
+    getGroupV1MigrationRecipients(&referenced_recipients);
+    /*
     SqliteDB::QueryResults results;
     if (d_database.exec("SELECT body FROM "s + (d_database.containsTable("sms") ? "sms" : "mms") + " WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
     {
@@ -172,10 +174,11 @@ void SignalBackup::cleanDatabaseByMessages()
         }
       }
     }
-
+    */
     using namespace std::string_literals;
 
     // get (former)group members
+    SqliteDB::QueryResults results;
     for (auto const &members : {"members", "former_v1_members"})
     {
       if (!d_database.tableContainsColumn("groups", members))
