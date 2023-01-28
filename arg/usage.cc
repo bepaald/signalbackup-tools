@@ -77,6 +77,13 @@ changes, you must provide one of the output options.
 //   --includeattachmentdata
 //   --setselfid
 R"*(
+--exporthtml <DIRECTORY>                 Export the messages to HTML files. Each conversation will be
+                                         placed in a separate subdirectory.
+   --limittothreads <LIST_OF_THREADS>    Optional modifier for `--exporthtml'. Only export the listed
+                                         threads. List format same as `--croptothreads'
+   --append                              Optional modifier for `--exporthtml'. Causes `--exporthtml' to
+                                         not show an error when DIRECTORY is not empty, but also not
+                                         overwrite existing media files. Still regenerates the HTML file.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --overwrite                              Optional modifier for all output operations. Overwrite output
