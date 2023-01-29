@@ -29,17 +29,17 @@ jobs:
           echo "Cleanup..."
           rm signalbackup-tools
 
-      - name: Build simple script
-        run: |
-          echo "Running build simple script..."
-          sh BUILDSCRIPT.sh
+#      - name: Build simple script
+#        run: |
+#          echo "Running build simple script..."
+#          sh BUILDSCRIPT.sh
 
-      - name: Clean 2
-        run: |
-          echo "Cleanup..."
-          rm */o/*.o
-          rm o/*.o
-          rm signalbackup-tools
+#      - name: Clean 2
+#        run: |
+#          echo "Cleanup..."
+#          rm */o/*.o
+#          rm o/*.o
+#          rm signalbackup-tools
 
 #      - name: Build new script
 #         run: |
@@ -53,4 +53,4 @@ jobs:
 #          rm o/*.o
 #          rm signalbackup-tools
 
-       -run:  echo "This job's status is ${{ job.status }}."
+#       -run:  echo "This job's status is ${{ job.status }}."
