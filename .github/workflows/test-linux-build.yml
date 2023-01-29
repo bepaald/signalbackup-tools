@@ -1,7 +1,7 @@
 name: Test Linux build
 
 on:
-  push:
+#  push:
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
@@ -10,8 +10,7 @@ concurrency:
 
 jobs:
   do-build-tests:
-    runs on:
-      ubuntu-latest
+    runs on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
