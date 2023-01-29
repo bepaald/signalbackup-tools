@@ -1,7 +1,6 @@
 name: Test Linux build
 
-on:
-#  push:
+#on: push
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
