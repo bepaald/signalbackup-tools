@@ -36,14 +36,14 @@ jobs:
           rm o/*.o
           rm signalbackup-tools
 
-#      - name: Build new script
-#         run: |
-#           bash BUILDSCRIPT_MULTIPROC.bash44
+      - name: Build new script
+         run: |
+           bash BUILDSCRIPT_MULTIPROC.bash44
 
-#     - name: Clean 3
-#       run: |
-#          rm */o/*.o
-#          rm o/*.o
-#          rm signalbackup-tools
+     - name: Clean 3
+       run: |
+          rm */o/*.o
+          rm o/*.o
+          rm signalbackup-tools
 
 #       -run:  echo "This job's status is ${{ job.status }}."
