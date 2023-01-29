@@ -11,4 +11,5 @@
 !*/*.h
 !*/*.ih
 !.github/*
+!.github/workflows/*
 !.gitignore
