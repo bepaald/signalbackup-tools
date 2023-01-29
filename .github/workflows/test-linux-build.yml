@@ -43,8 +43,8 @@ jobs:
 
       - name: Build new script
          run: |
-         echo "Running build new script..."
-         bash BUILDSCRIPT_MULTIPROC.bash44
+           echo "Running build new script..."
+           bash BUILDSCRIPT_MULTIPROC.bash44
 
       - name: Clean 3
         run: |
