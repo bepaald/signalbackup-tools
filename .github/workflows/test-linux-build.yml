@@ -14,34 +14,43 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
+          echo "Installing deps"
           set -x
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
 
       - name: Build default
         run: |
+          echo "Running build default..."
           g++ --std=c++2a */*.cc *.cc -o signalbackup-tools -lcrypto -lsqlite3
 
-#      - name: Clean 1
-#        run: |
-#          rm signalbackup-tools
-#
-#      - name: Build simple script
-#        run: |
-#          sh BUILDSCRIPT.sh
-#
-#      - name: Clean 2
-#        run: |
-#          rm */o/*.o
-#          rm o/*.o
-#          rm signalbackup-tools
-#
-#      - name: Build new script
-#         run: |
-#         bash BUILDSCRIPT_MULTIPROC.bash44
-#
-#      - name: Clean 3
-#        run: |
-#          rm */o/*.o
-#          rm o/*.o
-#          rm signalbackup-tools
+      - name: Clean 1
+        run: |
+          echo "Cleanup..."
+          rm signalbackup-tools
+
+      - name: Build simple script
+        run: |
+          echo "Running build simple script..."
+          sh BUILDSCRIPT.sh
+
+      - name: Clean 2
+        run: |
+          echo "Cleanup..."
+          rm */o/*.o
+          rm o/*.o
+          rm signalbackup-tools
+
+      - name: Build new script
+         run: |
+         echo "Running build new script..."
+         bash BUILDSCRIPT_MULTIPROC.bash44
+
+      - name: Clean 3
+        run: |
+          echo "Cleanup..."
+          rm */o/*.o
+          rm o/*.o
+          rm signalbackup-tools
+
+       -run:  echo "This job's status is ${{ job.status }}."
