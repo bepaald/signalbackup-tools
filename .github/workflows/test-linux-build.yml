@@ -1,8 +1,9 @@
 name: Test Linux build
 
-on: push:
-  paths-ignore:
-    - '**/README.md'
+on:
+  push:
+    paths-ignore:
+      - '**/README.md'
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
