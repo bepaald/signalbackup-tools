@@ -350,11 +350,13 @@ Where `outputdirectory` is an existing directory.
 
 ##### Export to HTML
 
-_NOTE: As of writing, this feature is very new. I expect some bugs, please open an issue if you encounter any._
+_NOTE: As of writing, this feature is very new. I expect some bugs, please open an issue if you encounter any. Decoding of group V2 status messages is not yet complete, these will simply show up as 'group V2 update'. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). At the moment, this function will only work with current database versions (version 170 and up). If there is demand, support for older databases may be added in the future._
 
-To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-file wil be rewritten.
+To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-file wil be rewritten. Example:
 
-At the moment, this function will only work with current database versions (version 170 and up). If there is demand, support for older databases may be added in the future.
+```
+./signalbackup-tools [input] [passphrase] --exporthtml [directory]
+```
 
 A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
 
@@ -364,7 +366,7 @@ To export the tables to a file of comma separated values (CSV), use `--exportcsv
 
 ##### Export to XML
 
-To export to XML file, use `--exportxml [filename]`. _NOTE: Currently this will only export the messages from the sms table, NOT the mms table. This should be exactly the same data the official Signal app used to output when exporting a plaintext backup. All messages with an attachment, as well as all outgoing group messages are in the mms database, and thus are skipped. Exporting the mms table is being worked on. This option should be considered experimental._
+To export to XML file, use `--exportxml [filename]`. _NOTE: Currently this will only export the messages from the `sms` table, NOT the `mms` table. This should be exactly the same data the official Signal app used to output when exporting a plaintext backup. All messages with an attachment, as well as all outgoing group messages are in the `mms` database, and thus are skipped. Exporting the `mms` table is being worked on. This option should be considered experimental._ _**NOTE** As of Signal's current version, the `sms` table has been removed from the database. This has rendered this function practically useless for the time being. While code to export the `mms` table was quite far along, it may now need more work which may take a while._
 
 
 **<span id="crop">Cropping to certain conversations or dates</span>**
@@ -713,7 +715,7 @@ If you also need to edit the attachments, dump the backup to directory first ([a
 ## Future plans
 
 - ~~merging existing backups (successful tests have been done)~~ _DONE_
-- exporting to other formats (~~csv, xml,~~ html) _WIP_
+- exporting to other formats (~~csv~~, xml, ~~html~~) _WIP_
 - ~~cropping backup to certain conversations and time spans (successfully done in testing)~~ _DONE_
 - ~~replacing/deleting attachments without changing/deleting messages. For example, replacing with thumbnails or tiny placeholders to save space.~~ _DONE (pretty much <sub><sup>hopefully</sup></sub>)_
 - ~~importing databases from the desktop app. I have no experience with that yet.~~ _DONE (<sub><sup>I think, mostly</sup></sub>)_
