@@ -26,7 +26,7 @@ void SignalBackup::updateGroupMembers(long long int id1, long long int id2) cons
 
   for (auto const &members : {"members", "former_v1_members"})
   {
-    if (!d_database.tableContainsColumn("recipient", members))
+    if (!d_database.tableContainsColumn("groups", members))
       continue;
 
     // get group members

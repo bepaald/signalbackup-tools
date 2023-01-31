@@ -34,13 +34,13 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id)
       return true;
 
   // if the attachment is in a quote and the original quote is missing, attachment is expected to be missing
-  if (d_database.exec("SELECT _id FROM mms WHERE quote_missing = 1 AND _id IN (SELECT mid FROM part WHERE quote IS 1 AND mid = ?)",
+  if (d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE quote_missing = 1 AND _id IN (SELECT mid FROM part WHERE quote IS 1 AND mid = ?)",
                       rowid, &results))
     if (results.rows())
       return true;
 
   // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check
-  if (d_database.exec("SELECT _id FROM mms WHERE remote_deleted IS 1 AND " + d_mms_date_sent + " IN (SELECT quote_id FROM mms WHERE _id IN "
+  if (d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE remote_deleted IS 1 AND " + d_mms_date_sent + " IN (SELECT quote_id FROM " + d_mms_table + " WHERE _id IN "
                       "(SELECT mid FROM part WHERE _id = ? AND unique_id = ? AND quote = 1))",
                       {rowid, unique_id}, &results))
     if (results.rows())

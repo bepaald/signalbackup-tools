@@ -26,15 +26,15 @@ long long int SignalBackup::scanSelf() const
 
   // only 'works' on 'newer' versions
   if (!d_database.containsTable("recipient") ||
-      !d_database.tableContainsColumn("thread", "thread_recipient_id") ||
-      !d_database.tableContainsColumn("mms", "quote_author") ||
-      (!d_database.tableContainsColumn("mms", "reactions") || !d_database.containsTable("reaction")))
+      !d_database.tableContainsColumn("thread", d_thread_recipient_id) ||
+      !d_database.tableContainsColumn(d_mms_table, "quote_author") ||
+      (!d_database.tableContainsColumn(d_mms_table, "reactions") || !d_database.containsTable("reaction")))
     return -1;
 
   SqliteDB::QueryResults res;
   // get thread ids of all 1-on-1 conversations
 
-  if (!d_database.exec("SELECT _id, thread_recipient_id FROM thread WHERE thread_recipient_id IN (SELECT _id FROM recipient WHERE group_id IS NULL)", &res))
+  if (!d_database.exec("SELECT _id, " + d_thread_recipient_id + " FROM thread WHERE " + d_thread_recipient_id + " IN (SELECT _id FROM recipient WHERE group_id IS NULL)", &res))
     return -1;
   //res.prettyPrint();
 
@@ -43,12 +43,12 @@ long long int SignalBackup::scanSelf() const
   for (uint i = 0; i < res.rows(); ++i)
   {
     long long int tid = res.getValueAs<long long int>(i, "_id");
-    long long int rid = res.getValueAs<long long int>(i, "thread_recipient_id");
+    long long int rid = res.getValueAs<long long int>(i, d_thread_recipient_id);
     //std::cout << "Dealing with thread: " << tid << std::endl;
 
     // try to find other recipient in thread
     SqliteDB::QueryResults res2;
-    if (!d_database.exec("SELECT DISTINCT quote_author FROM mms "
+    if (!d_database.exec("SELECT DISTINCT quote_author FROM " + d_mms_table + " "
                          "WHERE thread_id IS ? AND quote_author IS NOT NULL AND quote_author IS NOT ?", {tid, rid}, &res2))
       continue;
     for (uint j = 0; j < res2.rows(); ++j)
@@ -74,9 +74,9 @@ long long int SignalBackup::scanSelf() const
         }
       }
     }
-    if (d_database.tableContainsColumn("mms", "reactions"))
+    if (d_database.tableContainsColumn(d_mms_table, "reactions"))
     {
-      if (!d_database.exec("SELECT reactions FROM mms WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
+      if (!d_database.exec("SELECT reactions FROM " + d_mms_table + " WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
         continue;
       for (uint j = 0; j < res2.rows(); ++j)
       {
@@ -106,7 +106,7 @@ long long int SignalBackup::scanSelf() const
 
       if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE "s +
                            (d_database.tableContainsColumn("reaction", "is_mms") ? "is_mms IS 1 AND " : "") +
-                           "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM mms WHERE thread_id = ?)", {rid, tid} , &res2))
+                           "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id = ?)", {rid, tid} , &res2))
           continue;
 
       for (uint j = 0; j < res2.rows(); ++j)
@@ -136,7 +136,7 @@ long long int SignalBackup::scanSelf() const
 
     SqliteDB::QueryResults res2;
     // skip groups without thread
-    if (!d_database.exec("SELECT * from thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id from groups WHERE _id IS ?))", gid, &res2))
+    if (!d_database.exec("SELECT * from thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id from groups WHERE _id IS ?))", gid, &res2))
       continue;
     if (res2.rows() == 0)
     {
@@ -146,16 +146,24 @@ long long int SignalBackup::scanSelf() const
 
     //std::cout << "Dealing with group: " << gid << std::endl;
 
-    // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
     SqliteDB::QueryResults res3;
-    if (d_database.containsTable("sms"))
+    if (d_database.tableContainsColumn("groups", "members"))
     {
-      if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM mms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?)))) AND word NOT IN (SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid, gid}, &res3))
+      // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
+      if (d_database.containsTable("sms"))
+      {
+        if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM " + d_mms_table + " WHERE thread_id IS (SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?)))) AND word NOT IN (SELECT DISTINCT " + d_sms_recipient_id + " FROM sms WHERE thread_id IS (SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid, gid}, &res3))
+          continue;
+      }
+      else
+        if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM " + d_mms_table + " WHERE thread_id IS (SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid}, &res3))
+          continue;
+    }
+    else if (d_database.containsTable("group_membership"))
+    {
+      if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?)", gid, &res3))
         continue;
     }
-    else
-      if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM mms WHERE thread_id IS (SELECT _id FROM thread WHERE thread_recipient_id IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid}, &res3))
-        continue;
 
     for (uint j = 0; j < res3.rows(); ++j)
     {

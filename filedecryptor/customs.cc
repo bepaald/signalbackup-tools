@@ -386,7 +386,7 @@ void FileDecryptor::strugee2()
         if (std::find(tables.begin(), tables.end(), tablename) == tables.end())
           tables.push_back(tablename);
 
-        if (tablename == "mms" || tablename == "sms")
+        if (tablename == "mms" || tablename == "message" || tablename == "sms")
           lastmsg = s->statement();
       }
     }

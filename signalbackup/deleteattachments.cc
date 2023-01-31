@@ -35,7 +35,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   if (!threadids.empty() && threadids[0] != -1) // -1 indicates 'ALL', easier not to specify
   {
     if (specification.empty())
-      specification += " WHERE mid IN (SELECT _id FROM mms WHERE ";
+      specification += " WHERE mid IN (SELECT _id FROM " + d_mms_table + " WHERE ";
     else
       specification += " AND ";
 
@@ -51,7 +51,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     else
     {
       if (specification.empty())
-        specification += " WHERE mid IN (SELECT _id FROM mms WHERE ";
+        specification += " WHERE mid IN (SELECT _id FROM " + d_mms_table + " WHERE ";
       else
         specification += " AND ";
       specification += "date_received < " + bepaald::toString(date);
@@ -66,7 +66,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     else
     {
       if (specification.empty())
-        specification += " WHERE mid IN (SELECT _id FROM mms WHERE ";
+        specification += " WHERE mid IN (SELECT _id FROM " + d_mms_table + " WHERE ";
       else
         specification += " AND ";
       specification += "date_received > " + bepaald::toString(date);
@@ -129,16 +129,16 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
         // update existing message bodies
         if (!append.empty())
         {
-          if (!d_database.exec("UPDATE mms SET body = body || ? WHERE _id = ? AND (body IS NOT NULL AND body != '')", {"\n\n" + append, res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = body || ? WHERE _id = ? AND (body IS NOT NULL AND body != '')", {"\n\n" + append, res.getValueAs<long long int>(i, "mid")}))
             return false;
-          if (!d_database.exec("UPDATE mms SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {append, res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {append, res.getValueAs<long long int>(i, "mid")}))
             return false;
         }
         if (!prepend.empty())
         {
-          if (!d_database.exec("UPDATE mms SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, "mid")}))
             return false;
-          if (!d_database.exec("UPDATE mms SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, "mid")}))
             return false;
         }
       }
@@ -150,14 +150,14 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
         if (res2.empty()) // no other attachments for this message
         {
           // delete message if body empty
-          if (!d_database.exec("DELETE FROM mms WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
+          if (!d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
             return false;
           // else, if body is not empty, make sure the 'mms.previews' column does not refeerence non-existing attachment
           else
           {
             SqliteDB::QueryResults res3;
             // rewrite this with sqlites json_extract
-            if (!d_database.exec("SELECT " + d_mms_previews + " FROM mms WHERE _id = ? AND (" + d_mms_previews + " LIKE '%attachmentId\":{%')", res.getValueAs<long long int>(i, "mid"), &res3))
+            if (!d_database.exec("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE _id = ? AND (" + d_mms_previews + " LIKE '%attachmentId\":{%')", res.getValueAs<long long int>(i, "mid"), &res3))
               return false;
             if (!res3.empty())
             {
@@ -172,7 +172,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
                   //std::cout << sm.size() << std::endl;
                   previews.replace(sm.position(1), sm.length(1), "null");
                   //std::cout << " NEW: " << previews << std::endl;
-                  d_database.exec("UPDATE mms SET " + d_mms_previews + " = ? WHERE _id = ?", {previews, res.getValueAs<long long int>(i, "mid")});
+                  d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = ? WHERE _id = ?", {previews, res.getValueAs<long long int>(i, "mid")});
                 }
               }
             }

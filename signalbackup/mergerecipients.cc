@@ -19,9 +19,15 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bool editgroupmembers)
+void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bool editgroupmembers) // addresses is list of phone numbers
 {
   std::cout << __FUNCTION__ << std::endl;
+
+  std::cout << "THIS FUNCTION SHOULD BE CONSIDERED DEPRECATED!" << std::endl;
+  std::cout << "PLEASE OPEN AN ISSUE IF YOU NEED THIS" << std::endl;
+
+  // this requires much updating (could probably go a long way by using statics.cc
+  // + a few extras). Maybe just calling updaterecipientid() would do it.
 
   if (addresses.size() < 2)
   {
@@ -32,7 +38,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   std::vector<std::string> r_ids = addresses;
   std::vector<std::string> phonenumbers = addresses;
 
-  // for database version < 24, addresses = recipient_ids, for dataversion >= 24 addresses = recipient.phone
+  // for database version >= 24, addresses = recipient_ids, for dataversion < 24 addresses = recipient.phone
   // so convert to recipient._ids
   if (d_databaseversion >= 24)
   {
@@ -77,7 +83,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
                         {tid, targetaddr, oldtid, r_ids[i]});
         std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
       }
-      d_database.exec("UPDATE mms SET thread_id = ?, " + d_mms_recipient_id + " = ? "
+      d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?, " + d_mms_recipient_id + " = ? "
                       "WHERE thread_id = ? AND " + d_mms_recipient_id + " = ?",
                       {tid, targetaddr, oldtid, r_ids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
@@ -85,15 +91,21 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
       if (d_database.containsTable("mention"))
       {
         d_database.exec("UPDATE mention SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
-        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+        std::cout << "Updated " << d_database.changed() << " entries in 'mention' table" << std::endl;
         d_database.exec("UPDATE mention SET recipient_id = ? WHERE recipient_id = ?", {targetaddr, r_ids[i]});
-        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+        std::cout << "Updated " << d_database.changed() << " entries in 'mention' table" << std::endl;
       }
 
       if (d_database.containsTable("reaction"))
       {
         d_database.exec("UPDATE reaction SET author_id = ? WHERE author_id = ?", {targetaddr, r_ids[i]});
         std::cout << "Updated " << d_database.changed() << " entries in 'reaction' table" << std::endl;
+      }
+
+      if (d_database.containsTable("call"))
+      {
+        d_database.exec("UPDATE call SET recipient_id = ? WHERE recipient_id = ?", {targetaddr, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'call' table" << std::endl;
       }
 
       if (d_database.containsTable("notification_profile_allowed_members"))
@@ -113,7 +125,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
   // change quote authors:
   for (uint i = 0; i < r_ids.size() - 1; ++i)
   {
-    d_database.exec("UPDATE mms SET quote_author = ? WHERE quote_author = ?", {targetaddr, r_ids[i]});
+    d_database.exec("UPDATE " + d_mms_table + " SET quote_author = ? WHERE quote_author = ?", {targetaddr, r_ids[i]});
     std::cout << "Updated " << d_database.changed() << " quotes in 'mms' table" << std::endl;
   }
 
@@ -139,10 +151,10 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
       }
     }
   }
-  if (d_database.tableContainsColumn("mms", "reactions"))
+  if (d_database.tableContainsColumn(d_mms_table, "reactions"))
   {
     SqliteDB::QueryResults results;
-    d_database.exec("SELECT _id, reactions FROM mms WHERE reactions IS NOT NULL", &results);
+    d_database.exec("SELECT _id, reactions FROM " + d_mms_table + " WHERE reactions IS NOT NULL", &results);
     bool changed = false;
     for (uint i = 0; i < results.rows(); ++i)
     {
@@ -156,7 +168,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
             changed = true;
           }
         if (changed)
-          d_database.exec("UPDATE mms SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
+          d_database.exec("UPDATE " + d_mms_table + " SET reactions = ? WHERE _id = ?", {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())), results.getValueAs<long long int>(i, "_id")});
       }
     }
   }
@@ -212,9 +224,9 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
                         "WHERE " + d_sms_recipient_id + " = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
         std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
       }
-      d_database.exec("UPDATE mms SET " + d_mms_recipient_id + " = ? "
-                      "WHERE " +d_mms_recipient_id + " = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
-      std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_recipient_id + " = ? "
+                      "WHERE " + d_mms_recipient_id + " = ? AND thread_id = ?", {targetaddr, r_ids[j], tid});
+      std::cout << "Updated " << d_database.changed() << " entries in '" + d_mms_table + "' table" << std::endl;
     }
 
 
@@ -367,7 +379,7 @@ Field 4 (optional::protobuf):
     }
 
     // same for groupV1 status updates in mms database
-    d_database.exec("SELECT " + d_mms_type + ",body,_id FROM 'mms' "
+    d_database.exec("SELECT " + d_mms_type + ",body,_id FROM '" + d_mms_table + "' "
                     "WHERE thread_id = " + bepaald::toString(tid) + " AND "
                     "(" + d_mms_type + " & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND "
                     "(" + d_mms_type + " & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0", &results2);
@@ -406,7 +418,7 @@ Field 4 (optional::protobuf):
         if (!targetpresent) // add target if not present
           statusmsg.addField<4>(targetphone);
         // set body
-        d_database.exec("UPDATE mms SET body = ? WHERE _id = ?", {statusmsg.getDataString(), msgid});
+        d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ?", {statusmsg.getDataString(), msgid});
         std::cout << "Updated " << d_database.changed() << " group updates in 'mms' table" << std::endl;
       }
     }

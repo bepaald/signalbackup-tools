@@ -27,7 +27,7 @@ void SignalBackup::updateReactionAuthors(long long int id1, long long int id2) c
 
   using namespace std::string_literals;
 
-  for (auto const &msgtable : {"sms", "mms"})
+  for (auto const &msgtable : {"sms"s, d_mms_table})
   {
     if (d_database.tableContainsColumn(msgtable, "reactions"))
     {

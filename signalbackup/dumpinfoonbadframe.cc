@@ -63,8 +63,8 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
       }
     }
 
-    std::cout << std::endl << "Which belongs to entry in 'mms' table:" << std::endl;
-    query = "SELECT * FROM mms WHERE _id = " + bepaald::toString(mid);
+    std::cout << std::endl << "Which belongs to entry in '" + d_mms_table + "' table:" << std::endl;
+    query = "SELECT * FROM " + d_mms_table + " WHERE _id = " + bepaald::toString(mid);
     d_database.exec(query, &results);
 
     for (uint i = 0; i < results.rows(); ++i)
@@ -130,7 +130,7 @@ void SignalBackup::dumpInfoOnBadFrames() const
       std::cout << "Failed to get info 1" << std::endl;
       return;
     }
-    query = "SELECT * FROM mms WHERE _id = " + bepaald::toString(mid);
+    query = "SELECT * FROM " + d_mms_table + " WHERE _id = " + bepaald::toString(mid);
     d_database.exec(query, &results);
     long long int thread_id = -1;
     std::string body;

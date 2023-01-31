@@ -52,7 +52,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     SqliteDB::QueryResults results;
     d_database.exec("SELECT group_id from recipient WHERE _id IS ?", thread_recipient_id, &results);
     if (results.rows() == 1)
-      getGroupMembers(&groupmembers, results.valueAsString(0, "group_id"));
+      getGroupMembersOld(&groupmembers, results.valueAsString(0, "group_id"));
   }
 
   std::string avatar = HTMLwriteAvatar(thread_recipient_id, directory, threaddir, overwrite, append);

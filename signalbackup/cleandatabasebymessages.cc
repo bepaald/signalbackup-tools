@@ -25,17 +25,17 @@ void SignalBackup::cleanDatabaseByMessages()
 
   std::cout << __FUNCTION__ << std::endl;
 
-  std::cout << "  Deleting attachment entries from 'part' not belonging to remaining mms entries" << std::endl;
-  d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM mms)");
+  std::cout << "  Deleting attachment entries from 'part' not belonging to remaining " + d_mms_table + " entries" << std::endl;
+  d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
 
   std::cout << "  Deleting other threads from 'thread'..." << std::endl;
-  d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM mms)"s + (d_database.containsTable("sms") ? " AND _id NOT IN (SELECT DISTINCT thread_id FROM sms)" : ""));
+  d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM " + d_mms_table + ")" + (d_database.containsTable("sms") ? " AND _id NOT IN (SELECT DISTINCT thread_id FROM sms)" : ""));
   updateThreadsEntries();
 
   if (d_database.containsTable("mention"))
   {
     std::cout << "  Deleting entries from 'mention' not belonging to remaining mms entries" << std::endl;
-    d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM mms) OR thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
+    d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ") OR thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
   }
 
   //std::cout << "Groups left:" << std::endl;
@@ -45,7 +45,11 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_databaseversion < 27)
     d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
   else
-    d_database.exec("DELETE FROM groups WHERE recipient_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
+  {
+    d_database.exec("DELETE FROM groups WHERE recipient_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING group_id");
+    if (d_database.containsTable("group_membership"))
+      d_database.exec("DELETE FROM group_membership WHERE group_id NOT IN (SELECT DISTINCT group_id FROM groups)");
+  }
 
   //std::cout << "Groups left:" << std::endl;
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
@@ -62,10 +66,10 @@ void SignalBackup::cleanDatabaseByMessages()
     if (d_database.containsTable("sms"))
     {
       d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
-      d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+      d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
     }
     else
-      d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT _id FROM mms)");
+      d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
 
     // now delete all payloads for non existing messages
     d_database.exec("DELETE FROM msl_payload WHERE _id NOT IN (SELECT DISTINCT payload_id FROM msl_message)");
@@ -82,16 +86,22 @@ void SignalBackup::cleanDatabaseByMessages()
     if (d_database.containsTable("sms"))
     {
       d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
-      d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM mms)");
+      d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
     }
     else
-      d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT _id FROM mms)");
+      d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+  }
+
+  if (d_database.containsTable("call")) // dbv >= ~170?
+  {
+    std::cout << "  Deleting call details from non-existing messages" << std::endl;
+    d_database.exec("DELETE FROM call WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
   }
 
   // delete story_sends entries that no longer refer to an existing message?
   if (d_database.tableContainsColumn("story_sends", "message_id"))
   {
-    d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT _id FROM mms)");
+    d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
   }
 
   if (d_databaseversion < 24)
@@ -100,7 +110,7 @@ void SignalBackup::cleanDatabaseByMessages()
     //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
-    d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms)");
+    d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + ")");
   }
   else
   {
@@ -125,10 +135,10 @@ void SignalBackup::cleanDatabaseByMessages()
           referenced_recipients.insert(reactions.getAuthor(j));
       }
     }
-    if (d_database.tableContainsColumn("mms", "reactions"))
+    if (d_database.tableContainsColumn(d_mms_table, "reactions"))
     {
       SqliteDB::QueryResults reactionresults;
-      d_database.exec("SELECT DISTINCT reactions FROM mms WHERE reactions IS NOT NULL", &reactionresults);
+      d_database.exec("SELECT DISTINCT reactions FROM " + d_mms_table + " WHERE reactions IS NOT NULL", &reactionresults);
       for (uint i = 0; i < reactionresults.rows(); ++i)
       {
         ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
@@ -140,7 +150,7 @@ void SignalBackup::cleanDatabaseByMessages()
     getGroupV1MigrationRecipients(&referenced_recipients);
     /*
     SqliteDB::QueryResults results;
-    if (d_database.exec("SELECT body FROM "s + (d_database.containsTable("sms") ? "sms" : "mms") + " WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
+    if (d_database.exec("SELECT body FROM "s + (d_database.containsTable("sms") ? "sms" : d_mms_table) + " WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
     {
       //results.prettyPrint();
       for (uint i = 0; i < results.rows(); ++i)
@@ -198,6 +208,11 @@ void SignalBackup::cleanDatabaseByMessages()
         }
       }
     }
+    if (d_database.containsTable("group_membership"))
+      if (d_database.exec("SELECT DISTINCT recipient_id FROM group_membership", &results))
+        for (uint i = 0; i < results.rows(); ++i)
+          referenced_recipients.insert(results.getValueAs<long long int>(i, "recipient_id"));
+
 
     // get recipients mentioned in group updates (by uuid)
     std::vector<long long int> mentioned_in_group_updates = getGroupUpdateRecipients();
@@ -225,9 +240,10 @@ void SignalBackup::cleanDatabaseByMessages()
 
     SqliteDB::QueryResults deleted_recipients;
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
-                    " (SELECT DISTINCT " + d_mms_recipient_id + " FROM mms" +
+                    " (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table +
                     (d_database.containsTable("sms") ? " UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms"s : "") +
-                    (d_database.tableContainsColumn("mms", "quote_author") ? " UNION SELECT DISTINCT quote_author FROM mms WHERE quote_author IS NOT NULL"s : ""s) +
+                    (d_database.tableContainsColumn(d_mms_table, "quote_author") ? " UNION SELECT DISTINCT quote_author FROM " +
+                     d_mms_table + " WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
@@ -330,7 +346,7 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
   std::cout << "  Deleting group_receipts entries from deleted messages..." << std::endl;
-  d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM mms)");
+  d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
 
   std::cout << "  Deleting group_receipts from non-existing recipients" << std::endl;
   if (d_databaseversion < 24)
@@ -341,7 +357,7 @@ void SignalBackup::cleanDatabaseByMessages()
   std::cout << "  Deleting drafts from deleted threads..." << std::endl;
   d_database.exec("DELETE FROM drafts WHERE "s +
                   (d_database.containsTable("sms") ? "thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND " : "")
-                  + "thread_id NOT IN (SELECT DISTINCT thread_id FROM mms)");
+                  + "thread_id NOT IN (SELECT DISTINCT thread_id FROM " + d_mms_table + ")");
 
   if (d_database.containsTable("remapped_recipients"))
   {

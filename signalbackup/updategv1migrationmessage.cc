@@ -26,7 +26,7 @@ void SignalBackup::updateGV1MigrationMessage(long long int id1, long long int id
 {                                                                                        // else, change id1 into id2
   SqliteDB::QueryResults results;
   int changed = 0;
-  std::string table = d_database.containsTable("sms") ? "sms" : "mms";
+  std::string table = d_database.containsTable("sms") ? "sms" : d_mms_table;
   if (d_database.exec("SELECT _id,body FROM " + table + " WHERE type == ? AND body IS NOT NULL",
                       bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
   {

@@ -46,19 +46,19 @@ void SignalBackup::updateThreadsEntries(long long int thread)
       {
         d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
                         "(SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
-                        ") + (SELECT count(*) FROM mms WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
+                        ") + (SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
 
         d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = "
                         + threadid
-                        + " UNION SELECT mms." + d_mms_date_sent + " AS union_date, mms." + d_mms_date_sent + " AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
+                        + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_date_sent + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
                         + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
       }
       else // dbv >= 168
       {
         d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
-                        "(SELECT count(*) FROM mms WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
+                        "(SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
 
-        d_database.exec("SELECT mms." + d_mms_date_sent + " AS union_date, mms." + d_mms_date_sent + " AS union_type, mms.body AS union_body, '' AS [sms._id], mms._id AS [mms._id] FROM mms WHERE mms.thread_id = "
+        d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_date_sent + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
                         + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
       }
 
@@ -91,7 +91,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
         d_database.exec("UPDATE thread SET snippet_type = ? WHERE _id = ?", {std::any_cast<long long int>(type), threadid});
       }
 
-      std::any mid = results2.value(0, "mms._id");
+      std::any mid = results2.value(0, d_mms_table + "._id");
       if (mid.type() == typeid(long long int))
       {
         //std::cout << "Checking mms" << std::endl;
@@ -154,7 +154,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
         else // was mms, but no part -> maybe contact sharing?
         {    // -> '[{"name":{"displayName":"Basje Timmer",...}}]'
           SqliteDB::QueryResults results4;
-          d_database.exec("SELECT json_extract(mms.shared_contacts, '$[0].name.displayName') AS shared_contact_name from mms WHERE _id = ? AND shared_contacts IS NOT NULL", mid, &results4);
+          d_database.exec("SELECT json_extract(" + d_mms_table + ".shared_contacts, '$[0].name.displayName') AS shared_contact_name from " + d_mms_table + " WHERE _id = ? AND shared_contacts IS NOT NULL", mid, &results4);
           if (results4.rows() != 0 && results4.valueHasType<std::string>(0, "shared_contact_name"))
           {
             std::string snippet = "\xF0\x9F\x91\xA4 " + results4.getValueAs<std::string>(0, "shared_contact_name"); // bust in silouette emoji

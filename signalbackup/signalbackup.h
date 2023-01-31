@@ -57,7 +57,8 @@ class SignalBackup
   // only used in testing
   bool d_found_sqlite_sequence_in_backup;
 
-  // column names
+  // table/column names
+  std::string d_mms_table;
   std::string d_thread_recipient_id;
   std::string d_thread_message_count;
   std::string d_sms_date_received;
@@ -268,8 +269,9 @@ class SignalBackup
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
-  bool getGroupMembers(std::vector<long long int> *members, std::string const &group_id,
-                       std::string const &column = "members") const;
+  bool getGroupMembersModern(std::vector<long long int> *members, std::string const &group_id) const;
+  bool getGroupMembersOld(std::vector<long long int> *members, std::string const &group_id,
+                          std::string const &column = "members") const;
   bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;

@@ -174,7 +174,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
                     "_id, recipient_id, body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
                     "delivery_receipt_count, read_receipt_count, remote_deleted, expires_in "
-                    "FROM mms WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
+                    "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
 
     std::string previous_day_change;
 

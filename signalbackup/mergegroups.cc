@@ -27,19 +27,34 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
     return;
   }
 
+  std::cout << "" << std::endl;
+  std::cout << "THIS FUNCTION MAY NEED UPDATING. PLEASE OPAN AN ISSUE" << std::endl;
+  std::cout << "IF YOU NEED IT." << std::endl;
+  std::cout << "" << std::endl;
+
   std::string targetgroup = groupids.back();
 
   SqliteDB::QueryResults res;
-  d_database.exec("SELECT members FROM groups WHERE group_id = ?", targetgroup, &res);
-  std::string targetmembers = res.getValueAs<std::string>(0, 0);
   std::set<std::string> targetmembersvec;
-  std::stringstream ss(targetmembers);
-  while (ss.good())
+  if (d_database.tableContainsColumn("groups", "members"))
   {
-    std::string substr;
-    std::getline(ss, substr, ',');
-    targetmembersvec.insert(substr);
+    d_database.exec("SELECT members FROM groups WHERE group_id = ?", targetgroup, &res);
+    std::string targetmembers = res.getValueAs<std::string>(0, 0);
+    std::stringstream ss(targetmembers);
+    while (ss.good())
+    {
+      std::string substr;
+      std::getline(ss, substr, ',');
+      targetmembersvec.insert(substr);
+    }
   }
+  else
+  {
+    d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id = ?", targetgroup, &res);
+    for (uint i = 0; i < res.rows(); ++i)
+      targetmembersvec.insert(res.valueAsString(i, 0));
+  }
+
 
   // get the thread_id of the target
   long long int tid = getThreadIdFromRecipient(targetgroup);
@@ -63,9 +78,9 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? WHERE " + d_sms_recipient_id + " = ?",
                       {targetgroup, groupids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
-      d_database.exec("UPDATE mms SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
+      d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
-      d_database.exec("UPDATE mms SET " + d_mms_recipient_id + " = ? WHERE " + d_mms_recipient_id + " = ?",
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_recipient_id + " = ? WHERE " + d_mms_recipient_id + " = ?",
                       {targetgroup, groupids[i]});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
       if (d_database.containsTable("mention"))
@@ -85,32 +100,47 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       std::cout << "Removed " << d_database.changed() << " threads from table" << std::endl;
 
       // get members of groupids[i] and merge them into targetgroup
-      d_database.exec("SELECT members FROM groups WHERE group_id = ?", groupids[i], &res);
-      std::string members = res.getValueAs<std::string>(0, 0);
-      std::stringstream ss2(members);
-      while (ss2.good())
+      if (d_database.tableContainsColumn("groups", "members"))
       {
-        std::string substr;
-        std::getline(ss2, substr, ',');
-        auto [it, inserted] = targetmembersvec.insert(substr);
-        if (inserted)
-          std::cout << "Added " << substr << " to memberlist of group" << std::endl;
-        else
-          std::cout << "Skipped adding " << substr << " to group: already a member" << std::endl;
+        d_database.exec("SELECT members FROM groups WHERE group_id = ?", groupids[i], &res);
+        std::string members = res.getValueAs<std::string>(0, 0);
+        std::stringstream ss2(members);
+        while (ss2.good())
+        {
+          std::string substr;
+          std::getline(ss2, substr, ',');
+          auto [it, inserted] = targetmembersvec.insert(substr);
+          if (inserted)
+            std::cout << "Added " << substr << " to memberlist of group" << std::endl;
+          else
+            std::cout << "Skipped adding " << substr << " to group: already a member" << std::endl;
+        }
+      }
+      else
+      {
+        d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id = ?", groupids[i], &res);
+        for (uint g = 0; g < res.rows(); ++g)
+          d_database.exec("INSERT OR IGNORE INTO group_membership (group_id, recipient_id) VALUES (?, ?)", {targetgroup, res.getValueAs<long long int>(g, "recipient_id")});
       }
 
       // delete the merged group
       d_database.exec("DELETE FROM groups WHERE group_id = ?", groupids[i]);
       std::cout << "Removed " << d_database.changed() << " groups from table" << std::endl;
+
+      if (d_database.containsTable("group_membership"))
+        d_database.exec("DELETE FROM group_membership WHERE group_id = ?", groupids[i]);
     }
 
     // set new member list
-    std::cout << "Setting new memberlist" << std::endl;
-    std::string newmemberlist;
-    for (auto const &it : targetmembersvec)
-      newmemberlist += it + ',';
-    newmemberlist.pop_back(); // remove trailing comma...
-    d_database.exec("UPDATE groups SET members = ? WHERE group_id = ?", {newmemberlist, targetgroup});
+    if (d_database.tableContainsColumn("groups", "members"))
+    {
+      std::cout << "Setting new memberlist" << std::endl;
+      std::string newmemberlist;
+      for (auto const &it : targetmembersvec)
+        newmemberlist += it + ',';
+      newmemberlist.pop_back(); // remove trailing comma...
+      d_database.exec("UPDATE groups SET members = ? WHERE group_id = ?", {newmemberlist, targetgroup});
+    }
   }
   else
   {
