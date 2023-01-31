@@ -25,7 +25,7 @@ void SignalBackup::getGroupV1MigrationRecipients(std::set<long long int> *refere
 
   SqliteDB::QueryResults results;
   if (d_database.exec("SELECT body FROM "s +
-                      (d_database.containsTable("sms") ? "sms" : "mms") +
+                      (d_database.containsTable("sms") ? "sms" : d_mms_table) +
                       " WHERE type == ?" +
                       (thread != -1 ? " AND thread_id = " + bepaald::toString(thread) : ""),
                       bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))

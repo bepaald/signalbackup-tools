@@ -19,11 +19,14 @@
 
 #include "signalbackup.ih"
 
-#include <set>
-
 void SignalBackup::fillThreadTableFromMessages()
 {
   SqliteDB::QueryResults results;
+
+  std::cout << std::endl;
+  std::cout << "THIS FUNCTION IS VERY OLD AND MAY BE BROKEN" << std::endl;
+  std::cout << "PLEASE OPEN AN ISSUE IF YOU NEED THIS" << std::endl;
+  std::cout << std::endl;
 
   //d_database.exec("SELECT * FROM thread", &results);
   //std::cout << "THREAD:" << std::endl;
@@ -45,7 +48,7 @@ void SignalBackup::fillThreadTableFromMessages()
 
   std::cout << "Creating threads from 'mms' table data" << std::endl;
   //std::cout << "Threadids in mms, not in thread" << std::endl;
-  d_database.exec("SELECT DISTINCT thread_id," + d_mms_recipient_id + " FROM mms WHERE (" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) +
+  d_database.exec("SELECT DISTINCT thread_id," + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE (" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) +
                   ") BETWEEN " + bepaald::toString(Types::BASE_OUTBOX_TYPE) + " AND " +
                   bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
                   " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
@@ -80,7 +83,7 @@ void SignalBackup::fillThreadTableFromMessages()
   // get all thread_ids not yet in thread table, if there is only one recipient in that thread AND
   // there is no other thread with that recipient, add it (though it COULD be a 2 person group with only incoming messages)
   d_database.exec((d_database.containsTable("sms") ? "SELECT sms.thread_id AS union_thread_id, sms." + d_sms_recipient_id + " FROM 'sms' WHERE sms.thread_id NOT IN (SELECT DISTINCT _id FROM thread) UNION " : "") +
-                  "SELECT mms.thread_id AS union_thread_id, mms." + d_mms_recipient_id + " FROM 'mms' WHERE mms.thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+                  "SELECT " + d_mms_table + ".thread_id AS union_thread_id, " + d_mms_table + "." + d_mms_recipient_id + " FROM '" + d_mms_table + "' WHERE " + d_mms_table + ".thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
 
   //std::cout << "Orphan threads in db: " << std::endl;
   //results.prettyPrint();
@@ -91,9 +94,9 @@ void SignalBackup::fillThreadTableFromMessages()
     SqliteDB::QueryResults results2;
     if (d_database.containsTable("sms"))
       d_database.exec("SELECT DISTINCT sms." + d_sms_recipient_id + " AS union_address FROM 'sms' WHERE sms.thread_id == ? UNION "
-                      "SELECT DISTINCT mms." + d_mms_recipient_id + " AS union_address FROM 'mms' WHERE mms.thread_id == ?", {thread, thread}, &results2);
+                      "SELECT DISTINCT " + d_mms_table + "." + d_mms_recipient_id + " AS union_address FROM '" + d_mms_table + "' WHERE " + d_mms_table + ".thread_id == ?", {thread, thread}, &results2);
     else
-      d_database.exec("SELECT DISTINCT mms." + d_mms_recipient_id + " AS union_address FROM 'mms' WHERE mms.thread_id == ?", thread, &results2);
+      d_database.exec("SELECT DISTINCT " + d_mms_table + "." + d_mms_recipient_id + " AS union_address FROM '" + d_mms_table + "' WHERE " + d_mms_table + ".thread_id == ?", thread, &results2);
     if (results2.rows() == 1)
     {
       SqliteDB::QueryResults results3;
@@ -112,7 +115,7 @@ void SignalBackup::fillThreadTableFromMessages()
  }
 
   d_database.exec((d_database.containsTable("sms") ? "SELECT sms.thread_id AS union_thread_id, sms." + d_sms_recipient_id + " FROM 'sms' WHERE sms.thread_id NOT IN (SELECT DISTINCT _id FROM thread) UNION " : "") +
-                  "SELECT mms.thread_id AS union_thread_id, mms." + d_mms_recipient_id + " FROM 'mms' WHERE mms.thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
+                  "SELECT " + d_mms_table + ".thread_id AS union_thread_id, " + d_mms_table + "." + d_mms_recipient_id + " FROM '" + d_mms_table + "' WHERE " + d_mms_table + ".thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
   if (results.rows() > 0)
   {
     std::cout << "  !!! WARNING !!! Unable to generate thread data for messages belonging to this thread (no outgoing messages in conversation)" << std::endl;
@@ -144,10 +147,11 @@ void SignalBackup::fillThreadTableFromMessages()
                       "FROM 'sms' WHERE sms.thread_id = " + threadid +
                       " AND (sms.type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"
                       " OR sms.type & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) UNION " : ""
-                      "SELECT mms." + d_mms_date_sent + " AS union_display_date, mms." + d_mms_type + " AS union_type, mms.body AS union_body, mms." + d_mms_recipient_id + " AS union_address, '' AS [sms._id], mms._id AS [mms._id] "
-                      "FROM mms WHERE mms.thread_id = " + threadid +
-                      " AND (mms." + d_mms_type + " & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"
-                      " OR mms." + d_mms_type + " & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) ORDER BY union_date", &results);
+                      "SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_display_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " + d_mms_table + ".body AS union_body, " +
+                      d_mms_table + "." + d_mms_recipient_id + " AS union_address, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] "
+                      "FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = " + threadid +
+                      " AND (" + d_mms_table + "." + d_mms_type + " & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + " IS NOT 0"
+                      " OR " + d_mms_table + "." + d_mms_type + " & " + bepaald::toString(Types::GROUP_QUIT_BIT) + " IS NOT 0) ORDER BY union_date", &results);
 
       //std::cout << "STATUS MSGS FROM THREAD: " << threadid << std::endl;
       //results.prettyPrint();
@@ -187,6 +191,13 @@ void SignalBackup::fillThreadTableFromMessages()
     //std::cout << members << std::endl;
 
     std::cout << "Creating groups information" << std::endl;
-    d_database.exec("INSERT INTO groups (group_id, members) VALUES (?, ?)", {groupid, members});
+    if (d_database.tableContainsColumn("groups", "members"))
+      d_database.exec("INSERT INTO groups (group_id, members) VALUES (?, ?)", {groupid, members});
+    else
+    {
+      d_database.exec("INSERT INTO groups (group_id) VALUES (?)", groupid);
+      for (auto it = groupmembers.begin(); it != groupmembers.end(); ++it)
+        d_database.exec("INSERT INTO group_membership (group_id, recipient_id)", {groupid, it});
+    }
   }
 }

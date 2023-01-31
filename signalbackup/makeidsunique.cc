@@ -566,8 +566,8 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
            STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
+               (results.getValueAs<std::string>(i, 1) != d_mms_table + "_fts" &&
+                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), d_mms_table + "_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
@@ -592,7 +592,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
         //table == "dependency_spec" ||    // dealing with exported backups (not from live installations) -> they should
         //table == "emoji_search" ||       // have been excluded + the official import should be able to deal with them
         STRING_STARTS_WITH(table, "sms_fts") ||
-        STRING_STARTS_WITH(table, "mms_fts") ||
+        STRING_STARTS_WITH(table, d_mms_table + "_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))
       continue;
 

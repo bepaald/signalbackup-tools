@@ -28,11 +28,11 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
   SqliteDB::QueryResults results;
   if (!d_database.exec("SELECT DISTINCT " + d_thread_recipient_id + " FROM thread WHERE _id = ? "
                        "UNION "
-                       "SELECT DISTINCT recipient_id FROM mms WHERE thread_id = ? "
+                       "SELECT DISTINCT recipient_id FROM " + d_mms_table + " WHERE thread_id = ? "
                        "UNION "
-                       "SELECT DISTINCT quote_author FROM mms WHERE thread_id = ? AND quote_id IS NOT 0 "
+                       "SELECT DISTINCT quote_author FROM " + d_mms_table + " WHERE thread_id = ? AND quote_id IS NOT 0 "
                        "UNION "
-                       "SELECT DISTINCT author_id FROM reaction WHERE message_id IN (SELECT _id FROM mms WHERE thread_id = ?) "
+                       "SELECT DISTINCT author_id FROM reaction WHERE message_id IN (SELECT _id FROM " + d_mms_table + " WHERE thread_id = ?) "
                        "UNION "
                        "SELECT DISTINCT recipient_id FROM mention WHERE thread_id = ? "
                        , {t, t, t, t, t}, &results))
@@ -56,13 +56,13 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
   {
     // get current group members and former v1 members
     std::vector<long long int> groupmembers;
-    getGroupMembers(&groupmembers, group_id, "members");
+    getGroupMembersOld(&groupmembers, group_id, "members");
 
     // for (long long int id : groupmembers)
     //   std::cout << "INSERTING (0): "  << id << std::endl;
 
     if (d_database.tableContainsColumn("groups", "former_v1_members"))
-      getGroupMembers(&groupmembers, group_id, "former_v1_members");
+      getGroupMembersOld(&groupmembers, group_id, "former_v1_members");
 
     for (long long int id : groupmembers)
     {

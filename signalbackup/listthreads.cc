@@ -30,9 +30,9 @@ void SignalBackup::listThreads() const
   if (d_database.containsTable("sms"))
     d_database.exec("SELECT MIN(mindate) AS 'Min Date', MAX(maxdate) AS 'Max Date' FROM "
                     "(SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms "
-                    "UNION ALL SELECT MIN(mms.date_received) AS mindate, MAX(mms.date_received) AS maxdate FROM mms)", &results);
+                    "UNION ALL SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results);
   else
-    d_database.exec("SELECT MIN(mms.date_received) AS 'Min Date', MAX(mms.date_received) AS 'Max Date' FROM mms", &results);
+    d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS 'Min Date', MAX(" + d_mms_table + ".date_received) AS 'Max Date' FROM " + d_mms_table, &results);
   results.prettyPrint();
 
   if (!d_database.containsTable("recipient"))

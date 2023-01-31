@@ -47,7 +47,7 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
     if (i == 0)
     {
       smsq = "DELETE FROM sms WHERE ";
-      mmsq = "DELETE FROM mms WHERE ";
+      mmsq = "DELETE FROM " + d_mms_table + " WHERE ";
       megaphoneq = "DELETE FROM megaphone WHERE ";
     }
     else

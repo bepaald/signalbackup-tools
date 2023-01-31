@@ -36,7 +36,7 @@ void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
     if (i == 0)
     {
       smsq = "DELETE FROM sms WHERE ";
-      mmsq = "DELETE FROM mms WHERE ";
+      mmsq = "DELETE FROM " + d_mms_table + " WHERE ";
     }
     else
     {

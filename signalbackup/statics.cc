@@ -26,7 +26,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "_id",
     {
       {"sms", "thread_id"},
-      {"mms", "thread_id"},
+      {"mms", "thread_id"},    //       \ These are the same
+      {"message", "thread_id"},//       /
       {"drafts", "thread_id"},
       {"mention", "thread_id"}
     },
@@ -40,6 +41,22 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"msl_message", "message_id", "", "", 0, 168},
       {"reaction", "message_id", "is_mms IS NOT 1", "", 0, 0, 167},
       {"reaction", "message_id", "", "", 0, 168}
+    },
+    0
+  },
+  {
+    "message",
+    "_id",
+    {
+      {"part", "mid"},
+      {"group_receipts", "mms_id"},
+      {"mention", "message_id"},
+      {"msl_message", "message_id", "is_mms IS 1", "", 0, 0, 167}, // is_mms is 'removed' from table (dbv 168?)
+      {"msl_message", "message_id", "", "", 0, 168},
+      {"reaction", "message_id", "is_mms IS 1", "", 0, 0, 167},
+      {"reaction", "message_id", "", "", 0, 168},
+      {"story_sends", "message_id"},
+      {"call", "message_id"}
     },
     0
   },
@@ -63,6 +80,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "part",
     "_id",
     {
+      {"message", "previews", "", "'$[0].attachmentId.rowId'"},      //       \ These are the same
+      {"message", "link_previews", "", "'$[0].attachmentId.rowId'"}, //       /
       {"mms", "previews", "", "'$[0].attachmentId.rowId'"},     //       \ These are the same
       {"mms", "link_previews", "", "'$[0].attachmentId.rowId'"} //       /
     },
@@ -80,6 +99,9 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     {
       {"sms", "address"},      // \ These are one
       {"sms", "recipient_id"}, // /
+      {"message", "address"},      // \ These are one
+      {"message", "recipient_id"}, // /
+      {"message", "quote_author"},
       {"mms", "address"},      // \ These are one
       {"mms", "recipient_id"}, // /
       {"mms", "quote_author"},
@@ -105,7 +127,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"distribution_list_member", "recipient_id"},
       {"story_sends", "recipient_id"},
       {"pending_pni_signature_message", "recipient_id"},
-      {"call", "peer"}
+      {"call", "peer"},
+      {"group_membership", "recipient_id"}
     },
     NO_COMPACT
   },
@@ -296,7 +319,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     {
       {"recipient", "distribution_list_id"},
       {"distribution_list_member", "list_id"}
-        //{"mms","parent_story_id"}???
+        //{d_mms_table,"parent_story_id"}???
       //distribution_id TEXT UNIQUE NOT NULL
     },
     0
@@ -346,6 +369,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
   },
   {
     "call",
+    "_id",
+    {},
+    0
+  },
+  {
+    "group_membership",
     "_id",
     {},
     0

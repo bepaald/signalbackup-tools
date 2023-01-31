@@ -23,7 +23,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   std::cout << __FUNCTION__ << std::endl;
 
-  if ((d_databaseversion >= 168 && source->d_databaseversion < 168) ||
+  if ((d_databaseversion >= 172 && source->d_databaseversion < 172) || // group.members dropped
+      (d_databaseversion >= 168 && source->d_databaseversion < 168) || // sms table dropped
       (d_databaseversion >= 33 && source->d_databaseversion < 33) ||
       (d_databaseversion < 33 && source->d_databaseversion >= 33) ||
       (d_databaseversion >= 27 && source->d_databaseversion < 27) ||
@@ -56,7 +57,6 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
         std::cout << "New id: " << std::endl;
         source->d_database.print("SELECT * FROM recipient WHERE _id = ?", newid);
         std::cout << std::endl;
-
       }
 
       // apply the remapping (probably only some reactions _may_ need to be transferred?)
@@ -444,6 +444,16 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
   }
 
+  // delete group_membership's already present
+  if (d_database.containsTable("group_membership"))
+  {
+    SqliteDB::QueryResults gm_results;
+    d_database.exec("SELECT DISTINCT group_id,recipient_id FROM group_membership", &gm_results);
+    for (uint i = 0; i < gm_results.rows(); ++i)
+      source->d_database.exec("DELETE FROM group_membership WHERE group_id = ? AND recipient_id = ?",
+                              {gm_results.value(i, "group_id"), gm_results.value(i, "recipient_id")});
+  }
+
   // merge into existing thread, set the id on the sms, mms, and drafts
   // drop the recipient_preferences, identities and thread tables, they are already in the target db
   if (targetthread > -1)
@@ -451,7 +461,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     std::cout << "  Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
     if (source->d_database.containsTable("sms"))
       source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
-    source->d_database.exec("UPDATE mms SET thread_id = ?", targetthread);
+    source->d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
     if (source->d_database.containsTable("mention"))
       source->d_database.exec("UPDATE mention SET thread_id = ?", targetthread);
@@ -520,6 +530,13 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         }
     }
 
+    if (d_database.containsTable("call"))
+    {
+      // delete
+
+    }
+
+
     // even though the source was cropped to single thread, and this thread was not in target, avatar might still already be in target
     // because contact (and avatar) might be present in group in source, and only as one-on-one in target
 
@@ -566,8 +583,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
            STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
-               (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
+               (results.getValueAs<std::string>(i, 1) != d_mms_table + "_fts" &&
+                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), d_mms_table + "_fts")))
         ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
@@ -596,7 +613,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         //table == "dependency_spec" ||    // dealing with exported backups (not from live installations) -> they should
         //table == "emoji_search" ||       // have been excluded + the official import should be able to deal with them
         STRING_STARTS_WITH(table, "sms_fts") ||
-        STRING_STARTS_WITH(table, "mms_fts") ||
+        STRING_STARTS_WITH(table, d_mms_table + "_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))
       continue;
     std::cout << "Importing statements from source table '" << table << "'...";
@@ -680,6 +697,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   d_database.exec("VACUUM");
   d_database.freeMemory();
+
+  d_database.prettyPrint("SELECT * FROM call");
 
   return checkDbIntegrity();
 }

@@ -78,14 +78,17 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &thr
     bool fullbackup = false;
     std::string query = "SELECT part.mid, part.ct, part.file_name, part.display_order FROM part WHERE part._id == ? AND part.unique_id == ?";
     // if all tables for detailed info are present...
-    if (d_database.containsTable("mms") && d_database.containsTable("thread") &&
+    if (d_database.containsTable(d_mms_table) && d_database.containsTable("thread") &&
         d_database.containsTable("groups") && d_database.containsTable("recipient"))
     {
       fullbackup = true;
-      query = "SELECT part.mid, part.ct, part.file_name, part.display_order, mms.date_received, mms." + d_mms_type + ", mms.thread_id, thread." + d_thread_recipient_id +
-        ", COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM part "
-        "LEFT JOIN mms ON part.mid == mms._id "
-        "LEFT JOIN thread ON mms.thread_id == thread._id "
+      query = "SELECT part.mid, part.ct, part.file_name, part.display_order, " +
+        d_mms_table + ".date_received, " + d_mms_table + "." + d_mms_type + ", " +
+        d_mms_table + ".thread_id, thread." + d_thread_recipient_id +
+        ", COALESCE(groups.title,recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name)"
+        " AS 'chatpartner' FROM part "
+        "LEFT JOIN " + d_mms_table + " ON part.mid == " + d_mms_table + "._id "
+        "LEFT JOIN thread ON " + d_mms_table + ".thread_id == thread._id "
         "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " == recipient._id "
         "LEFT JOIN groups ON recipient.group_id == groups.group_id "
         "WHERE part._id == ? AND part.unique_id == ?";

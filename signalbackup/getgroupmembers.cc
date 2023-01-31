@@ -19,15 +19,33 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::getGroupMembers(std::vector<long long int> *members, std::string const &group_id,
-                                   std::string const &column) const
+bool SignalBackup::getGroupMembersModern(std::vector<long long int> *members, std::string const &group_id) const
+{
+  SqliteDB::QueryResults r;
+  if (!d_database.containsTable("group_membership") ||
+      !d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id = ?", group_id, &r))
+    return false;
+
+  for (uint i = 0; i < r.rows(); ++i)
+    members->push_back(r.getValueAs<long long int>(i, "recipient_id"));
+
+  return true;
+}
+
+bool SignalBackup::getGroupMembersOld(std::vector<long long int> *members, std::string const &group_id,
+                                      std::string const &column) const
 {
   if (!members)
     return false;
-  SqliteDB::QueryResults r;
   if (!d_database.tableContainsColumn("groups", column))
-    return false;
+  {
+    if (column == "members")
+      return getGroupMembersModern(members, group_id);
+    else
+      return false;
+  }
 
+  SqliteDB::QueryResults r;
   d_database.exec("SELECT " + column + " FROM groups WHERE group_id = ? AND " + column + " IS NOT NULL", group_id, &r);
   //r.prettyPrint();
 

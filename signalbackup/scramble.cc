@@ -68,7 +68,7 @@ bool SignalBackup::scramble() const
     if (!scrambleHelper("sms", {"body"}))
       return false;
 
-  if (!scrambleHelper("mms", {"body", "quote_body"}))
+  if (!scrambleHelper(d_mms_table, {"body", "quote_body"}))
     return false;
 
   if (!scrambleHelper("recipient", {"system_display_name", "profile_joined_name", "signal_profile_name", "profile_family_name", "system_family_name", "system_given_name"}))
@@ -80,91 +80,5 @@ bool SignalBackup::scramble() const
   if (!scrambleHelper("groups", {"title"}))
     return false;
 
-  /*
-  SqliteDB::QueryResults res;
-  d_database.exec("SELECT _id,body FROM sms", &res);
-  for (uint i = 0; i < res.rows(); ++i)
-  {
-    std::string str = res.valueAsString(i, "body");
-    std::replace_if(str.begin(), str.end(), [](char c)
-    {
-      return c != ' ' && std::islower(c);
-    }, 'x');
-    std::replace_if(str.begin(), str.end(), [](char c)
-    {
-      return c != ' ' && !std::islower(c);
-    }, 'X');
-    if (!d_database.exec("UPDATE sms SET body = ? WHERE _id = ?", {str, res.getValueAs<long long int>(i, "_id")}))
-      return false;
-  }
-
-  d_database.exec("SELECT _id,body FROM mms", &res);
-  for (uint i = 0; i < res.rows(); ++i)
-  {
-    std::string str = res.valueAsString(i, "body");
-    std::replace_if(str.begin(), str.end(), [](char c)
-    {
-      return c != ' ' && std::islower(c);
-    }, 'x');
-    std::replace_if(str.begin(), str.end(), [](char c)
-    {
-      return c != ' ' && !std::islower(c);
-    }, 'X');
-    if (!d_database.exec("UPDATE mms SET body = ? WHERE _id = ?", {str, res.getValueAs<long long int>(i, "_id")}))
-      return false;
-  }
-
-  d_database.exec("SELECT _id,system_display_name,profile_joined_name,signal_profile_name FROM recipient", &res);
-  for (uint i = 0; i < res.rows(); ++i)
-  {
-    std::string str1 = res.valueAsString(i, "system_display_name");
-    std::replace_if(str1.begin(), str1.end(), [](char c)
-    {
-      return c != ' ' && std::islower(c);
-    }, 'x');
-    std::replace_if(str1.begin(), str1.end(), [](char c)
-    {
-      return c != ' ' && !std::islower(c);
-    }, 'X');
-
-    std::string str2 = res.valueAsString(i, "profile_joined_name");
-    std::replace_if(str2.begin(), str2.end(), [](char c)
-    {
-      return c != ' ' && std::islower(c);
-    }, 'x');
-    std::replace_if(str2.begin(), str2.end(), [](char c)
-    {
-      return c != ' ' && !std::islower(c);
-    }, 'X');
-
-    std::string str3 = res.valueAsString(i, "signal_profile_name");
-    std::replace_if(str3.begin(), str3.end(), [](char c)
-    {
-      return c != ' ' && std::islower(c);
-    }, 'x');
-    std::replace_if(str3.begin(), str3.end(), [](char c)
-    {
-      return c != ' ' && !std::islower(c);
-    }, 'X');
-    if (!d_database.exec("UPDATE recipient SET system_display_name = ?, profile_joined_name = ?, signal_profile_name = ? WHERE _id = ?", {str1, str2, str3, res.getValueAs<long long int>(i, "_id")}))
-      return false;
-  }
-
-  d_database.exec("SELECT _id,title FROM groups", &res);
-  for (uint i = 0; i < res.rows(); ++i)
-  {
-    std::string str = res.valueAsString(i, "title");
-    std::replace_if(str.begin(), str.end(), [](char c)
-    {
-      return c != ' ' && std::islower(c);
-    }, 'x');
-    std::replace_if(str.begin(), str.end(), [](char c)
-    {
-      return c != ' ' && !std::islower(c);
-    }, 'X');
-    if (!d_database.exec("UPDATE groups SET title = ? WHERE _id = ?", {str, res.getValueAs<long long int>(i, "_id")}))
-      return false;
-  }
-  */
   return true;
 }

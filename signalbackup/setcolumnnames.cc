@@ -21,6 +21,12 @@
 
 bool SignalBackup::setColumnNames()
 {
+  // started at dbv 174
+  d_mms_table = "message";
+  if (d_database.containsTable("mms") &&
+      !d_database.containsTable("message"))
+    d_mms_table = "mms";
+
   // started at dbv166
   d_thread_recipient_id = "recipient_id";
   // from dbv 108
@@ -72,36 +78,36 @@ bool SignalBackup::setColumnNames()
   // started at dbv166
   d_mms_date_sent = "date_sent";
   // before 166
-  if (!d_database.tableContainsColumn("mms", "date_sent") &&
-      d_database.tableContainsColumn("mms", "date"))
+  if (!d_database.tableContainsColumn(d_mms_table, "date_sent") &&
+      d_database.tableContainsColumn(d_mms_table, "date"))
     d_mms_date_sent = "date";
 
   // started at dbv166
   d_mms_recipient_id = "recipient_id";
   // before 166
-  if (!d_database.tableContainsColumn("mms", "recipient_id") &&
-      d_database.tableContainsColumn("mms", "address"))
+  if (!d_database.tableContainsColumn(d_mms_table, "recipient_id") &&
+      d_database.tableContainsColumn(d_mms_table, "address"))
     d_mms_recipient_id = "address";
 
   // started at dbv166
   d_mms_recipient_device_id = "recipient_device_id";
   // before 166
-  if (!d_database.tableContainsColumn("mms", "recipient_device_id") &&
-      d_database.tableContainsColumn("mms", "address_device_id"))
+  if (!d_database.tableContainsColumn(d_mms_table, "recipient_device_id") &&
+      d_database.tableContainsColumn(d_mms_table, "address_device_id"))
     d_mms_recipient_device_id = "address_device_id";
 
   // started at dbv166
   d_mms_type = "type";
   // before 166
-  if (!d_database.tableContainsColumn("mms", "type") &&
-      d_database.tableContainsColumn("mms", "msg_box"))
+  if (!d_database.tableContainsColumn(d_mms_table, "type") &&
+      d_database.tableContainsColumn(d_mms_table, "msg_box"))
     d_mms_type = "msg_box";
 
   // started at dbv166
   d_mms_previews = "link_previews";
   // before 166
-  if (!d_database.tableContainsColumn("mms", "link_previews") &&
-      d_database.tableContainsColumn("mms", "previews"))
+  if (!d_database.tableContainsColumn(d_mms_table, "link_previews") &&
+      d_database.tableContainsColumn(d_mms_table, "previews"))
     d_mms_previews = "previews";
 
   return true;

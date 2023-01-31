@@ -129,7 +129,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, long long int ro
 
   // if (d_databaseversion < 170)
   //{
-  if (!insertRow(d_database.containsTable("sms") ? "sms" : "mms",
+  if (!insertRow(d_database.containsTable("sms") ? "sms" : d_mms_table,
                  {{"thread_id", ttid},
                   {d_database.containsTable("sms") ? d_sms_recipient_id : d_mms_recipient_id, address},
                   {d_database.containsTable("sms") ? d_sms_date_received : "date_received", calldetails.value(0, "sent_at")},
@@ -137,7 +137,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, long long int ro
                   {"type", calltype},
                   {"body", body}}))
   {
-    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << (d_database.containsTable("sms") ? "sms" : "mms") << ": call type message." << std::endl;
+    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << (d_database.containsTable("sms") ? "sms" : d_mms_table) << ": call type message." << std::endl;
     return false;
   }
   //}

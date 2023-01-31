@@ -27,7 +27,7 @@ bool SignalBackup::reorderMmsSmsIds() const
 
   // get all mms in the correct order
   SqliteDB::QueryResults res;
-  if (!d_database.exec("SELECT _id FROM mms ORDER BY date_received ASC", &res)) // for sms table, use 'date'
+  if (!d_database.exec("SELECT _id FROM " + d_mms_table + " ORDER BY date_received ASC", &res)) // for sms table, use 'date'
     return false;
 
   // set all id's 'negatively ascending' (negative because of UNIQUE constraint)
@@ -36,7 +36,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   {
     long long int oldid = res.getValueAs<long long int>(i, 0);
     ++negative_id_tmp;
-    if (!d_database.exec("UPDATE mms SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid}) ||
+    if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid}) ||
         !d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {-1 * negative_id_tmp, oldid}) ||
         !d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {-1 * negative_id_tmp, oldid}))
       return false;
@@ -49,10 +49,16 @@ bool SignalBackup::reorderMmsSmsIds() const
     if (d_database.containsTable("reaction")) // dbv >= 121
       if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ?"s + (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : ""), {-1 * negative_id_tmp, oldid}))
         return false;
+    if (d_database.containsTable("story_sends"))
+      if (!d_database.exec("UPDATE story_sends SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid}))
+        return false;
+    if (d_database.containsTable("call")) // dbv >= ~168?
+      if (!d_database.exec("UPDATE call SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid}))
+        return false;
   }
 
   // now make all id's positive again
-  if (!d_database.exec("UPDATE mms SET _id = _id * -1 WHERE _id < 0") ||
+  if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = _id * -1 WHERE _id < 0") ||
       !d_database.exec("UPDATE part SET mid = mid * -1 WHERE mid < 0") ||
       !d_database.exec("UPDATE group_receipts SET mms_id = mms_id * -1 WHERE mms_id < 0"))
     return false;
@@ -64,6 +70,12 @@ bool SignalBackup::reorderMmsSmsIds() const
       return false;
   if (d_database.containsTable("reaction")) // dbv >= 121
     if (!d_database.exec("UPDATE reaction SET message_id = message_id * -1 WHERE message_id < 0"s + (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : "")))
+      return false;
+  if (d_database.containsTable("story_sends"))
+    if (!d_database.exec("UPDATE story_sends SET message_id = message_id * -1 WHERE message_id < 0"))
+      return false;
+  if (d_database.containsTable("call")) // dbv >= ~168?
+    if (!d_database.exec("UPDATE call SET message_id = message_id * -1 WHERE message_id < 0"))
       return false;
 
   // SAME FOR SMS

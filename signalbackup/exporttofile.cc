@@ -93,8 +93,8 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         continue;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
 
       if (results.valueHasType<std::string>(i, 1) &&
-          (results.getValueAs<std::string>(i, 1) != "mms_fts" &&
-           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "mms_fts")))
+          (results.getValueAs<std::string>(i, 1) != d_mms_table + "_fts" &&
+           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), d_mms_table + "_fts")))
         continue;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
 
       if (results.valueHasType<std::string>(i, 1) &&
@@ -142,7 +142,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         //table == "avatar_picker" ||
         //table == "" ||
         STRING_STARTS_WITH(table, "sms_fts") ||
-        STRING_STARTS_WITH(table, "mms_fts") ||
+        STRING_STARTS_WITH(table, d_mms_table + "_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))
       continue;
 

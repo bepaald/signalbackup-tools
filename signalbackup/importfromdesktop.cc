@@ -249,9 +249,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   if (dateranges.empty() && autodates)
   {
     SqliteDB::QueryResults res;
-    if ((d_database.containsTable("sms") && !d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", mms.date_received) AS mindate FROM sms "
-                                                             "LEFT JOIN mms WHERE sms." + d_sms_date_received + " IS NOT NULL AND mms.date_received IS NOT NULL)", &res)) ||
-        (!d_database.containsTable("sms") && !d_database.exec("SELECT MIN(mms.date_received) AS mindate FROM mms WHERE mms.date_received IS NOT NULL", &res)))
+    if ((d_database.containsTable("sms") && !d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", " + d_mms_table + ".date_received) AS mindate FROM sms "
+                                                             "LEFT JOIN " + d_mms_table + " WHERE sms." + d_sms_date_received + " IS NOT NULL AND " + d_mms_table + ".date_received IS NOT NULL)", &res)) ||
+        (!d_database.containsTable("sms") && !d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS mindate FROM " + d_mms_table + " WHERE " + d_mms_table + ".date_received IS NOT NULL", &res)))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << "Failed to automatically determine data-range" << std::endl;
       return false;
@@ -614,24 +614,24 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
 
         std::any retval;
-        if (!insertRow("mms", {{"thread_id", ttid},
-                               {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                               {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                               {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
-                               {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                               {"body", results_all_messages_from_conversation.value(j, "body")},
-                               //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
-                               //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
-                               {d_mms_recipient_id, address},
-                               {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                               {"quote_id", hasquote ? mmsquote_id : 0},
-                               {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
-                               {"quote_body", hasquote ? mmsquote_body : nullptr},
-                               //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
-                               {"quote_missing", hasquote ? mmsquote_missing : 0},
-                               {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
-                               {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
-                               {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
+        if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                     {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                     {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                     {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
+                                     {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                     {"body", results_all_messages_from_conversation.value(j, "body")},
+                                     //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
+                                     //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
+                                     {d_mms_recipient_id, address},
+                                     {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+                                     {"quote_id", hasquote ? mmsquote_id : 0},
+                                     {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+                                     {"quote_body", hasquote ? mmsquote_body : nullptr},
+                                     //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
+                                     {"quote_missing", hasquote ? mmsquote_missing : 0},
+                                     {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                     {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                     {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
         {
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
         }
