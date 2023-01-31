@@ -530,13 +530,6 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         }
     }
 
-    if (d_database.containsTable("call"))
-    {
-      // delete
-
-    }
-
-
     // even though the source was cropped to single thread, and this thread was not in target, avatar might still already be in target
     // because contact (and avatar) might be present in group in source, and only as one-on-one in target
 
@@ -697,8 +690,6 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   d_database.exec("VACUUM");
   d_database.freeMemory();
-
-  d_database.prettyPrint("SELECT * FROM call");
 
   return checkDbIntegrity();
 }
