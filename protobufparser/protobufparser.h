@@ -444,7 +444,8 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL (2)" << std::endl;
+            std::cout << "ERROR REQUESTED TYPE TOO SMALL (2): "
+                      << fielddata.second << " " << sizeof(T) << std::endl;
           }
         }
       }
@@ -897,20 +898,19 @@ int64_t ProtoBufParser<Spec...>::getVarIntFieldLength(int pos, unsigned char *da
 template <typename... Spec>
 void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const
 {
-
-  //std::cout << "Starting fieldsearch at " << startpos << std::endl;
-
   int localpos = startpos;
   while (localpos < d_size)
   {
-    //std::cout << "Checking at pos : " << localpos << std::endl;
-    //std::cout << "Asked posandlength of data at: " << bepaald::bytesToHexString(d_data + localpos, d_size - localpos) << std::endl;
-
-    int32_t field    = (d_data[localpos] >> 3) & 0b00000000000000000000000000001111;
+    int32_t field    = (d_data[localpos] & 0b00000000000000000000000001111000) >> 3;
     int32_t wiretype = d_data[localpos] & 0b00000000000000000000000000000111;
+    int fieldshift = 4;
+    while (d_data[localpos] & 0b00000000000000000000000010000000 && // skipping the shift
+           localpos < d_size - 1)
+    {
+      field |= (d_data[++localpos] & 0b00000000000000000000000001111111) << fieldshift;
+      fieldshift += 7;
+    }
     int nextpos = localpos + 1;
-
-    //std::cout << "Got field: " << field << ", wiretype: " << wiretype << std::endl;
 
     switch (wiretype)
     {
@@ -996,8 +996,20 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
 {
   while (*pos < d_size)
   {
-    int32_t field    = (d_data[*pos] >> 3) & 0b00000000000000000000000000001111;
+    //std::cout << "AT: " << *pos << " : " << "0x" << std::hex << static_cast<int>(d_data[*pos] & 0xff) << std::dec << std::endl;
+    int32_t field    = (d_data[*pos] & 0b00000000000000000000000001111000) >> 3;
     int32_t wiretype = d_data[*pos] & 0b00000000000000000000000000000111;
+    int fieldshift = 4;
+    while (d_data[*pos] & 0b00000000000000000000000010000000 && // skipping the shift
+           *pos < d_size - 1)
+    {
+      //std::cout << "Adding byte to varint field number" << std::endl;
+      field |= (d_data[++(*pos)] & 0b00000000000000000000000001111111) << fieldshift;
+      fieldshift += 7;
+    }
+    // std::cout << "field: " << field << std::endl;
+    // std::cout << "wiret: " << wiretype << std::endl;
+
     ++(*pos);
     switch (wiretype)
     {
@@ -1012,6 +1024,7 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
       case WIRETYPE::VARINT:
       {
         *isvarint = true;
+        //std::cout << "AT: " << *pos << " : " << "0x" << std::hex << static_cast<int>(d_data[*pos] & 0xff) << std::dec << std::endl;
         uint64_t fieldlength = getVarIntFieldLength(*pos, d_data, d_size);
         if (field == num)
           return std::make_pair(d_data + *pos, fieldlength);
@@ -1055,12 +1068,19 @@ bool ProtoBufParser<Spec...>::fieldExists(int num) const
   int pos = 0;
   while (pos < d_size)
   {
-    int32_t field    = (d_data[pos] >> 3) & 0b00000000000000000000000000001111;
+    int32_t field    = (d_data[pos] & 0b00000000000000000000000001111000) >> 3;
+    int32_t wiretype = d_data[pos] & 0b00000000000000000000000000000111;
+    int fieldshift = 4;
+    while (d_data[pos] & 0b00000000000000000000000010000000 && // skipping the shift
+           pos < d_size - 1)
+    {
+      field |= (d_data[++pos] & 0b00000000000000000000000001111111) << fieldshift;
+      fieldshift += 7;
+    }
 
     if (field == num)
       return true;
 
-    int32_t wiretype = d_data[pos] & 0b00000000000000000000000000000111;
     ++pos;
 
     switch (wiretype)

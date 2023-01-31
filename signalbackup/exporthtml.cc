@@ -225,17 +225,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
         body = "Group call";
       else if (Types::isGroupUpdate(type)) // group v2: to do...
       {
-        if (!Types::isGroupV2(type))
-        {
+        body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"),
+                                   type, recipient_info[msg_recipient_id].display_name);
+        if (!Types::isGroupV2(type)) // not sure if this is needed anymore...
           isgroupupdatev1 = true;
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"),
-                                     type, recipient_info[msg_recipient_id].display_name);
-        }
-        else if (Types::isGroupQuit(type)) // done here because groupquit can also be groupv2
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"),
-                                     type, recipient_info[msg_recipient_id].display_name);
-        else
-          body = "(group V2 update)";
       }
       else if (Types::isProfileChange(type))
         body = decodeProfileChangeMessage(body, recipient_info.at(msg_recipient_id).display_name);

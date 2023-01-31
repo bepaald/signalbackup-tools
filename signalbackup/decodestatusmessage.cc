@@ -126,6 +126,55 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   {
     return decodeProfileChangeMessage(body, contactname);
   }
+  if (Types::isGroupUpdate(type) && Types::isGroupV2(type))
+  {
+    /*
+    //std::cout << body << std::endl;
+    DecryptedGroupV2Context groupv2ctx(body);
+    //groupv2ctx.print();
+
+    if (groupv2ctx.getField<2>().has_value())
+    {
+      DecryptedGroupChange groupchange = groupv2ctx.getField<2>().value();
+      std::cout << bepaald::bytesToHexString(groupchange.data(), groupchange.size()) << std::endl;
+      groupchange.print();
+
+      // check group title changed
+      if (groupchange.getField<10>().has_value() &&
+          groupchange.getField<10>().value().getField<1>().has_value())
+        std::cout << "NEW TITLE: " << groupchange.getField<10>().value().getField<1>().value() << std::endl; // string
+
+      // check group avatar changed
+      if (groupchange.getField<11>().has_value() &&
+          groupchange.getField<11>().value().getField<1>().has_value())
+        std::cout << "NEW AVATAR: " << groupchange.getField<11>().value().getField<1>().value() << std::endl; // string
+
+      // check group timer changed
+      if (groupchange.getField<12>().has_value() &&
+          groupchange.getField<12>().value().getField<1>().has_value())
+        std::cout << "NEW AVATAR: " << groupchange.getField<12>().value().getField<1>().value() << std::endl; // uint32
+
+      // check new member:
+      auto newmembers = groupchange.getField<3>();
+      for (uint i = 0; i < newmembers.size(); ++i)
+      {
+        auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+        std::cout << "NEW MEMBER: " << bepaald::bytesToHexString(uuid, uuid_size) << std::endl;
+      }
+
+      // check members left:
+      auto deletedmembers = groupchange.getField<4>();
+      for (uint i = 0; i < deletedmembers.size(); ++i)
+      {
+        auto [uuid, uuid_size] = deletedmembers[i]; // bytes
+        std::cout << "DELETED MEMBER: " << bepaald::bytesToHexString(uuid, uuid_size) << std::endl;
+      }
+
+      std::cout << "" << std::endl;
+    }
+    */
+    return "(group V2 update)";
+  }
 
 
   return body;
