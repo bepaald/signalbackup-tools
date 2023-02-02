@@ -142,17 +142,26 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       // check group title changed
       if (groupchange.getField<10>().has_value() &&
           groupchange.getField<10>().value().getField<1>().has_value())
+      {
         std::cout << "NEW TITLE: " << groupchange.getField<10>().value().getField<1>().value() << std::endl; // string
+        return "Group name is now '" + groupchange.getField<10>().value().getField<1>().value() + "'.";
+      }
 
       // check group avatar changed
       if (groupchange.getField<11>().has_value() &&
           groupchange.getField<11>().value().getField<1>().has_value())
+      {
         std::cout << "NEW AVATAR: " << groupchange.getField<11>().value().getField<1>().value() << std::endl; // string
+        return "NEW AVATAR: " + groupchange.getField<11>().value().getField<1>().value();
+      }
 
       // check group timer changed
       if (groupchange.getField<12>().has_value() &&
           groupchange.getField<12>().value().getField<1>().has_value())
-        std::cout << "NEW AVATAR: " << groupchange.getField<12>().value().getField<1>().value() << std::endl; // uint32
+      {
+        std::cout << "NEW TIMER: " << groupchange.getField<12>().value().getField<1>().value() << std::endl; // uint32
+        return "NEW TIMER: " + bepaald::toString(groupchange.getField<12>().value().getField<1>().value());
+      }
 
       // check new member:
       auto newmembers = groupchange.getField<3>();
@@ -160,6 +169,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       {
         auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
         std::cout << "NEW MEMBER: " << bepaald::bytesToHexString(uuid, uuid_size) << std::endl;
+        return "NEW MEMBER: " + bepaald::bytesToHexString(uuid, uuid_size);
       }
 
       // check members left:
@@ -168,6 +178,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       {
         auto [uuid, uuid_size] = deletedmembers[i]; // bytes
         std::cout << "DELETED MEMBER: " << bepaald::bytesToHexString(uuid, uuid_size) << std::endl;
+        return "DELETED MEMBER: " + bepaald::bytesToHexString(uuid, uuid_size);
       }
 
       std::cout << "" << std::endl;
