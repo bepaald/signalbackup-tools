@@ -211,15 +211,15 @@ class ProtoBufParser
   bool deleteFirstField(int num, T const *value = nullptr);
 
   // add repeated things
-  template <int idx>
+  template <unsigned int idx>
   inline bool addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type const &value);
-  template <int idx>
+  template <unsigned int idx>
   inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value, bool>::type addField(std::pair<unsigned char *, uint64_t> const &value); // specialization for repeated BYTES
 
   // add optional things
-  template <int idx>
+  template <unsigned int idx>
   inline bool addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type const &value);
-  template <int idx>
+  template <unsigned int idx>
   inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value, bool>::type addField(std::pair<unsigned char *, uint64_t> const &value); // specialization for optional BYTES
 
   inline void print(int indent = 0) const;
@@ -228,7 +228,7 @@ class ProtoBufParser
   inline void clear();
 
  private:
-  template <int idx, typename T>
+  template <unsigned int idx, typename T>
   inline bool addFieldInternal(T const &value);
   int64_t readVarInt(int *pos, unsigned char *data, int size, bool zigzag = false) const;
   int64_t getVarIntFieldLength(int pos, unsigned char *data, int size) const;
@@ -236,6 +236,8 @@ class ProtoBufParser
   std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint, int *pos) const;
   void getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const;
   bool fieldExists(int num) const;
+  template <int idx>
+  inline constexpr uint64_t fieldSize() const;
   inline uint64_t varIntSize(uint64_t value) const;
   template <int idx>
   static inline constexpr unsigned int getType();
@@ -642,6 +644,32 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
   return false;
 }
 
+// field is different from varint because first byte only has 4 bits left...
+template <typename... Spec>
+template <int idx>
+inline constexpr uint64_t ProtoBufParser<Spec...>::fieldSize() const
+{
+  if constexpr (idx <= 0xf)
+    return 1;
+  if constexpr (idx <= 0x7ff)
+    return 2;
+  if constexpr (idx <= 0x3ffff)
+    return 3;
+  if constexpr (idx <= 0x1ffffff)
+    return 4;
+  if constexpr (idx <= 0xffffffff)
+    return 5;
+  if constexpr (idx <= 0x7fffffffff)
+    return 6;
+  if constexpr (idx <= 0x3fffffffffff)
+    return 7;
+  if constexpr (idx <= 0x1fffffffffffff)
+    return 8;
+  if constexpr (idx <= 0xfffffffffffffff)
+    return 9;
+  return 10;
+}
+
 template <typename... Spec>
 inline uint64_t ProtoBufParser<Spec...>::varIntSize(uint64_t value) const
 {
@@ -747,7 +775,7 @@ inline constexpr unsigned int ProtoBufParser<Spec...>::getType() //static
 }
 
 template <typename... Spec>
-template <int idx, typename T>
+template <unsigned int idx, typename T>
 inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
 {
   unsigned int field = idx;
@@ -767,15 +795,25 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
   else if constexpr (type == WIRETYPE::FIXED64)
     fielddatasize = 8;
 
-  int size = 1 + (type == WIRETYPE::LENGTH_DELIMITED ? varIntSize(fielddatasize) : 0) + fielddatasize;
+  int size = fieldSize<idx>() + (type == WIRETYPE::LENGTH_DELIMITED ? varIntSize(fielddatasize) : 0) + fielddatasize;
   unsigned char *mem = new unsigned char[size]{};
 
-  // set field and wire
-  mem[0] = 0x00 | (field << 3);
-  mem[0] |= (type);
+  // set first byte of field (+ wire)
+  unsigned int mempos = 0;
+  mem[mempos] = (field << 3) & 0b00000000'00000000'00000000'01111000;
+  mem[mempos] |= (type);
+
+  field >>= 4; // shift out the used part of idx
+  while (field)
+  {
+    // previous byte add 0b1000000;
+    mem[mempos++] |= 0b10000000;
+    mem[mempos] = field & 0b00000000'00000000'00000000'01111111;
+    field >>= 7; // shift out the used part of idx
+  }
 
   // put length (as varint) if type is length_delim, or put actual value if type is varint
-  uint64_t outputpos = 1;
+  ++mempos;
   if constexpr (type == WIRETYPE::LENGTH_DELIMITED || type == WIRETYPE::VARINT)
   {
     uint64_t varint = 0;
@@ -785,23 +823,23 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
       varint = value;
     while (varint > 127)
     {
-      mem[outputpos] = (static_cast<uint8_t>(varint & 127)) | 128;
+      mem[mempos] = (static_cast<uint8_t>(varint & 127)) | 128;
       varint >>= 7;
-      ++outputpos;
+      ++mempos;
     }
-    mem[outputpos++] = (static_cast<uint8_t>(varint)) & 127;
+    mem[mempos++] = (static_cast<uint8_t>(varint)) & 127;
   }
 
   // put actual data
   if constexpr (type == WIRETYPE::LENGTH_DELIMITED)
   {
     if constexpr (is_specialization_of<std::pair, T>{}) // bytes
-      std::memcpy(mem + outputpos, value.first, fielddatasize);
+      std::memcpy(mem + mempos, value.first, fielddatasize);
     else // string
-      std::memcpy(mem + outputpos, value.data(), fielddatasize);
+      std::memcpy(mem + mempos, value.data(), fielddatasize);
   }
   else if constexpr (type == WIRETYPE::FIXED32 || type == WIRETYPE::FIXED64)
-    std::memcpy(mem + outputpos, reinterpret_cast<unsigned char const *>(&value), sizeof(value));
+    std::memcpy(mem + mempos, reinterpret_cast<unsigned char const *>(&value), sizeof(value));
 
   //std::cout << "Adding: " << bepaald::bytesToHexString(mem, size) << std::endl;
 
@@ -822,7 +860,7 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
 
 // add repeated things
 template <typename... Spec>
-template <int idx>
+template <unsigned int idx>
 inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type::value_type const &value)
 {
   //std::cout << "Repeated -> go!" << std::endl;
@@ -831,7 +869,7 @@ inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<dec
 
 // specialization for repeated BYTES
 template <typename... Spec>
-template <int idx>
+template <unsigned int idx>
 inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value, bool>::type ProtoBufParser<Spec...>::addField(std::pair<unsigned char *, uint64_t> const &value)
 {
   //std::cout << "Repeated -> go!" << std::endl;
@@ -840,7 +878,7 @@ inline typename std::enable_if<std::is_same<typename std::remove_reference<declt
 
 // add optional things
 template <typename... Spec>
-template <int idx>
+template <unsigned int idx>
 inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type const &value)
 {
   //std::cout << "Optional -> go!" << std::endl;
@@ -855,7 +893,7 @@ inline bool ProtoBufParser<Spec...>::addField(typename std::remove_reference<dec
 
 // specialization for optional BYTES
 template <typename... Spec>
-template <int idx>
+template <unsigned int idx>
 inline typename std::enable_if<std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value, bool>::type ProtoBufParser<Spec...>::addField(std::pair<unsigned char *, uint64_t> const &value)
 {
   //std::cout << "Optional -> go!" << std::endl;
