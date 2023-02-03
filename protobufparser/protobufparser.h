@@ -942,13 +942,14 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
     int32_t field    = (d_data[localpos] & 0b00000000000000000000000001111000) >> 3;
     int32_t wiretype = d_data[localpos] & 0b00000000000000000000000000000111;
     int fieldshift = 4;
-    while (d_data[localpos] & 0b00000000000000000000000010000000 && // skipping the shift
-           localpos < d_size - 1)
+    unsigned int localpos2 = localpos;
+    while (d_data[localpos2] & 0b00000000000000000000000010000000 && // skipping the shift
+           localpos2 < d_size - 1)
     {
-      field |= (d_data[++localpos] & 0b00000000000000000000000001111111) << fieldshift;
+      field |= (d_data[++localpos2] & 0b00000000000000000000000001111111) << fieldshift;
       fieldshift += 7;
     }
-    int nextpos = localpos + 1;
+    int nextpos = localpos2 + 1;
 
     switch (wiretype)
     {
