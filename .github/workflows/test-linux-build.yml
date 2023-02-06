@@ -2,8 +2,13 @@ name: Test Linux build
 
 on:
   push:
+    tags-ignore:
+      - '[0-9]*'
+    branches:
+      - master
     paths-ignore:
       - '**/README.md'
+      - '.github/workflows/*.yml'
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
