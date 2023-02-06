@@ -286,7 +286,7 @@ class SignalBackup
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
                        std::map<std::string, long long int> *savedmap) const;
   long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
-  std::string getNameFromUuid(std::string const &uuid) const;
+  inline std::string getNameFromUuid(std::string const &uuid) const;
   std::string getNameFromRecipientId(long long int id) const;
   void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
                                   long long int msg_id, bool is_mms, bool isgroup) const;
@@ -627,6 +627,11 @@ inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &da
       d_database.changed() != 1)
     return false;
   return true;
+}
+
+inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
+{
+  return getNameFromRecipientId(getRecipientIdFromUuid(uuid, nullptr));
 }
 
 #endif
