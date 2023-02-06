@@ -137,7 +137,7 @@ message DecryptedModifyMemberRole {
   Member.Role role = 2;
 }
 */
-typedef ProtoBufParser<protobuffer::optional::BYTES, Member> DecryptedModifyMemberRole;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM> DecryptedModifyMemberRole;
 
 /*
 message DecryptedString {

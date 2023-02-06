@@ -128,39 +128,56 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   }
   if (Types::isGroupUpdate(type) && Types::isGroupV2(type))
   {
-    /*
+
     //std::cout << body << std::endl;
     DecryptedGroupV2Context groupv2ctx(body);
     //groupv2ctx.print();
 
+    std::string statusmsg;
+
     if (groupv2ctx.getField<2>().has_value())
     {
       DecryptedGroupChange groupchange = groupv2ctx.getField<2>().value();
-      std::cout << bepaald::bytesToHexString(groupchange.data(), groupchange.size()) << std::endl;
-      groupchange.print();
+      //std::cout << bepaald::bytesToHexString(groupchange.data(), groupchange.size()) << std::endl;
+      //groupchange.print();
 
       // check group title changed
       if (groupchange.getField<10>().has_value() &&
           groupchange.getField<10>().value().getField<1>().has_value())
       {
-        std::cout << "NEW TITLE: " << groupchange.getField<10>().value().getField<1>().value() << std::endl; // string
-        return "Group name is now '" + groupchange.getField<10>().value().getField<1>().value() + "'.";
+        statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " changed the group name to \"" + groupchange.getField<10>().value().getField<1>().value() + "\".";
+      }
+
+      // check group description changed
+      if (groupchange.getField<20>().has_value()/* && groupchange.getField<20>().value().getField<1>().has_value()*/)
+      {
+        statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " changed the group description.";
       }
 
       // check group avatar changed
-      if (groupchange.getField<11>().has_value() &&
-          groupchange.getField<11>().value().getField<1>().has_value())
+      if (groupchange.getField<11>().has_value()/* && groupchange.getField<11>().value().getField<1>().has_value()*/)
       {
-        std::cout << "NEW AVATAR: " << groupchange.getField<11>().value().getField<1>().value() << std::endl; // string
-        return "NEW AVATAR: " + groupchange.getField<11>().value().getField<1>().value();
+        statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " changed the group avatar.";
       }
 
       // check group timer changed
-      if (groupchange.getField<12>().has_value() &&
-          groupchange.getField<12>().value().getField<1>().has_value())
+      if (groupchange.getField<12>().has_value()/* && groupchange.getField<12>().value().getField<1>().has_value()*/)
       {
-        std::cout << "NEW TIMER: " << groupchange.getField<12>().value().getField<1>().value() << std::endl; // uint32
-        return "NEW TIMER: " + bepaald::toString(groupchange.getField<12>().value().getField<1>().value());
+        uint32_t newexp = groupchange.getField<12>().value().getField<1>().value_or(0);
+        std::string time;
+        if (newexp == 0)
+          time = "Off";
+        else if (newexp < 60) // less than full minute
+          time = bepaald::toString(newexp) + " second" + (newexp > 1 ? "s" : "");
+        else if (newexp < 60 * 60) // less than full hour
+          time = bepaald::toString(newexp / 60) + " minute" + ((newexp / 60) > 1 ? "s" : "");
+        else if (newexp < 24 * 60 * 60) // less than full day
+          time = bepaald::toString(newexp / (60 * 60)) + " hour" + ((newexp / (60 * 60)) > 1 ? "s" : "");
+        else if (newexp < 7 * 24 * 60 * 60) // less than full week
+          time = bepaald::toString(newexp / (24 * 60 * 60)) + " day" + ((newexp / (24 * 60 * 60)) > 1 ? "s" : "");
+        else // show newexp in number of weeks
+          time = bepaald::toString(newexp / (7 * 24 * 60 * 60)) + " week" + ((newexp / (7 * 24 * 60 * 60)) > 1 ? "s" : "");
+        statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " set the disappearing message timer to " + time + ".";
       }
 
       // check new member:
@@ -168,23 +185,67 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       for (uint i = 0; i < newmembers.size(); ++i)
       {
         auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-        std::cout << "NEW MEMBER: " << bepaald::bytesToHexString(uuid, uuid_size) << std::endl;
-        return "NEW MEMBER: " + bepaald::bytesToHexString(uuid, uuid_size);
+        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " added " + getNameFromUuid(uuidstr) + ".";
       }
 
       // check members left:
       auto deletedmembers = groupchange.getField<4>();
-      for (uint i = 0; i < deletedmembers.size(); ++i)
+      for (uint i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
       {
         auto [uuid, uuid_size] = deletedmembers[i]; // bytes
-        std::cout << "DELETED MEMBER: " << bepaald::bytesToHexString(uuid, uuid_size) << std::endl;
-        return "DELETED MEMBER: " + bepaald::bytesToHexString(uuid, uuid_size);
+        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " removed " + getNameFromUuid(uuidstr) + ".";
       }
 
-      std::cout << "" << std::endl;
+      // check memberrole change
+      auto memberrolechanges = groupchange.getField<5>();
+      for (uint i = 0; i < memberrolechanges.size(); ++i) // I dont know how this can be more than size() == 1
+      {
+        DecryptedModifyMemberRole mr = memberrolechanges[i];
+
+        std::string uuidstr;
+        if (mr.getField<1>().has_value())
+        {
+          auto [uuid, uuid_size] = mr.getField<1>().value();
+          uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+          uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
+        /*
+          message Member {
+          enum Role {
+          UNKNOWN       = 0;
+          DEFAULT       = 1;
+          ADMINISTRATOR = 2;
+          }*/
+        int newrole = mr.getField<2>().value_or(0);
+
+        if (newrole == 2)
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " made " + getNameFromUuid(uuidstr) + " an admin.";
+        else
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " revoked admin privileges from " + getNameFromUuid(uuidstr) + ".";
+      }
+
+      // // check members left:
+      // auto deletedmembers = groupchange.getField<4>();
+      // for (uint i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
+      // {
+      //   auto [uuid, uuid_size] = deletedmembers[i]; // bytes
+      //   std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+      //   uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+      //   statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " removed " + getNameFromUuid(uuidstr) + ".";
+      // }
     }
-    */
-    return "(group V2 update)";
+
+    if (statusmsg.empty())
+    {
+      //std::cout << body << std::endl;
+      //groupv2ctx.print();
+      return "(group V2 update)";
+    }
+    return statusmsg;
   }
 
 
