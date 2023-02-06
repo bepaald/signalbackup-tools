@@ -17,9 +17,9 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20230206.164210"
-
-#endif
+std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
+{
+  return getNameFromRecipientId(getRecipientIdFromUuid(uuid, nullptr));
+}
