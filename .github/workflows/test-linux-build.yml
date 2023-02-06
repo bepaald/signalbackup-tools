@@ -9,6 +9,7 @@ on:
     paths-ignore:
       - '**/README.md'
       - '.github/workflows/*.yml'
+      - '**/autoversion.h'
 
 # This allows a subsequently queued workflow run to interrupt previous runs
 concurrency:
