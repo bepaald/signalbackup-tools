@@ -20,57 +20,132 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
-                                   std::map<long long int, RecipientInfo> const &recipients_info, bool incoming, bool isquote) const
+                                   std::map<long long int, RecipientInfo> const &recipients_info, bool incoming,
+                                   std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const
 {
   if (body->empty())
     return false;
 
   using namespace std::string_literals;
 
-  // std::string orig(*body);
-  // bool changed = false;
-
-  std::set<int> positions_excluded_from_escape;
+  std::vector<Range> ranges;
 
   // First, do mentions
-  int positions_added = 0;
   for (auto const &m : mentions)
   {
+    // m1 : uuid, m2: start, m3: length
     std::string author;
     if (recipients_info.contains(std::get<0>(m)))
       author = recipients_info.at(std::get<0>(m)).display_name;
     if (!author.empty())
     {
-      // NOTE: range_length is always 1, even though we need to replace all
-      // 3 bytes of the replacement character \xEF\xBF\xBC. Maybe the internal
-      // database is UTF16 (where this is 1 char), even though the exported backup
-      // is UTF8?
-      if (!isquote)
-      {
-        std::string span = "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">";
-
-        body->replace(std::get<1>(m) + positions_added, 3, span + "@" + author + "</span>");
-
-        positions_excluded_from_escape.insert(std::get<1>(m) + positions_added); // first '<'
-        positions_excluded_from_escape.insert(std::get<1>(m) + positions_added + STRLEN("<span class=\"") - 1); // first '"'
-        positions_excluded_from_escape.insert(std::get<1>(m) + positions_added + (span.size() - 2)); // last '"'
-        positions_excluded_from_escape.insert(std::get<1>(m) + positions_added + (span.size() - 1)); // first '>'
-        positions_excluded_from_escape.insert(std::get<1>(m) + positions_added + (span.size() - 1) + 1 + author.length() + 1); // last '<'
-        positions_excluded_from_escape.insert(std::get<1>(m) + positions_added + (span.size() - 1) + 1 + author.length() + STRLEN("</span>")); // last '>'
-
-        positions_added += author.length() + span.size() + 1 + STRLEN("</span>") - 1; // minus 1 for the char we are replacing
-      }
-      else
-      {
-        body->replace(std::get<1>(m) + positions_added, 3, "@" + author);
-        positions_added += author.length() + 1 - 1; // minus 1 for the char we are replacing
-      }
-      //changed = true;
+      ranges.emplace_back(Range{std::get<1>(m), std::get<2>(m),
+                                (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
+                                "@" + author,
+                                (isquote ? "" : "</span>")});
     }
   }
 
+  // now do other stylings?
+  if (brdata.second)
+  {
+    BodyRanges brsproto(brdata);
+    //brsproto.print();
+
+    auto brs = brsproto.getField<1>();
+    for (auto const &br : brs)
+    {
+      int start = br.getField<1>().value_or(0);
+      int length = br.getField<2>().value_or(0);
+      if (!length)
+        continue;
+
+      // get mention
+      //std::string mentionuuid = br.getField<3>().value_or(std::string());
+
+      // get style
+      int style = br.getField<4>().value_or(-1);
+
+      // get link
+      std::string link = br.getField<5>().value_or(std::string());
+
+      if (style > -1)
+      {
+        //std::cout << "Adding style to range [" << start << "-" << start+length << "] : " << style << std::endl;
+        switch (style)
+        {
+          case 0: // BOLD
+          {
+            ranges.emplace_back(Range{start, length, "<b>", "", "</b>"});
+            break;
+          }
+          case 1: // ITALIC
+          {
+            ranges.emplace_back(Range{start, length, "<i>", "", "</i>"});
+            break;
+          }
+          case 2: // SPOILER
+          {
+            //ranges.emplace_back(Range{start, length, "<<span class=\"spoiler\">", "", "</span>"});
+            /* PLUS:
+               .spoiler
+               {
+                 color: black;
+                 background-color: black;
+               }
+
+               .spoiler:hover
+               {
+                 background-color: white; // inherit/default?
+               }
+             */
+            break;
+          }
+          case 3: // STRIKETHROUGH
+          {
+            ranges.emplace_back(Range{start, length, "<s>", "", "</s>"}); // or <del>? or <span class="strikthrough">?
+            break;
+          }
+          case 4: // MONOSPACE
+          {
+            // <span class=\"monospace\"> </span>
+            /* PLUS:
+               .monospace
+               {
+                 font-family: 'Roboto Mono', 'others...',  monospace;
+               }
+             */
+            break;
+          }
+          default:
+          {
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                      << ": Unsupported range-style: " << style << std::endl;
+          }
+        }
+      }
+      if (!link.empty())
+      {
+        //std::cout << "Adding link to range [" << start << "-" << start+length << link << "'" << std::endl;
+        //std::string bodydouble = *body;
+        //std::cout << *body << std::endl;
+        //HTMLhandleRange(body, start, length, "<a href=\"" + link + "\">", "", "</a>", -1, &positions_added, &positions_excluded_from_escape);
+        ranges.emplace_back(Range{start, length, "<a href=\"" + link + "\">", "", "</a>"});
+        //std::cout << *body << std::endl;
+        //for (auto n : positions_excluded_from_escape)
+        //  std::cout << n << std::endl;
+        //*body = bodydouble;
+      }
+      // if (!mentionuuid.empty())
+      //   std::cout << "Adding mention to range [" << start << "-" << start+length << "] : '" << mentionuuid << "'" << std::endl;
+    }
+  }
+
+  std::set<int> positions_excluded_from_escape;
+  HTMLhandleRanges(body, &ranges, &positions_excluded_from_escape);
+
   // escape special html chars second, so the span's added by emojifinder (next) aren't escaped
-  positions_added = 0;
+  int positions_added = 0;
   for (uint i = 0; i < body->length(); ++i)
   {
     //std::cout << "I, POSITIONS_ADDED: " << i << "," << positions_added << std::endl;
@@ -161,4 +236,143 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   //   std::cout << "ORIG: " << orig << std::endl;
   //   std::cout << "NEW : " << *body << std::endl;
   // }
+}
+
+void SignalBackup::HTMLhandleRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const
+{
+  HTMLprepRanges(ranges);
+
+  unsigned int rangesidx = 0;
+  unsigned int bodyidx = 0;
+  while (bodyidx < body->size() && rangesidx < ranges->size())
+  {
+    //std::cout << "Checking char idx: " << bodyidx << "('" << body->at(bodyidx) << "') for range with start: " << ranges->at(rangesidx).start << std::endl;
+
+    int charsize = bytesToUtf8CharSize(body, bodyidx);
+    if (bodyidx == ranges->at(rangesidx).start)
+    {
+      int length = bytesToUtf8CharSize(body, bodyidx, ranges->at(rangesidx).length);
+      std::string pre = ranges->at(rangesidx).pre;
+      std::string replacement = ranges->at(rangesidx).replacement;
+      std::string post = ranges->at(rangesidx).post;
+
+      if (replacement.empty())
+        replacement = body->substr(bodyidx, length);
+
+      body->replace(bodyidx, length, pre + replacement + post);
+
+      for (uint i = 0; i < pre.size(); ++i)
+        if (pre[i] == '<' || pre[i] == '>' || pre[i] == '\'' || pre[i] == '"' || pre[i] == '&')
+          positions_excluded_from_escape->insert(i + bodyidx);
+      for (uint i = 0; i < post.size(); ++i)
+        if (post[i] == '<' || post[i] == '>' || post[i] == '\'' || post[i] == '"' || post[i] == '&')
+          positions_excluded_from_escape->insert(i + bodyidx + pre.size() + replacement.size());
+
+      //std::cout << "BODY: " << *body << std::endl;
+
+      for (uint i = rangesidx + 1; i < ranges->size(); ++i)
+        ranges->at(i).start += pre.size() + post.size() + (replacement.size() - ranges->at(rangesidx).length);
+
+      // skip the just inserted string
+      bodyidx += pre.size() + post.size() + replacement.size();
+
+      // look for next range
+      // while the prepwork should make sure it is the first one,
+      // interactions with mention replacements might throw it off?
+      // just to be sure, lets not just `++rangesidx'
+      while (++rangesidx < ranges->size() && ranges->at(rangesidx).start < bodyidx)
+        ;
+      continue;
+    }
+
+    // update all following ranges for multibyte char
+    if (charsize > 1)
+      for (uint i = rangesidx; i < ranges->size(); ++i)
+        ranges->at(i).start += charsize - 1;
+
+    // next char...
+    bodyidx += charsize;
+  }
+}
+
+// this makes sure overlapping ranges are converted into
+// (multiple if necessary) non-overlapping ranges
+// currently only works for non-replacing ranges, not sure
+// how replacing and non-replacing ranges interact (when
+// a body with a mention is made bold for example). Maybe
+// when it's implemented in the app it will be clear.
+void SignalBackup::HTMLprepRanges(std::vector<Range> *ranges) const
+{
+  std::sort(ranges->begin(), ranges->end());
+  // std::cout << "got range:" << std::endl;
+  // for (auto const &r : *ranges)
+  //   std::cout << "[" << r.start << "-" << r.start + r.length << "] '" << r.pre << "' '" << r.post << "'" << std::endl;
+
+  for (uint i = 1; i < ranges->size(); ++i)
+  {
+    if (!ranges->at(i).replacement.empty() || !ranges->at(i - 1).replacement.empty()) // not supported for now...?
+      continue;
+
+    if (ranges->at(i).start == ranges->at(i - 1).start)
+    {
+      // combine into 1
+      ranges->at(i - 1).pre += ranges->at(i).pre;
+      ranges->at(i - 1).post = ranges->at(i).post + ranges->at(i - 1).post;
+      if (ranges->at(i).length == ranges->at(i -1).length)
+      {
+        //std::cout << "SAME START, SAME FINISH" << std::endl;
+        ranges->erase(ranges->begin() + i);
+        return HTMLprepRanges(ranges);
+      }
+      //std::cout << "SAME START, LATER FINISH" << std::endl;
+      // else -> i.length > (i - 1).length
+      ranges->at(i).start = ranges->at(i - 1).start + ranges->at(i - 1).length;
+      ranges->at(i).length -= ranges->at(i - 1).length;
+      return HTMLprepRanges(ranges);
+    }
+    // else (i).start > (i - 1).start)
+    if (ranges->at(i).start + ranges->at(i).length == ranges->at(i - 1).start + ranges->at(i - 1).length) // same end pos
+    {
+      //std::cout << "LATER START, SAME FINISH" << std::endl;
+      ranges->at(i - 1).length = ranges->at(i).start - ranges->at(i - 1).start;
+      ranges->at(i).pre += ranges->at(i - 1).pre;
+      ranges->at(i).post = ranges->at(i - 1).post + ranges->at(i).post;
+      return HTMLprepRanges(ranges);
+    }
+    if (ranges->at(i).start < ranges->at(i - 1).start + ranges->at(i - 1).length)
+    {
+      if (ranges->at(i).start + ranges->at(i).length > ranges->at(i - 1).start + ranges->at(i - 1).length) // end later
+      {
+        //std::cout << "LATER START, LATER FINISH" << std::endl;
+        Range newrange = {ranges->at(i).start,
+                          ranges->at(i - 1).length - (ranges->at(i).start - ranges->at(i - 1).start),
+                          ranges->at(i - 1).pre + ranges->at(i).pre,
+                          "",
+                          ranges->at(i).post + ranges->at(i - 1).post};
+        ranges->emplace_back(newrange);
+
+        ranges->at(i - 1).length = newrange.start - ranges->at(i - 1).start;
+
+        ranges->at(i).start = newrange.start + newrange.length;
+        ranges->at(i).length -= newrange.length;
+
+        return HTMLprepRanges(ranges);
+      }
+      //if (ranges->at(i).start + ranges->at(i).length < ranges->at(i - 1).start + ranges->at(i - 1).length) // end sooner
+      //std::cout << "LATER START, EARLIER FINISH" << std::endl;
+      Range newrange = {ranges->at(i).start + ranges->at(i).length,
+                        ranges->at(i - 1).start + ranges->at(i - 1).length - (ranges->at(i).start + ranges->at(i).length),
+                        ranges->at(i - 1).pre,
+                        "",
+                        ranges->at(i - 1).post};
+      ranges->emplace_back(newrange);
+
+      ranges->at(i - 1).length = ranges->at(i).start - ranges->at(i - 1).start;
+
+      ranges->at(i).pre += ranges->at(i - 1).pre;
+      ranges->at(i).post = ranges->at(i - 1).post + ranges->at(i).post;
+      return;
+    }
+  }
+  // std::cout << "DONE!" << std::endl;
 }

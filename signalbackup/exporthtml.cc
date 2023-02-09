@@ -173,7 +173,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     d_database.exec("SELECT "s
                     "_id, recipient_id, body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, remote_deleted, expires_in "
+                    "delivery_receipt_count, read_receipt_count, remote_deleted, expires_in, message_ranges "
                     "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
 
     std::string previous_day_change;
@@ -243,8 +243,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
         mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
                                               mention_results.getValueAs<long long int>(mi, "range_start"),
                                               mention_results.getValueAs<long long int>(mi, "range_length")));
+      std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
+      if (!messages.isNull(i, "message_ranges"))
+        brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_ranges");
 
-      bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, false /*isquote*/);
+      bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, false /*isquote*/);
 
       bool nobackground = false;
       if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
@@ -257,8 +260,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
       // message BodyRangeList {
       //     message BodyRange {
       //         enum Style {
-      //             BOLD   = 0;
-      //             ITALIC = 1;
+      //             BOLD          = 0;
+      //             ITALIC        = 1;
+      //             SPOILER       = 2;
+      //             STRIKETHROUGH = 3;
+      //             MONOSPACE     = 4;
       //         }
       //
       //         message Button {
@@ -296,7 +302,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
             mentions.emplace_back(std::make_tuple(mrid, start, length));
         }
       }
-      HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, true);
+      HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, {nullptr, 0}, true);
 
       // insert date-change message
       if (readable_date_day != previous_day_change)
