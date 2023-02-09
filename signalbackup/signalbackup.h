@@ -140,6 +140,23 @@ class SignalBackup
     bool hasavatar;
   };
 
+  // data that defines ranges in a message body to be replaced for html output
+  struct Range
+  {
+    long long int start;
+    long long int length;
+    std::string pre;
+    std::string replacement;
+    std::string post;
+    bool operator<(Range const &other)
+    {
+      return (start < other.start) ||
+        (start == other.start && start + length < other.start + other.length) ||
+        (start == other.start && start + length < other.start + other.length && replacement < other.replacement);
+
+    };
+  };
+
   static char const *const s_emoji_unicode_list[3655];
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
@@ -300,13 +317,18 @@ class SignalBackup
   std::set<long long int> getAllThreadRecipients(long long int t) const;
   void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
-                       std::map<long long int, RecipientInfo> const &recipients_info, bool incoming, bool isquote) const;
+                       std::map<long long int, RecipientInfo> const &recipients_info, bool incoming,
+                       std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
+  void HTMLprepRanges(std::vector<Range> *ranges) const;
+  void HTMLhandleRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
+  inline int bytesToUtf8CharSize(std::string const *const body, int idx, int length = 1) const;
+  inline int utf8CharsToByteSize() const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -632,6 +654,28 @@ inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &da
 inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
 {
   return getNameFromRecipientId(getRecipientIdFromUuid(uuid, nullptr));
+}
+
+inline int SignalBackup::bytesToUtf8CharSize(std::string const *const body, int idx, int length) const
+{
+  int ret = 0;
+  for (int i = idx; i < idx + length; ++i)
+  {
+    if ((static_cast<uint8_t>((*body)[i]) & 0b11111000) == 0b11110000) // 4 byte char
+      ret += 4;
+    else if ((static_cast<uint8_t>((*body)[i]) & 0b11110000) == 0b11100000) // 3 byte char
+      ret += 3;
+    else if ((static_cast<uint8_t>((*body)[i]) & 0b11100000) == 0b11000000) // 2 byte char
+      ret += 2;
+    else
+      ret += 1;
+  }
+  return ret;
+}
+
+inline int SignalBackup::utf8CharsToByteSize() const
+{
+  return 0;
 }
 
 #endif

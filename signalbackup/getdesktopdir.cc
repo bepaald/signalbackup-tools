@@ -32,7 +32,13 @@ std::pair<std::string, std::string> SignalBackup::getDesktopDir() const
   std::string home = std::string(homedrive_cs) + std::string(homepath_cs);
   if (home.empty())
     return {std::string(), std::string()};
-  return {home + "/AppData/Roaming/Signal", home + "/AppData/Roaming/Signal"};
+
+  if (bepaald::isDir(home + "/AppData/Roaming/Signal"))
+    return {home + "/AppData/Roaming/Signal", home + "/AppData/Roaming/Signal"};
+  else if (bepaald::isDir(home + "/AppData/Roaming/Signal Beta"))
+    return {home + "/AppData/Roaming/Signal Beta", home + "/AppData/Roaming/Signal Beta"};
+  else
+    return {std::string(), std::string()};
 #else
   char const *homedir_cs = getenv("HOME");
   if (homedir_cs == nullptr)
@@ -41,9 +47,19 @@ std::pair<std::string, std::string> SignalBackup::getDesktopDir() const
   if (homedir.empty())
     return {std::string(), std::string()};
 #if defined(__APPLE__) && defined(__MACH__)
-  return {homedir + "/Library/Application Support/Signal", homedir + "/Library/Application Support/Signal"};
+  if (bepaald::isDir(homedir + "/Library/Application Support/Signal"))
+    return {homedir + "/Library/Application Support/Signal", homedir + "/Library/Application Support/Signal"};
+  if (bepaald::isDir(homedir + "/Library/Application Support/Signal Beta"))
+    return {homedir + "/Library/Application Support/Signal Beta", homedir + "/Library/Application Support/Signal Beta"};
+  else
+    return {std::string(), std::string()};
 #else // !windows && !mac
-  return {homedir + "/.config/Signal", homedir + "/.config/Signal"};
+  if (bepaald::isDir(homedir + "/.config/Signal"))
+    return {homedir + "/.config/Signal", homedir + "/.config/Signal"};
+  if (bepaald::isDir(homedir + "/.config/Signal Beta"))
+    return {homedir + "/.config/Signal Beta", homedir + "/.config/Signal Beta"};
+  else
+    return {std::string(), std::string()};
 #endif
 #endif
 }
