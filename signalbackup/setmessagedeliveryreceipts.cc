@@ -39,9 +39,9 @@ void SignalBackup::setMessageDeliveryReceipts(SqliteDB const &ddb, long long int
                 "delivery_details.key AS conv_id,"
                 "conversations.uuid AS uuid,"
                 "json_extract(delivery_details.value, '$.status') AS status,"
-                "json_extract(delivery_details.value, '$.updatedAt') AS updated_timestamp"
+                "COALESCE(json_extract(delivery_details.value, '$.updatedAt'), delivery_details.sent_at) AS updated_timestamp"
                 " FROM "
-                "(SELECT key,value FROM messages,json_each(messages.json, '$.sendStateByConversationId') WHERE rowid IS ?) delivery_details"
+                "(SELECT sent_at,key,value FROM messages,json_each(messages.json, '$.sendStateByConversationId') WHERE rowid IS ?) delivery_details"
                 " LEFT JOIN conversations ON conversations.id IS conv_id", rowid, &status_results))
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting message delivery status" << std::endl;
@@ -66,7 +66,7 @@ void SignalBackup::setMessageDeliveryReceipts(SqliteDB const &ddb, long long int
       if (status_results.valueAsString(i, "status") == "Delivered")
       {
         ++deliveryreceiptcount;
-        if (isgroup) // add per-group-member details to cdelivery_receipts table
+        if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
           long long int member_uuid = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
           if (member_uuid == -1)
@@ -84,7 +84,7 @@ void SignalBackup::setMessageDeliveryReceipts(SqliteDB const &ddb, long long int
       else if (status_results.valueAsString(i, "status") == "Read")
       {
         ++readreceiptcount;
-        if (isgroup) // add per-group-member details to cdelivery_receipts table
+        if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
           long long int member_uuid = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
           if (member_uuid == -1)
