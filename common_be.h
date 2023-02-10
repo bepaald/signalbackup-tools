@@ -77,7 +77,7 @@ namespace bepaald
   template <typename T>
   void destroyPtr(unsigned char **p, T *psize);
   template <typename T>
-  inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  inline std::string toString(T const &num, bool hex = false, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
   inline bool fileOrDirExists(std::string const &path);
@@ -203,10 +203,10 @@ inline void bepaald::destroyPtr(unsigned char **p, T *psize)
 }
 
 template <typename T>
-inline std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
+inline std::string bepaald::toString(T const &num, bool hex, typename std::enable_if<std::is_integral<T>::value>::type *)
 {
   std::ostringstream oss;
-  oss << num;
+  oss << (hex ? std::hex : std::dec) << num << std::dec;
   return oss.str();
 }
 

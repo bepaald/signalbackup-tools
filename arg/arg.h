@@ -39,8 +39,8 @@ class Arg
   std::string d_progname;
   std::string d_input;
   std::string d_passphrase;
-  std::vector<int> d_importthreads;
-  std::vector<int> d_limittothreads;
+  std::vector<long long int> d_importthreads;
+  std::vector<long long int> d_limittothreads;
   std::string d_output;
   std::string d_opassphrase;
   std::string d_source;
@@ -117,8 +117,8 @@ class Arg
   inline std::string const &input() const;
   inline std::string const &passphrase() const;
   inline void setpassphrase(std::string const &val);
-  inline std::vector<int> const &importthreads() const;
-  inline std::vector<int> const &limittothreads() const;
+  inline std::vector<long long int> const &importthreads() const;
+  inline std::vector<long long int> const &limittothreads() const;
   inline std::string const &output() const;
   inline std::string const &opassphrase() const;
   inline void setopassphrase(std::string const &val);
@@ -219,12 +219,12 @@ inline void Arg::setpassphrase(std::string const &val)
   d_passphrase = val;
 }
 
-inline std::vector<int> const &Arg::importthreads() const
+inline std::vector<long long int> const &Arg::importthreads() const
 {
   return d_importthreads;
 }
 
-inline std::vector<int> const &Arg::limittothreads() const
+inline std::vector<long long int> const &Arg::limittothreads() const
 {
   return d_limittothreads;
 }

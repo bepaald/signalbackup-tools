@@ -27,8 +27,8 @@ Arg::Arg(int argc, char *argv[])
   d_progname(argv[0]),
   d_input(std::string()),
   d_passphrase(std::string()),
-  d_importthreads(std::vector<int>()),
-  d_limittothreads(std::vector<int>()),
+  d_importthreads(std::vector<long long int>()),
+  d_limittothreads(std::vector<long long int>()),
   d_output(std::string()),
   d_opassphrase(std::string()),
   d_source(std::string()),
@@ -147,7 +147,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
         {
-          int tmp;
+          long long int tmp;
           if (!ston(&tmp, std::string("-1")))
           {
             std::cerr << "Bad special value in argument spec file!" << std::endl;
@@ -177,7 +177,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
         {
-          int tmp;
+          long long int tmp;
           if (!ston(&tmp, std::string("-1")))
           {
             std::cerr << "Bad special value in argument spec file!" << std::endl;

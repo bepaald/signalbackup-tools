@@ -25,7 +25,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> const &limittothreads, bool overwrite, bool append) const
+bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads, bool overwrite, bool append) const
 {
   using namespace std::string_literals;
 
@@ -76,8 +76,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     }
   }
 
-  std::vector<int> threads = ((limittothreads.empty() || (limittothreads.size() == 1 && limittothreads[0] == -1)) ?
-                              threadIds() : limittothreads);
+  std::vector<long long int> threads = ((limittothreads.empty() || (limittothreads.size() == 1 && limittothreads[0] == -1)) ?
+                                        threadIds() : limittothreads);
 
   std::map<long long int, RecipientInfo> recipient_info;
 
@@ -173,7 +173,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     d_database.exec("SELECT "s
                     "_id, recipient_id, body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, remote_deleted, expires_in, message_ranges "
+                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0), expires_in, message_ranges "
                     "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
 
     std::string previous_day_change;
@@ -235,6 +235,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
       else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
                Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
         body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
+      else if (Types::isStatusMessage(type))
+        body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
 
       // prep body (scan emoji? -> in <span>) and handle mentions...
       // if (prepbody)
@@ -256,53 +258,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
 
       // same for quote_body!
       mentions.clear();
-      // protospec (app/src/main/proto/Database.proto):
-      // message BodyRangeList {
-      //     message BodyRange {
-      //         enum Style {
-      //             BOLD          = 0;
-      //             ITALIC        = 1;
-      //             SPOILER       = 2;
-      //             STRIKETHROUGH = 3;
-      //             MONOSPACE     = 4;
-      //         }
-      //
-      //         message Button {
-      //             string label  = 1;
-      //             string action = 2;
-      //         }
-      //
-      //         int32 start  = 1;
-      //         int32 length = 2;
-      //
-      //         oneof associatedValue {
-      //             string mentionUuid = 3;
-      //             Style  style       = 4;
-      //             string link        = 5;
-      //             Button button      = 6;
-      //         }
-      //     }
-      //     repeated BodyRange ranges = 1;
-      // }
+      std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
       if (!messages.isNull(i, "quote_mentions"))
-      {
-        std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "quote_mentions");
-        ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::INT32, // int32 start
-                                                  protobuffer::optional::INT32, // int32 length
-                                                  protobuffer::optional::STRING // in place of the oneof?
-                                                  >>> bodyrangelist(quote_mentions.first.get(), quote_mentions.second);
-        for (uint qm = 0; qm < bodyrangelist.getField<1>().size(); ++qm)
-        {
-          long long int start = bodyrangelist.getField<1>()[qm].getField<1>().value_or(-1);
-          long long int length = bodyrangelist.getField<1>()[qm].getField<2>().value_or(-1);
-          std::string uuid = bodyrangelist.getField<1>()[qm].getField<3>().value_or("");
-          long long int mrid = getRecipientIdFromUuid(uuid, nullptr);
-          //std::cout << start << " " << length << " " << mrid << std::endl;
-          if (start > -1 && length > -1 && mrid > -1)
-            mentions.emplace_back(std::make_tuple(mrid, start, length));
-        }
-      }
-      HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, {nullptr, 0}, true);
+        quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "quote_mentions");
+      HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, true);
 
       // insert date-change message
       if (readable_date_day != previous_day_change)
@@ -346,6 +305,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<int> con
     htmloutput << "</html>" << std::endl;
 
   }
+
+  HTMLwriteIndex(threads, directory, recipient_info, overwrite, append);
 
   std::cout << "All done!" << std::endl;
   return true;

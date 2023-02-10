@@ -57,11 +57,23 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
     {
       int start = br.getField<1>().value_or(0);
       int length = br.getField<2>().value_or(0);
-      if (!length)
+      if (!length) // maybe legal? no length == rest of string? (like no start is beg)
         continue;
 
       // get mention
-      //std::string mentionuuid = br.getField<3>().value_or(std::string());
+      std::string mentionuuid = br.getField<3>().value_or(std::string());
+      if (!mentionuuid.empty())
+      {
+        long long int authorid = getRecipientIdFromUuid(mentionuuid, nullptr);
+        std::string author;
+        if (recipients_info.contains(authorid))
+          author = recipients_info.at(authorid).display_name;
+        if (!author.empty())
+          ranges.emplace_back(Range{start, length,
+                                    (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
+                                    "@" + author,
+                                    (isquote ? "" : "</span>")});
+      }
 
       // get style
       int style = br.getField<4>().value_or(-1);
@@ -130,7 +142,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
         //std::string bodydouble = *body;
         //std::cout << *body << std::endl;
         //HTMLhandleRange(body, start, length, "<a href=\"" + link + "\">", "", "</a>", -1, &positions_added, &positions_excluded_from_escape);
-        ranges.emplace_back(Range{start, length, "<a href=\"" + link + "\">", "", "</a>"});
+        ranges.emplace_back(Range{start, length, "<a class=\"styled-link\" href=\"" + link + "\">", "", "</a>"});
         //std::cout << *body << std::endl;
         //for (auto n : positions_excluded_from_escape)
         //  std::cout << n << std::endl;
@@ -144,60 +156,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   std::set<int> positions_excluded_from_escape;
   HTMLhandleRanges(body, &ranges, &positions_excluded_from_escape);
 
-  // escape special html chars second, so the span's added by emojifinder (next) aren't escaped
-  int positions_added = 0;
-  for (uint i = 0; i < body->length(); ++i)
-  {
-    //std::cout << "I, POSITIONS_ADDED: " << i << "," << positions_added << std::endl;
-    switch (body->at(i))
-    {
-      case '&':
-        if (!positions_excluded_from_escape.contains(i - positions_added))
-        {
-          body->replace(i, 1, "&amp;");
-          positions_added += STRLEN("&amp;") - 1;
-          i += STRLEN("&amp;") - 1;
-          //changed = true;
-        }
-        break;
-      case '<':
-        if (!positions_excluded_from_escape.contains(i - positions_added))
-        {
-          body->replace(i, 1, "&lt;");
-          positions_added += STRLEN("&lt;") - 1;
-          i += STRLEN("&lt;") - 1;
-          //changed = true;
-        }
-        break;
-      case '>':
-        if (!positions_excluded_from_escape.contains(i - positions_added))
-        {
-          body->replace(i, 1, "&gt;");
-          i += STRLEN("&gt;") - 1;
-          positions_added += STRLEN("&gt;") - 1;
-          //changed = true;
-        }
-        break;
-      case '"':
-        if (!positions_excluded_from_escape.contains(i - positions_added))
-        {
-          body->replace(i, 1, "&quot;");
-          i += STRLEN("&quot;") - 1;
-          positions_added += STRLEN("&quot;") - 1;
-          //changed = true;
-        }
-        break;
-      case '\'':
-        if (!positions_excluded_from_escape.contains(i - positions_added))
-        {
-          body->replace(i, 1, "&apos;");
-          i += STRLEN("&apos;") - 1;
-          positions_added += STRLEN("&apos;") - 1;
-          //changed = true;
-        }
-        break;
-    }
-  }
+  HTMLescapeString(body, &positions_excluded_from_escape);
 
   // now do the emoji
   std::vector<std::pair<unsigned int, unsigned int>> pos = HTMLgetEmojiPos(*body);

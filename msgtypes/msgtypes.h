@@ -191,7 +191,7 @@ struct Types
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
-      isProfileChange(type);
+      isProfileChange(type) || type == Types::GV1_MIGRATION_TYPE;
   }
 
 };
