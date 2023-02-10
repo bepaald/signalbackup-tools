@@ -399,7 +399,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "hasAttachments,"      // any attachment
                   "hasFileAttachments,"  // non-media files? (any attachment that does not get a preview?)
                   "hasVisualMediaAttachments," // ???
-                  "isErased,"
+                  "IFNULL(isErased, 0),"
                   "serverGuid,"
                   "sourceUuid,"
                   "seenStatus,"
