@@ -190,12 +190,12 @@ class SignalBackup
   void mergeGroups(std::vector<std::string> const &groups);
   inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles();
-  inline std::vector<int> threadIds() const;
+  inline std::vector<long long int> threadIds() const;
   bool importCSV(std::string const &file, std::map<std::string, std::string> const &fieldmap);
   bool importWAChat(std::string const &file, std::string const &fmt, std::string const &self = std::string());
   bool summarize() const;
   bool reorderMmsSmsIds() const;
-  bool dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const;
+  bool dumpMedia(std::string const &dir, std::vector<long long int> const &threads, bool overwrite) const;
   bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
   bool deleteAttachments(std::vector<long long int> const &threadids, std::string const &before,
                          std::string const &after, long long int filesize,
@@ -206,7 +206,7 @@ class SignalBackup
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
-  bool exportHtml(std::string const &directory, std::vector<int> const &threads, bool overwrite, bool append) const;
+  bool exportHtml(std::string const &directory, std::vector<long long int> const &threads, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -327,6 +327,10 @@ class SignalBackup
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
+  void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
+                      std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const;
+  void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
+  void HTMLescapeUrl(std::string *in) const;
   inline int bytesToUtf8CharSize(std::string const *const body, int idx, int length = 1) const;
   inline int utf8CharsToByteSize() const;
 };
@@ -603,9 +607,9 @@ inline void SignalBackup::addSMSMessage(std::string const &body, std::string con
   addSMSMessage(body, address, dateToMSecsSinceEpoch(timestamp), thread, incoming);
 }
 
-inline std::vector<int> SignalBackup::threadIds() const
+inline std::vector<long long int> SignalBackup::threadIds() const
 {
-  std::vector<int> res;
+  std::vector<long long int> res;
   SqliteDB::QueryResults results;
   d_database.exec("SELECT DISTINCT _id FROM thread ORDER BY _id ASC", &results);
   if (results.columns() == 1)

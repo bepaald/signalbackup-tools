@@ -17,9 +17,26 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20230210.081522"
-
-#endif
+void SignalBackup::HTMLescapeUrl(std::string *in) const
+{
+  for (uint i = 0; i < in->size(); ++i)
+  {
+    if (!(in->at(i) >= 'A' && in->at(i) <= 'Z') &&  // A-Z
+        !(in->at(i) >= 'a' && in->at(i) <= 'z') &&  // a-z
+        !(in->at(i) >= '0' && in->at(i) <= '9') &&  // 0-9
+        !(in->at(i) >= '\'' && in->at(i) <= '*') && // ' ( ) *
+        in->at(i) != '!' &&
+        in->at(i) != '-' &&
+        in->at(i) != '.' &&
+        in->at(i) != '_' &&
+        in->at(i) != '~')
+    {
+      // it is not an allowed character, escape it
+      std::string escape = "%" + bepaald::toString(static_cast<int>(in->at(i)) & 0xff, true);
+      in->replace(i, 1, escape);
+      i += escape.size() - 1;
+    }
+  }
+}

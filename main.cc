@@ -197,7 +197,7 @@ int main(int argc, char *argv[])
     bool sourcesummarized = false;
 
     std::unique_ptr<SignalBackup> source;
-    std::vector<int> threads = arg.importthreads();
+    std::vector<long long int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
 

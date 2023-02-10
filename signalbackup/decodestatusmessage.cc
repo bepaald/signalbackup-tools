@@ -248,6 +248,34 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     return statusmsg;
   }
 
+  if (type == Types::GV1_MIGRATION_TYPE)
+  {
+    if (body.empty())
+      return "This group was updated to a New Group.";
+
+    std::string b;
+    // parse body, get number of id's before '|': if one
+    //b = "A member couldn't be added to the New Group and has been invited to join."
+    // if N
+    //b = "N members couldn't be added to the New Group and have been invited to join."
+    // parse body, get number of id's after '|': if one
+    //b = "A member couldn't be added to the New Group and has been removed.";
+    // if N
+    //b = "N members couldn't be added to the New Group and have been removed.";
+    unsigned int middlepos = body.find('|');
+    int membersinvited = std::count(body.begin(), body.begin() + middlepos, ',') + (middlepos == 0 ? 0 : 1);
+    int membersremoved = std::count(body.begin() + middlepos + 1, body.end(), ',') + (middlepos == body.size() - 1 ? 0 : 1);
+    if (membersinvited == 1)
+      b = "A member couldn't be added to the New Group and has been invited to join.";
+    else if (membersinvited > 1)
+      b = bepaald::toString(membersinvited) + " members couldn't be added to the New Group and have been invited to join.";
+    if (membersremoved == 1)
+      b = (b.empty() ? std::string() : "\n") + "A member couldn't be added to the New Group and has been removed.";
+    else if (membersremoved > 1)
+      b = (b.empty() ? "" : "\n") + bepaald::toString(membersremoved) + " members couldn't be added to the New Group and have been removed.";
+
+    return b;
+  }
 
   return body;
 }

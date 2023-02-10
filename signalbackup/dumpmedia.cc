@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::dumpMedia(std::string const &dir, std::vector<int> const &threads, bool overwrite) const
+bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> const &threads, bool overwrite) const
 {
   std::cout << "Dumping media to dir '" << dir << "'" << std::endl;
 
