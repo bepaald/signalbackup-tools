@@ -48,13 +48,13 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
     "/media/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + ".bin";
   if (bepaald::fileOrDirExists(attachment_filename))
   {
-    if (append)
+    if (append) // file already exists, but we were asked to just use the existing file, so we're done
       return true;
 
-    if (!overwrite)
+    if (!overwrite) // file already exists, but we were no asked to overwrite -> error!
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": File exists. Not overwriting" << std::endl;
+                << ": Attachment file exists. Not overwriting" << std::endl;
       return false;
     }
   }

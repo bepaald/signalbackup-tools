@@ -62,6 +62,7 @@ class SqliteDB
     inline size_t rows() const;
     inline size_t columns() const;
     inline void clear();
+    void printLineMode() const;
     void prettyPrint() const;
     void print(bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
@@ -106,6 +107,9 @@ class SqliteDB
   inline bool prettyPrint(std::string const &q) const;
   inline bool prettyPrint(std::string const &q, std::any const &param) const;
   inline bool prettyPrint(std::string const &q, std::vector<std::any> const &params) const;
+  inline bool printLineMode(std::string const &q) const;
+  inline bool printLineMode(std::string const &q, std::any const &param) const;
+  inline bool printLineMode(std::string const &q, std::vector<std::any> const &params) const;
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
   inline long long int lastInsertRowid() const;
@@ -403,6 +407,24 @@ inline bool SqliteDB::prettyPrint(std::string const &q, std::vector<std::any> co
   QueryResults results;
   bool ret = exec(q, params, &results);
   results.prettyPrint();
+  return ret;
+}
+
+inline bool SqliteDB::printLineMode(std::string const &q) const
+{
+  return printLineMode(q, std::vector<std::any>());
+}
+
+inline bool SqliteDB::printLineMode(std::string const &q, std::any const &param) const
+{
+  return printLineMode(q, std::vector<std::any>{param});
+}
+
+inline bool SqliteDB::printLineMode(std::string const &q, std::vector<std::any> const &params) const
+{
+  QueryResults results;
+  bool ret = exec(q, params, &results);
+  results.printLineMode();
   return ret;
 }
 
