@@ -50,12 +50,12 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     // check actual avatar file
     if (bepaald::fileOrDirExists(directory + "/" + threaddir + "/" + avatar))
     {
-      if (append)
+      if (append) // file already exists, but we were asked to just use the existing file, so we're done
         return avatar;
-      if (!overwrite)
+      if (!overwrite) // file already exists, but we were no asked to overwrite -> error!
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                  << ": File exists. Not overwriting" << std::endl;
+                  << ": Avatar file exists. Not overwriting" << std::endl;
         return std::string();
       }
     }

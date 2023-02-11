@@ -294,7 +294,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   for (uint i = 0; i < results_all_conversations.rows(); ++i)
   {
 
-    std::cout << "Trying to match conversation (" << i + 1 << "/" << results_all_conversations.rows() << ")" << std::endl;
+    std::cout << "Trying to match conversation (" << i + 1 << "/" << results_all_conversations.rows() << ") (type: " << results_all_conversations.valueAsString(i, "type") << ")" << std::endl;
 
     // get the actual id
     bool isgroupconversation = false;
@@ -319,7 +319,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           continue;
         }
       }
-      else
+      else // group v1 maybe?
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Group V1 type not yet supported" << std::endl;
         std::cout << "ID AS STRING: " << results_all_conversations.valueAsString(i, "groupId") << std::endl;

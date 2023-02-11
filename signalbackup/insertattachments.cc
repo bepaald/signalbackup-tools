@@ -58,6 +58,16 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       continue;
     }
 
+    if (results_attachment_data.valueAsString(0, "path").empty())
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Expected attachment, but 'messages.json$.attachments[" << k << "].path is empty!" << std::endl;
+
+      std::cout << "Here is the message full data:" << std::endl;
+      ddb.prettyPrint("SELECT * FROM messages " + where);
+      continue;
+    }
+
     AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
     // PROBABLY JUST NOT AN IMAGE, WE STILL WANT THE HASH
     // if (!amd)
