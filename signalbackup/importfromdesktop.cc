@@ -328,7 +328,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         // lets just for fun try to find an old-style group with this id:
         std::string gid = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size(), true);
-        d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?))", gid);
+        d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
 
         continue;
         // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
