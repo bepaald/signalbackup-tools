@@ -206,7 +206,7 @@ class SignalBackup
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
-  bool exportHtml(std::string const &directory, std::vector<long long int> const &threads, bool overwrite, bool append) const;
+  bool exportHtml(std::string const &directory, std::vector<long long int> const &threads, long long int split, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);

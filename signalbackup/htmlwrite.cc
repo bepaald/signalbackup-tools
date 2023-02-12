@@ -88,11 +88,72 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding-left: 30px;
         padding-right: 30px;
         padding-bottom: 30px;
-        margin-bottom: 100px;
+        margin-bottom: 30px;
         background-color: #1B1C1F;
         color: white;
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         border-radius: 10px;
+      }
+
+      .navigation {
+        display: flex;
+        flex-direction: row;
+        width: 50%;
+        margin: 0 auto;
+        color: white;
+        margin-bottom: 30px;
+      }
+
+      .nav-controls {
+        margin: 0 auto;
+        display: flex;
+        flex-direction: row;
+      }
+
+      .nav-controls a:link,
+      .nav-controls a:visited,
+      .nav-controls a:hover,
+      .nav-controls a:active {
+        color: white;
+        text-decoration: none;
+      }
+
+      div .first,
+      div .last,
+      div .next,
+      div .prev {
+        display: flex;
+        flex-direction: column;
+        width: 50px;
+        aspect-ratio: 1 / 1;
+        align-items: center;
+        margin: 0 10px;
+      }
+
+      div .nav-one {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
+        width: 30px;
+        aspect-ratio: 1 / 1;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      div .nav-max {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 1.6,2.41 6.908,8 1.6,13.59 2.941,15 9.6,8 2.941,1 Z"></path><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
+        width: 30px;
+        aspect-ratio: 1 / 1;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+
+      div .nav-back {
+        transform: scaleX(-1);
+      }
+
+      div .nav-disabled {
+        filter: brightness(50%);
       }
 
       .incoming-group-msg {

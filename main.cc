@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
   if (!arg.exporthtml().empty())
-    if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.overwrite(), arg.append()))
+    if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), (arg.split_bool() ? arg.split() : -1), arg.overwrite(), arg.append()))
       return 1;
 
   if (!arg.exportcsv().empty())
