@@ -25,7 +25,8 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads, bool overwrite, bool append) const
+bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
+                              long long int split, bool overwrite, bool append) const
 {
   using namespace std::string_literals;
 
@@ -156,18 +157,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       return false;
     }
 
-    // create output-file
-    std::ofstream htmloutput(directory + "/" + threaddir + "/" + sanitizeFilename(recipient_info[thread_recipient_id].display_name) + ".html", std::ios_base::binary);
-    if (!htmloutput.is_open())
-    {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                << ": Failed to open '" << directory << "/" << threaddir << "/" << sanitizeFilename(recipient_info[thread_recipient_id].display_name) << ".html' for writing." << std::endl;
-      return false;
-    }
-
-    // create start of html (css, head, start of body
-    HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, recipient_info, overwrite, append);
-
     // now get all messages, and append them to html
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
@@ -176,134 +165,206 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0), expires_in, message_ranges "
                     "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
 
-    std::string previous_day_change;
-
-    for (uint i = 0; i < messages.rows(); ++i)
+    unsigned int messagecount = 0;
+    unsigned int max_msg_per_page = messages.rows();
+    int pagenumber = 0;
+    int totalpages = 1;
+    if (split > 0)
     {
-      long long int msg_id = messages.getValueAs<long long int>(i, "_id");
-      long long int msg_recipient_id = messages.getValueAs<long long int>(i, "recipient_id"); // for groups, this != thread_recipient_id on incoming messages
-      std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(i, "date_received") / 1000,
-                                                        "%b %d, %Y %T");
-      std::string readable_date_day = bepaald::toDateString(messages.getValueAs<long long int>(i, "date_received") / 1000,
-                                                            "%b %d, %Y");
-      bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(i, d_mms_type));
-      bool is_deleted = messages.getValueAs<long long int>(i, "remote_deleted") == 1;
-      std::string body = messages.valueAsString(i, "body");
-      std::string quote_body = messages.valueAsString(i, "quote_body");
-      long long int type = messages.getValueAs<long long int>(i, d_mms_type);
-      bool isgroupupdatev1 = false;
-      bool hasquote = !messages.isNull(i, "quote_id") && messages.getValueAs<long long int>(i, "quote_id");
+      totalpages = (messages.rows() / split) + (messages.rows() % split > 0 ? 1 : 0);
+      max_msg_per_page = messages.rows() / totalpages + (messages.rows() % totalpages ? 1 : 0);
+    }
 
-      SqliteDB::QueryResults attachment_results;
-      d_database.exec("SELECT _id,unique_id,ct,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+    // std::cout << "Split: " << split << std::endl;
+    // std::cout << "N MSG: " << messages.rows() << std::endl;
+    // std::cout << "MAX PER PAGE: " << max_msg_per_page << std::endl;
+    // std::cout << "N PAGES: " << totalpages << std::endl;
 
-      SqliteDB::QueryResults quote_attachment_results;
-      d_database.exec("SELECT _id, unique_id, ct FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
-
-      SqliteDB::QueryResults mention_results;
-      d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
-
-      SqliteDB::QueryResults reaction_results;
-      d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received'"
-                      "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
-
-      bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
-
-      if (Types::isIncomingVideoCall(type))
-        body = "Incoming video call";
-      else if (Types::isOutgoingVideoCall(type))
-        body = "Outgoing video call";
-      else if (Types::isMissedVideoCall(type))
-        body = "Missed video call";
-      else if (Types::isIncomingCall(type))
-        body = "Incoming voice call";
-      else if (Types::isOutgoingCall(type))
-        body = "Outgoing voice call";
-      else if (Types::isMissedCall(type))
-        body = "Missed voice call";
-      else if (Types::isGroupCall(type))
-        body = "Group call";
-      else if (Types::isGroupUpdate(type)) // group v2: to do...
+    while (true)
+    {
+      std::string previous_day_change;
+      // create output-file
+      std::string base_filename = sanitizeFilename(recipient_info[thread_recipient_id].display_name);
+      std::ofstream htmloutput(directory + "/" + threaddir + "/" +
+                               base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html", std::ios_base::binary);
+      if (!htmloutput.is_open())
       {
-        body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"),
-                                   type, recipient_info[msg_recipient_id].display_name);
-        if (!Types::isGroupV2(type)) // not sure if this is needed anymore...
-          isgroupupdatev1 = true;
+        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
+                  << ": Failed to open '" << directory << "/" << threaddir << "/"
+                  << sanitizeFilename(recipient_info[thread_recipient_id].display_name)
+                  << (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "")
+                  << ".html' for writing." << std::endl;
+        return false;
       }
-      else if (Types::isProfileChange(type))
-        body = decodeProfileChangeMessage(body, recipient_info.at(msg_recipient_id).display_name);
-      else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
-               Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
-        body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
-      else if (Types::isStatusMessage(type))
-        body = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
 
-      // prep body (scan emoji? -> in <span>) and handle mentions...
-      // if (prepbody)
-      std::vector<std::tuple<long long int, long long int, long long int>> mentions;
-      for (uint mi = 0; mi < mention_results.rows(); ++mi)
-        mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
-                                              mention_results.getValueAs<long long int>(mi, "range_start"),
-                                              mention_results.getValueAs<long long int>(mi, "range_length")));
-      std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
-      if (!messages.isNull(i, "message_ranges"))
-        brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_ranges");
+      // create start of html (css, head, start of body
+      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, recipient_info, overwrite, append);
 
-      bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, false /*isquote*/);
-
-      bool nobackground = false;
-      if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
-          issticker) // or sticker
-        nobackground = true;
-
-      // same for quote_body!
-      mentions.clear();
-      std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
-      if (!messages.isNull(i, "quote_mentions"))
-        quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "quote_mentions");
-      HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, true);
-
-      // insert date-change message
-      if (readable_date_day != previous_day_change)
+      while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
-        htmloutput << R"(      <div class="msg msg-date-change">
+        long long int msg_id = messages.getValueAs<long long int>(messagecount, "_id");
+        long long int msg_recipient_id = messages.getValueAs<long long int>(messagecount, "recipient_id"); // for groups, this != thread_recipient_id on incoming messages
+        std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
+                                                          "%b %d, %Y %T");
+        std::string readable_date_day = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
+                                                              "%b %d, %Y");
+        bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));
+        bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;
+        std::string body = messages.valueAsString(messagecount, "body");
+        std::string quote_body = messages.valueAsString(messagecount, "quote_body");
+        long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
+        bool isgroupupdatev1 = false;
+        bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
+
+        SqliteDB::QueryResults attachment_results;
+        d_database.exec("SELECT _id,unique_id,ct,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+
+        SqliteDB::QueryResults quote_attachment_results;
+        d_database.exec("SELECT _id, unique_id, ct FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+
+        SqliteDB::QueryResults mention_results;
+        d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
+
+        SqliteDB::QueryResults reaction_results;
+        d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received'"
+                        "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+
+        bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
+
+        if (Types::isIncomingVideoCall(type))
+          body = "Incoming video call";
+        else if (Types::isOutgoingVideoCall(type))
+          body = "Outgoing video call";
+        else if (Types::isMissedVideoCall(type))
+          body = "Missed video call";
+        else if (Types::isIncomingCall(type))
+          body = "Incoming voice call";
+        else if (Types::isOutgoingCall(type))
+          body = "Outgoing voice call";
+        else if (Types::isMissedCall(type))
+          body = "Missed voice call";
+        else if (Types::isGroupCall(type))
+          body = "Group call";
+        else if (Types::isGroupUpdate(type)) // group v2: to do...
+        {
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
+                                     type, recipient_info[msg_recipient_id].display_name);
+          if (!Types::isGroupV2(type)) // not sure if this is needed anymore...
+            isgroupupdatev1 = true;
+        }
+        else if (Types::isProfileChange(type))
+          body = decodeProfileChangeMessage(body, recipient_info.at(msg_recipient_id).display_name);
+        else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
+                 Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
+        else if (Types::isStatusMessage(type))
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
+
+        // prep body (scan emoji? -> in <span>) and handle mentions...
+        // if (prepbody)
+        std::vector<std::tuple<long long int, long long int, long long int>> mentions;
+        for (uint mi = 0; mi < mention_results.rows(); ++mi)
+          mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
+                                                mention_results.getValueAs<long long int>(mi, "range_start"),
+                                                mention_results.getValueAs<long long int>(mi, "range_length")));
+        std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
+        if (!messages.isNull(messagecount, "message_ranges"))
+          brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_ranges");
+
+        bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, false /*isquote*/);
+
+        bool nobackground = false;
+        if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
+            issticker) // or sticker
+          nobackground = true;
+
+        // same for quote_body!
+        mentions.clear();
+        std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
+        if (!messages.isNull(messagecount, "quote_mentions"))
+          quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
+        HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, true);
+
+        // insert date-change message
+        if (readable_date_day != previous_day_change)
+        {
+          htmloutput << R"(      <div class="msg msg-date-change">
         <p>
           )" << readable_date_day << R"(
         </p>
       </div>)" << std::endl << std::endl;
+        }
+        previous_day_change = readable_date_day;
+
+        // collect data needed by writeMessage()
+        HTMLMessageInfo msg_info({only_emoji,
+            is_deleted,
+            isgroup,
+            incoming,
+            isgroupupdatev1,
+            nobackground,
+            hasquote,
+            overwrite,
+            append,
+            type,
+            msg_id,
+            msg_recipient_id,
+            messagecount,
+            &messages,
+            &quote_attachment_results,
+            &attachment_results,
+            &reaction_results,
+            body,
+            quote_body,
+            readable_date,
+            directory,
+            threaddir});
+        HTMLwriteMessage(htmloutput, msg_info, &recipient_info);
+
+        if (++messagecount >= messages.rows())
+          break;
       }
-      previous_day_change = readable_date_day;
 
-      // collect data needed by writeMessage()
-      HTMLMessageInfo msg_info({only_emoji,
-                                is_deleted,
-                                isgroup,
-                                incoming,
-                                isgroupupdatev1,
-                                nobackground,
-                                hasquote,
-                                overwrite,
-                                append,
-                                type,
-                                msg_id,
-                                msg_recipient_id,
-                                i,
-                                &messages,
-                                &quote_attachment_results,
-                                &attachment_results,
-                                &reaction_results,
-                                body,
-                                quote_body,
-                                readable_date,
-                                directory,
-                                threaddir});
-      HTMLwriteMessage(htmloutput, msg_info, &recipient_info);
+      htmloutput << "    </div>" << std::endl;
+      if (totalpages > 1) // navigation control
+      {
+        HTMLescapeUrl(&base_filename);
+        htmloutput << "    <div class=\"navigation\">" << std::endl;
+        htmloutput << "      <div class=\"nav-controls\">" << std::endl;
+        htmloutput << "        <a href=\"" << base_filename << ".html" << "\">" << std::endl;
+        htmloutput << "          <div class=\"first" << (pagenumber > 0 ? "" : " nav-disabled") << "\">" << std::endl;
+        htmloutput << "            <div class=\"nav-max nav-back\"></div>" << std::endl;
+        htmloutput << "            first" << std::endl;
+        htmloutput << "          </div>" << std::endl;
+        htmloutput << "        </a>" << std::endl;
+        htmloutput << "        <a href=\"" << base_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html" << "\">" << std::endl;
+        htmloutput << "          <div class=\"prev" << (pagenumber > 0 ? "" : " nav-disabled") << "\">" << std::endl;
+        htmloutput << "            <div class=\"nav-one nav-back\"></div>" << std::endl;
+        htmloutput << "            prev" << std::endl;
+        htmloutput << "          </div>" << std::endl;
+        htmloutput << "        </a>" << std::endl;
+        htmloutput << "        <a href=\"" << base_filename << "_" << (pagenumber + 1 <= totalpages - 1 ? (pagenumber + 1) : totalpages - 1) << ".html" << "\">" << std::endl;
+        htmloutput << "          <div class=\"next" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\">" << std::endl;
+        htmloutput << "            <div class=\"nav-one nav-fwd\"></div>" << std::endl;
+        htmloutput << "            next" << std::endl;
+        htmloutput << "          </div>" << std::endl;
+        htmloutput << "        </a>" << std::endl;
+        htmloutput << "        <a href=\"" << base_filename << "_" << totalpages - 1 << ".html" << "\">" << std::endl;
+        htmloutput << "          <div class=\"last" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\">" << std::endl;
+        htmloutput << "            <div class=\"nav-max nav-fwd\"></div>" << std::endl;
+        htmloutput << "            last" << std::endl;
+        htmloutput << "          </div>" << std::endl;
+        htmloutput << "        </a>" << std::endl;
+        htmloutput << "      </div>" << std::endl;
+        htmloutput << "    </div>" << std::endl;
+      }
+      htmloutput << "  </body>" << std::endl;
+      htmloutput << "</html>" << std::endl;
+
+      ++pagenumber;
+      if (messagecount >= messages.rows())
+        break;
     }
-
-    htmloutput << "    </div>" << std::endl;
-    htmloutput << "  </body>" << std::endl;
-    htmloutput << "</html>" << std::endl;
-
   }
 
   HTMLwriteIndex(threads, directory, recipient_info, overwrite, append);
