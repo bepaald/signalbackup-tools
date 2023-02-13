@@ -64,7 +64,11 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                 << ": Expected attachment, but 'messages.json$.attachments[" << k << "].path is empty!" << std::endl;
 
       std::cout << "Here is the message full data:" << std::endl;
-      ddb.prettyPrint("SELECT * FROM messages " + where);
+      SqliteDB::QueryResults res;
+      ddb.exec("SELECT *,DATETIME(ROUND(IFNULL(received_at, 0) / 1000), 'unixepoch', 'localtime') AS HUMAN_READABLE_TIME FROM messages " + where, &res);
+      res.printLineMode();
+      std::string convuuid = res.valueAsString(0, "conversationId");
+      ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
       continue;
     }
 

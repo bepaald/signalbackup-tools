@@ -37,13 +37,13 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
       std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
     else
       printable_uuid = "xxx";
-    std::cout << "Finding recipient for uuid: " << printable_uuid << std::endl;
 
     SqliteDB::QueryResults res;
     if (!d_database.exec("SELECT recipient._id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
+      std::cout << "Failed to finding recipient for uuid: " << printable_uuid << std::endl;
       return -1;
     }
     //res.prettyPrint();

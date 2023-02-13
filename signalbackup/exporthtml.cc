@@ -65,7 +65,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export, " << std::endl
-                << "or --append to only write new files." << std::endl;
+                << "       or --append to only write new files." << std::endl;
       return false;
     }
     std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
@@ -165,6 +165,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0), expires_in, message_ranges "
                     "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
 
+    std::map<long long int, std::string> written_avatars; // maps recipient_ids to the path of a written avatar file.
     unsigned int messagecount = 0;
     unsigned int max_msg_per_page = messages.rows();
     int pagenumber = 0;
@@ -198,7 +199,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       }
 
       // create start of html (css, head, start of body
-      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, recipient_info, overwrite, append);
+      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, recipient_info, &written_avatars, overwrite, append);
 
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
