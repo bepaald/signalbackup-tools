@@ -43,6 +43,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
                                   std::string const &directory, std::string const &threaddir, bool isgroup,
                                   std::set<long long int> const &recipient_ids,
                                   std::map<long long int, RecipientInfo> const &recipients_info,
+                                  std::map<long long int, std::string> *written_avatars,
                                   bool overwrite, bool append) const
 {
 
@@ -55,7 +56,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       getGroupMembersOld(&groupmembers, results.valueAsString(0, "group_id"));
   }
 
-  std::string thread_avatar = HTMLwriteAvatar(thread_recipient_id, directory, threaddir, overwrite, append);
+  std::string thread_avatar = written_avatars->contains(thread_recipient_id) ?
+    (*written_avatars)[thread_recipient_id] :
+    ((*written_avatars)[thread_recipient_id] = HTMLwriteAvatar(thread_recipient_id, directory, threaddir, overwrite, append));
 
   file << R"(<!DOCTYPE html>
 <html lang="en">
@@ -195,11 +198,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
   for (long long int id : recipient_ids)
   {
-    // avatar for thread_recipient_id was already done at
-    // start of function, so skip it here
-    std::string recipient_avatar = (id == thread_recipient_id) ?
-      thread_avatar :
-      HTMLwriteAvatar(id, directory, threaddir, overwrite, append);
+    std::string recipient_avatar = written_avatars->contains(id) ?
+      (*written_avatars)[id] :
+      ((*written_avatars)[id] = HTMLwriteAvatar(id, directory, threaddir, overwrite, append));
     if (!recipient_avatar.empty())
     {
       file << R"(

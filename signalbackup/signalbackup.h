@@ -309,7 +309,8 @@ class SignalBackup
                                   long long int msg_id, bool is_mms, bool isgroup) const;
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, std::set<long long int> const &recipients,
-                      std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const;
+                      std::map<long long int, RecipientInfo> const &recipientinfo,
+                      std::map<long long int, std::string> *written_avatars, bool overwrite, bool append) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
