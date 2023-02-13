@@ -98,67 +98,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-radius: 10px;
       }
 
-      .navigation {
-        display: flex;
-        flex-direction: row;
-        width: 50%;
-        margin: 0 auto;
-        color: white;
-        margin-bottom: 30px;
-      }
-
-      .nav-controls {
-        margin: 0 auto;
-        display: flex;
-        flex-direction: row;
-      }
-
-      .nav-controls a:link,
-      .nav-controls a:visited,
-      .nav-controls a:hover,
-      .nav-controls a:active {
-        color: white;
-        text-decoration: none;
-      }
-
-      div .first,
-      div .last,
-      div .next,
-      div .prev {
-        display: flex;
-        flex-direction: column;
-        width: 50px;
-        aspect-ratio: 1 / 1;
-        align-items: center;
-        margin: 0 10px;
-      }
-
-      div .nav-one {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
-        width: 30px;
-        aspect-ratio: 1 / 1;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: cover;
-      }
-
-      div .nav-max {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 1.6,2.41 6.908,8 1.6,13.59 2.941,15 9.6,8 2.941,1 Z"></path><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
-        width: 30px;
-        aspect-ratio: 1 / 1;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: cover;
-      }
-
-      div .nav-back {
-        transform: scaleX(-1);
-      }
-
-      div .nav-disabled {
-        filter: brightness(50%);
-      }
-
       .incoming-group-msg {
         display: flex;
         flex-direction: row;
@@ -611,22 +550,84 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 14.117647 14.117647"><path d="m 13.288805,3.2188235 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877997,-0.9069 -0.5154997,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689998,0.1878 -1.23449998,0.5155 -0.3277,0.3276 -0.5129,0.7712 -0.5155,1.2345 v 6.5000005 c 0.0026,0.4633 0.1878,0.9069 0.5155,1.2345 0.3276,0.3277 0.77119998,0.5129 1.23449998,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277,-0.3276 0.5128997,-0.7712 0.5154997,-1.2345 V 8.7688235 l 1.87,1.8600005 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468005 0.2079,-0.6936005 v -5.38 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588053,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088235 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488235 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.58 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z m -4.9999997,-5.69 v 5 h -1 v -3.29 l -4.15,4.14 -0.7,-0.7 4.14,-4.15 h -3.29 v -1 z"></path></svg>');
       }
 
-      #back-button {
-        width: 50px;
-        height: 50px;
+      #menu {
+        display: flex;
+        flex-direction: column;
         position: fixed;
         top: 0px;
         left: 0px;
         margin-top: 30px;
         margin-left: 30px;
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"></path></svg>');
+        max-height: 40px;
+        overflow: hidden;
+        transition: max-height .3s ease-out;
+      }
+      #menu:hover {
+        max-height: 100%;
+        transition: max-height .3s ease-out;
+      }
+
+      #menu a:link,
+      #menu a:visited,
+      #menu a:hover,
+      #menu a:active {
+        color: white;
+        text-decoration: none;
+      }
+      #menu a:hover {
+        background-color: #303133;
+      }
+
+      .menu-button {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M17,9.25l-6.25,0l0,-6.25l-1.5,0l0,6.25l-6.25,0l0,1.5l6.25,0l0,6.25l1.5,0l0,-6.25l6.25,0l0,-1.5z"></path></svg>');
+        transition: transform .1s ease-in-out;
+      }
+      #menu:hover .menu-button {
+        transform: rotate(45deg);
+      }
+
+      .menu-item {
+        display: flex;
+        flex-direction: row;
+        color: white;
+        align-items: center;
+        font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
+        padding-right: 20px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+      }
+      .menu-item-disabled {
+        filter: brightness(50%);
+      }
+
+      .menu-icon {
+        margin-right: 10px;
+        width: 30px;
+        aspect-ratio: 1 / 1;
+        background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
       }
+
+      .nav-up {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"></path></svg>');
+      }
+
+      .nav-one {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
+      }
+
+      .nav-max {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 1.6,2.41 6.908,8 1.6,13.59 2.941,15 9.6,8 2.941,1 Z"></path><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
+      }
+
+      div .nav-back {
+        transform: scaleX(-1);
+      }
+
     </style>
   </head>
   <body>
-    <a href="../index.html"><div id="back-button"></div></a>
     <div id="message-header">)";
   if (thread_avatar.empty())
   {
