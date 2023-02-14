@@ -592,6 +592,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding: 5px;
       }
 
+      .menu-item > div {
+        margin-right: 5px;
+      }
+
       .menu-icon {
         margin-right: 0px;
         width: 30px;
@@ -636,9 +640,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .conversation-link > div {
-        align-self: flex-start;
+        align-self: flex-end;
         position: sticky;
-        top: 30px;
+        bottom: 30px;
         padding-right: 5px;
         padding-left: 5px;
         padding-top: 5px;
