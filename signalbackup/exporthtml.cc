@@ -297,6 +297,28 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         }
         previous_day_change = readable_date_day;
 
+
+        /*
+
+          LINKIFY?
+
+          Notes:
+          - currently this matches 'yes.combine them please' as 'yes.com'. (maybe try to match per word?)
+          - dont copy entire body, just match on stringview, and update it from suffix start?
+          - this interacts with prepbody/escapehtml
+
+        std::regex url_regex("(?:(?:(?:(?:(?:http|ftp|https|localhost):\\/\\/)|(?:www\\.)|(?:xn--)){1}(?:[\\w_-]+(?:(?:\\.[\\w_-]+)+))(?:[\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])?)|(?:(?:[\\w_-]{2,200}(?:(?:\\.[\\w_-]+)*))(?:(?:\\.[\\w_-]+\\/(?:[\\w.,@?^=%&:\\/~+#-]*[\\w@?^=%&\\/~+#-])?)|(?:\\.(?:(?:org|com|net|edu|gov|mil|int|arpa|biz|info|unknown|one|ninja|network|host|coop|tech)|(?:jp|br|it|cn|mx|ar|nl|pl|ru|tr|tw|za|be|uk|eg|es|fi|pt|th|nz|cz|hu|gr|dk|il|sg|uy|lt|ua|ie|ir|ve|kz|ec|rs|sk|py|bg|hk|eu|ee|md|is|my|lv|gt|pk|ni|by|ae|kr|su|vn|cy|am|ke))))))(?!(?:(?:(?:ttp|tp|ttps):\\/\\/)|(?:ww\\.)|(?:n--)))");
+        std::smatch url_match_result;
+        std::string body2 = body;
+        while (std::regex_search(body2, url_match_result, url_regex))
+        {
+          for (const auto &res : url_match_result)
+            std::cout << "FOUND URL: " << res << std::endl;
+          body2 = url_match_result.suffix();
+        }
+         */
+
+
         // collect data needed by writeMessage()
         HTMLMessageInfo msg_info({only_emoji,
             is_deleted,
@@ -360,6 +382,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         htmloutput << "      </div>" << std::endl;
         htmloutput << "" << std::endl;
       }
+      htmloutput << "    </div>" << std::endl; // closes controls-wrapper
+      htmloutput << "" << std::endl;
       htmloutput << "      <div id=\"menu\">" << std::endl;
       htmloutput << "        <a href=\"../index.html\">" << std::endl;
       htmloutput << "          <div class=\"menu-item\">" << std::endl;
@@ -372,7 +396,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "        </a>" << std::endl;
       htmloutput << "      </div>" << std::endl;
       htmloutput << "" << std::endl;
-      htmloutput << "    </div>" << std::endl; // closes controls-wrapper
       htmloutput << "  </body>" << std::endl;
       htmloutput << "</html>" << std::endl;
 

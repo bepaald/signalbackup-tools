@@ -237,7 +237,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         white-space: pre-wrap;
         margin-top: 0px;
         margin-bottom: 5px;
-        overflow-wrap: break-word;
+        overflow-wrap: anywhere;
       }
 
       .msg pre a {
@@ -566,10 +566,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: flex;
         flex-direction: column;
         position: fixed;
-        top: 0px;
-        left: 0px;
-        margin-top: 30px;
-        margin-left: 30px;
+        top: 30px;
+        left: 30px;
       }
 
       #menu a:link,
