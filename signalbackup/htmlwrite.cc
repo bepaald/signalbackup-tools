@@ -237,6 +237,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         white-space: pre-wrap;
         margin-top: 0px;
         margin-bottom: 5px;
+        overflow-wrap: break-word;
       }
 
       .msg pre a {
