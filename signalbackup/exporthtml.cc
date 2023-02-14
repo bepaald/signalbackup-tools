@@ -289,11 +289,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         // insert date-change message
         if (readable_date_day != previous_day_change)
         {
-          htmloutput << R"(      <div class="msg msg-date-change">
-        <p>
-          )" << readable_date_day << R"(
-        </p>
-      </div>)" << std::endl << std::endl;
+          htmloutput << R"(          <div class="msg msg-date-change">
+            <p>
+              )" << readable_date_day << R"(
+            </p>
+          </div>)" << std::endl << std::endl;
         }
         previous_day_change = readable_date_day;
 
@@ -326,72 +326,53 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           break;
       }
 
-      htmloutput << "    </div>" << std::endl; // closes conversation-box
+      htmloutput << "        </div>" << std::endl; // closes conversation-box
+      htmloutput << "      </div>" << std::endl; // closes conversation-wrapper
+      htmloutput << "" << std::endl;
 
-      // output menu;
       HTMLescapeUrl(&base_filename);
-      htmloutput << std::endl << "    <!-- the menu -->" << std::endl;
-      htmloutput << "    <div id=\"menu\">" << std::endl;
+
       if (totalpages > 1)
       {
-        htmloutput << "      <div class=\"menu-item\">" << std::endl;
-        htmloutput << "        <div class=\"menu-icon menu-button\">" << std::endl;
+        htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << std::endl;
+        htmloutput << "        <div title=\"First page\">" << std::endl;
+        htmloutput << "          <a href=\"" << base_filename << ".html\">" << std::endl;
+        htmloutput << "            <div class=\"menu-icon nav-max " << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
+        htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
-        htmloutput << "        <div>" << std::endl;
-        htmloutput << "          menu" << std::endl;
+        htmloutput << "        <div title=\"Previous page\">" << std::endl;
+        htmloutput << "          <a href=\"" << base_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html\">" << std::endl;
+        htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
+        htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "      </div>" << std::endl;
+        htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << std::endl;
+        htmloutput << "        <div title=\"Next page\">" << std::endl;
+        htmloutput << "          <a href=\"" << base_filename << "_" << (pagenumber + 1 <= totalpages - 1 ? (pagenumber + 1) : totalpages - 1) << ".html\">" << std::endl;
+        htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
+        htmloutput << "          </a>" << std::endl;
+        htmloutput << "        </div>" << std::endl;
+        htmloutput << "        <div title=\"Last page\">" << std::endl;
+        htmloutput << "          <a href=\"" << base_filename << "_" << totalpages - 1 << ".html\">" << std::endl;
+        htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
+        htmloutput << "          </a>" << std::endl;
+        htmloutput << "        </div>" << std::endl;
+        htmloutput << "      </div>" << std::endl;
+        htmloutput << "" << std::endl;
       }
-      htmloutput << "      <a href=\"../index.html\">" << std::endl;
-      htmloutput << "        <div class=\"menu-item\">" << std::endl;
-      htmloutput << "          <div class=\"menu-icon nav-up\">" << std::endl;
+      htmloutput << "      <div id=\"menu\">" << std::endl;
+      htmloutput << "        <a href=\"../index.html\">" << std::endl;
+      htmloutput << "          <div class=\"menu-item\">" << std::endl;
+      htmloutput << "            <div class=\"menu-icon nav-up\">" << std::endl;
+      htmloutput << "            </div>" << std::endl;
+      htmloutput << "            <div>" << std::endl;
+      htmloutput << "              index" << std::endl;
+      htmloutput << "            </div>" << std::endl;
       htmloutput << "          </div>" << std::endl;
-      htmloutput << "          <div>" << std::endl;
-      htmloutput << "            index" << std::endl;
-      htmloutput << "          </div>" << std::endl;
-      htmloutput << "        </div>" << std::endl;
-      htmloutput << "      </a>" << std::endl;
-      if (totalpages > 1)
-      {
-        htmloutput << "      <a href=\"" << base_filename << ".html" << "\">" << std::endl;
-        htmloutput << "        <div class=\"menu-item" << (pagenumber > 0 ? "" : " menu-item-disabled") << "\">" << std::endl;
-        htmloutput << "          <div class=\"menu-icon nav-max nav-back\">" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "          <div>" << std::endl;
-        htmloutput << "            first" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "      </a>" << std::endl;
-        htmloutput << "      <a href=\"" << base_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html" << "\">" << std::endl;
-        htmloutput << "        <div class=\"menu-item" << (pagenumber > 0 ? "" : " menu-item-disabled") << "\">" << std::endl;
-        htmloutput << "          <div class=\"menu-icon nav-one nav-back\">" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "          <div>" << std::endl;
-        htmloutput << "            prev" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "      </a>" << std::endl;
-        htmloutput << "      <a href=\"" << base_filename << "_" << (pagenumber + 1 <= totalpages - 1 ? (pagenumber + 1) : totalpages - 1) << ".html" << "\">" << std::endl;
-        htmloutput << "        <div class=\"menu-item" << (pagenumber < totalpages - 1 ? "" : " menu-item-disabled") << "\">" << std::endl;
-        htmloutput << "          <div class=\"menu-icon nav-one\">" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "          <div>" << std::endl;
-        htmloutput << "            next" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "      </a>" << std::endl;
-        htmloutput << "      <a href=\"" << base_filename << "_" << totalpages - 1 << ".html" << "\">" << std::endl;
-        htmloutput << "        <div class=\"menu-item" << (pagenumber < totalpages - 1 ? "" : " menu-item-disabled") << "\">" << std::endl;
-        htmloutput << "          <div class=\"menu-icon nav-max\">" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "          <div>" << std::endl;
-        htmloutput << "            last" << std::endl;
-        htmloutput << "          </div>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "      </a>" << std::endl;
-      }
-      htmloutput << "    </div>" << std::endl;
-
+      htmloutput << "        </a>" << std::endl;
+      htmloutput << "      </div>" << std::endl;
+      htmloutput << "" << std::endl;
+      htmloutput << "    </div>" << std::endl; // closes controls-wrapper
       htmloutput << "  </body>" << std::endl;
       htmloutput << "</html>" << std::endl;
 

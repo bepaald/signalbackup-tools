@@ -69,6 +69,24 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       body {
         background-color: #000000;
+        margin: 0px;
+        display: flex;
+      }
+
+      .controls-wrapper {
+        display: flex;
+        justify-content: center;
+        flex-direction: row;
+        margin: 0 auto;
+        flex: 1 1 100%;
+      }
+
+      .conversation-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: calc(50% + 60px);
+        height: 100%;
       }
 
       #message-header {
@@ -86,8 +104,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .conversation-box {
         display: flex;
         flex-direction: column;
-        width: 50%;
-        margin: 0 auto;
         padding-left: 30px;
         padding-right: 30px;
         padding-bottom: 30px;
@@ -96,6 +112,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         color: white;
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         border-radius: 10px;
+        width: calc(100% - 60px);
       }
 
       .incoming-group-msg {
@@ -331,12 +348,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         width: 400px;
       }
 
-/*
-      .msg-read {
-        color: blue;
-      }
-*/
-
       .msg-img-container input[type=checkbox] {
         display: none;
       }
@@ -558,13 +569,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         left: 0px;
         margin-top: 30px;
         margin-left: 30px;
-        max-height: 40px;
-        overflow: hidden;
-        transition: max-height .3s ease-out;
-      }
-      #menu:hover {
-        max-height: 100%;
-        transition: max-height .3s ease-out;
       }
 
       #menu a:link,
@@ -574,16 +578,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         color: white;
         text-decoration: none;
       }
-      #menu a:hover {
-        background-color: #303133;
-      }
 
       .menu-button {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M17,9.25l-6.25,0l0,-6.25l-1.5,0l0,6.25l-6.25,0l0,1.5l6.25,0l0,6.25l1.5,0l0,-6.25l6.25,0l0,-1.5z"></path></svg>');
-        transition: transform .1s ease-in-out;
-      }
-      #menu:hover .menu-button {
-        transform: rotate(45deg);
       }
 
       .menu-item {
@@ -592,16 +589,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         color: white;
         align-items: center;
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
-        padding-right: 20px;
-        padding-top: 5px;
-        padding-bottom: 5px;
-      }
-      .menu-item-disabled {
-        filter: brightness(50%);
+        padding: 5px;
       }
 
       .menu-icon {
-        margin-right: 10px;
+        margin-right: 0px;
         width: 30px;
         aspect-ratio: 1 / 1;
         background-position: center;
@@ -614,56 +606,86 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .nav-one {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131"></path></svg>');
       }
 
       .nav-max {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M 1.6,2.41 6.908,8 1.6,13.59 2.941,15 9.6,8 2.941,1 Z"></path><path d="M 6.4,2.41 11.708,8 6.4,13.59 7.741,15 14.4,8 7.741,1 Z"></path></svg>');
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 10.746186,2.9378689 3.6836603,10.000394 10.745399,17.062131"></path><path style="stroke-width: 3;" d="M 16.846186,2.9378689 9.7836603,10.000394 16.845399,17.062131"></path></svg>');
       }
 
-      div .nav-back {
+      .nav-fwd {
         transform: scaleX(-1);
+      }
+
+      .nav-disabled {
+        filter: brightness(50%);
+      }
+
+      .conversation-link {
+        display: flex;
+      }
+
+      .conversation-link-left {
+        padding-right: 20px;
+        order: -1;
+      }
+
+      .conversation-link-right {
+        padding-left: 20px;
+        order: 1;
+      }
+
+      .conversation-link > div {
+        align-self: flex-start;
+        position: sticky;
+        top: 30px;
+        padding-right: 5px;
+        padding-left: 5px;
+        padding-top: 5px;
       }
 
     </style>
   </head>
   <body>
-    <div id="message-header">)";
+    <div class="controls-wrapper">
+      <div class="conversation-wrapper">
+        <div id="message-header">)";
   if (thread_avatar.empty())
   {
     if (isgroup)
     {
       file << R"(
-      <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
-        <div class="group-avatar-icon"></div>
-      </div>)";
+          <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
+            <div class="group-avatar-icon"></div>
+          </div>)";
     }
     else
     {
       file << R"(
-      <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
-        )" << recipients_info.at(thread_recipient_id).initial << R"(
-      </div>)";
+          <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
+            )" << recipients_info.at(thread_recipient_id).initial << R"(
+          </div>)";
     }
   }
   else
   {
     file << R"(
-      <input type="checkbox" id="zoomCheck-avatar">
-      <label for="zoomCheck-avatar">
-        <img class="avatar avatar-)" << thread_recipient_id
-         << R"( header-avatar msg-sender-)" << thread_recipient_id << R"(" src="media/Avatar_)" << thread_recipient_id << R"(.bin" alt="thread avatar">
-      </label>)";
+          <input type="checkbox" id="zoomCheck-avatar">
+          <label for="zoomCheck-avatar">
+            <img class="avatar avatar-)" << thread_recipient_id
+             << R"( header-avatar msg-sender-)" << thread_recipient_id << R"(" src="media/Avatar_)" << thread_recipient_id << R"(.bin" alt="thread avatar">
+          </label>)";
   }
   file << R"(
-      <div id="thread-title">
-        )" << recipients_info.at(thread_recipient_id).display_name << R"(
-      </div>
-      <div id="thread-subtitle">
-        )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" : recipients_info.at(thread_recipient_id).phone) << R"(
-      </div>
-    </div>
-    <div class="conversation-box">
+          <div id="thread-title">
+            )" << recipients_info.at(thread_recipient_id).display_name << R"(
+          </div>
+          <div id="thread-subtitle">
+            )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" : recipients_info.at(thread_recipient_id).phone) << R"(
+          </div>
+        </div>
+        <div class="conversation-box">
+
 )";
 
   return true;
@@ -724,21 +746,21 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   // for incoming group (normal) message: insert avatar with initial
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
   {
-    htmloutput << "      <div class=\"incoming-group-msg\">" << std::endl;
-    htmloutput << "        <div class=\"avatar avatar-" << msg_info.msg_recipient_id
+    htmloutput << "          <div class=\"incoming-group-msg\">" << std::endl;
+    htmloutput << "            <div class=\"avatar avatar-" << msg_info.msg_recipient_id
                << " convo-avatar msg-sender-" << msg_info.msg_recipient_id << "\">";
     if (!recipient_info->at(msg_info.msg_recipient_id).hasavatar)
     {
       htmloutput << std::endl;
-      htmloutput << "          <span>" << recipient_info->at(msg_info.msg_recipient_id).initial << "</span>" << std::endl;
-      htmloutput << "        ";
+      htmloutput << "              <span>" << recipient_info->at(msg_info.msg_recipient_id).initial << "</span>" << std::endl;
+      htmloutput << "            ";
     }
     htmloutput << "</div>" << std::endl;
     extraindent = 2;
   }
 
   // msg bubble
-  htmloutput << std::string(extraindent, ' ') << "      <div id=\"msg-" << msg_info.msg_id
+  htmloutput << std::string(extraindent, ' ') << "          <div id=\"msg-" << msg_info.msg_id
              << "\" class=\"type-" << msg_info.type << " msg ";
   if (msg_info.isgroupupdatev1)
     htmloutput << "msg-group-update-v1\">" << std::endl;
@@ -746,7 +768,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   {
     htmloutput << "msg-" << (Types::isIncomingCall(msg_info.type) ? "call-incoming" : (Types::isOutgoingCall(msg_info.type) ? "call-outgoing" : (Types::isMissedCall(msg_info.type) ? "call-missed" : (Types::isIncomingVideoCall(msg_info.type) ? "video-call-incoming" : (Types::isOutgoingVideoCall(msg_info.type) ? "video-call-outgoing" : (Types::isMissedVideoCall(msg_info.type) ? "video-call-missed" : (Types::isGroupCall(msg_info.type) ? "group-call" : "")))))));
     htmloutput << "\">" << std::endl;
-    htmloutput << "        <div class=\"msg-icon\"></div>" << std::endl;
+    htmloutput << "            <div class=\"msg-icon\"></div>" << std::endl;
   }
   else if (Types::isStatusMessage(msg_info.type) && !Types::isCallType(msg_info.type) && !msg_info.isgroupupdatev1)
     htmloutput << "msg-status\">" << std::endl;
@@ -759,62 +781,62 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // for incoming group (normal) message: Senders name before message content
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
-    htmloutput << std::string(extraindent, ' ') << "        <span class=\"msg-name msg-name-"
+    htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name msg-name-"
                << msg_info.msg_recipient_id << "\">" << recipient_info->at(msg_info.msg_recipient_id).display_name << "</span>" << std::endl;
 
   // insert quote
   if (msg_info.hasquote)
   {
-    htmloutput << std::string(extraindent, ' ') << "        <div class=\"msg-quote\">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-quote\">" << std::endl;
 
     // quote message
-    htmloutput << std::string(extraindent, ' ') << "          <div class=\"msg-quote-message\">" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name\">"
+    htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "                <span class=\"msg-name\">"
                << recipient_info->at(msg_info.messages->getValueAs<long long int>(msg_info.idx, "quote_author")).display_name
                << "</span>" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "            <pre>" << msg_info.quote_body << "</pre>" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "          </div>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "              </div>" << std::endl;
 
     // quote attachment
     if (msg_info.quote_attachment_results->rows())
     {
-      htmloutput << std::string(extraindent, ' ') << "          <div class=\"msg-quote-attach\">" << std::endl;
-      HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 12 + extraindent,
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">" << std::endl;
+      HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 16 + extraindent,
                              msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
-      htmloutput << "          </div>" << std::endl;
+      htmloutput << "                </div>" << std::endl;
     }
 
-    htmloutput << std::string(extraindent, ' ') << "        </div>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
 
   // insert attachment?
-  HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 8 + extraindent,
+  HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
                          msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
 
   //insert body
   if (!msg_info.body.empty())
   {
-    htmloutput << std::string(extraindent, ' ') << "        <div"
+    htmloutput << std::string(extraindent, ' ') << "            <div"
                << (msg_info.only_emoji ? " class=\"msg-all-emoji\"" : "") << ">" << std::endl;
     if (!Types::isCallType(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "          <pre>" << msg_info.body << "</pre>" << std::endl;
+      htmloutput << std::string(extraindent, ' ') << "              <pre>" << msg_info.body << "</pre>" << std::endl;
     else
-      htmloutput << std::string(extraindent, ' ') << "        " << msg_info.body << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "        </div>" << std::endl;
+      htmloutput << std::string(extraindent, ' ') << "            " << msg_info.body << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
   else if (msg_info.is_deleted)
   {
-    htmloutput << "        <div>" << std::endl;
-    htmloutput << "          <pre>This message was deleted</pre>" << std::endl;
-    htmloutput << "        </div>" << std::endl;
+    htmloutput << "            <div>" << std::endl;
+    htmloutput << "              <pre>This message was deleted</pre>" << std::endl;
+    htmloutput << "            </div>" << std::endl;
   }
 
   // insert msg-footer (date & checkmarks)
-  htmloutput << std::string(extraindent, ' ') << "        <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">" << std::endl;
-  htmloutput << std::string(extraindent, ' ') << "          <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "            <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << std::endl;
   if (!msg_info.incoming && !Types::isCallType(msg_info.type)) // && received, read?
   {
-    htmloutput << std::string(extraindent, ' ') << "          <div class=\"checkmarks checkmarks-";
+    htmloutput << std::string(extraindent, ' ') << "              <div class=\"checkmarks checkmarks-";
     if (msg_info.messages->getValueAs<long long int>(msg_info.idx, "read_receipt_count") > 0)
       htmloutput << "read";
     else if (msg_info.messages->getValueAs<long long int>(msg_info.idx, "delivery_receipt_count") > 0)
@@ -823,24 +845,24 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "sent";
     htmloutput << "\"></div>" << std::endl;
   }
-  htmloutput << std::string(extraindent, ' ') << "        </div>" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
 
   // insert reaction
   if (msg_info.reaction_results->rows())
   {
-    htmloutput << std::string(extraindent, ' ') << "        <div class=\"msg-reactions\">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-reactions\">" << std::endl;
     for (uint r = 0; r < msg_info.reaction_results->rows(); ++r)
-      htmloutput << std::string(extraindent, ' ') << "          <span class=\"msg-reaction\"><span class=\"msg-emoji\">"
+      htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-reaction\"><span class=\"msg-emoji\">"
                  << msg_info.reaction_results->valueAsString(r, "emoji") << "</span>"
                  << "<span class=\"msg-reaction-info\">From "
                  << recipient_info->at(msg_info.reaction_results->getValueAs<long long int>(r, "author_id")).display_name
                  << "<br>Sent: " << msg_info.reaction_results->valueAsString(r, "date_sent")
                  << "<br>Received: " << msg_info.reaction_results->valueAsString(r, "date_received") << "</span></span>" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "        </div>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
   // end message
-  htmloutput << std::string(extraindent, ' ') << "      </div>" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "          </div>" << std::endl;
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
-    htmloutput << "      </div>" << std::endl;
+    htmloutput << "          </div>" << std::endl;
   htmloutput << std::endl;
 }
