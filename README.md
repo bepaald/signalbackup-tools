@@ -358,7 +358,7 @@ To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the ou
 ./signalbackup-tools [input] [passphrase] --exporthtml [directory]
 ```
 
-Because browsers may have difficulty loading an entire conversation if it consists of very many messages, the option `--split [N]` can be added to split the output HTML in multiple pages. The optional number `N` is the maximum number of messages on each generated page (default: 1000).
+Because browsers may have difficulty loading an entire conversation if it consists of a large number of messages, the option `--split [N]` can be added to split the output HTML in multiple pages. The optional number `N` is the maximum number of messages on each generated page (default: 1000).
 
 A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
 
