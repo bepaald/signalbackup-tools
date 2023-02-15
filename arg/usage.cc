@@ -84,6 +84,10 @@ R"*(
    --append                              Optional modifier for `--exporthtml'. Causes `--exporthtml' to
                                          not show an error when DIRECTORY is not empty, but also not
                                          overwrite existing media files. Still regenerates the HTML file.
+   --split [N]                           Optional modifier for `--exporthtml'. Splits the generated HTML
+                                         files to a maximum of N messages per page. By default, the pages
+                                         are not split. When this option is given without a value for N,
+                                         N is 1000.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --overwrite                              Optional modifier for all output operations. Overwrite output
