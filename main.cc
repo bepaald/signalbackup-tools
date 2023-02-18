@@ -352,6 +352,10 @@ int main(int argc, char *argv[])
     }
   }
 
+  // temporary, to investigate #95
+  if (!arg.carowit_1().empty())
+    return sb->carowit(arg.carowit_1(), arg.carowit_2());
+
   if (arg.scanmissingattachments())
     sb->scanMissingAttachments();
 

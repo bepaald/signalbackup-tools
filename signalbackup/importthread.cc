@@ -514,7 +514,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
-      std::cout << "  updateRecipientIds" << std::endl;
+      std::cout << "  updateRecipientIds (2)" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
         if (results.valueHasType<std::string>(i, "ident"))
         {
@@ -522,11 +522,14 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
           // source, to prevent doubles. However, many tables refer to the recipient._id
           // which was made unique above. If we just delete the doubles (by phone/group_id,
           // and in the future probably uuid), the fields in other tables will point
-          // to random or non-existing recipients, so we need to map them:
+          // to random or non-existing recipients, so we need to remap them:
           source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
           // now drop the already present recipient from source.
           source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
+          int count = source->d_database.changed();
+          if (count)
+            std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
         }
     }
 
@@ -560,7 +563,6 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   // return;
 
   // now import the source tables into target,
-
 
   // get tables
   std::string q("SELECT sql, name, type FROM sqlite_master");

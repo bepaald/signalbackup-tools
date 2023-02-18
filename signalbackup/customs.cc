@@ -26,6 +26,29 @@
 #include <sstream>
 #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
 
+
+bool SignalBackup::carowit(std::string const &sourcefile, std::string const &sourcepw) const
+{
+  SignalBackup source(sourcefile, sourcepw, false, true, false);
+  if (!source.ok())
+  {
+    std::cout << "Failed to open source" << std::endl;
+    return false;
+  }
+
+  SqliteDB::QueryResults r;
+  source.d_database.exec("SELECT _id, uuid, phone, group_id, COALESCE(uuid, phone, group_id) AS coalesce FROM recipient "
+                         "WHERE _id IS (SELECT " + source.d_thread_recipient_id + " FROM thread WHERE _id IS ?)", 31, &r);
+  r.prettyPrint();
+
+
+  d_database.prettyPrint("SELECT _id, uuid, phone, group_id, COALESCE(uuid, phone, group_id) AS coalesce FROM recipient "
+                         "WHERE phone IS ?", r.value(0, "phone"));
+
+  return true;
+}
+
+
 bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
 {
   /*
