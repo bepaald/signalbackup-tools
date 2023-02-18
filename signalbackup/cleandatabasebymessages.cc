@@ -265,7 +265,7 @@ void SignalBackup::cleanDatabaseByMessages()
           }
         }
         if (count)
-          std::cout << "Deleted " << count << " unneeded distribution_lists" << std::endl;
+          std::cout << "  Deleted " << count << " unneeded distribution_lists" << std::endl;
 
         // clean up the member table
         d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");

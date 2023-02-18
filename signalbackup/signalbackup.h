@@ -214,6 +214,7 @@ class SignalBackup
   bool hiperfall(uint64_t t_id, std::string const &selfid);
   void scanMissingAttachments() const;
   void devCustom() const;
+  bool carowit(std::string const &sourcefile, std::string const &sourcepw) const;
   /* CUSTOMS */
 
  private:
