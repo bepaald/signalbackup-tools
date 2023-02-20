@@ -41,12 +41,16 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
                   "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].timestamp') AS timestamp,"
 
                   // THE ID OF THE CONVERSATION OF THE REACTION AUTHOR (conversation somewhat doubles android's recipient table)
+                  // ON OLDER DATABASES THIS IS PHONE NUMBER OF THE ACTUAL AUTHOR
                   "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId') AS from_id,"
 
                   //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].source') AS source" // ???
-                  "conversations.uuid AS uuid"
+                  "conversations.uuid AS uuid,"
+                  "conversations.e164 AS phone"
                   " FROM messages LEFT JOIN conversations ON"
-                  " conversations.id IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId')"
+                  " (conversations.id IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId')"
+                  " OR "
+                  "conversations.e164 IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId'))"
                   " WHERE rowid = ?", rowid, &results_emoji_reactions))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get reaction data from desktop database. Skipping." << std::endl;
@@ -57,7 +61,8 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
 
     reactions->emplace_back(std::vector{results_emoji_reactions.valueAsString(0, "emoji"),
                                         results_emoji_reactions.valueAsString(0, "timestamp"),
-                                        results_emoji_reactions.valueAsString(0, "uuid")});
+                                        results_emoji_reactions.valueAsString(0, "uuid"),
+                                        results_emoji_reactions.valueAsString(0, "phone")});
 
 
     // DEBUG

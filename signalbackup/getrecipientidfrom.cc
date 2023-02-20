@@ -54,3 +54,38 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
   }
   return (*savedmap)[uuid];
 }
+
+long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
+                                                   std::map<std::string, long long int> *savedmap) const
+{
+  if (phone.empty())
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Asked to find recipient._id for empty e164. Refusing" << std::endl;
+    return -1;
+  }
+
+  if (!savedmap || savedmap->find(phone) == savedmap->end())
+  {
+    std::string printable_phone(phone);
+    unsigned int offset = 4;
+    if (offset < phone.size()) [[likely]]
+      std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c){ return !std::isdigit(c); }, 'x');
+    else
+      printable_phone = "xxx";
+
+    SqliteDB::QueryResults res;
+    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE phone = ?", phone, &res) ||
+        res.rows() != 1 ||
+        !res.valueHasType<long long int>(0, 0))
+    {
+      std::cout << "Failed to finding recipient for phone: " << printable_phone << std::endl;
+      return -1;
+    }
+    //res.prettyPrint();
+    if (savedmap)
+      (*savedmap)[phone] = res.getValueAs<long long int>(0, 0);
+
+    return res.getValueAs<long long int>(0, 0);
+  }
+  return (*savedmap)[phone];
+}

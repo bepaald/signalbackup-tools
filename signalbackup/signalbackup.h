@@ -299,11 +299,13 @@ class SignalBackup
                          std::string const &where, std::string const &databasedir, bool isquote);
   bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
   void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id) const;
+  bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
   void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
                       std::vector<std::vector<std::string>> *reactions) const;
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
                        std::map<std::string, long long int> *savedmap) const;
   long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap) const;
+  long long int getRecipientIdFromPhone(std::string const &phone, std::map<std::string, long long int> *savedmap) const;
   inline std::string getNameFromUuid(std::string const &uuid) const;
   std::string getNameFromRecipientId(long long int id) const;
   void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,

@@ -60,15 +60,15 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (results_attachment_data.valueAsString(0, "path").empty())
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Expected attachment, but 'messages.json$.attachments[" << k << "].path is empty!" << std::endl;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Attachment not found." << std::endl;
 
-      std::cout << "Here is the message full data:" << std::endl;
-      SqliteDB::QueryResults res;
-      ddb.exec("SELECT *,DATETIME(ROUND(IFNULL(received_at, 0) / 1000), 'unixepoch', 'localtime') AS HUMAN_READABLE_TIME FROM messages " + where, &res);
-      res.printLineMode();
-      std::string convuuid = res.valueAsString(0, "conversationId");
-      ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
+      // std::cout << "Here is the message full data:" << std::endl;
+      // SqliteDB::QueryResults res;
+      // ddb.exec("SELECT *,DATETIME(ROUND(IFNULL(received_at, 0) / 1000), 'unixepoch', 'localtime') AS HUMAN_READABLE_TIME FROM messages " + where, &res);
+      // res.printLineMode();
+      // std::string convuuid = res.valueAsString(0, "conversationId");
+      // ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
       continue;
     }
 
@@ -88,8 +88,8 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
       //results_attachment_data.prettyPrint();
-      std::cout << "Corresponding message:" << std::endl;
-      ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
+      //std::cout << "Corresponding message:" << std::endl;
+      //ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
       continue;
     }
 
