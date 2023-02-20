@@ -281,7 +281,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
-  if (!ddb.exec("SELECT id,type,uuid,groupId,IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
+  if (!ddb.exec("SELECT id,e164,type,uuid,groupId,IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
 
   //std::cout << "Conversations in desktop:" << std::endl;
@@ -315,43 +315,50 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         {
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Conversation is 'group'-type, but groupId "
                   << "unexpectedly was not base64 data. Maybe this is a groupV1 group? Here is the data: " << std::endl;
-          std::cout << results_all_conversations.valueAsString(i, "groupId") << std::endl;
+          ddb.printLineMode("SELECT * FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"));
           continue;
         }
       }
       else // group v1 maybe?
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Group V1 type not yet supported" << std::endl;
-        std::cout << "ID AS STRING: " << results_all_conversations.valueAsString(i, "groupId") << std::endl;
-        std::string giddata = results_all_conversations.valueAsString(i, "groupId");
-        std::cout << "ID IN HEX: " << bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size(), true) << std::endl;
+        ddb.printLineMode("SELECT * FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"));
 
         // lets just for fun try to find an old-style group with this id:
-        std::string gid = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size(), true);
-        d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
-
+        if (results_all_conversations.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId"))
+        {
+          auto [groupid_data, groupid_data_length] = results_all_conversations.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId");
+          std::string gid = "__textsecure_group__!" + bepaald::bytesToHexString(groupid_data.get(), groupid_data_length, true);
+          d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
+        }
         continue;
         // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
         // isgroupconversation = true;
       }
     }
-    else
+    else // type != 'group' (== 'private')
       person_or_group_id = results_all_conversations.valueAsString(i, "uuid"); // single person id, if group, this is empty
 
-    if (person_or_group_id.empty())
+    // get/create matching thread id from android database
+    long long int recipientid_for_thread = -1;
+    if (!person_or_group_id.empty())
+      recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap);
+    else
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to determine uuid. Skipping." << std::endl;
-      continue;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Failed to determine uuid. Trying with phone number..." << std::endl;
+      std::string phone = results_all_conversations.valueAsString(i, "e164");
+      if (!phone.empty())
+        recipientid_for_thread = getRecipientIdFromPhone(phone, &recipientmap);
     }
 
-    // get/create matching thread id from android database
-    long long int recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap);
     if (recipientid_for_thread == -1)
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Chat partner was not found in recipient-table. Creating is not (yet?) supported. Skipping. (id: " << person_or_group_id << ")" << std::endl;
+                << ": Chat partner was not found in recipient-table. Creating is not (yet?) supported. Skipping. (id: "
+                << (person_or_group_id.empty() ? results_all_conversations.valueAsString(i, "e164") : person_or_group_id) << ")" << std::endl;
       continue;
     }
+
     SqliteDB::QueryResults results2;
     long long int ttid = -1;
     if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", recipientid_for_thread, &results2))
@@ -445,9 +452,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         // note this might fail on messages sent from a desktop app, those may have sourceuuid == NULL (only verified on outgoing though)
         std::string source_uuid = results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
         address = getRecipientIdFromUuid(source_uuid, &recipientmap);
+        if (address == -1)
+        {
+          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to set address of incoming group message. Skipping" << std::endl;
+          continue;
+        }
       }
       else
-        address = getRecipientIdFromUuid(person_or_group_id, &recipientmap);
+        address = recipientid_for_thread; // message is 1-on-1 or outgoing_group
       if (address == -1)
       {
         std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get recipient id for message partner. Skipping message." << std::endl;
@@ -462,6 +474,16 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       else if (type == "group-v2-change")
       {
         handleDTGroupChangeMessage(ddb, rowid, ttid);
+        continue;
+      }
+      else if (type == "timer-notification")
+      {
+        if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
+        {
+          handleDTGroupChangeMessage(ddb, rowid, ttid);
+          continue;
+        }
+        handleDTExpirationChangeMessage(ddb, rowid, ttid, address); // placeholder for now
         continue;
       }
       else if (!outgoing && !incoming)
@@ -494,22 +516,32 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           //std::cout << "  Message has quote" << std::endl;
           SqliteDB::QueryResults quote_results;
           if (!ddb.exec("SELECT "
-                        "json_extract(json, '$.quote.id') AS quote_id,"
-                        "json_extract(json, '$.quote.authorUuid') AS quote_author_uuid,"
-                        "json_extract(json, '$.quote.text') AS quote_text,"
-                        "IFNULL(json_array_length(json, '$.quote.attachments'), 0) AS num_quote_attachments,"
-                        "IFNULL(json_array_length(json, '$.quote.bodyRanges'), 0) AS num_quote_bodyranges,"
-                        "IFNULL(json_extract(json, '$.quote.type'), 0) AS quote_type,"
-                        "IFNULL(json_extract(json, '$.quote.referencedMessageNotFound'), 0) AS quote_referencedmessagenotfound,"
-                        "IFNULL(json_extract(json, '$.quote.isGiftBadge'), 0) AS quote_isgiftbadge,"  // if null because it probably does not exist in older databases
-                        "IFNULL(json_extract(json, '$.quote.isViewOnce'), 0) AS quote_isviewonce"
-                        " FROM messages WHERE rowid = ?", rowid, &quote_results))
+                        "json_extract(messages.json, '$.quote.id') AS quote_id,"
+                        "json_extract(messages.json, '$.quote.author') AS quote_author_phone,"     // in old databases, authorUuid does not exist, but this holds the phone number
+                        "conversations.uuid AS quote_author_uuid_from_phone,"                      // this is filled from a left join on the possible phone number above
+                        "json_extract(messages.json, '$.quote.authorUuid') AS quote_author_uuid,"
+                        "json_extract(messages.json, '$.quote.text') AS quote_text,"
+                        "IFNULL(json_array_length(messages.json, '$.quote.attachments'), 0) AS num_quote_attachments,"
+                        "IFNULL(json_array_length(messages.json, '$.quote.bodyRanges'), 0) AS num_quote_bodyranges,"
+                        "IFNULL(json_extract(messages.json, '$.quote.type'), 0) AS quote_type,"
+                        "IFNULL(json_extract(messages.json, '$.quote.referencedMessageNotFound'), 0) AS quote_referencedmessagenotfound,"
+                        "IFNULL(json_extract(messages.json, '$.quote.isGiftBadge'), 0) AS quote_isgiftbadge,"  // if null because it probably does not exist in older databases
+                        "IFNULL(json_extract(messages.json, '$.quote.isViewOnce'), 0) AS quote_isviewonce"
+                        " FROM messages "
+                        "LEFT JOIN conversations ON json_extract(messages.json, '$.quote.author') = conversations.e164 "
+                        "WHERE messages.rowid = ?", rowid, &quote_results))
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Quote error msg" << std::endl;
           }
 
+          // try to set quote author from uuid or phone
           mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid");
-          mmsquote_author = getRecipientIdFromUuid(mmsquote_author_uuid, &recipientmap);
+          if (mmsquote_author_uuid.empty()) // possibly old database, try conversations.uuid
+            mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid_from_phone");
+          if (mmsquote_author_uuid.empty()) // failed to get uuid from desktopdatabase, try matching on phone number
+            mmsquote_author = getRecipientIdFromPhone(quote_results.valueAsString(0, "quote_author_phone"), &recipientmap);
+          else
+            mmsquote_author = getRecipientIdFromUuid(mmsquote_author_uuid, &recipientmap);
           if (mmsquote_author == -1)
           {
             std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find quote author. skipping" << std::endl;

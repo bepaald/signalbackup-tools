@@ -31,11 +31,16 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
     // r[0] : emoji
     // r[1] : timestamp
     // r[2] : author uuid
+    // r[3] : author phone
 
-    long long int author = getRecipientIdFromUuid(r[2], savedmap);
+    long long int author = -1;
+    author = getRecipientIdFromUuid(r[2], savedmap);
+    if (author == -1)
+      author = getRecipientIdFromPhone(r[3], savedmap);
+
     if (author == -1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << "Reaction author not found. Skipping" << std::endl;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Reaction author not found. Skipping" << std::endl;
       continue;
     }
     if (d_database.tableContainsColumn("reaction", "is_mms")) // not actually removed yet? just unused...
