@@ -281,7 +281,16 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
-  if (!ddb.exec("SELECT id,e164,type,uuid,groupId,IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
+  if (!ddb.exec("SELECT "
+                "id,"
+                "e164,"
+                "type,"
+                "uuid,"
+                "groupId,"
+                "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
+                "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
+                "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
+                " FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
 
   //std::cout << "Conversations in desktop:" << std::endl;
@@ -303,13 +312,16 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     {
       if (results_all_conversations.getValueAs<long long int>(i, "groupVersion") > 1)
       {
-        auto [groupid_data, groupid_data_length] = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "groupId"));
-        if (groupid_data && groupid_data_length != 0)
+        std::pair<unsigned char *, size_t> groupid_data = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "json_groupId"));
+        if (!groupid_data.first || groupid_data.second == 0) // data was not valid base64 string, lets try the other one
+          groupid_data = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "groupId"));
+
+        if (groupid_data.first && groupid_data.second != 0)
         {
           //std::cout << bepaald::bytesToHexString(groupid_data, groupid_data_length, true) << std::endl;
-          person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, groupid_data_length, true);
+          person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
           isgroupconversation = true;
-          bepaald::destroyPtr(&groupid_data, &groupid_data_length);
+          bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
         }
         else
         {
@@ -321,19 +333,35 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else // group v1 maybe?
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Group V1 type not yet supported" << std::endl;
-        ddb.printLineMode("SELECT * FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"));
-
-        // lets just for fun try to find an old-style group with this id:
-        if (results_all_conversations.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId"))
+        // see if it has a 'derivedgroupv2id', and if that can be matched...
+        bool found_new_group = false;
+        std::pair<unsigned char *, size_t> groupid_data = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "derivedGroupV2Id"));
+        if (groupid_data.first || groupid_data.second > 0)
         {
-          auto [groupid_data, groupid_data_length] = results_all_conversations.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId");
-          std::string gid = "__textsecure_group__!" + bepaald::bytesToHexString(groupid_data.get(), groupid_data_length, true);
-          d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
+          person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
+          if (getRecipientIdFromUuid(person_or_group_id, &recipientmap) != -1)
+            found_new_group = true;
+          bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
         }
-        continue;
-        // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
-        // isgroupconversation = true;
+
+        if (found_new_group)
+          isgroupconversation = true;
+        else
+        {
+          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Group V1 type not yet supported" << std::endl;
+          ddb.printLineMode("SELECT *,HEX(groupId) FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"));
+
+          // lets just for fun try to find an old-style group with this id:
+          if (results_all_conversations.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId"))
+          {
+            auto [groupv1id_data, groupv1id_data_length] = results_all_conversations.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId");
+            std::string gid = "__textsecure_group__!" + bepaald::bytesToHexString(groupv1id_data.get(), groupv1id_data_length, true);
+            d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
+          }
+          continue;
+          // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
+          // isgroupconversation = true;
+        }
       }
     }
     else // type != 'group' (== 'private')
