@@ -198,7 +198,7 @@
 
 bool SignalBackup::importFromDesktop(std::string configdir, std::string databasedir,
                                      std::vector<std::string> const &daterangelist,
-                                     bool autodates, bool ignorewal)
+                                     bool autodates, bool ignorewal, bool verbose)
 {
   if (configdir.empty() || databasedir.empty())
   {
@@ -213,6 +213,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       bepaald::fileOrDirExists(databasedir + "/db.sqlite-wal"))
   {
     // warn
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Found Sqlite-WAL file (write-ahead logging)."
+              << "Make sure Signal Desktop is cleanly shut down." << std::endl;
+    // << " or pass --ignorewall"?
     return false;
   }
 
@@ -450,7 +453,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::cout << " - Importing " << results_all_messages_from_conversation.rows() << " messages into thread._id " << ttid << std::endl;
     for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
     {
-      //std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
+      if (verbose) [[unlikely]] std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
@@ -483,6 +486,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         if (address == -1)
         {
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to set address of incoming group message. Skipping" << std::endl;
+          std::cout << "Some more info: " << std::endl;
+          ddb.printLineMode("SELECT * from messages WHERE rowid = ?", results_all_messages_from_conversation.value(j, "rowid"));
           continue;
         }
       }
@@ -522,8 +527,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
 
       // get emoji reactions
+      if (verbose) [[unlikely]] std::cout << "Handling reactions..." << std::flush;
       std::vector<std::vector<std::string>> reactions;
       getDTReactions(ddb, rowid, numreactions, &reactions);
+      if (verbose) [[unlikely]] std::cout << "done" << std::endl;
 
       // insert the collected data in the correct tables
       if (!d_database.containsTable("sms") || // starting at dbv168, the sms table is removed altogether
@@ -541,6 +548,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         long long int mmsquote_type = 0; // 0 == NORMAL, 1 == GIFT_BADGE (src/main/java/org/thoughtcrime/securesms/mms/QuoteModel.java)
         if (hasquote)
         {
+          if (verbose) [[unlikely]] std::cout << "Gathering quote data..." << std::flush;
+
           //std::cout << "  Message has quote" << std::endl;
           SqliteDB::QueryResults quote_results;
           if (!ddb.exec("SELECT "
@@ -671,8 +680,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           //"mms.quote_attachment,"// = -1 Always -1??
 
           //quote_results.prettyPrint();
+          if (verbose) [[unlikely]] std::cout << "done" << std::endl;
         }
 
+        if (verbose) [[unlikely]] std::cout << "Inserting message" << std::flush;
         std::any retval;
         if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                      {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
@@ -697,10 +708,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
+        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
 
         //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
 
         // insert message attachments
+        if (verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
         insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments,
                           ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false);
         if (hasquote && !mmsquote_missing)
@@ -710,14 +723,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
                             "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true);
         }
+        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
 
         if (outgoing)
           setMessageDeliveryReceipts(ddb, rowid, &recipientmap, new_mms_id, true/*mms*/, isgroupconversation);
 
         // insert into reactions
+        if (verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
         insertReactions(new_mms_id, reactions, true, &recipientmap);
+        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
 
         // insert into mentions
+        if (verbose) [[unlikely]] std::cout << "Inserting mentions..." << std::flush;
         for (uint k = 0; k < nummentions; ++k)
         {
           SqliteDB::QueryResults results_mentions;
@@ -751,6 +768,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           //else
           //  std::cout << "  Inserted mention" << std::endl;
         }
+        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
 
       }
       else // database contains sms-table and message has no attachment/quote/mention and is not group
