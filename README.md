@@ -399,13 +399,13 @@ The 'begindate' and 'enddate' must always appear in pairs and can be either in "
 
 _NOTE: Although this feature generally seems to work quite well, it requires constant maintenance to keep up with changes in Signal's internal database. You may encounter problems if this program happens to be slightly out of date when you run it. As always, feel free to open an issue to notify me of problems._
 
-To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [passphrase] --listthreads`. Either both backups need to have database version <= 27, both >= 33, or both in between 27 and 33. If needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
+To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [passphrase] --listthreads`. Though many database versions work perfectly fine together, but sometimes breaking changes are made: for example two databases at version before and after 168 can not be merged successfully. Before opening an issue, if needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
 
 ```
 signalbackup-tools [first_database] [passphrase] --importthreads ALL --source [second_database] --sourcepassphrase [passphrase] --output [output_file] (--opassphrase [output passphrase])
 ```
 
-Always use the backup file with the highest database version as 'first_database' and the older version as source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`.
+It is recommended to use the larger (containing the most data (contacts, threads,...)) as the 'first_database' and the smaller one source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`.
 
 If you use this option and read this line, I would really appreciate it if you let me know the results. Either send me a mail (basjetimmer at yahoo-dot-com) or feel free to just open an issue on the tracker for feedback.
 
