@@ -399,7 +399,7 @@ The 'begindate' and 'enddate' must always appear in pairs and can be either in "
 
 _NOTE: Although this feature generally seems to work quite well, it requires constant maintenance to keep up with changes in Signal's internal database. You may encounter problems if this program happens to be slightly out of date when you run it. As always, feel free to open an issue to notify me of problems._
 
-To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [passphrase] --listthreads`. Though many database versions work perfectly fine together, but sometimes breaking changes are made: for example two databases at version before and after 168 can not be merged successfully. Before opening an issue, if needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
+To merge two backups, the backups must be at compatible database versions. The database version can be found by running `signalbackup-tools [input] [passphrase] --listthreads`. Though many database versions work perfectly fine together, sometimes breaking changes are made. For example two databases at versions before and after 168 can not be merged successfully. Before opening an issue, if needed, import the backups into Signal and export them again to get them updated and at equal versions. To import all threads from one database into another, run:
 
 ```
 signalbackup-tools [first_database] [passphrase] --importthreads ALL --source [second_database] --sourcepassphrase [passphrase] --output [output_file] (--opassphrase [output passphrase])
