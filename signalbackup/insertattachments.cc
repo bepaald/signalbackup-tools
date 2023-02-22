@@ -120,9 +120,10 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     std::unique_ptr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
                                                                             "ATTACHMENTID:uint64:" + bepaald::toString(unique_id),
-                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}) &&
-      new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path")))
+                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))/* &&
+      new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path")))*/
     {
+      new_attachment_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
       d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
     }
     else
