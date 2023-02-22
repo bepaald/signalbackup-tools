@@ -250,10 +250,12 @@ int main(int argc, char *argv[])
     }
   }
 
+  MEMINFO("Before importfromdesktop");
   if (arg.importfromdesktop_bool())
     if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.limittodates(),
                                arg.autolimitdates(), arg.ignorewal(), arg.verbose()))
       return 1;
+  MEMINFO("After importfromdesktop");
 
   if (arg.removedoubles())
     sb->removeDoubles();
