@@ -99,7 +99,8 @@ Arg::Arg(int argc, char *argv[])
   d_split(1000),
   d_split_bool(false),
   d_carowit_1(std::string()),
-  d_carowit_2(std::string())
+  d_carowit_2(std::string()),
+  d_desktopdbversion(4)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -1052,6 +1053,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         d_carowit_1 = arguments[++i];
         d_carowit_2 = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--desktopdbversion")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!ston(&d_desktopdbversion, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
       {

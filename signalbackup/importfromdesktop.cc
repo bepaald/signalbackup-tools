@@ -197,6 +197,7 @@
 */
 
 bool SignalBackup::importFromDesktop(std::string configdir, std::string databasedir,
+                                     long long int sqlcipherversion,
                                      std::vector<std::string> const &daterangelist,
                                      bool autodates, bool ignorewal, bool verbose)
 {
@@ -219,7 +220,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     return false;
   }
 
-  SqlCipherDecryptor sqlcipherdecryptor(configdir, databasedir);
+  SqlCipherDecryptor sqlcipherdecryptor(configdir, databasedir, sqlcipherversion);
   if (!sqlcipherdecryptor.ok())
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to open database" << std::endl;
