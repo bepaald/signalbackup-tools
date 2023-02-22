@@ -252,8 +252,8 @@ int main(int argc, char *argv[])
 
   MEMINFO("Before importfromdesktop");
   if (arg.importfromdesktop_bool())
-    if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.limittodates(),
-                               arg.autolimitdates(), arg.ignorewal(), arg.verbose()))
+    if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.desktopdbversion(),
+                               arg.limittodates(), arg.autolimitdates(), arg.ignorewal(), arg.verbose()))
       return 1;
   MEMINFO("After importfromdesktop");
 
@@ -399,7 +399,7 @@ int main(int argc, char *argv[])
   // decode and dump Signal-Desktop database to 'desktop.db'.
   if (!arg.dumpdesktopdb_1().empty())
   {
-    SqlCipherDecryptor db(arg.dumpdesktopdb_1(), arg.dumpdesktopdb_2());
+    SqlCipherDecryptor db(arg.dumpdesktopdb_1(), arg.dumpdesktopdb_2(), arg.desktopdbversion());
     if (!db.ok() || !db.writeToFile("desktop.db", arg.overwrite()))
       std::cout << "Failed to dump desktop database" << std::endl;
   }

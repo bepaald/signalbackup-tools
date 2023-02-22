@@ -63,7 +63,7 @@ bool SignalBackup::hhenkel(std::string const &signaldesktoplocation)
   // args
 
   // open signal desktop database
-  SqlCipherDecryptor db(signaldesktoplocation, signaldesktoplocation + "/sql");
+  SqlCipherDecryptor db(signaldesktoplocation, signaldesktoplocation + "/sql", 4 /* desktop sqlcipher version */);
   if (!db.ok())
   {
     std::cout << "Error reading signal desktop database" << std::endl;

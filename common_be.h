@@ -74,8 +74,8 @@ namespace bepaald
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
   std::string bytesToString(unsigned char const *data, unsigned int length);
   std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
-  template <typename T>
-  void destroyPtr(unsigned char **p, T *psize);
+  template <typename P, typename T>
+  void destroyPtr(P **p, T *psize);
   template <typename T>
   inline std::string toString(T const &num, bool hex = false, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
@@ -191,8 +191,8 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
   return oss.str();
 }
 
-template <typename T>
-inline void bepaald::destroyPtr(unsigned char **p, T *psize)
+template <typename P, typename T>
+inline void bepaald::destroyPtr(P **p, T *psize)
 {
   if (*p)
   {

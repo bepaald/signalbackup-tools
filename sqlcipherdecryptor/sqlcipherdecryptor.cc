@@ -40,6 +40,10 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   d_saltsize(0),
 #ifndef USE_CRYPTOPP
   d_digest(version >= 4 ? EVP_sha512() : EVP_sha1()),
+  d_digestname_size((version >= 4 ? STRLEN("SHA512") : STRLEN("SHA1")) + 1),
+  d_digestname(version >= 4 ?
+               new char[d_digestname_size] {'S', 'H', 'A', '5', '1', '2', '\0'} :
+               new char[d_digestname_size] {'S', 'H', 'A', '1', '\0'}),
   d_digestsize(EVP_MD_size(d_digest)),
 #else
   d_pbkdf(version >= 4 ?

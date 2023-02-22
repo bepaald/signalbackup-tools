@@ -22,6 +22,7 @@
 #include <regex>
 #include <fstream>
 #include <charconv>
+#include <cstring>
 
 #ifndef USE_CRYPTOPP
 #include <openssl/evp.h>

@@ -79,8 +79,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
     std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
     std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
-    char digest[] = "SHA512";
-    OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", digest, 0), OSSL_PARAM_construct_end()};
+    OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", d_digestname, 0), OSSL_PARAM_construct_end()};
     if (EVP_MAC_init(hctx.get(), d_hmackey, d_hmackeysize, params) != 1)
     {
       std::cout << "Failed to initialize HMAC context" << std::endl;
@@ -114,7 +113,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     {
       std::cout << "MAC in file: " << bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize) << std::endl;
       std::cout << "Calculated : " << bepaald::bytesToHexString(calculatedmac.get(), d_digestsize) << std::endl;
-      std::cout << "BAD MAC!" << std::endl;
+      std::cout << "BAD MAC! (pagenumber: " << pagenumber << ")" << std::endl;
       return false;
     }
 

@@ -49,13 +49,14 @@ class SqlCipherDecryptor
   unsigned int d_saltsize;
 #ifndef USE_CRYPTOPP
   evp_md_st const *d_digest;
+  size_t d_digestname_size;
+  char *d_digestname;
 #else
   CryptoPP::PasswordBasedKeyDerivationFunction *d_pbkdf;
   CryptoPP::HMAC_Base *d_hmac;
 #endif
   unsigned int d_digestsize;
   unsigned int d_pagesize;
-
   unsigned char *d_decrypteddata;
   uint64_t d_decrypteddatasize;
 
@@ -70,7 +71,7 @@ class SqlCipherDecryptor
   };
 
  public:
-  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version = 4);
+  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version);
   SqlCipherDecryptor(SqlCipherDecryptor const &other) = delete;
   SqlCipherDecryptor &operator=(SqlCipherDecryptor const &other) = delete;
   ~SqlCipherDecryptor();
