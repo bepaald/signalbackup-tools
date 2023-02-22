@@ -47,6 +47,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].contentType') AS content_type,"
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].fileName') AS file_name,"
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].size') AS size,"
+                  "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].pending'), 0) AS pending,"
                   "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].cdnNumber'), 0) AS cdn_number,"
                   "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].flags') AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
                   //"json_extract(json, '$.attachments[" + bepaald::toString(k) + "].cdnKey') AS cdn_key,"
@@ -62,6 +63,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
                 << ": Attachment not found." << std::endl;
+      std::cout << "Pending: " << results_attachment_data.getValueAs<long long int>(0, "pending") << std::endl;
 
       // std::cout << "Here is the message full data:" << std::endl;
       // SqliteDB::QueryResults res;
@@ -87,6 +89,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     if (amd.filename.empty() || amd.filesize == 0)
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
+      std::cout << "Pending: " << results_attachment_data.getValueAs<long long int>(0, "pending") << std::endl;
       //results_attachment_data.prettyPrint();
       //std::cout << "Corresponding message:" << std::endl;
       //ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
