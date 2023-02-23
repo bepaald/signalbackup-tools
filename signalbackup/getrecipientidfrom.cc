@@ -39,7 +39,7 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
       printable_uuid = "xxx";
 
     SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE uuid = ? OR group_id = ?", {uuid, uuid}, &res) ||
+    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE uuid = ? COLLATE NOCASE OR group_id = ? COLLATE NOCASE", {uuid, uuid}, &res) ||
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
@@ -74,7 +74,7 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
       printable_phone = "xxx";
 
     SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE phone = ?", phone, &res) ||
+    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE phone = ? COLLATE NOCASE", phone, &res) ||
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {

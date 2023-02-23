@@ -92,6 +92,8 @@ namespace bepaald
   inline std::ostream &bold_on(std::ostream &os);
   inline std::ostream &bold_off(std::ostream &os);
   inline std::string toDateString(std::time_t epoch, std::string const &format);
+  inline std::string toLower(std::string s);
+  inline std::string toUpper(std::string s);
 
   template <typename T, typename U>
   inline int findIdxOf(T const &container, U const &value);
@@ -336,6 +338,18 @@ inline std::string bepaald::toDateString(std::time_t epoch, std::string const &f
   std::ostringstream tmp;
   tmp << std::put_time(std::localtime(&epoch), format.c_str());
   return tmp.str();
+}
+
+inline std::string bepaald::toLower(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+  return s;
+}
+
+inline std::string bepaald::toUpper(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+  return s;
 }
 
 template <typename T, typename U>

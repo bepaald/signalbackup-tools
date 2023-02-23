@@ -289,7 +289,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                 "id,"
                 "e164,"
                 "type,"
-                "uuid,"
+                "LOWER(uuid) AS 'uuid',"
                 "groupId,"
                 "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
                 "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
@@ -440,7 +440,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "hasVisualMediaAttachments," // ???
                   "IFNULL(isErased, 0),"
                   "serverGuid,"
-                  "sourceUuid,"
+                  "LOWER(sourceUuid) AS 'sourceUuid',"
                   "seenStatus,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
@@ -557,7 +557,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                         "json_extract(messages.json, '$.quote.id') AS quote_id,"
                         "json_extract(messages.json, '$.quote.author') AS quote_author_phone,"     // in old databases, authorUuid does not exist, but this holds the phone number
                         "conversations.uuid AS quote_author_uuid_from_phone,"                      // this is filled from a left join on the possible phone number above
-                        "json_extract(messages.json, '$.quote.authorUuid') AS quote_author_uuid,"
+                        "LOWER(json_extract(messages.json, '$.quote.authorUuid')) AS quote_author_uuid,"
                         "json_extract(messages.json, '$.quote.text') AS quote_text,"
                         "IFNULL(json_array_length(messages.json, '$.quote.attachments'), 0) AS num_quote_attachments,"
                         "IFNULL(json_array_length(messages.json, '$.quote.bodyRanges'), 0) AS num_quote_bodyranges,"
@@ -652,7 +652,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               if (!ddb.exec("SELECT "
                             "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
                             "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].length') AS qbr_length,"
-                            "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid') AS qbr_uuid"
+                            "LOWER(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid')) AS qbr_uuid"
                             " FROM messages WHERE rowid = ?", rowid, &qbrres))
               {
                 std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Retrieving quote bodyranges" << std::endl;
@@ -706,6 +706,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                      {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
         {
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
+          return false;
         }
         //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
@@ -742,7 +743,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (!ddb.exec("SELECT "
                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].start') AS start,"
                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].length') AS length,"
-                        "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionUuid') AS mention_uuid"
+                        "LOWER(json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionUuid')) AS mention_uuid"
                         " FROM messages WHERE rowid = ?", rowid, &results_mentions))
           {
             std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to retrieve mentions. Skipping." << std::endl;
