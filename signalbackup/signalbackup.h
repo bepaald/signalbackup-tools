@@ -294,7 +294,7 @@ class SignalBackup
   bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
-  bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> const &data,
+  bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, SqliteDB const &ddb,
                          std::string const &where, std::string const &databasedir, bool isquote);

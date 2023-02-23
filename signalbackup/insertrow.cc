@@ -23,10 +23,24 @@
 #include <ranges>
 #endif
 
-bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> const &data,
+bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                              std::string const &returnfield, std::any *returnvalue) const
 {
   using namespace std::string_literals;
+
+  // check if columns exist...
+  for (auto it = data.begin(); it != data.end();)
+  {
+    if (!d_database.tableContainsColumn(table, it->first))
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Table '" << table << "' does not contain any column '" << it->first
+                << "'. Removing"  << std::endl;
+      it = data.erase(it);
+    }
+    else
+      ++it;
+  }
 
   std::string query = "INSERT INTO " + table + "(";
   for (uint i = 0; i < data.size(); ++i)
