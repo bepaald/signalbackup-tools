@@ -367,6 +367,17 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         position: relative;
       }
 
+      .msg-outgoing .pending-attachment {
+        padding: 5px;
+        background-color: rgba(0, 0, 0, 0.244);
+        text-align: center;
+      }
+      .msg-incoming .pending-attachment {
+        padding: 5px;
+        background-color: #5E5E5E;
+        text-align: center;
+      }
+
       .msg-with-reaction {
         margin-bottom: 20px;
         padding-bottom: 15px;
@@ -464,6 +475,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-quote-attach {
         flex-grow: 1;
         max-width: 30%;
+        margin-right: 5px;
+        text-align: right;
       }
 
       .msg-quote-attach .msg-img-container input[type=checkbox]:checked ~ label > img {
@@ -703,13 +716,24 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
 
     long long int rowid = attachment_results.getValueAs<long long int>(a, "_id");
     long long int uniqueid = attachment_results.getValueAs<long long int>(a, "unique_id");
+    long long int pending_push = attachment_results.getValueAs<long long int>(a, "pending_push");
+
+    if (pending_push != 0)
+    {
+      htmloutput << std::string(indent, ' ') << "<div class=\"attachment\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  <div class=\"pending-attachment\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "    (attachment not downloaded)" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
+      return;
+    }
 
     // write the attachment data
     if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, overwrite, append))
       continue;
 
-
     htmloutput << std::string(indent, ' ') << "<div class=\"attachment\">" << std::endl;
+
     std::string content_type = attachment_results.valueAsString(a, "ct");
     if (STRING_STARTS_WITH(content_type, "image/"))
     {
@@ -717,7 +741,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
-                    << "_" << uniqueid << ".bin\" alt=\"Image attachment\">" << std::endl;
+                 << "_" << uniqueid << ".bin\" alt=\"Image attachment\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    </label>" << std::endl;
       htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
     }
@@ -726,17 +750,19 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     {
       htmloutput << std::string(indent, ' ') << "  <" << content_type.substr(0, 5) << " controls>" << std::endl;
       htmloutput << std::string(indent, ' ') << "    <source src=\"media/Attachment_" << rowid
-                    << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                    << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#x2913;</a></span>" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#x2913;</a></span>" << std::endl;
       htmloutput << std::string(indent, ' ') << "  </" << content_type.substr(0, 5) << ">" << std::endl;
     }
     else // other
     {
       htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                    << "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download>&#x2913;</a></span>" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download>&#x2913;</a></span>" << std::endl;
     }
+
     htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
+
   }
 }
 

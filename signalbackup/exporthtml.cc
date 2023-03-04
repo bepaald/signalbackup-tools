@@ -218,10 +218,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
 
         SqliteDB::QueryResults attachment_results;
-        d_database.exec("SELECT _id,unique_id,ct,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+        d_database.exec("SELECT _id,unique_id,ct,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
-        d_database.exec("SELECT _id, unique_id, ct FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+        d_database.exec("SELECT _id,unique_id,ct,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
 
         SqliteDB::QueryResults mention_results;
         d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
