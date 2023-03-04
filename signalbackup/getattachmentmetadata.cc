@@ -88,7 +88,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
   if (file_size < static_cast<unsigned int>(bufsize))
   {
-    std::cout << "File unexpectedly small" << std::endl;
+    //std::cout << "File unexpectedly small" << std::endl; // only unexpected when it is _supposed_ to be png/jpg/gif
     return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
   }
 

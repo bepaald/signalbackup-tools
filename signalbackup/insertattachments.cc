@@ -61,9 +61,30 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (results_attachment_data.valueAsString(0, "path").empty())
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Attachment not found." << std::endl;
-      std::cout << "Pending: " << results_attachment_data.getValueAs<long long int>(0, "pending") << std::endl;
+      if (results_attachment_data.getValueAs<long long int>(0, "pending") != 0)
+      {
+        if (!insertRow("part",
+                       {{"mid", mms_id},
+                        {"ct", results_attachment_data.value(0, "content_type")},
+                        {"pending_push", 2},
+                        {"data_size", results_attachment_data.value(0, "size")},
+                        {"file_name", results_attachment_data.value(0, "file_name")},
+                        {"unique_id", unique_id},
+                        {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.getValueAs<long long int>(0, "flags") == 1 ? 1 : 0)},
+                        {"width", 0},
+                        {"height", 0},
+                        {"quote", isquote ? 1 : 0},
+                        {"upload_timestamp", results_attachment_data.value(0, "upload_timestamp")},
+                        {"cdn_number", results_attachment_data.value(0, "cdn_number")}},
+                       "_id"))
+        {
+          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting part-data (pending)" << std::endl;
+          continue;
+        }
+      }
+      else
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                  << ": Attachment not found." << std::endl;
 
       // std::cout << "Here is the message full data:" << std::endl;
       // SqliteDB::QueryResults res;
@@ -71,7 +92,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       // res.printLineMode();
       // std::string convuuid = res.valueAsString(0, "conversationId");
       // ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
-      continue;
+        continue;
     }
 
     AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
