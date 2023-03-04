@@ -92,7 +92,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       // res.printLineMode();
       // std::string convuuid = res.valueAsString(0, "conversationId");
       // ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
-        continue;
+      continue;
     }
 
     AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
