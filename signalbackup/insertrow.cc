@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-#if __cpp_lib_ranges >= 201911L && !defined(__clang__) // ranges does not seem to work woith clang ATM
+#if __cpp_lib_ranges >= 201911L && !defined(__clang__) // ranges does not seem to work with clang ATM
 #include <ranges>
 #endif
 
