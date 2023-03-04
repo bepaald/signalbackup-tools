@@ -58,7 +58,7 @@ inline bool getPassword(std::string *pw)
 #endif
 
   char replacement = '*';
-  for (int i = 0, c = 0; (c = GETCHAR()) != enter && c != EOF; ++i)
+  for (char c = 0; (c = GETCHAR()) != enter && c != EOF;)
   {
 
 #if defined(_WIN32) || defined(__MINGW64__)

@@ -24,7 +24,7 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
 {
   if (uuid.empty())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Asked to find recipient._id for empty uuid. Refusing" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Asked to find recipient._id for empty uuid. Refusing" << std::endl;
     return -1;
   }
 
@@ -43,7 +43,7 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
-      std::cout << "Failed to finding recipient for uuid: " << printable_uuid << std::endl;
+      std::cout << "Failed to find recipient for uuid: " << printable_uuid << std::endl;
       return -1;
     }
     //res.prettyPrint();
@@ -60,7 +60,7 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
 {
   if (phone.empty())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Asked to find recipient._id for empty e164. Refusing" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Asked to find recipient._id for empty e164. Refusing" << std::endl;
     return -1;
   }
 
@@ -78,7 +78,7 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
-      std::cout << "Failed to finding recipient for phone: " << printable_phone << std::endl;
+      std::cout << "Failed to find recipient for phone: " << printable_phone << std::endl;
       return -1;
     }
     //res.prettyPrint();
