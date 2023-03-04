@@ -521,6 +521,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         handleDTGroupChangeMessage(ddb, rowid, ttid);
         continue;
       }
+      else if (type == "group-v1-migration")
+      {
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported messagetype '"
+                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
+        ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+        std::cout << "Skipping message." << std::endl;
+        continue;
+      }
       else if (type == "timer-notification")
       {
         if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
