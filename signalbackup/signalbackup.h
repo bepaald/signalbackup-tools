@@ -148,11 +148,14 @@ class SignalBackup
     std::string pre;
     std::string replacement;
     std::string post;
-    bool operator<(Range const &other)
+    bool operator<(Range const &other) const
     {
       return (start < other.start) ||
         (start == other.start && start + length < other.start + other.length) ||
-        (start == other.start && start + length < other.start + other.length && replacement < other.replacement);
+        (start == other.start && start + length == other.start + other.length && replacement < other.replacement);
+
+      //return std::tie(start, start + length, replacement) <
+      //  std::tie(other.start, other.start + other.length, other.replacement);
 
     };
   };

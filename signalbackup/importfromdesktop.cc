@@ -441,6 +441,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "IFNULL(isErased, 0),"
                   "serverGuid,"
                   "LOWER(sourceUuid) AS 'sourceUuid',"
+                  "json_extract(json, '$.source') AS sourcephone,"
                   "seenStatus,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
@@ -480,15 +481,20 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       else if (isgroupconversation && incoming)
         //if (isgroupconversation && (incoming || (type == "call-history" & something)))
       {
-        // incoming group messages have 'address' set to the group member who sent the message
-        // note this might fail on messages sent from a desktop app, those may have sourceuuid == NULL (only verified on outgoing though)
+        // incoming group messages have 'address' set to the group member who sent the message/
+
+        // NOTE this might fail on messages sent from a desktop app, those may
+        // have sourceuuid == NULL (only verified on outgoing though)
         std::string source_uuid = results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
-        address = getRecipientIdFromUuid(source_uuid, &recipientmap);
+        if (source_uuid.empty()) // try with phone number
+          address = getRecipientIdFromPhone(results_all_messages_from_conversation.valueAsString(j, "sourcephone"), &recipientmap);
+        else
+          address = getRecipientIdFromUuid(source_uuid, &recipientmap);
         if (address == -1)
         {
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to set address of incoming group message. Skipping" << std::endl;
-          std::cout << "Some more info: " << std::endl;
-          ddb.printLineMode("SELECT * from messages WHERE rowid = ?", results_all_messages_from_conversation.value(j, "rowid"));
+          //std::cout << "Some more info: " << std::endl;
+          //ddb.printLineMode("SELECT * from messages WHERE rowid = ?", results_all_messages_from_conversation.value(j, "rowid"));
           continue;
         }
       }
