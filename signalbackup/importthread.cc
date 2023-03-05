@@ -444,16 +444,6 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
   }
 
-  // delete group_membership's already present
-  if (d_database.containsTable("group_membership"))
-  {
-    SqliteDB::QueryResults gm_results;
-    d_database.exec("SELECT DISTINCT group_id,recipient_id FROM group_membership", &gm_results);
-    for (uint i = 0; i < gm_results.rows(); ++i)
-      source->d_database.exec("DELETE FROM group_membership WHERE group_id = ? AND recipient_id = ?",
-                              {gm_results.value(i, "group_id"), gm_results.value(i, "recipient_id")});
-  }
-
   // merge into existing thread, set the id on the sms, mms, and drafts
   // drop the recipient_preferences, identities and thread tables, they are already in the target db
   if (targetthread > -1)
@@ -553,6 +543,27 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
           break;
       }
     }
+  }
+
+  // delete group_membership's already present
+  if (d_database.containsTable("group_membership"))
+  {
+    SqliteDB::QueryResults gm_results;
+    d_database.exec("SELECT DISTINCT group_id,recipient_id FROM group_membership", &gm_results);
+    for (uint i = 0; i < gm_results.rows(); ++i)
+      source->d_database.exec("DELETE FROM group_membership WHERE group_id = ? AND recipient_id = ?",
+                              {gm_results.value(i, "group_id"), gm_results.value(i, "recipient_id")});
+  }
+
+  // delete double call.call_id's (call_id is timestamp, this shouldn't naturally
+  // happen, but does when merging threads that overlap in time)
+  if (d_database.containsTable("call"))
+  {
+    SqliteDB::QueryResults call_results;
+    d_database.exec("SELECT DISTINCT call_id FROM call", &call_results);
+    for (uint i = 0; i < call_results.rows(); ++i)
+      source->d_database.exec("DELETE FROM call WHERE call_id = ?",
+                              call_results.value(i, "call_id"));
   }
 
   // // export database
