@@ -341,6 +341,7 @@ class SignalBackup
   void HTMLescapeUrl(std::string *in) const;
   inline int bytesToUtf8CharSize(std::string const *const body, int idx, int length = 1) const;
   inline int utf8CharsToByteSize() const;
+  inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -688,6 +689,30 @@ inline int SignalBackup::bytesToUtf8CharSize(std::string const *const body, int 
 inline int SignalBackup::utf8CharsToByteSize() const
 {
   return 0;
+}
+
+inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const
+{
+  // NOTE THIS IS NOT GENERIC UTF-8 CONVERSION, THIS
+  // DATA IS GUARANTEED TO HAVE ONLY SINGLE- AND TWO-BYTE
+  // CHARS (NO 3 OR 4-BYTE). THE TWO-BYTE CHARS NEVER
+  // CONTAIN MORE THAN TWO BITS OF DATA
+  unsigned char output[16]{0};
+  uint outputpos = 0;
+  for (uint i = 0; i < data_size; ++i)
+  {
+    if (outputpos >= 16) [[unlikely]]
+      return std::string();
+
+    if ((data[i] & 0b10000000) == 0) // single byte char
+      output[outputpos++] += data[i];
+    else // 2 byte char
+    {
+      output[outputpos] = ((data[i] & 0b00000011) << 6);
+      output[outputpos++] |= (data[++i] & 0b00111111);
+    }
+  }
+  return bepaald::bytesToHexString(output, 16, true);
 }
 
 #endif
