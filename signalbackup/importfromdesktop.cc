@@ -373,17 +373,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
       }
     }
-    else // type != 'group' (== 'private')
+    else // type != 'group' ( == 'private'?)
       person_or_group_id = results_all_conversations.valueAsString(i, "uuid"); // single person id, if group, this is empty
 
     // get/create matching thread id from android database
     long long int recipientid_for_thread = -1;
+    std::string phone;
     if (!person_or_group_id.empty())
       recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap);
     else
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Failed to determine uuid. Trying with phone number..." << std::endl;
-      std::string phone = results_all_conversations.valueAsString(i, "e164");
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to determine uuid. Trying with phone number..." << std::endl;
+      phone = results_all_conversations.valueAsString(i, "e164");
       if (!phone.empty())
         recipientid_for_thread = getRecipientIdFromPhone(phone, &recipientmap);
     }
@@ -407,13 +408,15 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
     else if (results2.rows() == 0) // the query was succesful, but yielded no results -> create thread
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. (id: " << person_or_group_id << ")" << std::endl;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. ("
+                << (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)) << ")" << std::endl;
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, recipientid_for_thread}},
                      "_id", &new_thread_id))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. (id: " << person_or_group_id << "), skipping." << std::endl;
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. ("
+                  << (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)) << "), skipping." << std::endl;
         continue;
       }
       //std::cout << "Raw any_cast 1" << std::endl;
@@ -523,9 +526,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type == "group-v1-migration")
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported messagetype '"
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
                   << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
-        ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+        ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited' AS areWeInvited,"
+                          "json_extract(json, '$.groupMigration.invitedMembers' AS invitedMembers,"
+                          "json_extract(json, '$.groupMigration.droppedMemberIds' AS droppedmemberIds"
+                          " FROM messages WHERE rowid = ?", rowid);
         std::cout << "Skipping message." << std::endl;
         continue;
       }
@@ -541,14 +547,33 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type.empty())
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported messagetype (empty type). Printing info:" << std::endl;
-        ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type (empty type)." << std::endl;
+
+        ddb.printLineMode("SELECT json_extract(json, '$.flags') AS flags,"
+                          "json_extract(json, '$.expirationTimerUpdate') AS expirationTimerUpdate,"
+                          "json_extract(json, '$.expirationTimerUpdate.expireTimer') AS expireTimer,"
+                          "json_extract(json, '$.expirationTimerUpdate.fromGroupUpdate') AS fromGroupUpdate"
+                          " FROM messages WHERE rowid = ?", rowid);
         std::cout << "Skipping message." << std::endl;
+
+        /*
+          Most empty message types I've seen have json$.flags = 2
+
+          enum Flags {
+            END_SESSION             = 1;
+            EXPIRATION_TIMER_UPDATE = 2;
+            PROFILE_KEY_UPDATE      = 4;
+          }
+
+          and  json$.expirationTimerUpdate = not null
+          and  json$.expirationTimerUpdate.expireTimer = some value (in seconds or milliseconds?) or not present when disabling timer
+        */
+
         continue;
       }
       else if (!outgoing && !incoming)
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported messagetype '"
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
                   << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Skipping message." << std::endl;
         continue;
       }
