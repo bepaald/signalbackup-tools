@@ -29,7 +29,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     if (!ddb.exec("SELECT IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments FROM messages " + where, &res) ||
         (res.rows() != 1 && res.columns() != 1))
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get number of attachment in quoted message. Skipping" << std::endl;
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get number of attachments in quoted message. Skipping" << std::endl;
       return false;
     }
     numattachments = res.getValueAs<long long int>(0, "numattachments");
