@@ -1,6 +1,7 @@
 *
 !README.md
 !LICENSE
+!CMakeLists.txt
 !BUILDSCRIPT.sh
 !BUILDSCRIPT_MULTIPROC.bash44
 !*.cc
