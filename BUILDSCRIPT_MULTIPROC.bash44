@@ -9,6 +9,12 @@ while [ $# -gt 0 ] ; do
     shift
 done
 
+if ! command -v nproc &> /dev/null ; then
+  NUMPROCS="${NUMPROCS:-1}"
+else
+  NUMPROCS="${NUMPROCS:-$(nproc)}"
+fi
+
 CXX="${CXX:-g++}"
 CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3 -flto}"
 CXXARCH="${CXXARCH:--march=native}"
@@ -17,6 +23,12 @@ CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
 LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
 LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
 BIN="${BIN:-signalbackup-tools}"
+
+# CONFIG: brew
+if [ "$CONFIG" = "brew" ] ; then
+  CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto"
+  LDFLAGS="-Wall -Wextra -O3 -flto=auto"
+fi
 
 # CONFIG: cryptopp
 if [ "$CONFIG" = "cryptopp" ] ; then
@@ -310,7 +322,6 @@ num_jobs=${#SRC[@]}
 ## both used in parallel for-loop
 # check we are using bash, and it is >= 4.4
 if [ ! -z ${BASH+x} ] && ( { [ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSINFO[1]}" -ge 4 ] ; } || [ "${BASH_VERSINFO[0]}" -gt 4 ]) ; then
-  NUMPROCS=$(nproc)
   RUNNINGJOBS="\j"  # The prompt escape for number of jobs currently running
                     ### echo "${RUNNINGJOBS}" // parameter expansion
                     ### \j
@@ -330,11 +341,24 @@ if [ ! -z ${BASH+x} ] && ( { [ "${BASH_VERSINFO[0]}" -ge 4 ] && [ "${BASH_VERSIN
   wait
 else
   for (( i = 0; i < num_jobs; i++ )); do
-      mkdir -p $(dirname "${OBJ[$i]}")
-      if [ ! "${OBJ[$i]}" -nt "${SRC[$i]}" ] ; then
-          echo "$CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$i]} -o ${OBJ[$i]}"
-          $CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$i]}" -o "${OBJ[$i]}"
-      fi
+    threads_free=$((num_jobs - i))
+    if [[ "$threads_free" -lt "$NUMPROCS" ]] ; then
+      threads=$threads_free
+    else
+      threads=$NUMPROCS
+    fi
+    for (( t = 0; t < threads; t++ )); do
+      (
+        curjob=$((i + t))
+        mkdir -p $(dirname "${OBJ[$curjob]}")
+        if [ ! "${OBJ[$curjob]}" -nt "${SRC[$curjob]}" ] ; then
+            echo "$CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD ${SRC[$curjob]} -o ${OBJ[$curjob]}"
+            $CXX -c $CXXFLAGS $CXXFLAGSEXTRA $CXXARCH $CXXSTD "${SRC[$curjob]}" -o "${OBJ[$curjob]}"
+        fi
+      ) &
+    done
+    wait
+    i=$((i + t - 1))
   done
 fi
 

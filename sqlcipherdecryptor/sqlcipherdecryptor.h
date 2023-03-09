@@ -27,7 +27,7 @@
 
 
 #ifndef USE_CRYPTOPP
-class evp_md_st;
+struct evp_md_st;
 #else
 namespace CryptoPP
 {

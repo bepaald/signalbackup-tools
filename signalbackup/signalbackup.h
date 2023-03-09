@@ -707,10 +707,7 @@ inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned c
     if ((data[i] & 0b10000000) == 0) // single byte char
       output[outputpos++] += data[i];
     else // 2 byte char
-    {
-      output[outputpos] = ((data[i] & 0b00000011) << 6);
-      output[outputpos++] |= (data[++i] & 0b00111111);
-    }
+      output[outputpos++] = ((data[i] & 0b00000011) << 6) | (data[i + 1] & 0b00111111), ++i;
   }
   return bepaald::bytesToHexString(output, 16, true);
 }
