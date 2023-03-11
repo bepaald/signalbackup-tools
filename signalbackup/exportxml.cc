@@ -437,7 +437,6 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
              << "text_only=\"" << text_only << "\">" << std::endl;
   // << "=\"" <<  << "\" "
 
-
   /* PART */
 
 
@@ -620,12 +619,16 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
         d_database.tableContainsColumn("sms", "service_center") &&
         d_database.tableContainsColumn("sms", "subject")) // removed in dbv166
       d_database.exec("SELECT _id,thread_id,protocol,subject,service_center,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms WHERE "
+                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
                       "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
-                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
+                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                       Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
     else
       d_database.exec("SELECT _id,thread_id,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms WHERE "
+                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
                       "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
-                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
+                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                       Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
   }
 
   SqliteDB::QueryResults mms_results;
@@ -635,6 +638,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     if (d_databaseversion >= 109)
       d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM " + d_mms_table + " WHERE "
+                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
                       "(" + d_mms_type + " & ?) == 0 AND "
                       "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
@@ -643,6 +647,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
       d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,"
                       "m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM " + d_mms_table + " WHERE "
+                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
                       "(" + d_mms_type + " & ?) == 0 AND "
                       "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,

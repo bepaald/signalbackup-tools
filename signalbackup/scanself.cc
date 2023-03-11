@@ -28,28 +28,27 @@ long long int SignalBackup::scanSelf() const
   if (!d_database.containsTable("recipient") ||
       !d_database.tableContainsColumn("thread", d_thread_recipient_id) ||
       !d_database.tableContainsColumn(d_mms_table, "quote_author") ||
-      (!d_database.tableContainsColumn(d_mms_table, "reactions") || !d_database.containsTable("reaction")))
+      (!d_database.tableContainsColumn(d_mms_table, "reactions") && !d_database.containsTable("reaction")))
     return -1;
 
-  SqliteDB::QueryResults res;
   // get thread ids of all 1-on-1 conversations
-
+  SqliteDB::QueryResults res;
   if (!d_database.exec("SELECT _id, " + d_thread_recipient_id + " FROM thread WHERE " + d_thread_recipient_id + " IN (SELECT _id FROM recipient WHERE group_id IS NULL)", &res))
     return -1;
-  //res.prettyPrint();
 
   std::set<long long int> options;
 
   for (uint i = 0; i < res.rows(); ++i)
   {
     long long int tid = res.getValueAs<long long int>(i, "_id");
-    long long int rid = res.getValueAs<long long int>(i, d_thread_recipient_id);
-    //std::cout << "Dealing with thread: " << tid << std::endl;
+    long long int rid = bepaald::toNumber<long long int>(res.valueAsString(i, d_thread_recipient_id));
+    //std::cout << "Dealing with thread: " << tid << " (recipient: " << rid << ")" << std::endl;
 
     // try to find other recipient in thread
     SqliteDB::QueryResults res2;
     if (!d_database.exec("SELECT DISTINCT quote_author FROM " + d_mms_table + " "
-                         "WHERE thread_id IS ? AND quote_author IS NOT NULL AND quote_author IS NOT ?", {tid, rid}, &res2))
+                         "WHERE thread_id IS ? AND quote_id IS NOT 0 AND quote_id IS NOT NULL "
+                         "AND quote_author IS NOT NULL AND quote_author IS NOT ?", {tid, rid}, &res2))
       continue;
     for (uint j = 0; j < res2.rows(); ++j)
     {
@@ -118,7 +117,7 @@ long long int SignalBackup::scanSelf() const
   }
 
   // get thread ids of all group conversations
-  if (!d_database.exec("SELECT _id,active FROM groups", &res))
+  if (!d_database.exec("SELECT _id FROM groups WHERE active IS NOT 0", &res))
     return -1;
   //res.prettyPrint();
 
@@ -126,25 +125,19 @@ long long int SignalBackup::scanSelf() const
   for (uint i = 0; i < res.rows(); ++i)
   {
     long long int gid = res.getValueAs<long long int>(i, "_id");
-    long long int active = res.getValueAs<long long int>(i, "active");
-
-    if (active == 0)
-    {
-      //std::cout << "Skipping group: " << gid << " (inactive)" << std::endl;
-      continue;
-    }
 
     SqliteDB::QueryResults res2;
     // skip groups without thread
-    if (!d_database.exec("SELECT * from thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id from groups WHERE _id IS ?))", gid, &res2))
+    if (!d_database.exec("SELECT _id from thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id from groups WHERE _id IS ?))", gid, &res2))
       continue;
     if (res2.rows() == 0)
     {
       //std::cout << "Skipping group: " << gid << " (no thread)" << std::endl;
       continue;
     }
+    long long int tid = res2.getValueAs<long long int>(0, "_id");
 
-    //std::cout << "Dealing with group: " << gid << std::endl;
+    //std::cout << "Dealing with group: " << gid << " (thread: " << tid << ")" << std::endl;
 
     SqliteDB::QueryResults res3;
     if (d_database.tableContainsColumn("groups", "members"))
@@ -158,19 +151,25 @@ long long int SignalBackup::scanSelf() const
       else
         if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ? UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM " + d_mms_table + " WHERE thread_id IS (SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?))))", {gid, gid}, &res3))
           continue;
+
+      for (uint j = 0; j < res3.rows(); ++j)
+      {
+        //std::cout << "  From group membership:" << res3.valueAsString(j, "word") << std::endl;
+        options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "word")));
+      }
     }
     else if (d_database.containsTable("group_membership"))
     {
-      if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?)", gid, &res3))
+      if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?) AND "
+                           "recipient_id NOT IN (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id IS ? AND type IS NOT ?)",
+                           {gid, tid, Types::GROUP_CALL_TYPE}, &res3))
         continue;
     }
-
-    for (uint j = 0; j < res3.rows(); ++j)
-    {
-      //std::cout << "  From group membership:" << res3.valueAsString(j, "word") << std::endl;
-      options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "word")));
-    }
   }
+
+  // std::cout << "OPTIONS:" << std::endl;
+  // for (auto const &o: options)
+  //   std::cout << "Option: " << o << std::endl;
 
   if (options.size() == 1)
     return *options.begin();
