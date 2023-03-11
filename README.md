@@ -364,7 +364,7 @@ A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML
 
 ##### Export to CSV
 
-To export the tables to a file of comma separated values (CSV), use `--exportcsv [table1]=[filename1],[table2]=[filename2],...`. To get all messages from the database, only the 'message' table needs to be exported. to get all messages out of older databases, the 'sms' and 'mms' tables need to be exported.
+To export the tables to a file of comma separated values (CSV), use `--exportcsv [table1]=[filename1],[table2]=[filename2],...`. To get all messages from the database, only the 'message' table needs to be exported. To get all messages out of older databases, the 'sms' and 'mms' tables need to be exported.
 
 ##### Export to XML
 
