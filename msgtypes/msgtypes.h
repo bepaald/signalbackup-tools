@@ -39,6 +39,9 @@ struct Types
   static uint64_t constexpr INCOMING_VIDEO_CALL_TYPE           = 10;
   static uint64_t constexpr OUTGOING_VIDEO_CALL_TYPE           = 11;
   static uint64_t constexpr GROUP_CALL_TYPE                    = 12;
+  static uint64_t constexpr BAD_DECRYPT_TYPE                   = 13;
+  static uint64_t constexpr CHANGE_NUMBER_TYPE                 = 14;
+  static uint64_t constexpr BOOST_REQUEST_TYPE                 = 15;
 
   static uint64_t constexpr BASE_INBOX_TYPE                    = 20;
   static uint64_t constexpr BASE_OUTBOX_TYPE                   = 21;
