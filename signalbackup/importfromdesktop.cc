@@ -544,6 +544,78 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         handleDTExpirationChangeMessage(ddb, rowid, ttid, address); // placeholder for now
         continue;
       }
+      else if (type == "profile-change")
+      {
+        SqliteDB::QueryResults profilechange_data;
+        if (!ddb.exec("SELECT "
+                      "json_extract(json, '$.profileChange.type') AS type, "
+                      "IFNULL(json_extract(json, '$.profileChange.oldName'), '') AS old_name, "
+                      "IFNULL(json_extract(json, '$.profileChange.newName'), '') AS new_name "
+                      "FROM messages WHERE rowid = ?", rowid, &profilechange_data))
+        {
+           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": failed to query profile change data. Skipping message" << std::endl;
+           continue;
+        }
+        //profilechange_data.prettyPrint();
+        if (profilechange_data.valueAsString(0, "type") != "name")
+        {
+           std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change'. Skipping message" << std::endl;
+           continue;
+        }
+        /*
+          // from app/src/main/proto/Database.proto
+          message ProfileChangeDetails {
+            message StringChange {
+              string previous = 1;
+              string new      = 2;
+            }
+            StringChange profileNameChange = 1;
+          }
+        */
+        std::string previousname = profilechange_data.valueAsString(0, "old_name");
+        std::string newname = profilechange_data.valueAsString(0, "new_name");
+
+        // subobject namechange:
+        ProtoBufParser<protobuffer::optional::STRING,
+                       protobuffer::optional::STRING> profilenamechange;
+        profilenamechange.addField<1>(previousname);
+        profilenamechange.addField<2>(newname);
+
+        // full profilechange object:
+        ProtoBufParser<ProtoBufParser<protobuffer::optional::STRING, // previous
+                                      protobuffer::optional::STRING>> profchangefull;
+        profchangefull.addField<1>(profilenamechange);
+
+
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change'. Skipping message" << std::endl;
+        continue;
+
+        /*
+          json = {"timestamp":1678707615643,"attachments":[],"conversationId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","type":"profile-change","sent_at":1678707615618,"received_at":1668688206717,"received_at_ms":1678707615618,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 black 🖤","newName":"devphone 💩 blk 🖤"},"id":"0278f2e1-3d73-4b7d-8dad-032ed2805e5b","schemaVersion":10,"contact":[]}
+
+_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
+150|1678707616458|1678707616458|-1|9|8|1|7|CjIKGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpBIWZGV2cGhvbmUg8J+SqSBibGsg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
+
+
+          json = {"timestamp":1678707777050,"attachments":[],"conversationId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","type":"profile-change","sent_at":1678707777035,"received_at":1668688206735,"received_at_ms":1678707777035,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 blk 🖤","newName":"devphone 💩 black 🖤"},"id":"6087a693-1255-472a-801b-10e916f86b80","schemaVersion":10,"contact":[]}
+
+_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
+157|1678707855213|1678707855213|-1|9|8|1|7|CjIKFmRldnBob25lIPCfkqkgYmxrIPCflqQSGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
+
+
+          json = {"timestamp":1678707615653,"attachments":[],"conversationId":"9fb7a43e-539a-4bc6-a60c-1a286912a734","type":"profile-change","sent_at":1678707615649,"received_at":1668688206718,"received_at_ms":1678707615649,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 black 🖤","newName":"devphone 💩 blk 🖤"},"id":"d818a5e9-9e94-4f0b-968d-8bb4433983b8","schemaVersion":10,"contact":[]}
+
+_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
+151|1678707616460|1678707616460|-1|5|8|1|7|CjIKGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpBIWZGV2cGhvbmUg8J+SqSBibGsg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
+
+
+          json = {"timestamp":1678707777055,"attachments":[],"conversationId":"9fb7a43e-539a-4bc6-a60c-1a286912a734","type":"profile-change","sent_at":1678707777051,"received_at":1668688206736,"received_at_ms":1678707777051,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 blk 🖤","newName":"devphone 💩 black 🖤"},"id":"2f5f8375-f448-4542-ba8d-dd3a920d7843","schemaVersion":10,"contact":[]}
+
+_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
+158|1678707855215|1678707855215|-1|5|8|1|7|CjIKFmRldnBob25lIPCfkqkgYmxrIPCflqQSGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
+
+         */
+      }
       else if (type.empty())
       {
         std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type (empty type)." << std::endl;
@@ -643,10 +715,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           mmsquote_body = quote_results.valueAsString(0, "quote_text"); // check if this can be null (if quote exists, dont think so)
           mmsquote_missing = (quote_results.getValueAs<long long int>(0, "quote_referencedmessagenotfound") == false ? 0 : 1);
           mmsquote_type = (quote_results.getValueAs<long long int>(0, "quote_isgiftbadge") == false ? 0 : 1);
-          //if (quote_results.valueHasType<long long int>(0, quote_id))
-          mmsquote_id = quote_results.getValueAs<long long int>(0, "quote_id"); // this is the messages.json.$timestamp or messages.sent_at. In the android db,
-                                                                                // it should be mms.date, but this should be set by this import anyway
-          //else // type is string
+          if (quote_results.valueHasType<long long int>(0, "quote_id"))
+            mmsquote_id = quote_results.getValueAs<long long int>(0, "quote_id"); // this is the messages.json.$timestamp or messages.sent_at. In the android
+                                                                                  // db, it should be mms.date, but this should be set by this import anyway
+          else // type is string
+            mmsquote_id = bepaald::toNumber<long long int>(quote_results.valueAsString(0, "quote_id"));
 
           if (quote_results.getValueAs<long long int>(0, "num_quote_bodyranges") > 0)
           {

@@ -22,8 +22,7 @@
 std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, std::string const &name) const
 {
   /*
-    from app/src/main/proto/Database.proto
-
+    // from app/src/main/proto/Database.proto
     message ProfileChangeDetails {
       message StringChange {
         string previous = 1;

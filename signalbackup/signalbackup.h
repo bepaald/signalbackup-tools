@@ -327,8 +327,8 @@ class SignalBackup
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                        std::map<long long int, RecipientInfo> const &recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
-  void HTMLprepRanges(std::vector<Range> *ranges) const;
-  void HTMLhandleRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
+  void prepRanges(std::vector<Range> *ranges) const;
+  void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
@@ -339,6 +339,7 @@ class SignalBackup
                       std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
+  inline int utf16CharSize(std::string const &body, int idx) const;
   inline int bytesToUtf8CharSize(std::string const *const body, int idx, int length = 1) const;
   inline int utf8CharsToByteSize() const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
@@ -667,6 +668,35 @@ inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &da
 inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
 {
   return getNameFromRecipientId(getRecipientIdFromUuid(uuid, nullptr));
+}
+
+inline int SignalBackup::utf16CharSize(std::string const &body, int idx) const
+{
+  // get code point
+  uint32_t codepoint = 0;
+  if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
+    codepoint =
+      (static_cast<uint8_t>(body[idx]) & 0b00000111) << 18 |
+      (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 12 |
+      (static_cast<uint8_t>(body[idx + 2]) & 0b00111111) << 6 |
+      (static_cast<uint8_t>(body[idx + 3]) & 0b00111111);
+  else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
+    codepoint =
+      (static_cast<uint8_t>(body[idx]) & 0b00001111) << 12 |
+      (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 6 |
+      (static_cast<uint8_t>(body[idx + 2]) & 0b00111111);
+  /*
+  else if ((static_cast<uint8_t>(body[idx]) & 0b11100000) == 0b11000000) // 2 byte char
+    codepoint =
+      (static_cast<uint8_t>(body[idx]) & 0b00011111) << 6 |
+      (static_cast<uint8_t>(body[idx + 1]) & 0b00111111);
+  else
+    codepoint = static_cast<uint8_t>(body[idx]);
+  */
+  else // all 1 and two byte utf-8 chars are 1 utf-16 char (max is 0b11111111111 which < 0x10000)
+    return 1;
+
+  return codepoint >= 0x10000 ? 2 : 1;
 }
 
 inline int SignalBackup::bytesToUtf8CharSize(std::string const *const body, int idx, int length) const
