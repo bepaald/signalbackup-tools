@@ -91,7 +91,7 @@ Arg::Arg(int argc, char *argv[])
   d_limittodates(std::vector<std::string>()),
   d_autolimitdates(false),
   d_ignorewal(false),
-  d_includemms(false),
+  d_includemms(true),
   d_checkdbintegrity(false),
   d_interactive(false),
   d_exporthtml(std::string()),
