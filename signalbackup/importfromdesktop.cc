@@ -468,7 +468,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
       std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
       bool outgoing = type == "outgoing";
-      bool incoming = type == "incoming";
+      bool incoming = (type == "incoming" || type == "profile-change");
       long long int numattachments = results_all_messages_from_conversation.getValueAs<long long int>(j, "numattachments");
       long long int numreactions = results_all_messages_from_conversation.getValueAs<long long int>(j, "numreactions");
       long long int nummentions = results_all_messages_from_conversation.getValueAs<long long int>(j, "nummentions");
@@ -490,11 +490,22 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       {
         // incoming group messages have 'address' set to the group member who sent the message/
 
+        // profile change has source and sourceUuid NULL. There is 'changedId' which is the
+        // conversationId of the source.
+        SqliteDB::QueryResults profchangeuuid;
+        if (type == "profile-change")
+          ddb.exec("SELECT uuid, e164 FROM conversations WHERE id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)",
+                   rowid, &profchangeuuid);
+
         // NOTE this might fail on messages sent from a desktop app, those may
         // have sourceuuid == NULL (only verified on outgoing though)
-        std::string source_uuid = results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
+        std::string source_uuid = type == "profile-change" ?
+          profchangeuuid.valueAsString(0, "uuid") :
+          results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
         if (source_uuid.empty()) // try with phone number
-          address = getRecipientIdFromPhone(results_all_messages_from_conversation.valueAsString(j, "sourcephone"), &recipientmap);
+          address = getRecipientIdFromPhone(type == "profile-change" ?
+                                            profchangeuuid.valueAsString(0, "e164") :
+                                            results_all_messages_from_conversation.valueAsString(j, "sourcephone"), &recipientmap);
         else
           address = getRecipientIdFromUuid(source_uuid, &recipientmap);
         if (address == -1)
@@ -559,8 +570,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         //profilechange_data.prettyPrint();
         if (profilechange_data.valueAsString(0, "type") != "name")
         {
-           std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change'. Skipping message" << std::endl;
-           continue;
+          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change' (change type: "
+                    << profilechange_data.valueAsString(0, "type") << ". Skipping message" << std::endl;
+          continue;
         }
         /*
           // from app/src/main/proto/Database.proto
@@ -586,35 +598,39 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                       protobuffer::optional::STRING>> profchangefull;
         profchangefull.addField<1>(profilenamechange);
 
-
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change'. Skipping message" << std::endl;
+        if (d_database.containsTable("sms"))
+        {
+          if (!insertRow("sms", {{"thread_id", ttid},
+                                 {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {"type", Types::PROFILE_CHANGE_TYPE},
+                                 {"body", profchangefull.getDataString()},
+                                 {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                 {d_sms_recipient_id, address}}, "_id"))
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into sms" << std::endl;
+            return false;
+          }
+        }
+        else
+        {
+          if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+                                       {"body", profchangefull.getDataString()},
+                                       {d_mms_recipient_id, address},
+                                       {"recipient_device_id", 1}, // not sure what this is but at least for profile-change
+                                       {"read", 1}}, "_id"))       // it is hardcoded to 1 in Signal Android (as is 'read')
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into mms" << std::endl;
+            return false;
+          }
+        }
         continue;
 
-        /*
-          json = {"timestamp":1678707615643,"attachments":[],"conversationId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","type":"profile-change","sent_at":1678707615618,"received_at":1668688206717,"received_at_ms":1678707615618,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 black 🖤","newName":"devphone 💩 blk 🖤"},"id":"0278f2e1-3d73-4b7d-8dad-032ed2805e5b","schemaVersion":10,"contact":[]}
-
-_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
-150|1678707616458|1678707616458|-1|9|8|1|7|CjIKGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpBIWZGV2cGhvbmUg8J+SqSBibGsg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
-
-
-          json = {"timestamp":1678707777050,"attachments":[],"conversationId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","type":"profile-change","sent_at":1678707777035,"received_at":1668688206735,"received_at_ms":1678707777035,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 blk 🖤","newName":"devphone 💩 black 🖤"},"id":"6087a693-1255-472a-801b-10e916f86b80","schemaVersion":10,"contact":[]}
-
-_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
-157|1678707855213|1678707855213|-1|9|8|1|7|CjIKFmRldnBob25lIPCfkqkgYmxrIPCflqQSGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
-
-
-          json = {"timestamp":1678707615653,"attachments":[],"conversationId":"9fb7a43e-539a-4bc6-a60c-1a286912a734","type":"profile-change","sent_at":1678707615649,"received_at":1668688206718,"received_at_ms":1678707615649,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 black 🖤","newName":"devphone 💩 blk 🖤"},"id":"d818a5e9-9e94-4f0b-968d-8bb4433983b8","schemaVersion":10,"contact":[]}
-
-_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
-151|1678707616460|1678707616460|-1|5|8|1|7|CjIKGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpBIWZGV2cGhvbmUg8J+SqSBibGsg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
-
-
-          json = {"timestamp":1678707777055,"attachments":[],"conversationId":"9fb7a43e-539a-4bc6-a60c-1a286912a734","type":"profile-change","sent_at":1678707777051,"received_at":1668688206736,"received_at_ms":1678707777051,"readStatus":0,"seenStatus":0,"changedId":"52d99fa2-1795-4bc7-9bd6-bbc91c4442a1","profileChange":{"type":"name","oldName":"devphone 💩 blk 🖤","newName":"devphone 💩 black 🖤"},"id":"2f5f8375-f448-4542-ba8d-dd3a920d7843","schemaVersion":10,"contact":[]}
-
-_id|date_sent|date_received|date_server|thread_id|recipient_id|recipient_device_id|type|body|read|ct_l|exp|m_type|m_size|st|tr_id|subscription_id|receipt_timestamp|delivery_receipt_count|read_receipt_count|viewed_receipt_count|mismatched_identities|network_failures|expires_in|expire_started|notified|quote_id|quote_author|quote_body|quote_missing|quote_mentions|quote_type|shared_contacts|unidentified|link_previews|view_once|reactions_unread|reactions_last_seen|remote_deleted|mentions_self|notified_timestamp|server_guid|message_ranges|story_type|parent_story_id|export_state|exported|scheduled_date
-158|1678707855215|1678707855215|-1|5|8|1|7|CjIKFmRldnBob25lIPCfkqkgYmxrIPCflqQSGGRldnBob25lIPCfkqkgYmxhY2sg8J+WpA==|1|||||||-1|-1|0|0|0|||0|0|0|0|0||0||0||0||0|0|-1|0|0|0|||0|0||0|-1
-
-         */
+        // std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change'. Skipping message" << std::endl;
+        // continue;
       }
       else if (type.empty())
       {
