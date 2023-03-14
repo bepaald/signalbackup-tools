@@ -199,7 +199,7 @@
 bool SignalBackup::importFromDesktop(std::string configdir, std::string databasedir,
                                      long long int sqlcipherversion,
                                      std::vector<std::string> const &daterangelist,
-                                     bool autodates, bool ignorewal, bool verbose)
+                                     bool autodates, bool ignorewal)
 {
   if (configdir.empty() || databasedir.empty())
   {
@@ -462,13 +462,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::cout << " - Importing " << results_all_messages_from_conversation.rows() << " messages into thread._id " << ttid << std::endl;
     for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
     {
-      if (verbose) [[unlikely]] std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
+      if (d_verbose) [[unlikely]] std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
       std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
       bool outgoing = type == "outgoing";
-      bool incoming = (type == "incoming" || type == "profile-change");
+      bool incoming = (type == "incoming" || type == "profile-change" || type == "keychange" || type == "verified-change");
       long long int numattachments = results_all_messages_from_conversation.getValueAs<long long int>(j, "numattachments");
       long long int numreactions = results_all_messages_from_conversation.getValueAs<long long int>(j, "numreactions");
       long long int nummentions = results_all_messages_from_conversation.getValueAs<long long int>(j, "nummentions");
@@ -492,19 +492,46 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         // profile change has source and sourceUuid NULL. There is 'changedId' which is the
         // conversationId of the source.
-        SqliteDB::QueryResults profchangeuuid;
+        SqliteDB::QueryResults statusmsguuid;
         if (type == "profile-change")
-          ddb.exec("SELECT uuid, e164 FROM conversations WHERE id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)",
-                   rowid, &profchangeuuid);
+        {
+          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)",
+                        rowid, &statusmsguuid))
+          {
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group profile-change." << std::endl;
+            // print some extra info
+            //ddb.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+          }
+        }
+        else if (type == "keychange")
+        {
+          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE uuid IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?)",
+                        rowid, &statusmsguuid))
+          {
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group key-change." << std::endl;
+            // print some extra info
+            //ddb.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+          }
+        }
+        else if (type == "verified-change")
+        {
+          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?)",
+                        rowid, &statusmsguuid))
+          {
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group key-change." << std::endl;
+            // print some extra info
+            //ddb.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+          }
+        }
 
         // NOTE this might fail on messages sent from a desktop app, those may
         // have sourceuuid == NULL (only verified on outgoing though)
-        std::string source_uuid = type == "profile-change" ?
-          profchangeuuid.valueAsString(0, "uuid") :
+        std::string source_uuid = (type == "profile-change" || type == "keychange" || type == "verified-change") ?
+          statusmsguuid.valueAsString(0, "uuid") :
           results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
         if (source_uuid.empty()) // try with phone number
-          address = getRecipientIdFromPhone(type == "profile-change" ?
-                                            profchangeuuid.valueAsString(0, "e164") :
+          address = getRecipientIdFromPhone((type == "profile-change" || type == "keychange" || type == "verified-change") ?
+                                            statusmsguuid.valueAsString(0, "e164") :
                                             results_all_messages_from_conversation.valueAsString(j, "sourcephone"), &recipientmap);
         else
           address = getRecipientIdFromUuid(source_uuid, &recipientmap);
@@ -524,14 +551,21 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         continue;
       }
 
+
+
+      // PROCESS THE MESSAGE
       if (type == "call-history")
       {
+        if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
         handleDTCallTypeMessage(ddb, rowid, ttid, address);
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
       }
       else if (type == "group-v2-change")
       {
+        //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
         handleDTGroupChangeMessage(ddb, rowid, ttid);
+        //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
       }
       else if (type == "group-v1-migration")
@@ -547,6 +581,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type == "timer-notification")
       {
+        //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
+        //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
         {
           handleDTGroupChangeMessage(ddb, rowid, ttid);
@@ -555,8 +591,98 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         handleDTExpirationChangeMessage(ddb, rowid, ttid, address); // placeholder for now
         continue;
       }
+      else if (type == "keychange")
+      {
+        if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
+        if (d_database.containsTable("sms"))
+        {
+          if (!insertRow("sms", {{"thread_id", ttid},
+                                 {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {"type", Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
+                                 {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                 {d_sms_recipient_id, address}}))
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+            return false;
+          }
+        }
+        else
+        {
+          if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
+                                       {d_mms_recipient_id, address},
+                                       {"recipient_device_id", 1}, // not sure what this is but at least for profile-change
+                                       {"read", 1}}))              // it is hardcoded to 1 in Signal Android (as is 'read')
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+            return false;
+          }
+        }
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
+        continue;
+      }
+      else if (type == "verified-change")
+      {
+        if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
+        SqliteDB::QueryResults identityverification_results;
+        if (!ddb.exec("SELECT "
+                      "json_extract(json, '$.local') AS 'local', "
+                      "json_extract(json, '$.verified') AS 'verified' "
+                      "FROM messages WHERE rowid = ?", rowid, &identityverification_results))
+        {
+           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": failed to query verified-change data. Skipping message" << std::endl;
+           continue;
+        }
+
+        // if local == false, it would be an incoming message on Android and
+        // marked as 'You marked your safety number with CONTACT verified from another device'
+        // instead of just 'You marked your safety number with CONTACT verified'
+        [[maybe_unused]] bool local = identityverification_results.getValueAs<long long int>(0, "local") == 0 ? false : true;
+        bool verified = identityverification_results.getValueAs<long long int>(0, "verified") == 0 ? false : true;
+
+        // not sure if I should do anythng with local... the desktop may have been 'another device', but
+        // who's to say what this android backup we're importing into is...
+        long long int verifytype =
+          Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT |
+          Types::BASE_SENDING_TYPE | // if (local == false) BASE_INBOX_TYPE
+          (verified ? Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT : Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT);
+
+        if (d_database.containsTable("sms"))
+        {
+          if (!insertRow("sms", {{"thread_id", ttid},
+                                 {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {"type", verifytype},
+                                 {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                 {d_sms_recipient_id, address}}))
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+            return false;
+          }
+        }
+        else
+        {
+          if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_type, verifytype},
+                                       {d_mms_recipient_id, address},
+                                       {"m_type", 128}, // probably also if (local == false) 132
+                                       {"read", 1}}))              // hardcoded to 1 in Signal Android
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+            return false;
+          }
+        }
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
+        continue;
+      }
       else if (type == "profile-change")
       {
+        if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
         SqliteDB::QueryResults profilechange_data;
         if (!ddb.exec("SELECT "
                       "json_extract(json, '$.profileChange.type') AS type, "
@@ -606,7 +732,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                  {"type", Types::PROFILE_CHANGE_TYPE},
                                  {"body", profchangefull.getDataString()},
                                  {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
-                                 {d_sms_recipient_id, address}}, "_id"))
+                                 {d_sms_recipient_id, address}}))
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into sms" << std::endl;
             return false;
@@ -621,16 +747,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        {"body", profchangefull.getDataString()},
                                        {d_mms_recipient_id, address},
                                        {"recipient_device_id", 1}, // not sure what this is but at least for profile-change
-                                       {"read", 1}}, "_id"))       // it is hardcoded to 1 in Signal Android (as is 'read')
+                                       {"read", 1}}))              // it is hardcoded to 1 in Signal Android (as is 'read')
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into mms" << std::endl;
             return false;
           }
         }
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
-
-        // std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type 'profile-change'. Skipping message" << std::endl;
-        // continue;
       }
       else if (type.empty())
       {
@@ -666,10 +790,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
 
       // get emoji reactions
-      if (verbose) [[unlikely]] std::cout << "Handling reactions..." << std::flush;
+      if (d_verbose) [[unlikely]] std::cout << "Handling reactions..." << std::flush;
       std::vector<std::vector<std::string>> reactions;
       getDTReactions(ddb, rowid, numreactions, &reactions);
-      if (verbose) [[unlikely]] std::cout << "done" << std::endl;
+      if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 
       // insert the collected data in the correct tables
       if (!d_database.containsTable("sms") || // starting at dbv168, the sms table is removed altogether
@@ -687,7 +811,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         long long int mmsquote_type = 0; // 0 == NORMAL, 1 == GIFT_BADGE (src/main/java/org/thoughtcrime/securesms/mms/QuoteModel.java)
         if (hasquote)
         {
-          if (verbose) [[unlikely]] std::cout << "Gathering quote data..." << std::flush;
+          if (d_verbose) [[unlikely]] std::cout << "Gathering quote data..." << std::flush;
 
           //std::cout << "  Message has quote" << std::endl;
           SqliteDB::QueryResults quote_results;
@@ -820,10 +944,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           //"mms.quote_attachment,"// = -1 Always -1??
 
           //quote_results.prettyPrint();
-          if (verbose) [[unlikely]] std::cout << "done" << std::endl;
+          if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         }
 
-        if (verbose) [[unlikely]] std::cout << "Inserting message" << std::flush;
+        if (d_verbose) [[unlikely]] std::cout << "Inserting message" << std::flush;
         std::any retval;
         if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                      {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
@@ -849,12 +973,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
-        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 
         //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
 
         // insert message attachments
-        if (verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
+        if (d_verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
         insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments,
                           ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false);
         if (hasquote && !mmsquote_missing)
@@ -864,18 +988,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
                             "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true);
         }
-        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 
         if (outgoing)
           setMessageDeliveryReceipts(ddb, rowid, &recipientmap, new_mms_id, true/*mms*/, isgroupconversation);
 
         // insert into reactions
-        if (verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
+        if (d_verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
         insertReactions(new_mms_id, reactions, true, &recipientmap);
-        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 
         // insert into mentions
-        if (verbose) [[unlikely]] std::cout << "Inserting mentions..." << std::flush;
+        if (d_verbose) [[unlikely]] std::cout << "Inserting mentions..." << std::flush;
         for (uint k = 0; k < nummentions; ++k)
         {
           SqliteDB::QueryResults results_mentions;
@@ -909,7 +1033,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           //else
           //  std::cout << "  Inserted mention" << std::endl;
         }
-        if (verbose) [[unlikely]] std::cout << "done" << std::endl;
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 
       }
       else // database contains sms-table and message has no attachment/quote/mention and is not group
