@@ -208,7 +208,7 @@ class SignalBackup
   bool scramble() const;
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion,
-                         std::vector<std::string> const &dateranges, bool autodates, bool ignorewal, bool verbose);
+                         std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads, long long int split, bool overwrite, bool append) const;
 
