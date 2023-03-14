@@ -339,8 +339,9 @@ class SignalBackup
                       std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
+  inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, int idx) const;
-  inline int bytesToUtf8CharSize(std::string const *const body, int idx, int length = 1) const;
+  inline int bytesToUtf8CharSize(std::string const &body, int idx, int length = 1) const;
   inline int utf8CharsToByteSize() const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
 };
@@ -675,11 +676,14 @@ inline int SignalBackup::utf16CharSize(std::string const &body, int idx) const
   // get code point
   uint32_t codepoint = 0;
   if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
+    /*
     codepoint =
       (static_cast<uint8_t>(body[idx]) & 0b00000111) << 18 |
       (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 12 |
       (static_cast<uint8_t>(body[idx + 2]) & 0b00111111) << 6 |
       (static_cast<uint8_t>(body[idx + 3]) & 0b00111111);
+    */
+    return 2; // all 4 byte utf8 chars are 2 bytes in utf16
   else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
     codepoint =
       (static_cast<uint8_t>(body[idx]) & 0b00001111) << 12 |
@@ -699,16 +703,31 @@ inline int SignalBackup::utf16CharSize(std::string const &body, int idx) const
   return codepoint >= 0x10000 ? 2 : 1;
 }
 
-inline int SignalBackup::bytesToUtf8CharSize(std::string const *const body, int idx, int length) const
+inline int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const
+{
+  int utf16count = 0;
+  int bytecount = 0;
+
+  while (utf16count < length && idx < text.size())
+  {
+    utf16count += utf16CharSize(text, idx);
+    int utf8size = bytesToUtf8CharSize(text, idx);
+    bytecount += utf8size;
+    idx += utf8size;
+  }
+  return bytecount;
+}
+
+inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx, int length) const
 {
   int ret = 0;
   for (int i = idx; i < idx + length; ++i)
   {
-    if ((static_cast<uint8_t>((*body)[i]) & 0b11111000) == 0b11110000) // 4 byte char
+    if ((static_cast<uint8_t>(body[i]) & 0b11111000) == 0b11110000) // 4 byte char
       ret += 4;
-    else if ((static_cast<uint8_t>((*body)[i]) & 0b11110000) == 0b11100000) // 3 byte char
+    else if ((static_cast<uint8_t>(body[i]) & 0b11110000) == 0b11100000) // 3 byte char
       ret += 3;
-    else if ((static_cast<uint8_t>((*body)[i]) & 0b11100000) == 0b11000000) // 2 byte char
+    else if ((static_cast<uint8_t>(body[i]) & 0b11100000) == 0b11000000) // 2 byte char
       ret += 2;
     else
       ret += 1;

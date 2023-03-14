@@ -446,7 +446,6 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   if (results.valueHasType<std::string>(i, "body"))
   {
     text = results.getValueAs<std::string>(i, "body");
-
     SqliteDB::QueryResults mention_results;
     if (d_database.containsTable("mention"))
       d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id = ?", mid, &mention_results);
