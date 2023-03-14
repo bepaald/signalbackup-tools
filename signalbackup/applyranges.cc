@@ -19,10 +19,33 @@
 
 #include "signalbackup.ih"
 
-//
-//    0xf0 0x9f 0xa7 0x9b 0xf0 0x9f 0x8f 0xbd 0xe2 0x80 0x8d 0xe2 0x99 0x80 0xef 0xb8 0x8f   for  0xef
-// ^                                                                                               ^
-// 43                                                                                              56
+/*
+  While the data in 'body' is utf8 encoded, the range (start+length) deal with utf16 (one or two 16bit bytes)
+
+  at each point in the string (which only deals with single 8bit bytes, we need to know number of bytes to
+  skip to the next char (which is its utf8 size) as well as compensate the index as if the data were 16bit
+  utf16 (possibly multibyte).
+
+  It's a mess, and I hope it works
+
+
+  eg:
+
+  RANGE: {start: 3, length: 1, replacement: 'AA'}
+  '💩 ...'
+  0xF0 0x9F 0x92 0xA9 0x20 0xef 0xbf 0xbc ...
+   \_______________/   |     \_______/
+        emoji        space     placeholder
+
+  idx0: '0xF0' => utf8 size == 4 => idx0->idx4
+               => utf16 size == 2 => range{start: 3 + (4 - 2)}
+  idx4: '0x20' => utf8 size == 1 => idx4->idx5
+               => utf16 size == 1 => range{start: 5 + (1 - 1)}
+  idx5: MATCH! adjust length at this position from utf16 codepoints to 8bit bytes and replace
+               => utf16 length 1 at idx 5 == 3 => replace 3 with 'AA'
+               => 0xF0 0x9F 0x92 0xA9 0x20 0x41 0x41 ...
+               => idx5->idx7 (5 +
+ */
 
 void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const
 {
@@ -34,14 +57,15 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
   {
     //std::cout << "Checking char idx: " << bodyidx << "('" << body->at(bodyidx) << "') for range with start: " << ranges->at(rangesidx).start << std::flush;
 
-    int charsizeinbytes = bytesToUtf8CharSize(body, bodyidx);
+    int charsizeinbytes = bytesToUtf8CharSize(*body, bodyidx);
     int charsizeinutf16entities = utf16CharSize(*body, bodyidx);
 
     //std::cout << ", charsize: " << charsizeinbytes << " codepoints: " << charsizeinutf16entities <<  std::endl;
 
     if (bodyidx == ranges->at(rangesidx).start)
     {
-      int length = bytesToUtf8CharSize(body, bodyidx, ranges->at(rangesidx).length);
+      //int length = bytesToUtf8CharSize(*body, bodyidx, ranges->at(rangesidx).length);
+      int length = numBytesInUtf16Substring(*body, bodyidx, ranges->at(rangesidx).length);
       std::string pre = ranges->at(rangesidx).pre;
       std::string replacement = ranges->at(rangesidx).replacement;
       std::string post = ranges->at(rangesidx).post;
