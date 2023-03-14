@@ -27,7 +27,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
   // get info from all recipients:
   for (long long int rid : recipients)
   {
-    if (recipientinfo->find(rid) != recipientinfo->end()) // already present
+    if (bepaald::contains(recipientinfo, rid)) // already present
       continue;
 
     // get info
@@ -44,7 +44,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     std::string initial(1, std::toupper(display_name[0]));
 
     std::string color = "555";
-    if (s_html_colormap.contains(results.valueAsString(0, "color")))
+    if (bepaald::contains(s_html_colormap, results.valueAsString(0, "color")))
       color = s_html_colormap.at(results.valueAsString(0, "color"));
 
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),

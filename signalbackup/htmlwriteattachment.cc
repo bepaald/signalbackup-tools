@@ -23,7 +23,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
                                        long long int rowid, long long int uniqueid,  bool overwrite,
                                        bool append) const
 {
-  if (!d_attachments.contains({rowid, uniqueid}))
+  if (!bepaald::contains(d_attachments, std::pair{rowid, uniqueid}))
     return false;
 
   // directory + threaddir is guaranteed to exist at this point, check/create 'media'

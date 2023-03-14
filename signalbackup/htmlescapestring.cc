@@ -30,7 +30,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
     {
       case '&':
         if (!positions_excluded_from_escape ||
-            !positions_excluded_from_escape->contains(i - positions_added))
+            //!positions_excluded_from_escape->contains(i - positions_added)
+            !bepaald::contains(positions_excluded_from_escape, (i - positions_added)))
         {
           body->replace(i, 1, "&amp;");
           positions_added += STRLEN("&amp;") - 1;
@@ -40,7 +41,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         break;
       case '<':
         if (!positions_excluded_from_escape ||
-            !positions_excluded_from_escape->contains(i - positions_added))
+            //!positions_excluded_from_escape->contains(i - positions_added
+            !bepaald::contains(positions_excluded_from_escape, (i - positions_added)))
         {
           body->replace(i, 1, "&lt;");
           positions_added += STRLEN("&lt;") - 1;
@@ -50,7 +52,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         break;
       case '>':
         if (!positions_excluded_from_escape ||
-            !positions_excluded_from_escape->contains(i - positions_added))
+          //!positions_excluded_from_escape->contains(i - positions_added))
+            !bepaald::contains(positions_excluded_from_escape, (i - positions_added)))
         {
           body->replace(i, 1, "&gt;");
           i += STRLEN("&gt;") - 1;
@@ -60,7 +63,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         break;
       case '"':
         if (!positions_excluded_from_escape ||
-            !positions_excluded_from_escape->contains(i - positions_added))
+            //!positions_excluded_from_escape->contains(i - positions_added))
+            !bepaald::contains(positions_excluded_from_escape, (i - positions_added)))
         {
           body->replace(i, 1, "&quot;");
           i += STRLEN("&quot;") - 1;
@@ -70,7 +74,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         break;
       case '\'':
         if (!positions_excluded_from_escape ||
-            !positions_excluded_from_escape->contains(i - positions_added))
+            //!positions_excluded_from_escape->contains(i - positions_added))
+            !bepaald::contains(positions_excluded_from_escape, (i - positions_added)))
         {
           body->replace(i, 1, "&apos;");
           i += STRLEN("&apos;") - 1;

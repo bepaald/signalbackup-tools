@@ -56,7 +56,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       getGroupMembersOld(&groupmembers, results.valueAsString(0, "group_id"));
   }
 
-  std::string thread_avatar = written_avatars->contains(thread_recipient_id) ?
+  std::string thread_avatar = bepaald::contains(written_avatars, thread_recipient_id) ?
     (*written_avatars)[thread_recipient_id] :
     ((*written_avatars)[thread_recipient_id] = HTMLwriteAvatar(thread_recipient_id, directory, threaddir, overwrite, append));
 
@@ -154,7 +154,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
   for (long long int id : recipient_ids)
   {
-    std::string recipient_avatar = written_avatars->contains(id) ?
+    std::string recipient_avatar = bepaald::contains(written_avatars, id) ?
       (*written_avatars)[id] :
       ((*written_avatars)[id] = HTMLwriteAvatar(id, directory, threaddir, overwrite, append));
     if (!recipient_avatar.empty())

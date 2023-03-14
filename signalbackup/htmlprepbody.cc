@@ -35,7 +35,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   {
     // m1 : uuid, m2: start, m3: length
     std::string author;
-    if (recipients_info.contains(std::get<0>(m)))
+    if (bepaald::contains(recipients_info, std::get<0>(m)))
       author = recipients_info.at(std::get<0>(m)).display_name;
     if (!author.empty())
     {
@@ -66,7 +66,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       {
         long long int authorid = getRecipientIdFromUuid(mentionuuid, nullptr);
         std::string author;
-        if (recipients_info.contains(authorid))
+        if (bepaald::contains(recipients_info, authorid))
           author = recipients_info.at(authorid).display_name;
         if (!author.empty())
           ranges.emplace_back(Range{start, length,

@@ -42,12 +42,12 @@ std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, st
   ProtoBufParser<protobuffer::optional::STRING,
                  protobuffer::optional::STRING> profilenamechange = profchangefull.getField<1>().value();
 
-  if (!profilenamechange.getField<1>().has_value() &&
-      !profilenamechange.getField<2>().has_value())
+  if ((!profilenamechange.getField<1>().has_value() || profilenamechange.getField<1>().value() == "") ||
+      (!profilenamechange.getField<2>().has_value() || profilenamechange.getField<2>().value() == ""))
     return name + " has changed their profile name.";
 
-  std::string oldname = profilenamechange.getField<1>().has_value() ? profilenamechange.getField<1>().value() : "";
-  std::string newname = profilenamechange.getField<2>().has_value() ? profilenamechange.getField<2>().value() : "";
+  std::string oldname = profilenamechange.getField<1>().value();
+  std::string newname = profilenamechange.getField<2>().value();
 
-  return name + " has changed their profile name from " + oldname + " to " + newname + "."; //decodeProfileChange(body);
+  return oldname + " changed their profile name to " + newname + "."; //decodeProfileChange(body);
 }

@@ -55,9 +55,6 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
 
     //res.prettyPrint();
   }
-
-  std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-            << ": Unsupported message type 'group-v2-change'. Skipping." << std::endl;
 }
 
 
