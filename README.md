@@ -29,7 +29,7 @@ Signal is an actively developed application and consequently, the database forma
 ### Requirements
 
 Current stable released versions of
-- a c++ compiler supporting the c++17 standard (tested with [GCC](https://gcc.gnu.org) 12.2.0 and [Clang](https://clang.llvm.org) 14.0.6, also tested and working with a few older compiler versions)
+- a c++ compiler supporting at least the c++17 standard (tested with [GCC](https://gcc.gnu.org) 12.2.0 and [Clang](https://clang.llvm.org) 14.0.6, also tested and working with a few older compiler versions)
 - [OpenSSL](https://www.openssl.org/) (tested with 3.0.7, but should also work with 1.1 versions) _or_ a recent version of [Crypto++](https://www.cryptopp.com/). The default is openssl, see below to compile with crypto++ instead.
 - [SQLite3](https://www.sqlite.org/) (tested with 3.40.0)
 
@@ -37,7 +37,7 @@ Current stable released versions of
 
 **<span id="compiling">Compiling</span>**
 
-To compile the program, just running `g++ -std=c++2a */*.cc *.cc -lcrypto -lsqlite3` should generally do the trick. Add any compiler flags you feel useful, I personally use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++2a` with `-std=c++17`. 
+To compile the program, just running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqlite3` should generally do the trick. Add any compiler flags you feel useful, I personally use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++20` with `-std=c++17`.
 
 For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTI.bash44` for a faster build, and let me know if it works).
 

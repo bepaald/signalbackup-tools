@@ -37,10 +37,10 @@
 #include <windows.h>
 #else // !windows
 #include <sys/ioctl.h>
-  #if __has_include("unistd.h")
-  #define HAS_UNISTD_H_
-  #include <unistd.h>
-  #endif
+#if __has_include("unistd.h")
+#define HAS_UNISTD_H_
+#include <unistd.h>
+#endif
 #endif
 
 #ifdef DEBUGMSG
@@ -49,7 +49,7 @@
 #define DEBUGOUT(...)
 #endif
 
-#define STRLEN( STR ) (std::integral_constant<int, bepaald::strlitLength(STR)>::value)
+#define STRLEN( STR ) (bepaald::strlitLength(STR))
 
 #if __cpp_lib_starts_ends_with >= 201711L
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.starts_with(SUB) )
@@ -80,6 +80,7 @@ namespace bepaald
   inline std::string toString(T const &num, bool hex = false, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
+  inline int strlitLength(std::string const &str);
   inline bool fileOrDirExists(std::string const &path);
   inline bool fileOrDirExists(std::filesystem::path const &path);
   inline bool isDir(std::string const &path);
@@ -94,6 +95,26 @@ namespace bepaald
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
+
+  template <typename T, typename I>
+  inline bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
+  {
+#if __cpp_lib_starts_ends_with >= 201711L
+    return container.contains(item);
+#else
+    return container.find(item) != container.end();
+#endif
+  }
+
+  template <typename T, typename I>
+  inline bool contains(T const *const container, I const &item)
+  {
+#if __cpp_lib_starts_ends_with >= 201711L
+    return container->contains(item);
+#else
+    return container->find(item) != container->end();
+#endif
+  }
 
   template <typename T, typename U>
   inline int findIdxOf(T const &container, U const &value);
@@ -222,6 +243,11 @@ inline std::string bepaald::toString(double num)
 inline constexpr int bepaald::strlitLength(char const *str, int pos)
 {
   return str[pos] == '\0' ? 0 : 1 + strlitLength(str, pos + 1);
+}
+
+inline int bepaald::strlitLength(std::string const &str)
+{
+  return str.size();
 }
 
 inline bool bepaald::fileOrDirExists(std::string const &path)

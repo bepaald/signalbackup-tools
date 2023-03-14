@@ -24,8 +24,6 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb [[maybe_u
                                                    long long int ttid [[maybe_unused]],
                                                    long long int address [[maybe_unused]]) const
 {
-  std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-            << ": Unsupported message type 'timer-notification'. Skipping." << std::endl;
   return true;
 
   //SqliteDB::QueryResults results;
