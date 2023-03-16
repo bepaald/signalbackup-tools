@@ -22,7 +22,7 @@
 void SignalBackup::insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions,
                                    bool mms, std::map<std::string, long long int> *savedmap) const
 {
-  if (reactions.size())
+  if (d_verbose && reactions.size()) [[unlikely]]
     std::cout << "Inserting " << reactions.size() << " message reactions." << std::endl;
 
   // insert into reactions

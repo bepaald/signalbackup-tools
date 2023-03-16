@@ -466,11 +466,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::cout << " - Importing " << results_all_messages_from_conversation.rows() << " messages into thread._id " << ttid << std::endl;
     for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
     {
-      if (d_verbose) [[unlikely]] std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << std::endl;
+      std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
+      if (d_verbose) [[unlikely]] std::cout << "Message " << j + 1 << "/" << results_all_messages_from_conversation.rows() << ":" << (!type.empty() ? " '" + type + "'" : "") << std::endl;
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
-      std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
       bool outgoing = type == "outgoing";
       bool incoming = (type == "incoming" || type == "profile-change" || type == "keychange" || type == "verified-change");
       long long int numattachments = results_all_messages_from_conversation.getValueAs<long long int>(j, "numattachments");
@@ -974,7 +974,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         }
 
-        if (d_verbose) [[unlikely]] std::cout << "Inserting message" << std::flush;
+        if (d_verbose) [[unlikely]] std::cout << "Inserting message..." << std::flush;
         std::any retval;
         if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                      {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
@@ -1021,7 +1021,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           setMessageDeliveryReceipts(ddb, rowid, &recipientmap, new_mms_id, true/*mms*/, isgroupconversation);
 
         // insert into reactions
-        if (d_verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
+        if (d_verbose) [[unlikely]] std::cout << "Inserting reactions..." << std::flush;
         insertReactions(new_mms_id, reactions, true, &recipientmap);
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 
