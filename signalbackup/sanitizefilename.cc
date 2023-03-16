@@ -27,7 +27,7 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
 
   // filter disallowed characters. (Note this is not an exact science)
   for (char c : filename)
-    result += ((c == '/' || c == '\0') ? '_' : c);
+    result += ((c == '/' || c == '\0' || c == '\n') ? '_' : c); // newline is technically allowed I think
 
 #else // WINDOWS, NOT TESTED
 
@@ -65,7 +65,7 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
   for (auto const &r : reserved)
     if (std::equal(filename.begin(), filename.end(),
                    r.begin(), r.end(), icasecmp))
-      return std::string();
+      return "_" + filename;
 
   // filter disallowed characters. (Note this is not an exact science)
   for (char c : filename)
