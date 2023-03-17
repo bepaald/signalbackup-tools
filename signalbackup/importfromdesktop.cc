@@ -982,6 +982,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                      {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
                                      {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                      {"body", results_all_messages_from_conversation.value(j, "body")},
+                                     {"read", 1}, // always 1, but default = 0
                                      //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
                                      //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                                      {d_mms_recipient_id, address},
@@ -1075,6 +1076,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                         {"date_server", results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at")},
                         {"type", Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                         {"body", results_all_messages_from_conversation.value(j, "body")},
+                        {"read", 1},
                         //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
                         //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                         {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
