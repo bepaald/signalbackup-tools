@@ -445,7 +445,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
                   "body,"
                   "type,"
-                  "COALESCE(sent_at, json_extract(json, '$.sent_at')) AS sent_at,"
+                  "COALESCE(sent_at, json_extract(json, '$.sent_at'), received_at, json_extract(json, '$.received_at')) AS sent_at,"
                   "hasAttachments,"      // any attachment
                   "hasFileAttachments,"  // non-media files? (any attachment that does not get a preview?)
                   "hasVisualMediaAttachments," // ???
@@ -499,8 +499,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         SqliteDB::QueryResults statusmsguuid;
         if (type == "profile-change")
         {
-          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)",
-                        rowid, &statusmsguuid))
+          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE "
+                        "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?) OR "
+                        "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)", // maybe id can be a phone number?
+                        {rowid, rowid}, &statusmsguuid))
           {
             std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group profile-change." << std::endl;
             // print some extra info
@@ -509,20 +511,24 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else if (type == "keychange")
         {
-          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE uuid IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?)",
-                        rowid, &statusmsguuid))
+          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE "
+                        "uuid IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?) OR "
+                        "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?)",     // 'key_changed' can be a phone number (confirmed)
+                        {rowid, rowid}, &statusmsguuid))
           {
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group key-change." << std::endl;
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group keychange." << std::endl;
             // print some extra info
             //ddb.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
           }
         }
         else if (type == "verified-change")
         {
-          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?)",
-                        rowid, &statusmsguuid))
+          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE "
+                        "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?) OR "
+                        "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?)",// maybe id can be a phone number?
+                        {rowid, rowid}, &statusmsguuid))
           {
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group key-change." << std::endl;
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get uuid for incoming group verified-change." << std::endl;
             // print some extra info
             //ddb.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
           }
@@ -584,9 +590,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       {
         std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
                   << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
-        ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited' AS areWeInvited,"
-                          "json_extract(json, '$.groupMigration.invitedMembers' AS invitedMembers,"
-                          "json_extract(json, '$.groupMigration.droppedMemberIds' AS droppedmemberIds"
+        ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
+                          "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
+                          "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
                           " FROM messages WHERE rowid = ?", rowid);
         std::cout << "Skipping message." << std::endl;
         continue;
@@ -982,8 +988,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                      {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
                                      {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                      {"body", results_all_messages_from_conversation.value(j, "body")},
-                                     {"read", 1}, // always 1, but default = 0
-                                     //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
+                                     {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+                                     //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                                      //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                                      {d_mms_recipient_id, address},
                                      {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
@@ -1077,7 +1083,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                         {"type", Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                         {"body", results_all_messages_from_conversation.value(j, "body")},
                         {"read", 1},
-                        //{"delivery_receipt_count", (incoming ? 0 : 0)}, // when !incoming -> !0
+                        //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                         //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                         {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
                         {"server_guid", results_all_messages_from_conversation.value(j, "serverGuid")}},
