@@ -346,6 +346,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::pair<unsigned char *, size_t> groupid_data = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "derivedGroupV2Id"));
         if (groupid_data.first || groupid_data.second > 0)
         {
+          if (d_verbose) [[unlikely]] std::cout << "Trying to match group-v1 by 'derivedGroupV2Id'" << std::endl;
           person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
           if (getRecipientIdFromUuid(person_or_group_id, &recipientmap) != -1)
             found_new_group = true;
@@ -368,6 +369,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             auto [groupv1id_data, groupv1id_data_length] = results_all_conversations.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId");
             std::string gid = "__textsecure_group__!" + utf8BytesToHexString(groupv1id_data, groupv1id_data_length);
+            std::cout << "Possible GroupV1 id from BLOB: " << gid << std::endl;
+            d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
+          }
+          else if (results_all_conversations.valueHasType<std::string>(i, "groupId"))
+          {
+            std::string groupv1id_str = results_all_conversations.valueAsString(i, "groupId");
+            std::string gid = "__textsecure_group__!" + utf8BytesToHexString(groupv1id_str);
+            std::cout << "Possible GroupV1 id from STRING: " << gid << std::endl;
             d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
           }
           continue;
@@ -445,11 +454,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
                   "body,"
                   "type,"
-                  "COALESCE(sent_at, json_extract(json, '$.sent_at'), received_at, json_extract(json, '$.received_at')) AS sent_at,"
+                  "COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at')) AS sent_at,"
                   "hasAttachments,"      // any attachment
                   "hasFileAttachments,"  // non-media files? (any attachment that does not get a preview?)
                   "hasVisualMediaAttachments," // ???
-                  "IFNULL(isErased, 0),"
+                  "IFNULL(isErased, 0) AS isErased,"
                   "serverGuid,"
                   "LOWER(sourceUuid) AS 'sourceUuid',"
                   "json_extract(json, '$.source') AS sourcephone,"

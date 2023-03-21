@@ -343,7 +343,9 @@ class SignalBackup
   inline int utf16CharSize(std::string const &body, int idx) const;
   inline int bytesToUtf8CharSize(std::string const &body, int idx, int length = 1) const;
   inline int utf8CharsToByteSize() const;
+  inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
+  inline std::string utf8BytesToHexString(std::string const &data) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -740,7 +742,7 @@ inline int SignalBackup::utf8CharsToByteSize() const
   return 0;
 }
 
-inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const
+inline std::string SignalBackup::utf8BytesToHexString(unsigned char const *const data, size_t data_size) const
 {
   // NOTE THIS IS NOT GENERIC UTF-8 CONVERSION, THIS
   // DATA IS GUARANTEED TO HAVE ONLY SINGLE- AND TWO-BYTE
@@ -759,6 +761,16 @@ inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned c
       output[outputpos++] = ((data[i] & 0b00000011) << 6) | (data[i + 1] & 0b00111111), ++i;
   }
   return bepaald::bytesToHexString(output, 16, true);
+}
+
+inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const
+{
+  return utf8BytesToHexString(data.get(), data_size);
+}
+
+inline std::string SignalBackup::utf8BytesToHexString(std::string const &data) const
+{
+  return utf8BytesToHexString(reinterpret_cast<unsigned char const *>(data.data()), data.size());
 }
 
 #endif
