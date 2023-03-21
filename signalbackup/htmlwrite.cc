@@ -856,7 +856,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   else if (msg_info.is_deleted)
   {
     htmloutput << "            <div>" << std::endl;
-    htmloutput << "              <pre>This message was deleted</pre>" << std::endl;
+    if (msg_info.incoming)
+      htmloutput << "              <pre>This message was deleted.</pre>" << std::endl;
+    else
+      htmloutput << "              <pre>You deleted this message.</pre>" << std::endl;
     htmloutput << "            </div>" << std::endl;
   }
 

@@ -162,7 +162,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     d_database.exec("SELECT "s
                     "_id, recipient_id, body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0), expires_in, message_ranges "
+                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, expires_in, message_ranges "
                     "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
 
     std::map<long long int, std::string> written_avatars; // maps recipient_ids to the path of a written avatar file.
