@@ -54,10 +54,15 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "thread.snippet, "
                        "thread.snippet_type, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
+                       + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
+                       + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        "recipient.group_id "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
-                       "WHERE thread._id IN (" + threadlist +") ORDER BY date DESC", &results))
+                       "WHERE thread._id IN (" + threadlist +") ORDER BY "
+                       + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, " : "") +
+                       + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
+                       "date DESC", &results)) // order by pinned DESC archived ASC date DESC??
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
               << ": Failed to query database for thread snippets." << std::endl;
@@ -82,6 +87,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        color: white;" << std::endl
     << "        padding: 10px;" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl
+    << "      .header {" << std::endl
+    << "        margin-top: 5px;" << std::endl
+    << "        margin-bottom: 5px;" << std::endl
+    << "        margin-left: 10px;" << std::endl
+    << "        font-weight: bold;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .conversation-list {" << std::endl
@@ -202,8 +214,35 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "" << std::endl;
 
   // for item in threads
+  bool pinnedheader = false;
+  bool archivedheader = false;
+  bool chatsheader = false;
   for (uint i = 0; i < results.rows(); ++i)
   {
+    bool archived = false;
+    if (d_database.tableContainsColumn("thread", "archived"))
+      archived = (results.getValueAs<long long int>(i, "archived") != 0);
+    if (archived && !archivedheader)
+    {
+      outputfile << "      <div class=\"header\">Archived conversations</div>" << std::endl;
+      archivedheader = true;
+    }
+
+    bool pinned = false;
+    if (d_database.tableContainsColumn("thread", "pinned"))
+      pinned = (results.getValueAs<long long int>(i, "pinned") != 0);
+    if (pinned && !pinnedheader)
+    {
+      outputfile << "      <div class=\"header\">Pinned</div>" << std::endl;
+      pinnedheader = true;
+    }
+
+    if (pinnedheader && !pinned && !chatsheader && !archived) // this message is not pinned, but pinnedheader was previously shown
+    {
+      outputfile << "      <div class=\"header\">Chats</div>" << std::endl;
+      chatsheader = true;
+    }
+
     if (!results.valueHasType<long long int>(i, d_thread_recipient_id))
       continue;
     long long int rec_id = results.getValueAs<long long int>(i, d_thread_recipient_id);

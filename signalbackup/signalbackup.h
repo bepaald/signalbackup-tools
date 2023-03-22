@@ -304,6 +304,8 @@ class SignalBackup
   bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
   void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id) const;
   bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
+  bool handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int timestamp,
+                                long long int address, std::map<std::string, long long int> *savedmap);
   void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
                       std::vector<std::vector<std::string>> *reactions) const;
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,

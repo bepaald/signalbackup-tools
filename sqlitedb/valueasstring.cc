@@ -40,7 +40,7 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
     return bepaald::toString(getValueAs<double>(row, column));
 
   if (valueHasType<std::nullptr_t>(row, column))
-    return "";
+    return std::string();
 
   if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column))
     return Base64::bytesToBase64String(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).first.get(),
