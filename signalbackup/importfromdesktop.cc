@@ -452,6 +452,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
                   "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS nummentions,"
                   "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
+                  "IFNULL(json_extract(json, '$.flags'), 0) AS flags," // see 'if (type.empty())' below for FLAGS enum
                   "body,"
                   "type,"
                   "COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at')) AS sent_at,"
@@ -486,6 +487,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       long long int numreactions = results_all_messages_from_conversation.getValueAs<long long int>(j, "numreactions");
       long long int nummentions = results_all_messages_from_conversation.getValueAs<long long int>(j, "nummentions");
       bool hasquote = !results_all_messages_from_conversation.isNull(j, "quote");
+      long long int flags = results_all_messages_from_conversation.getValueAs<long long int>(j, "flags");
 
       // get address (needed in both mms and sms databases)
       // for 1-on-1 messages, address is conversation partner (with uuid 'person_or_group_id')
@@ -597,16 +599,22 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type == "group-v1-migration")
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
-                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
-        ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
-                          "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
-                          "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
-                          " FROM messages WHERE rowid = ?", rowid);
-        std::cout << "Skipping message." << std::endl;
-        continue;
+        // std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
+        //           << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
+        // ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
+        //                   "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
+        //                   "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
+        //                   " FROM messages WHERE rowid = ?", rowid);
+        // std::cout << "Skipping message." << std::endl;
+        // continue;
+
+        if (!handleDTGroupV1Migration(ddb, rowid, ttid,
+                                      results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
+                                      address, &recipientmap))
+          return false;
+
       }
-      else if (type == "timer-notification")
+      else if (type == "timer-notification" || (type.empty() && flags == 2))
       {
 
         //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
@@ -625,6 +633,22 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           handleDTGroupChangeMessage(ddb, rowid, ttid);
           continue;
         }
+
+        /*
+          (in group converstations recipient uuid of contact setting the timer = sourceUuid, but
+           this is groupchangemessage on Android, so not handled here)
+
+          in 1-on-1: json$.expirationTimerUpdate.source == conversationId of person setting the timer (IF SELF!)
+                     json$.expirationTimerUpdate.source == recipientUuid of person setting the timer (IF OTHER!)
+
+          json$.expirationTimerUpdate = not null
+          json$.expirationTimerUpdate.expireTimer = some value (in seconds or milliseconds?) or not present when disabling timer
+
+          SELECT IFNULL(json_extract(json,'$.expirationTimerUpdate.fromGroupUpdate'), false) AS fromGroupUpdate,
+                 IFNULL(json_extract(json,'$.expirationTimerUpdate.expireTimer'),0) AS expireTimer,
+                 json$.expirationTimerUpdate.source AS source
+                 FROM messages WHERE rowid = ?
+        */
         handleDTExpirationChangeMessage(ddb, rowid, ttid, address); // placeholder for now
         continue;
       }
@@ -796,28 +820,17 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type.empty())
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type (empty type)." << std::endl;
-
-        ddb.printLineMode("SELECT json_extract(json, '$.flags') AS flags,"
-                          "json_extract(json, '$.expirationTimerUpdate') AS expirationTimerUpdate,"
-                          "json_extract(json, '$.expirationTimerUpdate.expireTimer') AS expireTimer,"
-                          "json_extract(json, '$.expirationTimerUpdate.fromGroupUpdate') AS fromGroupUpdate"
-                          " FROM messages WHERE rowid = ?", rowid);
-        std::cout << "Skipping message." << std::endl;
-
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                  << ": Unsupported message type (empty type, flags = " << flags << "). Skipping..." << std::endl;
         /*
-          Most empty message types I've seen have json$.flags = 2
+          Most (the only) empty message types I've seen have json$.flags = 2, but that is handled above
 
           enum Flags {
             END_SESSION             = 1;
             EXPIRATION_TIMER_UPDATE = 2;
             PROFILE_KEY_UPDATE      = 4;
           }
-
-          and  json$.expirationTimerUpdate = not null
-          and  json$.expirationTimerUpdate.expireTimer = some value (in seconds or milliseconds?) or not present when disabling timer
         */
-
         continue;
       }
       else if (!outgoing && !incoming)
