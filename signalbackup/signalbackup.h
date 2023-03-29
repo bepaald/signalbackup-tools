@@ -97,6 +97,13 @@ class SignalBackup
     SET_UNIQUELY,
   };
 
+  struct RecipientIdentification
+  {
+    std::string uuid;
+    std::string phone;
+    std::string group_id;
+  };
+
   struct TableConnection
   {
     std::string table;
@@ -210,7 +217,8 @@ class SignalBackup
   bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion,
                          std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
-  bool exportHtml(std::string const &directory, std::vector<long long int> const &threads, long long int split, bool overwrite, bool append) const;
+  bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
+                  std::vector<std::string> const &dateranges, long long int split, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -260,7 +268,8 @@ class SignalBackup
   //                    long long int minnotification_profile, long long int minnotification_profile_allowed_members,
   //                    long long int minnotification_profile_schedule);
   void makeIdsUnique(SignalBackup *source);
-  void updateRecipientId(long long int targetid, std::string ident);
+  void updateRecipientId(long long int targetid, RecipientIdentification const &ident);
+  //void updateRecipientId(long long int targetid, std::string const &ident);
   void updateRecipientId(long long int targetid, long long int sourceid);
   void updateGroupMembers(long long int id1, long long int id2 = -1) const; // id2 == -1 -> id1 = offset, else transform 1 into 2
   void updateReactionAuthors(long long int id1, long long int id2 = -1) const; // idem.

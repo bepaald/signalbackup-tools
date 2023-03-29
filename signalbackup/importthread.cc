@@ -21,7 +21,7 @@
 
 bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
-  std::cout << __FUNCTION__ << std::endl;
+  std::cout << __FUNCTION__ << " (" << thread << ")" << std::endl;
 
   if ((d_databaseversion >= 172 && source->d_databaseversion < 172) || // group.members dropped
       (d_databaseversion >= 168 && source->d_databaseversion < 168) || // sms table dropped
@@ -115,11 +115,12 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   else // new database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
-    source->d_database.exec("SELECT COALESCE(uuid,phone,group_id) FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
-    if (results.rows() != 1 || results.columns() != 1 ||
-        !results.valueHasType<std::string>(0, 0))
+    source->d_database.exec("SELECT "
+                            "IFNULL(uuid, '') AS uuid, "
+                            "IFNULL(phone, '') AS phone, "
+                            "IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
+    if (results.rows() != 1)
     {
-
       // skip current thread if it is the releasechannel-thread
       // maybe I should deal with this in the future
       SqliteDB::QueryResults res2;
@@ -136,8 +137,14 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       std::cout << "Failed to get uuid/phone/group_id from source database" << std::endl;
       return false;
     }
-    std::string phone_or_group = results.getValueAs<std::string>(0, 0);
-    d_database.exec("SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = ?", phone_or_group, &results);
+
+    //std::string phone_or_group = results.getValueAs<std::string>(0, 0);
+    RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id")};
+
+    d_database.exec("SELECT _id FROM recipient WHERE "
+                    "(uuid IS NOT NULL AND uuid IS ?) OR "
+                    "(phone IS NOT NULL AND phone IS ?) OR "
+                    "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<long long int>(0, 0))
       std::cout << "Failed to find recipient._id matching uuid/phone/group_id in target database" << std::endl;
@@ -459,11 +466,15 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     // see below for comment explaining this function
     if (d_databaseversion >= 24)
     {
-      d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
+      //d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
+      d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient", &results);
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
-        if (results.valueHasType<std::string>(i, "identifier"))
-          source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
+      {
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id")};
+        //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
+        source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
+      }
     }
 
     source->d_database.exec("DROP TABLE thread");
@@ -474,6 +485,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   }
   else // no matching thread in target (but recipient may still exist)
   {
+    std::cout << "  No existing thread found in target database for this recipient, importing." << std::endl;
+
     // check identities and recipient prefs for presence of values, they may be there (even though no
     // thread was found (for example via a group chat or deleted thread))
     // get identities from target, drop all rows from source that are already present
@@ -487,10 +500,16 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       // get all phonenums/groups_ids for all in identities
-      d_database.exec("SELECT COALESCE(uuid,phone,group_id) AS ident FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
+      d_database.exec("SELECT IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
-        if (results.header(0) == "ident" && results.valueHasType<std::string>(i, 0))
-          source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
+      {
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id")};
+        // source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
+        source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE "
+                                "(uuid IS NOT NULL AND uuid IS ?) OR "
+                                "(phone IS NOT NULL AND phone IS ?) OR "
+                                "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
+      }
     }
 
     // get recipient(_preferences) from target, drop all rows from source that are already present
@@ -503,24 +522,30 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
     else
     {
-      d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
+      //d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
+      d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient", &results);
       std::cout << "  updateRecipientIds (2)" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
-        if (results.valueHasType<std::string>(i, "ident"))
-        {
-          // if the recipient is already in target, we are going to delete it from
-          // source, to prevent doubles. However, many tables refer to the recipient._id
-          // which was made unique above. If we just delete the doubles (by phone/group_id,
-          // and in the future probably uuid), the fields in other tables will point
-          // to random or non-existing recipients, so we need to remap them:
-          source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
+      {
+        // if the recipient is already in target, we are going to delete it from
+        // source, to prevent doubles. However, many tables refer to the recipient._id
+        // which was made unique above. If we just delete the doubles (by phone/group_id,
+        // and in the future probably uuid), the fields in other tables will point
+        // to random or non-existing recipients, so we need to remap them:
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id")};
+        source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
+        //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
-          // now drop the already present recipient from source.
-          source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
-          int count = source->d_database.changed();
-          if (count)
-            std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
-        }
+        // now drop the already present recipient from source.
+        //source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
+        source->d_database.exec("DELETE FROM recipient WHERE "
+                                "(uuid IS NOT NULL AND uuid IS ?) OR "
+                                "(phone IS NOT NULL AND phone IS ?) OR "
+                                "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id});
+        int count = source->d_database.changed();
+        if (count)
+          std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
+      }
     }
 
     // even though the source was cropped to single thread, and this thread was not in target, avatar might still already be in target
