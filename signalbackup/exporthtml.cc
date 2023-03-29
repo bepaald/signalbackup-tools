@@ -26,6 +26,7 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
+                              std::vector<std::string> const &daterangelist,
                               long long int split, bool overwrite, bool append) const
 {
   using namespace std::string_literals;
@@ -82,6 +83,38 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
   std::map<long long int, RecipientInfo> recipient_info;
 
+  // set where-clause for date requested
+  std::vector<std::pair<std::string, std::string>> dateranges;
+  if (daterangelist.size() % 2 == 0)
+    for (uint i = 0; i < daterangelist.size(); i += 2)
+      dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
+  std::string datewhereclause;
+  for (uint i = 0; i < dateranges.size(); ++i)
+  {
+    bool needrounding = false;
+    long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
+    long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
+    if (startrange == -1 || endrange == -1 || endrange < startrange)
+    {
+      std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
+      std::cout << startrange << " " << endrange << std::endl;
+      continue;
+    }
+    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second
+              << " (" << startrange << " - " << endrange << ")" << std::endl;
+
+    if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
+      endrange += 999; // to get everything in the second specified...
+
+    dateranges[i].first = bepaald::toString(startrange);
+    dateranges[i].second = bepaald::toString(endrange);
+
+    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "date_received BETWEEN "s + dateranges[i].first + " AND " + dateranges[i].second;
+    if (i == dateranges.size() - 1)
+      datewhereclause += ')';
+  }
+  std::sort(dateranges.begin(), dateranges.end());
+
   // // get releasechannel thread, to skip
   // int releasechannel = -1;
   // for (auto const &skv : d_keyvalueframes)
@@ -115,6 +148,19 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     d_database.exec("SELECT group_id FROM recipient WHERE _id = ? AND group_id IS NOT NULL", thread_recipient_id, &groupcheck);
     if (groupcheck.rows())
       isgroup = true;
+
+    // now get all messages
+    SqliteDB::QueryResults messages;
+    d_database.exec("SELECT "s
+                    "_id, recipient_id, body, "
+                    "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
+                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, expires_in, message_ranges "
+                    "FROM " + d_mms_table + " "
+                    "WHERE thread_id = ?"
+                    + datewhereclause +
+                    " ORDER BY date_received ASC", t, &messages);
+    if (messages.rows() == 0)
+      continue;
 
     // get all recipients in thread (group member (past and present), quote/reaction authors, mentions)
     std::set<long long int> all_recipients_ids = getAllThreadRecipients(t);
@@ -157,14 +203,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       return false;
     }
 
-    // now get all messages, and append them to html
-    SqliteDB::QueryResults messages;
-    d_database.exec("SELECT "s
-                    "_id, recipient_id, body, "
-                    "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, expires_in, message_ranges "
-                    "FROM " + d_mms_table + " WHERE thread_id = ? ORDER BY date_received ASC", t, &messages);
-
+    // now append messages to html
     std::map<long long int, std::string> written_avatars; // maps recipient_ids to the path of a written avatar file.
     unsigned int messagecount = 0;
     unsigned int max_msg_per_page = messages.rows();
@@ -180,6 +219,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     // std::cout << "N MSG: " << messages.rows() << std::endl;
     // std::cout << "MAX PER PAGE: " << max_msg_per_page << std::endl;
     // std::cout << "N PAGES: " << totalpages << std::endl;
+
+    unsigned int daterangeidx = 0;
 
     while (true)
     {
@@ -200,9 +241,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, recipient_info, &written_avatars, overwrite, append);
-
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
+
         long long int msg_id = messages.getValueAs<long long int>(messagecount, "_id");
         long long int msg_recipient_id = messages.getValueAs<long long int>(messagecount, "recipient_id"); // for groups, this != thread_recipient_id on incoming messages
         std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
@@ -346,6 +387,30 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         if (++messagecount >= messages.rows())
           break;
+
+        // std::cout << daterangeidx << std::endl;
+        // std::cout << "curm: " << messages.getValueAs<long long int>(messagecount, "date_received") << std::endl;
+        // std::cout << "rhig: " << bepaald::toNumber<long long int>(dateranges[daterangeidx].second) << std::endl;
+        // std::cout << "rlow: " << bepaald::toNumber<long long int>(dateranges[daterangeidx + 1].first) << std::endl;
+        // std::cout << (messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second) &&
+        //               messages.getValueAs<long long int>(messagecount, "date_received") <= bepaald::toNumber<long long int>(dateranges[daterangeidx + 1].first)) << std::endl;
+
+        if (!dateranges.empty() &&
+            daterangeidx < dateranges.size() - 1 && // dont split if it's the last range
+            messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second))
+        {
+          if (messagecount < (max_msg_per_page * (pagenumber + 1)))
+          {
+            //std::cout << "SPLITTING! (rangeend(" << daterangeidx << "): " << dateranges[daterangeidx].second << ")" << std::endl;
+            htmloutput << "        </div>" << std::endl;
+            htmloutput << "        <div class=\"conversation-box\">" << std::endl;
+            htmloutput << std::endl;
+          }
+          while (daterangeidx < dateranges.size() - 1 &&
+                 messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second))
+            ++daterangeidx;
+        }
+
       }
 
       htmloutput << "        </div>" << std::endl; // closes conversation-box

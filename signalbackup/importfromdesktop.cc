@@ -246,7 +246,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
-    for (uint i = 0; i < daterangelist.size(); i+=2)
+    for (uint i = 0; i < daterangelist.size(); i += 2)
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
 
   // set daterange automatically
@@ -263,6 +263,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     dateranges.push_back({"0", res.valueAsString(0, 0)});
   }
 
+  using namespace std::string_literals;
+
   std::string datewhereclause;
   for (uint i = 0; i < dateranges.size(); ++i)
   {
@@ -274,13 +276,15 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
       continue;
     }
-    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second << std::endl;
-    std::cout << "               " << startrange << " - " << endrange << std::endl;
+    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second
+              << " (" << startrange << " - " << endrange << ")" << std::endl;
 
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...
 
-    datewhereclause += " AND sent_at BETWEEN " + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
+    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "date_received BETWEEN "s + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
+    if (i == dateranges.size() - 1)
+      datewhereclause += ')';
   }
 
   // get all conversations (conversationpartners) from ddb
@@ -599,14 +603,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type == "group-v1-migration")
       {
-        // std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
-        //           << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
+                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
         // ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
         //                   "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
         //                   "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
         //                   " FROM messages WHERE rowid = ?", rowid);
-        // std::cout << "Skipping message." << std::endl;
-        // continue;
+        std::cout << "Skipping message." << std::endl;
+        continue;
 
         if (!handleDTGroupV1Migration(ddb, rowid, ttid,
                                       results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
@@ -614,42 +618,27 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           return false;
 
       }
-      else if (type == "timer-notification" || (type.empty() && flags == 2))
+      else if (type == "timer-notification" || flags == 2) // type can be also be 'incoming' or empty
       {
 
         //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
         //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
-
-        if (!bepaald::contains(warnmessagetypesupport, type))
-        {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                    << ": Unsupported message type 'timer-notification'. Skipping..."
-                    << " (this warning will be shown only once)" << std::endl;
-          warnmessagetypesupport.insert(type);
-        }
-
         if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
         {
+          if (!bepaald::contains(warnmessagetypesupport, "'timer-notification (in group)'"))
+          {
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                      << ": Unsupported message type 'timer-notification (in group)'. Skipping..."
+                      << " (this warning will be shown only once)" << std::endl;
+            warnmessagetypesupport.insert("'timer-notification (in group)'");
+          }
           handleDTGroupChangeMessage(ddb, rowid, ttid);
           continue;
         }
 
-        /*
-          (in group converstations recipient uuid of contact setting the timer = sourceUuid, but
-           this is groupchangemessage on Android, so not handled here)
+        if (!handleDTExpirationChangeMessage(ddb, rowid, ttid, address))
+          return false;
 
-          in 1-on-1: json$.expirationTimerUpdate.source == conversationId of person setting the timer (IF SELF!)
-                     json$.expirationTimerUpdate.source == recipientUuid of person setting the timer (IF OTHER!)
-
-          json$.expirationTimerUpdate = not null
-          json$.expirationTimerUpdate.expireTimer = some value (in seconds or milliseconds?) or not present when disabling timer
-
-          SELECT IFNULL(json_extract(json,'$.expirationTimerUpdate.fromGroupUpdate'), false) AS fromGroupUpdate,
-                 IFNULL(json_extract(json,'$.expirationTimerUpdate.expireTimer'),0) AS expireTimer,
-                 json$.expirationTimerUpdate.source AS source
-                 FROM messages WHERE rowid = ?
-        */
-        handleDTExpirationChangeMessage(ddb, rowid, ttid, address); // placeholder for now
         continue;
       }
       else if (type == "keychange")

@@ -236,7 +236,8 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 //   }
 // }
 
-void SignalBackup::updateRecipientId(long long int targetid, std::string identifier)
+/*
+void SignalBackup::updateRecipientId(long long int targetid, std::string const &identifier)
 {
   //std::cout << __FUNCTION__ << std::endl;
 
@@ -250,6 +251,43 @@ void SignalBackup::updateRecipientId(long long int targetid, std::string identif
   // get the current (to be deleted) recipient._id for this identifier (=phone,group_id,possibly uuid)
   SqliteDB::QueryResults results;
   d_database.exec("SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + identifier + "'", &results);
+
+  if (results.rows() > 1)
+  {
+    std::cout << "ERROR! Unexpectedly got multiple results" << std::endl;
+    return;
+  }
+
+  // the target recipient was not found in this source db, nothing to do.
+  if (results.rows() == 0)
+    return;
+
+  long long int sourceid = results.getValueAs<long long int>(0, "_id");
+
+  //std::cout << "  Mapping " << sourceid << " -> " << targetid << " (" << ident << ")" << std::endl;
+
+  updateRecipientId(targetid, sourceid);
+}
+*/
+
+void SignalBackup::updateRecipientId(long long int targetid, RecipientIdentification const &rec_id)
+{
+  //std::cout << __FUNCTION__ << std::endl;
+
+  // CALLED ON SOURCE
+  // the targetid should already be guaranteed to not exist in source as this is called
+  // after makeIdsUnique() & friends
+
+  if (d_databaseversion < 24) // recipient table does not exist
+    return;
+
+  // get the current (to be deleted) recipient._id for this identifier (=phone,group_id,possibly uuid)
+  SqliteDB::QueryResults results;
+  d_database.exec("SELECT _id FROM recipient WHERE "
+                  "(uuid IS NOT NULL AND uuid IS ?) OR "
+                  "(phone IS NOT NULL AND phone IS ?) OR "
+                  "(group_id IS NOT NULL AND group_id IS ?)",
+                  {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
 
   if (results.rows() > 1)
   {

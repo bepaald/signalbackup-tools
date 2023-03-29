@@ -67,6 +67,8 @@ class SqliteDB
     void print(bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
     std::string valueAsString(size_t row, std::string const &header) const;
+    inline std::string operator()(size_t row, std::string const &header) const;
+    inline std::string operator()(std::string const &header) const;
     template <typename T>
     inline bool contains(T const &value) const;
     bool removeColumn(uint idx);
@@ -642,6 +644,16 @@ inline void SqliteDB::QueryResults::clear()
 {
   d_headers.clear();
   d_values.clear();
+}
+
+inline std::string SqliteDB::QueryResults::operator()(size_t row, std::string const &header) const
+{
+  return valueAsString(row, header);
+}
+
+inline std::string SqliteDB::QueryResults::operator()(std::string const &header) const
+{
+  return valueAsString(0, header);
 }
 
 template <typename T>
