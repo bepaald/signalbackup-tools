@@ -30,6 +30,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (bepaald::contains(recipientinfo, rid)) // already present
       continue;
 
+    std::cout << "HANDLING ID: " << rid << std::endl;
+
     // get info
     SqliteDB::QueryResults results;
     d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
@@ -41,9 +43,13 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
 
     std::string display_name = results.valueAsString(0, "display_name");
 
-    std::string initial(1, std::toupper(display_name[0]));
-    if (display_name[0] == '+' || std::isdigit(display_name[0]))
-      initial = "#";
+    std::string initial(1, '?');
+    if (!display_name.empty())
+    {
+      initial = std::toupper(display_name[0]);
+      if (display_name[0] == '+' || std::isdigit(display_name[0]))
+        initial = "#";
+    }
 
     std::string color = "555";
     if (bepaald::contains(s_html_colormap, results.valueAsString(0, "color")))

@@ -604,7 +604,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       else if (type == "group-v1-migration")
       {
         std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
-                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. Some more info:" << std::endl;
+                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. ";
         // ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
         //                   "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
         //                   "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"

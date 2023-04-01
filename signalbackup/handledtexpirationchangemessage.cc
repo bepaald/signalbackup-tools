@@ -24,6 +24,8 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb [[maybe_u
                                                    long long int ttid [[maybe_unused]],
                                                    long long int address [[maybe_unused]]) const
 {
+  return true;
+
   SqliteDB::QueryResults timer_results;
   if (!ddb.exec("SELECT "
                 "type, "
@@ -48,8 +50,8 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb [[maybe_u
   }
 
   // get details (who sent this, what's the new timer value
-  long long int timer = timer_results.getValueAs<long long int>(0, "expiretimer");
 
+  long long int timer = timer_results.getValueAs<long long int>(0, "expiretimer");
   bool incoming = (timer_results.valueAsString(0, "type") == "incoming");
   if (!incoming)
   {
