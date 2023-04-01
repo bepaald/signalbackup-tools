@@ -25,8 +25,6 @@ SignalBackup::RecipientInfo const &SignalBackup::getRecipientInfoFromMap(std::ma
   if (bepaald::contains(recipient_info, rid))
     return recipient_info->at(rid);
 
-  std::cout << "Getting info for ID: " << rid << std::endl;
-
   setRecipientInfo({rid}, recipient_info);
   return recipient_info->at(rid);
 }
