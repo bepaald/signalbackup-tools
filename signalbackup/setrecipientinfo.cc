@@ -30,8 +30,6 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (bepaald::contains(recipientinfo, rid)) // already present
       continue;
 
-    std::cout << "HANDLING ID: " << rid << std::endl;
-
     // get info
     SqliteDB::QueryResults results;
     d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
