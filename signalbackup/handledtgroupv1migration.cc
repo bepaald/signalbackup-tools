@@ -100,7 +100,9 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
     }
   }
 
-  std::string body = invited_members + '|' + dropped_members;
+  std::string body;
+  if (!invited_members.empty() || !dropped_members.empty())
+    body = invited_members + '|' + dropped_members;
 
   if (d_database.containsTable("sms"))
   {

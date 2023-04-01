@@ -164,8 +164,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     // get all recipients in thread (group member (past and present), quote/reaction authors, mentions)
     std::set<long long int> all_recipients_ids = getAllThreadRecipients(t);
+
     //try to set any missing info on recipients
     setRecipientInfo(all_recipients_ids, &recipient_info);
+
     //for (auto const &ri : recipient_info)
     //  std::cout << ri.first << ": " << ri.second.display_name << std::endl;
 
@@ -240,7 +242,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       }
 
       // create start of html (css, head, start of body
-      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, recipient_info, &written_avatars, overwrite, append);
+      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, &recipient_info, &written_avatars, overwrite, append);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -295,12 +297,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             isgroupupdatev1 = true;
         }
         else if (Types::isProfileChange(type))
-          body = decodeProfileChangeMessage(body, recipient_info.at(msg_recipient_id).display_name);
+          body = decodeProfileChangeMessage(body, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
         else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
                  Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
         else if (Types::isStatusMessage(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, recipient_info.at(msg_recipient_id).display_name);
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
 
         // prep body (scan emoji? -> in <span>) and handle mentions...
         // if (prepbody)
@@ -313,7 +315,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (!messages.isNull(messagecount, "message_ranges"))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_ranges");
 
-        bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, false /*isquote*/);
+        bool only_emoji = HTMLprepMsgBody(&body, mentions, &recipient_info, incoming, brdata, false /*isquote*/);
 
         bool nobackground = false;
         if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
@@ -325,7 +327,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
         if (!messages.isNull(messagecount, "quote_mentions"))
           quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
-        HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, true);
+        HTMLprepMsgBody(&quote_body, mentions, &recipient_info, incoming, quote_mentions, true);
 
         // insert date-change message
         if (readable_date_day != previous_day_change)
@@ -470,7 +472,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  HTMLwriteIndex(threads, directory, recipient_info, overwrite, append);
+  HTMLwriteIndex(threads, directory, &recipient_info, overwrite, append);
 
   std::cout << "All done!" << std::endl;
   return true;

@@ -17,9 +17,16 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20230401.152109"
+SignalBackup::RecipientInfo const &SignalBackup::getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info,
+                                                                         long long int rid) const
+{
+  if (bepaald::contains(recipient_info, rid))
+    return recipient_info->at(rid);
 
-#endif
+  std::cout << "Getting info for ID: " << rid << std::endl;
+
+  setRecipientInfo({rid}, recipient_info);
+  return recipient_info->at(rid);
+}

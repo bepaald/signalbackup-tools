@@ -42,7 +42,7 @@
 bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id,
                                   std::string const &directory, std::string const &threaddir, bool isgroup,
                                   std::set<long long int> const &recipient_ids,
-                                  std::map<long long int, RecipientInfo> const &recipients_info,
+                                  std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
                                   bool overwrite, bool append) const
 {
@@ -64,7 +64,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>)" << recipients_info.at(thread_recipient_id).display_name << R"(</title>
+    <title>)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name << R"(</title>
     <style>
 
       body {
@@ -128,15 +128,15 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 )";
 
   for (long long int id : recipient_ids)
-    file << "      .msg-sender-" << id << " { background: #" << recipients_info.at(id).color << ";}" << std::endl;
+    file << "      .msg-sender-" << id << " { background: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}" << std::endl;
   file << std::endl;
   for (long long int id : recipient_ids)
-    file << "      .msg-name-" << id << " { color: #" << recipients_info.at(id).color << ";}" << std::endl;
+    file << "      .msg-name-" << id << " { color: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}" << std::endl;
 
   file << R"(
       .msg-outgoing {
         align-self: flex-end;
-        background: #)" << (isgroup ? s_html_colormap.at("ULTRAMARINE") : recipients_info.at(thread_recipient_id).color) << R"(;
+        background: #)" << (isgroup ? s_html_colormap.at("ULTRAMARINE") : getRecipientInfoFromMap(recipient_info, thread_recipient_id).color) << R"(;
       }
 
       .deleted-msg {
@@ -679,7 +679,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     {
       file << R"(
           <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
-            )" << recipients_info.at(thread_recipient_id).initial << R"(
+            )" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial << R"(
           </div>)";
     }
   }
@@ -694,10 +694,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   }
   file << R"(
           <div id="thread-title">
-            )" << recipients_info.at(thread_recipient_id).display_name << R"(
+            )" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name << R"(
           </div>
           <div id="thread-subtitle">
-            )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" : recipients_info.at(thread_recipient_id).phone) << R"(
+            )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << R"(
           </div>
         </div>
         <div class="conversation-box">
@@ -778,10 +778,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "          <div class=\"incoming-group-msg\">" << std::endl;
     htmloutput << "            <div class=\"avatar avatar-" << msg_info.msg_recipient_id
                << " convo-avatar msg-sender-" << msg_info.msg_recipient_id << "\">";
-    if (!recipient_info->at(msg_info.msg_recipient_id).hasavatar)
+    if (!getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).hasavatar)
     {
       htmloutput << std::endl;
-      htmloutput << "              <span>" << recipient_info->at(msg_info.msg_recipient_id).initial << "</span>" << std::endl;
+      htmloutput << "              <span>" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).initial << "</span>" << std::endl;
       htmloutput << "            ";
     }
     htmloutput << "</div>" << std::endl;
@@ -811,7 +811,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   // for incoming group (normal) message: Senders name before message content
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
     htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name msg-name-"
-               << msg_info.msg_recipient_id << "\">" << recipient_info->at(msg_info.msg_recipient_id).display_name << "</span>" << std::endl;
+               << msg_info.msg_recipient_id << "\">" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name << "</span>" << std::endl;
 
   // insert quote
   if (msg_info.hasquote)
@@ -821,7 +821,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     // quote message
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "                <span class=\"msg-name\">"
-               << recipient_info->at(msg_info.messages->getValueAs<long long int>(msg_info.idx, "quote_author")).display_name
+               << getRecipientInfoFromMap(recipient_info, msg_info.messages->getValueAs<long long int>(msg_info.idx, "quote_author")).display_name
                << "</span>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "              </div>" << std::endl;
@@ -887,7 +887,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-reaction\"><span class=\"msg-emoji\">"
                  << msg_info.reaction_results->valueAsString(r, "emoji") << "</span>"
                  << "<span class=\"msg-reaction-info\">From "
-                 << recipient_info->at(msg_info.reaction_results->getValueAs<long long int>(r, "author_id")).display_name
+                 << getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r, "author_id")).display_name
                  << "<br>Sent: " << msg_info.reaction_results->valueAsString(r, "date_sent")
                  << "<br>Received: " << msg_info.reaction_results->valueAsString(r, "date_received") << "</span></span>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;

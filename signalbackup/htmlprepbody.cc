@@ -20,7 +20,7 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
-                                   std::map<long long int, RecipientInfo> const &recipients_info, bool incoming,
+                                   std::map<long long int, RecipientInfo> *recipient_info, bool incoming,
                                    std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const
 {
   if (body->empty())
@@ -34,9 +34,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   for (auto const &m : mentions)
   {
     // m1 : uuid, m2: start, m3: length
-    std::string author;
-    if (bepaald::contains(recipients_info, std::get<0>(m)))
-      author = recipients_info.at(std::get<0>(m)).display_name;
+    std::string author = getRecipientInfoFromMap(recipient_info, std::get<0>(m)).display_name;
     if (!author.empty())
     {
       ranges.emplace_back(Range{std::get<1>(m), std::get<2>(m),
@@ -65,9 +63,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       if (!mentionuuid.empty())
       {
         long long int authorid = getRecipientIdFromUuid(mentionuuid, nullptr);
-        std::string author;
-        if (bepaald::contains(recipients_info, authorid))
-          author = recipients_info.at(authorid).display_name;
+        std::string author = getRecipientInfoFromMap(recipient_info, authorid).display_name;
         if (!author.empty())
           ranges.emplace_back(Range{start, length,
                                     (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),

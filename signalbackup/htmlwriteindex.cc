@@ -20,8 +20,11 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                                  std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const
+                                  std::map<long long int, RecipientInfo> *recipient_info, bool overwrite, bool append) const
 {
+
+  std::cout << "Writing index.html..." << std::endl;
+
   if (bepaald::fileOrDirExists(directory + "/index.html"))
   {
     if (!overwrite && ! append)
@@ -148,11 +151,11 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       continue;
     long long int rec_id = results.getValueAs<long long int>(i, d_thread_recipient_id);
 
-    if (recipientinfo.at(rec_id).hasavatar)
+    if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
       outputfile
         << "      .avatar-" << rec_id << " {" << std::endl
-        << "        background-image: url(\"" << sanitizeFilename(recipientinfo.at(rec_id).display_name) << " (_id" << results.getValueAs<long long int>(i, "_id") << ")/media/Avatar_" << rec_id << ".bin\");" << std::endl
+        << "        background-image: url(\"" << sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name) << " (_id" << results.getValueAs<long long int>(i, "_id") << ")/media/Avatar_" << rec_id << ".bin\");" << std::endl
         << "        background-position: center;" << std::endl
         << "        background-repeat: no-repeat;" << std::endl
         << "        background-size: cover;" << std::endl
@@ -163,7 +166,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     {
       outputfile
         << "      .avatar-" << rec_id << " {" << std::endl
-        << "        background: #" << recipientinfo.at(rec_id).color << ";" << std::endl
+        << "        background: #" << getRecipientInfoFromMap(recipient_info, rec_id).color << ";" << std::endl
         << "        padding-bottom: 2px;" << std::endl
         << "      }" << std::endl
         << "" << std::endl;
@@ -267,21 +270,21 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     if (Types::isStatusMessage(snippet_type))
       snippet = "(status message)";
 
-    std::string convo_url_path = sanitizeFilename(recipientinfo.at(rec_id).display_name) + " (_id" + bepaald::toString(_id) + ")";
+    std::string convo_url_path = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name) + " (_id" + bepaald::toString(_id) + ")";
     HTMLescapeUrl(&convo_url_path);
-    std::string convo_url_location = sanitizeFilename(recipientinfo.at(rec_id).display_name) + ".html";
+    std::string convo_url_location = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name) + ".html";
     HTMLescapeUrl(&convo_url_location);
 
     outputfile
       << "      <div class=\"conversation-list-item\">" << std::endl
-      << "        <div class=\"avatar " << ((recipientinfo.at(rec_id).hasavatar || !isgroup) ? "avatar-" + bepaald::toString(rec_id) : "group-avatar-icon") << "\">" << std::endl
+      << "        <div class=\"avatar " << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || !isgroup) ? "avatar-" + bepaald::toString(rec_id) : "group-avatar-icon") << "\">" << std::endl
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
-      << ((!recipientinfo.at(rec_id).hasavatar && !isgroup) ? "          <span>" + recipientinfo.at(rec_id).initial + "</span>\n" : "")
+      << ((!getRecipientInfoFromMap(recipient_info, rec_id).hasavatar && !isgroup) ? "          <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
       << "        </div>" << std::endl
       << "        <div class=\"name-and-snippet\">" << std::endl
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
-      << "          <span class=\"name\">" << recipientinfo.at(rec_id).display_name << "</span>" << std::endl
-      << "          <span class=\"snippet\">" << ((isgroup && groupsender > 0) ? recipientinfo.at(groupsender).display_name + ": " : "") << snippet << "</span>" << std::endl
+      << "          <span class=\"name\">" << getRecipientInfoFromMap(recipient_info, rec_id).display_name << "</span>" << std::endl
+      << "          <span class=\"snippet\">" << ((isgroup && groupsender > 0) ? getRecipientInfoFromMap(recipient_info, groupsender).display_name + ": " : "") << snippet << "</span>" << std::endl
       << "        </div>" << std::endl
       << "      </div>" << std::endl
       << "" << std::endl;

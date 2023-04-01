@@ -327,7 +327,7 @@ class SignalBackup
                                   long long int msg_id, bool is_mms, bool isgroup) const;
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, std::set<long long int> const &recipients,
-                      std::map<long long int, RecipientInfo> const &recipientinfo,
+                      std::map<long long int, RecipientInfo> *recipientinfo,
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const;
@@ -336,7 +336,7 @@ class SignalBackup
   std::set<long long int> getAllThreadRecipients(long long int t) const;
   void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
-                       std::map<long long int, RecipientInfo> const &recipients_info, bool incoming,
+                       std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
   void prepRanges(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
@@ -347,7 +347,7 @@ class SignalBackup
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                      std::map<long long int, RecipientInfo> const &recipientinfo, bool overwrite, bool append) const;
+                      std::map<long long int, RecipientInfo> *recipientinfo, bool overwrite, bool append) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
@@ -357,6 +357,7 @@ class SignalBackup
   inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
+  RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
