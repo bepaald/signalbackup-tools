@@ -25,6 +25,8 @@
 
 #include "signalbackup.ih"
 
+#include <cerrno>
+
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist,
                               long long int split, bool overwrite, bool append) const
@@ -46,6 +48,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to create directory `" << directory << "'" << std::endl;
+      std::cout << "       " << std::strerror(errno) << std::endl;
       return false;
     }
   }
@@ -58,6 +61,19 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
               << ": `" << directory << "' is not a directory." << std::endl;
     return false;
   }
+
+  // temporary !!
+  {
+    std::error_code ec;
+    std::filesystem::space_info const si = std::filesystem::space(directory, ec);
+    if (!ec)
+    {
+      std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
+      std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
+      std::cout << " Filesize: " << d_fd->total() << std::endl;
+    }
+  }
+
 
   // and is it empty?
   if (!bepaald::isEmpty(directory) && !append)
@@ -202,6 +218,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to create directory `" << directory << "/" << threaddir << "'" << std::endl;
+      std::cout << "       " << std::strerror(errno) << std::endl;
       return false;
     }
 
