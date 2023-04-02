@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include <cerrno>
+
 bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string const &threaddir,
                                        long long int rowid, long long int uniqueid,  bool overwrite,
                                        bool append) const
@@ -66,6 +68,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
               << ": Failed to open file for writing: '" << attachment_filename << "'" << std::endl;
+    std::cout << "       " << std::strerror(errno) << std::endl;
     return false;
   }
   else
