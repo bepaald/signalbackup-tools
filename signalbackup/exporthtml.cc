@@ -49,6 +49,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to create directory `" << directory << "'" << std::endl;
       std::cout << "       " << std::strerror(errno) << std::endl;
+      // temporary !!
+      {
+        std::error_code ec;
+        std::filesystem::space_info const si = std::filesystem::space(directory, ec);
+        if (!ec)
+        {
+          std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
+          std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
+          std::cout << " Filesize: " << d_fd->total() << std::endl;
+        }
+      }
       return false;
     }
   }
@@ -61,19 +72,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
               << ": `" << directory << "' is not a directory." << std::endl;
     return false;
   }
-
-  // temporary !!
-  {
-    std::error_code ec;
-    std::filesystem::space_info const si = std::filesystem::space(directory, ec);
-    if (!ec)
-    {
-      std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
-      std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
-      std::cout << " Filesize: " << d_fd->total() << std::endl;
-    }
-  }
-
 
   // and is it empty?
   if (!bepaald::isEmpty(directory) && !append)
@@ -219,6 +217,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to create directory `" << directory << "/" << threaddir << "'" << std::endl;
       std::cout << "       " << std::strerror(errno) << std::endl;
+      // temporary !!
+      {
+        std::error_code ec;
+        std::filesystem::space_info const si = std::filesystem::space(directory, ec);
+        if (!ec)
+        {
+          std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
+          std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
+          std::cout << " Filesize: " << d_fd->total() << std::endl;
+        }
+      }
       return false;
     }
 
@@ -247,7 +256,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create output-file
       std::string base_filename = sanitizeFilename(recipient_info[thread_recipient_id].display_name);
       std::ofstream htmloutput(directory + "/" + threaddir + "/" +
-                               base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html", std::ios_base::binary);
+                               base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html",
+                               std::ios_base::binary);
       if (!htmloutput.is_open())
       {
         std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
