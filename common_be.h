@@ -236,7 +236,7 @@ inline std::string bepaald::toString(T const &num, bool hex, typename std::enabl
 inline std::string bepaald::toString(double num)
 {
   std::ostringstream oss;
-  oss << std::defaultfloat << std::setprecision(17) << num;
+  oss << std::defaultfloat << std::fixed << std::setprecision(17) << num;
   return oss.str();
 }
 

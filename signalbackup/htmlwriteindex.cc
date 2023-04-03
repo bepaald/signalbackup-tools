@@ -34,7 +34,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       return;
     }
   }
-  std::ofstream outputfile(directory + "/index.html");
+  std::ofstream outputfile(directory + "/index.html", std::ios_base::binary);
   if (!outputfile.is_open())
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
