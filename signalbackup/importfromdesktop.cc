@@ -468,6 +468,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "LOWER(sourceUuid) AS 'sourceUuid',"
                   "json_extract(json, '$.source') AS sourcephone,"
                   "seenStatus,"
+                  "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
                   results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
@@ -492,6 +493,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       long long int nummentions = results_all_messages_from_conversation.getValueAs<long long int>(j, "nummentions");
       bool hasquote = !results_all_messages_from_conversation.isNull(j, "quote");
       long long int flags = results_all_messages_from_conversation.getValueAs<long long int>(j, "flags");
+      long long int haspreview = results_all_messages_from_conversation.getValueAs<long long int>(j, "haspreview");
 
       // get address (needed in both mms and sms databases)
       // for 1-on-1 messages, address is conversation partner (with uuid 'person_or_group_id')
@@ -504,7 +506,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         // group calls always have address set to the one initiating the call
         address = getRecipientIdFromUuid(results_all_messages_from_conversation.valueAsString(j, "group_call_init"), &recipientmap);
       }
-      else if (isgroupconversation && incoming)
+      else if (isgroupconversation && incoming && type != "group-v1-migration")
         //if (isgroupconversation && (incoming || (type == "call-history" & something)))
       {
         // incoming group messages have 'address' set to the group member who sent the message/
@@ -603,18 +605,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (type == "group-v1-migration")
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
-                  << results_all_messages_from_conversation.valueAsString(j, "type") << "'. ";
-        // ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
-        //                   "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
-        //                   "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
-        //                   " FROM messages WHERE rowid = ?", rowid);
-        std::cout << "Skipping message." << std::endl;
-        continue;
+        // std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
+        //           << results_all_messages_from_conversation.valueAsString(j, "type") << "'. ";
+        // // ddb.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
+        // //                   "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
+        // //                   "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
+        // //                   " FROM messages WHERE rowid = ?", rowid);
+        // std::cout << "Skipping message." << std::endl;
+        // continue;
 
         if (!handleDTGroupV1Migration(ddb, rowid, ttid,
                                       results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
-                                      address, &recipientmap))
+                                      recipientid_for_thread, &recipientmap))
           return false;
 
       }
@@ -636,7 +638,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           continue;
         }
 
-        if (!handleDTExpirationChangeMessage(ddb, rowid, ttid, address))
+        if (!handleDTExpirationChangeMessage(ddb, rowid, ttid,
+                                             results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
+                                             address))
           return false;
 
         continue;
@@ -1024,12 +1028,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         // insert message attachments
         if (d_verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
-        insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments,
-                          ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false);
+        insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
+                          rowid, ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false);
         if (hasquote && !mmsquote_missing)
         {
           // insert quotes attachments
-          insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, ddb,
+          insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, ddb,
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
                             "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true);
         }

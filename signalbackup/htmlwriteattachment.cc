@@ -67,17 +67,16 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   if (!attachmentstream.is_open())
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to open file for writing: '" << attachment_filename << "'" << std::endl;
-    std::cout << "       " << std::strerror(errno) << std::endl;
+              << ": Failed to open file for writing: '" << attachment_filename << "'"
+              << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
     // temporary !!
     {
       std::error_code ec;
       std::filesystem::space_info const si = std::filesystem::space(directory, ec);
       if (!ec)
       {
-        std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
-        std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
-        std::cout << " Filesize: " << d_fd->total() << std::endl;
+        std::cout << "Space available: " << static_cast<std::intmax_t>(si.available) << std::endl;
+        std::cout << "Attachment size: " << a->attachmentSize() << std::endl;
       }
     }
     return false;

@@ -95,6 +95,7 @@ namespace bepaald
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
+  inline void replaceAll(std::string *in, std::string const &from, std::string const &to);
 
   template <typename T, typename I>
   inline bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
@@ -376,6 +377,16 @@ inline std::string bepaald::toUpper(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
   return s;
+}
+
+inline void bepaald::replaceAll(std::string *in, std::string const &from, std::string const &to)
+{
+  size_t start_pos = 0;
+  while ((start_pos = in->find(from, start_pos)) != std::string::npos)
+  {
+    in->replace(start_pos, from.length(), to);
+    start_pos += to.length();
+  }
 }
 
 template <typename T, typename U>
