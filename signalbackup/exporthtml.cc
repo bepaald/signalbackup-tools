@@ -47,17 +47,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (!bepaald::createDir(directory))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to create directory `" << directory << "'" << std::endl;
-      std::cout << "       " << std::strerror(errno) << std::endl;
+                << ": Failed to create directory `" << directory << "'"
+                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
       // temporary !!
       {
         std::error_code ec;
         std::filesystem::space_info const si = std::filesystem::space(directory, ec);
         if (!ec)
         {
-          std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
-          std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
-          std::cout << " Filesize: " << d_fd->total() << std::endl;
+          std::cout << "Available  : " << static_cast<std::intmax_t>(si.available) << std::endl;
+          std::cout << "Backup size: " << d_fd->total() << std::endl;
         }
       }
       return false;
@@ -215,15 +214,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     else if (!bepaald::createDir(directory + "/" + threaddir)) // try to create it
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to create directory `" << directory << "/" << threaddir << "'" << std::endl;
-      std::cout << "       " << std::strerror(errno) << std::endl;
+                << ": Failed to create directory `" << directory << "/" << threaddir << "'"
+                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
       // temporary !!
       {
         std::error_code ec;
         std::filesystem::space_info const si = std::filesystem::space(directory, ec);
         if (!ec)
         {
-          std::cout << "     Free: " << static_cast<std::intmax_t>(si.free) << std::endl;
           std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
           std::cout << " Filesize: " << d_fd->total() << std::endl;
         }

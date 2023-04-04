@@ -19,13 +19,12 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb [[maybe_unused]],
-                                                   long long int rowid [[maybe_unused]],
-                                                   long long int ttid [[maybe_unused]],
-                                                   long long int address [[maybe_unused]]) const
+bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
+                                                   long long int rowid,
+                                                   long long int ttid,
+                                                   long long int sent_at,
+                                                   long long int address) const
 {
-  return true;
-
   SqliteDB::QueryResults timer_results;
   if (!ddb.exec("SELECT "
                 "type, "
@@ -42,6 +41,10 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb [[maybe_u
     return false;
   }
 
+  // 'from sync' timer updates do not have any info on who set the timer.
+  // On Android, the message must be either incoming or outgoing, but I can
+  // only guess. 50-50 of having correct or incorrect info in the database,
+  // let's just skip.
   if (timer_results.valueAsString(0, "fromsync") != "0")
   {
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
@@ -78,16 +81,57 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb [[maybe_u
   // 10747927 (outgoing type) =  PUSH_MESSAGE_BIT | SECURE_MESSAGE_BIT | EXPIRATION_TIMER_UPDATE_BIT | BASE_SENT_TYPE
   // 10747924 (incoming type) =  PUSH_MESSAGE_BIT | SECURE_MESSAGE_BIT | EXPIRATION_TIMER_UPDATE_BIT | BASE_INBOX_TYPE
 
+  // std::cout << rowid
+  //           << "|" << (incoming ? "incoming" : "outgoing")
+  //           << "|" << ttid
+  //           << "|" << address
+  //           << "|" << timer
+  //           << std::endl;
 
-  std::cout << rowid
-            << "|" << (incoming ? "incoming" : "outgoing")
-            << "|" << ttid
-            << "|" << address
-            << "|" << timer
-            << std::endl;
-
-
-  // insertMessage(Types::INCOMING/OUTGOING | Types::EXPIRATION_TIMER_UPDATE_BIT), value
+  if (d_database.containsTable("sms"))
+  {
+    if (!insertRow("sms", {{"thread_id", ttid},
+                           {"date_sent", sent_at},
+                           {d_sms_date_received, sent_at},
+                           {"type", Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
+                            (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                           {"expires_in", timer},
+                           {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                           {d_sms_recipient_id, address}}))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting expiration-timer-update into sms" << std::endl;
+      return false;
+    }
+  }
+  else
+  {
+    if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                 {d_mms_date_sent, sent_at},
+                                 {"date_received", sent_at},
+                                 {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
+                                  (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                 {"m_type", (incoming ? 132 : 128)},
+                                 {"expires_in", timer},
+                                 {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                 {d_mms_recipient_id, address}}))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting expiration-timer-update into mms" << std::endl;
+      return false;
+    }
+  }
 
   return true;
 }
+
+/*
+          (in group converstations recipient uuid of contact setting the timer = sourceUuid, but
+           this is group-update message on Android, so not handled here)
+
+          in 1-on-1: json$.expirationTimerUpdate.source == conversationId of person setting the timer (IF SELF!)
+                     json$.expirationTimerUpdate.source == recipientUuid of person setting the timer (IF OTHER!)
+
+          json$.expirationTimerUpdate = not null
+          json$.expirationTimerUpdate.expireTimer = some value (in seconds or milliseconds?) or not present when disabling timer
+
+          IF json$.expirationTimerUpdate.fromSync = true -> SOURCE WILL BE UNKNOWN
+*/

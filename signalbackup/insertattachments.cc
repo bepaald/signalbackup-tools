@@ -19,11 +19,12 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_id, int numattachments,
-                                     SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
+bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,
+                                     long long int rowid, SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
                                      bool isquote)
 {
-  if (numattachments == -1) // quote attachments, number not known yet
+  bool quoted_linkpreview = false;
+  if (numattachments == -1 && isquote) // quote attachments, number not known yet
   {
     SqliteDB::QueryResults res;
     if (!ddb.exec("SELECT IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments FROM messages " + where, &res) ||
@@ -33,7 +34,22 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       return false;
     }
     numattachments = res.getValueAs<long long int>(0, "numattachments");
+
+    if (numattachments == 0)
+    {
+      if (ddb.exec("SELECT json_extract(json, '$.preview[0].image.path') IS NOT NULL AS quoteispreview FROM messages " + where, &res) &&
+          res.rows() == 1 && res.getValueAs<long long int>(0, "quoteispreview") != 0)
+      {
+        quoted_linkpreview = true;
+        numattachments = 1;
+        //std::cout << "GOT QUOTED LINK PREVIEW" << std::endl;
+      }
+    }
   }
+
+  if (numattachments == 0)
+    if (haspreview > 0)
+      numattachments = 1;
 
   //if (numattachments)
   //  std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
@@ -43,16 +59,33 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
   {
     //std::cout << "  Attachment " << k + 1 << "/" << numattachments << ": " << std::flush;
 
+    std::string jsonpath = "$.attachments[" + bepaald::toString(k) + "]";
+
+    SqliteDB::QueryResults linkpreview_results;
+    if (haspreview)
+    {
+      jsonpath = "$.preview[0].image";
+      ddb.exec("SELECT "
+               "json_extract(json, '$.preview[0].url') AS url,"
+               "json_extract(json, '$.preview[0].title') AS title,"
+               "json_extract(json, '$.preview[0].description') AS description,"
+               "json_extract(json, '$.preview[0].image') AS image"
+               " FROM messages WHERE rowid = ?",
+               rowid, &linkpreview_results);
+    }
+    if (quoted_linkpreview)
+      jsonpath = "$.preview[0].image";
+
     if (!ddb.exec("SELECT "
-                  "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].contentType') AS content_type,"
-                  "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].fileName') AS file_name,"
-                  "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].size') AS size,"
-                  "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].pending'), 0) AS pending,"
-                  "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].cdnNumber'), 0) AS cdn_number,"
-                  "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].flags') AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
-                  //"json_extract(json, '$.attachments[" + bepaald::toString(k) + "].cdnKey') AS cdn_key,"
-                  "IFNULL(json_extract(json, '$.attachments[" + bepaald::toString(k) + "].uploadTimestamp'), 0) AS upload_timestamp,"
-                  "json_extract(json, '$.attachments[" + bepaald::toString(k) + "].path') AS path"
+                  "json_extract(json, '" + jsonpath + ".contentType') AS content_type,"
+                  "json_extract(json, '" + jsonpath + ".fileName') AS file_name,"
+                  "json_extract(json, '" + jsonpath + ".size') AS size,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".pending'), 0) AS pending,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".cdnNumber'), 0) AS cdn_number,"
+                  "json_extract(json, '" + jsonpath + ".flags') AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
+                  //"json_extract(json, '" + jsonpath + ".cdnKey') AS cdn_key,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".uploadTimestamp'), 0) AS upload_timestamp,"
+                  "json_extract(json, '" + jsonpath + ".path') AS path"
                   " FROM messages " + where, &results_attachment_data))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get attachment data from desktop database" << std::endl;
@@ -83,8 +116,39 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
         }
       }
       else
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                  << ": Attachment not found." << std::endl;
+      {
+        //std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+        //          << ": Attachment not found." << std::endl;
+      }
+
+      if (haspreview && linkpreview_results.rows())
+      {
+        // this work, but just for consistency, I'd like to escape the string as Signal does for some reason
+        //d_database.exec("UPDATE " + d_mms_table + " SET link_previews = json_array(json_object('url', ?, 'title', ?, 'description', ?, 'date', 0, 'attachmentId', NULL)) WHERE _id = ?",
+        //                {linkpreview_results.value(0, "url"), linkpreview_results.value(0, "title"), linkpreview_results.value(0, "description"), mms_id});
+
+        // there are more chars to escape (tabs and backspaces and the like), but i'm gonna naively pretend they dont appear in urls
+        std::string url = linkpreview_results("url");
+        bepaald::replaceAll(&url, "/", R"(\/)");
+        bepaald::replaceAll(&url, "'", R"(\')");
+        bepaald::replaceAll(&url, "\"", R"(\")");
+        std::string title = linkpreview_results("title");
+        bepaald::replaceAll(&title, "/", R"(\/)");
+        bepaald::replaceAll(&title, "'", R"(\')");
+        bepaald::replaceAll(&title, "\"", R"(\")");
+        std::string description = linkpreview_results("description");
+        bepaald::replaceAll(&description, "/", R"(\/)");
+        bepaald::replaceAll(&description, "'", R"(\')");
+        bepaald::replaceAll(&description, "\"", R"(\")");
+
+        SqliteDB::QueryResults jsonstring;
+        ddb.exec("SELECT json_array(json_object('url', json('\"" + url + "\"'), 'title', json('\"" + title + "\"'), 'description', json('\"" + description + "\"'), 'date', 0, 'attachmentId', NULL)) AS link_previews",
+                 &jsonstring);
+        std::string linkpreview_as_string = jsonstring("link_previews");
+
+        d_database.exec("UPDATE " + d_mms_table + " SET link_previews = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
+        //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
+      }
 
       // std::cout << "Here is the message full data:" << std::endl;
       // SqliteDB::QueryResults res;
@@ -140,6 +204,53 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     }
     long long int new_part_id = std::any_cast<long long int>(retval);
     //std::cout << "Inserted part, new id: " << new_part_id << std::endl;
+
+    if (haspreview && linkpreview_results.rows())
+    {
+      // this works, but I want to escape the string like Signal does
+      //d_database.exec("UPDATE " + d_mms_table + " SET link_previews = json_array(json_object('url', ?, 'title', ?, 'description', ?, 'date', 0, 'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', true))) "
+      //"WHERE _id = ?", {linkpreview_results.value(0, "url"), linkpreview_results.value(0, "title"), linkpreview_results.value(0, "description"), new_part_id, unique_id, mms_id});
+
+      std::string url = linkpreview_results("url");
+      bepaald::replaceAll(&url, "/", R"(\/)");
+      bepaald::replaceAll(&url, "'", R"(\')");
+      bepaald::replaceAll(&url, "\"", R"(\")");
+      std::string title = linkpreview_results("title");
+      bepaald::replaceAll(&title, "/", R"(\/)");
+      bepaald::replaceAll(&title, "'", R"(\')");
+      bepaald::replaceAll(&title, "\"", R"(\")");
+      std::string description = linkpreview_results("description");
+      bepaald::replaceAll(&description, "/", R"(\/)");
+      bepaald::replaceAll(&description, "'", R"(\')");
+      bepaald::replaceAll(&description, "\"", R"(\")");
+
+      SqliteDB::QueryResults jsonstring;
+      ddb.exec("SELECT json_array(json_object("
+               "'url', json('\"" + url + "\"'), "
+               "'title', json('\"" + title + "\"'), "
+               "'description', json('\"" + description + "\"'), "
+               "'date', 0, "
+               "'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', json('true')))) AS link_previews",
+               {new_part_id, unique_id}, &jsonstring);
+      std::string linkpreview_as_string = jsonstring("link_previews");
+      d_database.exec("UPDATE " + d_mms_table + " SET link_previews = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
+      //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
+    }
+    /*
+    // 1 link with preview image
+    // DESKTOP
+    // json_extract(json, '$.preview') = [{"url":"https://www.reddit.com/r/StableDiffusionInfo/comments/10h30h6/tutorial_on_installing_sd_to_run_locally_on/","title":"r/StableDiffusionInfo on Reddit","image":{"contentType":"image/jpeg","size":69266,"flags":0,"width":1200,"height":630,"blurHash":"LASX=n.:zATd_2rpkoy?:4K*BX+Z","uploadTimestamp":1674935886235,"cdnNumber":2,"cdnKey":"AnPqh3-Ujsx9ZGeW1_J1","path":"d6/d6e6cad87d22f14500024701a34aa2d76abfce1f5b2ce0e619c0c1dd6d235be1","thumbnail":{"path":"2d/2d3f2e7e9d782fd33f2b20e2a6ead088decacc5d549b1451d2d43dddae99db96","contentType":"image/png","width":150,"height":150}},"description":"Tutorial on installing SD to run locally on Windows?"}]
+    //   -->
+    // ANDROID
+    // link_previews = [{"url":"https:\/\/www.reddit.com\/r\/StableDiffusionInfo\/comments\/10h30h6\/tutorial_on_installing_sd_to_run_locally_on\/","title":"r\/StableDiffusionInfo on Reddit","description":"Tutorial on installing SD to run locally on Windows?","date":0,"attachmentId":{"rowId":28,"uniqueId":1675171736355,"valid":true}}]
+
+    //
+    // 1 link, no preview image:
+    // DESKTOP
+    // preview":[{"description":"Posted by u/calilaser - 65 votes and 7 comments","title":"r/esp32 on Reddit: 10 Steps To Building a Light Up IoT Button from Scratch","url":"https://www.reddit.com/r/esp32/comments/12b5258/10_steps_to_building_a_light_up_iot_button_from/","domain":"www.reddit.com","isStickerPack":false}]
+    //  --> ANDROID
+    // link_previews = [{"url":"https:\/\/www.reddit.com\/r\/esp32\/comments\/12b5258\/10_steps_to_building_a_light_up_iot_button_from\/","title":"r\/esp32 on Reddit: 10 Steps To Building a Light Up IoT Button from Scratch","description":"Posted by u\/calilaser - 65 votes and 7 comments","date":0,"attachmentId":null}]
+    */
 
     std::unique_ptr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),

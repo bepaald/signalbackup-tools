@@ -308,11 +308,12 @@ class SignalBackup
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
-  bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, SqliteDB const &ddb,
-                         std::string const &where, std::string const &databasedir, bool isquote);
+  bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
+                         long long int rowid, SqliteDB const &ddb, std::string const &where,
+                         std::string const &databasedir, bool isquote);
   bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
   void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id) const;
-  bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
+  bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int sent_at, long long int address) const;
   bool handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int timestamp,
                                 long long int address, std::map<std::string, long long int> *savedmap);
   void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
