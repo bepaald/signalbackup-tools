@@ -45,5 +45,6 @@ struct HTMLMessageInfo
   std::string readable_date;
   std::string directory;
   std::string threaddir;
-
+  std::string link_preview_title;
+  std::string link_preview_description;
 };

@@ -218,7 +218,7 @@ class SignalBackup
                          std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
-                  std::vector<std::string> const &dateranges, long long int split, bool overwrite, bool append) const;
+                  std::vector<std::string> const &dateranges, long long int split, bool migrate, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -331,7 +331,7 @@ class SignalBackup
                       std::map<long long int, RecipientInfo> *recipientinfo,
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
-                              std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const;
+                              std::string const &directory, std::string const &threaddir, bool is_image_preview, bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
                            long long int uniqueid, bool overwrite, bool append) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
@@ -359,6 +359,7 @@ class SignalBackup
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
   RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
+  bool migrateDatabase(int from, int to) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
