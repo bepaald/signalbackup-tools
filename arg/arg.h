@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 78> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--carowit", "--desktopdbversion"};
+  std::array<std::string, 79> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--generatefromtruncated", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--carowit", "--desktopdbversion", "--migratedb"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -113,6 +113,7 @@ class Arg
   std::string d_carowit_1;
   std::string d_carowit_2;
   long long int d_desktopdbversion;
+  bool d_migratedb;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -198,6 +199,7 @@ class Arg
   inline std::string const &carowit_1() const;
   inline std::string const &carowit_2() const;
   inline long long int desktopdbversion() const;
+  inline bool migratedb() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -607,6 +609,11 @@ inline std::string const &Arg::carowit_2() const
 inline long long int Arg::desktopdbversion() const
 {
   return d_desktopdbversion;
+}
+
+inline bool Arg::migratedb() const
+{
+  return d_migratedb;
 }
 
 inline bool Arg::ok() const

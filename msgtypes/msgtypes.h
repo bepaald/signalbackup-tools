@@ -77,6 +77,8 @@ struct Types
   static uint64_t constexpr END_SESSION_BIT    = 0x400000;
   static uint64_t constexpr PUSH_MESSAGE_BIT   = 0x200000;
 
+  static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_NOTIFICATION = 0x300000000L;
+
  public:
   inline static bool isGroupUpdate(uint64_t type)
   {

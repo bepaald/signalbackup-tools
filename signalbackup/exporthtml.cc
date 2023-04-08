@@ -29,15 +29,38 @@
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist,
-                              long long int split, bool overwrite, bool append) const
+                              long long int split, bool migrate,
+                              bool overwrite, bool append) const
 {
   using namespace std::string_literals;
 
-  if (d_databaseversion < 170)
+  // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
+  if (d_databaseversion == 167)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": currently unsupported database version. Please upgrade your database" << std::endl;
-    return false;
+    if (!migrateDatabase(167, 170))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
+                << " Please upgrade your database" << std::endl;
+      return false;
+    }
+  }
+  else if (d_databaseversion < 167)
+  {
+    if (!migrate)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Currently unsupported database version (" << d_databaseversion << ")."
+                << " Please upgrade your database" << std::endl;
+      return false;
+    }
+    else if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
+                << " Please upgrade your database" << std::endl;
+      return false;
+    }
   }
 
   // check if dir exists, create if not
@@ -167,7 +190,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     d_database.exec("SELECT "s
                     "_id, recipient_id, body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, expires_in, message_ranges "
+                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
+                    "expires_in, message_ranges, "
+                    "json_extract(link_previews, '$[0].title') AS link_preview_title, "
+                    "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
                     "WHERE thread_id = ?"
                     + datewhereclause +
@@ -389,27 +415,30 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         // collect data needed by writeMessage()
         HTMLMessageInfo msg_info({only_emoji,
-            is_deleted,
-            isgroup,
-            incoming,
-            isgroupupdatev1,
-            nobackground,
-            hasquote,
-            overwrite,
-            append,
-            type,
-            msg_id,
-            msg_recipient_id,
-            messagecount,
-            &messages,
-            &quote_attachment_results,
-            &attachment_results,
-            &reaction_results,
-            body,
-            quote_body,
-            readable_date,
-            directory,
-            threaddir});
+              is_deleted,
+              isgroup,
+              incoming,
+              isgroupupdatev1,
+              nobackground,
+              hasquote,
+              overwrite,
+              append,
+              type,
+              msg_id,
+              msg_recipient_id,
+              messagecount,
+              &messages,
+              &quote_attachment_results,
+              &attachment_results,
+              &reaction_results,
+              body,
+              quote_body,
+              readable_date,
+              directory,
+              threaddir,
+              messages(messagecount, "link_preview_title"),
+              messages(messagecount, "link_preview_description")
+          });
         HTMLwriteMessage(htmloutput, msg_info, &recipient_info);
 
         if (++messagecount >= messages.rows())

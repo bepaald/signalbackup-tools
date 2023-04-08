@@ -349,7 +349,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         width: 400px;
       }
 
-      .msg-img-container input[type=checkbox] {
+      .msg-img-container input[type=checkbox],
+      .msg-linkpreview-img-container input[type=checkbox] {
         display: none;
       }
 
@@ -359,7 +360,29 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         cursor: zoom-in;
       }
 
-      .msg-img-container input[type=checkbox]:checked ~ label > img {
+      .msg-linkpreview-img-container img {
+        transition: transform 0.25s ease;
+        border-top-left-radius: 0.6em;
+        border-top-right-radius: 0.6em;
+        border-bottom-left-radius: 0em;
+        border-bottom-right-radius: 0em;
+        cursor: zoom-in;
+      }
+
+      .linkpreview {
+        padding: 5px;
+        margin-bottom: 5px;
+      }
+
+      .linkpreview_title {
+        font-weight: 550;
+      }
+
+      .linkpreview_description {
+      }
+
+      .msg-img-container input[type=checkbox]:checked ~ label > img,
+      .msg-linkpreview-img-container input[type=checkbox]:checked ~ label > img {
         transform: scale(2.5);
         border-radius: 0;
         cursor: zoom-out;
@@ -459,11 +482,15 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-left: 5px solid white;
       }
 
-      .msg-incoming .msg-quote {
+      .msg-incoming .msg-quote,
+      .msg-incoming .msg-linkpreview-img-container,
+      .msg-incoming .linkpreview {
         background-color: rgba(255, 255, 255, .16);
-        }
+      }
 
-      .msg-outgoing .msg-quote {
+      .msg-outgoing .msg-quote,
+      .msg-outgoing .msg-linkpreview-img-container,
+      .msg-outgoing .linkpreview {
         background-color: rgba(255, 255, 255, .485);
         color: black;
       }
@@ -709,7 +736,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 }
 
 void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
-                                          std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const
+                                          std::string const &directory, std::string const &threaddir,
+                                          bool is_image_preview, bool overwrite, bool append) const
 {
   for (uint a = 0; a < attachment_results.rows(); ++a)
   {
@@ -737,7 +765,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     std::string content_type = attachment_results.valueAsString(a, "ct");
     if (STRING_STARTS_WITH(content_type, "image/"))
     {
-      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-img-container\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
@@ -831,7 +859,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     {
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">" << std::endl;
       HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 16 + extraindent,
-                             msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
+                             msg_info.directory, msg_info.threaddir, false, msg_info.overwrite, msg_info.append);
       htmloutput << "                </div>" << std::endl;
     }
 
@@ -840,7 +868,28 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // insert attachment?
   HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
-                         msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
+                         msg_info.directory, msg_info.threaddir,
+                         (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
+                         msg_info.overwrite, msg_info.append);
+
+  // insert link_preview data?
+  if (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty())
+  {
+    htmloutput << "            <div class=\"linkpreview\">" << std::endl;
+    if (!msg_info.link_preview_title.empty())
+    {
+      htmloutput << "              <div class=\"linkpreview_title\">" << std::endl;
+      htmloutput << "                " << msg_info.link_preview_title << std::endl;
+      htmloutput << "              </div>" << std::endl;
+    }
+    if (!msg_info.link_preview_description.empty())
+    {
+      htmloutput << "              <div class=\"linkpreview_description\">" << std::endl;
+      htmloutput << "                " << msg_info.link_preview_description << std::endl;
+      htmloutput << "              </div>" << std::endl;
+    }
+    htmloutput << "            </div>" << std::endl;
+  }
 
   //insert body
   if (!msg_info.body.empty())

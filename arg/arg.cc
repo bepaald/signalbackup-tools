@@ -100,7 +100,8 @@ Arg::Arg(int argc, char *argv[])
   d_split_bool(false),
   d_carowit_1(std::string()),
   d_carowit_2(std::string()),
-  d_desktopdbversion(4)
+  d_desktopdbversion(4),
+  d_migratedb(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -1076,6 +1077,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--migratedb")
+    {
+      d_migratedb = true;
+      continue;
+    }
+    if (option == "--no-migratedb")
+    {
+      d_migratedb = false;
       continue;
     }
     if (option[0] != '-')
