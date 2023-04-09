@@ -95,6 +95,7 @@ namespace bepaald
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
+  inline void replaceAll(std::string *in, char from, std::string const &to);
   inline void replaceAll(std::string *in, std::string const &from, std::string const &to);
 
   template <typename T, typename I>
@@ -377,6 +378,11 @@ inline std::string bepaald::toUpper(std::string s)
 {
   std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
   return s;
+}
+
+inline void bepaald::replaceAll(std::string *in, char from, std::string const &to)
+{
+  replaceAll(in, std::string(1, from), to);
 }
 
 inline void bepaald::replaceAll(std::string *in, std::string const &from, std::string const &to)

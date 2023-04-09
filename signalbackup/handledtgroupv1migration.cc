@@ -32,7 +32,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
     {
       std::string convuuid = results_droppedmembers.valueAsString(dm, "droppedmember");
       SqliteDB::QueryResults dm_id;
-      if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE conversationId IS ?", convuuid, &dm_id) ||
+      if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
           dm_id.rows() != 1)
         continue;
       long long int recid = getRecipientIdFromUuid(dm_id.valueAsString(0, "rid"), recipientmap);
@@ -77,7 +77,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
       if (!convuuid.empty())
       {
         SqliteDB::QueryResults im_id;
-        if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE conversationId IS ?", convuuid, &im_id) ||
+        if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE id IS ?", convuuid, &im_id) ||
             im_id.rows() != 1)
           continue;
         long long int recid = getRecipientIdFromUuid(im_id.valueAsString(0, "rid"), recipientmap);

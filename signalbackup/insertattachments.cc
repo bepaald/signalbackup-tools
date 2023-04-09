@@ -127,24 +127,49 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
         //d_database.exec("UPDATE " + d_mms_table + " SET link_previews = json_array(json_object('url', ?, 'title', ?, 'description', ?, 'date', 0, 'attachmentId', NULL)) WHERE _id = ?",
         //                {linkpreview_results.value(0, "url"), linkpreview_results.value(0, "title"), linkpreview_results.value(0, "description"), mms_id});
 
-        // there are more chars to escape (tabs and backspaces and the like), but i'm gonna naively pretend they dont appear in urls
+        /*
+          STRING_ESCAPE():
+          Quotation mark (") 	\"
+          Reverse solidus (\) 	\|
+          Solidus (/) 	\/
+          Backspace 	\b
+          Form feed 	\f
+          New line 	\n
+          Carriage return 	\r
+          Horizontal tab 	\t
+
+          As far as I can tell/test, only '/' '\' and '"' are escaped
+
+          NOTE backslash needs to be done first, or the backslashes inserted by other escapes are escaped...
+        */
         std::string url = linkpreview_results("url");
-        bepaald::replaceAll(&url, "/", R"(\/)");
-        bepaald::replaceAll(&url, "'", R"(\')");
-        bepaald::replaceAll(&url, "\"", R"(\")");
+        bepaald::replaceAll(&url, '\\', R"(\\)");
+        bepaald::replaceAll(&url, '/', R"(\/)");
+        bepaald::replaceAll(&url, '\"', R"(\")");
+        bepaald::replaceAll(&url, '\'', R"('')");
+        //bepaald::replaceAll(&url, "'", R"(\')");  // not done in db
+        //bepaald::replaceAll(&url, '\b', R"(\b)");
+        //bepaald::replaceAll(&url, '\f', R"(\f)");
+        //bepaald::replaceAll(&url, '\n', R"(\n)");
+        //bepaald::replaceAll(&url, '\r', R"(\r)");
+        //bepaald::replaceAll(&url, '\t', R"(\t)");
         std::string title = linkpreview_results("title");
-        bepaald::replaceAll(&title, "/", R"(\/)");
-        bepaald::replaceAll(&title, "'", R"(\')");
-        bepaald::replaceAll(&title, "\"", R"(\")");
+        bepaald::replaceAll(&title, '\\', R"(\\)");
+        bepaald::replaceAll(&title, '/', R"(\/)");
+        bepaald::replaceAll(&title, '\"', R"(\")");
+        bepaald::replaceAll(&title, '\'', R"('')");
         std::string description = linkpreview_results("description");
-        bepaald::replaceAll(&description, "/", R"(\/)");
-        bepaald::replaceAll(&description, "'", R"(\')");
-        bepaald::replaceAll(&description, "\"", R"(\")");
+        bepaald::replaceAll(&description, '\\', R"(\\)");
+        bepaald::replaceAll(&description, '/', R"(\/)");
+        bepaald::replaceAll(&description, '\"', R"(\")");
+        bepaald::replaceAll(&description, '\'', R"('')");
 
         SqliteDB::QueryResults jsonstring;
         ddb.exec("SELECT json_array(json_object('url', json('\"" + url + "\"'), 'title', json('\"" + title + "\"'), 'description', json('\"" + description + "\"'), 'date', 0, 'attachmentId', NULL)) AS link_previews",
                  &jsonstring);
         std::string linkpreview_as_string = jsonstring("link_previews");
+
+        bepaald::replaceAll(&linkpreview_as_string, '\'', R"('')");
 
         d_database.exec("UPDATE " + d_mms_table + " SET link_previews = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
         //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
@@ -212,17 +237,20 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       //"WHERE _id = ?", {linkpreview_results.value(0, "url"), linkpreview_results.value(0, "title"), linkpreview_results.value(0, "description"), new_part_id, unique_id, mms_id});
 
       std::string url = linkpreview_results("url");
-      bepaald::replaceAll(&url, "/", R"(\/)");
-      bepaald::replaceAll(&url, "'", R"(\')");
-      bepaald::replaceAll(&url, "\"", R"(\")");
+      bepaald::replaceAll(&url, '\\', R"(\\)");
+      bepaald::replaceAll(&url, '/', R"(\/)");
+      bepaald::replaceAll(&url, '\"', R"(\")");
+      bepaald::replaceAll(&url, '\'', R"('')");
       std::string title = linkpreview_results("title");
-      bepaald::replaceAll(&title, "/", R"(\/)");
-      bepaald::replaceAll(&title, "'", R"(\')");
-      bepaald::replaceAll(&title, "\"", R"(\")");
+      bepaald::replaceAll(&title, '\\', R"(\\)");
+      bepaald::replaceAll(&title, '/', R"(\/)");
+      bepaald::replaceAll(&title, '\"', R"(\")");
+      bepaald::replaceAll(&title, '\'', R"('')");
       std::string description = linkpreview_results("description");
-      bepaald::replaceAll(&description, "/", R"(\/)");
-      bepaald::replaceAll(&description, "'", R"(\')");
-      bepaald::replaceAll(&description, "\"", R"(\")");
+      bepaald::replaceAll(&description, '\\', R"(\\)");
+      bepaald::replaceAll(&description, '/', R"(\/)");
+      bepaald::replaceAll(&description, '\"', R"(\")");
+      bepaald::replaceAll(&description, '\'', R"('')");
 
       SqliteDB::QueryResults jsonstring;
       ddb.exec("SELECT json_array(json_object("
@@ -233,6 +261,9 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                "'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', json('true')))) AS link_previews",
                {new_part_id, unique_id}, &jsonstring);
       std::string linkpreview_as_string = jsonstring("link_previews");
+
+      bepaald::replaceAll(&linkpreview_as_string, '\'', R"('')");
+
       d_database.exec("UPDATE " + d_mms_table + " SET link_previews = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
       //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
     }
