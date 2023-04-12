@@ -20,7 +20,8 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                                  std::map<long long int, RecipientInfo> *recipient_info, bool overwrite, bool append) const
+                                  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
+                                  bool overwrite, bool append) const
 {
 
   std::cout << "Writing index.html..." << std::endl;
@@ -134,6 +135,14 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        text-align: center;" << std::endl
     << "        justify-content: center;" << std::endl
     << "        font-size: 38px;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl
+    << "      .note-to-self-icon {" << std::endl
+    << "        background: #315FF4;" << std::endl
+    << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" fill=\"white\"><path d=\"M58,7.5A6.51,6.51 0,0 1,64.5 14L64.5,66A6.51,6.51 0,0 1,58 72.5L22,72.5A6.51,6.51 0,0 1,15.5 66L15.5,14A6.51,6.51 0,0 1,22 7.5L58,7.5M58,6L22,6a8,8 0,0 0,-8 8L14,66a8,8 0,0 0,8 8L58,74a8,8 0,0 0,8 -8L66,14a8,8 0,0 0,-8 -8ZM60,24L20,24v1.5L60,25.5ZM60,34L20,34v1.5L60,35.5ZM60,44L20,44v1.5L60,45.5ZM50,54L20,54v1.5L50,55.5Z\"></path></svg>');" << std::endl
+    << "        background-position: center;" << std::endl
+    << "        background-repeat: no-repeat;" << std::endl
+    << "        background-size: 80%;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .group-avatar-icon {" << std::endl
@@ -252,13 +261,14 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
     if (!results.valueHasType<long long int>(i, "_id"))
       continue;
-    long long int _id = results.getValueAs<long long int>(i, "_id");
+    long long int t_id = results.getValueAs<long long int>(i, "_id");
 
     if (!results.valueHasType<long long int>(i, "snippet_type"))
       continue;
     long long int snippet_type = results.getValueAs<long long int>(i, "snippet_type");
 
     bool isgroup = !results.isNull(i, "group_id");
+    bool isnotetoself = (t_id == note_to_self_tid);
 
     long long int groupsender = -1;
     if (results.valueHasType<std::string>(i, "group_sender_id"))
@@ -270,20 +280,25 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     if (Types::isStatusMessage(snippet_type))
       snippet = "(status message)";
 
-    std::string convo_url_path = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name) + " (_id" + bepaald::toString(_id) + ")";
+    std::string convo_url_path = (isnotetoself ? "Note to self" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name)) + " (_id" + bepaald::toString(t_id) + ")";
     HTMLescapeUrl(&convo_url_path);
-    std::string convo_url_location = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name) + ".html";
+    std::string convo_url_location = (isnotetoself ? "Note to self" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name)) + ".html";
     HTMLescapeUrl(&convo_url_location);
 
     outputfile
       << "      <div class=\"conversation-list-item\">" << std::endl
-      << "        <div class=\"avatar " << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || !isgroup) ? "avatar-" + bepaald::toString(rec_id) : "group-avatar-icon") << "\">" << std::endl
+      //<< "        <div class=\"avatar " << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || (!isgroup && !isnotetoself)) ? "avatar-" + bepaald::toString(rec_id) : "group-avatar-icon") << (isnotetoself ? " note-to-self-icon" : "") << "\">" << std::endl
+      << "        <div class=\"avatar"
+      << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || (!isgroup && !isnotetoself)) ? " avatar-" + bepaald::toString(rec_id) : "")
+      << ((isgroup && !getRecipientInfoFromMap(recipient_info, rec_id).hasavatar) ? " group-avatar-icon" : "")
+      << (isnotetoself ? " note-to-self-icon" : "") << "\">" << std::endl
+
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
-      << ((!getRecipientInfoFromMap(recipient_info, rec_id).hasavatar && !isgroup) ? "          <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
+      << ((!getRecipientInfoFromMap(recipient_info, rec_id).hasavatar && !isgroup && !isnotetoself) ? "          <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
       << "        </div>" << std::endl
       << "        <div class=\"name-and-snippet\">" << std::endl
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
-      << "          <span class=\"name\">" << getRecipientInfoFromMap(recipient_info, rec_id).display_name << "</span>" << std::endl
+      << "          <span class=\"name\">" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</span>" << std::endl
       << "          <span class=\"snippet\">" << ((isgroup && groupsender > 0) ? getRecipientInfoFromMap(recipient_info, groupsender).display_name + ": " : "") << snippet << "</span>" << std::endl
       << "        </div>" << std::endl
       << "      </div>" << std::endl

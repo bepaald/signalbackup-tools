@@ -215,10 +215,12 @@ class SignalBackup
   bool scramble() const;
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion,
-                         std::vector<std::string> const &dateranges, bool autodates, bool ignorewal);
+                         std::vector<std::string> const &dateranges, bool createmissingcontacts,
+                         bool autodates, bool ignorewal);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
-                  std::vector<std::string> const &dateranges, long long int split, bool migrate, bool overwrite, bool append) const;
+                  std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
+                  bool migrate, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   bool hhenkel(std::string const &);
@@ -327,11 +329,12 @@ class SignalBackup
   void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
                                   long long int msg_id, bool is_mms, bool isgroup) const;
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
-                      std::string const &threaddir, bool isgroup, std::set<long long int> const &recipients,
+                      std::string const &threaddir, bool isgroup, bool isnotetoself, std::set<long long int> const &recipients,
                       std::map<long long int, RecipientInfo> *recipientinfo,
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
-                              std::string const &directory, std::string const &threaddir, bool is_image_preview, bool overwrite, bool append) const;
+                              std::string const &directory, std::string const &threaddir, bool is_image_preview,
+                              bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
                            long long int uniqueid, bool overwrite, bool append) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
@@ -348,7 +351,7 @@ class SignalBackup
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                      std::map<long long int, RecipientInfo> *recipientinfo, bool overwrite, bool append) const;
+                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool overwrite, bool append) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
@@ -360,6 +363,8 @@ class SignalBackup
   inline std::string utf8BytesToHexString(std::string const &data) const;
   RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
   bool migrateDatabase(int from, int to) const;
+  long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone,
+                                  std::map<std::string, long long int> *recipient_info) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

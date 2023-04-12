@@ -101,7 +101,8 @@ Arg::Arg(int argc, char *argv[])
   d_carowit_1(std::string()),
   d_carowit_2(std::string()),
   d_desktopdbversion(4),
-  d_migratedb(false)
+  d_migratedb(false),
+  d_addincompletedataforhtmlexport(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -1087,6 +1088,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-migratedb")
     {
       d_migratedb = false;
+      continue;
+    }
+    if (option == "--addincompletedataforhtmlexport")
+    {
+      d_addincompletedataforhtmlexport = true;
+      continue;
+    }
+    if (option == "--no-addincompletedataforhtmlexport")
+    {
+      d_addincompletedataforhtmlexport = false;
       continue;
     }
     if (option[0] != '-')
