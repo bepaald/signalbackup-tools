@@ -199,6 +199,7 @@
 bool SignalBackup::importFromDesktop(std::string configdir, std::string databasedir,
                                      long long int sqlcipherversion,
                                      std::vector<std::string> const &daterangelist,
+                                     bool createmissingcontacts,
                                      bool autodates, bool ignorewal)
 {
   if (configdir.empty() || databasedir.empty())
@@ -282,7 +283,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...
 
-    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "date_received BETWEEN "s + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
+    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "sent_at BETWEEN "s + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
     if (i == dateranges.size() - 1)
       datewhereclause += ')';
   }
@@ -407,8 +408,27 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
     if (recipientid_for_thread == -1)
     {
+      if (createmissingcontacts)
+      {
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                  << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
+                  << "         " << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
+                  << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML" << std::endl;
+
+        recipientid_for_thread = dtCreateRecipient(ddb, person_or_group_id, results_all_conversations.valueAsString(i, "e164"), &recipientmap);
+        if (recipientid_for_thread == -1)
+        {
+          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                    << ": Failed to create missing recipient. Skipping." << std::endl;
+          continue;
+        }
+      }
+    }
+
+    if (recipientid_for_thread == -1)
+    {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Chat partner was not found in recipient-table. Creating is not (yet?) supported. Skipping. (id: "
+                << ": Chat partner was not found in recipient-table. Skipping. (id: "
                 << (person_or_group_id.empty() ? results_all_conversations.valueAsString(i, "e164") : person_or_group_id) << ")" << std::endl;
       continue;
     }

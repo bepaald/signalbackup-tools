@@ -140,7 +140,7 @@ long long int SignalBackup::scanSelf() const
     //std::cout << "Dealing with group: " << gid << " (thread: " << tid << ")" << std::endl;
 
     SqliteDB::QueryResults res3;
-    if (d_database.tableContainsColumn("groups", "members"))
+    if (d_database.tableContainsColumn("groups", "members")) // old style
     {
       // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
       if (d_database.containsTable("sms"))
@@ -158,12 +158,14 @@ long long int SignalBackup::scanSelf() const
         options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "word")));
       }
     }
-    else if (d_database.containsTable("group_membership"))
+    else if (d_database.containsTable("group_membership")) // modern style
     {
+      // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
       if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?) AND "
                            "recipient_id NOT IN (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id IS ? AND type IS NOT ?)",
                            {gid, tid, Types::GROUP_CALL_TYPE}, &res3))
         continue;
+      //res3.prettyPrint();
     }
   }
 

@@ -253,7 +253,8 @@ int main(int argc, char *argv[])
   MEMINFO("Before importfromdesktop");
   if (arg.importfromdesktop_bool())
     if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.desktopdbversion(),
-                               arg.limittodates(), arg.autolimitdates(), arg.ignorewal()))
+                               arg.limittodates(), false && arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
+                               arg.ignorewal()))
       return 1;
   MEMINFO("After importfromdesktop");
 
@@ -316,7 +317,8 @@ int main(int argc, char *argv[])
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
   if (!arg.exporthtml().empty())
-    if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.limittodates(), (arg.split_bool() ? arg.split() : -1), arg.migratedb(), arg.overwrite(), arg.append()))
+    if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
+                        arg.setselfid(), arg.migratedb(), arg.overwrite(), arg.append()))
       return 1;
 
   if (!arg.exportcsv().empty())

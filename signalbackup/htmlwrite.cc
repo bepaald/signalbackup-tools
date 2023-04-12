@@ -41,7 +41,7 @@
 
 bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id,
                                   std::string const &directory, std::string const &threaddir, bool isgroup,
-                                  std::set<long long int> const &recipient_ids,
+                                  bool isnotetoself, std::set<long long int> const &recipient_ids,
                                   std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
                                   bool overwrite, bool append) const
@@ -64,7 +64,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name << R"(</title>
+    <title>)" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(</title>
     <style>
 
       body {
@@ -190,6 +190,18 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-right: auto;
         margin-bottom: 5px;
         transition: 0.25s ease;
+      }
+
+      .note-to-self-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" fill="white"><path d="M58,7.5A6.51,6.51 0,0 1,64.5 14L64.5,66A6.51,6.51 0,0 1,58 72.5L22,72.5A6.51,6.51 0,0 1,15.5 66L15.5,14A6.51,6.51 0,0 1,22 7.5L58,7.5M58,6L22,6a8,8 0,0 0,-8 8L14,66a8,8 0,0 0,8 8L58,74a8,8 0,0 0,8 -8L66,14a8,8 0,0 0,-8 -8ZM60,24L20,24v1.5L60,25.5ZM60,34L20,34v1.5L60,35.5ZM60,44L20,44v1.5L60,45.5ZM50,54L20,54v1.5L50,55.5Z"></path></svg>');
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        position: relative;
+        width: 86px;
+        height: 86px;
+        top: calc(50% - 86px / 2);
+        left: calc(50% - 86px / 2);
       }
 
       .group-avatar-icon {
@@ -702,6 +714,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
             <div class="group-avatar-icon"></div>
           </div>)";
     }
+    if (isnotetoself)
+    {
+      file << R"(
+          <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
+            <div class="note-to-self-icon"></div>
+          </div>)";
+    }
     else
     {
       file << R"(
@@ -721,7 +740,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   }
   file << R"(
           <div id="thread-title">
-            )" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name << R"(
+            )" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(
           </div>
           <div id="thread-subtitle">
             )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << R"(

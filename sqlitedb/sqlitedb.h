@@ -103,6 +103,12 @@ class SqliteDB
   inline bool exec(std::string const &q, R &&params, QueryResults *results = nullptr) const;
 #endif
   inline bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
+  template <typename T>
+  inline T getSingleResultAs(std::string const &q, T defaultval) const;
+  template <typename T>
+  inline T getSingleResultAs(std::string const &q, std::any const &param, T defaultval) const;
+  template <typename T>
+  inline T getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T defaultval) const;
   inline bool print(std::string const &q) const;
   inline bool print(std::string const &q, std::any const &param) const;
   inline bool print(std::string const &q, std::vector<std::any> const &params) const;
@@ -375,6 +381,37 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   return exec(q, std::views::all(params), results);
 }
 #endif
+
+template <typename T>
+inline T SqliteDB::getSingleResultAs(std::string const &q, T defaultval) const
+{
+  return getSingleResultAs<T>(q, std::vector<std::any>(), defaultval);
+}
+
+template <typename T>
+inline T SqliteDB::getSingleResultAs(std::string const &q, std::any const &param, T defaultval) const
+{
+  return getSingleResultAs<T>(q, std::vector<std::any>{param}, defaultval);
+}
+
+template <typename T>
+inline T SqliteDB::getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T defaultval) const
+{
+  QueryResults tmp;
+  if (!exec(q, params, &tmp))
+    return defaultval;
+
+  if (tmp.rows() != 1 ||
+      tmp.columns() != 1 ||
+      !tmp.valueHasType<T>(0, 0))
+  {
+    //if (tmp.rows() && tmp.columns())
+    //  std::cout << "Type: " << tmp.value(0, 0).type().name() << " Requested type: " << typeid(T).name() << std::endl;
+    return defaultval;
+  }
+
+  return tmp.getValueAs<T>(0, 0);
+}
 
 inline bool SqliteDB::print(std::string const &q) const
 {

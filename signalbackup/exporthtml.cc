@@ -28,9 +28,8 @@
 #include <cerrno>
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
-                              std::vector<std::string> const &daterangelist,
-                              long long int split, bool migrate,
-                              bool overwrite, bool append) const
+                              std::vector<std::string> const &daterangelist, long long int split,
+                              std::string const &selfphone, bool migrate, bool overwrite, bool append) const
 {
   using namespace std::string_literals;
 
@@ -114,6 +113,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
+  long long int note_to_self_thread_id = -1;
+  if (selfphone.empty())
+  {
+    long long int selfid = scanSelf();
+    if (selfid != -1)
+      note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", selfid, -1);
+  }
+  else
+    note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS "
+                                                                         "(SELECT _id FROM recipient WHERE phone = ?)", selfphone, -1);
+
   std::vector<long long int> threads = ((limittothreads.empty() || (limittothreads.size() == 1 && limittothreads[0] == -1)) ?
                                         threadIds() : limittothreads);
 
@@ -167,6 +177,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     std::cout << "Dealing with thread " << t << std::endl;
 
+    bool is_note_to_self = (t == note_to_self_thread_id);
+
     // get recipient_id for thread;
     SqliteDB::QueryResults recid;
     if (!d_database.exec("SELECT _id," + d_thread_recipient_id + " FROM thread WHERE _id = ?", t, &recid) ||
@@ -218,7 +230,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       continue;
     }
 
-    std::string threaddir = sanitizeFilename(recipient_info[thread_recipient_id].display_name) + " (_id" + bepaald::toString(thread_id) + ")";
+    std::string threaddir = (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name))
+      + " (_id" + bepaald::toString(thread_id) + ")";
     //if (!append)
     //  makeFilenameUnique(directory, &threaddir);
 
@@ -278,7 +291,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       std::string previous_day_change;
       // create output-file
-      std::string base_filename = sanitizeFilename(recipient_info[thread_recipient_id].display_name);
+      std::string base_filename = (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name));
       std::ofstream htmloutput(directory + "/" + threaddir + "/" +
                                base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html",
                                std::ios_base::binary);
@@ -286,14 +299,15 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       {
         std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
                   << ": Failed to open '" << directory << "/" << threaddir << "/"
-                  << sanitizeFilename(recipient_info[thread_recipient_id].display_name)
+                  << (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name))
                   << (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "")
                   << ".html' for writing." << std::endl;
         return false;
       }
 
       // create start of html (css, head, start of body
-      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, all_recipients_ids, &recipient_info, &written_avatars, overwrite, append);
+      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
+                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -526,7 +540,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  HTMLwriteIndex(threads, directory, &recipient_info, overwrite, append);
+  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append);
 
   std::cout << "All done!" << std::endl;
   return true;
