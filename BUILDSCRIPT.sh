@@ -210,264 +210,264 @@ if [ "$CONFIG" = "default" ] ; then
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/exporttodir.o" "signalbackup/exporttodir.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (38/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/setmessagedeliveryreceipts.o\" \"signalbackup/setmessagedeliveryreceipts.cc\""
-    if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
-    $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/setmessagedeliveryreceipts.o" "signalbackup/setmessagedeliveryreceipts.cc"
-    if [ $? -ne 0 ] ; then exit 1 ; fi
-
-    echo "BUILDING (39/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/setfiletimestamp.o\" \"signalbackup/setfiletimestamp.cc\""
+    echo "BUILDING (38/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/setfiletimestamp.o\" \"signalbackup/setfiletimestamp.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/setfiletimestamp.o" "signalbackup/setfiletimestamp.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (40/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/exportcsv.o\" \"signalbackup/exportcsv.cc\""
+    echo "BUILDING (39/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/exportcsv.o\" \"signalbackup/exportcsv.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/exportcsv.o" "signalbackup/exportcsv.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (41/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handledtgroupv1migration.o\" \"signalbackup/handledtgroupv1migration.cc\""
+    echo "BUILDING (40/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handledtgroupv1migration.o\" \"signalbackup/handledtgroupv1migration.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/handledtgroupv1migration.o" "signalbackup/handledtgroupv1migration.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (42/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/migratedatabase.o\" \"signalbackup/migratedatabase.cc\""
+    echo "BUILDING (41/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/migratedatabase.o\" \"signalbackup/migratedatabase.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/migratedatabase.o" "signalbackup/migratedatabase.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (43/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/listthreads.o\" \"signalbackup/listthreads.cc\""
+    echo "BUILDING (42/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/listthreads.o\" \"signalbackup/listthreads.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/listthreads.o" "signalbackup/listthreads.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (44/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlgetemojipos.o\" \"signalbackup/htmlgetemojipos.cc\""
+    echo "BUILDING (43/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlgetemojipos.o\" \"signalbackup/htmlgetemojipos.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/htmlgetemojipos.o" "signalbackup/htmlgetemojipos.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (45/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updatethreadsentries.o\" \"signalbackup/updatethreadsentries.cc\""
+    echo "BUILDING (44/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updatethreadsentries.o\" \"signalbackup/updatethreadsentries.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/updatethreadsentries.o" "signalbackup/updatethreadsentries.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (46/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updaterecipientid.o\" \"signalbackup/updaterecipientid.cc\""
+    echo "BUILDING (45/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updaterecipientid.o\" \"signalbackup/updaterecipientid.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/updaterecipientid.o" "signalbackup/updaterecipientid.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (47/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/deleteattachments.o\" \"signalbackup/deleteattachments.cc\""
+    echo "BUILDING (46/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/deleteattachments.o\" \"signalbackup/deleteattachments.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/deleteattachments.o" "signalbackup/deleteattachments.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (48/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getgroupmembers.o\" \"signalbackup/getgroupmembers.cc\""
+    echo "BUILDING (47/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getgroupmembers.o\" \"signalbackup/getgroupmembers.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/getgroupmembers.o" "signalbackup/getgroupmembers.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (49/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/customs.o\" \"signalbackup/customs.cc\""
+    echo "BUILDING (48/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/customs.o\" \"signalbackup/customs.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/customs.o" "signalbackup/customs.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (50/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getminmaxusedid.o\" \"signalbackup/getminmaxusedid.cc\""
+    echo "BUILDING (49/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getminmaxusedid.o\" \"signalbackup/getminmaxusedid.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/getminmaxusedid.o" "signalbackup/getminmaxusedid.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (51/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/reordermmssmsids.o\" \"signalbackup/reordermmssmsids.cc\""
+    echo "BUILDING (50/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/reordermmssmsids.o\" \"signalbackup/reordermmssmsids.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/reordermmssmsids.o" "signalbackup/reordermmssmsids.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (52/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/importcsv.o\" \"signalbackup/importcsv.cc\""
+    echo "BUILDING (51/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/importcsv.o\" \"signalbackup/importcsv.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/importcsv.o" "signalbackup/importcsv.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (53/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handledtcalltypemessage.o\" \"signalbackup/handledtcalltypemessage.cc\""
+    echo "BUILDING (52/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handledtcalltypemessage.o\" \"signalbackup/handledtcalltypemessage.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/handledtcalltypemessage.o" "signalbackup/handledtcalltypemessage.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (54/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/statics.o\" \"signalbackup/statics.cc\""
+    echo "BUILDING (53/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/statics.o\" \"signalbackup/statics.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/statics.o" "signalbackup/statics.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (55/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getnamefromrecipientid.o\" \"signalbackup/getnamefromrecipientid.cc\""
+    echo "BUILDING (54/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getnamefromrecipientid.o\" \"signalbackup/getnamefromrecipientid.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/getnamefromrecipientid.o" "signalbackup/getnamefromrecipientid.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (56/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/importthread.o\" \"signalbackup/importthread.cc\""
+    echo "BUILDING (55/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/importthread.o\" \"signalbackup/importthread.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/importthread.o" "signalbackup/importthread.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (57/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/decodeprofilechangemessage.o\" \"signalbackup/decodeprofilechangemessage.cc\""
+    echo "BUILDING (56/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/decodeprofilechangemessage.o\" \"signalbackup/decodeprofilechangemessage.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/decodeprofilechangemessage.o" "signalbackup/decodeprofilechangemessage.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (58/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/remaprecipients.o\" \"signalbackup/remaprecipients.cc\""
+    echo "BUILDING (57/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/remaprecipients.o\" \"signalbackup/remaprecipients.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/remaprecipients.o" "signalbackup/remaprecipients.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (59/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlwriteindex.o\" \"signalbackup/htmlwriteindex.cc\""
+    echo "BUILDING (58/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlwriteindex.o\" \"signalbackup/htmlwriteindex.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/htmlwriteindex.o" "signalbackup/htmlwriteindex.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (60/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dumpavatars.o\" \"signalbackup/dumpavatars.cc\""
+    echo "BUILDING (59/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dumpavatars.o\" \"signalbackup/dumpavatars.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/dumpavatars.o" "signalbackup/dumpavatars.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (61/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/summarize.o\" \"signalbackup/summarize.cc\""
+    echo "BUILDING (60/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/summarize.o\" \"signalbackup/summarize.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/summarize.o" "signalbackup/summarize.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (62/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/removedoubles.o\" \"signalbackup/removedoubles.cc\""
+    echo "BUILDING (61/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/removedoubles.o\" \"signalbackup/removedoubles.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/removedoubles.o" "signalbackup/removedoubles.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (63/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getthreadidfromrecipient.o\" \"signalbackup/getthreadidfromrecipient.cc\""
+    echo "BUILDING (62/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getthreadidfromrecipient.o\" \"signalbackup/getthreadidfromrecipient.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/getthreadidfromrecipient.o" "signalbackup/getthreadidfromrecipient.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (64/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/cleanattachments.o\" \"signalbackup/cleanattachments.cc\""
+    echo "BUILDING (63/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/cleanattachments.o\" \"signalbackup/cleanattachments.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/cleanattachments.o" "signalbackup/cleanattachments.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (65/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/exporthtml.o\" \"signalbackup/exporthtml.cc\""
+    echo "BUILDING (64/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/exporthtml.o\" \"signalbackup/exporthtml.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/exporthtml.o" "signalbackup/exporthtml.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (66/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/buildsqlstatementframe.o\" \"signalbackup/buildsqlstatementframe.cc\""
+    echo "BUILDING (65/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/buildsqlstatementframe.o\" \"signalbackup/buildsqlstatementframe.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/buildsqlstatementframe.o" "signalbackup/buildsqlstatementframe.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (67/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlescapeurl.o\" \"signalbackup/htmlescapeurl.cc\""
+    echo "BUILDING (66/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlescapeurl.o\" \"signalbackup/htmlescapeurl.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/htmlescapeurl.o" "signalbackup/htmlescapeurl.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (68/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/escapexmlstring.o\" \"signalbackup/escapexmlstring.cc\""
+    echo "BUILDING (67/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/escapexmlstring.o\" \"signalbackup/escapexmlstring.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/escapexmlstring.o" "signalbackup/escapexmlstring.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (69/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handlewamessage.o\" \"signalbackup/handlewamessage.cc\""
+    echo "BUILDING (68/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handlewamessage.o\" \"signalbackup/handlewamessage.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/handlewamessage.o" "signalbackup/handlewamessage.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (70/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/addsmsmessage.o\" \"signalbackup/addsmsmessage.cc\""
+    echo "BUILDING (69/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/addsmsmessage.o\" \"signalbackup/addsmsmessage.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/addsmsmessage.o" "signalbackup/addsmsmessage.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (71/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handledtexpirationchangemessage.o\" \"signalbackup/handledtexpirationchangemessage.cc\""
+    echo "BUILDING (70/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/handledtexpirationchangemessage.o\" \"signalbackup/handledtexpirationchangemessage.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/handledtexpirationchangemessage.o" "signalbackup/handledtexpirationchangemessage.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (72/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlwrite.o\" \"signalbackup/htmlwrite.cc\""
+    echo "BUILDING (71/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlwrite.o\" \"signalbackup/htmlwrite.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/htmlwrite.o" "signalbackup/htmlwrite.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (73/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/initfromfile.o\" \"signalbackup/initfromfile.cc\""
+    echo "BUILDING (72/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/initfromfile.o\" \"signalbackup/initfromfile.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/initfromfile.o" "signalbackup/initfromfile.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (74/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/makefilenameunique.o\" \"signalbackup/makefilenameunique.cc\""
+    echo "BUILDING (73/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/makefilenameunique.o\" \"signalbackup/makefilenameunique.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/makefilenameunique.o" "signalbackup/makefilenameunique.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (75/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/sanitizefilename.o\" \"signalbackup/sanitizefilename.cc\""
+    echo "BUILDING (74/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/sanitizefilename.o\" \"signalbackup/sanitizefilename.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/sanitizefilename.o" "signalbackup/sanitizefilename.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (76/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/mergerecipients.o\" \"signalbackup/mergerecipients.cc\""
+    echo "BUILDING (75/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/mergerecipients.o\" \"signalbackup/mergerecipients.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/mergerecipients.o" "signalbackup/mergerecipients.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (77/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/missingattachmentexpected.o\" \"signalbackup/missingattachmentexpected.cc\""
+    echo "BUILDING (76/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/missingattachmentexpected.o\" \"signalbackup/missingattachmentexpected.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/missingattachmentexpected.o" "signalbackup/missingattachmentexpected.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (78/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dtcreaterecipient.o\" \"signalbackup/dtcreaterecipient.cc\""
+    echo "BUILDING (77/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dtcreaterecipient.o\" \"signalbackup/dtcreaterecipient.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/dtcreaterecipient.o" "signalbackup/dtcreaterecipient.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (79/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getgroupupdaterecipients.o\" \"signalbackup/getgroupupdaterecipients.cc\""
+    echo "BUILDING (78/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getgroupupdaterecipients.o\" \"signalbackup/getgroupupdaterecipients.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/getgroupupdaterecipients.o" "signalbackup/getgroupupdaterecipients.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (80/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/insertreactions.o\" \"signalbackup/insertreactions.cc\""
+    echo "BUILDING (79/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/insertreactions.o\" \"signalbackup/insertreactions.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/insertreactions.o" "signalbackup/insertreactions.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (81/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dumpinfoonbadframe.o\" \"signalbackup/dumpinfoonbadframe.cc\""
+    echo "BUILDING (80/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dumpinfoonbadframe.o\" \"signalbackup/dumpinfoonbadframe.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/dumpinfoonbadframe.o" "signalbackup/dumpinfoonbadframe.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (82/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dropbadframes.o\" \"signalbackup/dropbadframes.cc\""
+    echo "BUILDING (81/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dropbadframes.o\" \"signalbackup/dropbadframes.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/dropbadframes.o" "signalbackup/dropbadframes.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (83/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/exportxml.o\" \"signalbackup/exportxml.cc\""
+    echo "BUILDING (82/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/exportxml.o\" \"signalbackup/exportxml.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/exportxml.o" "signalbackup/exportxml.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (84/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/statics_emoji.o\" \"signalbackup/statics_emoji.cc\""
+    echo "BUILDING (83/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/statics_emoji.o\" \"signalbackup/statics_emoji.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/statics_emoji.o" "signalbackup/statics_emoji.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (85/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updategv1migrationmessage.o\" \"signalbackup/updategv1migrationmessage.cc\""
+    echo "BUILDING (84/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updategv1migrationmessage.o\" \"signalbackup/updategv1migrationmessage.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/updategv1migrationmessage.o" "signalbackup/updategv1migrationmessage.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (86/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updatereactionauthors.o\" \"signalbackup/updatereactionauthors.cc\""
+    echo "BUILDING (85/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/updatereactionauthors.o\" \"signalbackup/updatereactionauthors.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/updatereactionauthors.o" "signalbackup/updatereactionauthors.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (87/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/setrecipientinfo.o\" \"signalbackup/setrecipientinfo.cc\""
+    echo "BUILDING (86/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/setrecipientinfo.o\" \"signalbackup/setrecipientinfo.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/setrecipientinfo.o" "signalbackup/setrecipientinfo.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (88/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlwriteattachment.o\" \"signalbackup/htmlwriteattachment.cc\""
+    echo "BUILDING (87/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/htmlwriteattachment.o\" \"signalbackup/htmlwriteattachment.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/htmlwriteattachment.o" "signalbackup/htmlwriteattachment.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "BUILDING (89/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getdesktopdir.o\" \"signalbackup/getdesktopdir.cc\""
+    echo "BUILDING (88/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/getdesktopdir.o\" \"signalbackup/getdesktopdir.cc\""
     if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/getdesktopdir.o" "signalbackup/getdesktopdir.cc"
+    if [ $? -ne 0 ] ; then exit 1 ; fi
+
+    echo "BUILDING (89/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"signalbackup/o/dtsetmessagedeliveryreceipts.o\" \"signalbackup/dtsetmessagedeliveryreceipts.cc\""
+    if [ ! -d "signalbackup/o" ] ; then mkdir "signalbackup/o" ; fi
+    $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "signalbackup/o/dtsetmessagedeliveryreceipts.o" "signalbackup/dtsetmessagedeliveryreceipts.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
     echo "BUILDING (90/132): $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o \"attachmentframe/o/statics.o\" \"attachmentframe/statics.cc\""
@@ -685,8 +685,8 @@ if [ "$CONFIG" = "default" ] ; then
     $COMPILER -c -Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -std=c++2a -O3 -march=native -flto $EXTRAOPTIONS -o "cryptbase/o/getcipherandmac.o" "cryptbase/getcipherandmac.cc"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 
-    echo "LINKING: $COMPILER -Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto \"keyvalueframe/o/statics.o\" \"signalbackup/o/checkdbintegrity.o\" \"signalbackup/o/mergegroups.o\" \"signalbackup/o/writeencryptedframe.o\" \"signalbackup/o/scanself.o\" \"signalbackup/o/applyranges.o\" \"signalbackup/o/scramble.o\" \"signalbackup/o/htmlescapestring.o\" \"signalbackup/o/cleandatabasebymessages.o\" \"signalbackup/o/insertattachments.o\" \"signalbackup/o/setminimumid.o\" \"signalbackup/o/htmlprepbody.o\" \"signalbackup/o/croptodates.o\" \"signalbackup/o/datetomsecssinceepoch.o\" \"signalbackup/o/updategroupmembers.o\" \"signalbackup/o/exporttofile.o\" \"signalbackup/o/setcolumnnames.o\" \"signalbackup/o/handledtgroupchangemessage.o\" \"signalbackup/o/getrecipientinfofrommap.o\" \"signalbackup/o/insertrow.o\" \"signalbackup/o/getgroupv1migrationrecipients.o\" \"signalbackup/o/importwachat.o\" \"signalbackup/o/dumpmedia.o\" \"signalbackup/o/getattachmentmetadata.o\" \"signalbackup/o/makeidsunique.o\" \"signalbackup/o/getallthreadrecipients.o\" \"signalbackup/o/croptothread.o\" \"signalbackup/o/initfromdir.o\" \"signalbackup/o/fillthreadtablefrommessages.o\" \"signalbackup/o/getrecipientidfrom.o\" \"signalbackup/o/compactids.o\" \"signalbackup/o/importfromdesktop.o\" \"signalbackup/o/getdtreactions.o\" \"signalbackup/o/decodestatusmessage.o\" \"signalbackup/o/htmlwriteavatar.o\" \"signalbackup/o/statics_html.o\" \"signalbackup/o/exporttodir.o\" \"signalbackup/o/setmessagedeliveryreceipts.o\" \"signalbackup/o/setfiletimestamp.o\" \"signalbackup/o/exportcsv.o\" \"signalbackup/o/handledtgroupv1migration.o\" \"signalbackup/o/migratedatabase.o\" \"signalbackup/o/listthreads.o\" \"signalbackup/o/htmlgetemojipos.o\" \"signalbackup/o/updatethreadsentries.o\" \"signalbackup/o/updaterecipientid.o\" \"signalbackup/o/deleteattachments.o\" \"signalbackup/o/getgroupmembers.o\" \"signalbackup/o/customs.o\" \"signalbackup/o/getminmaxusedid.o\" \"signalbackup/o/reordermmssmsids.o\" \"signalbackup/o/importcsv.o\" \"signalbackup/o/handledtcalltypemessage.o\" \"signalbackup/o/statics.o\" \"signalbackup/o/getnamefromrecipientid.o\" \"signalbackup/o/importthread.o\" \"signalbackup/o/decodeprofilechangemessage.o\" \"signalbackup/o/remaprecipients.o\" \"signalbackup/o/htmlwriteindex.o\" \"signalbackup/o/dumpavatars.o\" \"signalbackup/o/summarize.o\" \"signalbackup/o/removedoubles.o\" \"signalbackup/o/getthreadidfromrecipient.o\" \"signalbackup/o/cleanattachments.o\" \"signalbackup/o/exporthtml.o\" \"signalbackup/o/buildsqlstatementframe.o\" \"signalbackup/o/htmlescapeurl.o\" \"signalbackup/o/escapexmlstring.o\" \"signalbackup/o/handlewamessage.o\" \"signalbackup/o/addsmsmessage.o\" \"signalbackup/o/handledtexpirationchangemessage.o\" \"signalbackup/o/htmlwrite.o\" \"signalbackup/o/initfromfile.o\" \"signalbackup/o/makefilenameunique.o\" \"signalbackup/o/sanitizefilename.o\" \"signalbackup/o/mergerecipients.o\" \"signalbackup/o/missingattachmentexpected.o\" \"signalbackup/o/dtcreaterecipient.o\" \"signalbackup/o/getgroupupdaterecipients.o\" \"signalbackup/o/insertreactions.o\" \"signalbackup/o/dumpinfoonbadframe.o\" \"signalbackup/o/dropbadframes.o\" \"signalbackup/o/exportxml.o\" \"signalbackup/o/statics_emoji.o\" \"signalbackup/o/updategv1migrationmessage.o\" \"signalbackup/o/updatereactionauthors.o\" \"signalbackup/o/setrecipientinfo.o\" \"signalbackup/o/htmlwriteattachment.o\" \"signalbackup/o/getdesktopdir.o\" \"attachmentframe/o/statics.o\" \"databaseversionframe/o/statics.o\" \"endframe/o/statics.o\" \"sqlcipherdecryptor/o/getkey.o\" \"sqlcipherdecryptor/o/destructor.o\" \"sqlcipherdecryptor/o/gethmackey.o\" \"sqlcipherdecryptor/o/sqlcipherdecryptor.o\" \"sqlcipherdecryptor/o/decryptdata.o\" \"framewithattachment/o/setattachmentdata.o\" \"sharedprefframe/o/statics.o\" \"avatarframe/o/statics.o\" \"sqlstatementframe/o/statics.o\" \"sqlstatementframe/o/buildstatement.o\" \"backupframe/o/init.o\" \"memfiledb/o/statics.o\" \"sqlitedb/o/valueasstring.o\" \"sqlitedb/o/prettyprint.o\" \"sqlitedb/o/availablewidth.o\" \"sqlitedb/o/removecolumn.o\" \"sqlitedb/o/copydb.o\" \"sqlitedb/o/print.o\" \"sqlitedb/o/printlinemode.o\" \"stickerframe/o/statics.o\" \"csvreader/o/readrow.o\" \"csvreader/o/read.o\" \"o/main.o\" \"headerframe/o/statics.o\" \"basedecryptor/o/getattachment.o\" \"reactionlist/o/setauthor.o\" \"fileencryptor/o/init.o\" \"fileencryptor/o/encryptframe.o\" \"fileencryptor/o/fileencryptor.o\" \"fileencryptor/o/encryptattachment.o\" \"filedecryptor/o/getframe.o\" \"filedecryptor/o/getframebrute.o\" \"filedecryptor/o/filedecryptor.o\" \"filedecryptor/o/customs.o\" \"filedecryptor/o/initbackupframe.o\" \"arg/o/usage.o\" \"arg/o/arg.o\" \"cryptbase/o/cryptbase.o\" \"cryptbase/o/getbackupkey.o\" \"cryptbase/o/getcipherandmac.o\" -lcrypto -lsqlite3 $EXTRALINKOPTIONS -o \"signalbackup-tools\""
-    $COMPILER -Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto "keyvalueframe/o/statics.o" "signalbackup/o/checkdbintegrity.o" "signalbackup/o/mergegroups.o" "signalbackup/o/writeencryptedframe.o" "signalbackup/o/scanself.o" "signalbackup/o/applyranges.o" "signalbackup/o/scramble.o" "signalbackup/o/htmlescapestring.o" "signalbackup/o/cleandatabasebymessages.o" "signalbackup/o/insertattachments.o" "signalbackup/o/setminimumid.o" "signalbackup/o/htmlprepbody.o" "signalbackup/o/croptodates.o" "signalbackup/o/datetomsecssinceepoch.o" "signalbackup/o/updategroupmembers.o" "signalbackup/o/exporttofile.o" "signalbackup/o/setcolumnnames.o" "signalbackup/o/handledtgroupchangemessage.o" "signalbackup/o/getrecipientinfofrommap.o" "signalbackup/o/insertrow.o" "signalbackup/o/getgroupv1migrationrecipients.o" "signalbackup/o/importwachat.o" "signalbackup/o/dumpmedia.o" "signalbackup/o/getattachmentmetadata.o" "signalbackup/o/makeidsunique.o" "signalbackup/o/getallthreadrecipients.o" "signalbackup/o/croptothread.o" "signalbackup/o/initfromdir.o" "signalbackup/o/fillthreadtablefrommessages.o" "signalbackup/o/getrecipientidfrom.o" "signalbackup/o/compactids.o" "signalbackup/o/importfromdesktop.o" "signalbackup/o/getdtreactions.o" "signalbackup/o/decodestatusmessage.o" "signalbackup/o/htmlwriteavatar.o" "signalbackup/o/statics_html.o" "signalbackup/o/exporttodir.o" "signalbackup/o/setmessagedeliveryreceipts.o" "signalbackup/o/setfiletimestamp.o" "signalbackup/o/exportcsv.o" "signalbackup/o/handledtgroupv1migration.o" "signalbackup/o/migratedatabase.o" "signalbackup/o/listthreads.o" "signalbackup/o/htmlgetemojipos.o" "signalbackup/o/updatethreadsentries.o" "signalbackup/o/updaterecipientid.o" "signalbackup/o/deleteattachments.o" "signalbackup/o/getgroupmembers.o" "signalbackup/o/customs.o" "signalbackup/o/getminmaxusedid.o" "signalbackup/o/reordermmssmsids.o" "signalbackup/o/importcsv.o" "signalbackup/o/handledtcalltypemessage.o" "signalbackup/o/statics.o" "signalbackup/o/getnamefromrecipientid.o" "signalbackup/o/importthread.o" "signalbackup/o/decodeprofilechangemessage.o" "signalbackup/o/remaprecipients.o" "signalbackup/o/htmlwriteindex.o" "signalbackup/o/dumpavatars.o" "signalbackup/o/summarize.o" "signalbackup/o/removedoubles.o" "signalbackup/o/getthreadidfromrecipient.o" "signalbackup/o/cleanattachments.o" "signalbackup/o/exporthtml.o" "signalbackup/o/buildsqlstatementframe.o" "signalbackup/o/htmlescapeurl.o" "signalbackup/o/escapexmlstring.o" "signalbackup/o/handlewamessage.o" "signalbackup/o/addsmsmessage.o" "signalbackup/o/handledtexpirationchangemessage.o" "signalbackup/o/htmlwrite.o" "signalbackup/o/initfromfile.o" "signalbackup/o/makefilenameunique.o" "signalbackup/o/sanitizefilename.o" "signalbackup/o/mergerecipients.o" "signalbackup/o/missingattachmentexpected.o" "signalbackup/o/dtcreaterecipient.o" "signalbackup/o/getgroupupdaterecipients.o" "signalbackup/o/insertreactions.o" "signalbackup/o/dumpinfoonbadframe.o" "signalbackup/o/dropbadframes.o" "signalbackup/o/exportxml.o" "signalbackup/o/statics_emoji.o" "signalbackup/o/updategv1migrationmessage.o" "signalbackup/o/updatereactionauthors.o" "signalbackup/o/setrecipientinfo.o" "signalbackup/o/htmlwriteattachment.o" "signalbackup/o/getdesktopdir.o" "attachmentframe/o/statics.o" "databaseversionframe/o/statics.o" "endframe/o/statics.o" "sqlcipherdecryptor/o/getkey.o" "sqlcipherdecryptor/o/destructor.o" "sqlcipherdecryptor/o/gethmackey.o" "sqlcipherdecryptor/o/sqlcipherdecryptor.o" "sqlcipherdecryptor/o/decryptdata.o" "framewithattachment/o/setattachmentdata.o" "sharedprefframe/o/statics.o" "avatarframe/o/statics.o" "sqlstatementframe/o/statics.o" "sqlstatementframe/o/buildstatement.o" "backupframe/o/init.o" "memfiledb/o/statics.o" "sqlitedb/o/valueasstring.o" "sqlitedb/o/prettyprint.o" "sqlitedb/o/availablewidth.o" "sqlitedb/o/removecolumn.o" "sqlitedb/o/copydb.o" "sqlitedb/o/print.o" "sqlitedb/o/printlinemode.o" "stickerframe/o/statics.o" "csvreader/o/readrow.o" "csvreader/o/read.o" "o/main.o" "headerframe/o/statics.o" "basedecryptor/o/getattachment.o" "reactionlist/o/setauthor.o" "fileencryptor/o/init.o" "fileencryptor/o/encryptframe.o" "fileencryptor/o/fileencryptor.o" "fileencryptor/o/encryptattachment.o" "filedecryptor/o/getframe.o" "filedecryptor/o/getframebrute.o" "filedecryptor/o/filedecryptor.o" "filedecryptor/o/customs.o" "filedecryptor/o/initbackupframe.o" "arg/o/usage.o" "arg/o/arg.o" "cryptbase/o/cryptbase.o" "cryptbase/o/getbackupkey.o" "cryptbase/o/getcipherandmac.o" -lcrypto -lsqlite3 $EXTRALINKOPTIONS -o "signalbackup-tools"
+    echo "LINKING: $COMPILER -Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto \"keyvalueframe/o/statics.o\" \"signalbackup/o/checkdbintegrity.o\" \"signalbackup/o/mergegroups.o\" \"signalbackup/o/writeencryptedframe.o\" \"signalbackup/o/scanself.o\" \"signalbackup/o/applyranges.o\" \"signalbackup/o/scramble.o\" \"signalbackup/o/htmlescapestring.o\" \"signalbackup/o/cleandatabasebymessages.o\" \"signalbackup/o/insertattachments.o\" \"signalbackup/o/setminimumid.o\" \"signalbackup/o/htmlprepbody.o\" \"signalbackup/o/croptodates.o\" \"signalbackup/o/datetomsecssinceepoch.o\" \"signalbackup/o/updategroupmembers.o\" \"signalbackup/o/exporttofile.o\" \"signalbackup/o/setcolumnnames.o\" \"signalbackup/o/handledtgroupchangemessage.o\" \"signalbackup/o/getrecipientinfofrommap.o\" \"signalbackup/o/insertrow.o\" \"signalbackup/o/getgroupv1migrationrecipients.o\" \"signalbackup/o/importwachat.o\" \"signalbackup/o/dumpmedia.o\" \"signalbackup/o/getattachmentmetadata.o\" \"signalbackup/o/makeidsunique.o\" \"signalbackup/o/getallthreadrecipients.o\" \"signalbackup/o/croptothread.o\" \"signalbackup/o/initfromdir.o\" \"signalbackup/o/fillthreadtablefrommessages.o\" \"signalbackup/o/getrecipientidfrom.o\" \"signalbackup/o/compactids.o\" \"signalbackup/o/importfromdesktop.o\" \"signalbackup/o/getdtreactions.o\" \"signalbackup/o/decodestatusmessage.o\" \"signalbackup/o/htmlwriteavatar.o\" \"signalbackup/o/statics_html.o\" \"signalbackup/o/exporttodir.o\" \"signalbackup/o/setfiletimestamp.o\" \"signalbackup/o/exportcsv.o\" \"signalbackup/o/handledtgroupv1migration.o\" \"signalbackup/o/migratedatabase.o\" \"signalbackup/o/listthreads.o\" \"signalbackup/o/htmlgetemojipos.o\" \"signalbackup/o/updatethreadsentries.o\" \"signalbackup/o/updaterecipientid.o\" \"signalbackup/o/deleteattachments.o\" \"signalbackup/o/getgroupmembers.o\" \"signalbackup/o/customs.o\" \"signalbackup/o/getminmaxusedid.o\" \"signalbackup/o/reordermmssmsids.o\" \"signalbackup/o/importcsv.o\" \"signalbackup/o/handledtcalltypemessage.o\" \"signalbackup/o/statics.o\" \"signalbackup/o/getnamefromrecipientid.o\" \"signalbackup/o/importthread.o\" \"signalbackup/o/decodeprofilechangemessage.o\" \"signalbackup/o/remaprecipients.o\" \"signalbackup/o/htmlwriteindex.o\" \"signalbackup/o/dumpavatars.o\" \"signalbackup/o/summarize.o\" \"signalbackup/o/removedoubles.o\" \"signalbackup/o/getthreadidfromrecipient.o\" \"signalbackup/o/cleanattachments.o\" \"signalbackup/o/exporthtml.o\" \"signalbackup/o/buildsqlstatementframe.o\" \"signalbackup/o/htmlescapeurl.o\" \"signalbackup/o/escapexmlstring.o\" \"signalbackup/o/handlewamessage.o\" \"signalbackup/o/addsmsmessage.o\" \"signalbackup/o/handledtexpirationchangemessage.o\" \"signalbackup/o/htmlwrite.o\" \"signalbackup/o/initfromfile.o\" \"signalbackup/o/makefilenameunique.o\" \"signalbackup/o/sanitizefilename.o\" \"signalbackup/o/mergerecipients.o\" \"signalbackup/o/missingattachmentexpected.o\" \"signalbackup/o/dtcreaterecipient.o\" \"signalbackup/o/getgroupupdaterecipients.o\" \"signalbackup/o/insertreactions.o\" \"signalbackup/o/dumpinfoonbadframe.o\" \"signalbackup/o/dropbadframes.o\" \"signalbackup/o/exportxml.o\" \"signalbackup/o/statics_emoji.o\" \"signalbackup/o/updategv1migrationmessage.o\" \"signalbackup/o/updatereactionauthors.o\" \"signalbackup/o/setrecipientinfo.o\" \"signalbackup/o/htmlwriteattachment.o\" \"signalbackup/o/getdesktopdir.o\" \"signalbackup/o/dtsetmessagedeliveryreceipts.o\" \"attachmentframe/o/statics.o\" \"databaseversionframe/o/statics.o\" \"endframe/o/statics.o\" \"sqlcipherdecryptor/o/getkey.o\" \"sqlcipherdecryptor/o/destructor.o\" \"sqlcipherdecryptor/o/gethmackey.o\" \"sqlcipherdecryptor/o/sqlcipherdecryptor.o\" \"sqlcipherdecryptor/o/decryptdata.o\" \"framewithattachment/o/setattachmentdata.o\" \"sharedprefframe/o/statics.o\" \"avatarframe/o/statics.o\" \"sqlstatementframe/o/statics.o\" \"sqlstatementframe/o/buildstatement.o\" \"backupframe/o/init.o\" \"memfiledb/o/statics.o\" \"sqlitedb/o/valueasstring.o\" \"sqlitedb/o/prettyprint.o\" \"sqlitedb/o/availablewidth.o\" \"sqlitedb/o/removecolumn.o\" \"sqlitedb/o/copydb.o\" \"sqlitedb/o/print.o\" \"sqlitedb/o/printlinemode.o\" \"stickerframe/o/statics.o\" \"csvreader/o/readrow.o\" \"csvreader/o/read.o\" \"o/main.o\" \"headerframe/o/statics.o\" \"basedecryptor/o/getattachment.o\" \"reactionlist/o/setauthor.o\" \"fileencryptor/o/init.o\" \"fileencryptor/o/encryptframe.o\" \"fileencryptor/o/fileencryptor.o\" \"fileencryptor/o/encryptattachment.o\" \"filedecryptor/o/getframe.o\" \"filedecryptor/o/getframebrute.o\" \"filedecryptor/o/filedecryptor.o\" \"filedecryptor/o/customs.o\" \"filedecryptor/o/initbackupframe.o\" \"arg/o/usage.o\" \"arg/o/arg.o\" \"cryptbase/o/cryptbase.o\" \"cryptbase/o/getbackupkey.o\" \"cryptbase/o/getcipherandmac.o\" -lcrypto -lsqlite3 $EXTRALINKOPTIONS -o \"signalbackup-tools\""
+    $COMPILER -Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto "keyvalueframe/o/statics.o" "signalbackup/o/checkdbintegrity.o" "signalbackup/o/mergegroups.o" "signalbackup/o/writeencryptedframe.o" "signalbackup/o/scanself.o" "signalbackup/o/applyranges.o" "signalbackup/o/scramble.o" "signalbackup/o/htmlescapestring.o" "signalbackup/o/cleandatabasebymessages.o" "signalbackup/o/insertattachments.o" "signalbackup/o/setminimumid.o" "signalbackup/o/htmlprepbody.o" "signalbackup/o/croptodates.o" "signalbackup/o/datetomsecssinceepoch.o" "signalbackup/o/updategroupmembers.o" "signalbackup/o/exporttofile.o" "signalbackup/o/setcolumnnames.o" "signalbackup/o/handledtgroupchangemessage.o" "signalbackup/o/getrecipientinfofrommap.o" "signalbackup/o/insertrow.o" "signalbackup/o/getgroupv1migrationrecipients.o" "signalbackup/o/importwachat.o" "signalbackup/o/dumpmedia.o" "signalbackup/o/getattachmentmetadata.o" "signalbackup/o/makeidsunique.o" "signalbackup/o/getallthreadrecipients.o" "signalbackup/o/croptothread.o" "signalbackup/o/initfromdir.o" "signalbackup/o/fillthreadtablefrommessages.o" "signalbackup/o/getrecipientidfrom.o" "signalbackup/o/compactids.o" "signalbackup/o/importfromdesktop.o" "signalbackup/o/getdtreactions.o" "signalbackup/o/decodestatusmessage.o" "signalbackup/o/htmlwriteavatar.o" "signalbackup/o/statics_html.o" "signalbackup/o/exporttodir.o" "signalbackup/o/setfiletimestamp.o" "signalbackup/o/exportcsv.o" "signalbackup/o/handledtgroupv1migration.o" "signalbackup/o/migratedatabase.o" "signalbackup/o/listthreads.o" "signalbackup/o/htmlgetemojipos.o" "signalbackup/o/updatethreadsentries.o" "signalbackup/o/updaterecipientid.o" "signalbackup/o/deleteattachments.o" "signalbackup/o/getgroupmembers.o" "signalbackup/o/customs.o" "signalbackup/o/getminmaxusedid.o" "signalbackup/o/reordermmssmsids.o" "signalbackup/o/importcsv.o" "signalbackup/o/handledtcalltypemessage.o" "signalbackup/o/statics.o" "signalbackup/o/getnamefromrecipientid.o" "signalbackup/o/importthread.o" "signalbackup/o/decodeprofilechangemessage.o" "signalbackup/o/remaprecipients.o" "signalbackup/o/htmlwriteindex.o" "signalbackup/o/dumpavatars.o" "signalbackup/o/summarize.o" "signalbackup/o/removedoubles.o" "signalbackup/o/getthreadidfromrecipient.o" "signalbackup/o/cleanattachments.o" "signalbackup/o/exporthtml.o" "signalbackup/o/buildsqlstatementframe.o" "signalbackup/o/htmlescapeurl.o" "signalbackup/o/escapexmlstring.o" "signalbackup/o/handlewamessage.o" "signalbackup/o/addsmsmessage.o" "signalbackup/o/handledtexpirationchangemessage.o" "signalbackup/o/htmlwrite.o" "signalbackup/o/initfromfile.o" "signalbackup/o/makefilenameunique.o" "signalbackup/o/sanitizefilename.o" "signalbackup/o/mergerecipients.o" "signalbackup/o/missingattachmentexpected.o" "signalbackup/o/dtcreaterecipient.o" "signalbackup/o/getgroupupdaterecipients.o" "signalbackup/o/insertreactions.o" "signalbackup/o/dumpinfoonbadframe.o" "signalbackup/o/dropbadframes.o" "signalbackup/o/exportxml.o" "signalbackup/o/statics_emoji.o" "signalbackup/o/updategv1migrationmessage.o" "signalbackup/o/updatereactionauthors.o" "signalbackup/o/setrecipientinfo.o" "signalbackup/o/htmlwriteattachment.o" "signalbackup/o/getdesktopdir.o" "signalbackup/o/dtsetmessagedeliveryreceipts.o" "attachmentframe/o/statics.o" "databaseversionframe/o/statics.o" "endframe/o/statics.o" "sqlcipherdecryptor/o/getkey.o" "sqlcipherdecryptor/o/destructor.o" "sqlcipherdecryptor/o/gethmackey.o" "sqlcipherdecryptor/o/sqlcipherdecryptor.o" "sqlcipherdecryptor/o/decryptdata.o" "framewithattachment/o/setattachmentdata.o" "sharedprefframe/o/statics.o" "avatarframe/o/statics.o" "sqlstatementframe/o/statics.o" "sqlstatementframe/o/buildstatement.o" "backupframe/o/init.o" "memfiledb/o/statics.o" "sqlitedb/o/valueasstring.o" "sqlitedb/o/prettyprint.o" "sqlitedb/o/availablewidth.o" "sqlitedb/o/removecolumn.o" "sqlitedb/o/copydb.o" "sqlitedb/o/print.o" "sqlitedb/o/printlinemode.o" "stickerframe/o/statics.o" "csvreader/o/readrow.o" "csvreader/o/read.o" "o/main.o" "headerframe/o/statics.o" "basedecryptor/o/getattachment.o" "reactionlist/o/setauthor.o" "fileencryptor/o/init.o" "fileencryptor/o/encryptframe.o" "fileencryptor/o/fileencryptor.o" "fileencryptor/o/encryptattachment.o" "filedecryptor/o/getframe.o" "filedecryptor/o/getframebrute.o" "filedecryptor/o/filedecryptor.o" "filedecryptor/o/customs.o" "filedecryptor/o/initbackupframe.o" "arg/o/usage.o" "arg/o/arg.o" "cryptbase/o/cryptbase.o" "cryptbase/o/getbackupkey.o" "cryptbase/o/getcipherandmac.o" -lcrypto -lsqlite3 $EXTRALINKOPTIONS -o "signalbackup-tools"
     if [ $? -ne 0 ] ; then exit 1 ; fi
 fi
 

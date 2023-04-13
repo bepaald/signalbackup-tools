@@ -20,7 +20,8 @@
 #include "signalbackup.ih"
 
 long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone,
-                                              std::map<std::string, long long int> *recipient_info) const
+                                              std::string const &databasedir,
+                                              std::map<std::string, long long int> *recipient_info)
 {
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, profileFamilyName, "
@@ -61,11 +62,20 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb, std::string c
 
     // set avatar
     std::string avatarpath = res("avatar");
-    //if (!avatarpath.empty() &&
-    // not starts with "images/"?? ")
-    //{
-    //  d_avatars.something...
-    //}
+    if (!avatarpath.empty())
+    {
+      AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
+      if (amd)
+      {
+        std::unique_ptr<AvatarFrame> new_avatar_frame;
+        if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(new_rec_id),
+                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+        {
+          new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
+          d_avatars.emplace_back(std::make_pair(bepaald::toString(new_rec_id), std::move(new_avatar_frame)));
+        }
+      }
+    }
 
     return new_rec_id;
   }
