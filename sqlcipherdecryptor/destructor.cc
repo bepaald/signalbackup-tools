@@ -25,6 +25,7 @@ SqlCipherDecryptor::~SqlCipherDecryptor()
   bepaald::destroyPtr(&d_hmackey, &d_hmackeysize);
   bepaald::destroyPtr(&d_salt, &d_saltsize);
   bepaald::destroyPtr(&d_decrypteddata, &d_decrypteddatasize);
+  bepaald::destroyPtr(&d_digestname, &d_digestname_size);
 #ifdef USE_CRYPTOPP
   if (d_hmac)
     delete d_hmac;

@@ -326,8 +326,8 @@ class SignalBackup
   long long int getRecipientIdFromPhone(std::string const &phone, std::map<std::string, long long int> *savedmap) const;
   inline std::string getNameFromUuid(std::string const &uuid) const;
   std::string getNameFromRecipientId(long long int id) const;
-  void setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
-                                  long long int msg_id, bool is_mms, bool isgroup) const;
+  void dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
+                                    std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup);
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, bool isnotetoself, std::set<long long int> const &recipients,
                       std::map<long long int, RecipientInfo> *recipientinfo,
@@ -363,8 +363,8 @@ class SignalBackup
   inline std::string utf8BytesToHexString(std::string const &data) const;
   RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
   bool migrateDatabase(int from, int to) const;
-  long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone,
-                                  std::map<std::string, long long int> *recipient_info) const;
+  long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &databasedir,
+                                  std::map<std::string, long long int> *recipient_info);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

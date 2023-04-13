@@ -19,8 +19,9 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::setMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
-                                              long long int msg_id, bool is_mms, bool isgroup) const
+void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
+                                                std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms,
+                                                bool isgroup)
 {
 
   using namespace std::string_literals;
@@ -68,14 +69,25 @@ void SignalBackup::setMessageDeliveryReceipts(SqliteDB const &ddb, long long int
         ++deliveryreceiptcount;
         if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
-          long long int member_uuid = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
-          if (member_uuid == -1)
+          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
+          if (member_id == -1)
           {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get uuid of delivery_receipt member. Skipping" << std::endl;
-            continue;
+            if (createcontacts)
+            {
+              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), databasedir, savedmap)) == -1)
+              {
+                std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create delivery_receipt member. Skipping" << std::endl;
+                continue;
+              }
+            }
+            else
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get id of delivery_receipt member. Skipping" << std::endl;
+              continue;
+            }
           }
           if (!insertRow("group_receipts", {{"mms_id", msg_id},
-                                            {"address", member_uuid},
+                                            {"address", member_id},
                                             {"status", STATUS_DELIVERED},
                                             {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group_receipt" << std::endl;
@@ -86,14 +98,25 @@ void SignalBackup::setMessageDeliveryReceipts(SqliteDB const &ddb, long long int
         ++readreceiptcount;
         if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
-          long long int member_uuid = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
-          if (member_uuid == -1)
+          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
+          if (member_id == -1)
           {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get uuid of delivery_receipt member. Skipping" << std::endl;
-            continue;
+            if (createcontacts)
+            {
+              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), databasedir, savedmap)) == -1)
+              {
+                std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create delivery_receipt member. Skipping" << std::endl;
+                continue;
+              }
+            }
+            else
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get id of delivery_receipt member. Skipping" << std::endl;
+              continue;
+            }
           }
           if (!insertRow("group_receipts", {{"mms_id", msg_id},
-                                            {"address", member_uuid},
+                                            {"address", member_id},
                                             {"status", STATUS_READ},
                                             {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group_receipt" << std::endl;
