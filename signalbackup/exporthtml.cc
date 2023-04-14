@@ -33,16 +33,23 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 {
   using namespace std::string_literals;
 
+  bool databasemigrated = false;
+  SqliteDB backup_database(":memory:");
+
   // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
   if (d_databaseversion == 167)
   {
+    SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(167, 170))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
                 << " Please upgrade your database" << std::endl;
+      SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
+    else
+      databasemigrated = true;
   }
   else if (d_databaseversion < 167)
   {
@@ -53,13 +60,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                 << " Please upgrade your database" << std::endl;
       return false;
     }
-    else if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
+    SqliteDB::copyDb(d_database, backup_database);
+    if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
                 << " Please upgrade your database" << std::endl;
+      SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
+    else
+      databasemigrated = true;
   }
 
   // check if dir exists, create if not
@@ -81,6 +92,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           std::cout << "Backup size: " << d_fd->total() << std::endl;
         }
       }
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
   }
@@ -91,6 +104,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
               << ": `" << directory << "' is not a directory." << std::endl;
+    if (databasemigrated)
+      SqliteDB::copyDb(backup_database, d_database);
     return false;
   }
 
@@ -102,6 +117,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export, " << std::endl
                 << "       or --append to only write new files." << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
     std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
@@ -109,6 +126,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to empty directory '" << directory << "'" << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
   }
@@ -241,12 +260,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                   << ": dir is regular file" << std::endl;
+        if (databasemigrated)
+          SqliteDB::copyDb(backup_database, d_database);
         return false;
       }
       if (!append && !overwrite) // should be impossible at this point....
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                   << ": Refusing to overwrite existing directory" << std::endl;
+        if (databasemigrated)
+          SqliteDB::copyDb(backup_database, d_database);
         return false;
       }
     }
@@ -265,6 +288,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           std::cout << " Filesize: " << d_fd->total() << std::endl;
         }
       }
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
 
@@ -302,6 +327,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                   << (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name))
                   << (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "")
                   << ".html' for writing." << std::endl;
+        if (databasemigrated)
+          SqliteDB::copyDb(backup_database, d_database);
         return false;
       }
 
@@ -543,5 +570,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append);
 
   std::cout << "All done!" << std::endl;
+  if (databasemigrated)
+  {
+    std::cout << "restoring migrated database..." << std::endl;
+    SqliteDB::copyDb(backup_database, d_database);
+  }
   return true;
 }
