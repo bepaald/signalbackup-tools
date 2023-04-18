@@ -63,9 +63,6 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   if (res("type") == "group")
   {
-    // almost
-    return -1;
-
     if (res.getValueAs<long long int>(0, "groupVersion") < 2)
     {
       // group v1 not yet....
