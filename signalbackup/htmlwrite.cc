@@ -721,7 +721,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
             <div class="note-to-self-icon"></div>
           </div>)";
     }
-    else
+    if (!isgroup && !isnotetoself)
     {
       file << R"(
           <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">

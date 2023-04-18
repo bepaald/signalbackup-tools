@@ -140,6 +140,10 @@ class SqliteDB
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
+
+  inline bool registerCustoms() const;
+  static inline void tokencount(sqlite3_context *context, int argc, sqlite3_value **argv);
+  static inline void token(sqlite3_context *context, int argc, sqlite3_value **argv);
 };
 
 inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
@@ -152,6 +156,9 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
     d_ok = (sqlite3_open_v2(name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
   else
     d_ok = (sqlite3_open(name.c_str(), &d_db) == SQLITE_OK);
+
+  if (d_ok)
+    d_ok = registerCustoms();
 }
 
 inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
@@ -162,6 +169,9 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
 {
   if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
     d_ok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+
+  if (d_ok)
+    d_ok = registerCustoms();
 }
 
 inline SqliteDB::~SqliteDB()
@@ -749,4 +759,113 @@ inline bool SqliteDB::QueryResults::removeRow(uint idx)
   return true;
 }
 
+inline bool SqliteDB::registerCustoms() const
+{
+  return sqlite3_create_function(d_db, "TOKENCOUNT", -1, SQLITE_UTF8, nullptr, &tokencount, nullptr, nullptr) == SQLITE_OK &&
+    sqlite3_create_function(d_db, "TOKEN", -1, SQLITE_UTF8, nullptr, &token, nullptr, nullptr) == SQLITE_OK;
+}
+
+inline void SqliteDB::tokencount(sqlite3_context *context, int argc, sqlite3_value **argv) //static
+{
+  if (argc == 0)
+  {
+    sqlite3_result_int(context, 0);
+    return;
+  }
+
+  if (sqlite3_value_type(argv[0]) != SQLITE_TEXT)
+  {
+    sqlite3_result_int(context, 0);
+    return;
+  }
+
+  unsigned char const *text = sqlite3_value_text(argv[0]);
+  if (!text || !text[0])
+  {
+    sqlite3_result_int(context, 0);
+    return;
+  }
+
+  char delim = ' ';
+  if (argc > 1 && argv[1] && sqlite3_value_text(argv[1])[0])
+    delim = (sqlite3_value_text(argv[1]))[0];
+
+  int startpos = 0;
+  int count = 1;
+
+  while (text[startpos])
+  {
+    if (text[startpos] == delim)
+    {
+      ++count;
+      while (text[startpos] == delim)
+        ++startpos;
+    }
+    else
+      ++startpos;
+  }
+  sqlite3_result_int(context, count);
+}
+
+inline void SqliteDB::token(sqlite3_context *context, int argc, sqlite3_value **argv) // static
+{
+  if (argc > 1)
+  {
+    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT)
+    {
+      sqlite3_result_null(context);
+      return;
+    }
+
+    // get params
+    unsigned char const *text = sqlite3_value_text(argv[0]);
+    if (!text)
+      return;
+    unsigned int idx = sqlite3_value_int(argv[1]);
+    char delim = ' ';
+    if (argc > 2 && argv[2] && sqlite3_value_text(argv[2])[0])
+      delim = (sqlite3_value_text(argv[2]))[0];
+
+    //std::cout << "DELIM: '" << delim << "' (" << (static_cast<int>(delim) & 0xff) << ")" << std::endl;
+
+    // find the requested token
+    unsigned int startpos = 0;
+    unsigned int endpos = 0;
+    unsigned int count = 0;
+    while (text[startpos])
+    {
+      if (count == idx) // look for end delim
+      {
+        endpos = startpos;
+        break;
+      }
+      if (text[startpos] == delim)
+      {
+        ++count;
+        while (text[startpos] == delim)
+          ++startpos;
+      }
+      else
+        ++startpos;
+    }
+
+    while (text[endpos] && text[endpos] != delim)
+      ++endpos;
+
+    //std::cout << " TEXT: " << text << std::endl;
+    //std::cout << "RANGE: " << std::string(startpos, ' ') << "^" << std::string(endpos < startpos ? 0 : endpos - startpos, ' ') << "^" <<std::endl;
+
+    if (endpos > startpos)
+    {
+      int len = endpos - startpos;
+      char *result = new char[len];
+      std::memcpy(result, text + startpos, len);
+      sqlite3_result_text(context, result, len, SQLITE_TRANSIENT);
+      bepaald::destroyPtr(&result, &len);
+      return;
+    }
+
+  }
+  sqlite3_result_null(context);
+}
 #endif

@@ -293,6 +293,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
   if (!ddb.exec("SELECT "
+                "rowid,"
                 "id,"
                 "e164,"
                 "type,"
@@ -317,8 +318,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   // for each conversation
   for (uint i = 0; i < results_all_conversations.rows(); ++i)
   {
-
     std::cout << "Trying to match conversation (" << i + 1 << "/" << results_all_conversations.rows() << ") (type: " << results_all_conversations.valueAsString(i, "type") << ")" << std::endl;
+
+    //long long int conversation_rowid = results_all_conversations.getValueAs<long long int>(i, "rowid");
 
     // get the actual id
     bool isgroupconversation = false;
@@ -413,7 +415,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       if (createmissingcontacts)
       {
         recipientid_for_thread = dtCreateRecipient(ddb, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
-                                                   databasedir, &recipientmap, &warned_createcontacts);
+                                                   results_all_conversations.valueAsString(i, "groupId"), databasedir, &recipientmap,
+                                                   &warned_createcontacts);
         if (recipientid_for_thread == -1)
         {
           std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
@@ -585,7 +588,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (createmissingcontacts)
           {
             if ((address = dtCreateRecipient(ddb, source_uuid, (type == "profile-change" || type == "keychange" || type == "verified-change") ?
-                                             statusmsguuid("e164") : results_all_messages_from_conversation(j, "sourcephone"), databasedir,
+                                             statusmsguuid("e164") : results_all_messages_from_conversation(j, "sourcephone"),
+                                             std::string(), databasedir,
                                              &recipientmap, &warned_createcontacts)) == -1)
             {
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create contact for incoming group message. Skipping" << std::endl;
@@ -1101,7 +1105,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             if (createmissingcontacts)
             {
-              if ((rec_id = dtCreateRecipient(ddb, results_mentions("mention_uuid"), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
+              if ((rec_id = dtCreateRecipient(ddb, results_mentions("mention_uuid"), std::string(), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
               {
                 std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to create recipient for mention. Skipping." << std::endl;
                 continue;
