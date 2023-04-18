@@ -577,12 +577,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::string source_uuid = (type == "profile-change" || type == "keychange" || type == "verified-change") ?
           statusmsguuid.valueAsString(0, "uuid") :
           results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
-        if (source_uuid.empty()) // try with phone number
+        if (source_uuid.empty() || (address = getRecipientIdFromUuid(source_uuid, &recipientmap)) == -1) // try with phone number
           address = getRecipientIdFromPhone((type == "profile-change" || type == "keychange" || type == "verified-change") ?
                                             statusmsguuid.valueAsString(0, "e164") :
                                             results_all_messages_from_conversation.valueAsString(j, "sourcephone"), &recipientmap);
-        else
-          address = getRecipientIdFromUuid(source_uuid, &recipientmap);
         if (address == -1)
         {
           if (createmissingcontacts)

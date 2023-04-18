@@ -39,6 +39,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
   if (!ddb.exec("SELECT "
                 "delivery_details.key AS conv_id,"
                 "conversations.uuid AS uuid,"
+                "conversations.e164 AS e164,"
                 "json_extract(delivery_details.value, '$.status') AS status,"
                 "COALESCE(json_extract(delivery_details.value, '$.updatedAt'), delivery_details.sent_at) AS updated_timestamp"
                 " FROM "
@@ -70,6 +71,8 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
           long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
+          if (member_id == -1) // try phone
+            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap);
           if (member_id == -1)
           {
             if (createcontacts)
@@ -99,6 +102,8 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
           long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
+          if (member_id == -1) // try phone
+            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap);
           if (member_id == -1)
           {
             if (createcontacts)
