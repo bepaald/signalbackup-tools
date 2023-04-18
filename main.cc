@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
   MEMINFO("Before importfromdesktop");
   if (arg.importfromdesktop_bool())
     if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.desktopdbversion(),
-                               arg.limittodates(), false && arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
+                               arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
                                arg.ignorewal()))
       return 1;
   MEMINFO("After importfromdesktop");
