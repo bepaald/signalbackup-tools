@@ -21,7 +21,8 @@
 
 long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone,
                                               std::string const &databasedir,
-                                              std::map<std::string, long long int> *recipient_info)
+                                              std::map<std::string, long long int> *recipient_info,
+                                              bool *warn)
 {
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, profileFamilyName, "
@@ -29,15 +30,34 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb, std::string c
                 "json_extract(json, '$.profileAvatar.path') AS avatar, "
                 "groupId, members FROM conversations WHERE uuid = ? OR e164 = ?",
                 {id, phone}, &res))
+  {
+    // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
     return -1;
+  }
   //res.prettyPrint();
 
   if (res.rows() != 1)
+  {
+    if (res.rows() > 1)
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Unexpected number of results getting new recipient data." << std::endl;
+    else // = 0
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": No results trying to get new recipient data." << std::endl;
     return -1;
+  }
+
+  if (*warn == false)
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
+              << "         " << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
+              << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML" << std::endl;
+    *warn = true;
+  }
 
   if (res("type") == "group")
   {
     // not yet
+    //std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": (skipping group types for now)." << std::endl;
     return -1;
   }
 
@@ -50,13 +70,16 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb, std::string c
                   {"uuid", res.value(0, "uuid")},
                   {"color", res.value(0, "color")}}, "_id", &new_rid))
   {
-    // message
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new recipient into database." << std::endl;
     return -1;
   }
   else
   {
     if (new_rid.type() != typeid(long long int))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": New recipient _id has unexpected type." << std::endl;
       return -1;
+    }
     long long int new_rec_id = std::any_cast<long long int>(new_rid);
     (*recipient_info)[id.empty() ? phone : id] = new_rec_id;
 
@@ -80,6 +103,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb, std::string c
     return new_rec_id;
   }
 
+  // unreachable?
   return -1;
 }
 

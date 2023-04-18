@@ -412,17 +412,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     {
       if (createmissingcontacts)
       {
-        if (!warned_createcontacts)
-        {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                    << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
-                    << "         " << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
-                    << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML" << std::endl;
-          warned_createcontacts = true;
-        }
-
         recipientid_for_thread = dtCreateRecipient(ddb, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
-                                                   databasedir, &recipientmap);
+                                                   databasedir, &recipientmap, &warned_createcontacts);
         if (recipientid_for_thread == -1)
         {
           std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
@@ -594,7 +585,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (createmissingcontacts)
           {
             if ((address = dtCreateRecipient(ddb, source_uuid, (type == "profile-change" || type == "keychange" || type == "verified-change") ?
-                                             statusmsguuid("e164") : results_all_messages_from_conversation(j, "sourcephone"), databasedir, &recipientmap)) == -1)
+                                             statusmsguuid("e164") : results_all_messages_from_conversation(j, "sourcephone"), databasedir,
+                                             &recipientmap, &warned_createcontacts)) == -1)
             {
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create contact for incoming group message. Skipping" << std::endl;
               continue;
@@ -1081,7 +1073,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         if (outgoing)
           dtSetMessageDeliveryReceipts(ddb, rowid, &recipientmap, databasedir, createmissingcontacts,
-                                       new_mms_id, true/*mms*/, isgroupconversation);
+                                       new_mms_id, true/*mms*/, isgroupconversation, &warned_createcontacts);
 
         // insert into reactions
         if (d_verbose) [[unlikely]] std::cout << "Inserting reactions..." << std::flush;
@@ -1109,7 +1101,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             if (createmissingcontacts)
             {
-              if ((rec_id = dtCreateRecipient(ddb, results_mentions("mention_uuid"), std::string(), databasedir, &recipientmap)) == -1)
+              if ((rec_id = dtCreateRecipient(ddb, results_mentions("mention_uuid"), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
               {
                 std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to create recipient for mention. Skipping." << std::endl;
                 continue;
@@ -1166,7 +1158,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         // set delivery/read counts
         if (outgoing)
           dtSetMessageDeliveryReceipts(ddb, rowid, &recipientmap, databasedir, createmissingcontacts,
-                                       new_sms_id, false/*mms*/, isgroupconversation);
+                                       new_sms_id, false/*mms*/, isgroupconversation, &warned_createcontacts);
 
         // insert into reactions
         insertReactions(new_sms_id, reactions, false, &recipientmap);
