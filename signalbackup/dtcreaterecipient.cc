@@ -31,11 +31,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, profileFamilyName, "
                 "profileFullName, e164, uuid, json_extract(json,'$.color') AS color, "
-                "json_extract(json, '$.profileAvatar.path') AS avatar, "
+                "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
                 "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
-                "TOKENCOUNT(members) AS nummembers FROM conversations "
-                "WHERE uuid = ? OR e164 = ? OR groupId = ?",
+                "TOKENCOUNT(members) AS nummembers, json_extract(json, '$.masterKey') AS masterKey "
+                "FROM conversations WHERE uuid = ? OR e164 = ? OR groupId = ?",
                 {id, phone, groupidb64}, &res))
   {
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
@@ -56,8 +56,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
               << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
-              << "         " << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
-              << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML" << std::endl;
+              << "         " << bepaald::bold_on << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
+              << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML." << bepaald::bold_off << std::endl;
     *warn = true;
   }
 
@@ -74,13 +74,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     std::pair<unsigned char *, size_t> groupid_data = Base64::base64StringToBytes(res("json_groupId"));
     if (!groupid_data.first || groupid_data.second == 0) // json data was not valid base64 string, lets try the other one
       groupid_data = Base64::base64StringToBytes(res("groupId"));
-
     if (!groupid_data.first || groupid_data.second == 0)
     {
       // maybe, just create out own id here? we don't care
       return -1;
     }
-
     std::string group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
     bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
 
@@ -100,20 +98,25 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       return -1;
     }
     long long int new_rec_id = std::any_cast<long long int>(new_rid);
+
+    std::pair<unsigned char *, size_t>  masterkey = Base64::base64StringToBytes(res("masterKey"));
     if (!insertRow("groups",
                    {{"title", res.value(0, "name")},
                     {"group_id", group_id},
                     {"recipient_id", new_rec_id},
                     {"avatar_id", 0},
-                    // {"master_key",},
+                    {"master_key", masterkey},
                     // {"decrypted_group",},
                     // {"distribution_id",},
                     {"revision", 0}}))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new group into database." << std::endl;
       d_database.exec("ROLLBACK TRANSACTION");
+      bepaald::destroyPtr(&masterkey.first, &masterkey.second);
       return -1;
     }
+    bepaald::destroyPtr(&masterkey.first, &masterkey.second);
+
 
     // get group members:
     std::string oldstyle_members;
@@ -123,7 +126,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       if (!ddb.exec("SELECT members,TOKEN(members, ?) AS member FROM conversations WHERE groupId = ?", {i, groupidb64}, &mem))
         continue;
 
-      std::cout << "Got members: " << mem("member") << std::endl;
+      //std::cout << "Got members: " << mem("member") << std::endl;
 
       long long int member_rid = getRecipientIdFromUuid(mem("member"), recipient_info);
       if (member_rid == -1)
@@ -164,6 +167,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
     d_database.exec("COMMIT TRANSACTION");
     (*recipient_info)[groupidb64] = new_rec_id;
+
+    // set avatar
+    dtSetAvatar(res("avatar"), new_rec_id, databasedir);
+
     return new_rec_id; //-1;
   }
 
@@ -189,21 +196,22 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   (*recipient_info)[id.empty() ? phone : id] = new_rec_id;
 
   // set avatar
-  std::string avatarpath = res("avatar");
-  if (!avatarpath.empty())
-  {
-    AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
-    if (amd)
-    {
-      std::unique_ptr<AvatarFrame> new_avatar_frame;
-      if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(new_rec_id),
-                                                                          "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
-      {
-        new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
-        d_avatars.emplace_back(std::make_pair(bepaald::toString(new_rec_id), std::move(new_avatar_frame)));
-      }
-    }
-  }
+  dtSetAvatar(res("avatar"), new_rec_id, databasedir);
+  // std::string avatarpath = res("avatar");
+  // if (!avatarpath.empty())
+  // {
+  //   AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
+  //   if (amd)
+  //   {
+  //     std::unique_ptr<AvatarFrame> new_avatar_frame;
+  //     if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(new_rec_id),
+  //                                                                         "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+  //     {
+  //       new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
+  //       d_avatars.emplace_back(std::make_pair(bepaald::toString(new_rec_id), std::move(new_avatar_frame)));
+  //     }
+  //   }
+  // }
   return new_rec_id;
 }
 
