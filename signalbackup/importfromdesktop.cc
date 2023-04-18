@@ -288,6 +288,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       datewhereclause += ')';
   }
 
+  bool warned_createcontacts = false;
+
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
   if (!ddb.exec("SELECT "
@@ -410,10 +412,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     {
       if (createmissingcontacts)
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                  << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
-                  << "         " << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
-                  << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML" << std::endl;
+        if (!warned_createcontacts)
+        {
+          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                    << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
+                    << "         " << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
+                    << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML" << std::endl;
+          warned_createcontacts = true;
+        }
 
         recipientid_for_thread = dtCreateRecipient(ddb, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
                                                    databasedir, &recipientmap);
