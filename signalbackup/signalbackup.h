@@ -363,8 +363,9 @@ class SignalBackup
   inline std::string utf8BytesToHexString(std::string const &data) const;
   RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
   bool migrateDatabase(int from, int to) const;
-  long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &databasedir,
-                                  std::map<std::string, long long int> *recipient_info, bool *warn);
+  long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &gidb64,
+                                  std::string const &databasedir, std::map<std::string, long long int> *recipient_info,
+                                  bool *warn);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

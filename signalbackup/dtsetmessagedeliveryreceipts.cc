@@ -74,7 +74,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
           {
             if (createcontacts)
             {
-              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), databasedir, savedmap, warn)) == -1)
+              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
               {
                 std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create delivery_receipt member. Skipping" << std::endl;
                 continue;
@@ -103,7 +103,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
           {
             if (createcontacts)
             {
-              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), databasedir, savedmap, warn)) == -1)
+              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
               {
                 std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create delivery_receipt member. Skipping" << std::endl;
                 continue;
