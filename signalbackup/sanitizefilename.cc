@@ -74,6 +74,7 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
                 c == '"' || c == '<' || c == '>' ||
                 c <= 0x1f || c == 0x7f) ? '_' : c);
 
+
   // trailing whitespace or periods are (possibly) technically allowed
   // by the filesystem, but not supported by windows shell and UI
   while (result.back() == ' ' ||

@@ -86,11 +86,10 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
         std::find(contacts.begin(), contacts.end(), name) == contacts.end())
       continue;
 
-    std::string filename = sanitizeFilename(name);
+    std::string filename = sanitizeFilename(name + ".jpg");
     if (filename.empty()) // filename was not set in database or was not impossible
                           // to sanitize (eg reserved name in windows 'COM1')
-      filename = af->recipient();
-    filename += ".jpg";
+      filename = af->recipient() + ".jpg";
 
     // make filename unique
     while (bepaald::fileOrDirExists(dir + "/" + filename))
