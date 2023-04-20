@@ -70,9 +70,9 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         ++deliveryreceiptcount;
         if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
-          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
+          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
           if (member_id == -1) // try phone
-            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap);
+            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap, createcontacts);
           if (member_id == -1)
           {
             if (createcontacts)
@@ -101,9 +101,9 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         ++readreceiptcount;
         if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
         {
-          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap);
+          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
           if (member_id == -1) // try phone
-            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap);
+            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap, createcontacts);
           if (member_id == -1)
           {
             if (createcontacts)

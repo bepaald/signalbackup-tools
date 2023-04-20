@@ -21,7 +21,8 @@
 
 bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid,
                                             long long int thread_id, long long int timestamp, long long int address,
-                                            std::map<std::string, long long int> *recipientmap)
+                                            std::map<std::string, long long int> *recipientmap, bool createcontacts,
+                                            std::string const &databasedir, bool *warned_createcontacts)
 {
   // get a list of dropped members (I _think_ these are not recipient uuid's but conversationUuid's...)
   std::string dropped_members;
@@ -35,19 +36,25 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
       if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
           dm_id.rows() != 1)
         continue;
-      long long int recid = getRecipientIdFromUuid(dm_id.valueAsString(0, "rid"), recipientmap);
+      long long int recid = getRecipientIdFromUuid(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
       if (recid < 0)
-        recid = getRecipientIdFromPhone(dm_id.valueAsString(0, "rid"), recipientmap);
+        recid = getRecipientIdFromPhone(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
       if (recid < 0)
       {
         // let's just check the uuid's aren't recipient uuid's to make sure
-          // this can go when we know it's working
+        // this can go when we know it's working
         SqliteDB::QueryResults test_results;
         if (ddb.exec("SELECT uuid FROM conversations WHERE uuid IS ?", dm_id.valueAsString(0, "rid"), &test_results))
           if (test_results.rows())
             std::cout << " *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (droppedMembers) ***" << std::endl;
-        continue;
+
+        if (createcontacts)
+          recid = dtCreateRecipient(ddb, dm_id.valueAsString(0, "rid"), dm_id.valueAsString(0, "rid"), std::string(),
+                                    databasedir, recipientmap, warned_createcontacts);
+        if (recid < 0)
+          continue;
       }
+
 
       dropped_members += (dropped_members.empty() ? bepaald::toString(recid) : ("," + bepaald::toString(recid)));
     }
@@ -80,9 +87,9 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
         if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE id IS ?", convuuid, &im_id) ||
             im_id.rows() != 1)
           continue;
-        long long int recid = getRecipientIdFromUuid(im_id.valueAsString(0, "rid"), recipientmap);
+        long long int recid = getRecipientIdFromUuid(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
         if (recid < 0)
-          recid = getRecipientIdFromPhone(im_id.valueAsString(0, "rid"), recipientmap);
+          recid = getRecipientIdFromPhone(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
         if (recid < 0)
         {
           // let's just check the uuid's aren't recipient uuid's to make sure
@@ -92,7 +99,12 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
             if (test_results.rows())
               std::cout << " *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (invitedMembers, uuid: "
                         << im_id.valueAsString(0, "is_uuid") << ") ***" << std::endl;
-          continue;
+
+          if (createcontacts)
+            recid = dtCreateRecipient(ddb, im_id.valueAsString(0, "rid"), im_id.valueAsString(0, "rid"), std::string(),
+                                      databasedir, recipientmap, warned_createcontacts);
+          if (recid < 0)
+            continue;
         }
 
         invited_members += (invited_members.empty() ? bepaald::toString(recid) : ("," + bepaald::toString(recid)));

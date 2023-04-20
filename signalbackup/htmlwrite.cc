@@ -303,7 +303,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-emoji {
-        font-family: "Noto Color Emoji", sans-serif;
+        font-family: "Apple Color Emoji", "Noto Color Emoji", sans-serif;
       }
 
       .msg-all-emoji {
@@ -379,6 +379,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-bottom-left-radius: 0em;
         border-bottom-right-radius: 0em;
         cursor: zoom-in;
+      }
+
+      .msg-linkpreview-img-container {
+        border-top-left-radius: 0.6em;
+        border-top-right-radius: 0.6em;
+        border-bottom-left-radius: 0em;
+        border-bottom-right-radius: 0em;
       }
 
       .linkpreview {
