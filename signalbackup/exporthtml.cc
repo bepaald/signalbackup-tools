@@ -249,8 +249,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       continue;
     }
 
-    std::string threaddir = (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name))
-      + " (_id" + bepaald::toString(thread_id) + ")";
+    std::string threaddir = (is_note_to_self ? "Note to self (_id"s + bepaald::toString(thread_id) + ")"
+                             : sanitizeFilename(recipient_info[thread_recipient_id].display_name) + " (_id" + bepaald::toString(thread_id) + ")");
+
     //if (!append)
     //  makeFilenameUnique(directory, &threaddir);
 
@@ -316,17 +317,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       std::string previous_day_change;
       // create output-file
-      std::string base_filename = (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name));
-      std::ofstream htmloutput(directory + "/" + threaddir + "/" +
-                               base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html",
-                               std::ios_base::binary);
+      std::string raw_base_filename = (is_note_to_self ? "Note to self" : recipient_info[thread_recipient_id].display_name);
+      std::string filename = sanitizeFilename(raw_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
+      std::ofstream htmloutput(directory + "/" + threaddir + "/" + filename, std::ios_base::binary);
       if (!htmloutput.is_open())
       {
         std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                  << ": Failed to open '" << directory << "/" << threaddir << "/"
-                  << (is_note_to_self ? "Note to self" : sanitizeFilename(recipient_info[thread_recipient_id].display_name))
-                  << (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "")
-                  << ".html' for writing." << std::endl;
+                  << ": Failed to open '" << directory << "/" << threaddir << "/" << filename << " for writing." << std::endl;
         if (databasemigrated)
           SqliteDB::copyDb(backup_database, d_database);
         return false;
@@ -514,30 +511,30 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "      </div>" << std::endl; // closes conversation-wrapper
       htmloutput << "" << std::endl;
 
-      HTMLescapeUrl(&base_filename);
+      HTMLescapeUrl(&raw_base_filename);
 
       if (totalpages > 1)
       {
         htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << std::endl;
         htmloutput << "        <div title=\"First page\">" << std::endl;
-        htmloutput << "          <a href=\"" << base_filename << ".html\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + ".html") << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-max " << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "        <div title=\"Previous page\">" << std::endl;
-        htmloutput << "          <a href=\"" << base_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") + ".html") << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "      </div>" << std::endl;
         htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << std::endl;
         htmloutput << "        <div title=\"Next page\">" << std::endl;
-        htmloutput << "          <a href=\"" << base_filename << "_" << (pagenumber + 1 <= totalpages - 1 ? (pagenumber + 1) : totalpages - 1) << ".html\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + "_" + (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) + ".html") << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "        <div title=\"Last page\">" << std::endl;
-        htmloutput << "          <a href=\"" << base_filename << "_" << totalpages - 1 << ".html\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + "_" + bepaald::toString(totalpages - 1) + ".html") << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
