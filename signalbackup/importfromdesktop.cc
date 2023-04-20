@@ -299,6 +299,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                 "type,"
                 "LOWER(uuid) AS 'uuid',"
                 "groupId,"
+                "IFNULL(json_extract(json,'$.isArchived'), false) AS 'is_archived',"
                 "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
                 "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
@@ -401,13 +402,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     long long int recipientid_for_thread = -1;
     std::string phone;
     if (!person_or_group_id.empty())
-      recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap);
+      recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap, createmissingcontacts);
     else
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to determine uuid. Trying with phone number..." << std::endl;
       phone = results_all_conversations.valueAsString(i, "e164");
       if (!phone.empty())
-        recipientid_for_thread = getRecipientIdFromPhone(phone, &recipientmap);
+        recipientid_for_thread = getRecipientIdFromPhone(phone, &recipientmap, createmissingcontacts);
     }
 
     if (recipientid_for_thread == -1)
@@ -449,7 +450,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                 << (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)) << ")" << std::endl;
       std::any new_thread_id;
       if (!insertRow("thread",
-                     {{d_thread_recipient_id, recipientid_for_thread}},
+                     {{d_thread_recipient_id, recipientid_for_thread},
+                      {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")}},
                      "_id", &new_thread_id))
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. ("
@@ -525,7 +527,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       if (!results_all_messages_from_conversation.isNull(j, "group_call_init"))
       {
         // group calls always have address set to the one initiating the call
-        address = getRecipientIdFromUuid(results_all_messages_from_conversation.valueAsString(j, "group_call_init"), &recipientmap);
+        address = getRecipientIdFromUuid(results_all_messages_from_conversation.valueAsString(j, "group_call_init"),
+                                         &recipientmap, createmissingcontacts);
       }
       else if (isgroupconversation && incoming && type != "group-v1-migration")
         //if (isgroupconversation && (incoming || (type == "call-history" & something)))
@@ -577,16 +580,17 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::string source_uuid = (type == "profile-change" || type == "keychange" || type == "verified-change") ?
           statusmsguuid.valueAsString(0, "uuid") :
           results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
-        if (source_uuid.empty() || (address = getRecipientIdFromUuid(source_uuid, &recipientmap)) == -1) // try with phone number
-          address = getRecipientIdFromPhone((type == "profile-change" || type == "keychange" || type == "verified-change") ?
-                                            statusmsguuid.valueAsString(0, "e164") :
-                                            results_all_messages_from_conversation.valueAsString(j, "sourcephone"), &recipientmap);
+        std::string source_phone = (type == "profile-change" || type == "keychange" || type == "verified-change") ?
+          statusmsguuid.valueAsString(0, "e164") :
+          results_all_messages_from_conversation.valueAsString(j, "sourcephone");
+
+        if (source_uuid.empty() || (address = getRecipientIdFromUuid(source_uuid, &recipientmap, createmissingcontacts)) == -1) // try with phone number
+          address = getRecipientIdFromPhone(source_phone, &recipientmap, createmissingcontacts);
         if (address == -1)
         {
           if (createmissingcontacts)
           {
-            if ((address = dtCreateRecipient(ddb, source_uuid, (type == "profile-change" || type == "keychange" || type == "verified-change") ?
-                                             statusmsguuid("e164") : results_all_messages_from_conversation(j, "sourcephone"),
+            if ((address = dtCreateRecipient(ddb, source_uuid, source_phone,
                                              std::string(), databasedir,
                                              &recipientmap, &warned_createcontacts)) == -1)
             {
@@ -650,7 +654,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         if (!handleDTGroupV1Migration(ddb, rowid, ttid,
                                       results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
-                                      recipientid_for_thread, &recipientmap))
+                                      recipientid_for_thread, &recipientmap, createmissingcontacts, databasedir,
+                                      &warned_createcontacts))
           return false;
 
       }
@@ -921,9 +926,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (mmsquote_author_uuid.empty()) // possibly old database, try conversations.uuid
             mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid_from_phone");
           if (mmsquote_author_uuid.empty()) // failed to get uuid from desktopdatabase, try matching on phone number
-            mmsquote_author = getRecipientIdFromPhone(quote_results.valueAsString(0, "quote_author_phone"), &recipientmap);
+            mmsquote_author = getRecipientIdFromPhone(quote_results.valueAsString(0, "quote_author_phone"), &recipientmap, createmissingcontacts);
           else
-            mmsquote_author = getRecipientIdFromUuid(mmsquote_author_uuid, &recipientmap);
+            mmsquote_author = getRecipientIdFromUuid(mmsquote_author_uuid, &recipientmap, createmissingcontacts);
           if (mmsquote_author == -1)
           {
             std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find quote author. skipping" << std::endl;
@@ -1098,7 +1103,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           }
           //std::cout << "  Mention " << k + 1 << "/" << nummentions << std::endl;
 
-          long long int rec_id = getRecipientIdFromUuid(results_mentions.valueAsString(0, "mention_uuid"), &recipientmap);
+          long long int rec_id = getRecipientIdFromUuid(results_mentions.valueAsString(0, "mention_uuid"), &recipientmap, createmissingcontacts);
           if (rec_id == -1)
           {
             if (createmissingcontacts)

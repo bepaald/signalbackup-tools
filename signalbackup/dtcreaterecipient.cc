@@ -56,7 +56,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
               << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
-              << "         " << bepaald::bold_on << "NOTE THE RESULTING BACKUP CAN  MOST LIKELY NOT BE RESTORED"  << std::endl
+              << "         " << bepaald::bold_on << "NOTE THE RESULTING BACKUP CAN MOST LIKELY NOT BE RESTORED"  << std::endl
               << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML." << bepaald::bold_off << std::endl;
     *warn = true;
   }
@@ -78,6 +78,13 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     }
     std::string group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
     bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
+
+    if (res("name").empty())
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Group name of new recipient is empty." <<
+        "Here is the data from the Desktop db:" << std::endl;
+      ddb.printLineMode("SELECT * FROM conversations WHERE uuid = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
+    }
 
     d_database.exec("BEGIN TRANSACTION"); // things could still go bad...
 
@@ -168,10 +175,24 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     // set avatar
     dtSetAvatar(res("avatar"), new_rec_id, databasedir);
 
+    std::cout << "Succesfully created new recipient for group (id: " << new_rec_id << ")." << std::endl;
     return new_rec_id; //-1;
   }
 
+
+
+
   // type != group
+
+  if (res("profileName").empty() && res("profileFamilyName").empty() &&
+      res("profileFullName").empty() && res("e164").empty() &&
+      res("uuid").empty())
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": All relevant info on new recipient is empty." <<
+      "Here is the data from the Desktop db:" << std::endl;
+    ddb.printLineMode("SELECT * FROM conversations WHERE uuid = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
+  }
+
   std::any new_rid;
   if (!insertRow("recipient",
                  {{"signal_profile_name", res.value(0, "profileName")},
@@ -209,6 +230,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   //     }
   //   }
   // }
+  std::cout << "Succesfully created new recipient for group (id: " << new_rec_id << ")." << std::endl;
   return new_rec_id;
 }
 

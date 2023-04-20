@@ -19,8 +19,8 @@
 
 #include "signalbackup.ih"
 
-long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
-                                                   std::map<std::string, long long int> *savedmap) const
+long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap,
+                                                   bool suppresswarning) const
 {
   if (uuid.empty())
   {
@@ -43,7 +43,8 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
-      std::cout << "Failed to find recipient for uuid: " << printable_uuid << std::endl;
+      if (!suppresswarning)
+        std::cout << "Failed to find recipient for uuid: " << printable_uuid << std::endl;
       return -1;
     }
     //res.prettyPrint();
@@ -55,8 +56,8 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid,
   return (*savedmap)[uuid];
 }
 
-long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
-                                                   std::map<std::string, long long int> *savedmap) const
+long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone, std::map<std::string, long long int> *savedmap,
+                                                    bool suppresswarning) const
 {
   if (phone.empty())
   {
@@ -67,9 +68,9 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
   if (!savedmap || savedmap->find(phone) == savedmap->end())
   {
     std::string printable_phone(phone);
-    unsigned int offset = 4;
+    unsigned int offset = 3;
     if (offset < phone.size()) [[likely]]
-      std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c){ return !std::isdigit(c); }, 'x');
+      std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c){ return std::isdigit(c); }, 'x');
     else
       printable_phone = "xxx";
 
@@ -78,7 +79,8 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone,
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
-      std::cout << "Failed to find recipient for phone: " << printable_phone << std::endl;
+      if (!suppresswarning)
+        std::cout << "Failed to find recipient for phone: " << printable_phone << std::endl;
       return -1;
     }
     //res.prettyPrint();

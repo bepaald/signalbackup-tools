@@ -79,7 +79,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "<html lang=\"en\">" << std::endl
     << "  <head>" << std::endl
     << "    <meta charset=\"utf-8\">" << std::endl
-    << "    <title>Signal</title>" << std::endl
+    << "    <title>Signal conversation list</title>" << std::endl
     << "    <style>" << std::endl
     << "      body {" << std::endl
     << "        background-color: #000000;" << std::endl
@@ -284,6 +284,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     HTMLescapeUrl(&convo_url_path);
     std::string convo_url_location = (isnotetoself ? "Note to self" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name)) + ".html";
     HTMLescapeUrl(&convo_url_location);
+
+    if (convo_url_location == ".html")
+      std::cout << "Sanitized, url encoded was empty. This should never happen. Original display_name: '" << getRecipientInfoFromMap(recipient_info, rec_id).display_name << "'" << std::endl;
 
     outputfile
       << "      <div class=\"conversation-list-item\">" << std::endl
