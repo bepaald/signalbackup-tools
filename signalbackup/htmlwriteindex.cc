@@ -162,9 +162,12 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
+      std::string avatar_path = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + results(i, "_id") + ")");
+      bepaald::replaceAll(&avatar_path, '\"', R"(\")");
+
       outputfile
         << "      .avatar-" << rec_id << " {" << std::endl
-        << "        background-image: url(\"" << sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + results(i, "_id") + ")") << "/media/Avatar_" << rec_id << ".bin\");" << std::endl
+        << "        background-image: url(\"" << avatar_path << "/media/Avatar_" << rec_id << ".bin\");" << std::endl
         << "        background-position: center;" << std::endl
         << "        background-repeat: no-repeat;" << std::endl
         << "        background-size: cover;" << std::endl
