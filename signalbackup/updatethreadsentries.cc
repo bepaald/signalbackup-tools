@@ -50,7 +50,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
 
         d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = "
                         + threadid
-                        + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_date_sent + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
+                        + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
                         + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
       }
       else // dbv >= 168
@@ -58,7 +58,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
         d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
                         "(SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
 
-        d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_date_sent + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
+        d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
                         + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
       }
 

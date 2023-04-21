@@ -367,27 +367,21 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           isgroupconversation = true;
         else
         {
-          /**/
+          /*
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Group V1 type not yet supported" << std::endl;
           SqliteDB::QueryResults groupid_res;
           ddb.exec("SELECT HEX(groupId) FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"), &groupid_res);
           if (groupid_res.rows())
             std::cout << "       Possible group id: " << groupid_res.valueAsString(0, 0) << std::endl;
-          /**/
+          */
           // lets just for fun try to find an old-style group with this id:
-          if (results_all_conversations.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId"))
-          {
-            auto [groupv1id_data, groupv1id_data_length] = results_all_conversations.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupId");
-            std::string gid = "__textsecure_group__!" + utf8BytesToHexString(groupv1id_data, groupv1id_data_length);
-            std::cout << "Possible GroupV1 id from BLOB: " << gid << std::endl;
-            d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
-          }
-          else if (results_all_conversations.valueHasType<std::string>(i, "groupId"))
+          if (results_all_conversations.valueHasType<std::string>(i, "groupId"))
           {
             std::string groupv1id_str = results_all_conversations.valueAsString(i, "groupId");
-            std::string gid = "__textsecure_group__!" + utf8BytesToHexString(groupv1id_str);
-            std::cout << "Possible GroupV1 id from STRING: " << gid << std::endl;
-            d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
+            person_or_group_id = "__textsecure_group__!" + utf8BytesToHexString(groupv1id_str);
+            isgroupconversation = true;
+            //std::cout << "Possible GroupV1 id from STRING: " << gid << std::endl;
+            //d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
           }
           continue;
           // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
