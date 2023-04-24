@@ -60,10 +60,11 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
-                       "recipient.group_id "
+                       "recipient.group_id, "
+                       "(SELECT COUNT(message._id) FROM message WHERE message.thread_id = thread._id) AS message_count "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
-                       "WHERE thread._id IN (" + threadlist +") ORDER BY "
+                       "WHERE thread._id IN (" + threadlist +") AND message_count > 0 ORDER BY "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, " : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
                        "date DESC", &results)) // order by pinned DESC archived ASC date DESC??
