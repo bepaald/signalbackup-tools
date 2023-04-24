@@ -319,6 +319,17 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   // for each conversation
   for (uint i = 0; i < results_all_conversations.rows(); ++i)
   {
+
+    // skip convo's with no messages...
+    SqliteDB::QueryResults messagecount;
+    if (ddb.exec("SELECT COUNT(*) AS count FROM messages WHERE conversationId = ?", results_all_conversations(i, "id"), &messagecount))
+      if (messagecount.rows() == 1 &&
+          messagecount.getValueAs<long long int>(0, "count") == 0)
+      {
+        std::cout << "Skipping conversation, conversation has no messages (" << i + 1 << "/" << results_all_conversations.rows() << ")" << std::endl;
+        continue;
+      }
+
     std::cout << "Trying to match conversation (" << i + 1 << "/" << results_all_conversations.rows() << ") (type: " << results_all_conversations.valueAsString(i, "type") << ")" << std::endl;
 
     //long long int conversation_rowid = results_all_conversations.getValueAs<long long int>(i, "rowid");
@@ -676,6 +687,37 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                              address))
           return false;
 
+        continue;
+      }
+      else if (flags == 1) // END_SESSION
+      {
+        long long int endsessiontype = Types::SECURE_MESSAGE_BIT |
+          Types::END_SESSION_BIT |
+          Types::PUSH_MESSAGE_BIT |
+          (outgoing ? Types::BASE_SENDING_TYPE : Types::BASE_INBOX_TYPE);
+
+        if (d_database.containsTable("sms"))
+        {
+          if (!insertRow("sms",
+                         {{"thread_id", ttid},
+                          {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
+                          {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
+                          {"type", endsessiontype},
+                          {d_sms_recipient_id, address},
+                          {"read", 1}}))
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into sms" << std::endl;
+        }
+        else
+        {
+          if (!insertRow(d_mms_table,
+                         {{"thread_id", ttid},
+                          {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                          {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                          {d_mms_type, endsessiontype},
+                          {d_mms_recipient_id, address},
+                          {"read", 1}}))
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
+        }
         continue;
       }
       else if (type == "keychange")

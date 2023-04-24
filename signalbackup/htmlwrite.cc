@@ -60,6 +60,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     (*written_avatars)[thread_recipient_id] :
     ((*written_avatars)[thread_recipient_id] = HTMLwriteAvatar(thread_recipient_id, directory, threaddir, overwrite, append));
 
+  std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  file << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T")
+       << " by signalbackup-tools (" << VERSIONDATE << "). "
+       << "Input database version: " << d_databaseversion << ". -->" << std::endl;
+
   file << R"(<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -149,6 +154,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-radius: 50% 50%;
         aspect-ratio: 1 / 1;
         text-align: center;
+      }
+
+      .avatar-emoji-initial {
+        font-family: "Apple Color Emoji", "Noto Color Emoji", sans-serif;
       }
 )";
 
@@ -540,45 +549,16 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         text-align: left;
       }
 
-      .msg-call-incoming,
-      .msg-call-outgoing,
-      .msg-call-missed,
-      .msg-video-call-incoming,
-      .msg-video-call-outgoing,
-      .msg-video-call-missed,
       .msg-status,
-      .msg-group-update-v1,
-      .msg-group-update-v2,
-      .msg-group-call {
+      .msg-group-update-v1 {
         background: none;
         align-self: center;
       }
 
-      .msg-call-incoming div,
-      .msg-call-outgoing div,
-      .msg-call-missed div,
-      .msg-video-call-incoming div,
-      .msg-video-call-outgoing div,
-      .msg-video-call-missed div,
       .msg-status div,
-      .msg-group-update-v1 div,
-      .msg-group-update-v2 div,
-      .msg-group-call div {
+      .msg-group-update-v1 div{
         background: none;
         align-self: center;
-        text-align: center;
-      }
-      .msg-call-incoming .msg-data,
-      .msg-call-outgoing .msg-data,
-      .msg-call-missed .msg-data,
-      .msg-video-call-incoming .msg-data,
-      .msg-video-call-outgoing .msg-data,
-      .msg-video-call-missed .msg-data,
-      .msg-status .msg-data,
-      .msg-group-update-v1 .msg-data,
-      .msg-group-update-v2 .msg-data,
-      .msg-group-call .msg-data {
-        display: block;
         text-align: center;
       }
 
@@ -596,29 +576,136 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: invert(100%);
       }
 
-      .msg-call-missed .msg-icon {
-        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-missed"><line x1="23" y1="1" x2="17" y2="7"></line><line x1="17" y1="1" x2="23" y2="7"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+      .msg-status {
+        max-width: 70%;
       }
 
-      .msg-call-incoming .msg-icon {
-        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-incoming"><polyline points="16 2 16 8 22 8"></polyline><line x1="23" y1="1" x2="16" y2="8"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+      .msg-status div.status-text {
+        align-items: center;
+        display: flex;
       }
 
-      .msg-call-outgoing .msg-icon {
-        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-outgoing"><polyline points="23 7 23 1 17 1"></polyline><line x1="16" y1="8" x2="23" y2="1"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+      .msg-status div.status-text:has( .msg-call-missed),
+      .msg-status div.status-text:has( .msg-video-call-missed) {
+        color: red;
+      }
+
+      .msg-status .msg-video-call-missed {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 14.117647 14.117647" stroke="none" fill="red"><path d="m 13.288805,3.2188235 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877997,-0.9069 -0.5154997,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689998,0.1878 -1.23449998,0.5155 -0.3277,0.3276 -0.5129,0.7712 -0.5155,1.2345 v 6.5000005 c 0.0026,0.4633 0.1878,0.9069 0.5155,1.2345 0.3276,0.3277 0.77119998,0.5129 1.23449998,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277,-0.3276 0.5128997,-0.7712 0.5154997,-1.2345 V 8.7688235 l 1.87,1.8600005 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468005 0.2079,-0.6936005 v -5.38 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588053,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088235 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488235 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.58 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z m -7.2899997,-2.69 2.14,2.15 -0.7,0.7 -2.15,-2.14 -2.15,2.14 -0.7,-0.7 2.14,-2.15 -2.14,-2.15 0.7,-0.7 2.15,2.14 2.15,-2.14 0.7,0.7 z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-video-call-incoming {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 14.117647 14.117647" stroke="none" fill="white"><path d="m 13.288805,3.2188234 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877996,-0.9069 -0.5154999,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689997,0.1878 -1.23449997,0.5155 -0.32769998,0.3276 -0.51289998,0.7712 -0.51549998,1.2345 v 6.5000006 c 0.0026,0.4633 0.1878,0.9069 0.51549998,1.2345 0.3276,0.3277 0.77119997,0.5129 1.23449997,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277003,-0.3276 0.5128999,-0.7712 0.5154999,-1.2345 V 8.7688234 l 1.87,1.8600006 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468003 0.2079,-0.6936003 V 4.3688234 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588051,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088234 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488237 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.5800003 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z M 3.7688051,9.0588234 h 3.29 v 1.0000006 h -5 V 5.0588234 h 1 v 3.29 l 4.15,-4.14 0.7,0.7 z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-video-call-outgoing {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 14.117647 14.117647" stroke="none" fill="white"><path d="m 13.288805,3.2188235 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877997,-0.9069 -0.5154997,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689998,0.1878 -1.23449998,0.5155 -0.3277,0.3276 -0.5129,0.7712 -0.5155,1.2345 v 6.5000005 c 0.0026,0.4633 0.1878,0.9069 0.5155,1.2345 0.3276,0.3277 0.77119998,0.5129 1.23449998,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277,-0.3276 0.5128997,-0.7712 0.5154997,-1.2345 V 8.7688235 l 1.87,1.8600005 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468005 0.2079,-0.6936005 v -5.38 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588053,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088235 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488235 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.58 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z m -4.9999997,-5.69 v 5 h -1 v -3.29 l -4.15,4.14 -0.7,-0.7 4.14,-4.15 h -3.29 v -1 z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-group-call {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" stroke="none" fill="white"><path d="M14.23,4.16a1.23,1.23 0,0 0,-1.36 0.27L11,6.29L11,4.75A1.76,1.76 0,0 0,9.25 3L2.75,3A1.76,1.76 0,0 0,1 4.75v6.5A1.76,1.76 0,0 0,2.75 13h6.5A1.76,1.76 0,0 0,11 11.25L11,9.71l1.87,1.86a1.23,1.23 0,0 0,0.88 0.37,1.18 1.18,0 0,0 0.48,-0.1A1.23,1.23 0,0 0,15 10.69L15,5.31A1.23,1.23 0,0 0,14.23 4.16ZM10,11.25a0.76,0.76 0,0 1,-0.75 0.75L2.75,12A0.76,0.76 0,0 1,2 11.25L2,4.75A0.76,0.76 0,0 1,2.75 4h6.5a0.76,0.76 0,0 1,0.75 0.75ZM14,10.69a0.25,0.25 0,0 1,-0.15 0.23,0.26 0.26,0 0,1 -0.28,-0.05L11,8.29L11,7.71l2.57,-2.58a0.26,0.26 0,0 1,0.28 0,0.25 0.25,0 0,1 0.15,0.23Z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-call-incoming {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" ><polyline points="16 2 16 8 22 8"></polyline><line x1="23" y1="1" x2="16" y2="8"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-call-missed {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2"><line x1="23" y1="1" x2="17" y2="7"></line><line x1="17" y1="1" x2="23" y2="7"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-call-outgoing {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="23 7 23 1 17 1"></polyline><line x1="16" y1="8" x2="23" y2="1"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
         transform: scale(-1, 1);
       }
 
-      .msg-video-call-missed .msg-icon {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 14.117647 14.117647"><path d="m 13.288805,3.2188235 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877997,-0.9069 -0.5154997,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689998,0.1878 -1.23449998,0.5155 -0.3277,0.3276 -0.5129,0.7712 -0.5155,1.2345 v 6.5000005 c 0.0026,0.4633 0.1878,0.9069 0.5155,1.2345 0.3276,0.3277 0.77119998,0.5129 1.23449998,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277,-0.3276 0.5128997,-0.7712 0.5154997,-1.2345 V 8.7688235 l 1.87,1.8600005 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468005 0.2079,-0.6936005 v -5.38 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588053,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088235 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488235 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.58 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z m -7.2899997,-2.69 2.14,2.15 -0.7,0.7 -2.15,-2.14 -2.15,2.14 -0.7,-0.7 2.14,-2.15 -2.14,-2.15 0.7,-0.7 2.15,2.14 2.15,-2.14 0.7,0.7 z"></path></svg>');
+      .msg-status .msg-info-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"  viewBox="0 0 24 24" fill="white" stroke="none"><path d="M12,2.5A9.5,9.5 0,1 1,2.5 12,9.511 9.511,0 0,1 12,2.5M12,1A11,11 0,1 0,23 12,11 11,0 0,0 12,1ZM12,8.5A1.5,1.5 0,0 0,13.5 7a1.5,1.5 0,1 0,-2.56 1.06A1.435,1.435 0,0 0,12 8.5ZM13,16.5L13,10L9.5,10v1.5h2v5L9,16.5L9,18h6L15,16.5Z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
       }
 
-      .msg-video-call-incoming .msg-icon {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 14.117647 14.117647"><path d="m 13.288805,3.2188234 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877996,-0.9069 -0.5154999,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689997,0.1878 -1.23449997,0.5155 -0.32769998,0.3276 -0.51289998,0.7712 -0.51549998,1.2345 v 6.5000006 c 0.0026,0.4633 0.1878,0.9069 0.51549998,1.2345 0.3276,0.3277 0.77119997,0.5129 1.23449997,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277003,-0.3276 0.5128999,-0.7712 0.5154999,-1.2345 V 8.7688234 l 1.87,1.8600006 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468003 0.2079,-0.6936003 V 4.3688234 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588051,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088234 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488237 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.5800003 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z M 3.7688051,9.0588234 h 3.29 v 1.0000006 h -5 V 5.0588234 h 1 v 3.29 l 4.15,-4.14 0.7,0.7 z"></path></svg>');
+      .msg-status .msg-security-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21.793,7.888A19.35,19.35 0,0 1,12 23C7.6,20.4 2,15.5 2,4.5 9,4.5 12,1 12,1s2.156,2.5 7.05,3.268L17.766,5.553A14.7,14.7 0,0 1,12 3,15.653 15.653,0 0,1 3.534,5.946c0.431,8.846 4.8,12.96 8.458,15.29A17.39,17.39 0,0 0,19.983 9.7ZM22.53,5.03 L21.47,3.97 12,13.439 8.53,9.97 7.47,11.03 12,15.561Z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
       }
 
-      .msg-video-call-outgoing .msg-icon {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 14.117647 14.117647"><path d="m 13.288805,3.2188235 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877997,-0.9069 -0.5154997,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689998,0.1878 -1.23449998,0.5155 -0.3277,0.3276 -0.5129,0.7712 -0.5155,1.2345 v 6.5000005 c 0.0026,0.4633 0.1878,0.9069 0.5155,1.2345 0.3276,0.3277 0.77119998,0.5129 1.23449998,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277,-0.3276 0.5128997,-0.7712 0.5154997,-1.2345 V 8.7688235 l 1.87,1.8600005 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468005 0.2079,-0.6936005 v -5.38 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588053,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088235 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488235 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.58 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z m -4.9999997,-5.69 v 5 h -1 v -3.29 l -4.15,4.14 -0.7,-0.7 4.14,-4.15 h -3.29 v -1 z"></path></svg>');
+      .msg-status .msg-profile-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" stroke="none"><path d="M13.653,9.893a5,5 0,1 0,-7.306 0A5.589,5.589 0,0 0,2 15.333V17H3.5V15.333A4.088,4.088 0,0 1,7.583 11.25h4.834A4.088,4.088 0,0 1,16.5 15.333V17H18V15.333A5.589,5.589 0,0 0,13.653 9.893ZM10,10a3.5,3.5 0,1 1,3.5 -3.5A3.5,3.5 0,0 1,10 10Z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-checkmark {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M9.172,18.5l-6.188,-6.187l1.061,-1.061l5.127,5.127l10.783,-10.784l1.061,1.061l-11.844,11.844z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-expiration-timer-disabled {
+          background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M11.47,13.89C10.4585,14.6149 9.2445,15.0033 8,15C6.4087,15 4.8826,14.3679 3.7574,13.2426C2.6321,12.1174 2,10.5913 2,9C2.0004,7.7576 2.3923,6.5469 3.12,5.54L3.83,6.25C3.2027,7.2109 2.9251,8.3584 3.0437,9.4999C3.1623,10.6413 3.6699,11.7072 4.4814,12.5186C5.2928,13.3301 6.3587,13.8377 7.5001,13.9563C8.6416,14.0749 9.7891,13.7973 10.75,13.17L11.47,13.89ZM14.71,14.29L14,15L2,3L2.71,2.29L4.53,4.12C5.3872,3.4951 6.3948,3.1086 7.45,3L7,1H9L8.55,3C9.7326,3.1074 10.8567,3.5633 11.78,4.31C11.8082,4.1801 11.8708,4.0602 11.9613,3.9628C12.0519,3.8655 12.1669,3.7943 12.2945,3.7569C12.422,3.7194 12.5573,3.7169 12.6861,3.7498C12.8149,3.7826 12.9325,3.8496 13.0265,3.9435C13.1204,4.0375 13.1874,4.1551 13.2202,4.2839C13.2531,4.4127 13.2506,4.548 13.2131,4.6755C13.1757,4.8031 13.1045,4.9181 13.0072,5.0087C12.9098,5.0992 12.7899,5.1618 12.66,5.19C13.4844,6.2077 13.9531,7.4672 13.9946,8.7763C14.0362,10.0854 13.6482,11.3721 12.89,12.44L14.71,14.29ZM13,9C12.999,8.0979 12.7539,7.2129 12.2907,6.4387C11.8275,5.6646 11.1636,5.0302 10.3691,4.6027C9.5747,4.1753 8.6795,3.9707 7.7783,4.0107C6.877,4.0507 6.0034,4.3338 5.25,4.83L7.49,7.08L7.75,5H8.25L8.66,8.24L12.17,11.75C12.7097,10.9342 12.9983,9.9781 13,9Z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
+      }
+
+      .msg-status .msg-expiration-timer-set {
+          background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M12.66,5.22C12.7899,5.1918 12.9098,5.1292 13.0072,5.0387C13.1045,4.9481 13.1757,4.8331 13.2132,4.7055C13.2506,4.578 13.2531,4.4427 13.2202,4.3139C13.1874,4.1851 13.1205,4.0675 13.0265,3.9735C12.9325,3.8795 12.8149,3.8126 12.6861,3.7798C12.5573,3.7469 12.422,3.7494 12.2945,3.7868C12.1669,3.8243 12.0519,3.8955 11.9613,3.9928C11.8708,4.0902 11.8082,4.2101 11.78,4.34C10.8603,3.5825 9.7358,3.1161 8.55,3L9,1H7L7.45,3C6.2642,3.1161 5.1397,3.5825 4.22,4.34C4.1918,4.2101 4.1292,4.0902 4.0387,3.9928C3.9481,3.8955 3.8331,3.8243 3.7055,3.7868C3.578,3.7494 3.4427,3.7469 3.3139,3.7798C3.1851,3.8126 3.0675,3.8795 2.9736,3.9735C2.8795,4.0675 2.8126,4.1851 2.7798,4.3139C2.7469,4.4427 2.7494,4.578 2.7868,4.7055C2.8244,4.8331 2.8955,4.9481 2.9928,5.0387C3.0902,5.1292 3.2101,5.1918 3.34,5.22C2.6259,6.1004 2.1759,7.1652 2.042,8.2908C1.9081,9.4165 2.0959,10.5571 2.5835,11.5805C3.0712,12.6038 3.8387,13.4681 4.7973,14.0732C5.756,14.6783 6.8664,14.9995 8,14.9995C9.1336,14.9995 10.244,14.6783 11.2027,14.0732C12.1613,13.4681 12.9289,12.6038 13.4165,11.5805C13.9041,10.5571 14.0919,9.4165 13.958,8.2908C13.8241,7.1652 13.3741,6.1004 12.66,5.22ZM8,14C7.0111,14 6.0444,13.7068 5.2221,13.1573C4.3999,12.6079 3.759,11.827 3.3806,10.9134C3.0022,9.9998 2.9032,8.9944 3.0961,8.0246C3.289,7.0546 3.7652,6.1637 4.4645,5.4645C5.1637,4.7652 6.0546,4.289 7.0245,4.0961C7.9945,3.9032 8.9998,4.0022 9.9134,4.3806C10.8271,4.759 11.6079,5.3999 12.1574,6.2221C12.7068,7.0444 13,8.0111 13,9C13,9.6566 12.8707,10.3068 12.6194,10.9134C12.3681,11.52 11.9998,12.0712 11.5355,12.5355C11.0712,12.9998 10.52,13.3681 9.9134,13.6194C9.3068,13.8707 8.6566,14 8,14ZM8.75,9C8.75,9.1989 8.671,9.3897 8.5303,9.5303C8.3897,9.671 8.1989,9.75 8,9.75C7.8011,9.75 7.6103,9.671 7.4697,9.5303C7.329,9.3897 7.25,9.1989 7.25,9L7.75,5H8.25L8.75,9Z"></path></svg>');
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        margin-right: 10px;
+        margin-bottom: 5px;
       }
 
       #menu {
@@ -731,7 +818,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     if (!isgroup && !isnotetoself)
     {
       file << R"(
-          <div class="avatar header-avatar msg-sender-)" << thread_recipient_id << R"(">
+          <div class="avatar header-avatar)" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial_is_emoji ? " avatar-emoji-initial" : "") << R"( msg-sender-)" << thread_recipient_id << R"(">
             )" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial << R"(
           </div>)";
     }
@@ -809,6 +896,11 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
                  << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#x2913;</a></span>" << std::endl;
       htmloutput << std::string(indent, ' ') << "  </" << content_type.substr(0, 5) << ">" << std::endl;
     }
+    else if (content_type.empty())
+    {
+      htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+                 << "_" << uniqueid << ".bin\" download>&#x2913;</a></span>" << std::endl;
+    }
     else // other
     {
       htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
@@ -825,6 +917,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 {
   int extraindent = 0;
   // insert message
+
+  htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->" << std::endl;
 
   // for incoming group (normal) message: insert avatar with initial
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
@@ -843,17 +937,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   }
 
   // msg bubble
-  htmloutput << std::string(extraindent, ' ') << "          <div id=\"msg-" << msg_info.msg_id
-             << "\" class=\"type-" << msg_info.type << " msg ";
+  htmloutput << std::string(extraindent, ' ') << "          <div class=\"msg ";
   if (msg_info.isgroupupdatev1)
     htmloutput << "msg-group-update-v1\">" << std::endl;
-  else if (Types::isCallType(msg_info.type)) // some call type
-  {
-    htmloutput << "msg-" << (Types::isIncomingCall(msg_info.type) ? "call-incoming" : (Types::isOutgoingCall(msg_info.type) ? "call-outgoing" : (Types::isMissedCall(msg_info.type) ? "call-missed" : (Types::isIncomingVideoCall(msg_info.type) ? "video-call-incoming" : (Types::isOutgoingVideoCall(msg_info.type) ? "video-call-outgoing" : (Types::isMissedVideoCall(msg_info.type) ? "video-call-missed" : (Types::isGroupCall(msg_info.type) ? "group-call" : "")))))));
-    htmloutput << "\">" << std::endl;
-    htmloutput << "            <div class=\"msg-icon\"></div>" << std::endl;
-  }
-  else if (Types::isStatusMessage(msg_info.type) && !Types::isCallType(msg_info.type) && !msg_info.isgroupupdatev1)
+  else if (Types::isStatusMessage(msg_info.type) && !msg_info.isgroupupdatev1)
     htmloutput << "msg-status\">" << std::endl;
   else
     htmloutput << "msg-" << (msg_info.incoming ? "incoming" : "outgoing")
@@ -921,11 +1008,42 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   if (!msg_info.body.empty())
   {
     htmloutput << std::string(extraindent, ' ') << "            <div"
-               << (msg_info.only_emoji ? " class=\"msg-all-emoji\"" : "") << ">" << std::endl;
-    if (!Types::isCallType(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <pre>" << msg_info.body << "</pre>" << std::endl;
-    else
-      htmloutput << std::string(extraindent, ' ') << "            " << msg_info.body << std::endl;
+               << (msg_info.only_emoji ? " class=\"msg-all-emoji\"" : "")
+               << (Types::isStatusMessage(msg_info.type) && !msg_info.isgroupupdatev1 ? " class=\"status-text\"" : "")
+               << ">" << std::endl;
+    if (Types::isEndSession(msg_info.type) || Types::isIdentityDefault(msg_info.type)) // info-icon
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-info-icon\"></div>" << std::endl;
+    else if (Types::isIdentityUpdate(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-security-icon\"></div>" << std::endl;
+    else if (Types::isIdentityVerified(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-checkmark\"></div>" << std::endl;
+    else if (Types::isProfileChange(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-profile-icon\"></div>" << std::endl;
+    else if (Types::isExpirationTimerUpdate(msg_info.type))
+    {
+      if (msg_info.body.find("disabled disappearing messages") != std::string::npos)
+        htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-expiration-timer-disabled\"></div>" << std::endl;
+      else
+        htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-expiration-timer-set\"></div>" << std::endl;
+    }
+    else if (Types::isIncomingCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-call-incoming\"></div>" << std::endl;
+    else if (Types::isOutgoingCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-call-outgoing\"></div>" << std::endl;
+    else if (Types::isMissedCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-call-missed\"></div>" << std::endl;
+    else if (Types::isIncomingVideoCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-video-call-incoming\"></div>" << std::endl;
+    else if (Types::isOutgoingVideoCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-video-call-outgoing\"></div>" << std::endl;
+    else if (Types::isMissedVideoCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-video-call-missed\"></div>" << std::endl;
+    else if (Types::isGroupCall(msg_info.type))
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-group-call\"></div>" << std::endl;
+    //else if (Types::isProfileChange(msg_info.type))
+    //  htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-profile-icon\"></div>" << std::endl;
+    //else if
+    htmloutput << std::string(extraindent, ' ') << "              <pre>" << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
   else if (msg_info.is_deleted)

@@ -250,7 +250,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
 
     std::string threaddir = (is_note_to_self ? "Note to self (_id"s + bepaald::toString(thread_id) + ")"
-                             : sanitizeFilename(recipient_info[thread_recipient_id].display_name) + " (_id" + bepaald::toString(thread_id) + ")");
+                             : sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ")"));
 
     //if (!append)
     //  makeFilenameUnique(directory, &threaddir);

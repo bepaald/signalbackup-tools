@@ -36,5 +36,6 @@
 #include "../csvreader/csvreader.h"
 #include "../mimetypes/mimetypes.h"
 #include "../messagerangeproto/messagerangeproto.h"
+#include "../autoversion.h"
 
 #include "htmlmessageinfo.h"

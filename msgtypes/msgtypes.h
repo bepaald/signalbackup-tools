@@ -77,6 +77,8 @@ struct Types
   static uint64_t constexpr END_SESSION_BIT    = 0x400000;
   static uint64_t constexpr PUSH_MESSAGE_BIT   = 0x200000;
 
+  static uint64_t constexpr ENCRYPTION_REMOTE_NO_SESSION_BIT = 0x08000000;
+
   static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_NOTIFICATION = 0x300000000L;
 
  public:
@@ -186,6 +188,11 @@ struct Types
     return (type & SECURE_MESSAGE_BIT) != 0;
   }
 
+  inline static bool isEndSession(long type)
+  {
+    return (type & END_SESSION_BIT) != 0;
+  }
+
   inline static bool isProfileChange(long type)
   {
     return (type & BASE_TYPE_MASK) == PROFILE_CHANGE_TYPE;
@@ -196,7 +203,7 @@ struct Types
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
-      isProfileChange(type) || type == Types::GV1_MIGRATION_TYPE;
+      isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE;
   }
 
 };

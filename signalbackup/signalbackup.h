@@ -140,6 +140,7 @@ class SignalBackup
   {
     std::string display_name;
     std::string initial;
+    bool initial_is_emoji;
     std::string uuid;
     std::string phone;
     std::string username;
@@ -360,7 +361,7 @@ class SignalBackup
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, int idx) const;
   inline int bytesToUtf8CharSize(std::string const &body, int idx, int length = 1) const;
-  inline int utf8CharsToByteSize() const;
+  //inline int utf8CharsToByteSize() const;
   inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
@@ -761,11 +762,12 @@ inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx, i
   return ret;
 }
 
+/*
 inline int SignalBackup::utf8CharsToByteSize() const
 {
   return 0;
 }
-
+*/
 inline std::string SignalBackup::utf8BytesToHexString(unsigned char const *const data, size_t data_size) const
 {
   // NOTE THIS IS NOT GENERIC UTF-8 CONVERSION, THIS
