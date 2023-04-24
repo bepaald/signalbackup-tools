@@ -38,12 +38,35 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     " recipient._id) AS 'display_name',recipient.phone,recipient.username,recipient.uuid, recipient.color "
                     "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?", rid, &results);
 
-
     std::string display_name = results.valueAsString(0, "display_name");
     if (display_name.empty())
       display_name = "?";
 
-    std::string initial(1, std::toupper(display_name[0]));
+    std::string initial;
+    bool initial_is_emoji = false;
+    if (bepaald::contains(s_emoji_first_bytes, display_name[0]))
+    {
+      for (char const *const emoji_string : s_emoji_unicode_list)
+      {
+        unsigned int emoji_size = std::strlen(emoji_string);
+        if ((display_name.size() >= emoji_size) &&
+            std::strncmp(display_name.data(), emoji_string, emoji_size) == 0)
+        {
+          initial = emoji_string;
+          initial_is_emoji = true;
+          break;
+        }
+      }
+    }
+
+    if (initial.empty())
+    {
+      int charsize = bytesToUtf8CharSize(display_name, 0);
+      if (charsize == 1)
+        initial = std::toupper(display_name[0]);
+      else
+        initial = display_name.substr(0, charsize);
+    }
     if (display_name[0] != '?' && (std::ispunct(display_name[0]) || std::isdigit(display_name[0])))
       initial = "#";
 
@@ -56,6 +79,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
 
     (*recipientinfo)[rid] = {display_name,
                              initial,
+                             initial_is_emoji,
                              results.valueAsString(0, "uuid"),
                              results.valueAsString(0, "phone"),
                              results.valueAsString(0, "username"),

@@ -74,6 +74,11 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   }
   //results.prettyPrint();
 
+  std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T")
+             << " by signalbackup-tools (" << VERSIONDATE << "). "
+             << "Input database version: " << d_databaseversion << ". -->" << std::endl;
+
   outputfile
     << "<!DOCTYPE html>" << std::endl
     << "<html lang=\"en\">" << std::endl
@@ -137,6 +142,10 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        font-size: 38px;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
+    << "      .avatar-emoji-initial {" << std::endl
+    << "        font-family: \"Apple Color Emoji\", \"Noto Color Emoji\", sans-serif;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl
     << "      .note-to-self-icon {" << std::endl
     << "        background: #315FF4;" << std::endl
     << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" fill=\"white\"><path d=\"M58,7.5A6.51,6.51 0,0 1,64.5 14L64.5,66A6.51,6.51 0,0 1,58 72.5L22,72.5A6.51,6.51 0,0 1,15.5 66L15.5,14A6.51,6.51 0,0 1,22 7.5L58,7.5M58,6L22,6a8,8 0,0 0,-8 8L14,66a8,8 0,0 0,8 8L58,74a8,8 0,0 0,8 -8L66,14a8,8 0,0 0,-8 -8ZM60,24L20,24v1.5L60,25.5ZM60,34L20,34v1.5L60,35.5ZM60,44L20,44v1.5L60,45.5ZM50,54L20,54v1.5L50,55.5Z\"></path></svg>');" << std::endl
@@ -162,7 +171,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
-      std::string avatar_path = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + results(i, "_id") + ")");
+      std::string avatar_path = (results.getValueAs<long long int>(i, "_id") == note_to_self_tid ?
+                                 "Note to self (_id" + results(i, "_id") + ")" :
+                                 sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + results(i, "_id") + ")"));
       bepaald::replaceAll(&avatar_path, '\"', R"(\")");
 
       outputfile
@@ -272,6 +283,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
     bool isgroup = !results.isNull(i, "group_id");
     bool isnotetoself = (t_id == note_to_self_tid);
+    bool emoji_initial = getRecipientInfoFromMap(recipient_info, rec_id).initial_is_emoji;
+    bool hasavatar = getRecipientInfoFromMap(recipient_info, rec_id).hasavatar;
 
     long long int groupsender = -1;
     if (results.valueHasType<std::string>(i, "group_sender_id"))
@@ -297,12 +310,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "      <div class=\"conversation-list-item\">" << std::endl
       //<< "        <div class=\"avatar " << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || (!isgroup && !isnotetoself)) ? "avatar-" + bepaald::toString(rec_id) : "group-avatar-icon") << (isnotetoself ? " note-to-self-icon" : "") << "\">" << std::endl
       << "        <div class=\"avatar"
-      << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || (!isgroup && !isnotetoself)) ? " avatar-" + bepaald::toString(rec_id) : "")
-      << ((isgroup && !getRecipientInfoFromMap(recipient_info, rec_id).hasavatar) ? " group-avatar-icon" : "")
+      << (((hasavatar || !isgroup) && !isnotetoself) ? " avatar-" + bepaald::toString(rec_id) : "")
+      << ((isgroup && !hasavatar) ? " group-avatar-icon" : "")
+      << ((emoji_initial && !hasavatar) ? " avatar-emoji-initial" : "")
       << (isnotetoself ? " note-to-self-icon" : "") << "\">" << std::endl
 
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
-      << ((!getRecipientInfoFromMap(recipient_info, rec_id).hasavatar && !isgroup && !isnotetoself) ? "          <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
+      << ((!hasavatar && !isgroup && !isnotetoself) ? "          <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
       << "        </div>" << std::endl
       << "        <div class=\"name-and-snippet\">" << std::endl
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl

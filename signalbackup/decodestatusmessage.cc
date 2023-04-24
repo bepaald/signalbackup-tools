@@ -122,6 +122,12 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       return "You marked your safety number with " + contactname + " unverified";
     return "You marked your safety number with " + contactname + " unverified from another device";
   }
+  if (Types::isEndSession(type))
+  {
+    if (Types::isOutgoing(type))
+      return "You reset the secure session.";
+    return contactname + " reset the secure session.";
+  }
   if (Types::isProfileChange(type))
   {
     return decodeProfileChangeMessage(body, contactname);
