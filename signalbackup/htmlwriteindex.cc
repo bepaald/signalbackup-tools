@@ -62,7 +62,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        "recipient.group_id, "
-                       "(SELECT COUNT(message._id) FROM message WHERE message.thread_id = thread._id) AS message_count "
+                       "(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
                        "WHERE thread._id IN (" + threadlist +") AND message_count > 0 ORDER BY "
