@@ -57,6 +57,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "thread." + d_thread_recipient_id + ", "
                        "thread.snippet, "
                        "thread.snippet_type, "
+                       "IFNULL(thread.date, 0) AS date, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
@@ -202,7 +203,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        position: relative;" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
-    << "        margin-left: 30px;" << std::endl
+    << "        padding-left: 30px;" << std::endl
     << "        justify-content: center;" << std::endl
     << "        align-content: center;" << std::endl
     << "        width: 350px;" << std::endl
@@ -220,6 +221,17 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "/*        box-orient: vertical; */" << std::endl
     << "        overflow: hidden;" << std::endl
     << "        text-overflow: ellipsis;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl
+    << "      .index-date {" << std::endl
+    << "        position: relative;" << std::endl
+    << "        display: flex;" << std::endl
+    << "        flex-direction: column;" << std::endl
+    << "        padding-left: 20px;" << std::endl
+    << "        font-size: small;" << std::endl
+    << "      /*font-style: italic;*/" << std::endl
+    << "        text-align: center;" << std::endl
+    << "        max-width: 100px;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .main-link::before {" << std::endl
@@ -297,6 +309,10 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     if (Types::isStatusMessage(snippet_type))
       snippet = "(status message)";
 
+    long long int datetime = results.getValueAs<long long int>(i, "date");
+    std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
+    std::string date_time = bepaald::toDateString(datetime / 1000, "%R");
+
     using namespace std::string_literals;
 
     std::string convo_url_path = (isnotetoself ? "Note to self (_id"s + bepaald::toString(t_id) + ")" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + bepaald::toString(t_id) + ")"));
@@ -323,6 +339,11 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
       << "          <span class=\"name\">" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</span>" << std::endl
       << "          <span class=\"snippet\">" << ((isgroup && groupsender > 0) ? getRecipientInfoFromMap(recipient_info, groupsender).display_name + ": " : "") << snippet << "</span>" << std::endl
+      << "        </div>" << std::endl
+      << "        <div class=\"index-date\">" << std::endl
+      << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
+      << "          <span>" << date_date << "</span>" << std::endl
+      << "          <span>" << date_time << "</span>" << std::endl
       << "        </div>" << std::endl
       << "      </div>" << std::endl
       << "" << std::endl;

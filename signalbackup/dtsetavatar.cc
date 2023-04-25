@@ -19,22 +19,23 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir)
+bool SignalBackup::dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir)
 {
   // set avatar
   //std::string avatarpath = res("avatar");
-  if (!avatarpath.empty())
+  if (avatarpath.empty())
+    return false;
+
+  AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
+  if (!amd)
+    return false;
+
+  std::unique_ptr<AvatarFrame> new_avatar_frame;
+  if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(rid),
+                                                                      "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
   {
-    AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
-    if (amd)
-    {
-      std::unique_ptr<AvatarFrame> new_avatar_frame;
-      if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(rid),
-                                                                          "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
-      {
-        new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
-        d_avatars.emplace_back(std::make_pair(bepaald::toString(rid), std::move(new_avatar_frame)));
-      }
-    }
+    new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
+    d_avatars.emplace_back(std::make_pair(bepaald::toString(rid), std::move(new_avatar_frame)));
   }
+  return true;
 }
