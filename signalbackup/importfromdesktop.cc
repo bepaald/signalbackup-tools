@@ -1228,13 +1228,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   for (auto const &r : recipientmap)
   {
-    std::cout << "Recpients in map: " << r.first << " : " << r.second << std::endl;
+    //std::cout << "Recpients in map: " << r.first << " : " << r.second << std::endl;
     long long int profile_date_desktop = ddb.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE uuid = ? OR groupId = ? OR e164 = ?", {r.first, r.first, r.first}, 0);
     long long int profile_date_android = d_database.getSingleResultAs<long long int>("SELECT last_profile_fetch FROM recipient WHERE _id = ?", r.second, 0);
 
     if (profile_date_desktop > profile_date_android)
     {
-      std::cout << "Need to update profile!" << std::endl;
+      //std::cout << "Need to update profile!" << std::endl;
       // update profile from desktop.
       if (!dtUpdateProfile(ddb, r.first, r.second, databasedir))
         std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to update profile data." << std::endl;
