@@ -370,7 +370,8 @@ class SignalBackup
   long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &gidb64,
                                   std::string const &databasedir, std::map<std::string, long long int> *recipient_info,
                                   bool *warn);
-  void dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
+  bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
+  bool dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

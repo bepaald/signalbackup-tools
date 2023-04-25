@@ -290,6 +290,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   bool warned_createcontacts = false;
 
+  // find out which database is newer
+  long long int maxdate_desktop_db = ddb.getSingleResultAs<long long int>("SELECT MAX(MAX(json_extract(json, '$.received_at_ms')),MAX(received_at)) FROM messages", 0);
+  long long int maxdate_android_db = d_database.getSingleResultAs<long long int>("SELECT MAX(date_received) FROM " + d_mms_table, 0);
+  if (d_database.containsTable("sms"))
+    maxdate_android_db = d_database.getSingleResultAs<long long int>("SELECT MAX((SELECT MAX(date_received) FROM " + d_mms_table + "),(SELECT MAX(" + d_sms_date_received + ") FROM sms))", 0);
+  bool desktop_is_newer = maxdate_desktop_db > maxdate_android_db;
+
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
   if (!ddb.exec("SELECT "
@@ -300,6 +307,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                 "LOWER(uuid) AS 'uuid',"
                 "groupId,"
                 "IFNULL(json_extract(json,'$.isArchived'), false) AS 'is_archived',"
+                "IFNULL(json_extract(json,'$.isPinned'), false) AS 'is_pinned',"
                 "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
                 "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
@@ -319,7 +327,6 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   // for each conversation
   for (uint i = 0; i < results_all_conversations.rows(); ++i)
   {
-
     // skip convo's with no messages...
     SqliteDB::QueryResults messagecount;
     if (ddb.exec("SELECT COUNT(*) AS count FROM messages WHERE conversationId = ?", results_all_conversations(i, "id"), &messagecount))
@@ -456,7 +463,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, recipientid_for_thread},
-                      {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")}},
+                      {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")},
+                      {"pinned", results_all_conversations.getValueAs<long long int>(i, "is_pinned")}},
                      "_id", &new_thread_id))
       {
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. ("
@@ -474,6 +482,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
     //std::cout << "Match for " << person_or_group_id << std::endl;
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
+
+    // we have the Android thread id (ttid) and the desktop data (results_all_conversations.value(i, "xxx")), update
+    // Androids pinned and archived status if desktop is newer:
+    if (desktop_is_newer)
+      if (!d_database.exec("UPDATE thread SET archived = ?, pinned = ? WHERE _id = ?", {results_all_conversations.getValueAs<long long int>(i, "is_archived"),
+                                                                                        results_all_conversations.getValueAs<long long int>(i, "is_pinned"),
+                                                                                        ttid}))
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to update thread properties (id: " << ttid << ")" << std::endl;
 
     // now lets get all messages for this conversation
     SqliteDB::QueryResults results_all_messages_from_conversation;
@@ -1208,6 +1224,21 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
     }
     //updateThreadsEntries(ttid);
+  }
+
+  for (auto const &r : recipientmap)
+  {
+    std::cout << "Recpients in map: " << r.first << " : " << r.second << std::endl;
+    long long int profile_date_desktop = ddb.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE uuid = ? OR groupId = ? OR e164 = ?", {r.first, r.first, r.first}, 0);
+    long long int profile_date_android = d_database.getSingleResultAs<long long int>("SELECT last_profile_fetch FROM recipient WHERE _id = ?", r.second, 0);
+
+    if (profile_date_desktop > profile_date_android)
+    {
+      std::cout << "Need to update profile!" << std::endl;
+      // update profile from desktop.
+      if (!dtUpdateProfile(ddb, r.first, r.second, databasedir))
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to update profile data." << std::endl;
+    }
   }
 
   reorderMmsSmsIds();

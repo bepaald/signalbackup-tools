@@ -419,7 +419,6 @@ inline T SqliteDB::getSingleResultAs(std::string const &q, std::vector<std::any>
     //  std::cout << "Type: " << tmp.value(0, 0).type().name() << " Requested type: " << typeid(T).name() << std::endl;
     return defaultval;
   }
-
   return tmp.getValueAs<T>(0, 0);
 }
 
