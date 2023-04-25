@@ -230,7 +230,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        padding-left: 20px;" << std::endl
     << "        font-size: small;" << std::endl
     << "      /*font-style: italic;*/" << std::endl
-    << "        text-align: center;" << std::endl
+    << "        text-align: right;" << std::endl
     << "        max-width: 100px;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
