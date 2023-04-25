@@ -339,8 +339,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-dl-link a {
-        font-size: xx-large;
+        font-size: large;
+        font-weight: 700;
         text-decoration: none;
+        color: white;
+        padding-left: 5px;
       }
 
       .msg-name {
@@ -427,6 +430,23 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding: 5px;
         background-color: #5E5E5E;
         text-align: center;
+      }
+
+      .attachment-unknown-type {
+        border-radius: .6em;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        padding-left: 9px;
+        padding-right: 9px;
+        margin-bottom: 5px;
+      }
+
+      .msg-incoming .attachment-unknown-type {
+        background-color: rgba(255, 255, 255, .16);
+      }
+
+      .msg-outgoing .attachment-unknown-type {
+        background-color: rgba(0, 0, 0, 0.244);
       }
 
       .msg-with-reaction {
@@ -873,9 +893,13 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, overwrite, append))
       continue;
 
-    htmloutput << std::string(indent, ' ') << "<div class=\"attachment\">" << std::endl;
-
     std::string content_type = attachment_results.valueAsString(a, "ct");
+
+    htmloutput << std::string(indent, ' ') << "<div class=\"attachment"
+               << ((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) ?
+                   " attachment-unknown-type" : "")
+               << "\">" << std::endl;
+
     if (STRING_STARTS_WITH(content_type, "image/"))
     {
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">" << std::endl;
@@ -893,18 +917,18 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "    <source src=\"media/Attachment_" << rowid
                  << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#x2913;</a></span>" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
       htmloutput << std::string(indent, ' ') << "  </" << content_type.substr(0, 5) << ">" << std::endl;
     }
     else if (content_type.empty())
     {
-      htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" download>&#x2913;</a></span>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+                 << "_" << uniqueid << ".bin\" download>&#129055;</a></span>" << std::endl;
     }
     else // other
     {
       htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download>&#x2913;</a></span>" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download>&#129055;</a></span>" << std::endl;
     }
 
     htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
