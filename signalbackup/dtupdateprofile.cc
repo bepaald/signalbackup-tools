@@ -43,12 +43,16 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
   // handle group
   if (res("type") == "group")
   {
-    if (res.isNull(0, "name") || res("name").empty())
-      return false;
-
     if (res.getValueAs<long long int>(0, "groupVersion") < 2)
     {
       // group v1 not yet....
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Updating profile data for groupV1 not yet supported." << std::endl;
+      return false;
+    }
+
+    if (res.isNull(0, "name") || res("name").empty())
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Profile data empty. Not updating group recipient." << std::endl;
       return false;
     }
 
@@ -57,7 +61,10 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
     if (!groupid_data.first || groupid_data.second == 0) // json data was not valid base64 string, lets try the other one
       groupid_data = Base64::base64StringToBytes(res("groupId"));
     if (!groupid_data.first || groupid_data.second == 0)
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to deteremine group_id when trying to update profile." << std::endl;
       return false;
+    }
     std::string group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
     bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
 
@@ -69,7 +76,13 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
     if ((res.isNull(0, "profileName") || res("profileName").empty()) &&
         (res.isNull(0, "profileFamilyName") || res("profileFamilyName").empty()) &&  // not updating with empty info
         (res.isNull(0, "profileFullName") || res("profileFullName").empty()))
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Profile data empty. Not updating recipient." << std::endl;
       return false;
+    }
+
+    //std::cout << "Updating profile:" << std::endl;
+    //res.prettyPrint();
 
     // update name info
     if (!d_database.exec("UPDATE recipient SET "

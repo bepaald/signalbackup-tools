@@ -857,7 +857,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
             )" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(
           </div>
           <div id="thread-subtitle">
-            )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << R"(
+            )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" :
+                   (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
+                    getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone)) << R"(
           </div>
         </div>
         <div class="conversation-box">
@@ -894,6 +896,12 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       continue;
 
     std::string content_type = attachment_results.valueAsString(a, "ct");
+    std::string original_filename;
+    if (!attachment_results.isNull(a, "file_name") && !attachment_results(a, "file_name").empty())
+    {
+      original_filename = attachment_results(a, "file_name");
+      HTMLescapeString(&original_filename);
+    }
 
     htmloutput << std::string(indent, ' ') << "<div class=\"attachment"
                << ((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) ?
@@ -922,13 +930,23 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     }
     else if (content_type.empty())
     {
-      htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" download>&#129055;</a></span>" << std::endl;
+      if (original_filename.empty())
+        htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+                   << "_" << uniqueid << ".bin\">&#129055;</a></span>" << std::endl;
+      else
+        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "' <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+          //<< "_" << uniqueid << ".bin\" download=\"" << original_filename << "\">&#129055;</a></span>" << std::endl; // does not work
+                   << "_" << uniqueid << ".bin\">&#129055;</a></span>" << std::endl;
     }
     else // other
     {
-      htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download>&#129055;</a></span>" << std::endl;
+      if (original_filename.empty())
+        htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
+      else
+        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "'<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+          //<< "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download=\"" << original_filename << "\">&#129055;</a></span>" << std::endl; // does not work
+                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
     }
 
     htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
