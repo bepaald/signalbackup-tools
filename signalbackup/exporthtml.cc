@@ -138,6 +138,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     long long int selfid = scanSelf();
     if (selfid != -1)
       note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", selfid, -1);
+    else
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Failed to determine Note-to-self thread. Consider passing `--setselfid \"[phone]\"' to set it manually" << std::endl;
   }
   else
     note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS "
@@ -350,10 +353,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
 
         SqliteDB::QueryResults attachment_results;
-        d_database.exec("SELECT _id,unique_id,ct,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+        d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
-        d_database.exec("SELECT _id,unique_id,ct,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+        d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
 
         SqliteDB::QueryResults mention_results;
         d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
