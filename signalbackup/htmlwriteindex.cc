@@ -77,7 +77,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   //results.prettyPrint();
 
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T")
+  //outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F an d%T do not work on minGW
+  outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
              << " by signalbackup-tools (" << VERSIONDATE << "). "
              << "Input database version: " << d_databaseversion << ". -->" << std::endl;
 
@@ -311,7 +312,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
-    std::string date_time = bepaald::toDateString(datetime / 1000, "%R");
+    //std::string date_time = bepaald::toDateString(datetime / 1000, "%R"); // does not work with mingw
+    std::string date_time = bepaald::toDateString(datetime / 1000, "%H:%M");
 
     using namespace std::string_literals;
 

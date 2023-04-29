@@ -61,7 +61,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     ((*written_avatars)[thread_recipient_id] = HTMLwriteAvatar(thread_recipient_id, directory, threaddir, overwrite, append));
 
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  file << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T")
+  //file << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F and %T do not work on minGW
+  file << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
        << " by signalbackup-tools (" << VERSIONDATE << "). "
        << "Input database version: " << d_databaseversion << ". -->" << std::endl;
 

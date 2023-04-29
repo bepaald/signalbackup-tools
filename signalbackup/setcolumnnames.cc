@@ -82,8 +82,12 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn(d_mms_table, "date"))
     d_mms_date_sent = "date";
 
-  // started at dbv166
-  d_mms_recipient_id = "recipient_id";
+  // started at dbv185
+  d_mms_recipient_id = "from_recipient_id";
+  // before 185
+  if (!d_database.tableContainsColumn(d_mms_table, "from_recipient_id") &&
+      d_database.tableContainsColumn(d_mms_table, "recipient_id"))
+    d_mms_recipient_id = "recipient_id";
   // before 166
   if (!d_database.tableContainsColumn(d_mms_table, "recipient_id") &&
       d_database.tableContainsColumn(d_mms_table, "address"))

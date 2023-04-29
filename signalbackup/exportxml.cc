@@ -107,7 +107,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
     long long int datum = results.getValueAs<long long int>(i, d_sms_date_received);
     std::time_t epoch = datum / 1000;
     std::ostringstream tmp;
-    tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %T");
+    tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %H:%M:%S");
     readable_date = tmp.str();
   }
 
@@ -239,7 +239,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     long long int datum = results.getValueAs<long long int>(i, "date_received");
     std::time_t epoch = datum / 1000;
     std::ostringstream tmp;
-    tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %T");
+    tmp << std::put_time(std::localtime(&epoch), "%b %d, %Y %H:%M:%S");
     readable_date = tmp.str();
   }
 

@@ -285,3 +285,11 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
   return body;
 }
+
+/*
+
+type & 0x1f == 14 CHANGE_NUMBER_TYPE
+
+689:app/src/main/res/values/strings.xml:1437:    <string name="MessageRecord_s_changed_their_phone_number">%1$s changed their phone number.</string>
+701:app/src/main/res/values/strings.xml:3982:    <string name="ChangeNumber__your_phone_number_has_changed_to_s">Your phone number has been changed to %1$s</string>
+*/
