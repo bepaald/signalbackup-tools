@@ -23,7 +23,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   std::cout << __FUNCTION__ << " (" << thread << ")" << std::endl;
 
-  if ((d_databaseversion >= 172 && source->d_databaseversion < 172) || // group.members dropped
+  if ((d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
+      (d_databaseversion >= 172 && source->d_databaseversion < 172) || // group.members dropped
       (d_databaseversion >= 168 && source->d_databaseversion < 168) || // sms table dropped
       (d_databaseversion >= 33 && source->d_databaseversion < 33) ||
       (d_databaseversion < 33 && source->d_databaseversion >= 33) ||

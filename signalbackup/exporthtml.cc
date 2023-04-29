@@ -222,7 +222,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     // now get all messages
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
-                    "_id, recipient_id, body, "
+                    "_id, " + d_mms_recipient_id + ", body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "expires_in, message_ranges, "
@@ -339,9 +339,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       {
 
         long long int msg_id = messages.getValueAs<long long int>(messagecount, "_id");
-        long long int msg_recipient_id = messages.getValueAs<long long int>(messagecount, "recipient_id"); // for groups, this != thread_recipient_id on incoming messages
+        long long int msg_recipient_id = messages.getValueAs<long long int>(messagecount, d_mms_recipient_id); // for groups, this != thread_recipient_id on incoming messages
         std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
-                                                          "%b %d, %Y %T");
+                                                          "%b %d, %Y %H:%M:%S");
         std::string readable_date_day = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
                                                               "%b %d, %Y");
         bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));

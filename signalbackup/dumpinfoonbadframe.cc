@@ -84,7 +84,8 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
           {
             long long int datum = results.getValueAs<long long int>(i, j);
             std::time_t epoch = datum / 1000;
-            std::cout << std::put_time(std::localtime(&epoch), "%F %T %z") << " (" << results.getValueAs<long long int>(i, j) << ")" << std::endl;
+            //std::cout << std::put_time(std::localtime(&epoch), "%F %T %z") << " (" << results.getValueAs<long long int>(i, j) << ")" << std::endl; // %F and %T do not work with mingw
+            std::cout << std::put_time(std::localtime(&epoch), "%Y-%m-%d %H:%M:%S %z") << " (" << results.getValueAs<long long int>(i, j) << ")" << std::endl;
           }
           else
             std::cout << results.getValueAs<long long int>(i, j) << std::endl;
@@ -151,7 +152,8 @@ void SignalBackup::dumpInfoOnBadFrames() const
             long long int datum = results.getValueAs<long long int>(i, j);
             std::time_t epoch = datum / 1000;
             std::ostringstream tmp;
-            tmp << std::put_time(std::localtime(&epoch), "%F %T %z") << " (" << results.getValueAs<long long int>(i, j) << ")";
+            //tmp << std::put_time(std::localtime(&epoch), "%F T %z") << " (" << results.getValueAs<long long int>(i, j) << ")"; // %F and %T do not work on mingw
+            tmp << std::put_time(std::localtime(&epoch), "%Y-%m-%d %H:%M:%S %z") << " (" << results.getValueAs<long long int>(i, j) << ")";
             date = tmp.str();
           }
           if (results.header(j) == "date_received")
@@ -159,7 +161,8 @@ void SignalBackup::dumpInfoOnBadFrames() const
             long long int datum = results.getValueAs<long long int>(i, j);
             std::time_t epoch = datum / 1000;
             std::ostringstream tmp;
-            tmp << std::put_time(std::localtime(&epoch), "%F %T %z") << " (" << results.getValueAs<long long int>(i, j) << ")";
+            //tmp << std::put_time(std::localtime(&epoch), "%F T %z") << " (" << results.getValueAs<long long int>(i, j) << ")"; // %F and %T do not work on mingw
+            tmp << std::put_time(std::localtime(&epoch), "%Y-%m-%d %H:%M:%S %z") << " (" << results.getValueAs<long long int>(i, j) << ")";
             date_received = tmp.str();
           }
         }
