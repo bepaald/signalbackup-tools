@@ -21,15 +21,56 @@
 
 long long int SignalBackup::scanSelf() const
 {
-
-  using namespace std::string_literals;
-
   // only 'works' on 'newer' versions
   if (!d_database.containsTable("recipient") ||
       !d_database.tableContainsColumn("thread", d_thread_recipient_id) ||
       !d_database.tableContainsColumn(d_mms_table, "quote_author") ||
       (!d_database.tableContainsColumn(d_mms_table, "reactions") && !d_database.containsTable("reaction")))
     return -1;
+
+  ///// FIRST TRY BY GETTING KEY 'account.pni_identity_public_key' FROM KeyValues, and matching it to uuid from identites-table
+  std::string identity_public_key;
+  for (auto const &kv : d_keyvalueframes)
+    if (kv->key() == "account.pni_identity_public_key" && !kv->value().empty())
+    {
+      identity_public_key = kv->value();
+      break;
+    }
+  if (!identity_public_key.empty())
+  {
+    long long int selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE uuid IN "
+                                                                       "(SELECT address FROM identities WHERE identity_key IS ?)",
+                                                                       identity_public_key, -1);
+    if (selfid != -1)
+      return selfid;
+  }
+
+  ///// NEXT TRY BY GETTING KEY 'account.aci_identity_public_key' FROM KeyValues, and matching it to uuid from identites-table
+  identity_public_key.clear();
+  for (auto const &kv : d_keyvalueframes)
+    if (kv->key() == "account.aci_identity_public_key" && !kv->value().empty())
+    {
+      identity_public_key = kv->value();
+      break;
+    }
+  if (!identity_public_key.empty())
+  {
+    long long int selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE uuid IN "
+                                                                       "(SELECT address FROM identities WHERE identity_key IS ?)",
+                                                                       identity_public_key, -1);
+    if (selfid != -1)
+      return selfid;
+  }
+
+  // in newer databases (>= dbv185), message.from_recipient_id should always be set to self on outgoing messages.
+  long long int selfid = d_database.getSingleResultAs<long long int>("SELECT DISTINCT " + d_mms_recipient_id + " FROM message WHERE (type & 0x1f) IN (?, ?, ?, ?, ?, ?, ?, ?)",
+                                                                     {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE,
+                                                                      Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                                                                      Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK ,
+                                                                      Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, -1);
+  if (selfid != -1)
+    return selfid;
+
 
   // get thread ids of all 1-on-1 conversations
   SqliteDB::QueryResults res;
@@ -160,12 +201,50 @@ long long int SignalBackup::scanSelf() const
     }
     else if (d_database.containsTable("group_membership")) // modern style
     {
-      // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
-      if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?) AND "
-                           "recipient_id NOT IN (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id IS ? AND type IS NOT ?)",
-                           {gid, tid, Types::GROUP_CALL_TYPE}, &res3))
-        continue;
-      //res3.prettyPrint();
+      if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id")) // < dbv185
+      {
+        // this prints all group members that never appear as recipient in a message (in groups, the recipient ('address') is always the sender, except for self, who has the groups id as address)
+        if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?) AND "
+                             "recipient_id NOT IN (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id IS ? AND type IS NOT ?)",
+                             {gid, tid, Types::GROUP_CALL_TYPE}, &res3))
+          continue;
+        //res3.prettyPrint();
+      }
+      else
+      {
+        // in the newer style, ([from/to]_recipient_id), self CAN appear as recipient (to_ when incoming, from_ when outgoing).
+        // for incoming messages 'self' will never appear in from_, but could (for msgs arriving since 185) appear in to_.
+        // for outgoing messages 'self' will never appear in to_ (= always rec._id of group), but always (if migration succesfull) in from_.
+
+        // // outgoing
+        // if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?) AND "
+        //                      "recipient_id NOT IN ("
+        //                      "SELECT DISTINCT to_recipient_id FROM " + d_mms_table + " WHERE thread_id IS ? AND type IN (?, ?, ?, ?, ?, ?, ?, ?)"
+        //                      ")",
+        //                      {gid, tid,
+        //                       Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+        //                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
+        //   for (uint j = 0; j < res3.rows(); ++j)
+        //   {
+        //     std::cout << "  From group membership (NEW):" << res3(j, "recipeint_id") << std::endl;
+        //     options.insert(bepaald::toNumber<long long int>(res3(j, "recipient_id")));
+        //   }
+
+        // incoming
+        if (!d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id IN (SELECT group_id FROM groups WHERE _id = ?) AND "
+                             "recipient_id NOT IN ("
+                             "SELECT DISTINCT from_recipient_id FROM " + d_mms_table + " WHERE thread_id IS ? AND type IS NOT ? AND type NOT IN (?, ?, ?, ?, ?, ?, ?, ?)"
+                             ")",
+                             {gid, tid, Types::GROUP_CALL_TYPE,
+                              Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
+                              Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
+          for (uint j = 0; j < res3.rows(); ++j)
+          {
+            std::cout << "  From group membership (NEW):" << res3(j, "recipeint_id") << std::endl;
+            options.insert(bepaald::toNumber<long long int>(res3(j, "recipient_id")));
+          }
+
+      }
     }
   }
 

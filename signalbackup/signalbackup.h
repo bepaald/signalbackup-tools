@@ -84,6 +84,8 @@ class SignalBackup
   bool d_showprogress;
   bool d_stoponerror;
   bool d_verbose;
+  std::set<std::string> d_warningsgiven;
+  long long int d_selfid;
 
   enum DBLinkFlag : int
   {
@@ -102,6 +104,8 @@ class SignalBackup
     std::string uuid;
     std::string phone;
     std::string group_id;
+    long long int group_type; //    NONE(0), MMS(1), SIGNAL_V1(2), SIGNAL_V2(3), DISTRIBUTION_LIST(4);
+    std::string storage_service_key;
   };
 
   struct TableConnection
@@ -195,7 +199,7 @@ class SignalBackup
   //bool importThread(SignalBackup *source, std::vector<long long int> const &threads);
   inline bool ok() const;
   bool dropBadFrames();
-  void fillThreadTableFromMessages();
+  //void fillThreadTableFromMessages();
   inline void addEndFrame();
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
   void mergeGroups(std::vector<std::string> const &groups);
@@ -224,12 +228,12 @@ class SignalBackup
                   bool migrate, bool overwrite, bool append) const;
 
   /* CUSTOMS */
-  bool hhenkel(std::string const &);
-  bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
-  bool hiperfall(uint64_t t_id, std::string const &selfid);
+  //bool hhenkel(std::string const &);
+  //bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
+  //bool hiperfall(uint64_t t_id, std::string const &selfid);
   void scanMissingAttachments() const;
-  void devCustom() const;
-  bool carowit(std::string const &sourcefile, std::string const &sourcepw) const;
+  //void devCustom() const;
+  //bool carowit(std::string const &sourcefile, std::string const &sourcepw) const;
   /* CUSTOMS */
 
  private:
@@ -372,6 +376,7 @@ class SignalBackup
                                   bool *warn);
   bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
   bool dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
+  inline void warnOnce(std::string const &msg, bool error = false);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -391,7 +396,8 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   d_databaseversion(-1),
   d_showprogress(showprogress),
   d_stoponerror(stoponerror),
-  d_verbose(verbose)
+  d_verbose(verbose),
+  d_selfid(-1)
 {
   if (bepaald::isDir(filename))
     initFromDir(filename, replaceattachments);
@@ -798,6 +804,16 @@ inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned c
 inline std::string SignalBackup::utf8BytesToHexString(std::string const &data) const
 {
   return utf8BytesToHexString(reinterpret_cast<unsigned char const *>(data.data()), data.size());
+}
+
+inline void SignalBackup::warnOnce(std::string const &warning, bool error)
+{
+  if (!bepaald::contains(d_warningsgiven, warning))
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": "
+              << warning << std::endl;
+    d_warningsgiven.insert(warning);
+  }
 }
 
 #endif

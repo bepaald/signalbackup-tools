@@ -21,8 +21,6 @@
 
 bool SignalBackup::reorderMmsSmsIds() const
 {
-  using namespace std::string_literals;
-
   std::cout << __FUNCTION__ << std::endl;
 
   // get all mms in the correct order

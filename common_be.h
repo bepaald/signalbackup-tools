@@ -59,6 +59,8 @@
 
 typedef unsigned int uint;
 
+using std::literals::string_literals::operator""s;
+
 namespace bepaald
 {
   template <typename T>

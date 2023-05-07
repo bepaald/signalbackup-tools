@@ -26,8 +26,6 @@
 bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                              std::string const &returnfield, std::any *returnvalue) const
 {
-  using namespace std::string_literals;
-
   // check if columns exist...
   for (auto it = data.begin(); it != data.end();)
   {

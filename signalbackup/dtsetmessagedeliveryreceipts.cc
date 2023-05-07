@@ -23,9 +23,6 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
                                                 std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms,
                                                 bool isgroup, bool *warn)
 {
-
-  using namespace std::string_literals;
-
   //  public static final int STATUS_UNKNOWN     = -1;
   //  public static final int STATUS_UNDELIVERED = 0;
   //  public static final int STATUS_DELIVERED   = 1;

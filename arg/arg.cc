@@ -33,7 +33,6 @@ Arg::Arg(int argc, char *argv[])
   d_opassphrase(std::string()),
   d_source(std::string()),
   d_sourcepassphrase(std::string()),
-  d_generatefromtruncated(false),
   d_croptothreads(std::vector<long long int>()),
   d_croptodates(std::vector<std::string>()),
   d_mergerecipients(std::vector<std::string>()),
@@ -102,7 +101,8 @@ Arg::Arg(int argc, char *argv[])
   d_carowit_2(std::string()),
   d_desktopdbversion(4),
   d_migratedb(false),
-  d_addincompletedataforhtmlexport(false)
+  d_addincompletedataforhtmlexport(false),
+  d_light(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -258,16 +258,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
-      continue;
-    }
-    if (option == "--generatefromtruncated")
-    {
-      d_generatefromtruncated = true;
-      continue;
-    }
-    if (option == "--no-generatefromtruncated")
-    {
-      d_generatefromtruncated = false;
       continue;
     }
     if (option == "--croptothreads")
@@ -1098,6 +1088,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-addincompletedataforhtmlexport")
     {
       d_addincompletedataforhtmlexport = false;
+      continue;
+    }
+    if (option == "--light")
+    {
+      d_light = true;
+      continue;
+    }
+    if (option == "--no-light")
+    {
+      d_light = false;
       continue;
     }
     if (option[0] != '-')

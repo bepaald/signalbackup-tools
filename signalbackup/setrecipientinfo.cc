@@ -22,8 +22,6 @@
 void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                                     std::map<long long int, RecipientInfo> *recipientinfo) const
 {
-  using namespace std::string_literals;
-
   // get info from all recipients:
   for (long long int rid : recipients)
   {

@@ -41,7 +41,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("SELECT * FROM remapped_recipients", &r);
     if (r.rows())
     {
-      std::cout << "WARNING: Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!" << std::endl;
+      warnOnce("Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!");
 
       for (uint i = 0; i < r.rows(); ++i)
       {
@@ -140,7 +140,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
 
     //std::string phone_or_group = results.getValueAs<std::string>(0, 0);
-    RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id")};
+    RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id"), -1, std::string()};
 
     d_database.exec("SELECT _id FROM recipient WHERE "
                     "(uuid IS NOT NULL AND uuid IS ?) OR "
@@ -468,11 +468,16 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     if (d_databaseversion >= 24)
     {
       //d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
-      d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient", &results);
+      if (d_database.tableContainsColumn("recipient", "group_type") &&
+          d_database.tableContainsColumn("recipient", "storage_service_key"))
+        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
+      else
+        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
+
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
       {
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id")};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, "storage_service_key")};
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
       }
@@ -504,7 +509,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.exec("SELECT IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
       {
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id")};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), -1, std::string()};
         // source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
         source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE "
                                 "(uuid IS NOT NULL AND uuid IS ?) OR "
@@ -524,7 +529,11 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       //d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
-      d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient", &results);
+      if (d_database.tableContainsColumn("recipient", "group_type") &&
+          d_database.tableContainsColumn("recipient", "storage_service_key"))
+        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
+      else
+        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
       std::cout << "  updateRecipientIds (2)" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
       {
@@ -533,17 +542,41 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         // which was made unique above. If we just delete the doubles (by phone/group_id,
         // and in the future probably uuid), the fields in other tables will point
         // to random or non-existing recipients, so we need to remap them:
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id")};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, "storage_service_key")};
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
+        // std::cout << "Testing if recipient is present:" << std::endl;
+        // std::cout << "\"" << rec_id.uuid << "\" \"" << rec_id.phone << "\" \"" <<  rec_id.group_id << "\" \"" <<  rec_id.group_type << "\" \"" <<  rec_id.storage_service_key << "\"" << std::endl;
+
         // now drop the already present recipient from source.
-        //source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
-        source->d_database.exec("DELETE FROM recipient WHERE "
-                                "(uuid IS NOT NULL AND uuid IS ?) OR "
-                                "(phone IS NOT NULL AND phone IS ?) OR "
-                                "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id});
-        int count = source->d_database.changed();
+        // source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
+        int count = 0;
+        if (d_database.tableContainsColumn("recipient", "group_type"))
+        {
+          source->d_database.exec("DELETE FROM recipient WHERE "
+                                  // one-of uuid/phone/group_id is set and equal to existing recipient
+                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
+                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "(group_id IS NOT NULL AND group_id IS ?)) OR "
+                                  // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
+                                  "(uuid IS NULL AND "
+                                  "phone IS NULL AND "
+                                  "group_id IS NULL AND "
+                                  "group_type IS 4  AND group_type IS ? AND "
+                                  "storage_service_key IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service_key});
+          count = source->d_database.changed();
+        }
+        else
+        {
+          source->d_database.exec("DELETE FROM recipient WHERE "
+                                  // one-of uuid/phone/group_id is set and equal to existing recipient
+                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
+                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
+          count = source->d_database.changed();
+        }
+
         if (count)
           std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
       }
@@ -697,6 +730,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       // }
       SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
       d_database.exec(newframe.bindStatement(), newframe.parameters());
+      //newframe.printInfo();
     }
   }
 

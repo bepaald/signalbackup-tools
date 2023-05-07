@@ -21,8 +21,6 @@
 
 void SignalBackup::removeDoubles()
 {
-  using namespace std::string_literals;
-
   std::cout << __FUNCTION__  << std::endl;
 
   if (d_database.containsTable("sms"))
@@ -44,10 +42,19 @@ void SignalBackup::removeDoubles()
   std::cout << "  Removing duplicate entries from mms table..." << std::endl;
   //d_database.exec("DELETE FROM mms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1." + d_mms_date_sent + " = t2." + d_mms_date_sent + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_mms_recipient_id + " = t2." +d_mms_recipient_id + " AND t1.read = t2.read AND t1." + d_mms_type + " = t2." + d_mms_type + " AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles ORDER BY " + d_mms_date_sent +" ASC, date_received ASC, body ASC, thread_id ASC, " + d_mms_recipient_id + " ASC, read ASC, " + d_mms_type + " ASC, _id ASC) t WHERE RNum%2 = 0)");
 
-  d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
-                  "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, CAST(" + d_mms_recipient_id + " AS STRING), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
-
-  std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+  if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+  {
+    d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
+                    "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, CAST(" + d_mms_recipient_id + " AS STRING), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
+    std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+  }
+  else
+  {
+    d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
+                    "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, "
+                    "CAST(from_recipient_id AS STRING), CAST(to_recipient_id AS STRING), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
+    std::cout << "  Removed " << d_database.changed() << " entries." << std::endl;
+  }
 
 
   //cleanDatabaseByMessages();

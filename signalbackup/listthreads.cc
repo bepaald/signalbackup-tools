@@ -21,8 +21,6 @@
 
 void SignalBackup::listThreads() const
 {
-  using namespace std::string_literals;
-
   std::cout << "Database version: " << d_databaseversion << std::endl;
 
   SqliteDB::QueryResults results;

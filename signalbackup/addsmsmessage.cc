@@ -32,8 +32,6 @@ void SignalBackup::addSMSMessage(std::string const &body, std::string const &add
     return;
   }
 
-  using namespace std::string_literals;
-
   //get address automatically -> msg partner for normal thread, sender for incoming group, groupid (__textsecure__!xxxxx) for outgoing
   // maybe do something with 'notified'? it is almost always 0, but a few times it is 1 on incoming msgs in my db
 

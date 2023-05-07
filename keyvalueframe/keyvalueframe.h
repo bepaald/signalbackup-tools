@@ -203,9 +203,6 @@ inline bool KeyValueFrame::validate() const
 
 inline std::string KeyValueFrame::getHumanData() const
 {
-
-  using namespace std::string_literals;
-
   std::string data;
   for (auto const &p : d_framedata)
   {
@@ -256,8 +253,6 @@ inline std::string KeyValueFrame::key() const
 
 inline std::string KeyValueFrame::value() const
 {
-  using namespace std::string_literals;
-
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::STRINGVALUE)

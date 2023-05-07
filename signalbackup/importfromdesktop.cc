@@ -264,8 +264,6 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     dateranges.push_back({"0", res.valueAsString(0, 0)});
   }
 
-  using namespace std::string_literals;
-
   std::string datewhereclause;
   for (uint i = 0; i < dateranges.size(); ++i)
   {

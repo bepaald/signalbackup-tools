@@ -21,8 +21,6 @@
 
 std::string SignalBackup::getNameFromRecipientId(long long int rid) const
 {
-  using namespace std::string_literals;
-
   SqliteDB::QueryResults results;
   if (d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
                       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +

@@ -25,8 +25,6 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
                                      std::string const &append, std::string const &prepend,
                                      std::vector<std::pair<std::string, std::string>> replace)
 {
-  using namespace std::string_literals;
-
   std::string query_delete("DELETE FROM part");
   std::string query_list("SELECT _id,mid,unique_id,ct,quote FROM part");
 

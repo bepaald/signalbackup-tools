@@ -28,7 +28,6 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 
   std::set<std::string> uuids;
 
-  using namespace std::string_literals;
   std::vector<std::string> queries{"SELECT body FROM " + d_mms_table + " WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s +
                                    (thread != -1 ? " AND thread_id = " + bepaald::toString(thread) : "")};
   if (d_database.containsTable("sms"))
