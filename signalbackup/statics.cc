@@ -99,8 +99,10 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     {
       {"sms", "address"},      // \ These are one
       {"sms", "recipient_id"}, // /
-      {"message", "address"},      // \ These are one
-      {"message", "recipient_id"}, // /
+      {"message", "address"},           // \ These are one
+      {"message", "recipient_id"},      // /
+      {"message", "from_recipient_id"}, // | Also sort of
+      {"message", "to_recipient_id"},   // /
       {"message", "quote_author"},
       {"mms", "address"},      // \ These are one
       {"mms", "recipient_id"}, // /
@@ -377,6 +379,14 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     "group_membership",
     "_id",
     {},
+    0
+  },
+  {
+    "call_link",
+    "_id",
+    {
+      {"call", "call_link"}
+    },
     0
   }
 };

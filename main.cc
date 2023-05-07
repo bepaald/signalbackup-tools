@@ -183,12 +183,12 @@ int main(int argc, char *argv[])
   if (arg.showdbinfo())
     sb->showDBInfo();
 
-  if (arg.generatefromtruncated())
-  {
-    //std::cout << "fillthread" << std::endl;
-    sb->fillThreadTableFromMessages();
-    //sb->addEndFrame(); // this should not be necessary, if endframe is missing, it's added in init
-  }
+  // if (arg.generatefromtruncated())
+  // {
+  //   //std::cout << "fillthread" << std::endl;
+  //   sb->fillThreadTableFromMessages();
+  //   //sb->addEndFrame(); // this should not be necessary, if endframe is missing, it's added in init
+  // }
 
   if (!arg.source().empty())
   {
@@ -332,33 +332,33 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-  // temporary, to generate truncated backup's missing data from Signal Desktop database INCOMPLETE
-  if (!arg.hhenkel().empty())
-  {
-    sb->hhenkel(arg.hhenkel());
-  }
+  // // temporary, to generate truncated backup's missing data from Signal Desktop database INCOMPLETE
+  // if (!arg.hhenkel().empty())
+  // {
+  //   sb->hhenkel(arg.hhenkel());
+  // }
 
-  // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
-  if (arg.hiperfall() != -1)
-    if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
-    {
-      std::cout << "Some error occurred..." << std::endl;
-      return 1;
-    }
+  // // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
+  // if (arg.hiperfall() != -1)
+  //   if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
+  //   {
+  //     std::cout << "Some error occurred..." << std::endl;
+  //     return 1;
+  //   }
 
-  // temporary, to import messages from truncated database into older, but complete database
-  if (!arg.sleepyh34d().empty())
-  {
-    if (!sb->sleepyh34d(arg.sleepyh34d()[0], (arg.sleepyh34d().size() > 1) ? arg.sleepyh34d()[1] : arg.passphrase()))
-    {
-      std::cout << "Error during import" << std::endl;
-      return 1;
-    }
-  }
+  // // temporary, to import messages from truncated database into older, but complete database
+  // if (!arg.sleepyh34d().empty())
+  // {
+  //   if (!sb->sleepyh34d(arg.sleepyh34d()[0], (arg.sleepyh34d().size() > 1) ? arg.sleepyh34d()[1] : arg.passphrase()))
+  //   {
+  //     std::cout << "Error during import" << std::endl;
+  //     return 1;
+  //   }
+  // }
 
-  // temporary, to investigate #95
-  if (!arg.carowit_1().empty())
-    return sb->carowit(arg.carowit_1(), arg.carowit_2());
+  // // temporary, to investigate #95
+  // if (!arg.carowit_1().empty())
+  //   return sb->carowit(arg.carowit_1(), arg.carowit_2());
 
   if (arg.scanmissingattachments())
     sb->scanMissingAttachments();
@@ -377,11 +377,11 @@ int main(int argc, char *argv[])
   if (arg.checkdbintegrity())
     sb->checkDbIntegrity();
 
-  if (arg.devcustom())
-  {
-    sb->devCustom();
-    return 0;
-  }
+  // if (arg.devcustom())
+  // {
+  //   sb->devCustom();
+  //   return 0;
+  // }
 
   MEMINFO("Before output");
 

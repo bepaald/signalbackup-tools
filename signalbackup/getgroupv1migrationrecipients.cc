@@ -21,8 +21,6 @@
 
 void SignalBackup::getGroupV1MigrationRecipients(std::set<long long int> *referenced_recipients, long long int thread) const
 {
-  using namespace std::string_literals;
-
   SqliteDB::QueryResults results;
   if (d_database.exec("SELECT body FROM "s +
                       (d_database.containsTable("sms") ? "sms" : d_mms_table) +

@@ -21,14 +21,17 @@
 
 std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) const
 {
-  using namespace std::string_literals;
-
   std::set<long long int> recipientlist;
 
   SqliteDB::QueryResults results;
   if (!d_database.exec("SELECT DISTINCT " + d_thread_recipient_id + " FROM thread WHERE _id = ? "
                        "UNION "
-                       "SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id = ? "
+                       "SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id = ? " +
+                       (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ?
+                        ("UNION "
+                         "SELECT DISTINCT "s + "to_recipient_id" + " FROM " + d_mms_table + " WHERE thread_id = ? ") :
+                        ""
+                        ) +
                        "UNION "
                        "SELECT DISTINCT quote_author FROM " + d_mms_table + " WHERE thread_id = ? AND quote_id IS NOT 0 "
                        "UNION "

@@ -393,7 +393,7 @@ template <typename T>
 inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser<Spec...>::getFieldAs(int num) const
 {
   bool varint = false;
-  std::pair<unsigned char *, int64_t> fielddata(std::move(getField(num, &varint)));
+  std::pair<unsigned char *, int64_t> fielddata(getField(num, &varint));
   if (fielddata.first)
   {
     if constexpr (std::is_constructible<T, char *, int64_t>::value) // this handles std::string and ProtoBufParser<U...> ?
@@ -466,7 +466,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
   while (true)
   {
     bool varint = false;
-    std::pair<unsigned char *, int64_t> fielddata(std::move(getField(num, &varint, &pos)));
+    std::pair<unsigned char *, int64_t> fielddata(getField(num, &varint, &pos));
     if (fielddata.first)
     {
       if constexpr (std::is_constructible<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, char *, int64_t>::value)

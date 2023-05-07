@@ -83,10 +83,25 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
                         {tid, targetaddr, oldtid, r_ids[i]});
         std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
       }
-      d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?, " + d_mms_recipient_id + " = ? "
-                      "WHERE thread_id = ? AND " + d_mms_recipient_id + " = ?",
-                      {tid, targetaddr, oldtid, r_ids[i]});
-      std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+
+      if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id")) // < dbv 185
+      {
+        d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?, " + d_mms_recipient_id + " = ? "
+                        "WHERE thread_id = ? AND " + d_mms_recipient_id + " = ?",
+                        {tid, targetaddr, oldtid, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+      }
+      else
+      {
+        d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?, " + d_mms_recipient_id + " = ? "
+                        "WHERE thread_id = ? AND " + d_mms_recipient_id + " = ?",
+                        {tid, targetaddr, oldtid, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+        d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?, " + "to_recipient_id" + " = ? "
+                        "WHERE thread_id = ? AND " + "to_recipient_id" + " = ?",
+                        {tid, targetaddr, oldtid, r_ids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+      }
 
       if (d_database.containsTable("mention"))
       {

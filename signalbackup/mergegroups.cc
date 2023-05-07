@@ -28,7 +28,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
   }
 
   std::cout << "" << std::endl;
-  std::cout << "THIS FUNCTION MAY NEED UPDATING. PLEASE OPAN AN ISSUE" << std::endl;
+  std::cout << "THIS FUNCTION MAY NEED UPDATING. PLEASE OPEN AN ISSUE" << std::endl;
   std::cout << "IF YOU NEED IT." << std::endl;
   std::cout << "" << std::endl;
 
@@ -73,16 +73,31 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       }
 
       std::cout << "Dealing with group: " << groupids[i] << std::endl;
-      d_database.exec("UPDATE sms SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
-      std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
-      d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? WHERE " + d_sms_recipient_id + " = ?",
-                      {targetgroup, groupids[i]});
-      std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+      if (d_database.containsTable("sms"))
+      {
+        d_database.exec("UPDATE sms SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
+        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+        d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? WHERE " + d_sms_recipient_id + " = ?",
+                        {targetgroup, groupids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+      }
       d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
       std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
-      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_recipient_id + " = ? WHERE " + d_mms_recipient_id + " = ?",
-                      {targetgroup, groupids[i]});
-      std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+
+      if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id")) // < dbv185
+      {
+        d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_recipient_id + " = ? WHERE " + d_mms_recipient_id + " = ?",
+                        {targetgroup, groupids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+      }
+      else
+      {
+        // adjust to_recipient (= group id on outgoing messages)
+        d_database.exec("UPDATE " + d_mms_table + " SET to_recipient_id = ? WHERE to_recipient_id = ?",
+                        {targetgroup, groupids[i]});
+        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+      }
+
       if (d_database.containsTable("mention"))
       {
         d_database.exec("UPDATE mention SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});

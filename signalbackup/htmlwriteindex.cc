@@ -315,8 +315,6 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     //std::string date_time = bepaald::toDateString(datetime / 1000, "%R"); // does not work with mingw
     std::string date_time = bepaald::toDateString(datetime / 1000, "%H:%M");
 
-    using namespace std::string_literals;
-
     std::string convo_url_path = (isnotetoself ? "Note to self (_id"s + bepaald::toString(t_id) + ")" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + bepaald::toString(t_id) + ")"));
     HTMLescapeUrl(&convo_url_path);
     std::string convo_url_location = (isnotetoself ? "Note to self.html" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + ".html"));

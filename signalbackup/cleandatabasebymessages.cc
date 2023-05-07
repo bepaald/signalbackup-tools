@@ -21,8 +21,6 @@
 
 void SignalBackup::cleanDatabaseByMessages()
 {
-  using namespace std::string_literals;
-
   std::cout << __FUNCTION__ << std::endl;
 
   std::cout << "  Deleting attachment entries from 'part' not belonging to remaining " + d_mms_table + " entries" << std::endl;
@@ -185,7 +183,6 @@ void SignalBackup::cleanDatabaseByMessages()
       }
     }
     */
-    using namespace std::string_literals;
 
     // get (former)group members
     SqliteDB::QueryResults results;
@@ -244,6 +241,8 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("sms") ? " UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms"s : "") +
                     (d_database.tableContainsColumn(d_mms_table, "quote_author") ? " UNION SELECT DISTINCT quote_author FROM " +
                      d_mms_table + " WHERE quote_author IS NOT NULL"s : ""s) +
+                    (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? " UNION SELECT DISTINCT to_recipient_id FROM " +
+                     d_mms_table + " WHERE to_recipient_id IS NOT NULL"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +

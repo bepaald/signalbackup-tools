@@ -197,8 +197,6 @@ inline bool SharedPrefFrame::validate() const
 
 inline std::string SharedPrefFrame::getHumanData() const
 {
-  using namespace std::string_literals;
-
   std::string data;
   for (auto const &p : d_framedata)
   {

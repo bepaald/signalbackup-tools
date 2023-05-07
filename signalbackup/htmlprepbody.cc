@@ -26,8 +26,6 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   if (body->empty())
     return false;
 
-  using namespace std::string_literals;
-
   std::vector<Range> ranges;
 
   // First, do mentions

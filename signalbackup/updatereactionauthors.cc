@@ -24,9 +24,6 @@
 // but in their own table called 'reaction'.
 void SignalBackup::updateReactionAuthors(long long int id1, long long int id2) const // if id2 == -1, id1 is an offset
 {                                                                                    // else, change id1 into id2
-
-  using namespace std::string_literals;
-
   for (auto const &msgtable : {"sms"s, d_mms_table})
   {
     if (d_database.tableContainsColumn(msgtable, "reactions"))

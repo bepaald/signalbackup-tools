@@ -31,8 +31,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool migrate, bool overwrite, bool append) const
 {
-  using namespace std::string_literals;
-
   bool databasemigrated = false;
   SqliteDB backup_database(":memory:");
 
