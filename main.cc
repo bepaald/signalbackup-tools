@@ -180,6 +180,9 @@ int main(int argc, char *argv[])
   if (arg.listthreads())
     sb->listThreads();
 
+  if (arg.listrecipients())
+    sb->listRecipients();
+
   if (arg.showdbinfo())
     sb->showDBInfo();
 
@@ -362,6 +365,9 @@ int main(int argc, char *argv[])
 
   if (arg.scanmissingattachments())
     sb->scanMissingAttachments();
+
+  if (arg.findrecipient() != -1)
+    sb->findRecipient(arg.findrecipient());
 
   if (arg.scramble())
     sb->scramble();

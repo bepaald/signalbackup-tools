@@ -375,7 +375,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-img-container input[type=checkbox],
-      .msg-linkpreview-img-container input[type=checkbox] {
+      .msg-linkpreview-img-container input[type=checkbox],
+      #thread-subtitle input[type=checkbox] {
         display: none;
       }
 
@@ -814,6 +815,138 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding-top: 5px;
       }
 
+      .memberslist {
+        max-height: 0px;
+        max-width: 70%;
+        margin-left: auto;
+        margin-right: auto;
+        overflow: hidden;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        transition: padding-top 0.25s ease, padding-bottom 0.25s ease, max-height 0.25s ease;
+      }
+
+      #thread-subtitle input[type=checkbox]:checked ~ label > .memberslist {
+        max-height: 100px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        transition: padding-top 0.4s ease, padding-bottom 0.4s ease, max-height 0.4s ease;
+      }
+
+      @media print {
+        #menu {
+          display: none;
+        }
+        .msg {
+          break-inside: avoid;
+          /* both fit-content and max-content seem fine here, so just including both as fall back */
+          width: -webkit-fit-content;
+          width: -moz-fit-content;
+          width: fit-content;
+          width: -webkit-max-content;
+          width: -moz-max-content;
+          width: max-content;
+
+         /*leave it up to print settings */
+         /*background-color: transparent;*/
+        }
+
+        .msg-incoming, .msg-outgoing {
+          border: 1px solid black;
+          display: block;
+        }
+
+        .no-bg-bubble {
+          border: 0;
+        }
+
+        .incoming-group-msg {
+          display: block;
+        }
+
+        .incoming-group-msg > .msg-incoming {
+          display: inline-block;
+        }
+
+        .msg.msg-incoming, .incoming-group-msg {
+          margin-right: auto;
+        }
+
+        .msg.msg-outgoing {
+          margin-left: auto;
+        }
+
+        .msg-status, .msg-date-change, .msg-group-update-v1 {
+          margin: 0 auto;
+        }
+
+        .conversation-wrapper {
+          width: 100%;
+        }
+
+        body, .controls-wrapper, .conversation-wrapper, .conversation-box {
+          display: block;
+
+          /*leave it up to print settings */
+          /*background-color: transparent;*/
+        }
+
+        .conversation-box {
+          padding: 0 3px;
+          margin: 0;
+          box-sizing: border-box;
+          width: 100%;
+          border-radius: 0;
+
+          /*leave it up to print settings */
+          /*color: black; */
+        }
+
+        .msg-reaction {
+          border: none;
+        }
+
+        #message-header {
+          padding-top: 0;
+          padding-bottom: 10px;
+
+          /*leave it up to print settings */
+          /* color: black;*/
+        }
+
+        .msg-quote {
+          border: 1px solid grey;
+          border-left: 5px solid grey;
+        }
+
+        .status-text > div, .checkmarks {
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+          print-color-adjust: exact;
+          filter: brightness(0);
+        }
+
+        .status-text > div.msg-call-missed {
+          filter: none;
+        }
+
+        .avatar {
+          -webkit-print-color-adjust: exact;
+          color-adjust: exact;
+          print-color-adjust: exact;
+          display: inline-block;
+        }
+
+        .convo-avatar, .incoming-group-msg, .msg {
+          break-inside: avoid;
+        }
+
+        .convo-avatar {
+          vertical-align: bottom;
+        }
+        /* todo: print style for audio, video and attachment previews */
+      } /* end @media print */
+
     </style>
   </head>
   <body>
@@ -858,9 +991,21 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
             )" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(
           </div>
           <div id="thread-subtitle">
-            )" << (isgroup ? bepaald::toString(groupmembers.size()) + " members" :
-                   (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
-                    getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone)) << R"(
+            )";
+  if (isgroup)
+  {
+    file << groupmembers.size() << " members <input type=\"checkbox\" id=\"showmembers\"><label for=\"showmembers\">" << std::endl;
+    file << "              <small>(show)</small>" << std::endl;
+    file << "              <div class=\"memberslist\">";
+    for (uint gm = 0; gm < groupmembers.size(); ++gm)
+      file << getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name << ((gm < groupmembers.size() - 1) ? ", " : "");
+    file << "</div>";
+    file << "            </label>" << std::endl;
+  }
+  else
+    file << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
+             getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone);
+  file << R"(
           </div>
         </div>
         <div class="conversation-box">
