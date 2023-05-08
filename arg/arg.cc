@@ -59,6 +59,7 @@ Arg::Arg(int argc, char *argv[])
   d_onlydb(bool()),
   d_overwrite(false),
   d_listthreads(false),
+  d_listrecipients(false),
   d_editgroupmembers(false),
   d_showprogress(true),
   d_removedoubles(false),
@@ -102,7 +103,8 @@ Arg::Arg(int argc, char *argv[])
   d_desktopdbversion(4),
   d_migratedb(false),
   d_addincompletedataforhtmlexport(false),
-  d_light(false)
+  d_light(false),
+  d_findrecipient(-1)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -609,6 +611,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_listthreads = false;
       continue;
     }
+    if (option == "--listrecipients")
+    {
+      d_listrecipients = true;
+      continue;
+    }
+    if (option == "--no-listrecipients")
+    {
+      d_listrecipients = false;
+      continue;
+    }
     if (option == "--editgroupmembers")
     {
       d_editgroupmembers = true;
@@ -1098,6 +1110,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-light")
     {
       d_light = false;
+      continue;
+    }
+    if (option == "--findrecipient")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!ston(&d_findrecipient, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option[0] != '-')

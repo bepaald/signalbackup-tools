@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 81> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--carowit", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light"};
+  std::array<std::string, 83> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--carowit", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--findrecipient"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -71,6 +71,7 @@ class Arg
   bool d_onlydb;
   bool d_overwrite;
   bool d_listthreads;
+  bool d_listrecipients;
   bool d_editgroupmembers;
   bool d_showprogress;
   bool d_removedoubles;
@@ -115,6 +116,7 @@ class Arg
   bool d_migratedb;
   bool d_addincompletedataforhtmlexport;
   bool d_light;
+  long long int d_findrecipient;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -158,6 +160,7 @@ class Arg
   inline bool onlydb() const;
   inline bool overwrite() const;
   inline bool listthreads() const;
+  inline bool listrecipients() const;
   inline bool editgroupmembers() const;
   inline bool showprogress() const;
   inline bool removedoubles() const;
@@ -202,6 +205,7 @@ class Arg
   inline bool migratedb() const;
   inline bool addincompletedataforhtmlexport() const;
   inline bool light() const;
+  inline long long int findrecipient() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -401,6 +405,11 @@ inline bool Arg::overwrite() const
 inline bool Arg::listthreads() const
 {
   return d_listthreads;
+}
+
+inline bool Arg::listrecipients() const
+{
+  return d_listrecipients;
 }
 
 inline bool Arg::editgroupmembers() const
@@ -621,6 +630,11 @@ inline bool Arg::addincompletedataforhtmlexport() const
 inline bool Arg::light() const
 {
   return d_light;
+}
+
+inline long long int Arg::findrecipient() const
+{
+  return d_findrecipient;
 }
 
 inline bool Arg::ok() const

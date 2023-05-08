@@ -17,9 +17,12 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20230508.195011"
-
-#endif
+void SignalBackup::listRecipients() const
+{
+  d_database.prettyPrint("SELECT recipient._id, recipient.phone, COALESCE(NULLIF(recipient.system_display_name, ''), " +
+                         (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+                         "NULLIF(recipient.signal_profile_name, ''), NULLIF(groups.title, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), "
+                         " recipient._id) AS 'display_name' FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id");
+}

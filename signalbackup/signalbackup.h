@@ -188,6 +188,7 @@ class SignalBackup
   bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true) const;
   void exportCsv(std::string const &filename, std::string const &table) const;
   void listThreads() const;
+  void listRecipients() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
   void cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
@@ -226,6 +227,7 @@ class SignalBackup
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
                   bool migrate, bool overwrite, bool append, bool light) const;
+  bool findRecipient(long long int id) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
