@@ -322,10 +322,19 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   std::string contact_name;
   if (!isgroup)
   {
-    if (results.valueHasType<std::string>(i, d_mms_recipient_id) || results.valueHasType<long long int>(i, d_mms_recipient_id))
+    std::string rid;
+    if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id") || !Types::isOutgoing(realtype)) // this is the way for older dbs, or when message is not outgoing
     {
-      std::string rid = results.valueAsString(i, d_mms_recipient_id);
+      if (results.valueHasType<std::string>(i, d_mms_recipient_id) || results.valueHasType<long long int>(i, d_mms_recipient_id))
+        rid = results.valueAsString(i, d_mms_recipient_id);
+    }
+    else if (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") && Types::isOutgoing(realtype)) // on newer dbs, when message is outgoing, check the to_recipient
+      if (results.valueHasType<std::string>(i, "to_recipient_id") || results.valueHasType<long long int>(i, "to_recipient_id"))
+        rid = results.valueAsString(i, "to_recipient_id");
 
+
+    if (!rid.empty())
+    {
       SqliteDB::QueryResults r2;
       if (d_databaseversion >= 24)
         d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
@@ -575,7 +584,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (msg_box == 1) // incoming message
       {
         SqliteDB::QueryResults r2;
-        if (d_database.exec("SELECT phone FROM recipient WHERE _id = ?", results.valueAsString(i, d_mms_recipient_id), &r2) &&
+        if (d_database.exec("SELECT phone FROM recipient WHERE _id = ?", results.valueAsString(i, d_mms_recipient_id), &r2) && // should be ok to use d_mms_recipient_id, since msb_box = incoming
             r2.rows() == 1)
           sender = r2.valueAsString(0, "phone");
       }
@@ -642,7 +651,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
     else
       d_database.exec("SELECT _id,thread_id,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms WHERE "
-                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
+                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
                       "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
@@ -653,10 +662,12 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   {
     // at dbv 109 many columns were removed from the mms table.
     if (d_databaseversion >= 109)
-      d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
+      d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? ",to_recipient_id" : "") +
+                      "," + d_mms_type + ","
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM " + d_mms_table +
                       " WHERE "
-                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND "
+                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND " +
+                      (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL AND " : "") +
                       "(" + d_mms_type + " & ?) == 0 AND "
                       "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,

@@ -200,8 +200,20 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                      long long int sqlcipherversion,
                                      std::vector<std::string> const &daterangelist,
                                      bool createmissingcontacts,
-                                     bool autodates, bool ignorewal)
+                                     bool autodates, bool ignorewal, std::string const &selfphone)
 {
+
+  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE phone = ?", selfphone, -1);
+  if (d_selfid == -1)
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": Failed to determine id of 'self'.";
+    if (selfphone.empty())
+      std::cout << "Please pass `--setselfid \"[phone]\"' to set it manually";
+    std::cout << std::endl;
+    return false;
+  }
+
   if (configdir.empty() || databasedir.empty())
   {
     // try to set dir automatically
@@ -723,14 +735,27 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else
         {
-          if (!insertRow(d_mms_table,
-                         {{"thread_id", ttid},
-                          {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                          {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                          {d_mms_type, endsessiontype},
-                          {d_mms_recipient_id, address},
-                          {"read", 1}}))
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+          {
+            if (!insertRow(d_mms_table,
+                           {{"thread_id", ttid},
+                            {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                            {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                            {d_mms_type, endsessiontype},
+                            {d_mms_recipient_id, address},
+                            {"read", 1}}))
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
+          }
+          else
+            if (!insertRow(d_mms_table,
+                           {{"thread_id", ttid},
+                            {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                            {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                            {d_mms_type, endsessiontype},
+                            {d_mms_recipient_id, Types::isOutgoing(endsessiontype) ? d_selfid : address},
+                            {"to_recipient_id", Types::isOutgoing(endsessiontype) ? address : address},
+                            {"read", 1}}))
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
         }
         continue;
       }
@@ -752,18 +777,35 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else
         {
-          if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
-                                       {d_mms_recipient_id, address},
-                                       {"recipient_device_id", 1}, // not sure what this is but at least for profile-change
-                                       {"read", 1}}))              // it is hardcoded to 1 in Signal Android (as is 'read')
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
           {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
-            ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
-            return false;
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
+                                         {d_mms_recipient_id, address},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+              ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              return false;
+            }
           }
+          else
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
+                                         {d_mms_recipient_id, address},
+                                         {"to_recipient_id", d_selfid},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+              ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              return false;
+            }
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
@@ -809,17 +851,33 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else
         {
-          if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {d_mms_type, verifytype},
-                                       {d_mms_recipient_id, address},
-                                       {"m_type", 128}, // probably also if (local == false) 132
-                                       {"read", 1}}))              // hardcoded to 1 in Signal Android
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
           {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
-            return false;
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, verifytype},
+                                         {d_mms_recipient_id, address},
+                                         {"m_type", 128}, // probably also if (local == false) 132
+                                         {"read", 1}}))              // hardcoded to 1 in Signal Android
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+              return false;
+            }
           }
+          else
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, verifytype},
+                                         {d_mms_recipient_id, Types::isOutgoing(verifytype) ? d_selfid : address},
+                                         {"to_recipient_id", Types::isOutgoing(verifytype) ? address : d_selfid},
+                                         {"m_type", 128}, // probably also if (local == false) 132
+                                         {"read", 1}}))              // hardcoded to 1 in Signal Android
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+              return false;
+            }
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
@@ -884,18 +942,35 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else
         {
-          if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {d_mms_type, Types::PROFILE_CHANGE_TYPE},
-                                       {"body", profchangefull.getDataString()},
-                                       {d_mms_recipient_id, address},
-                                       {"recipient_device_id", 1}, // not sure what this is but at least for profile-change
-                                       {"read", 1}}))              // it is hardcoded to 1 in Signal Android (as is 'read')
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
           {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into mms" << std::endl;
-            return false;
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+                                         {"body", profchangefull.getDataString()},
+                                         {d_mms_recipient_id, address},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into mms" << std::endl;
+              return false;
+            }
           }
+          else
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+                                         {"body", profchangefull.getDataString()},
+                                         {d_mms_recipient_id, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address},
+                                         {"to_recipient_id", Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? address : d_selfid},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into mms" << std::endl;
+              return false;
+            }
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
@@ -1086,29 +1161,58 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         if (d_verbose) [[unlikely]] std::cout << "Inserting message..." << std::flush;
         std::any retval;
-        if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                     {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                     {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                                     {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
-                                     {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                                     {"body", results_all_messages_from_conversation.value(j, "body")},
-                                     {"read", 1}, // defaults to 0, but causes tons of unread message notifications
-                                     //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
-                                     //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
-                                     {d_mms_recipient_id, address},
-                                     {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                                     {"quote_id", hasquote ? mmsquote_id : 0},
-                                     {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
-                                     {"quote_body", hasquote ? mmsquote_body : nullptr},
-                                     //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
-                                     {"quote_missing", hasquote ? mmsquote_missing : 0},
-                                     {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
-                                     {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
-                                     {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
+        if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
         {
-          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
-          return false;
+          if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                       {"body", results_all_messages_from_conversation.value(j, "body")},
+                                       {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+                                       //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
+                                       //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
+                                       {d_mms_recipient_id, address},
+                                       {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+                                       {"quote_id", hasquote ? mmsquote_id : 0},
+                                       {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+                                       {"quote_body", hasquote ? mmsquote_body : nullptr},
+                                       //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
+                                       {"quote_missing", hasquote ? mmsquote_missing : 0},
+                                       {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                       {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
+            return false;
+          }
         }
+        else
+          if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                       {"body", results_all_messages_from_conversation.value(j, "body")},
+                                       {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+                                       //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
+                                       //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
+                                       {d_mms_recipient_id, incoming ? address : d_selfid},
+                                       {"to_recipient_id", incoming ? d_selfid : address},
+                                       {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+                                       {"quote_id", hasquote ? mmsquote_id : 0},
+                                       {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+                                       {"quote_body", hasquote ? mmsquote_body : nullptr},
+                                       //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
+                                       {"quote_missing", hasquote ? mmsquote_missing : 0},
+                                       {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                       {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
+            return false;
+          }
+
         //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;

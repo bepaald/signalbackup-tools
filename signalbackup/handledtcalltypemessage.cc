@@ -129,17 +129,34 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, long long int ro
 
   // if (d_databaseversion < 170)
   //{
-  if (!insertRow(d_database.containsTable("sms") ? "sms" : d_mms_table,
-                 {{"thread_id", ttid},
-                  {d_database.containsTable("sms") ? d_sms_recipient_id : d_mms_recipient_id, address},
-                  {d_database.containsTable("sms") ? d_sms_date_received : "date_received", calldetails.value(0, "sent_at")},
-                  {"date_sent", calldetails.value(0, "sent_at")},
-                  {"type", calltype},
-                  {"body", body}}))
+  if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
   {
-    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << (d_database.containsTable("sms") ? "sms" : d_mms_table) << ": call type message." << std::endl;
-    return false;
+    if (!insertRow(d_database.containsTable("sms") ? "sms" : d_mms_table,
+                   {{"thread_id", ttid},
+                    {d_database.containsTable("sms") ? d_sms_recipient_id : d_mms_recipient_id, address},
+                    {d_database.containsTable("sms") ? d_sms_date_received : "date_received", calldetails.value(0, "sent_at")},
+                    {"date_sent", calldetails.value(0, "sent_at")},
+                    {"type", calltype},
+                    {"body", body}}))
+    {
+      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << (d_database.containsTable("sms") ? "sms" : d_mms_table) << ": call type message." << std::endl;
+      return false;
+    }
   }
+  else
+    if (!insertRow(d_mms_table,
+                   {{"thread_id", ttid},
+                    {d_mms_recipient_id, Types::isOutgoing(calltype) ? d_selfid : address},
+                    {"to_recipient_id", Types::isOutgoing(calltype) ? address : d_selfid},
+                    {"date_received", calldetails.value(0, "sent_at")},
+                    {"date_sent", calldetails.value(0, "sent_at")},
+                    {"type", calltype},
+                    {"body", body}}))
+    {
+      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << d_mms_table << ": call type message." << std::endl;
+      return false;
+    }
+
   //}
   /*
   else // dbv >=170 -> call into 'call' table???, or also in mms -> just additional details?

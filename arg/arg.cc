@@ -540,7 +540,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--importwachat")
+    if (option == "-//" || option == "--importwachat")
     {
       if (i < arguments.size() - 1)
       {
