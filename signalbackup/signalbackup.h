@@ -207,7 +207,7 @@ class SignalBackup
   void removeDoubles();
   inline std::vector<long long int> threadIds() const;
   bool importCSV(std::string const &file, std::map<std::string, std::string> const &fieldmap);
-  bool importWAChat(std::string const &file, std::string const &fmt, std::string const &self = std::string());
+  //bool importWAChat(std::string const &file, std::string const &fmt, std::string const &self = std::string());
   bool summarize() const;
   bool reorderMmsSmsIds() const;
   bool dumpMedia(std::string const &dir, std::vector<long long int> const &threads, bool overwrite) const;
@@ -221,11 +221,11 @@ class SignalBackup
   std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
-                         bool autodates, bool ignorewal);
+                         bool autodates, bool ignorewal, std::string const &selfphone);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
-                  bool migrate, bool overwrite, bool append) const;
+                  bool migrate, bool overwrite, bool append, bool light) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -295,9 +295,9 @@ class SignalBackup
                                  std::string const &columnname, std::string const &def = std::string()) const;
   inline long long int getIntOr(SqliteDB::QueryResults const &results, int i,
                                 std::string const &columnname, long long int def) const;
-  bool handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author,
-                       std::string const &message, std::string const &selfid, bool isgroup,
-                       std::map<std::string, std::string> const &name_to_recipientid);
+  //  bool handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author,
+  //                     std::string const &message, std::string const &selfid, bool isgroup,
+  //                     std::map<std::string, std::string> const &name_to_recipientid);
   bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
   std::string sanitizeFilename(std::string const &filename) const;
   bool setColumnNames();
@@ -810,7 +810,7 @@ inline void SignalBackup::warnOnce(std::string const &warning, bool error)
 {
   if (!bepaald::contains(d_warningsgiven, warning))
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": "
+    std::cout << bepaald::bold_on << (error ? "Error" : "Warning") << bepaald::bold_off << ": "
               << warning << std::endl;
     d_warningsgiven.insert(warning);
   }

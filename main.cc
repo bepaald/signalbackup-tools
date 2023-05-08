@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
   if (arg.importfromdesktop_bool())
     if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.desktopdbversion(),
                                arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
-                               arg.ignorewal()))
+                               arg.ignorewal(), arg.setselfid()))
       return 1;
   MEMINFO("After importfromdesktop");
 
@@ -304,9 +304,9 @@ int main(int argc, char *argv[])
       return 1;
   }
 
-  if (!arg.importwachat().empty())
-    if (!sb->importWAChat(arg.importwachat(), arg.setwatimefmt(), arg.setselfid()))
-      return 1;
+  // if (!arg.importwachat().empty())
+  //   if (!sb->importWAChat(arg.importwachat(), arg.setwatimefmt(), arg.setselfid()))
+  //     return 1;
 
   if (!arg.runsqlquery().empty())
     for (uint i = 0; i < arg.runsqlquery().size(); ++i)
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
 
   if (!arg.exporthtml().empty())
     if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
-                        arg.setselfid(), arg.migratedb(), arg.overwrite(), arg.append()))
+                        arg.setselfid(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light()))
       return 1;
 
   if (!arg.exportcsv().empty())

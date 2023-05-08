@@ -132,18 +132,36 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
   }
   else
   {
-    if (!insertRow(d_mms_table, {{"thread_id", thread_id},
-                                 {d_mms_date_sent, timestamp},
-                                 {"date_received", timestamp},
-                                 {d_mms_type, Types::GV1_MIGRATION_TYPE},
-                                 {d_mms_recipient_id, address},
-                                 {"body", body},
-                                 {"recipient_device_id", 1},
-                                 {"read", 1}}))
+    if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
-      return false;
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, timestamp},
+                                   {"date_received", timestamp},
+                                   {d_mms_type, Types::GV1_MIGRATION_TYPE},
+                                   {d_mms_recipient_id, address},
+                                   {"body", body},
+                                   {d_mms_recipient_device_id, 1},
+                                   {"read", 1}}))
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
+        return false;
+      }
     }
+    else
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, timestamp},
+                                   {"date_received", timestamp},
+                                   {d_mms_type, Types::GV1_MIGRATION_TYPE},
+                                   {d_mms_recipient_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address},
+                                   {"to_recipient_id", Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? address : d_selfid},
+                                   {"body", body},
+                                   {d_mms_recipient_device_id, 1},
+                                   {"read", 1}}))
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
+        return false;
+      }
+
   }
   return true;
 }
