@@ -101,6 +101,46 @@ namespace bepaald
   inline void replaceAll(std::string *in, std::string const &from, std::string const &to);
 
   template <typename T, typename I>
+  class container_has_contains
+  {
+    template<typename> static std::false_type test(...);
+    template<typename U> static auto test(int) -> decltype(std::declval<U>().contains(std::declval<I>()), std::true_type());
+   public:
+    static constexpr bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
+  };
+
+  template <typename T, typename I>
+  class container_has_find
+  {
+    template<typename> static std::false_type test(...);
+    template<typename U> static auto test(int) -> decltype(std::declval<U>().find(std::declval<I>()), std::true_type());
+   public:
+    static constexpr bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
+  };
+
+  template <typename T, typename I>
+  inline bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
+  {
+    if constexpr (container_has_contains<T, I>::value)
+      return container.contains(item);
+    else if constexpr (container_has_find<T, I>::value)
+      return container.find(item) != container.end();
+    else
+      return std::find(container.begin(), container.end(), item) != container.end();
+  }
+
+  template <typename T, typename I>
+  inline bool contains(T const *const container, I const &item)
+  {
+    if constexpr (container_has_contains<T, I>::value)
+      return container->contains(item);
+    else if constexpr (container_has_find<T, I>::value)
+      return container->find(item) != container->end();
+    else
+      return std::find(container->begin(), container->end(), item) != container->end();
+  }
+  /*
+  template <typename T, typename I>
   inline bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
   {
 #if __cpp_lib_starts_ends_with >= 201711L
@@ -119,7 +159,7 @@ namespace bepaald
     return container->find(item) != container->end();
 #endif
   }
-
+  */
   template <typename T, typename U>
   inline int findIdxOf(T const &container, U const &value);
 }

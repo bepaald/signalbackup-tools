@@ -48,6 +48,51 @@ bool SignalBackup::findRecipient(long long int id) const
     }
   }
 
+  // get phone and uuid
+  std::string uuid;
+  std::string phone;
+  SqliteDB::QueryResults res;
+  if (!d_database.exec("SELECT phone, uuid FROM recipient WHERE _id = ?", id, &res) ||
+      res.rows() != 1)
+    return false;
+  uuid = res("uuid");
+  phone = res("phone");
+
+  // check in identities
+  if (d_database.containsTable("identities") &&
+      d_database.exec("SELECT COUNT(*) AS 'count' FROM identities WHERE address = ? OR address = ?", {uuid, phone}, &res) &&
+      res.rows() == 1)
+  {
+    std::cout << "Found recipient " << id << " referenced in 'identities.address' (by uuid/phone, "
+              << res.getValueAs<long long int>(0, "count") << " times)" << std::endl;
+  }
+
+  // check in quote mentions
+  if (!uuid.empty())
+  {
+    int count = 0;
+    if (d_database.exec("SELECT DISTINCT quote_mentions FROM " + d_mms_table + " WHERE quote_mentions IS NOT NULL", &res))
+    {
+      for (uint i = 0; i < res.rows(); ++i)
+      {
+        auto brdata = res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "quote_mentions");
+        BodyRanges brsproto(brdata);
+        auto brs = brsproto.getField<1>();
+        for (auto const &br : brs)
+        {
+          std::string mentionuuid = br.getField<3>().value_or(std::string());
+          if (mentionuuid == uuid)
+            ++count;
+        }
+      }
+    }
+    if (count)
+      std::cout << "Found recipient " << id << " referenced in '" << d_mms_table << ".quote_mentions' (by uuid, "
+                << count << " times)" << std::endl;
+  }
+
+  // check in group updates
+
   // now check the other thigns (uuid in group updates?)
 
 

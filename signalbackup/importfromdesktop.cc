@@ -523,6 +523,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "json_extract(json, '$.source') AS sourcephone,"
                   "seenStatus,"
                   "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
+                  "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
                   results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
@@ -548,6 +549,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       bool hasquote = !results_all_messages_from_conversation.isNull(j, "quote");
       long long int flags = results_all_messages_from_conversation.getValueAs<long long int>(j, "flags");
       long long int haspreview = results_all_messages_from_conversation.getValueAs<long long int>(j, "haspreview");
+      bool issticker = results_all_messages_from_conversation.getValueAs<long long int>(j, "issticker");
 
       // get address (needed in both mms and sms databases)
       // for 1-on-1 messages, address is conversation partner (with uuid 'person_or_group_id')
@@ -1222,13 +1224,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         // insert message attachments
         if (d_verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
         insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
-                          rowid, ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false);
+                          rowid, ddb, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false, issticker);
         if (hasquote && !mmsquote_missing)
         {
           // insert quotes attachments
           insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, ddb,
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
-                            "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true);
+                            "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 

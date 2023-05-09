@@ -39,3 +39,4 @@
 #include "../autoversion.h"
 
 #include "htmlmessageinfo.h"
+#include "groupinfo.h"

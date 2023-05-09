@@ -37,7 +37,6 @@ Arg::Arg(int argc, char *argv[])
   d_croptodates(std::vector<std::string>()),
   d_mergerecipients(std::vector<std::string>()),
   d_mergegroups(std::vector<std::string>()),
-  d_sleepyh34d(std::vector<std::string>()),
   d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_exportxml(std::string()),
   d_runsqlquery(std::vector<std::string>()),
@@ -54,7 +53,6 @@ Arg::Arg(int argc, char *argv[])
   d_importcsv(std::string()),
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
   d_importwachat(std::string()),
-  d_setwatimefmt(std::string()),
   d_setselfid(std::string()),
   d_onlydb(bool()),
   d_overwrite(false),
@@ -70,7 +68,6 @@ Arg::Arg(int argc, char *argv[])
   d_strugee3(-1),
   d_ashmorgan(false),
   d_strugee2(false),
-  d_hiperfall(-1),
   d_deleteattachments(false),
   d_onlyinthreads(std::vector<long long int>()),
   d_onlyolderthan(std::string()),
@@ -98,8 +95,6 @@ Arg::Arg(int argc, char *argv[])
   d_append(false),
   d_split(1000),
   d_split_bool(false),
-  d_carowit_1(std::string()),
-  d_carowit_2(std::string()),
   d_desktopdbversion(4),
   d_migratedb(false),
   d_addincompletedataforhtmlexport(false),
@@ -330,23 +325,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--sleepyh34d")
-    {
-      if (i < arguments.size() - 1)
-      {
-        if (!parseStringList(arguments[++i], &d_sleepyh34d))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--exportcsv")
     {
       if (i < arguments.size() - 1)
@@ -555,19 +533,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--setwatimefmt")
-    {
-      if (i < arguments.size() - 1)
-      {
-        d_setwatimefmt = arguments[++i];
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--setselfid")
     {
       if (i < arguments.size() - 1)
@@ -733,23 +698,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-strugee2")
     {
       d_strugee2 = false;
-      continue;
-    }
-    if (option == "--hiperfall")
-    {
-      if (i < arguments.size() - 1)
-      {
-        if (!ston(&d_hiperfall, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
       continue;
     }
     if (option == "--deleteattachments")
@@ -1049,20 +997,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         d_split_bool = true;
-      continue;
-    }
-    if (option == "--carowit")
-    {
-      if (i < arguments.size() - 2)
-      {
-        d_carowit_1 = arguments[++i];
-        d_carowit_2 = arguments[++i];
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
       continue;
     }
     if (option == "--desktopdbversion")
