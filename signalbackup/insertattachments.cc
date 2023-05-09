@@ -257,16 +257,24 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (issticker)
     {
-      if (results_attachment_data.isNull(0, "sticker_id"))
+      // get the data from $.sticker (instead of $.sticker.data)
+      SqliteDB::QueryResults stickerdata;
+      if (ddb.exec("SELECT "
+                   "json_extract(json, '$.sticker.packKey') AS 'packkey',"
+                   "json_extract(json, '$.sticker.packId') AS 'packid',"
+                   "json_extract(json, '$.sticker.stickerId') AS 'stickerid',"
+                   "IFNULL(json_extract(json, '$.sticker.emoji'), '') AS 'emoji' "
+                   "FROM messages " + where, &stickerdata) &&
+          stickerdata.rows() == 1)
       {
-        ddb.printLineMode("SELECT json_extract(json, '$.sticker') FROM messages " + where);
-      }
-      else
-      {
-        std::string sticker_emoji = results_attachment_data("sticker_emoji");
-        long long int sticker_id = results_attachment_data.getValueAs<long long int>(0, "sticker_id");
-        std::string sticker_packid = results_attachment_data("sticker_packid");
-        std::string sticker_packkey = ddb.getSingleResultAs<std::string>("SELECT json_extract(json, '$.sticker.packKey') FROM messages " + where, std::string());
+
+        // gather data
+        std::string sticker_emoji = stickerdata("emoji");
+        std::string sticker_packid = stickerdata("packid");
+        long long int sticker_id = -1;
+        if (stickerdata.valueHasType<long long int>(0, "stickerid"))
+          sticker_id = stickerdata.getValueAs<long long int>(0, "stickerid");
+        std::string sticker_packkey = stickerdata("packkey");
         if (!sticker_packkey.empty())
         {
           auto [key, keysize] = Base64::base64StringToBytes(sticker_packkey);
@@ -274,12 +282,27 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
           bepaald::destroyPtr(&key, &keysize);
         }
 
-        d_database.exec("UPDATE part SET "
-                        "sticker_pack_id = ?, "
-                        "sticker_pack_key = ?, "
-                        "sticker_id = ?, "
-                        "sticker_emoji = ?"
-                        " WHERE _id = ?", {sticker_packid, (sticker_packkey.empty() ? nullptr : sticker_packkey), sticker_id, sticker_emoji, new_part_id});
+        // check data, emoji can be empty
+        if (sticker_packid.empty() ||
+            sticker_packkey.empty() ||
+            sticker_id == -1)
+        {
+          stickerdata.printLineMode();
+        }
+        else
+        {
+          d_database.exec("UPDATE part SET "
+                          "sticker_pack_id = ?, "
+                          "sticker_pack_key = ?, "
+                          "sticker_id = ?, "
+                          "sticker_emoji = ?"
+                          " WHERE _id = ?",
+                          {sticker_packid,
+                           (sticker_packkey.empty() ? nullptr : sticker_packkey),
+                           sticker_id,
+                           (sticker_emoji.empty() ? nullptr : sticker_emoji),
+                           new_part_id});
+        }
       }
     }
 
