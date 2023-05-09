@@ -257,23 +257,30 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (issticker)
     {
-      std::string sticker_emoji = results_attachment_data("sticker_emoji");
-      long long int sticker_id = results_attachment_data.getValueAs<long long int>(0, "sticker_id");
-      std::string sticker_packid = results_attachment_data("sticker_packid");
-      std::string sticker_packkey = ddb.getSingleResultAs<std::string>("SELECT json_extract(json, '$.sticker.packKey') FROM messages " + where, std::string());
-      if (!sticker_packkey.empty())
+      if (results_attachment_data.isNull(0, "sticker_id"))
       {
-        auto [key, keysize] = Base64::base64StringToBytes(sticker_packkey);
-        sticker_packkey = bepaald::bytesToHexString(key, keysize, true);
-        bepaald::destroyPtr(&key, &keysize);
+        ddb.printLineMode("SELECT json_extract(json, '$.sticker') FROM messages " + where);
       }
+      else
+      {
+        std::string sticker_emoji = results_attachment_data("sticker_emoji");
+        long long int sticker_id = results_attachment_data.getValueAs<long long int>(0, "sticker_id");
+        std::string sticker_packid = results_attachment_data("sticker_packid");
+        std::string sticker_packkey = ddb.getSingleResultAs<std::string>("SELECT json_extract(json, '$.sticker.packKey') FROM messages " + where, std::string());
+        if (!sticker_packkey.empty())
+        {
+          auto [key, keysize] = Base64::base64StringToBytes(sticker_packkey);
+          sticker_packkey = bepaald::bytesToHexString(key, keysize, true);
+          bepaald::destroyPtr(&key, &keysize);
+        }
 
-      d_database.exec("UPDATE part SET "
-                      "sticker_pack_id = ?, "
-                      "sticker_pack_key = ?, "
-                      "sticker_id = ?, "
-                      "sticker_emoji = ?"
-                      " WHERE _id = ?", {sticker_packid, (sticker_packkey.empty() ? nullptr : sticker_packkey), sticker_id, sticker_emoji, new_part_id});
+        d_database.exec("UPDATE part SET "
+                        "sticker_pack_id = ?, "
+                        "sticker_pack_key = ?, "
+                        "sticker_id = ?, "
+                        "sticker_emoji = ?"
+                        " WHERE _id = ?", {sticker_packid, (sticker_packkey.empty() ? nullptr : sticker_packkey), sticker_id, sticker_emoji, new_part_id});
+      }
     }
 
     if (haspreview && linkpreview_results.rows())
