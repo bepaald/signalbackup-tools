@@ -21,7 +21,7 @@
 
 bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,
                                      long long int rowid, SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
-                                     bool isquote)
+                                     bool isquote, bool issticker)
 {
   bool quoted_linkpreview = false;
   if (numattachments == -1 && isquote) // quote attachments, number not known yet
@@ -48,8 +48,12 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
   }
 
   if (numattachments == 0)
+  {
     if (haspreview > 0)
       numattachments = 1;
+    else if (issticker)
+      numattachments = 1;
+  }
 
   //if (numattachments)
   //  std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
@@ -73,19 +77,30 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                " FROM messages WHERE rowid = ?",
                rowid, &linkpreview_results);
     }
+    if (issticker)
+      jsonpath = "$.sticker.data";
+
     if (quoted_linkpreview)
       jsonpath = "$.preview[0].image";
 
     if (!ddb.exec("SELECT "
+                  "json_extract(json, '" + jsonpath + ".path') AS path,"
                   "json_extract(json, '" + jsonpath + ".contentType') AS content_type,"
-                  "json_extract(json, '" + jsonpath + ".fileName') AS file_name,"
                   "json_extract(json, '" + jsonpath + ".size') AS size,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".pending'), 0) AS pending,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".cdnNumber'), 0) AS cdn_number,"
-                  "json_extract(json, '" + jsonpath + ".flags') AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
                   //"json_extract(json, '" + jsonpath + ".cdnKey') AS cdn_key,"
+
+                  // only in sticker
+                  "json_extract(json, '" + jsonpath + ".emoji') AS sticker_emoji,"
+                  "json_extract(json, '" + jsonpath + ".packId') AS sticker_packid,"
+                  "json_extract(json, '" + jsonpath + ".id') AS sticker_id,"
+
+                  // not when sticker
+                  "json_extract(json, '" + jsonpath + ".fileName') AS file_name,"
                   "IFNULL(json_extract(json, '" + jsonpath + ".uploadTimestamp'), 0) AS upload_timestamp,"
-                  "json_extract(json, '" + jsonpath + ".path') AS path"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".flags'), 0) AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
+                  "IFNULL(json_extract(json, '" + jsonpath + ".pending'), 0) AS pending,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".cdnNumber'), 0) AS cdn_number"
+
                   " FROM messages " + where, &results_attachment_data))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get attachment data from desktop database" << std::endl;
@@ -223,15 +238,15 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                     {"ct", results_attachment_data.value(0, "content_type")},
                     {"pending_push", 0},
                     {"data_size", results_attachment_data.value(0, "size")},
-                    {"file_name", results_attachment_data.value(0, "file_name")},
                     {"unique_id", unique_id},
                     {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.getValueAs<long long int>(0, "flags") == 1 ? 1 : 0)},
                     {"width", amd.width == -1 ? 0 : amd.width},
                     {"height", amd.height == -1 ? 0 : amd.height},
                     {"quote", isquote ? 1 : 0},
                     {"data_hash", amd.hash},
-                    {"upload_timestamp", results_attachment_data.value(0, "upload_timestamp")},
-                    {"cdn_number", results_attachment_data.value(0, "cdn_number")}},
+                    {"upload_timestamp", results_attachment_data.value(0, "upload_timestamp")},      // will be 0 on sticker
+                    {"cdn_number", results_attachment_data.value(0, "cdn_number")}, // will be 0 on sticker, usually 0 or 2, but I dont know what it means
+                    {"file_name", results_attachment_data.value(0, "file_name")}},
                    "_id", &retval))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting part-data" << std::endl;
@@ -239,6 +254,27 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     }
     long long int new_part_id = std::any_cast<long long int>(retval);
     //std::cout << "Inserted part, new id: " << new_part_id << std::endl;
+
+    if (issticker)
+    {
+      std::string sticker_emoji = results_attachment_data("sticker_emoji");
+      long long int sticker_id = results_attachment_data.getValueAs<long long int>(0, "sticker_id");
+      std::string sticker_packid = results_attachment_data("sticker_packid");
+      std::string sticker_packkey = ddb.getSingleResultAs<std::string>("SELECT json_extract(json, '$.sticker.packKey') FROM messages " + where, std::string());
+      if (!sticker_packkey.empty())
+      {
+        auto [key, keysize] = Base64::base64StringToBytes(sticker_packkey);
+        sticker_packkey = bepaald::bytesToHexString(key, keysize, true);
+        bepaald::destroyPtr(&key, &keysize);
+      }
+
+      d_database.exec("UPDATE part SET "
+                      "sticker_pack_id = ?, "
+                      "sticker_pack_key = ?, "
+                      "sticker_id = ?, "
+                      "sticker_emoji = ?"
+                      " WHERE _id = ?", {sticker_packid, (sticker_packkey.empty() ? nullptr : sticker_packkey), sticker_id, sticker_emoji, new_part_id});
+    }
 
     if (haspreview && linkpreview_results.rows())
     {

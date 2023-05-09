@@ -333,7 +333,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
-                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append);
+                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append, light);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -568,7 +568,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append);
+  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append, light);
 
   std::cout << "All done!" << std::endl;
   if (databasemigrated)

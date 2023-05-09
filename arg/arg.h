@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 83> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--sleepyh34d", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setwatimefmt", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--hiperfall", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--carowit", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--findrecipient"};
+  std::array<std::string, 79> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--findrecipient"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -49,7 +49,6 @@ class Arg
   std::vector<std::string> d_croptodates;
   std::vector<std::string> d_mergerecipients;
   std::vector<std::string> d_mergegroups;
-  std::vector<std::string> d_sleepyh34d;
   std::vector<std::pair<std::string,std::string>> d_exportcsv;
   std::string d_exportxml;
   std::vector<std::string> d_runsqlquery;
@@ -66,7 +65,6 @@ class Arg
   std::string d_importcsv;
   std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
   std::string d_importwachat;
-  std::string d_setwatimefmt;
   std::string d_setselfid;
   bool d_onlydb;
   bool d_overwrite;
@@ -82,7 +80,6 @@ class Arg
   long long int d_strugee3;
   bool d_ashmorgan;
   bool d_strugee2;
-  long long int d_hiperfall;
   bool d_deleteattachments;
   std::vector<long long int> d_onlyinthreads;
   std::string d_onlyolderthan;
@@ -110,8 +107,6 @@ class Arg
   bool d_append;
   long long int d_split;
   bool d_split_bool;
-  std::string d_carowit_1;
-  std::string d_carowit_2;
   long long int d_desktopdbversion;
   bool d_migratedb;
   bool d_addincompletedataforhtmlexport;
@@ -138,7 +133,6 @@ class Arg
   inline std::vector<std::string> const &croptodates() const;
   inline std::vector<std::string> const &mergerecipients() const;
   inline std::vector<std::string> const &mergegroups() const;
-  inline std::vector<std::string> const &sleepyh34d() const;
   inline std::vector<std::pair<std::string,std::string>> const &exportcsv() const;
   inline std::string const &exportxml() const;
   inline std::vector<std::string> const &runsqlquery() const;
@@ -155,7 +149,6 @@ class Arg
   inline std::string const &importcsv() const;
   inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
   inline std::string const &importwachat() const;
-  inline std::string const &setwatimefmt() const;
   inline std::string const &setselfid() const;
   inline bool onlydb() const;
   inline bool overwrite() const;
@@ -171,7 +164,6 @@ class Arg
   inline long long int strugee3() const;
   inline bool ashmorgan() const;
   inline bool strugee2() const;
-  inline long long int hiperfall() const;
   inline bool deleteattachments() const;
   inline std::vector<long long int> const &onlyinthreads() const;
   inline std::string const &onlyolderthan() const;
@@ -199,8 +191,6 @@ class Arg
   inline bool append() const;
   inline long long int split() const;
   inline bool split_bool() const;
-  inline std::string const &carowit_1() const;
-  inline std::string const &carowit_2() const;
   inline long long int desktopdbversion() const;
   inline bool migratedb() const;
   inline bool addincompletedataforhtmlexport() const;
@@ -297,11 +287,6 @@ inline std::vector<std::string> const &Arg::mergegroups() const
   return d_mergegroups;
 }
 
-inline std::vector<std::string> const &Arg::sleepyh34d() const
-{
-  return d_sleepyh34d;
-}
-
 inline std::vector<std::pair<std::string,std::string>> const &Arg::exportcsv() const
 {
   return d_exportcsv;
@@ -382,11 +367,6 @@ inline std::string const &Arg::importwachat() const
   return d_importwachat;
 }
 
-inline std::string const &Arg::setwatimefmt() const
-{
-  return d_setwatimefmt;
-}
-
 inline std::string const &Arg::setselfid() const
 {
   return d_setselfid;
@@ -460,11 +440,6 @@ inline bool Arg::ashmorgan() const
 inline bool Arg::strugee2() const
 {
   return d_strugee2;
-}
-
-inline long long int Arg::hiperfall() const
-{
-  return d_hiperfall;
 }
 
 inline bool Arg::deleteattachments() const
@@ -600,16 +575,6 @@ inline long long int Arg::split() const
 inline bool Arg::split_bool() const
 {
   return d_split_bool;
-}
-
-inline std::string const &Arg::carowit_1() const
-{
-  return d_carowit_1;
-}
-
-inline std::string const &Arg::carowit_2() const
-{
-  return d_carowit_2;
 }
 
 inline long long int Arg::desktopdbversion() const

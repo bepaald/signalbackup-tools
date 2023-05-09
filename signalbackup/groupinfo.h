@@ -17,9 +17,14 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.h"
 
-#define VERSIONDATE "20230509.202838"
+#include <list>
 
-#endif
+struct GroupInfo
+{
+  std::list<long long int> admin_ids;
+  long long int expiration_timer = 0;
+  bool link_invite_enabled = false;
+  std::string description;
+};

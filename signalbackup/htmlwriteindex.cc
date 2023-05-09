@@ -21,7 +21,7 @@
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool overwrite, bool append) const
+                                  bool overwrite, bool append, bool light) const
 {
 
   std::cout << "Writing index.html..." << std::endl;
@@ -90,13 +90,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "    <title>Signal conversation list</title>" << std::endl
     << "    <style>" << std::endl
     << "      body {" << std::endl
-    << "        background-color: #000000;" << std::endl
+    << "        background-color: " << (light ? "#EDF0F6" : "#000000") << ";" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .conversation-list-header {" << std::endl
     << "        text-align: center;" << std::endl
     << "        font-size: xx-large;" << std::endl
-    << "        color: white;" << std::endl
+    << "        color: " << (light ? "black" : "white") << ";" << std::endl
     << "        padding: 10px;" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "      }" << std::endl
@@ -117,8 +117,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        margin-right: auto;" << std::endl
     << "        margin-left: auto;" << std::endl
     << "        padding: 30px;" << std::endl
-    << "        background-color: #1B1C1F;" << std::endl
-    << "        color: white;" << std::endl
+    << "        background-color: " << (light ? "#FBFCFF" : "#1B1C1F") << ";" << std::endl
+    << "        color: " << (light ? "black" : "white") << ";" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "        border-radius: 10px;" << std::endl
     << "      }" << std::endl
@@ -143,6 +143,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        text-align: center;" << std::endl
     << "        justify-content: center;" << std::endl
     << "        font-size: 38px;" << std::endl
+    << (light ? "        color: white;\n" : "")
     << "      }" << std::endl
     << "" << std::endl
     << "      .avatar-emoji-initial {" << std::endl

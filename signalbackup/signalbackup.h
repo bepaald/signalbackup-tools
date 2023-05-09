@@ -42,6 +42,7 @@
 #include <algorithm>
 
 struct HTMLMessageInfo;
+struct GroupInfo;
 
 class SignalBackup
 {
@@ -319,7 +320,7 @@ class SignalBackup
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
                          long long int rowid, SqliteDB const &ddb, std::string const &where,
-                         std::string const &databasedir, bool isquote);
+                         std::string const &databasedir, bool isquote, bool issticker);
   bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
   void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id) const;
   bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int sent_at, long long int address) const;
@@ -341,7 +342,7 @@ class SignalBackup
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, bool isnotetoself, std::set<long long int> const &recipients,
                       std::map<long long int, RecipientInfo> *recipientinfo,
-                      std::map<long long int, std::string> *written_avatars, bool overwrite, bool append) const;
+                      std::map<long long int, std::string> *written_avatars, bool overwrite, bool append, bool light) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool is_image_preview,
                               bool overwrite, bool append) const;
@@ -361,7 +362,7 @@ class SignalBackup
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool overwrite, bool append) const;
+                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool overwrite, bool append, bool light) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
@@ -379,6 +380,7 @@ class SignalBackup
   bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
   bool dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
   inline void warnOnce(std::string const &msg, bool error = false);
+  void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
