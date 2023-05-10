@@ -41,6 +41,18 @@ void SignalBackup::updateThreadsEntries(long long int thread)
         std::cout << ", " << threadid << std::flush;
 
       //std::cout << "    Updating msgcount" << std::endl;
+
+      /*
+ThreadTable::
+  private fun isSilentType(type: Long): Boolean {
+    return MessageTypes.isProfileChange(type) ||
+      MessageTypes.isGroupV1MigrationEvent(type) ||
+      MessageTypes.isChangeNumber(type) ||
+      MessageTypes.isBoostRequest(type) ||
+      MessageTypes.isGroupV2LeaveOnly(type) ||
+      MessageTypes.isThreadMergeType(type)
+      }
+*/
       SqliteDB::QueryResults results2;
       if (d_database.containsTable("sms"))
       {
@@ -48,18 +60,46 @@ void SignalBackup::updateThreadsEntries(long long int thread)
                         "(SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
                         ") + (SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
 
-        d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = "
-                        + threadid
-                        + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
-                        + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
+        d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = " +
+                        threadid + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
+                        d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
+                        " WHERE " + d_mms_table + ".thread_id = " +threadid +
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " ORDER BY union_date DESC LIMIT 1",
+                        {Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
+                         Types::BASE_TYPE_MASK, Types::GV1_MIGRATION_TYPE,
+                         Types::BASE_TYPE_MASK, Types::CHANGE_NUMBER_TYPE,
+                         Types::BASE_TYPE_MASK, Types::BOOST_REQUEST_TYPE,
+                         Types::GROUP_V2_LEAVE_BITS, Types::GROUP_V2_LEAVE_BITS,
+                         Types::BASE_TYPE_MASK, Types::THREAD_MERGE_TYPE}, &results2);
       }
       else // dbv >= 168
       {
         d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
                         "(SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
 
-        d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " + d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = "
-                        + threadid + " ORDER BY union_date DESC LIMIT 1", &results2);
+        d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
+                        d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
+                        " WHERE " + d_mms_table + ".thread_id = " + threadid +
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " AND (union_type & ?) IS NOT ?"
+                        " ORDER BY union_date DESC LIMIT 1",
+                        {Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
+                         Types::BASE_TYPE_MASK, Types::GV1_MIGRATION_TYPE,
+                         Types::BASE_TYPE_MASK, Types::CHANGE_NUMBER_TYPE,
+                         Types::BASE_TYPE_MASK, Types::BOOST_REQUEST_TYPE,
+                         Types::GROUP_V2_LEAVE_BITS, Types::GROUP_V2_LEAVE_BITS,
+                         Types::BASE_TYPE_MASK, Types::THREAD_MERGE_TYPE},
+                        &results2);
       }
 
       std::any date = results2.value(0, "union_date");
@@ -175,3 +215,17 @@ void SignalBackup::updateThreadsEntries(long long int thread)
   }
   std::cout << std::endl;
 }
+
+/*
+ meaningful messages
+
+        NOT $TYPE & ${MessageTypes.IGNORABLE_TYPESMASK_WHEN_COUNTING} AND
+        $TYPE != ${MessageTypes.PROFILE_CHANGE_TYPE} AND
+        $TYPE != ${MessageTypes.CHANGE_NUMBER_TYPE} AND
+        $TYPE != ${MessageTypes.SMS_EXPORT_TYPE} AND
+        $TYPE != ${MessageTypes.BOOST_REQUEST_TYPE} AND
+        $TYPE & ${MessageTypes.GROUP_V2_LEAVE_BITS} != ${MessageTypes.GROUP_V2_LEAVE_BITS}
+
+long IGNORABLE_TYPESMASK_WHEN_COUNTING = END_SESSION_BIT | KEY_EXCHANGE_IDENTITY_UPDATE_BIT | KEY_EXCHANGE_IDENTITY_VERIFIED_BIT;
+
+*/

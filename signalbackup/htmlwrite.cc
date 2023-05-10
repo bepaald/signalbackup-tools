@@ -891,6 +891,17 @@ file << R"(      }
           border: 0;
         }
 
+        .memberslist {
+          max-height: none;
+          padding-top: 5px;
+          padding-bottom: 5px;
+          overflow: visible;
+        }
+
+        .memberslist span {
+          white-space: nowrap;
+        }
+
         .incoming-group-msg {
           display: block;
         }
