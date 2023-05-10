@@ -213,6 +213,11 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "" << std::endl
     << "      .name {" << std::endl
     << "        font-weight: bold;" << std::endl
+    << "        font-size: 18px;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl
+    << "      .groupsender {" << std::endl
+    << "        font-weight: 500;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .snippet {" << std::endl
@@ -362,7 +367,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "        <div class=\"name-and-snippet\">" << std::endl
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
       << "          <span class=\"name\">" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</span>" << std::endl
-      << "          <span class=\"snippet\">" << ((isgroup && groupsender > 0) ? getRecipientInfoFromMap(recipient_info, groupsender).display_name + ": " : "") << snippet << "</span>" << std::endl
+      << "          <span class=\"snippet\">"
+      << ((isgroup && groupsender > 0) ? "<span class=\"groupsender\">" + getRecipientInfoFromMap(recipient_info, groupsender).display_name + "</span>: " : "")
+      << snippet << "</span>" << std::endl
       << "        </div>" << std::endl
       << "        <div class=\"index-date\">" << std::endl
       << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl

@@ -88,11 +88,13 @@ R"*(
                                          files to a maximum of N messages per page. By default, the pages
                                          are not split. When this option is given without a value for N,
                                          N is 1000.
+   --light                               By default a dark theme is used for the rendered HTML. Add this
+                                         option to output in a light theme instead.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --overwrite                              Optional modifier for all output operations. Overwrite output
                                          files if they exist. When <OUTPUT> is a directory this will
-                                         delete all directory contents.
+                                         delete ALL directory contents.
 
  = EDITING OPTIONS =
 --croptothreads <LIST_OF_THREADS>        Crop database to list of threads. The list supports comma

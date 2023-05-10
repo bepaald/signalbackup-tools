@@ -42,6 +42,8 @@ struct Types
   static uint64_t constexpr BAD_DECRYPT_TYPE                   = 13;
   static uint64_t constexpr CHANGE_NUMBER_TYPE                 = 14;
   static uint64_t constexpr BOOST_REQUEST_TYPE                 = 15;
+  static uint64_t constexpr THREAD_MERGE_TYPE                  = 16;
+
 
   static uint64_t constexpr BASE_INBOX_TYPE                    = 20;
   static uint64_t constexpr BASE_OUTBOX_TYPE                   = 21;
@@ -69,9 +71,11 @@ struct Types
   static uint64_t constexpr KEY_EXCHANGE_CONTENT_FORMAT        = 0x100;
 
   static uint64_t constexpr GROUP_UPDATE_BIT            = 0x10000;
-  static uint64_t constexpr GROUP_QUIT_BIT              = 0x20000;
+  static uint64_t constexpr GROUP_LEAVE_BIT             = 0x20000;
+  static uint64_t constexpr GROUP_QUIT_BIT              = GROUP_LEAVE_BIT;
   static uint64_t constexpr EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
   static uint64_t constexpr GROUP_V2_BIT                = 0x80000;
+  static uint64_t constexpr GROUP_V2_LEAVE_BITS         = GROUP_V2_BIT | GROUP_LEAVE_BIT | GROUP_UPDATE_BIT;
 
   static uint64_t constexpr SECURE_MESSAGE_BIT = 0x800000;
   static uint64_t constexpr END_SESSION_BIT    = 0x400000;
