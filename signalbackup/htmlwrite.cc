@@ -61,7 +61,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     getGroupInfo(thread_recipient_id, &groupinfo);
 
   // sort group members by admin and name
-
   std::sort(groupmembers.begin(), groupmembers.end(),
             [this, &groupinfo, &recipient_info](auto left, auto right) {
               return (bepaald::contains(groupinfo.admin_ids, left) && !bepaald::contains(groupinfo.admin_ids, right)) ||
@@ -514,8 +513,9 @@ file << R"(      }
         position: relative;
       }
 
-      .msg-reaction-self {
-        background-color: #aaaaaa;
+      .reaction-count {
+        color: )" << (light ? "black" : "white") << R"(;
+        margin-left: 5px;
       }
 
       .msg-reaction .msg-reaction-info {
@@ -996,7 +996,7 @@ file << R"(      }
             )";
   if (isgroup)
   {
-    file << groupmembers.size() << " members" << std::endl;
+    file << groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << std::endl;
     file << "            <input type=\"checkbox\" id=\"showmembers\">" << std::endl;
     file << "            <label for=\"showmembers\">" << std::endl;
     file << "              <small>(details)</small>" << std::endl;
@@ -1273,13 +1273,35 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   if (msg_info.reaction_results->rows())
   {
     htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-reactions\">" << std::endl;
+
+
+    std::set<std::string> skip;
     for (uint r = 0; r < msg_info.reaction_results->rows(); ++r)
+    {
+
+      std::string emojireaction = msg_info.reaction_results->valueAsString(r, "emoji");
+
+      if (bepaald::contains(skip, emojireaction))
+        continue;
+
+      skip.insert(emojireaction);
+
+      // count occurences of this emoji, and set info
+      int count = 0;
+      std::string reaction_info;
+      for (uint r2 = r; r2 < msg_info.reaction_results->rows(); ++r2)
+        if (emojireaction == msg_info.reaction_results->valueAsString(r2, "emoji"))
+        {
+          ++count;
+          reaction_info += (reaction_info.empty() ? "" : "<hr>") + "From "s + getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r2, "author_id")).display_name +
+            "<br>Sent: " + msg_info.reaction_results->valueAsString(r2, "date_sent") +
+            "<br>Received: " + msg_info.reaction_results->valueAsString(r2, "date_received");
+        }
+
       htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-reaction\"><span class=\"msg-emoji\">"
-                 << msg_info.reaction_results->valueAsString(r, "emoji") << "</span>"
-                 << "<span class=\"msg-reaction-info\">From "
-                 << getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r, "author_id")).display_name
-                 << "<br>Sent: " << msg_info.reaction_results->valueAsString(r, "date_sent")
-                 << "<br>Received: " << msg_info.reaction_results->valueAsString(r, "date_received") << "</span></span>" << std::endl;
+                 << emojireaction << "</span>" << (count > 1 ? "<span class=\"reaction-count\">" + bepaald::toString(count) + "</span>": "")
+                 << "<span class=\"msg-reaction-info\">" << reaction_info << "</span></span>" << std::endl;
+    }
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
   // end message
