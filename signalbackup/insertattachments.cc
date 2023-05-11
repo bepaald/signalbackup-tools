@@ -23,6 +23,16 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                                      long long int rowid, SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
                                      bool isquote, bool issticker)
 {
+
+  // REMOVE
+  if (mms_id == 27523)
+  {
+    std::cout << " ====== " << std::endl
+              << "  INFO ON MSG_ID 27523 (desktop import):" << std::endl;
+    std::cout << "  issticker: " << issticker << std::endl;
+  }
+
+
   bool quoted_linkpreview = false;
   if (numattachments == -1 && isquote) // quote attachments, number not known yet
   {
@@ -106,6 +116,14 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get attachment data from desktop database" << std::endl;
       continue;
     }
+
+
+    // REMOVE
+    if (mms_id == 27523)
+    {
+      results_attachment_data.printLineMode();
+    }
+
 
     if (results_attachment_data.valueAsString(0, "path").empty())
     {
@@ -268,6 +286,12 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
           stickerdata.rows() == 1)
       {
 
+        // REMOVE
+        if (mms_id == 27523)
+        {
+          stickerdata.printLineMode();
+        }
+
         // gather data
         std::string sticker_emoji = stickerdata("emoji");
         std::string sticker_packid = stickerdata("packid");
@@ -303,6 +327,15 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
             // set emoji if not empty
             if (!sticker_emoji.empty())
               d_database.exec("UPDATE part SET sticker_emoji = ? WHERE _id = ?", {sticker_emoji, new_part_id});
+
+          // REMOVE
+          if (mms_id == 27523)
+          {
+            std::cout << "Inserted sticker data into part:" << std::endl;
+            d_database.printLineMode("SELECT sticker_pack_id, sticker_pack_key, sticker_id, sticker_emoji FROM part WHERE _id = ?", new_part_id);
+            std::cout << "   ========" << std::endl;
+          }
+
         }
       }
     }
