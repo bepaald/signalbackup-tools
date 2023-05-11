@@ -157,19 +157,23 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
 
   // check if body is only emoji
   bool all_emoji = true;
-  for (uint i = 0, posidx = 0; i < body->size(); ++i)
+  if (pos.size() > 5)
+    all_emoji = false; // could technically still be only emoji, but it gets a bubble in html
+  else
   {
-    if (posidx >= pos.size() || i != pos[posidx].first)
+    for (uint i = 0, posidx = 0; i < body->size(); ++i)
     {
-      if (body->at(i) == ' ') // spaces dont count
-        continue;
-      all_emoji = false;
-      break;
+      if (posidx >= pos.size() || i != pos[posidx].first)
+      {
+        if (body->at(i) == ' ') // spaces dont count
+          continue;
+        all_emoji = false;
+        break;
+      }
+      else // body[i] == pos[posidx].first
+        i += pos[posidx++].second - 1; // minus 1 for the ++i in loop
     }
-    else // body[i] == pos[posidx].first
-      i += pos[posidx++].second - 1; // minus 1 for the ++i in loop
   }
-  //std::cout << "ALL EMOJI: " << all_emoji << std::endl;
 
   // surround emoji with span
   std::string pre = "<span class=\"msg-emoji\">";
