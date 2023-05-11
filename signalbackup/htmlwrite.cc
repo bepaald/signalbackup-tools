@@ -613,22 +613,11 @@ file << R"(      }
       .msg-status div,
       .msg-group-update-v1 div{
         background: none;
-        align-self: center;
         text-align: center;
       }
 
       .msg-group-update-v1, .msg-group-update-v2 {
         max-width: 80%;
-      }
-
-      .msg-icon {
-        background-repeat: no-repeat;
-        background-size: cover;
-        width: 24px;
-        height: 24px;
-        opacity: 50%;
-        margin: 0 auto;
-        filter: invert(100%);
       }
 
       .msg-status {
@@ -715,11 +704,11 @@ file << R"(      }
       .msg-status .msg-expiration-timer-disabled,
       .msg-status .msg-expiration-timer-set {
         display: inline-block;
-        align-self: flex-start;
         height: 18px;
         aspect-ratio: 1 / 1;
-        margin-right: 10px;
-        margin-top: 2px;
+        margin-right: 8px;
+        top: 2px;
+        position: relative;
       }
 
       #menu {
@@ -1208,39 +1197,40 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << (Types::isStatusMessage(msg_info.type) && !msg_info.isgroupupdatev1 ? " class=\"status-text" +
                    (Types::isMissedCall(msg_info.type) || Types::isMissedVideoCall(msg_info.type) ? " status-text-red"s : "") + "\"" : "")
                << ">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "              <pre>";
     if (Types::isEndSession(msg_info.type) || Types::isIdentityDefault(msg_info.type)) // info-icon
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-info-icon\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-info-icon\"></div>";
     else if (Types::isIdentityUpdate(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-security-icon\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-security-icon\"></div>";
     else if (Types::isIdentityVerified(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-checkmark\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-checkmark\"></div>";
     else if (Types::isProfileChange(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-profile-icon\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-profile-icon\"></div>";
     else if (Types::isExpirationTimerUpdate(msg_info.type))
     {
       if (msg_info.body.find("disabled disappearing messages") != std::string::npos)
-        htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-expiration-timer-disabled\"></div>" << std::endl;
+        htmloutput << "<div class=\"msg-expiration-timer-disabled\"></div>";
       else
-        htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-expiration-timer-set\"></div>" << std::endl;
+        htmloutput << "<div class=\"msg-expiration-timer-set\"></div>";
     }
     else if (Types::isIncomingCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-call-incoming\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-call-incoming\"></div>";
     else if (Types::isOutgoingCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-call-outgoing\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-call-outgoing\"></div>";
     else if (Types::isMissedCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-call-missed\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-call-missed\"></div>";
     else if (Types::isIncomingVideoCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-video-call-incoming\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-video-call-incoming\"></div>";
     else if (Types::isOutgoingVideoCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-video-call-outgoing\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-video-call-outgoing\"></div>";
     else if (Types::isMissedVideoCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-video-call-missed\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-video-call-missed\"></div>";
     else if (Types::isGroupCall(msg_info.type))
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-group-call\"></div>" << std::endl;
+      htmloutput << "<div class=\"msg-group-call\"></div>";
     //else if (Types::isProfileChange(msg_info.type))
-    //  htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-profile-icon\"></div>" << std::endl;
+    //  htmloutput << "<div class=\"msg-profile-icon\"></div>";
     //else if
-    htmloutput << std::string(extraindent, ' ') << "              <pre>" << msg_info.body << "</pre>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
   else if (msg_info.is_deleted)
