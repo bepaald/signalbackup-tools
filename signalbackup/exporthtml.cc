@@ -355,7 +355,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
 
         // REMOVE THIS
-        if (msg_id == 27523)
+        if (msg_id == 218862)
         {
           std::cout << " ==== " << std::endl;
           std::cout << " INFO ON IMPORTED STICKER (htmlexport)" << std::endl;
