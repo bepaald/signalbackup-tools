@@ -25,10 +25,10 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 {
 
   // REMOVE
-  if (mms_id == 27523)
+  if (mms_id == 218862)
   {
     std::cout << " ====== " << std::endl
-              << "  INFO ON MSG_ID 27523 (desktop import):" << std::endl;
+              << "  INFO ON MSG_ID 218862 (desktop import):" << std::endl;
     std::cout << "  issticker: " << issticker << std::endl;
   }
 
@@ -119,7 +119,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
 
     // REMOVE
-    if (mms_id == 27523)
+    if (mms_id == 218862)
     {
       results_attachment_data.printLineMode();
     }
@@ -287,7 +287,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       {
 
         // REMOVE
-        if (mms_id == 27523)
+        if (mms_id == 218862)
         {
           stickerdata.printLineMode();
         }
@@ -329,7 +329,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
               d_database.exec("UPDATE part SET sticker_emoji = ? WHERE _id = ?", {sticker_emoji, new_part_id});
 
           // REMOVE
-          if (mms_id == 27523)
+          if (mms_id == 218862)
           {
             std::cout << "Inserted sticker data into part:" << std::endl;
             d_database.printLineMode("SELECT sticker_pack_id, sticker_pack_key, sticker_id, sticker_emoji FROM part WHERE _id = ?", new_part_id);
