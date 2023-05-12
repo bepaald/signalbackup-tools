@@ -317,8 +317,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
           if (d_database.exec("UPDATE part SET "
                               "sticker_pack_id = ?, "
                               "sticker_pack_key = ?, "
-                              "sticker_id = ?, "
-                              "sticker_emoji = ?"
+                              "sticker_id = ?"
                               " WHERE _id = ?",
                               {sticker_packid,
                                sticker_packkey,
