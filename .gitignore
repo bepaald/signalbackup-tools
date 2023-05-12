@@ -4,6 +4,7 @@
 !BUILDSCRIPT.sh
 !BUILDSCRIPT_MULTIPROC.bash44
 !CMakeLists.txt
+!signalbackup-tools.rb
 !*.cc
 !*.h
 !*.ih
