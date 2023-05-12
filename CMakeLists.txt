@@ -18,4 +18,4 @@ find_package(SQLite3 REQUIRED)
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.cc *.h)
 add_executable(signalbackup-tools ${SOURCES})
 
-target_link_libraries(signalbackup-tools OpenSSL::SSL SQLite::SQLite3)
+target_link_libraries(signalbackup-tools OpenSSL::Crypto SQLite::SQLite3)
