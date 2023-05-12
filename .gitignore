@@ -3,6 +3,7 @@
 !LICENSE
 !BUILDSCRIPT.sh
 !BUILDSCRIPT_MULTIPROC.bash44
+!CMakeLists.txt
 !*.cc
 !*.h
 !*.ih
