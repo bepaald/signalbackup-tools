@@ -37,8 +37,9 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
                        "UNION "
                        "SELECT DISTINCT author_id FROM reaction WHERE message_id IN (SELECT _id FROM " + d_mms_table + " WHERE thread_id = ?) "
                        "UNION "
-                       "SELECT DISTINCT recipient_id FROM mention WHERE thread_id = ? "
-                       , {t, t, t, t, t}, &results))
+                       "SELECT DISTINCT recipient_id FROM mention WHERE thread_id = ? ",
+                       (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? std::vector<std::any>{t, t, t, t, t, t} : std::vector<std::any>{t, t, t, t, t}),
+                       &results))
     std::cout << "error" << std::endl;
 
   //results.prettyPrint();
