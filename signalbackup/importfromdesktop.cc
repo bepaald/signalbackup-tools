@@ -1345,9 +1345,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     }
   }
 
-  if (!createmissingcontacts)
-    reorderMmsSmsIds();
-
+  reorderMmsSmsIds();
   updateThreadsEntries();
   return checkDbIntegrity();
 }
