@@ -1,0 +1,28 @@
+name: Test macOs build
+
+on:
+  workflow_dispatch:
+  push:
+    tags-ignore:
+      - '[0-9]*'
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
+      - '.github/workflows/*.yml'
+      - '**/autoversion.h'
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  do-build-tests:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build
+        run: |
+          brew install --HEAD homebrew/signalbackup-tools.rb

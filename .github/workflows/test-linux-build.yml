@@ -1,6 +1,7 @@
 name: Test Linux build
 
 on:
+  workflow_dispatch:
   push:
     tags-ignore:
       - '[0-9]*'
