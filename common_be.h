@@ -139,29 +139,10 @@ namespace bepaald
     else
       return std::find(container->begin(), container->end(), item) != container->end();
   }
-  /*
-  template <typename T, typename I>
-  inline bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
-  {
-#if __cpp_lib_starts_ends_with >= 201711L
-    return container.contains(item);
-#else
-    return container.find(item) != container.end();
-#endif
-  }
 
-  template <typename T, typename I>
-  inline bool contains(T const *const container, I const &item)
-  {
-#if __cpp_lib_starts_ends_with >= 201711L
-    return container->contains(item);
-#else
-    return container->find(item) != container->end();
-#endif
-  }
-  */
   template <typename T, typename U>
   inline int findIdxOf(T const &container, U const &value);
+  inline bool hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize);
 }
 
 template <typename T>
@@ -444,6 +425,39 @@ inline int bepaald::findIdxOf(T const &container, U const &value)
   if (it == container.end())
     return -1;
   return std::distance(container.begin(), it);
+}
+
+inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize)
+{
+  // sanitize input;
+  std::string input = in;
+  auto newend = std::remove_if(input.begin(), input.end(), [](char c) {
+    return (c > '9' || c < '0') && (c > 'F' || c < 'A') && (c > 'f' || c < 'a'); });
+  input.erase(newend, input.end());
+
+  if (input.size() % 2 ||
+      outsize != input.size() / 2)
+  {
+    std::cout << bold_on << "Error" << bold_off << ": "
+              << "Invalid size for hex string or output array too small" << std::endl;
+    return false;
+  }
+
+  auto charToInt = [] (char c)
+  {
+    if (c <= '9' && c >= '0')
+      return c - '0';
+    if (c <= 'F' && c >= 'A')
+      return c - 'A' + 10;
+    //if (c <= 'f' && c >= 'a') // guaranteed at this point
+      return c - 'a' + 10;
+  };
+
+  uint64_t outpos = 0;
+  for (uint i = 0; i < input.size() - 1; i += 2)
+    out[outpos++] = charToInt(input[i]) * 16 + charToInt(input[i + 1]);
+
+  return true;
 }
 
 #ifdef SIGNALBACKUP_TOOLS_REPORT_MEM

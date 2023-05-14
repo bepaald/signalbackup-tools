@@ -121,7 +121,6 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     }
     bepaald::destroyPtr(&masterkey.first, &masterkey.second);
 
-
     // get group members:
     std::string oldstyle_members;
     for (uint i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
@@ -145,9 +144,9 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         }
       }
 
-      if (d_database.containsTable("group_memberships"))
+      if (d_database.containsTable("group_membership"))
       {
-        if (!insertRow("group_memberships",
+        if (!insertRow("group_membership",
                        {{"group_id", group_id},
                         {"recipient_id", member_rid}}))
         {
@@ -159,6 +158,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       else
         oldstyle_members += ((oldstyle_members.empty() ? "" : ",") + bepaald::toString(member_rid));
     }
+
+    // set old-style members
     if (d_database.tableContainsColumn("groups", "members"))
     {
       if (!d_database.exec("UPDATE groups SET members = ? WHERE _id = ?", {oldstyle_members, new_rec_id}))
@@ -167,6 +168,95 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         d_database.exec("ROLLBACK TRANSACTION");
         return -1;
       }
+    }
+
+    // set member roles:
+    if (d_database.containsTable("group_membership") &&
+        d_database.tableContainsColumn("groups", "decrypted_group"))
+    {
+      std::map<std::string, long long int> memberroles;
+      for (uint i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
+      {
+      // get member role (0 = unknown, 1 = normal, 2 = admin)
+        SqliteDB::QueryResults memberrole_results;
+        if (ddb.exec("SELECT json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].role') AS role, "
+                     "json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].uuid') AS uuid "
+                     "FROM conversations WHERE groupId = ?", groupidb64, &memberrole_results))
+        {
+          //memberrole_results.prettyPrint();
+          for (uint mr = 0; mr < memberrole_results.rows(); ++mr)
+          {
+            if (!memberrole_results.valueHasType<long long int>(mr, "role") ||
+                !memberrole_results.valueHasType<std::string>(mr, "uuid"))
+              continue;
+
+            // check if uuid is an actual member:
+            long long int uuidpresent = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM group_membership WHERE "
+                                                                                    "recipient_id IS (SELECT _id FROM recipient WHERE uuid = ?) AND "
+                                                                                    "group_id = ?", {memberrole_results(mr, "uuid"), group_id}, 0);
+            if (uuidpresent)
+              memberroles[memberrole_results(mr, "uuid")] = memberrole_results.getValueAs<long long int>(mr, "role");
+          }
+        }
+      }
+
+      // now create a GroupV2Context and add it
+      /*
+        message DecryptedGroup {
+        string                    title                     = 2;
+        string                    avatar                    = 3;
+        DecryptedTimer            disappearingMessagesTimer = 4;
+        AccessControl             accessControl             = 5;
+        uint32                    revision                  = 6;
+        repeated DecryptedMember           members                   = 7;
+        repeated DecryptedPendingMember    pendingMembers            = 8;
+        repeated DecryptedRequestingMember requestingMembers         = 9;
+        bytes                     inviteLinkPassword        = 10;
+        string                    description               = 11;
+        EnabledState              isAnnouncementGroup       = 12;
+        repeated DecryptedBannedMember     bannedMembers             = 13;
+        }
+      */
+      std::string title = res("name");
+      // if available
+        // std::string description = res("description");
+
+      DecryptedGroup group_info;
+      group_info.addField<2>(title);
+      //group_info.print();
+
+      for (auto const &m : memberroles)
+      {
+
+        /*
+          message DecryptedMember {
+          bytes       uuid             = 1;
+          Member.Role role             = 2;
+          bytes       profileKey       = 3;
+          uint32      joinedAtRevision = 5;
+          bytes       pni              = 6;
+          }
+          enum Role {
+          UNKNOWN       = 0;
+          DEFAULT       = 1;
+          ADMINISTRATOR = 2;
+          }
+        */
+        DecryptedMember mem;
+
+        unsigned char rawuuid[16];
+        uint64_t rawuuid_size = 16;
+        if (bepaald::hexStringToBytes(m.first, rawuuid, rawuuid_size))
+        {
+          mem.addField<1>({rawuuid, rawuuid_size});
+          mem.addField<2>(m.second);
+          group_info.addField<7>(mem);
+          //group_info.print();
+        }
+      }
+      // add it
+      std::pair<unsigned char *, uint64_t> groupdetails = {group_info.data(), group_info.size()};
+      d_database.exec("UPDATE groups SET decrypted_group = ? WHERE recipient_id = ?", {groupdetails, new_rid});
     }
 
     d_database.exec("COMMIT TRANSACTION");
