@@ -227,7 +227,7 @@ class SignalBackup
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
-                  bool migrate, bool overwrite, bool append, bool light) const;
+                  bool migrate, bool overwrite, bool append, bool theme) const;
   bool findRecipient(long long int id) const;
 
   /* CUSTOMS */

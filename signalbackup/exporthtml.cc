@@ -30,7 +30,7 @@
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool migrate, bool overwrite, bool append,
-                              bool light [[maybe_unused]]) const
+                              bool lighttheme) const
 {
   bool databasemigrated = false;
   SqliteDB backup_database(":memory:");
@@ -188,6 +188,28 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   //   if (skv->key() == "releasechannel.recipient_id")
   //     releasechannel = bepaald::toNumber<int>(skv->value());
 
+  // // get theme
+  // bool lighttheme = false;
+  // if (theme == 1)
+  //   lighttheme = true;
+  // else if (theme == 0)
+  // {
+  //   std::string theme_val;
+  //   for (auto const &skv : d_keyvalueframes)
+  //     if (skv->key() == "settings.theme")
+  //     {
+  //       if (skv->value() == "light")
+  //         lighttheme = true;
+
+  //       std::cout << "AUTO THEME : " << skv->value() << std::endl;
+
+  //       //else if (skv->value() == "dark") || "system" ( <- default dark)
+  //       //  lighttheme = false;
+  //     }
+  //     else
+  //       std::cout << "KEY: " << skv->key() << std::endl;
+  // }
+
   for (int t : threads)
   {
     // if (t == releasechannel)
@@ -333,7 +355,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
-                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append, light);
+                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append, lighttheme);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -568,7 +590,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append, light);
+  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append, lighttheme);
 
   std::cout << "All done!" << std::endl;
   if (databasemigrated)
