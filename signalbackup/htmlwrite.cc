@@ -804,8 +804,31 @@ file << R"(      }
         transition: padding-top 0.05s ease, padding-bottom 0.05s ease, max-height 0.25s ease;
       }
 
-      .groupdetails span {
-        white-space: nowrap;
+      .columnview {
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: space-between;
+      }
+
+      .left-column,
+      .right-column {
+        flex: 0 0 49%;
+      }
+
+      .left-column {
+        padding-right: 1%;
+        text-align: right;
+      }
+
+      .right-column {
+        padding-left: 1%;
+        text-align: left;
+      }
+
+      .columnview-header {
+        flex: 0 0 100%;
+        text-align: center;
+        font-style: italic;
       }
 
       #thread-subtitle input[type=checkbox]:checked ~ label > .groupdetails {
@@ -990,13 +1013,92 @@ file << R"(      }
     file << "            <label for=\"showmembers\">" << std::endl;
     file << "              <small>(details)</small>" << std::endl;
     file << "              <span class=\"groupdetails\">" << std::endl;
+    file << "                <span class=\"columnview\">" << std::endl;
+
+    // group description
     if (!groupinfo.description.empty())
-      file << "                <span>" << groupinfo.description << "</span><br>" << std::endl;
-    file << "                ";
+    {
+      file << "                  <span class=\"left-column\">Description:</span>" << std::endl;
+      file << "                  <span class=\"right-column\">" << groupinfo.description << "</span>" << std::endl;
+    }
+
+    // group members
+    file << "                  <span class=\"left-column\">Members:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">";
     for (uint gm = 0; gm < groupmembers.size(); ++gm)
-      file << "<span>" << getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name
-           << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << "</span>" << ((gm < groupmembers.size() - 1) ? ", " : "");
-    file << std::endl;
+      file << getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name
+           << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
+    file << "</span>" << std::endl;
+
+    // pending members
+    file << "                  <span class=\"left-column\">Pending members:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">";
+    if (groupinfo.pending_members.size() == 0)
+      file << "(none)";
+    else
+      for (uint pm = 0; pm < groupinfo.pending_members.size(); ++pm)
+        file << getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name
+             << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
+    file << "</span>" << std::endl;
+
+    // 'requesting' members
+    file << "                  <span class=\"left-column\">Requesting members:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">";
+    if (groupinfo.requesting_members.size() == 0)
+      file << "(none)";
+    else
+      for (uint rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
+        file << getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name
+             << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
+    file << "</span>" << std::endl;
+
+    // banned members
+    file << "                  <span class=\"left-column\">Banned members:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">";
+    if (groupinfo.banned_members.size() == 0)
+      file << "(none)";
+    else
+      for (uint bm = 0; bm < groupinfo.banned_members.size(); ++bm)
+        file << getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name
+             << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
+    file << "</span>" << std::endl;
+
+    file << "                  <span class=\"columnview-header\">Options</span>" << std::endl;
+
+    // expiration timer
+    file << "                  <span class=\"left-column\">Disappearing messages:</span>" << std::endl;
+    std::string exptimer = "Off";
+    if (groupinfo.expiration_timer)
+    {
+      if (groupinfo.expiration_timer < 60) // less than full minute
+        exptimer = bepaald::toString(groupinfo.expiration_timer) + " seconds";
+      else if (groupinfo.expiration_timer < 60 * 60) // less than full hour
+        exptimer = bepaald::toString(groupinfo.expiration_timer / 60) + " minutes";
+      else if (groupinfo.expiration_timer < 24 * 60 * 60) // less than full day
+        exptimer = bepaald::toString(groupinfo.expiration_timer / (60 * 60)) + " hours";
+      else if (groupinfo.expiration_timer < 7 * 24 * 60 * 60) // less than full week
+        exptimer = bepaald::toString(groupinfo.expiration_timer / (24 * 60 * 60)) + " days";
+      else // show groupinfo.expiration_timer in number of weeks
+        exptimer = bepaald::toString(groupinfo.expiration_timer / (7 * 24 * 60 * 60)) + " weeks";
+    }
+    file << "                  <span class=\"right-column\">" << exptimer << "</span>" << std::endl;
+
+    // link enabled?
+    file << "                  <span class=\"left-column\">Group link:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>" << std::endl;
+
+    // access control
+    file << "                  <span class=\"columnview-header\">Permissions</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Add members:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">" << groupinfo.access_control_members << "</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Edit group info:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">" << groupinfo.access_control_attributes << "</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Send messages:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Approve members from invite link:</span>" << std::endl;
+    file << "                  <span class=\"right-column\">" << groupinfo.access_control_addfromlinkinvite << "</span>" << std::endl;
+
+    file << "                </span>" << std::endl;
     file << "              </span>" << std::endl;
     file << "            </label>" << std::endl;
   }
@@ -1199,36 +1301,36 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << ">" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "              <pre>";
     if (Types::isEndSession(msg_info.type) || Types::isIdentityDefault(msg_info.type)) // info-icon
-      htmloutput << "<div class=\"msg-info-icon\"></div>";
+      htmloutput << "<span class=\"msg-info-icon\"></span>";
     else if (Types::isIdentityUpdate(msg_info.type))
-      htmloutput << "<div class=\"msg-security-icon\"></div>";
+      htmloutput << "<span class=\"msg-security-icon\"></span>";
     else if (Types::isIdentityVerified(msg_info.type))
-      htmloutput << "<div class=\"msg-checkmark\"></div>";
+      htmloutput << "<span class=\"msg-checkmark\"></span>";
     else if (Types::isProfileChange(msg_info.type))
-      htmloutput << "<div class=\"msg-profile-icon\"></div>";
+      htmloutput << "<span class=\"msg-profile-icon\"></span>";
     else if (Types::isExpirationTimerUpdate(msg_info.type))
     {
       if (msg_info.body.find("disabled disappearing messages") != std::string::npos)
-        htmloutput << "<div class=\"msg-expiration-timer-disabled\"></div>";
+        htmloutput << "<span class=\"msg-expiration-timer-disabled\"></span>";
       else
-        htmloutput << "<div class=\"msg-expiration-timer-set\"></div>";
+        htmloutput << "<span class=\"msg-expiration-timer-set\"></span>";
     }
     else if (Types::isIncomingCall(msg_info.type))
-      htmloutput << "<div class=\"msg-call-incoming\"></div>";
+      htmloutput << "<span class=\"msg-call-incoming\"></span>";
     else if (Types::isOutgoingCall(msg_info.type))
-      htmloutput << "<div class=\"msg-call-outgoing\"></div>";
+      htmloutput << "<span class=\"msg-call-outgoing\"></span>";
     else if (Types::isMissedCall(msg_info.type))
-      htmloutput << "<div class=\"msg-call-missed\"></div>";
+      htmloutput << "<span class=\"msg-call-missed\"></span>";
     else if (Types::isIncomingVideoCall(msg_info.type))
-      htmloutput << "<div class=\"msg-video-call-incoming\"></div>";
+      htmloutput << "<span class=\"msg-video-call-incoming\"></span>";
     else if (Types::isOutgoingVideoCall(msg_info.type))
-      htmloutput << "<div class=\"msg-video-call-outgoing\"></div>";
+      htmloutput << "<span class=\"msg-video-call-outgoing\"></span>";
     else if (Types::isMissedVideoCall(msg_info.type))
-      htmloutput << "<div class=\"msg-video-call-missed\"></div>";
+      htmloutput << "<span class=\"msg-video-call-missed\"></span>";
     else if (Types::isGroupCall(msg_info.type))
-      htmloutput << "<div class=\"msg-group-call\"></div>";
+      htmloutput << "<span class=\"msg-group-call\"></span>";
     //else if (Types::isProfileChange(msg_info.type))
-    //  htmloutput << "<div class=\"msg-profile-icon\"></div>";
+    //  htmloutput << "<span class=\"msg-profile-icon\"></span>";
     //else if
     htmloutput << std::string(extraindent, ' ') << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;

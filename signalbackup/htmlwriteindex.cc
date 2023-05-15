@@ -65,7 +65,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
-                       "WHERE thread._id IN (" + threadlist +") AND message_count > 0 ORDER BY "
+                       "WHERE thread._id IN (" + threadlist +") AND " + d_thread_message_count + " > 0 ORDER BY "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, " : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
                        "date DESC", &results)) // order by pinned DESC archived ASC date DESC??
@@ -352,9 +352,17 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     if (convo_url_location == ".html")
       std::cout << "Sanitized, url encoded was empty. This should never happen. Original display_name: '" << getRecipientInfoFromMap(recipient_info, rec_id).display_name << "'" << std::endl;
 
+    // if (t_id == 11)
+    // {
+    //   std::cout << "Snippet: " << snippet << std::endl;
+    //   if (isgroup && groupsender > 0)
+    //     std::cout << "GROUPSEND: " + getRecipientInfoFromMap(recipient_info, groupsender).display_name << std::endl;
+    //   else
+    //     std::cout << "isgroup: " << isgroup << std::endl << "groupsender: " << groupsender << std::endl;
+    // }
+
     outputfile
       << "      <div class=\"conversation-list-item\">" << std::endl
-      //<< "        <div class=\"avatar " << ((getRecipientInfoFromMap(recipient_info, rec_id).hasavatar || (!isgroup && !isnotetoself)) ? "avatar-" + bepaald::toString(rec_id) : "group-avatar-icon") << (isnotetoself ? " note-to-self-icon" : "") << "\">" << std::endl
       << "        <div class=\"avatar"
       << (((hasavatar || !isgroup) && !isnotetoself) ? " avatar-" + bepaald::toString(rec_id) : "")
       << ((isgroup && !hasavatar) ? " group-avatar-icon" : "")

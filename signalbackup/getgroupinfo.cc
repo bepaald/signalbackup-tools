@@ -46,6 +46,26 @@ message DecryptedGroup {
   DecryptedGroup group_info(groupdata);
   //group_info.print();
 
+  // get announcementgroup
+  if (group_info.getField<12>().has_value())
+  {
+    /*
+      enum EnabledState {
+      UNKNOWN  = 0;
+      ENABLED  = 1;
+      DISABLED = 2;
+      }
+    */
+    long long int state = group_info.getField<12>().value();
+
+    if (state == 2)
+      groupinfo->isannouncementgroup = false;
+    else if (state == 1)
+      groupinfo->isannouncementgroup = true;
+
+    // 0 = unknown => false?
+  }
+
   // get timer value:
   //std::cout << "=== TIMER:" << std::endl;
   if (group_info.getField<4>().has_value())
@@ -60,6 +80,8 @@ message DecryptedGroup {
     if (timerdata.getField<1>().has_value())
       timer = timerdata.getField<1>().value();
     //std::cout << "Timer: " << timer << std::endl;
+    if (timer != -1)
+      groupinfo->expiration_timer = timer;
   }
   //std::cout << "===" << std::endl << std::endl;
 
@@ -83,19 +105,42 @@ message AccessControl {
   AccessRequired addFromInviteLink = 3;
 }
     */
+
+    auto enumToString = [] (int i)
+    {
+      switch (i)
+      {
+        case 1:
+          return "Anyone";
+        case 2:
+          return "All members";
+        case 3:
+          return "Only admins";
+        case 4:
+          return "No one";
+        case 0:
+        default:
+          return "Unknown";
+      }
+    };
+
     AccessControl acdata(group_info.getField<5>().value());
 
-    long long int attributes [[maybe_unused]] = -1;
+    long long int attributes [[maybe_unused]] = 0;
     if (acdata.getField<1>().has_value())
       attributes = acdata.getField<1>().value();
+    groupinfo->access_control_attributes = enumToString(attributes);
 
-    long long int members [[maybe_unused]] = -1;
-    if (acdata.getField<1>().has_value())
-      members = acdata.getField<1>().value();
 
-    long long int addfrominvitelink [[maybe_unused]] = -1;
-    if (acdata.getField<1>().has_value())
-      addfrominvitelink = acdata.getField<1>().value();
+    long long int members [[maybe_unused]] = 0;
+    if (acdata.getField<2>().has_value())
+      members = acdata.getField<2>().value();
+    groupinfo->access_control_members = enumToString(members);
+
+    long long int addfrominvitelink [[maybe_unused]] = 0;
+    if (acdata.getField<3>().has_value())
+      addfrominvitelink = acdata.getField<3>().value();
+    groupinfo->access_control_addfromlinkinvite = enumToString(addfrominvitelink);
 
     //std::cout << "Access control: " << attributes << " - " << members << " - " << addfrominvitelink << std::endl;
   }
@@ -165,6 +210,10 @@ message DecryptedPendingMember {
     if (newmembers[i].getField<2>().has_value())
       role = newmembers[i].getField<2>().value();
 
+    long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+    if (id != -1)
+      groupinfo->pending_members.push_back(id);
+
     //std::cout << uuidstr << " (" << role << ")" << std::endl;
   }
   //std::cout << "===" << std::endl << std::endl;
@@ -186,6 +235,35 @@ message DecryptedRequestingMember {
     std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
     uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
+    long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+    if (id != -1)
+      groupinfo->pending_members.push_back(id);
+
+    //std::cout << uuidstr << std::endl;
+  }
+  //std::cout << "===" << std::endl << std::endl;
+
+
+  // get banned members:
+  //std::cout << "=== BANNED MEMBERS:" << std::endl;
+  auto bannedmembers = group_info.getField<13>();
+  for (uint i = 0; i < bannedmembers.size(); ++i)
+  {
+/*
+message DecryptedBannedMember {
+  bytes  uuid      = 1;
+  uint64 timestamp = 2;
+}
+*/
+    // uuid
+    auto [uuid, uuid_size] = bannedmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+    std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+    uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+    long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+    if (id != -1)
+      groupinfo->banned_members.push_back(id);
+
     //std::cout << uuidstr << std::endl;
   }
   //std::cout << "===" << std::endl << std::endl;
@@ -205,8 +283,8 @@ message DecryptedRequestingMember {
   if (group_info.getField<10>().has_value())
   {
     auto [pw, pwsize] = group_info.getField<10>().value();
-    // std::cout << bepaald::bytesToHexString(pw, pwsize) << std::endl;
-    // std::cout << "(base64:) " << Base64::bytesToBase64String(pw, pwsize) << std::endl;
+    //std::cout << bepaald::bytesToHexString(pw, pwsize) << std::endl;
+    //std::cout << "(base64:) " << Base64::bytesToBase64String(pw, pwsize) << std::endl;
     if (pwsize)
       groupinfo->link_invite_enabled = true;
   }
