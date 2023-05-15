@@ -27,4 +27,11 @@ struct GroupInfo
   long long int expiration_timer = 0;
   bool link_invite_enabled = false;
   std::string description;
+  std::vector<long long int> pending_members;
+  std::vector<long long int> requesting_members;
+  std::vector<long long int> banned_members;
+  std::string access_control_attributes;
+  std::string access_control_members;
+  std::string access_control_addfromlinkinvite;
+  bool isannouncementgroup = false;
 };

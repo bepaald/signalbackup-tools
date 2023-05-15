@@ -196,7 +196,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
         bepaald::replaceAll(&linkpreview_as_string, '\'', R"('')");
 
-        d_database.exec("UPDATE " + d_mms_table + " SET link_previews = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
+        d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
         //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
       }
 
@@ -308,7 +308,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     if (haspreview && linkpreview_results.rows())
     {
       // this works, but I want to escape the string like Signal does
-      //d_database.exec("UPDATE " + d_mms_table + " SET link_previews = json_array(json_object('url', ?, 'title', ?, 'description', ?, 'date', 0, 'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', true))) "
+      //d_database.exec("UPDATE " + d_mms_table + " SET d_mms_previews = json_array(json_object('url', ?, 'title', ?, 'description', ?, 'date', 0, 'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', true))) "
       //"WHERE _id = ?", {linkpreview_results.value(0, "url"), linkpreview_results.value(0, "title"), linkpreview_results.value(0, "description"), new_part_id, unique_id, mms_id});
 
       std::string url = linkpreview_results("url");
@@ -354,8 +354,8 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
       bepaald::replaceAll(&linkpreview_as_string, '\'', R"('')");
 
-      d_database.exec("UPDATE " + d_mms_table + " SET link_previews = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
-      //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
+      //d_database.print("SELECT _id,d_mms_previews FROM message WHERE _id = ?", mms_id);
     }
     /*
     // 1 link with preview image

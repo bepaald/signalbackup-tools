@@ -24,21 +24,25 @@ void SignalBackup::updateThreadsEntries(long long int thread)
   std::cout << __FUNCTION__ << std::endl;
 
   SqliteDB::QueryResults results;
-  std::string query = "SELECT DISTINCT _id FROM thread"; // gets all threads
+  std::string query = "SELECT DISTINCT _id, " + d_thread_recipient_id + " FROM thread"; // gets all threads
   if (thread > -1)
     query += " WHERE _id = " + bepaald::toString(thread);
   d_database.exec(query, &results);
   for (uint i = 0; i < results.rows(); ++i)
   {
-    if (results.valueHasType<long long int>(i, 0))
+    if (results.valueHasType<long long int>(i, "_id"))
     {
       // set message count
-      std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, 0));
+      std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, "_id"));
 
       if (i == 0)
         std::cout << "  Dealing with thread id: " << threadid << std::flush;
       else
         std::cout << ", " << threadid << std::flush;
+
+      long long int thread_recipient = -1;
+      if (results.valueHasType<long long int>(i, d_thread_recipient_id))
+        thread_recipient = results.getValueAs<long long int>(i, d_thread_recipient_id);
 
       //std::cout << "    Updating msgcount" << std::endl;
 
@@ -63,7 +67,7 @@ ThreadTable::
         d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = " +
                         threadid + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
                         d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
-                        " WHERE " + d_mms_table + ".thread_id = " +threadid +
+                        " WHERE " + d_mms_table + ".thread_id = " + threadid +
                         " AND (union_type & ?) IS NOT ?"
                         " AND (union_type & ?) IS NOT ?"
                         " AND (union_type & ?) IS NOT ?"
@@ -131,13 +135,17 @@ ThreadTable::
         d_database.exec("UPDATE thread SET snippet_type = ? WHERE _id = ?", {std::any_cast<long long int>(type), threadid});
       }
 
-      std::any mid = results2.value(0, d_mms_table + "._id");
+      std::any mid = results2.value(0, "mms._id"); // not d_mms_table, we used an alias in query
       if (mid.type() == typeid(long long int))
       {
         //std::cout << "Checking mms" << std::endl;
 
         SqliteDB::QueryResults results3;
-        d_database.exec("SELECT unique_id, _id, ct FROM part WHERE mid = ?", {mid}, &results3);
+        if (d_database.tableContainsColumn("part", "sticker_pack_id") &&
+            d_database.tableContainsColumn("part", "sticker_emoji"))
+          d_database.exec("SELECT unique_id, _id, ct, sticker_pack_id, IFNULL(sticker_emoji, '') AS sticker_emoji FROM part WHERE mid = ?", {mid}, &results3);
+        else
+          d_database.exec("SELECT unique_id, _id, ct, NULL AS sticker_pack_id, NULL AS sticker_emoji FROM part WHERE mid = ?", {mid}, &results3);
 
         if (results3.rows())
         {
@@ -155,7 +163,14 @@ ThreadTable::
           }
 
           // update body to show photo/movie/file
-          if (filetype.type() == typeid(std::string))
+          if (!results3.isNull(0, "sticker_pack_id") &&
+              !results3("sticker_pack_id").empty())
+          {
+            std::string snippet = results3("sticker_emoji");
+            snippet += (snippet.empty() ? "" : " ") + "Sticker"s;
+            d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {snippet, threadid});
+          }
+          else if (filetype.type() == typeid(std::string))
           {
             std::string t = std::any_cast<std::string>(filetype);
 
@@ -207,6 +222,65 @@ ThreadTable::
       {
         //std::cout << "    Updating snippet (NULL)" << std::endl;
         d_database.exec("UPDATE thread SET snippet_uri = NULL");
+      }
+
+      // if isgroup && database has snippet_extras
+      // set snippet_extras = {"individualRecipientId":"8"};
+      if (!d_database.containsTable("sms") && d_database.tableContainsColumn("thread", "snippet_extras"))
+      {
+        long long int isgroup = d_database.getSingleResultAs<long long int>("SELECT group_id IS NOT NULL FROM recipient WHERE _id = ?", thread_recipient, 0);
+        if  (isgroup)
+        {
+          long long int sender = -1;
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id")) // old style -> incoming: sender = message.recipient_id
+          {                                                                    //              outgoing: sender = self
+            SqliteDB::QueryResults snippet_extras;
+            if (d_database.exec("SELECT " + d_mms_type + "," + d_mms_recipient_id + " FROM " + d_mms_table +
+                                " WHERE " + d_mms_table + ".thread_id = " + threadid +
+                                " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                " ORDER BY " + d_mms_date_sent + " DESC LIMIT 1",
+                                {Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
+                                 Types::BASE_TYPE_MASK, Types::GV1_MIGRATION_TYPE,
+                                 Types::BASE_TYPE_MASK, Types::CHANGE_NUMBER_TYPE,
+                                 Types::BASE_TYPE_MASK, Types::BOOST_REQUEST_TYPE,
+                                 Types::GROUP_V2_LEAVE_BITS, Types::GROUP_V2_LEAVE_BITS,
+                                 Types::BASE_TYPE_MASK, Types::THREAD_MERGE_TYPE}, &snippet_extras) &&
+                snippet_extras.rows() == 1 && snippet_extras.valueHasType<long long int>(0, d_mms_type) && snippet_extras.valueHasType<long long int>(0, d_mms_recipient_id))
+            {
+              long long int mmstype = snippet_extras.getValueAs<long long int>(0, d_mms_type);
+              if (Types::isOutgoing(mmstype))
+                sender = d_selfid;
+              else
+                sender = snippet_extras.getValueAs<long long int>(0, d_mms_recipient_id);
+            }
+          }
+          else // new style
+            sender = d_database.getSingleResultAs<long long int>("SELECT " + d_mms_recipient_id + " FROM " + d_mms_table +
+                                                                 " WHERE " + d_mms_table + ".thread_id = " + threadid +
+                                                                 " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                                                 " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                                                 " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                                                 " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                                                 " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                                                 " AND (" + d_mms_type + " & ?) IS NOT ?"
+                                                                 " ORDER BY " + d_mms_date_sent + " DESC LIMIT 1",
+                                                                 {Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
+                                                                  Types::BASE_TYPE_MASK, Types::GV1_MIGRATION_TYPE,
+                                                                  Types::BASE_TYPE_MASK, Types::CHANGE_NUMBER_TYPE,
+                                                                  Types::BASE_TYPE_MASK, Types::BOOST_REQUEST_TYPE,
+                                                                  Types::GROUP_V2_LEAVE_BITS, Types::GROUP_V2_LEAVE_BITS,
+                                                                  Types::BASE_TYPE_MASK, Types::THREAD_MERGE_TYPE}, -1);
+          if (sender > -1) // got sender, set snippet_extras
+          {
+            d_database.exec("UPDATE thread SET snippet_extras = json_object('individualRecipientId', '" + bepaald::toString(sender) + "') WHERE _id = ?", threadid);
+            //d_database.prettyPrint("SELECT snippet_extras FROM thread WHERE _id = ?", threadid);
+          }
+        }
       }
 
     }
