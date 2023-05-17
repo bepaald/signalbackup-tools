@@ -227,7 +227,7 @@ class SignalBackup
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
-                  bool migrate, bool overwrite, bool append, bool theme) const;
+                  bool migrate, bool overwrite, bool append, bool theme, bool themeswitching) const;
   bool findRecipient(long long int id) const;
 
   /* CUSTOMS */
@@ -342,7 +342,8 @@ class SignalBackup
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, bool isnotetoself, std::set<long long int> const &recipients,
                       std::map<long long int, RecipientInfo> *recipientinfo,
-                      std::map<long long int, std::string> *written_avatars, bool overwrite, bool append, bool light) const;
+                      std::map<long long int, std::string> *written_avatars, bool overwrite, bool append,
+                      bool light, bool themeswitching) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool is_image_preview,
                               bool overwrite, bool append) const;
@@ -362,7 +363,8 @@ class SignalBackup
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool overwrite, bool append, bool light) const;
+                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool overwrite,
+                      bool append, bool light, bool themeswitching) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;

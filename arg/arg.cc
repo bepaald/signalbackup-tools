@@ -99,6 +99,7 @@ Arg::Arg(int argc, char *argv[])
   d_migratedb(false),
   d_addincompletedataforhtmlexport(false),
   d_light(false),
+  d_themeswitching(false),
   d_findrecipient(-1)
 {
   // vector to hold arguments
@@ -1044,6 +1045,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-light")
     {
       d_light = false;
+      continue;
+    }
+    if (option == "--themeswitching")
+    {
+      d_themeswitching = true;
+      continue;
+    }
+    if (option == "--no-themeswitching")
+    {
+      d_themeswitching = false;
       continue;
     }
     if (option == "--findrecipient")

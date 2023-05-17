@@ -21,7 +21,7 @@
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool overwrite, bool append, bool light) const
+                                  bool overwrite, bool append, bool light, bool themeswitching) const
 {
 
   std::cout << "Writing index.html..." << std::endl;
@@ -80,23 +80,66 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   //outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F an d%T do not work on minGW
   outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
              << " by signalbackup-tools (" << VERSIONDATE << "). "
-             << "Input database version: " << d_databaseversion << ". -->" << std::endl;
+             << "Input database version: " << d_databaseversion << ". -->" << std::endl
+             << "<!DOCTYPE html>" << std::endl
+             << "<html lang=\"en\">" << std::endl
+             << "  <head>" << std::endl
+             << "    <meta charset=\"utf-8\">" << std::endl
+             << "    <title>Signal conversation list</title>" << std::endl
+             << "    <style>" << std::endl
+             << "    :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
+             << "        /* " << (light ? "light" : "dark") << "*/" << std::endl
+             << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl
+             << "        --conversationlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
+             << "        --conversationlist-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
+             << "        --conversationlist-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
+             << "        --avatar-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl
+             << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
+             << "        --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl
+             << "      }" << std::endl
+             << std::endl;
+
+  if (themeswitching)
+  {
+    outputfile
+      << "    :root[data-theme=\"" + (!light ? "light"s : "dark") + "\"] {" << std::endl
+      << "        /* " << (!light ? "light" : "dark") << "*/" << std::endl
+      << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl
+      << "        --conversationlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
+      << "        --conversationlist-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
+      << "        --conversationlist-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
+      << "        --avatar-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << std::endl
+      << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
+      << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl
+      << "      }" << std::endl;
+  }
 
   outputfile
-    << "<!DOCTYPE html>" << std::endl
-    << "<html lang=\"en\">" << std::endl
-    << "  <head>" << std::endl
-    << "    <meta charset=\"utf-8\">" << std::endl
-    << "    <title>Signal conversation list</title>" << std::endl
-    << "    <style>" << std::endl
     << "      body {" << std::endl
-    << "        background-color: " << (light ? "#EDF0F6" : "#000000") << ";" << std::endl
+    << "        margin: 0px;" << std::endl
+    << "        padding: 0px;" << std::endl
+    << "        width: 100%;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl;
+
+  outputfile
+    << "      #theme-switch {" << std::endl
+    << "        display: none;" << std::endl
+    << "      }" << std::endl
+    << "" << std::endl
+    << "      #page {" << std::endl
+    << "        background-color: var(--body-bgc);" << std::endl
+    << "        padding: 8px;" << std::endl
+    << "        display: flex;" << std::endl
+    << "        flex-direction: column;" << std::endl
+    << "        transition: color .2s, background-color .2s;" << std::endl
+    << "        min-height: 100vh;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .conversation-list-header {" << std::endl
     << "        text-align: center;" << std::endl
     << "        font-size: xx-large;" << std::endl
-    << "        color: " << (light ? "black" : "white") << ";" << std::endl
+    << "        color: var(--conversationlistheader-c);" << std::endl
     << "        padding: 10px;" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "      }" << std::endl
@@ -117,8 +160,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        margin-right: auto;" << std::endl
     << "        margin-left: auto;" << std::endl
     << "        padding: 30px;" << std::endl
-    << "        background-color: " << (light ? "#FBFCFF" : "#1B1C1F") << ";" << std::endl
-    << "        color: " << (light ? "black" : "white") << ";" << std::endl
+    << "        background-color: var(--conversationlist-bc);" << std::endl
+    << "        color: var(--conversationlist-c);" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "        border-radius: 10px;" << std::endl
     << "      }" << std::endl
@@ -143,7 +186,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        text-align: center;" << std::endl
     << "        justify-content: center;" << std::endl
     << "        font-size: 38px;" << std::endl
-    << (light ? "        color: white;\n" : "")
+    << "        color: var(--avatar-c);" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .avatar-emoji-initial {" << std::endl
@@ -209,16 +252,16 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        align-content: center;" << std::endl
     << "        width: 350px;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .name {" << std::endl
     << "        font-weight: bold;" << std::endl
     << "        font-size: 18px;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .groupsender {" << std::endl
     << "        font-weight: 500;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .snippet {" << std::endl
     << "        display: -webkit-box;" << std::endl
     << "        -webkit-line-clamp: 2;" << std::endl
@@ -228,7 +271,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        overflow: hidden;" << std::endl
     << "        text-overflow: ellipsis;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .index-date {" << std::endl
     << "        position: relative;" << std::endl
     << "        display: flex;" << std::endl
@@ -239,7 +282,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        text-align: right;" << std::endl
     << "        max-width: 100px;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .main-link::before {" << std::endl
     << "        content: \" \";" << std::endl
     << "        position: absolute;" << std::endl
@@ -248,7 +291,43 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        width: 100%;" << std::endl
     << "        height: 100%;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
+    << "      .menu-item > div {" << std::endl
+    << "        margin-right: 5px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .menu-icon {" << std::endl
+    << "        margin-right: 0px;" << std::endl
+    << "        width: 30px;" << std::endl
+    << "        aspect-ratio: 1 / 1;" << std::endl
+    << "        background-position: center;" << std::endl
+    << "        background-repeat: no-repeat;" << std::endl
+    << "        background-size: cover;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .menu-item {" << std::endl
+    << "        display: flex;" << std::endl
+    << "        flex-direction: row;" << std::endl
+    << "        color: var(--menuitem-c);" << std::endl
+    << "        align-items: center;" << std::endl
+    << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+    << "        padding: 5px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      #theme {" << std::endl
+    << "        display: flex;" << std::endl
+    << "        flex-direction: column;" << std::endl
+    << "        position: fixed;" << std::endl
+    << "       top: 20px;" << std::endl
+    << "       right: 20px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .themebutton {" << std::endl
+    << "        display: block;" << std::endl
+    << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g id=\"g_0\"><path d=\"M11.5 7.75c0-0.4 0.34-0.77 0.78-0.74C14.9 7.15 17 9.33 17 12c0 2.67-2.09 4.85-4.72 5-0.44 0.02-0.78-0.34-0.78-0.75v-8.5Z\"/><path d=\"M12.97 0.73c-0.53-0.53-1.4-0.53-1.94 0L8.39 3.38H4.75c-0.76 0-1.37 0.61-1.37 1.37v3.64l-2.65 2.64c-0.53 0.53-0.53 1.4 0 1.94l2.65 2.64v3.64c0 0.76 0.61 1.38 1.37 1.38h3.64l2.64 2.64c0.53 0.53 1.4 0.53 1.94 0l2.64-2.63 3.64-0.01c0.76 0 1.38-0.62 1.38-1.38v-3.64l2.63-2.64c0.54-0.53 0.54-1.4 0-1.94l-2.62-2.61-0.01-3.67c0-0.76-0.62-1.38-1.38-1.38h-3.64l-2.64-2.64Zm-3.45 4L12 2.22l2.48 2.5c0.26 0.25 0.61 0.4 0.98 0.4h3.42v3.45c0.01 0.36 0.16 0.71 0.41 0.97L21.76 12l-2.48 2.48c-0.26 0.26-0.4 0.61-0.4 0.98v3.42h-3.43c-0.36 0.01-0.7 0.15-0.96 0.4L12 21.77l-2.48-2.48c-0.26-0.26-0.61-0.4-0.98-0.4H5.13v-3.42c0-0.37-0.15-0.72-0.4-0.98L2.22 12l2.5-2.48c0.25-0.26 0.4-0.61 0.4-0.98V5.13h3.41c0.37 0 0.72-0.15 0.98-0.4Z\"></path></g></svg>');" << std::endl
+    << "        filter: var(--icon-f);" << std::endl
+    << "      }" << std::endl
+    << std::endl
     << "      @media print {" << std::endl
     << "        .conversation-list-header {" << std::endl
     << "          padding: 0;" << std::endl
@@ -273,7 +352,55 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "" << std::endl
     << "    </style>" << std::endl
     << "  </head>" << std::endl
-    << "" << std::endl
+    << "  <body>" << std::endl;
+  if (themeswitching)
+  {
+    outputfile << R"(    <script>
+      function setCookie(name, value, days)
+      {
+        var expires = "";
+        if (days)
+        {
+          var date = new Date();
+          date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+          expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+      }
+
+      function getCookie(name)
+      {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; ++i)
+        {
+          var c = ca[i];
+          while (c.charAt(0) == ' ')
+            c = c.substring(1, c.length);
+          if (c.indexOf(nameEQ) == 0)
+            return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+      }
+
+      function eraseCookie(name)
+      {
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'
+      }
+
+      // Important to be 1st in the DOM
+      const theme = getCookie('theme') || ')" << (light ? "light" : "dark") << R"(';
+      //alert(theme);
+
+      document.documentElement.dataset.theme = theme;
+    </script>)";
+  }
+  outputfile
+    << std::endl
+    << "  <input type=\"checkbox\" id=\"theme-switch\">" << std::endl
+    << "  <div id=\"page\">" << std::endl
+    << std::endl
+
     << "    <div class=\"conversation-list-header\">" << std::endl
     << "      Signal conversation list" << std::endl
     << "    </div>" << std::endl
@@ -387,8 +514,47 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "" << std::endl;
   }
 
+
+  if (themeswitching)
+  {
+    outputfile
+      << "    <div id=\"theme\">" << std::endl
+      << "      <div class=\"menu-item\">" << std::endl
+      << "        <label for=\"theme-switch\">" << std::endl
+      << "          <span class=\"menu-icon themebutton\">" << std::endl
+      << "         </span>" << std::endl
+      << "       </label>" << std::endl
+      << "      </div>" << std::endl
+      << "    </div>" << std::endl
+      << std::endl;
+  }
   outputfile
     << "    </div>" << std::endl
+    << "  </div>" << std::endl;
+
+  if (themeswitching)
+  {
+    outputfile << R"(<script>
+    const themeSwitch = document.querySelector('#theme-switch');
+    themeSwitch.addEventListener('change', function(e)
+    {
+      if (e.currentTarget.checked === true)
+      {
+        //alert('Setting theme light');
+        setCookie('theme', 'light');
+        document.documentElement.dataset.theme = 'light';
+      }
+      else
+      {
+        //alert('Setting theme dark');
+        setCookie('theme', 'dark');
+        document.documentElement.dataset.theme = 'dark';
+      }
+    });
+  </script>)";
+  }
+
+  outputfile
     << "  </body>" << std::endl
     << "</html>" << std::endl;
 }

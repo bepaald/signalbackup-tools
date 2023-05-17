@@ -30,7 +30,7 @@
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool migrate, bool overwrite, bool append,
-                              bool lighttheme) const
+                              bool lighttheme, bool themeswitching) const
 {
   bool databasemigrated = false;
   SqliteDB backup_database(":memory:");
@@ -355,7 +355,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
-                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append, lighttheme);
+                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append,
+                     lighttheme, themeswitching);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -581,6 +582,42 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "        </a>" << std::endl;
       htmloutput << "      </div>" << std::endl;
       htmloutput << "" << std::endl;
+      if (themeswitching)
+      {
+        htmloutput << "      <div id=\"theme\">" << std::endl;
+        htmloutput << "        <div class=\"menu-item\">" << std::endl;
+        htmloutput << "          <label for=\"theme-switch\">" << std::endl;
+        htmloutput << "            <span class=\"menu-icon themebutton\">" << std::endl;
+        htmloutput << "            </span>" << std::endl;
+        htmloutput << "          </label>" << std::endl;
+        htmloutput << "        </div>" << std::endl;
+        htmloutput << "      </div>" << std::endl;
+        htmloutput << std::endl;
+      }
+      htmloutput << "  </div>" << std::endl; // closes div id=page (I think)
+      if (themeswitching)
+      {
+        htmloutput << R"(  <script>
+    const themeSwitch = document.querySelector('#theme-switch');
+    themeSwitch.addEventListener('change', function(e)
+    {
+      if (e.currentTarget.checked === true)
+      {
+        //alert('Setting theme light');
+        setCookie('theme', 'light');
+        document.documentElement.dataset.theme = 'light';
+      }
+      else
+      {
+        //alert('Setting theme dark');
+        setCookie('theme', 'dark');
+        document.documentElement.dataset.theme = 'dark';
+      }
+    });
+  </script>
+
+)";
+      }
       htmloutput << "  </body>" << std::endl;
       htmloutput << "</html>" << std::endl;
 
@@ -590,7 +627,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id, overwrite, append, lighttheme);
+  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
+                 overwrite, append, lighttheme, themeswitching);
 
   std::cout << "All done!" << std::endl;
   if (databasemigrated)
