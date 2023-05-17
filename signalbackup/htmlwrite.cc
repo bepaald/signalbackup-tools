@@ -104,6 +104,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << std::endl;
   file << "        --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl;
   file << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
+  file << "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << std::endl;
   file << "      }" << std::endl;
   file << std::endl;
 
@@ -129,6 +130,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << std::endl;
     file << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl;
     file << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
+    file << "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << std::endl;
     file << "      }";
     file << std::endl;
   }
@@ -805,6 +807,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding: 5px;
       }
 
+      .threadtitle {
+        font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
+        padding: 0px;
+        margin: 0px;
+      }
+
       .menu-item > div {
         margin-right: 5px;
       }
@@ -1024,7 +1032,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
           -webkit-print-color-adjust: exact;
           color-adjust: exact;
           print-color-adjust: exact;
-          filter: brightness(0);
+          filter: var(--media-status-checkmarks-f);
         }
 
         .status-text > div.msg-call-missed {
@@ -1136,7 +1144,7 @@ file << R"(
           </label>)";
   }
   file << R"(
-          <div id="thread-title">)" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(</div>
+          <div id="thread-title"><pre class="threadtitle">)" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(</pre></div>
           <div id="thread-subtitle">
             )";
   if (isgroup)
