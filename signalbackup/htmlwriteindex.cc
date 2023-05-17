@@ -194,7 +194,6 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       outputfile
         << "      .avatar-" << rec_id << " {" << std::endl
         << "        background: #" << getRecipientInfoFromMap(recipient_info, rec_id).color << ";" << std::endl
-        << "        padding-bottom: 2px;" << std::endl
         << "      }" << std::endl
         << "" << std::endl;
     }
