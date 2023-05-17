@@ -813,6 +813,7 @@ file << R"(      }
         display: flex;
         flex-flow: row wrap;
         justify-content: space-between;
+        overflow-wrap: anywhere;
       }
 
       .left-column,
