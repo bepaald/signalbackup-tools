@@ -1337,7 +1337,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     //else if (Types::isProfileChange(msg_info.type))
     //  htmloutput << "<span class=\"msg-profile-icon\"></span>";
     //else if
-    htmloutput << std::string(extraindent, ' ') << msg_info.body << "</pre>" << std::endl;
+    htmloutput << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
   else if (msg_info.is_deleted)
