@@ -90,6 +90,9 @@ R"*(
                                          N is 1000.
    --light                               By default a dark theme is used for the rendered HTML. Add this
                                          option to output in a light theme instead.
+   --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
+                                         to switch the theme between light and dark. This adds a bit of
+                                         javascript to the page, and sets a cookie when switching.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --overwrite                              Optional modifier for all output operations. Overwrite output

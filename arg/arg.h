@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 79> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--findrecipient"};
+  std::array<std::string, 80> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--append", "--split", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--themeswitching", "--findrecipient"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -111,6 +111,7 @@ class Arg
   bool d_migratedb;
   bool d_addincompletedataforhtmlexport;
   bool d_light;
+  bool d_themeswitching;
   long long int d_findrecipient;
  public:
   Arg(int argc, char *argv[]);
@@ -195,6 +196,7 @@ class Arg
   inline bool migratedb() const;
   inline bool addincompletedataforhtmlexport() const;
   inline bool light() const;
+  inline bool themeswitching() const;
   inline long long int findrecipient() const;
  private:
   template <typename T>
@@ -595,6 +597,11 @@ inline bool Arg::addincompletedataforhtmlexport() const
 inline bool Arg::light() const
 {
   return d_light;
+}
+
+inline bool Arg::themeswitching() const
+{
+  return d_themeswitching;
 }
 
 inline long long int Arg::findrecipient() const
