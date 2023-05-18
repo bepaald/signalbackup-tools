@@ -335,24 +335,34 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        .conversation-list-header {" << std::endl
     << "          padding: 0;" << std::endl
     << "        }" << std::endl
-    << "" << std::endl
+    << std::endl
+    << "        .conversation-list-item {" << std::endl
+    << "          break-inside: avoid;" << std::endl
+    << "        }" << std::endl
+    << std::endl
     << "        .conversation-list {" << std::endl
     << "          margin: 0 auto;" << std::endl
     << "          display: block;" << std::endl
     << "          border-radius: 0;" << std::endl
     << "        }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "        .avatar {" << std::endl
     << "          -webkit-print-color-adjust: exact;" << std::endl
     << "          color-adjust: exact;" << std::endl
     << "          print-color-adjust: exact;" << std::endl
+    << "          flex-shrink: 0;" << std::endl
     << "        }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "        #menu {" << std::endl
     << "          display: none;" << std::endl
     << "        }" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
+    << "        #theme {" << std::endl
+    << "          display: none;" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << std::endl
     << "    </style>" << std::endl
     << "  </head>" << std::endl
     << "  <body>" << std::endl;
