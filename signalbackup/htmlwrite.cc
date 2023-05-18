@@ -304,7 +304,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         left: calc(50% - 86px / 2);
       }
 )";
-  if (!thread_avatar.empty())
+  if (!thread_avatar.empty() && !isnotetoself)
   {
     file << R"(
       .header-avatar:hover {
@@ -939,15 +939,20 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
           display: none;
         }
 
+        #theme {
+          display: none;
+        }
+
+        #thread-subtitle > label > small {
+          display: none;
+        }
+
         .msg {
           break-inside: avoid;
           /* both fit-content and max-content seem fine here, so just including both as fall back */
           width: -webkit-fit-content;
           width: -moz-fit-content;
           width: fit-content;
-          width: -webkit-max-content;
-          width: -moz-max-content;
-          width: max-content;
 
          /*leave it up to print settings */
          /*background-color: transparent;*/
@@ -1026,6 +1031,15 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         .msg-quote {
           border: 1px solid grey;
           border-left: 5px solid grey;
+        }
+
+        .msg-status .msg-video-call-incoming, .msg-status .msg-video-call-outgoing,
+        .msg-status .msg-group-call, .msg-status .msg-call-incoming,
+        .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
+        .msg-status .msg-info-icon, .msg-status .msg-security-icon,
+        .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
+        .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set {
+          print-color-adjust: exact;
         }
 
         .status-text > div, .checkmarks {
