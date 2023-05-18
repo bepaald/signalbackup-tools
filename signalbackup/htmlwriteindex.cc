@@ -356,7 +356,6 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        #menu {" << std::endl
     << "          display: none;" << std::endl
     << "        }" << std::endl
-    << "      }" << std::endl
     << std::endl
     << "        #theme {" << std::endl
     << "          display: none;" << std::endl
@@ -526,7 +525,6 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "      </div>" << std::endl
       << "" << std::endl;
   }
-
 
   if (themeswitching)
   {
