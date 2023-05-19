@@ -277,7 +277,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-left: auto;
         margin-right: auto;
         margin-bottom: 5px;
-        transition: 0.25s ease;
+        z-index: 1;
+        position: relative;
+        transition: z-index, transform .25s ease;
+        transition-delay: .25s, 0s;
       }
 
       .note-to-self-icon {
@@ -312,15 +315,16 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       #message-header input[type=checkbox] {
-      display: none;
+        display: none;
       }
 
       #message-header input[type=checkbox]:checked ~ label > .avatar {
         transform: translateY(240px) scale(5);
         border-radius: 0;
         position: relative;
-        z-index: 1;
+        z-index: 2;
         cursor: zoom-out;
+        transition: transform .25s ease;
       })";
   }
   file << R"(
@@ -472,18 +476,24 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-img-container img {
-        transition: transform 0.25s ease;
         border-radius: 0.6em;
         cursor: zoom-in;
+        z-index: 1;
+        position: relative;
+        transition: z-index, transform .25s ease;
+        transition-delay: .25s, 0s;
       }
 
       .msg-linkpreview-img-container img {
-        transition: transform 0.25s ease;
         border-top-left-radius: 0.6em;
         border-top-right-radius: 0.6em;
         border-bottom-left-radius: 0em;
         border-bottom-right-radius: 0em;
         cursor: zoom-in;
+        z-index: 1;
+        position: relative;
+        transition: z-index, transform .25s ease;
+        transition-delay: .25s, 0s;
       }
 
       .msg-linkpreview-img-container {
@@ -510,8 +520,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         transform: scale(2.5);
         border-radius: 0;
         cursor: zoom-out;
-        z-index: 1;
+        z-index: 2;
         position: relative;
+        transition: transform .25s ease;
       }
 
       .pending-attachment {
@@ -934,6 +945,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         transition: padding-top 0.2s ease, padding-bottom 0.2s ease, max-height 0.4s ease;
       }
 
+      #thread-subtitle input[type=checkbox] ~ label > small::before {
+        content: '(show';
+      }
+
+      #thread-subtitle input[type=checkbox]:checked ~ label >  small::before {
+        content: '(hide';
+      }
+
       @media print {
         #menu {
           display: none;
@@ -1067,6 +1086,26 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         .convo-avatar {
           vertical-align: bottom;
         }
+
+        .right-column,
+        .left-column {
+          padding: 0px;
+          text-align: left;
+          flex: 0 0 100%;
+        }
+
+        .left-column {
+          font-style: italic;
+        }
+
+        .left-column::before {
+          content: '- ';
+        }
+
+        .columnview-header {
+          display: none;
+        }
+
         /* todo: print style for audio, video and attachment previews */
       } /* end @media print */
 
@@ -1166,7 +1205,7 @@ file << R"(
     file << groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << std::endl;
     file << "            <input type=\"checkbox\" id=\"showmembers\">" << std::endl;
     file << "            <label for=\"showmembers\">" << std::endl;
-    file << "              <small>(details)</small>" << std::endl;
+    file << "              <small> details)</small>" << std::endl;
     file << "              <span class=\"groupdetails\">" << std::endl;
     file << "                <span class=\"columnview\">" << std::endl;
 
