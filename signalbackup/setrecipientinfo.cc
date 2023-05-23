@@ -33,7 +33,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
                     (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                     "NULLIF(recipient.signal_profile_name, ''), NULLIF(groups.title, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), "
-                    " recipient._id) AS 'display_name',recipient.phone,recipient.username,recipient.uuid, recipient.color "
+                    " recipient._id) AS 'display_name',recipient.phone,recipient.username,recipient.uuid, recipient.color, recipient.wallpaper, "
+                    " recipient.chat_colors " //wallpaper_file, custom_chat_colors_id
                     "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?", rid, &results);
 
     std::string display_name = results.valueAsString(0, "display_name");
@@ -72,6 +73,29 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (bepaald::contains(s_html_colormap, results.valueAsString(0, "color")))
       color = s_html_colormap.at(results.valueAsString(0, "color"));
 
+    // custom color?
+    if (!results.isNull(0, "chat_colors"))
+    {
+      //std::cout << "CHAT COLOR" << std::endl;
+      auto [lightcolor, darkcolor] = getCustomColor(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "chat_colors"));
+      if (!lightcolor.empty())
+        color = lightcolor;
+    }
+
+    // custom wallpaper?
+    std::string wall_light;
+    std::string wall_dark;
+    if (!results.isNull(0, "wallpaper"))
+    {
+      //std::cout << "WALLPAPER" << std::endl;
+      auto [lightcolor, darkcolor] = getCustomColor(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "wallpaper"));
+      if (false || !lightcolor.empty())
+      {
+        wall_light = lightcolor;
+        wall_dark = (darkcolor.empty() ? lightcolor : darkcolor);
+      }
+    }
+
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
@@ -82,6 +106,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                              results.valueAsString(0, "phone"),
                              results.valueAsString(0, "username"),
                              color,
+                             std::string(),//wall_light,
+                             std::string(),//wall_dark,
                              hasavatar};
   }
 }

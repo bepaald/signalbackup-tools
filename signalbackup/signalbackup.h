@@ -150,6 +150,8 @@ class SignalBackup
     std::string phone;
     std::string username;
     std::string color; // "RRGGBB"
+    std::string wall_light;
+    std::string wall_dark;
     bool hasavatar;
   };
 
@@ -383,6 +385,7 @@ class SignalBackup
   bool dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
   inline void warnOnce(std::string const &msg, bool error = false);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
+  std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
