@@ -93,44 +93,99 @@ private static final Map<String, MaterialColor> COLOR_MATCHES = new HashMap<Stri
 std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red", "CF163E"},
                                                                           {"deep_orange", "CF163E"},
                                                                           {"CRIMSON", "CF163E"},
+
                                                                           {"orange", "C73F0A"},
                                                                           {"amber", "C73F0A"},
                                                                           {"A170", "C73F0A"},
+                                                                          {"C010", "C73F0A"},
+                                                                          {"C020", "C73F0A"},
+                                                                          {"C030", "C73F0A"},
                                                                           {"VERMILION", "C73F0A"},
+
                                                                           {"brown", "6F6A58"},
                                                                           {"yellow", "6F6A58"},
+                                                                          {"C000", "6F6A58"},
+                                                                          {"C060", "6F6A58"},
+                                                                          {"C070", "6F6A58"},
                                                                           {"A190", "6F6A58"}, // OR taupe
                                                                           {"BURLAP", "6F6A58"},
+
                                                                           {"pink", "AA377A"},
+                                                                          {"C300", "AA377A"},
+                                                                          {"C310", "AA377A"},
+                                                                          {"C320", "AA377A"},
                                                                           {"A150", "AA377A"},
                                                                           {"PLUM", "AA377A"},
+
                                                                           {"purple", "9932CB"},
                                                                           {"deep_purple", "9932CB"},
+                                                                          {"C270", "9932CB"},
+                                                                          {"C280", "9932CB"},
+                                                                          {"C290", "9932CB"},
                                                                           {"A140", "9932CB"},
                                                                           {"VIOLET", "9932CB"},
+
                                                                           {"indigo", "6058CA"},
+                                                                          {"C230", "6058CA"},
+                                                                          {"C240", "6058CA"},
+                                                                          {"C250", "6058CA"},
+                                                                          {"C260", "6058CA"},
                                                                           {"A100", "6058CA"}, // OR ultramarine
                                                                           {"INDIGO", "6058CA"},
+
                                                                           {"blue", "336BA3"},
                                                                           {"light_blue", "336BA3"},
+                                                                          {"C200", "336BA3"},
+                                                                          {"C210", "336BA3"},
+                                                                          {"C220", "336BA3"},
                                                                           {"A110", "336BA3"},
                                                                           {"BLUE", "336BA3"},
+
                                                                           {"cyan", "077D92"},
                                                                           {"teal", "077D92"},
+                                                                          {"C170", "077D92"},
+                                                                          {"C180", "077D92"},
+                                                                          {"C190", "077D92"},
                                                                           {"A120", "077D92"},
                                                                           {"TEAL", "077D92"},
+
                                                                           {"green", "3B7845"},
+                                                                          {"C080", "3B7845"},
+                                                                          {"C090", "3B7845"},
+                                                                          {"C100", "3B7845"},
+                                                                          {"C110", "3B7845"},
+                                                                          {"C120", "3B7845"},
+                                                                          {"C130", "3B7845"},
+                                                                          {"C140", "3B7845"},
+                                                                          {"C150", "3B7845"},
+                                                                          {"C160", "3B7845"},
                                                                           {"A130", "3B7845"}, // OR wintergreen
                                                                           {"FOREST", "3B7845"},
+
                                                                           {"light_green", "1D8663"},
                                                                           {"lime", "1D8663"},
                                                                           {"WINTERGREEN", "1D8663"},
+
                                                                           {"blue_grey", "8F616A"},
                                                                           {"TAUPE", "8F616A"},
+
                                                                           {"grey", "71717F"},
                                                                           {"A210", "71717F"},
                                                                           {"STEEL", "71717F"},
+
                                                                           {"ultramarine", "315FF4"},
-                                                                          {"ULTRAMARINE", "315FF4"}/*,
-                                                                          {"group_color", "315FF4"},
-                                                                          {"GROUP", "315FF4"}*/};
+                                                                          {"ULTRAMARINE", "315FF4"},
+                                                                          {"group_color", "315FF4"}/*,
+                                                                          {"GROUP", "315FF4"}*/
+
+                                                                          /*
+                                                                          {"A180", "FEF5D0"},
+                                                                          {"C040", "FEF5D0"},
+                                                                          {"C050", "FEF5D0"},
+
+                                                                          {"A160", "F6D8EC"},
+                                                                          {"C330", "F6D8EC"},
+                                                                          {"C340", "F6D8EC"},
+                                                                          {"C350", "F6D8EC"},
+                                                                          */
+                                                                          };

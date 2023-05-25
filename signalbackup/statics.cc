@@ -388,5 +388,11 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"call", "call_link"}
     },
     0
+  },
+  {
+    "kyber_prekey",
+    "_id",
+    {},
+    0
   }
 };

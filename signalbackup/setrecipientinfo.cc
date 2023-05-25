@@ -33,7 +33,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
                     (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                     "NULLIF(recipient.signal_profile_name, ''), NULLIF(groups.title, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), "
-                    " recipient._id) AS 'display_name',recipient.phone,recipient.username,recipient.uuid, recipient.color, recipient.wallpaper, "
+                    " recipient._id) AS 'display_name', recipient.phone, recipient.username, recipient.uuid, recipient.group_id, recipient.color, recipient.wallpaper, "
                     " recipient.chat_colors " //wallpaper_file, custom_chat_colors_id
                     "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?", rid, &results);
 
@@ -69,7 +69,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (display_name[0] != '?' && (std::ispunct(display_name[0]) || std::isdigit(display_name[0])))
       initial = "#";
 
-    std::string color = "555";
+    std::string color = results.isNull(0, "group_id") ? "555555" : s_html_colormap.at("group_color");
     if (bepaald::contains(s_html_colormap, results.valueAsString(0, "color")))
       color = s_html_colormap.at(results.valueAsString(0, "color"));
 
@@ -89,7 +89,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     {
       //std::cout << "WALLPAPER" << std::endl;
       auto [lightcolor, darkcolor] = getCustomColor(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "wallpaper"));
-      if (false || !lightcolor.empty())
+      if (!lightcolor.empty())
       {
         wall_light = lightcolor;
         wall_dark = (darkcolor.empty() ? lightcolor : darkcolor);
