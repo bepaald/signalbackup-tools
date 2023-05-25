@@ -754,6 +754,51 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--icon-f);
       }
 
+      .msg-status .msg-pencil-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21.561,4.561 L19.439,2.439a1.5,1.5 0,0 0,-2.121 0L3.823,15.934a1.5,1.5 0,0 0,-0.394 0.7L2.317,21.076a0.5,0.5 0,0 0,0.607 0.607l4.445,-1.112a1.5,1.5 0,0 0,0.7 -0.394l13.5,-13.495A1.5,1.5 0,0 0,21.561 4.561ZM7.005,19.116l-2.828,0.707L4.884,17l9.772,-9.773 2.122,2.122ZM17.838,8.283 L15.717,6.162 18.379,3.5 20.5,5.621Z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-megaphone-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M14.117,2C14.0399,2.0002 13.9658,2.0294 13.9094,2.0818L10.7086,5.0142H3.2721C2.9434,5.0142 2.6281,5.1448 2.3957,5.3773C2.1633,5.6097 2.0327,5.925 2.0327,6.2537V9.3522C2.0327,9.6809 2.1633,9.9962 2.3957,10.2286C2.6281,10.461 2.9434,10.5916 3.2721,10.5916H10.7086L13.9075,13.5241C13.9639,13.5765 14.0381,13.6057 14.1151,13.6059C14.1973,13.6059 14.2761,13.5732 14.3342,13.5151C14.3923,13.457 14.425,13.3782 14.425,13.296V2.3105C14.4251,2.2285 14.3928,2.1498 14.3351,2.0916C14.2774,2.0334 14.1989,2.0005 14.117,2ZM13.6522,12.2958L12.7784,11.2281L11.0699,9.6621H3.2721C3.1899,9.6621 3.1111,9.6294 3.053,9.5713C2.9949,9.5132 2.9622,9.4344 2.9622,9.3522V6.2537C2.9622,6.1715 2.9949,6.0927 3.053,6.0346C3.1111,5.9765 3.1899,5.9438 3.2721,5.9438H11.0699L12.7784,4.3778L13.6522,3.3101L13.4973,5.0142V10.5916L13.6522,12.2958Z"></path><path d="M5.7509,5.3241h0.9296v8.6759h-0.9296z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-member-add-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M12.2831,8.4211C12.699,7.9623 12.9758,7.3883 13.0794,6.7696C13.1831,6.1509 13.1091,5.5145 12.8665,4.9385C12.6239,4.3626 12.2234,3.8723 11.7141,3.5279C11.2049,3.1835 10.6091,3 10,3C9.3909,3 8.7951,3.1835 8.2859,3.5279C7.7766,3.8723 7.3761,4.3626 7.1335,4.9385C6.8909,5.5145 6.8169,6.1509 6.9206,6.7696C7.0242,7.3883 7.301,7.9623 7.7169,8.4211C6.9461,8.6021 6.2577,9.0474 5.7642,9.684C5.2707,10.3207 5.0013,11.111 5,11.926V13H5.9375V11.926C5.9383,11.2285 6.2074,10.5599 6.6858,10.0668C7.1642,9.5736 7.8128,9.2962 8.4894,9.2954H11.5106C12.1872,9.2962 12.8358,9.5736 13.3142,10.0668C13.7926,10.5599 14.0617,11.2285 14.0625,11.926V13H15V11.926C14.9987,11.111 14.7293,10.3207 14.2358,9.684C13.7423,9.0474 13.0539,8.6021 12.2831,8.4211ZM10,8.49C9.5674,8.49 9.1444,8.3577 8.7847,8.11C8.425,7.8622 8.1446,7.51 7.979,7.0979C7.8134,6.6859 7.7701,6.2325 7.8545,5.7951C7.9389,5.3576 8.1473,4.9558 8.4532,4.6405C8.7591,4.3251 9.1489,4.1103 9.5732,4.0233C9.9976,3.9363 10.4374,3.981 10.8371,4.1516C11.2368,4.3223 11.5785,4.6113 11.8188,4.9822C12.0592,5.353 12.1875,5.789 12.1875,6.235C12.1875,6.833 11.957,7.4066 11.5468,7.8295C11.1366,8.2524 10.5802,8.49 10,8.49Z"></path><path d="M5,6.8H3.2V5H2.8V6.8H1V7.2H2.8V9H3.2V7.2H5V6.8Z" stroke="white" stroke-width="0.5"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-member-remove-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M12.2831,8.4211C12.699,7.9623 12.9758,7.3883 13.0794,6.7696C13.1831,6.1509 13.1091,5.5145 12.8665,4.9385C12.6239,4.3626 12.2234,3.8723 11.7141,3.5279C11.2049,3.1835 10.6091,3 10,3C9.3909,3 8.7951,3.1835 8.2859,3.5279C7.7766,3.8723 7.3761,4.3626 7.1335,4.9385C6.8909,5.5145 6.8169,6.1509 6.9206,6.7696C7.0242,7.3883 7.301,7.9623 7.7169,8.4211C6.9461,8.6021 6.2577,9.0474 5.7642,9.684C5.2707,10.3207 5.0013,11.111 5,11.926V13H5.9375V11.926C5.9383,11.2285 6.2074,10.5599 6.6858,10.0668C7.1642,9.5736 7.8128,9.2962 8.4894,9.2954H11.5106C12.1872,9.2962 12.8358,9.5736 13.3142,10.0668C13.7926,10.5599 14.0617,11.2285 14.0625,11.926V13H15V11.926C14.9987,11.111 14.7293,10.3207 14.2358,9.684C13.7423,9.0474 13.0539,8.6021 12.2831,8.4211ZM10,8.49C9.5674,8.49 9.1444,8.3577 8.7847,8.11C8.425,7.8622 8.1446,7.51 7.979,7.0979C7.8134,6.6859 7.7701,6.2325 7.8545,5.7951C7.9389,5.3576 8.1473,4.9558 8.4532,4.6405C8.7591,4.3251 9.1489,4.1103 9.5732,4.0233C9.9976,3.9363 10.4374,3.981 10.8371,4.1516C11.2368,4.3223 11.5785,4.6113 11.8188,4.9822C12.0592,5.353 12.1875,5.789 12.1875,6.235C12.1875,6.833 11.957,7.4066 11.5468,7.8295C11.1366,8.2524 10.5802,8.49 10,8.49Z"></path><path d="M4.5,6.8H2.925V7.05H2.575V6.8H1V7.3H2.575V7.05H2.925V7.3H4.5V6.8Z"></path><path d="M2.925,7.05V6.8H4.5V7.3H2.925V7.05ZM2.925,7.05H2.575M2.575,7.05V6.8H1V7.3H2.575V7.05Z" stroke="white" stroke-width="0.5"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-avatar-update-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M17.5,2L6.5,2A4.5,4.5 0,0 0,2 6.5v11A4.5,4.5 0,0 0,6.5 22h11A4.5,4.5 0,0 0,22 17.5L22,6.5A4.5,4.5 0,0 0,17.5 2ZM6.5,3.5h11a3,3 0,0 1,3 3v6.75l-0.621,-0.932L16,8.439l-3,3 -4,-4L4.121,12.318 3.5,13.25L3.5,6.5A3,3 0,0 1,6.5 3.5ZM17.5,20.5L6.5,20.5a3,3 0,0 1,-3 -3L3.5,15.061L9,9.561l5.97,5.969 1.06,-1.06L14.061,12.5 16,10.561l4.5,4.5L20.5,17.5A3,3 0,0 1,17.5 20.5Z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-group-quit-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M6,9.5V13H5V9.5H6ZM11,2H7C6.4696,2 5.9609,2.2107 5.5858,2.5858C5.2107,2.9609 5,3.4696 5,4V6.5H6V4C6,3.7348 6.1054,3.4804 6.2929,3.2929C6.4804,3.1054 6.7348,3 7,3H11C11.2652,3 11.5196,3.1054 11.7071,3.2929C11.8946,3.4804 12,3.7348 12,4V13H13V4C13,3.4696 12.7893,2.9609 12.4142,2.5858C12.0391,2.2107 11.5304,2 11,2ZM7.957,4.979L7.257,5.689L8.671,7.1L9.371,7.5H2V8.5H9.375L8.675,8.9L7.252,10.311L7.957,11.021L11,8L7.957,4.979Z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-members-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="white" stroke="white" stroke-width="0.5"><path d="M29,16.75a6.508,6.508 0,0 1,6.5 6.5L35.5,24L37,24v-0.75a8,8 0,0 0,-6.7 -7.885,6.5 6.5,0 1,0 -8.6,0 7.941,7.941 0,0 0,-2.711 0.971A6.5,6.5 0,1 0,9.7 25.365,8 8,0 0,0 3,33.25L3,34L4.5,34v-0.75a6.508,6.508 0,0 1,6.5 -6.5h6a6.508,6.508 0,0 1,6.5 6.5L23.5,34L25,34v-0.75a8,8 0,0 0,-6.7 -7.885,6.468 6.468,0 0,0 1.508,-7.771A6.453,6.453 0,0 1,23 16.75ZM14,25.5a5,5 0,1 1,5 -5A5,5 0,0 1,14 25.5ZM21,10.5a5,5 0,1 1,5 5A5,5 0,0 1,21 10.5Z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-member-approved-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M13.283,8.4211C13.6989,7.9623 13.9756,7.3883 14.0793,6.7696C14.1829,6.1509 14.1089,5.5145 13.8664,4.9385C13.6238,4.3626 13.2233,3.8723 12.714,3.5279C12.2047,3.1835 11.6089,3 10.9999,3C10.3908,3 9.795,3.1835 9.2857,3.5279C8.7765,3.8723 8.3759,4.3626 8.1334,4.9385C7.8908,5.5145 7.8168,6.1509 7.9204,6.7696C8.0241,7.3883 8.3009,7.9623 8.7167,8.4211C7.946,8.6021 7.2576,9.0474 6.7641,9.684C6.2706,10.3207 6.0012,11.111 5.9999,11.926V13H6.9374V11.926C6.9382,11.2285 7.2073,10.5599 7.6857,10.0668C8.1641,9.5736 8.8127,9.2962 9.4892,9.2954H12.5105C13.187,9.2962 13.8356,9.5736 14.314,10.0668C14.7924,10.5599 15.0615,11.2285 15.0624,11.926V13H15.9999V11.926C15.9986,11.111 15.7291,10.3207 15.2356,9.684C14.7421,9.0474 14.0538,8.6021 13.283,8.4211ZM10.9999,8.49C10.5672,8.49 10.1443,8.3577 9.7845,8.11C9.4248,7.8622 9.1444,7.51 8.9789,7.0979C8.8133,6.6859 8.77,6.2325 8.8544,5.7951C8.9388,5.3576 9.1471,4.9558 9.4531,4.6405C9.759,4.3251 10.1488,4.1103 10.5731,4.0233C10.9974,3.9363 11.4373,3.981 11.837,4.1516C12.2367,4.3223 12.5783,4.6113 12.8187,4.9822C13.0591,5.353 13.1874,5.789 13.1874,6.235C13.1874,6.833 12.9569,7.4066 12.5467,7.8295C12.1364,8.2524 11.58,8.49 10.9999,8.49ZM5.9749,5.2322L6.682,5.9394L3.1465,9.4749L3.1465,9.4749L2.4394,10.182L2.4394,10.182L1.7323,9.4749L0.3181,8.0607L1.0252,7.3536L2.4394,8.7678L5.9749,5.2322Z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
+      .msg-status .msg-member-rejected-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M12.2831,8.4211C12.699,7.9623 12.9758,7.3883 13.0794,6.7696C13.1831,6.1509 13.1091,5.5145 12.8665,4.9385C12.6239,4.3626 12.2234,3.8723 11.7141,3.5279C11.2049,3.1835 10.6091,3 10,3C9.3909,3 8.7951,3.1835 8.2859,3.5279C7.7766,3.8723 7.3761,4.3626 7.1335,4.9385C6.8909,5.5145 6.8169,6.1509 6.9206,6.7696C7.0242,7.3883 7.301,7.9623 7.7169,8.4211C6.9461,8.6021 6.2577,9.0474 5.7642,9.684C5.2707,10.3207 5.0013,11.111 5,11.926V13H5.9375V11.926C5.9383,11.2285 6.2074,10.5599 6.6858,10.0668C7.1642,9.5736 7.8128,9.2962 8.4894,9.2954H11.5106C12.1872,9.2962 12.8358,9.5736 13.3142,10.0668C13.7926,10.5599 14.0617,11.2285 14.0625,11.926V13H15V11.926C14.9987,11.111 14.7293,10.3207 14.2358,9.684C13.7423,9.0474 13.0539,8.6021 12.2831,8.4211ZM10,8.49C9.5674,8.49 9.1444,8.3577 8.7847,8.11C8.425,7.8622 8.1446,7.51 7.979,7.0979C7.8134,6.6859 7.7701,6.2325 7.8545,5.7951C7.9389,5.3576 8.1473,4.9558 8.4532,4.6405C8.7591,4.3251 9.1489,4.1103 9.5732,4.0233C9.9976,3.9363 10.4374,3.981 10.8371,4.1516C11.2368,4.3223 11.5785,4.6113 11.8188,4.9822C12.0592,5.353 12.1875,5.789 12.1875,6.235C12.1875,6.833 11.957,7.4066 11.5468,7.8295C11.1366,8.2524 10.5802,8.49 10,8.49Z"></path><path d="M4.5556,8.2728L3.2828,7L4.5556,5.7272L4.2728,5.4444L3,6.7172L1.7272,5.4444L1.4444,5.7272L2.7172,7L1.4444,8.2728L1.7272,8.5556L3,7.2828L4.2728,8.5556L4.5556,8.2728Z" stroke="white" stroke-width="0.5"></path></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-profile-icon {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" stroke="none"><path d="M13.653,9.893a5,5 0,1 0,-7.306 0A5.589,5.589 0,0 0,2 15.333V17H3.5V15.333A4.088,4.088 0,0 1,7.583 11.25h4.834A4.088,4.088 0,0 1,16.5 15.333V17H18V15.333A5.589,5.589 0,0 0,13.653 9.893ZM10,10a3.5,3.5 0,1 1,3.5 -3.5A3.5,3.5 0,0 1,10 10Z"></path></svg>');
         filter: var(--icon-f);
@@ -782,6 +827,15 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-call-outgoing,
       .msg-status .msg-info-icon,
       .msg-status .msg-security-icon,
+      .msg-status .msg-pencil-icon,
+      .msg-status .msg-megaphone-icon,
+      .msg-status .msg-member-add-icon,
+      .msg-status .msg-member-remove-icon,
+      .msg-status .msg-avatar-update-icon,
+      .msg-status .msg-group-quit-icon,
+      .msg-status .msg-members-icon,
+      .msg-status .msg-member-approved-icon,
+      .msg-status .msg-member-rejected-icon,
       .msg-status .msg-profile-icon,
       .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled,
@@ -1057,6 +1111,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         .msg-status .msg-group-call, .msg-status .msg-call-incoming,
         .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
         .msg-status .msg-info-icon, .msg-status .msg-security-icon,
+        .msg-status .msg-pencil-icon, .msg-status .msg-megaphone-icon,
+        .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
+        .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
+        .msg-status .msg-members-icon, .msg-status .msg-member-approved-icon,
+        .msg-status .msg-member-rejected-icon,
         .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
         .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set {
           print-color-adjust: exact;
@@ -1501,6 +1560,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-security-icon\"></span>";
     else if (Types::isIdentityVerified(msg_info.type))
       htmloutput << "<span class=\"msg-checkmark\"></span>";
+    else if (Types::isGroupQuit(msg_info.type))
+      htmloutput << "<span class=\"msg-group-quit-icon\"></span>";
     else if (Types::isProfileChange(msg_info.type))
       htmloutput << "<span class=\"msg-profile-icon\"></span>";
     else if (Types::isExpirationTimerUpdate(msg_info.type))
@@ -1524,9 +1585,31 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-video-call-missed\"></span>";
     else if (Types::isGroupCall(msg_info.type))
       htmloutput << "<span class=\"msg-group-call\"></span>";
-    //else if (Types::isProfileChange(msg_info.type))
-    //  htmloutput << "<span class=\"msg-profile-icon\"></span>";
-    //else if
+
+    // group v2 status msgs
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::TIMER_UPDATE)
+      htmloutput << "<span class=\"msg-expiration-timer-set\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::TIMER_DISABLE)
+      htmloutput << "<span class=\"msg-expiration-timer-disabled\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::PENCIL)
+      htmloutput << "<span class=\"msg-pencil-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEGAPHONE)
+      htmloutput << "<span class=\"msg-megaphone-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBERS)
+      htmloutput << "<span class=\"msg-members-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_APPROVED)
+      htmloutput << "<span class=\"msg-member-approved-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_ADD)
+      htmloutput << "<span class=\"msg-member-add-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_REMOVE)
+      htmloutput << "<span class=\"msg-member-remove-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::AVATAR_UPDATE)
+      htmloutput << "<span class=\"msg-avatar-update-icon\"></span>";
+
+    // else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::)
+    //   htmloutput << "<span class=\"msg-\"></span>";
+
+
     htmloutput << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }

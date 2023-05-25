@@ -389,6 +389,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
 
+        IconType icon = IconType::NONE;
+
         if (Types::isIncomingVideoCall(type))
           body = "Incoming video call";
         else if (Types::isOutgoingVideoCall(type))
@@ -406,7 +408,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         else if (Types::isGroupUpdate(type)) // group v2: to do...
         {
           body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
-                                     type, recipient_info[msg_recipient_id].display_name);
+                                     type, recipient_info[msg_recipient_id].display_name, &icon);
           if (!Types::isGroupV2(type)) // not sure if this is needed anymore...
             isgroupupdatev1 = true;
         }
@@ -414,9 +416,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           body = decodeProfileChangeMessage(body, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
         else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
                  Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
         else if (Types::isStatusMessage(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
 
         // prep body (scan emoji? -> in <span>) and handle mentions...
         // if (prepbody)
@@ -502,7 +504,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             directory,
             threaddir,
             messages(messagecount, "link_preview_title"),
-            messages(messagecount, "link_preview_description")
+            messages(messagecount, "link_preview_description"),
+            icon
           });
         HTMLwriteMessage(htmloutput, msg_info, &recipient_info);
 

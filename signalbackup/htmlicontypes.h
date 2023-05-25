@@ -17,37 +17,24 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.h"
-#include "htmlicontypes.h"
+#ifndef HTMLICONTYPES_H_
+#define HTMLICONTYPES_H_
 
-struct HTMLMessageInfo
+enum class IconType
 {
-  bool only_emoji;
-  bool is_deleted;
-  bool isgroup;
-  bool incoming;
-  bool isgroupupdatev1;
-  bool nobackground;
-  bool hasquote;
-  bool overwrite;
-  bool append;
-  long long int type;
-  long long int msg_id;
-  long long int msg_recipient_id;
-  unsigned int idx;
-
-  SqliteDB::QueryResults *messages;
-  SqliteDB::QueryResults *quote_attachment_results;
-  SqliteDB::QueryResults *attachment_results;
-  SqliteDB::QueryResults *reaction_results;
-
-  std::string body;
-  std::string quote_body;
-  std::string readable_date;
-  std::string directory;
-  std::string threaddir;
-  std::string link_preview_title;
-  std::string link_preview_description;
-
-  IconType icon;
+  NONE,
+  TIMER_UPDATE,
+  TIMER_DISABLE,
+  MEGAPHONE,
+  MEMBERS,
+  MEMBER_APPROVED,
+  MEMBER_REJECTED,
+  MEMBER_ADD,
+  MEMBER_REMOVE,
+  PENCIL,
+  AVATAR_UPDATE,
+  //AVATAR_REMOVE,
 };
+
+
+#endif

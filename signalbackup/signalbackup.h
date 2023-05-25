@@ -43,6 +43,7 @@
 
 struct HTMLMessageInfo;
 struct GroupInfo;
+enum class IconType;
 
 class SignalBackup
 {
@@ -292,7 +293,7 @@ class SignalBackup
   void dumpInfoOnBadFrames() const;
   void duplicateQuotes(std::string *s) const;
   std::string decodeStatusMessage(std::string const &body, long long int expiration, long long int type,
-                                  std::string const &contactname) const;
+                                  std::string const &contactname, IconType *icon = nullptr) const;
   void escapeXmlString(std::string *s) const;
   void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const;
   void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const;
