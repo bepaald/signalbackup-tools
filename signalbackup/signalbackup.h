@@ -387,6 +387,7 @@ class SignalBackup
   inline void warnOnce(std::string const &msg, bool error = false);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
+  inline std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -824,6 +825,27 @@ inline void SignalBackup::warnOnce(std::string const &warning, bool error)
               << warning << std::endl;
     d_warningsgiven.insert(warning);
   }
+}
+
+inline std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string const &in) const
+{
+  // link preview can contain html, this is problematic for the export +
+  // in the app the tags are stripped, and underscores are replaced with spaces
+  // for some reason
+
+  std::string cleaned = in;
+
+  while (cleaned.find("<") != std::string::npos)
+  {
+    auto startpos = cleaned.find("<");
+    auto endpos = cleaned.find(">") + 1;
+
+    if (endpos != std::string::npos)
+      cleaned.erase(startpos, endpos - startpos);
+  }
+
+  bepaald::replaceAll(&cleaned, "_", " ");
+  return cleaned;
 }
 
 #endif

@@ -339,11 +339,15 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // Field 21 'newIsAnnouncementGroup'
-      if (groupchange.getField<21>().has_value() && groupchange.getField<1>().has_value())
+      if (groupchange.getField<21>().has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
-        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        std::string uuidstr;
+        if (groupchange.getField<1>().has_value())
+        {
+          auto [uuid, uuid_size] = groupchange.getField<1>().value();
+          uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+          uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
 
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEGAPHONE;
@@ -356,9 +360,19 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         */
         int enabledstate = groupchange.getField<21>().value();
         if (enabledstate == 2)
-          statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " changed the group settings to allow all members to send messages.";
+        {
+          if (uuidstr.empty())
+            statusmsg += "The group settings were changed to allow all members to send messages.";
+          else
+            statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " changed the group settings to allow all members to send messages.";
+        }
         else
-          statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " changed the group settings to only allow admins to send messages.";
+        {
+          if (uuidstr.empty())
+            statusmsg += "The group settings were changed to only allow all admins to send messages.";
+          else
+            statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " changed the group settings to only allow admins to send messages.";
+        }
       }
 
       // Field 13 'newAttributeAccess' : who can edit group info

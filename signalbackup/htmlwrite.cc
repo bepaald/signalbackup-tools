@@ -1536,10 +1536,11 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "                " << msg_info.link_preview_title << std::endl;
       htmloutput << "              </div>" << std::endl;
     }
-    if (!msg_info.link_preview_description.empty())
+    std::string cleaned_link_preview_description = HTMLprepLinkPreviewDescription(msg_info.link_preview_description);
+    if (!cleaned_link_preview_description.empty())
     {
       htmloutput << "              <div class=\"linkpreview_description\">" << std::endl;
-      htmloutput << "                " << msg_info.link_preview_description << std::endl;
+      htmloutput << "                " << cleaned_link_preview_description << std::endl;
       htmloutput << "              </div>" << std::endl;
     }
     htmloutput << "            </div>" << std::endl;
@@ -1668,9 +1669,9 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
             "<br>Received: " + msg_info.reaction_results->valueAsString(r2, "date_received");
         }
 
-      htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-reaction\"><span class=\"msg-emoji\">"
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-reaction\"><span class=\"msg-emoji\">"
                  << emojireaction << "</span>" << (count > 1 ? "<span class=\"reaction-count\">" + bepaald::toString(count) + "</span>": "")
-                 << "<span class=\"msg-reaction-info\">" << reaction_info << "</span></span>" << std::endl;
+                 << "<div class=\"msg-reaction-info\">" << reaction_info << "</div></div>" << std::endl;
     }
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
   }
