@@ -82,7 +82,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
              << " by signalbackup-tools (" << VERSIONDATE << "). "
              << "Input database version: " << d_databaseversion << ". -->" << std::endl
              << "<!DOCTYPE html>" << std::endl
-             << "<html lang=\"en\">" << std::endl
+             << "<html>" << std::endl
              << "  <head>" << std::endl
              << "    <meta charset=\"utf-8\">" << std::endl
              << "    <title>Signal conversation list</title>" << std::endl

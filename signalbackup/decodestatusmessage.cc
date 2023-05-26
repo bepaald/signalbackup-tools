@@ -509,7 +509,11 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   if (type == Types::GV1_MIGRATION_TYPE)
   {
     if (body.empty())
+    {
+      if (icon && *icon == IconType::NONE)
+        *icon = IconType::MEGAPHONE;
       return "This group was updated to a New Group.";
+    }
 
     std::string b;
     // parse body, get number of id's before '|': if one
@@ -531,6 +535,22 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       b = (b.empty() ? std::string() : "\n") + "A member couldn't be added to the New Group and has been removed.";
     else if (membersremoved > 1)
       b = (b.empty() ? "" : "\n") + bepaald::toString(membersremoved) + " members couldn't be added to the New Group and have been removed.";
+
+    if (membersinvited >= 1 && membersremoved == 0)
+    {
+      if (icon && *icon == IconType::NONE)
+        *icon = IconType::MEMBER_ADD;
+    }
+    else if (membersinvited == 0 && membersremoved >= 1)
+    {
+      if (icon && *icon == IconType::NONE)
+        *icon = IconType::MEMBER_REMOVE;
+    }
+    else // membersinvited >= 1 && membersremoved >= 1, // never seen this... don't know...
+    {
+      if (icon && *icon == IconType::NONE)
+        *icon = IconType::MEGAPHONE; //MEMBERS;
+    }
 
     return b;
   }
