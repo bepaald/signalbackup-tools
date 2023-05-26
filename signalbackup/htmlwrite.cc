@@ -78,7 +78,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
        << "Input database version: " << d_databaseversion << ". -->" << std::endl;
 
   file << R"(<!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
     <meta charset="utf-8">
     <title>)" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(</title>
@@ -671,20 +671,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         text-align: left;
       }
 
-      .msg-status,
-      .msg-group-update-v1 {
+      .msg-status {
         background: none;
         align-self: center;
       }
 
-      .msg-status div,
-      .msg-group-update-v1 div{
+      .msg-status div {
         background: none;
         text-align: center;
-      }
-
-      .msg-group-update-v1, .msg-group-update-v2 {
-        max-width: 80%;
       }
 
       .msg-status {
@@ -1064,7 +1058,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
           margin-left: auto;
         }
 
-        .msg-status, .msg-date-change, .msg-group-update-v1 {
+        .msg-status, .msg-date-change {
           margin: 0 auto;
         }
 
@@ -1479,9 +1473,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // msg bubble
   htmloutput << std::string(extraindent, ' ') << "          <div class=\"msg ";
-  if (msg_info.isgroupupdatev1)
-    htmloutput << "msg-group-update-v1\">" << std::endl;
-  else if (Types::isStatusMessage(msg_info.type) && !msg_info.isgroupupdatev1)
+  if (Types::isStatusMessage(msg_info.type))
     htmloutput << "msg-status\">" << std::endl;
   else
     htmloutput << "msg-" << (msg_info.incoming ? "incoming" : "outgoing")
@@ -1551,7 +1543,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   {
     htmloutput << std::string(extraindent, ' ') << "            <div"
                << (msg_info.only_emoji ? " class=\"msg-all-emoji\"" : "")
-               << (Types::isStatusMessage(msg_info.type) && !msg_info.isgroupupdatev1 ? " class=\"status-text" +
+               << (Types::isStatusMessage(msg_info.type) ? " class=\"status-text" +
                    (Types::isMissedCall(msg_info.type) || Types::isMissedVideoCall(msg_info.type) ? " status-text-red"s : "") + "\"" : "")
                << ">" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "              <pre>";
@@ -1586,6 +1578,22 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-video-call-missed\"></span>";
     else if (Types::isGroupCall(msg_info.type))
       htmloutput << "<span class=\"msg-group-call\"></span>";
+    else if (Types::isJoined(msg_info.type))
+      htmloutput << "<span class=\"msg-member-add-icon\"></span>";
+    else if (msg_info.type == Types::GV1_MIGRATION_TYPE)
+    {
+      if (msg_info.icon == IconType::MEMBER_ADD)
+        htmloutput << "<span class=\"msg-member-add-icon\"></span>";
+      else if (msg_info.icon == IconType::MEMBER_REMOVE)
+        htmloutput << "<span class=\"msg-member-remove-icon\"></span>";
+      // dont know, never seen this...
+      // else if (msg_info.icon == IconType::MEMBERS)
+      //   htmloutput << "<span class=\"msg-members-icon\"></span>";
+      else
+        htmloutput << "<span class=\"msg-megaphone-icon\"></span>";
+    }
+    else if (Types::isGroupUpdate(msg_info.type) && !Types::isGroupV2(msg_info.type))
+      htmloutput << "<span class=\"msg-members-icon\"></span>";
 
     // group v2 status msgs
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::TIMER_UPDATE)
@@ -1609,7 +1617,6 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
     // else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::)
     //   htmloutput << "<span class=\"msg-\"></span>";
-
 
     htmloutput << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
