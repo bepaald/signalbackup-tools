@@ -87,7 +87,6 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     std::string wall_dark;
     if (!results.isNull(0, "wallpaper"))
     {
-      //std::cout << "WALLPAPER" << std::endl;
       auto [lightcolor, darkcolor] = getCustomColor(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "wallpaper"));
       if (!lightcolor.empty())
       {
@@ -106,8 +105,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                              results.valueAsString(0, "phone"),
                              results.valueAsString(0, "username"),
                              color,
-                             std::string(),//wall_light,
-                             std::string(),//wall_dark,
+                             wall_light,
+                             wall_dark,
                              hasavatar};
   }
 }
