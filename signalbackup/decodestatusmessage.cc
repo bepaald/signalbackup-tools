@@ -139,7 +139,6 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     //std::cout << body << std::endl;
     DecryptedGroupV2Context groupv2ctx(body);
     //groupv2ctx.print();
-
     std::string statusmsg;
 
     if (groupv2ctx.getField<2>().has_value())
@@ -217,15 +216,38 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // check new member:
-      auto newmembers = groupchange.getField<3>();
-      for (uint i = 0; i < newmembers.size(); ++i)
+      if (groupchange.getField<3>().size())
       {
-        auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-        statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " added " + getNameFromUuid(uuidstr) + ".";
-        if (icon && *icon == IconType::NONE)
-          *icon = IconType::MEMBER_ADD;
+        // get editor of this group change
+        std::string editoruuid;
+        if (groupchange.getField<1>().has_value())
+        {
+          auto [uuid, uuid_size] = groupchange.getField<1>().value();
+          editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
+          editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
+
+        auto newmembers = groupchange.getField<3>();
+        for (uint i = 0; i < newmembers.size(); ++i)
+        {
+          auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+          std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+          uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+
+          if (uuidstr == editoruuid) // you can't add yourself to the group, if this happens
+          {                          // you joined via invite link (without approval)
+            statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " joined the group via the group link";
+            if (icon && *icon == IconType::NONE)
+              *icon = IconType::MEMBER_APPROVED;
+          }
+          else
+          {
+            statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " added " + getNameFromUuid(uuidstr) + ".";
+            if (icon && *icon == IconType::NONE)
+              *icon = IconType::MEMBER_ADD;
+          }
+        }
       }
 
       // check members left:
