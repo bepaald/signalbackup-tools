@@ -122,9 +122,18 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
       }
     }
     else
+    {
+      // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      // we try to get the first free date_sent
+      long long int freedate = getFreeDateForMessage(sent_at, ttid, incoming ? address : d_selfid);
+      if (freedate == -1)
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting expiration-timer-update message into mms" << std::endl;
+        return false;
+      }
       if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                   {d_mms_date_sent, sent_at},
-                                   {"date_received", sent_at},
+                                   {d_mms_date_sent, freedate},//sent_at},
+                                   {"date_received", freedate},//sent_at},
                                    {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
                                     (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                    {"m_type", (incoming ? 132 : 128)},
@@ -136,6 +145,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting expiration-timer-update into mms" << std::endl;
         return false;
       }
+    }
   }
 
   return true;

@@ -23,7 +23,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, long long int ro
 {
   SqliteDB::QueryResults calldetails;
   if (!ddb.exec("SELECT "
-                "sent_at,"
+                "COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at')) AS sent_at,"
                 "json_extract(json, '$.callHistoryDetails.callMode') AS mode,"
                 "json_extract(json, '$.callHistoryDetails.creatorUuid') AS creator_uuid,"
                 "json_extract(json, '$.callHistoryDetails.eraId') AS era_id,"
@@ -144,19 +144,29 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, long long int ro
     }
   }
   else
+  {
+    // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+    // we try to get the first free date_sent
+    long long int freedate = getFreeDateForMessage(calldetails.getValueAs<long long int>(0, "sent_at"), ttid, Types::isOutgoing(calltype) ? d_selfid : address);
+    if (freedate == -1)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for call type message" << std::endl;
+      return false;
+    }
+
     if (!insertRow(d_mms_table,
                    {{"thread_id", ttid},
                     {d_mms_recipient_id, Types::isOutgoing(calltype) ? d_selfid : address},
                     {"to_recipient_id", Types::isOutgoing(calltype) ? address : d_selfid},
-                    {"date_received", calldetails.value(0, "sent_at")},
-                    {"date_sent", calldetails.value(0, "sent_at")},
+                    {"date_received", freedate},//calldetails.value(0, "sent_at")},
+                    {"date_sent", freedate},//calldetails.value(0, "sent_at")},
                     {"type", calltype},
                     {"body", body}}))
     {
       std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << d_mms_table << ": call type message." << std::endl;
       return false;
     }
-
+  }
   //}
   /*
   else // dbv >=170 -> call into 'call' table???, or also in mms -> just additional details?

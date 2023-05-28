@@ -388,6 +388,7 @@ class SignalBackup
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
   inline std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
+  long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
