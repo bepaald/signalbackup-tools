@@ -1610,6 +1610,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-members-icon\"></span>";
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_APPROVED)
       htmloutput << "<span class=\"msg-member-approved-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_REJECTED)
+      htmloutput << "<span class=\"msg-member-rejected-icon\"></span>";
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_ADD)
       htmloutput << "<span class=\"msg-member-add-icon\"></span>";
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_REMOVE)
