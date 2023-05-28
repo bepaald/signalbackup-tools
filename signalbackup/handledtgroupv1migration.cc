@@ -148,9 +148,19 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
       }
     }
     else
+    {
+      // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      // we try to get the first free date_sent
+      long long int freedate = getFreeDateForMessage(timestamp, thread_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address);
+      if (freedate == -1)
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting group-v1-migration message into mms" << std::endl;
+        return false;
+      }
+
       if (!insertRow(d_mms_table, {{"thread_id", thread_id},
-                                   {d_mms_date_sent, timestamp},
-                                   {"date_received", timestamp},
+                                   {d_mms_date_sent, freedate},
+                                   {"date_received", freedate},
                                    {d_mms_type, Types::GV1_MIGRATION_TYPE},
                                    {d_mms_recipient_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address},
                                    {"to_recipient_id", Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? address : d_selfid},
@@ -161,7 +171,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
         return false;
       }
-
+    }
   }
   return true;
 }

@@ -749,15 +749,26 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
           }
           else
+          {
+            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // we try to get the first free date_sent
+            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
+            if (freedate == -1)
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
+              continue;
+            }
+
             if (!insertRow(d_mms_table,
                            {{"thread_id", ttid},
-                            {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                            {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                            {d_mms_date_sent, freedate},
+                            {"date_received", freedate},
                             {d_mms_type, endsessiontype},
                             {d_mms_recipient_id, Types::isOutgoing(endsessiontype) ? d_selfid : address},
                             {"to_recipient_id", Types::isOutgoing(endsessiontype) ? address : address},
                             {"read", 1}}))
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
+          }
         }
         continue;
       }
@@ -795,9 +806,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             }
           }
           else
+          {
+            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // we try to get the first free date_sent
+            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, address);
+            if (freedate == -1)
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
+              continue;
+            }
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_date_sent, freedate},
+                                         {"date_received", freedate},
                                          {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
                                          {d_mms_recipient_id, address},
                                          {"to_recipient_id", d_selfid},
@@ -808,6 +828,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
+          }
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
@@ -847,7 +868,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                  {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                                  {d_sms_recipient_id, address}}))
           {
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
             return false;
           }
         }
@@ -863,23 +884,34 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                          {"m_type", 128}, // probably also if (local == false) 132
                                          {"read", 1}}))              // hardcoded to 1 in Signal Android
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
               return false;
             }
           }
           else
+          {
+            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // we try to get the first free date_sent
+            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
+            if (freedate == -1)
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting verified-change message into mms" << std::endl;
+              continue;
+            }
+
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                          {d_mms_type, verifytype},
                                          {d_mms_recipient_id, Types::isOutgoing(verifytype) ? d_selfid : address},
                                          {"to_recipient_id", Types::isOutgoing(verifytype) ? address : d_selfid},
                                          {"m_type", 128}, // probably also if (local == false) 132
                                          {"read", 1}}))              // hardcoded to 1 in Signal Android
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting keychange into mms" << std::endl;
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
               return false;
             }
+          }
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
@@ -960,9 +992,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             }
           }
           else
+          {
+            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // we try to get the first free date_sent
+            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
+            if (freedate == -1)
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting profile-change into mms" << std::endl;
+              continue;
+            }
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                          {d_mms_type, Types::PROFILE_CHANGE_TYPE},
                                          {"body", profchangefull.getDataString()},
                                          {d_mms_recipient_id, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address},
@@ -973,6 +1014,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting profile-change into mms" << std::endl;
               return false;
             }
+          }
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
@@ -1190,9 +1232,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           }
         }
         else
+        {
+          // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+          // we try to get the first free date_sent
+          long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, incoming ? address : d_selfid);
+          if (freedate == -1)
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting message into mms" << std::endl;
+            continue;
+          }
           if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                        {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
                                        {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                        {"body", results_all_messages_from_conversation.value(j, "body")},
@@ -1214,6 +1265,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
             return false;
           }
+        }
 
         //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
