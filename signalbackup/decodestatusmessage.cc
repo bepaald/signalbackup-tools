@@ -73,8 +73,8 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   if (Types::isGroupQuit(type))
   {
     if (Types::isOutgoing(type))
-      return "You have left the group.";
-    return contactname + "has left the group.";
+      return "You left the group.";
+    return contactname + " left the group.";
   }
   if (Types::isIncomingCall(type))
     return contactname + "called you";
@@ -449,9 +449,28 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBERS;
 
-        // field 16 is (vector of) requesting members (= [uuid, profilekey, timestamp]). But all that's needed is the uuid and we have that from <1> already
+        // if field 17 'deletereqestingmembers' is also present (and same uuid as reqesting member?)
+        // the memebrs has cancelled their request.
+        std::string cancelleduuidstr;
+        if (groupchange.getField<17>().size())
+        {
+          auto [cancelleduuid, cancelleduuid_size] = groupchange.getField<17>()[0];
+          cancelleduuidstr = bepaald::bytesToHexString(cancelleduuid, cancelleduuid_size, true);
+          cancelleduuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
 
-        statusmsg += getNameFromUuid(uuidstr) + " requested to join via the group link.";
+        if (cancelleduuidstr == uuidstr)
+        {
+          statusmsg += (statusmsg.empty() ? "" : " ") +
+            getNameFromUuid(uuidstr) + " requested and cancelled their request to join via the group link.";
+        }
+        else
+        {
+          // field 16 is (vector of) requesting members (= [uuid, profilekey, timestamp]).
+          // But all that's needed is the uuid and we have that from <1> already
+          statusmsg += (statusmsg.empty() ? "" : " ") +
+            getNameFromUuid(uuidstr) + " requested to join via the group link.";
+        }
       }
 
       // Field 18 'approved member' : added after request
@@ -476,6 +495,45 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           if (!newmem.empty())
             statusmsg += (statusmsg.empty() ? "" : " ") +
               (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " approved a request to join the group from " + newmem + ".";
+        }
+      }
+
+      // field 22 'new banned member' , when combined with 17 ('delete reqeusting members) : request denied
+      if (groupchange.getField<22>().size() && groupchange.getField<1>().has_value())
+      {
+        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+        if (icon && *icon == IconType::NONE)
+          *icon = IconType::MEMBER_REJECTED;
+
+        DecryptedBannedMember decryptedbannedmember = groupchange.getField<22>()[0];
+        std::string banneduuidstr;
+        if (decryptedbannedmember.getField<1>().has_value())
+        {
+          auto [banneduuid, banneduuid_size] = decryptedbannedmember.getField<1>().value();
+          banneduuidstr = bepaald::bytesToHexString(banneduuid, banneduuid_size, true);
+          banneduuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
+
+        // if field 17 'deletereqestingmembers' is also present (and same uuid as reqesting member?)
+        // the members request was denied
+        std::string cancelleduuidstr;
+        if (groupchange.getField<17>().size())
+        {
+          auto [cancelleduuid, cancelleduuid_size] = groupchange.getField<17>()[0];
+          cancelleduuidstr = bepaald::bytesToHexString(cancelleduuid, cancelleduuid_size, true);
+          cancelleduuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
+
+        if (cancelleduuidstr == banneduuidstr)
+        {
+          statusmsg += (statusmsg.empty() ? "" : " ") +
+            getNameFromUuid(uuidstr) + " denied a request to join the group from " + getNameFromUuid(banneduuidstr);
+        }
+        else // non-requesting member was banned???
+        {
         }
       }
 
@@ -520,7 +578,8 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       // std::cout << "" << std::endl;
       // std::cout << "  ********" << std::endl;
       // std::cout << body << std::endl;
-      // groupv2ctx.print();
+      // //groupv2ctx.print();
+      // groupv2ctx.getField<2>().value().print();
       // std::cout << "  ********" << std::endl;
       // std::cout << "" << std::endl;
       return "(group V2 update)";
