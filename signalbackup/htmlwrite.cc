@@ -1115,6 +1115,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
         .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set {
           print-color-adjust: exact;
+          filter: brightness(0.5);
         }
 
         .status-text > div, .checkmarks {

@@ -490,6 +490,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       continue;
     }
 
+    // in newer databases, the date_sent may need to be adjusted on insertion because of a UNIQUE constraint.
+    // however this date is used as an id for the source of a quoted message. This map saves any adjusted
+    // timestamps <to, from>
+    std::map<long long int, long long int> adjusted_timestamps;
+
     //std::cout << "Match for " << person_or_group_id << std::endl;
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
 
@@ -752,12 +757,15 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
-            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
             if (freedate == -1)
             {
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
               continue;
             }
+            if (originaldate != freedate)
+              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table,
                            {{"thread_id", ttid},
@@ -809,12 +817,16 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
-            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, address);
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
             if (freedate == -1)
             {
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
               continue;
             }
+            if (originaldate != freedate)
+              adjusted_timestamps[originaldate] = freedate;
+
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},
                                          {"date_received", freedate},
@@ -892,12 +904,16 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
-            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
             if (freedate == -1)
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting verified-change message into mms" << std::endl;
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                        << ": Getting free date for inserting verified-change message into mms" << std::endl;
               continue;
             }
+            if (originaldate != freedate)
+              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
@@ -995,12 +1011,16 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           {
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
-            long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
             if (freedate == -1)
             {
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting profile-change into mms" << std::endl;
               continue;
             }
+            if (originaldate != freedate)
+              adjusted_timestamps[originaldate] = freedate;
+
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                          {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
@@ -1114,6 +1134,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (quote_results.valueHasType<long long int>(0, "quote_id"))
             mmsquote_id = quote_results.getValueAs<long long int>(0, "quote_id"); // this is the messages.json.$timestamp or messages.sent_at. In the android
                                                                                   // db, it should be mms.date, but this should be set by this import anyway
+                                                                                  // *EDIT* since there is a unique constraint on mms.date, the quoted message's
+                                                                                  // date may have been adjusted!!! This needs work
           else // type is string
             mmsquote_id = bepaald::toNumber<long long int>(quote_results.valueAsString(0, "quote_id"));
 
@@ -1218,7 +1240,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                                        {d_mms_recipient_id, address},
                                        {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                                       {"quote_id", hasquote ? mmsquote_id : 0},
+                                       {"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
                                        {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
                                        {"quote_body", hasquote ? mmsquote_body : nullptr},
                                        //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
@@ -1235,12 +1257,15 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         {
           // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
           // we try to get the first free date_sent
-          long long int freedate = getFreeDateForMessage(results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), ttid, incoming ? address : d_selfid);
+          long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+          long long int freedate = getFreeDateForMessage(originaldate, ttid, incoming ? address : d_selfid);
           if (freedate == -1)
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting message into mms" << std::endl;
             continue;
           }
+          if (originaldate != freedate)
+            adjusted_timestamps[originaldate] = freedate;
           if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                        {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                        {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
@@ -1253,7 +1278,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        {d_mms_recipient_id, incoming ? address : d_selfid},
                                        {"to_recipient_id", incoming ? d_selfid : address},
                                        {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                                       {"quote_id", hasquote ? mmsquote_id : 0},
+                                       {"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
                                        {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
                                        {"quote_body", hasquote ? mmsquote_body : nullptr},
                                        //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
