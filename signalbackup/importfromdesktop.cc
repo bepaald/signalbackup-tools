@@ -523,6 +523,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "hasFileAttachments,"  // non-media files? (any attachment that does not get a preview?)
                   "hasVisualMediaAttachments," // ???
                   "IFNULL(isErased, 0) AS isErased,"
+                  "IFNULL(isViewOnce, 0) AS isViewOnce,"
                   "serverGuid,"
                   "LOWER(sourceUuid) AS 'sourceUuid',"
                   "json_extract(json, '$.source') AS sourcephone,"
@@ -1065,6 +1066,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         continue;
       }
 
+
+      // skip viewonce messages
+      if (results_all_messages_from_conversation.valueHasType<long long int>(j, "isViewOnce") != 0 &&
+          results_all_messages_from_conversation.getValueAs<long long int>(j, "isViewOnce") != 0 &&
+          !createmissingcontacts)
+        continue;
+
       // get emoji reactions
       if (d_verbose) [[unlikely]] std::cout << "Handling reactions..." << std::flush;
       std::vector<std::vector<std::string>> reactions;
@@ -1247,6 +1255,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        {"quote_missing", hasquote ? mmsquote_missing : 0},
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
                                        {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;
@@ -1285,6 +1294,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        {"quote_missing", hasquote ? mmsquote_missing : 0},
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
                                        {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
           {
             std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting into mms" << std::endl;

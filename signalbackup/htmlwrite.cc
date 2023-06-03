@@ -378,21 +378,56 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .checkmarks-sent {
-          height: 14px;
-          width: 14px;
-          background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white"><path d="M12,2.5A9.5,9.5 0,1 1,2.5 12,9.511 9.511,0 0,1 12,2.5M12,1A11,11 0,1 0,23 12,11 11,0 0,0 12,1ZM17.834,9.4L16.773,8.338l-6.541,6.541 -3,-3 -1.061,1.06L10.232,17Z"></path></svg>');
+        height: 14px;
+        width: 14px;
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white"><path d="M12,2.5A9.5,9.5 0,1 1,2.5 12,9.511 9.511,0 0,1 12,2.5M12,1A11,11 0,1 0,23 12,11 11,0 0,0 12,1ZM17.834,9.4L16.773,8.338l-6.541,6.541 -3,-3 -1.061,1.06L10.232,17Z"></path></svg>');
       }
 
       .checkmarks-received {
-          height: 12px;
-          width: 19px;
-          background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="19" height="11.9999" viewBox="0 0 34.833624 22" fill="white" stroke="white"><path d="M 11.000092 0 A 11 11 0 1 0 15.268357 21.069186 A 12.375103 12.375103 0 0 1 13.4923 19.744305 A 9.5 9.5 0 0 1 1.500338 11.000092 A 9.511 9.511 0 0 1 11.000092 1.500338 A 9.5 9.5 0 0 1 12.729598 2.1054863 A 12.375103 12.375103 0 0 1 14.473428 0.56934069 A 11 11 0 0 0 11.000092 0 z M 6.2305207 10.878346 L 5.1706161 11.938251 L 9.2311968 15.998831 L 10.212325 15.017703 A 12.375103 12.375103 0 0 1 9.7253416 13.384877 L 9.2311968 13.879022 L 6.2305207 10.878346 z"></path><path d="M 22.183427,1.5 A 9.5,9.5 0 1 1 12.683423,11 9.511,9.511 0 0 1 22.183427,1.5 m 0,-1.5 a 11,11 0 1 0 11,11 11,11 0 0 0 -11,-11 z m 5.834,8.3999998 -1.061,-1.062 -6.541,6.5410002 -3.000002,-3 -1.061001,1.06 4.061003,4.061 z"></path></svg>');
+        height: 12px;
+        width: 19px;
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="19" height="11.9999" viewBox="0 0 34.833624 22" fill="white" stroke="white"><path d="M 11.000092 0 A 11 11 0 1 0 15.268357 21.069186 A 12.375103 12.375103 0 0 1 13.4923 19.744305 A 9.5 9.5 0 0 1 1.500338 11.000092 A 9.511 9.511 0 0 1 11.000092 1.500338 A 9.5 9.5 0 0 1 12.729598 2.1054863 A 12.375103 12.375103 0 0 1 14.473428 0.56934069 A 11 11 0 0 0 11.000092 0 z M 6.2305207 10.878346 L 5.1706161 11.938251 L 9.2311968 15.998831 L 10.212325 15.017703 A 12.375103 12.375103 0 0 1 9.7253416 13.384877 L 9.2311968 13.879022 L 6.2305207 10.878346 z"></path><path d="M 22.183427,1.5 A 9.5,9.5 0 1 1 12.683423,11 9.511,9.511 0 0 1 22.183427,1.5 m 0,-1.5 a 11,11 0 1 0 11,11 11,11 0 0 0 -11,-11 z m 5.834,8.3999998 -1.061,-1.062 -6.541,6.5410002 -3.000002,-3 -1.061001,1.06 4.061003,4.061 z"></path></svg>');
       }
 
       .checkmarks-read {
-          height: 12px;
-          width: 19px;
-          background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="19" height="12" viewBox="0 0 34.833627 22.000184" fill="white" stroke="none"><path d="M 11.000092 0 A 11 11 0 1 0 16.181451 20.693208 A 12.375104 12.375104 0 0 1 11.74131 13.492301 L 9.2311973 15.998832 L 5.1670356 11.934671 L 6.2269403 10.874766 L 9.2276165 13.875442 L 11.512141 11.590918 A 12.375104 12.375104 0 0 1 11.45843 11.000092 A 12.375104 12.375104 0 0 1 16.188612 1.3033964 A 11 11 0 0 0 11.000092 0 z"></path><path d="m 23.833441,0 a 11,11 0 1 0 11,11 11,11 0 0 0 -11,-11 z m -1.768001,16 -4.066003,-4.066 1.061001,-1.06 3.000002,3 6.541001,-6.541 1.066,1.067 z"></path></svg>');
+        height: 12px;
+        width: 19px;
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="19" height="12" viewBox="0 0 34.833627 22.000184" fill="white" stroke="none"><path d="M 11.000092 0 A 11 11 0 1 0 16.181451 20.693208 A 12.375104 12.375104 0 0 1 11.74131 13.492301 L 9.2311973 15.998832 L 5.1670356 11.934671 L 6.2269403 10.874766 L 9.2276165 13.875442 L 11.512141 11.590918 A 12.375104 12.375104 0 0 1 11.45843 11.000092 A 12.375104 12.375104 0 0 1 16.188612 1.3033964 A 11 11 0 0 0 11.000092 0 z"></path><path d="m 23.833441,0 a 11,11 0 1 0 11,11 11,11 0 0 0 -11,-11 z m -1.768001,16 -4.066003,-4.066 1.061001,-1.06 3.000002,3 6.541001,-6.541 1.066,1.067 z"></path></svg>');
+      }
+
+      .msg-viewonce .viewonce {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      .msg-viewonce .viewonce > pre {
+        margin-bottom: 0px;
+      }
+
+      .msg-outgoing.msg-viewonce .viewonce > pre::after {
+        content: "Media";
+      }
+
+      .msg-incoming.msg-viewonce .viewonce > pre::after {
+        content: "Viewed";
+      }
+
+      .msg-viewonce .viewonce_icon {
+        width: 50px;
+        aspect-ratio: 1/1;
+        display: inline-block;
+        position: relative;
+        margin-right: 10px;
+      }
+
+      .msg-viewonce.msg-outgoing .viewonce_icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13.25 7.75v7.87a.88.88 0 1 1-1.75 0V9.5h-1.25a.74.74 0 0 1-.12-1.5h0A2.34 2.34 0 0 0 12 7.22.73.73 0 0 1 12.5 7a.76.76 0 0 1 .75.75zM12 1a11 11 0 1 0 7.31 19.21l-.19 1.09v.7a.88.88 0 0 0 1.76 0v-4a.89.89 0 0 0-.88-.88h-4a.88.88 0 0 0 0 1.76h1.34l1-.18a9.24 9.24 0 1 1 2.91-6.7 9.37 9.37 0 0 1-.41 2.74.87.87 0 1 0 1.67.52A11.19 11.19 0 0 0 23 12 11 11 0 0 0 12 1z"></path></svg>');
+      }
+
+      .msg-viewonce.msg-incoming .viewonce_icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13.25 7.75v7.87a.88.88 0 1 1-1.75 0V9.5h-1.25a.74.74 0 0 1-.12-1.5h0A2.34 2.34 0 0 0 12 7.22.73.73 0 0 1 12.5 7a.76.76 0 0 1 .75.75zM8.89 3.29a9.18 9.18 0 0 1 2.65-.53H12A.88.88 0 1 0 12 1h-.54a11.3 11.3 0 0 0-3.16.63.88.88 0 0 0 .29 1.7 1 1 0 0 0 .3-.04zM3.64 8a9.2 9.2 0 0 1 1.5-2.25.87.87 0 1 0-1.29-1.14 11.11 11.11 0 0 0-1.79 2.68.88.88 0 0 0 .41 1.17.84.84 0 0 0 .38.08.87.87 0 0 0 .79-.54zm-.88 8.19a.87.87 0 0 0 .53-1.11 9.31 9.31 0 0 1-.53-2.66v-.46A.88.88 0 1 0 1 12v.54a11.3 11.3 0 0 0 .63 3.16.87.87 0 0 0 .82.58.79.79 0 0 0 .31-.05zm5.7 5.3A.88.88 0 0 0 8 20.36a9.2 9.2 0 0 1-2.25-1.5.87.87 0 1 0-1.17 1.29 10.86 10.86 0 0 0 2.67 1.79.85.85 0 0 0 .38.09.89.89 0 0 0 .83-.5zM12.54 23a11.3 11.3 0 0 0 3.16-.63.86.86 0 0 0 .53-1.12.87.87 0 0 0-1.11-.53 9.31 9.31 0 0 1-2.66.53H12A.88.88 0 1 0 12 23zm7.61-3.61a10.86 10.86 0 0 0 1.79-2.67.87.87 0 1 0-1.58-.72 9.2 9.2 0 0 1-1.5 2.25.86.86 0 0 0 .06 1.23.81.81 0 0 0 .58.23.84.84 0 0 0 .65-.33zM23 12v-.54a11.3 11.3 0 0 0-.63-3.16.87.87 0 0 0-1.65.58 9.31 9.31 0 0 1 .53 2.66V12A.88.88 0 1 0 23 12zm-3.55-6.92a.87.87 0 0 0-.07-1.23 10.86 10.86 0 0 0-2.67-1.79.87.87 0 1 0-.71 1.58 9.2 9.2 0 0 1 2.25 1.5.85.85 0 0 0 .59.23.89.89 0 0 0 .61-.29z"></path></svg>');
+        filter: var(--icon-f);
       }
 
       .msg-emoji {
@@ -1482,7 +1517,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "msg-" << (msg_info.incoming ? "incoming" : "outgoing")
                << (!msg_info.incoming ? " msg-sender-" + bepaald::toString(msg_info.msg_recipient_id) : "")
                << (msg_info.nobackground ? " no-bg-bubble" : "")
-               << (msg_info.is_deleted ? " deleted-msg" : "")
+               << (msg_info.is_viewonce ? " msg-viewonce" : "")
+               << ((msg_info.is_deleted && !msg_info.is_viewonce) ? " deleted-msg" : "")
                << (msg_info.reaction_results->rows() ? " msg-with-reaction" : "")<< "\">" << std::endl;
 
   // for incoming group (normal) message: Senders name before message content
@@ -1623,8 +1659,15 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     // else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::)
     //   htmloutput << "<span class=\"msg-\"></span>";
 
+
     htmloutput << msg_info.body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
+  }
+  else if (msg_info.is_viewonce)
+  {
+    htmloutput << "            <div class=\"viewonce\">" << std::endl;
+    htmloutput << "              <div class=\"viewonce_icon\"></div><pre></pre>" << std::endl;
+    htmloutput << "            </div>" << std::endl;
   }
   else if (msg_info.is_deleted)
   {
