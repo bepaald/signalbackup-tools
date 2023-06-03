@@ -24,6 +24,7 @@ struct HTMLMessageInfo
 {
   bool only_emoji;
   bool is_deleted;
+  bool is_viewonce;
   bool isgroup;
   bool incoming;
   bool isgroupupdatev1;

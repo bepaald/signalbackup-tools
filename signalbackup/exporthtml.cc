@@ -246,7 +246,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "_id, " + d_mms_recipient_id + ", body, "
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
-                    "expires_in, message_ranges, "
+                    "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, "
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
@@ -368,6 +368,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                                               "%b %d, %Y");
         bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));
         bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;
+        bool is_viewonce = messages.getValueAs<long long int>(messagecount, "view_once") == 1;
         std::string body = messages.valueAsString(messagecount, "body");
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
@@ -480,32 +481,33 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         // collect data needed by writeMessage()
         HTMLMessageInfo msg_info({only_emoji,
-            is_deleted,
-            isgroup,
-            incoming,
-            isgroupupdatev1,
-            nobackground,
-            hasquote,
-            overwrite,
-            append,
-            type,
-            msg_id,
-            msg_recipient_id,
-            messagecount,
+                                  is_deleted,
+                                  is_viewonce,
+                                  isgroup,
+                                  incoming,
+                                  isgroupupdatev1,
+                                  nobackground,
+                                  hasquote,
+                                  overwrite,
+                                  append,
+                                  type,
+                                  msg_id,
+                                  msg_recipient_id,
+                                  messagecount,
 
-            &messages,
-            &quote_attachment_results,
-            &attachment_results,
-            &reaction_results,
+                                  &messages,
+                                  &quote_attachment_results,
+                                  &attachment_results,
+                                  &reaction_results,
 
-            body,
-            quote_body,
-            readable_date,
-            directory,
-            threaddir,
-            messages(messagecount, "link_preview_title"),
-            messages(messagecount, "link_preview_description"),
-            icon
+                                  body,
+                                  quote_body,
+                                  readable_date,
+                                  directory,
+                                  threaddir,
+                                  messages(messagecount, "link_preview_title"),
+                                  messages(messagecount, "link_preview_description"),
+                                  icon
           });
         HTMLwriteMessage(htmloutput, msg_info, &recipient_info);
 
