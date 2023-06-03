@@ -405,24 +405,29 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-bottom: 0px;
       }
 
-      .msg-outgoing.msg-viewonce .viewonce > pre::after {
-        content: "Media";
-      }
-
-      .msg-incoming.msg-viewonce .viewonce > pre::after {
-        content: "Viewed";
-      }
-
+      .msg-viewonce .unviewed_viewonce_icon,
       .msg-viewonce .viewonce_icon {
-        width: 50px;
         aspect-ratio: 1/1;
         display: inline-block;
         position: relative;
         margin-right: 10px;
       }
 
+      .msg-viewonce .viewonce_icon {
+        width: 50px;
+      }
+
+      .msg-viewonce .unviewed_viewonce_icon {
+        width: 20px;
+      }
+
+      .msg-viewonce.msg-incoming .unviewed_viewonce_icon,
       .msg-viewonce.msg-outgoing .viewonce_icon {
         background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M13.25 7.75v7.87a.88.88 0 1 1-1.75 0V9.5h-1.25a.74.74 0 0 1-.12-1.5h0A2.34 2.34 0 0 0 12 7.22.73.73 0 0 1 12.5 7a.76.76 0 0 1 .75.75zM12 1a11 11 0 1 0 7.31 19.21l-.19 1.09v.7a.88.88 0 0 0 1.76 0v-4a.89.89 0 0 0-.88-.88h-4a.88.88 0 0 0 0 1.76h1.34l1-.18a9.24 9.24 0 1 1 2.91-6.7 9.37 9.37 0 0 1-.41 2.74.87.87 0 1 0 1.67.52A11.19 11.19 0 0 0 23 12 11 11 0 0 0 12 1z"></path></svg>');
+      }
+
+      .msg-viewonce.msg-incoming .unviewed_viewonce_icon {
+        filter: var(--icon-f);
       }
 
       .msg-viewonce.msg-incoming .viewonce_icon {
@@ -1666,7 +1671,13 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   else if (msg_info.is_viewonce)
   {
     htmloutput << "            <div class=\"viewonce\">" << std::endl;
-    htmloutput << "              <div class=\"viewonce_icon\"></div><pre></pre>" << std::endl;
+    if (msg_info.incoming)
+      htmloutput << "              <div class=\""
+                 << (msg_info.is_deleted ? "viewonce_icon" : "unviewed_viewonce_icon") << "\"></div><pre>"
+                 << (msg_info.is_deleted ? "Viewed" : "View-once media")
+                 << "</pre>" << std::endl;
+    else
+      htmloutput << "              <div class=\"viewonce_icon\"></div><pre>Media</pre>" << std::endl;
     htmloutput << "            </div>" << std::endl;
   }
   else if (msg_info.is_deleted)
