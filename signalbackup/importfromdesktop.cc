@@ -411,7 +411,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             //std::cout << "Possible GroupV1 id from STRING: " << gid << std::endl;
             //d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
           }
-          continue;
+          else
+            continue;
           // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
           // isgroupconversation = true;
         }
