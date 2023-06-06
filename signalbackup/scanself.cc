@@ -63,7 +63,7 @@ long long int SignalBackup::scanSelf() const
   }
 
   // in newer databases (>= dbv185), message.from_recipient_id should always be set to self on outgoing messages.
-  long long int selfid = d_database.getSingleResultAs<long long int>("SELECT DISTINCT " + d_mms_recipient_id + " FROM message WHERE (type & 0x1f) IN (?, ?, ?, ?, ?, ?, ?, ?)",
+  long long int selfid = d_database.getSingleResultAs<long long int>("SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE (" + d_mms_type + " & 0x1f) IN (?, ?, ?, ?, ?, ?, ?, ?)",
                                                                      {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE,
                                                                       Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
                                                                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK ,
