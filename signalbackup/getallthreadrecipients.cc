@@ -42,17 +42,20 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
                        &results))
     std::cout << "error" << std::endl;
 
-  //results.prettyPrint();
-
   // put results in vector...
   for (uint i = 0; i < results.rows(); ++i)
     if (!results.isNull(i, 0))
-      recipientlist.insert(results.getValueAs<long long int>(i, 0));
+    {
+      if (results.valueHasType<long long int>(i, 0))
+        recipientlist.insert(results.getValueAs<long long int>(i, 0));
+      else //if (results.valueHasType<std::string>(i, 0))
+        recipientlist.insert(bepaald::toNumber<long long int>(results.valueAsString(i, 0)));
+    }
 
   // check if thread is group
   std::string group_id;
   d_database.exec("SELECT group_id from recipient WHERE "
-                  "_id IS (SELECT recipient_id FROM thread WHERE _id = ?) AND group_id IS NOT NULL", t, &results);
+                  "_id IS (SELECT " + d_thread_recipient_id + " FROM thread WHERE _id = ?) AND group_id IS NOT NULL", t, &results);
   if (results.rows() == 1)
     group_id = results.valueAsString(0, "group_id");
 

@@ -478,7 +478,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         }
          */
 
-
         // collect data needed by writeMessage()
         HTMLMessageInfo msg_info({only_emoji,
                                   is_deleted,

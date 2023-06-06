@@ -1496,6 +1496,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   int extraindent = 0;
   // insert message
 
+  long long int quote_author_id = bepaald::toNumber<long long int>(msg_info.messages->valueAsString(msg_info.idx, "quote_author"));
+
   htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->" << std::endl;
 
   // for incoming group (normal) message: insert avatar with initial
@@ -1539,7 +1541,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     // quote message
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "                <span class=\"msg-name\">"
-               << getRecipientInfoFromMap(recipient_info, msg_info.messages->getValueAs<long long int>(msg_info.idx, "quote_author")).display_name
+               << getRecipientInfoFromMap(recipient_info, quote_author_id).display_name
                << "</span>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "              </div>" << std::endl;
