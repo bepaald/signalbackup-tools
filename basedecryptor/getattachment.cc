@@ -24,7 +24,6 @@
 int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
 {
   //std::cout << " *** REALLY GETTING ATTACHMENT ***" << std::endl;
-  //std::cout << "          length : " << frame->length() << std::endl;
 
   std::ifstream file(frame->filename(), std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
@@ -41,8 +40,9 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
       !frame->mackey() ||
       !frame->iv())
   {
+    //std::cout << "GETTING RAW UNENCRYPTED DATA" << std::endl;
     std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[frame->length()]); // to hold the data
-    if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), frame->length()))
+    if (frame->length() == 0 || !file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), frame->length()))
     {
       std::cout << "Failed to read raw attachment \"" << frame->filename() << "\"" << std::endl;
       return 1;

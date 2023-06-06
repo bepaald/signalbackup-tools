@@ -492,7 +492,7 @@ void process_mem_usage(Args && ...args)
   double vm_usage     = vsize / 1024.0;
   double resident_set = rss * page_size_kb;
 
-  std::cout << "VM: " << std::fixed << std::setprecision(2) << (vm_usage / 1024) << "MB ; RSS: " << (resident_set / 1024) << "MB" << std::endl;
+  std::cout << " *** VM: " << std::fixed << std::setprecision(2) << (vm_usage / 1024) << "MB ; RSS: " << (resident_set / 1024) << "MB" << std::endl;
 }
 #else
 #define MEMINFO(...)
