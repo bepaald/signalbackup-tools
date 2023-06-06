@@ -332,12 +332,12 @@ inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size
 
 inline void FrameWithAttachment::setLazyDataRAW(uint32_t attsize, std::string const &filename)
 {
-  setLazyData(nullptr, 0,
-              nullptr, 0,
-              nullptr, 0,
-              attsize,
-              filename,
-              0);
+  setLazyData(nullptr, 0, // iv, iv_size
+              nullptr, 0, // mackey, mackey_size
+              nullptr, 0, // cipherkey, cipherkey_size
+              attsize,    // attachment size
+              filename,   // filename
+              0);         // filepos
 }
 
 inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac)

@@ -160,44 +160,44 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     if (!setFrameFromFile(&temp, attframe.string()))
       return;
 
-    //if (replaced_attachement)
-    //  temp->printInfo();
-
-    if (!temp->setAttachmentData(attbin.string()))
-      return;
+    //if (!temp->setAttachmentData(attbin.string()))
+    //  return;
+    temp->setLazyDataRAW(temp->length(), attbin.string());
 
     if (replaced_attachement)
     {
       AttachmentMetadata amd = getAttachmentMetaData(attbin.string());
 
-      if (!amd)
+      if (!amd) // undo the replacement
       {
         std::cout << "Failed to get metadata on new attachment: " << attbin << std::endl;
         attbin.replace_extension(".bin");
-        if (!temp->setAttachmentData(attbin.string()))
-          return;
-        continue;
+        //if (!temp->setAttachmentData(attbin.string()))
+        //  return;
+        temp->setLazyDataRAW(temp->length(), attbin.string());
       }
-
-      // update database
-      if (!updatePartTableForReplace(amd, temp->rowId()))
-        //if (!d_database.exec("UPDATE part SET ct = ?,  data_size = ?, width = ?, height = ?, data_hash = ? WHERE  _id = ? ",
-        //                   {type, size, width, height, hash, temp->rowId()}) ||
-        //  d_database.changed() != 1)
+      else
       {
-        std::cout << "ERROR: Failed to insert new attachment into database" << std::endl;
-        return;
+        // update database
+        if (!updatePartTableForReplace(amd, temp->rowId()))
+        {
+          std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
+                    << ": Failed to insert new attachment into database" << std::endl;
+          return;
+        }
+
+        // set correct size on AttachmentFrame
+        temp->setLength(amd.filesize);
+
+        ++replaced_count;
       }
-
-      // set correct size on AttachmentFrame
-      temp->setLength(amd.filesize);
-
-      ++replaced_count;
     }
 
     uint64_t rowid = temp->rowId();
     uint64_t attachmentid = temp->attachmentId();
     d_attachments.emplace(std::make_pair(rowid, attachmentid), temp.release());
+
+    MEMINFO("ADDED ATTACHMENT");
   }
 
   if (replaced_count)

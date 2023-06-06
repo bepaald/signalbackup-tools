@@ -138,7 +138,7 @@ inline void AttachmentFrame::setLength(uint32_t l)
     {
       uint64_t val = bepaald::swap_endian(static_cast<uint64_t>(l));
       std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&val), sizeof(val));
-      d_attachmentdata_size = 0;
+      d_attachmentdata_size = l;
       return;
     }
 }

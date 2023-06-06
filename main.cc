@@ -253,13 +253,15 @@ int main(int argc, char *argv[])
     }
   }
 
-  MEMINFO("Before importfromdesktop");
   if (arg.importfromdesktop_bool())
+  {
+    MEMINFO("Before importfromdesktop");
     if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.desktopdbversion(),
                                arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
                                arg.ignorewal(), arg.setselfid()))
       return 1;
-  MEMINFO("After importfromdesktop");
+    MEMINFO("After importfromdesktop");
+  }
 
   if (arg.removedoubles())
     sb->removeDoubles();

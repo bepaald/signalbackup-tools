@@ -74,7 +74,11 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
           return false;
 
       if (!keepattachmentdatainmemory)
+      {
+        MEMINFO("BEFORE DROPPING ATTACHMENT DATA");
         a->clearData();
+        MEMINFO("AFTER DROPPING ATTACHMENT DATA");
+      }
     }
 
     // export avatars
