@@ -33,8 +33,9 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
                     (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                     "NULLIF(recipient.signal_profile_name, ''), NULLIF(groups.title, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), "
-                    " recipient._id) AS 'display_name', recipient.phone, recipient.username, recipient.uuid, recipient.group_id, recipient.color, recipient.wallpaper, "
-                    " recipient.chat_colors " //wallpaper_file, custom_chat_colors_id
+                    " recipient._id) AS 'display_name', recipient.phone, recipient.username, recipient.uuid, " +
+                    (d_database.tableContainsColumn("recipient", "chat_colors") ? "NULLIF(recipient.chat_colors, ''),"s : ""s) + //wallpaper_file, custom_chat_colors_id
+                    "recipient.group_id, recipient.color, recipient.wallpaper "
                     "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?", rid, &results);
 
     std::string display_name = results.valueAsString(0, "display_name");
