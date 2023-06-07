@@ -31,8 +31,43 @@ bool SignalBackup::migrateDatabase(int from [[maybe_unused]], int to [[maybe_unu
   if (!d_database.exec("BEGIN TRANSACTION"))
     return false;
 
+  // create reaction table if not present
+  if (!d_database.containsTable("reaction"))
+  {
+    if (!d_database.exec("CREATE TABLE reaction (_id INTEGER PRIMARY KEY, message_id INTEGER NOT NULL, is_mms INTEGER NOT NULL, author_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE, emoji TEXT NOT NULL, date_sent INTEGER NOT NULL, date_received INTEGER NOT NULL, UNIQUE(message_id, is_mms, author_id) ON CONFLICT REPLACE)"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
 
-  // add any missing columns to mms (from dbv 123)
+    // fill it
+    for (auto const &msgtable : {"sms"s, d_mms_table})
+    {
+      SqliteDB::QueryResults results;
+      d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
+      for (uint i = 0; i < results.rows(); ++i)
+      {
+        ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+        for (uint j = 0; j < reactions.numReactions(); ++j)
+        {
+          if (!insertRow("reaction",
+                         {{"message_id", results.getValueAs<long long int>(i, "_id")},
+                          {"is_mms", (msgtable == "sms" ? 0 : 1)},
+                          {"author_id", reactions.getAuthor(j)},
+                          {"emoji", reactions.getEmoji(j)},
+                          {"date_sent", reactions.getSentTime(j)},
+                          {"date_received", reactions.getReceivedTime(j)}}))
+          {
+            d_database.exec("ROLLBACK TRANSACTION");
+            return false;
+          }
+        }
+      }
+      d_database.exec("ALTER TABLE " + msgtable + " DROP COLUMN reactions");
+    }
+  }
+
+  // add any missing columns to mms (from dbv 123 ( or hopefully -> 99)
   auto ensureColumns = [&](std::string const &table, std::string const &column, std::string const &columndefinition)
   {
     if (!d_database.tableContainsColumn(table, column))
@@ -224,10 +259,13 @@ bool SignalBackup::migrateDatabase(int from [[maybe_unused]], int to [[maybe_unu
       }
 
       // update msl_tables (probably not necessary)
-      if (!d_database.exec("UPDATE msl_message SET message_id = ?, is_mms = 1 WHERE message_id IS ? AND is_mms = 0", {newestmmsid, i}))
+      if (d_database.containsTable("msl_message"))
       {
-        d_database.exec("ROLLBACK TRANSACTION");
-        return false;
+        if (!d_database.exec("UPDATE msl_message SET message_id = ?, is_mms = 1 WHERE message_id IS ? AND is_mms = 0", {newestmmsid, i}))
+        {
+          d_database.exec("ROLLBACK TRANSACTION");
+          return false;
+        }
       }
     }
   }
