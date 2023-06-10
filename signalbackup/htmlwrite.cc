@@ -93,6 +93,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << std::endl;
   file << "        --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
+  file << "        --spoilerout-b: " << (light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
+  file << "        --spoilerin-b: " << (light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
   file << "        --deletedmsg-border: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --deletedmsg-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --nobgbubble-footer-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
@@ -120,6 +122,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "        --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << std::endl;
     file << "        --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
+    file << "        --spoilerout-b: " << (!light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
+    file << "        --spoilerin-b: " << (!light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
     file << "        --deletedmsg-border: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --deletedmsg-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --nobgbubble-footer-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
@@ -204,16 +208,24 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .spoiler {
-	background: black;
-        color: black;
-        transition: background .2s, color .2s;
+        transition: background .2s, filter .2s;
+      }
+
+      .msg-outgoing .spoiler {
+        filter: blur(5px) saturate(0%) contrast(0) brightness(2);
+        background: var(--spoilerout-b);
+      }
+
+      .msg-incoming .spoiler {
+        filter: blur(5px) saturate(0%) contrast(0);
+        background: var(--spoilerin-b);
       }
 
       .spoiler:hover,
       .spoiler:active {
         background: transparent;
-        color: var(--msgoutgoing-c);
-        transition: background .2s, color .2s;
+        filter: none;
+        transition: background .2s, filter .2s;
       }
 
       .incoming-group-msg {
@@ -479,11 +491,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--nobgbubble-checkmarks-f);
       }
 
-      .mention-in {
+      :not(.spoiler) > .mention-in,
+      .spoiler:hover > .mention-in {
         background-color: var(--mentionin-bc);
       }
 
-      .mention-out {
+      :not(.spoiler) > .mention-out,
+      .spoiler:hover > .mention-out {
         background-color: rgba(0, 0, 0, 0.244);
       }
 
@@ -1089,6 +1103,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         .msg-incoming, .msg-outgoing {
           border: 1px solid black;
           display: block;
+        }
+
+        .msg-incoming .spoiler,
+        .msg-outgoing .spoiler {
+          filter: none;
+          background: rgba(0, 0, 0, .2);
         }
 
         .no-bg-bubble {

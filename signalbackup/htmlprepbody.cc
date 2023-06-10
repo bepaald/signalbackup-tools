@@ -92,7 +92,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
           }
           case 2: // SPOILER
           {
-            //ranges.emplace_back(Range{start, length, "<span class=\"spoiler\">", "", "</span>"});
+            ranges.emplace_back(Range{start, length, "<span class=\"spoiler\">", "", "</span>"});
             break;
           }
           case 3: // STRIKETHROUGH
