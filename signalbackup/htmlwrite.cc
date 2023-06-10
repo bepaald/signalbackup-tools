@@ -467,6 +467,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .msg-emoji {
         font-family: "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+        font-style: normal;
       }
 
       .msg-all-emoji {
