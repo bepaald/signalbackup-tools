@@ -198,6 +198,24 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         width: calc(100% - 60px);
       }
 
+      .monospace
+      {
+        font-family: 'Roboto Mono', 'Noto Mono', "Liberation Mono", OpenMono,  monospace;
+      }
+
+      .spoiler {
+	background: black;
+        color: black;
+        transition: background .2s, color .2s;
+      }
+
+      .spoiler:hover,
+      .spoiler:active {
+        background: transparent;
+        color: var(--msgoutgoing-c);
+        transition: background .2s, color .2s;
+      }
+
       .incoming-group-msg {
         display: flex;
         flex-direction: row;

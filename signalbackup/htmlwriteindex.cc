@@ -212,11 +212,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
   for (uint i = 0; i < results.rows(); ++i)
   {
-    long long int rec_id = -1;
-    if (results.valueHasType<long long int>(i, d_thread_recipient_id))
-      rec_id = results.getValueAs<long long int>(i, d_thread_recipient_id);
-    else // string type
-      rec_id = bepaald::toNumber<long long int>(results(i, d_thread_recipient_id));
+    long long int rec_id = results.valueAsInt(i, d_thread_recipient_id);
+    if (rec_id == -1) [[unlikely]]
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Failed to get thread recipient id. Skipping." << std::endl;
+      continue;
+    }
 
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
@@ -452,11 +454,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       chatsheader = true;
     }
 
-    long long int rec_id = -1;
-    if (results.valueHasType<long long int>(i, d_thread_recipient_id))
-      rec_id = results.getValueAs<long long int>(i, d_thread_recipient_id);
-    else // string type
-      rec_id = bepaald::toNumber<long long int>(results(i, d_thread_recipient_id));
+    long long int rec_id = results.valueAsInt(i, d_thread_recipient_id);
+    if (rec_id == -1) [[unlikely]]
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Failed to get thread recipient id. Skipping." << std::endl;
+      continue;
+    }
 
     if (!results.valueHasType<long long int>(i, "_id"))
       continue;

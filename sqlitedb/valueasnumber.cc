@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2023  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,41 +19,40 @@
 
 #include "sqlitedb.ih"
 
-std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) const
+long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column) const
 {
   if (valueHasType<std::string>(row, column))
-    return getValueAs<std::string>(row, column);
+    return bepaald::toNumber<long long int>(getValueAs<std::string>(row, column));
 
   if (valueHasType<unsigned int>(row, column))
-    return bepaald::toString(getValueAs<unsigned int>(row, column));
+    return getValueAs<unsigned int>(row, column);
 
   if (valueHasType<unsigned long long int>(row, column))
-    return bepaald::toString(getValueAs<unsigned long long int>(row, column));
+    return getValueAs<unsigned long long int>(row, column);
 
   if (valueHasType<unsigned long>(row, column))
-    return bepaald::toString(getValueAs<unsigned long>(row, column));
+    return getValueAs<unsigned long>(row, column);
 
   if (valueHasType<long long int>(row, column))
-    return bepaald::toString(getValueAs<long long int>(row, column));
+    return getValueAs<long long int>(row, column);
 
   if (valueHasType<double>(row, column))
-    return bepaald::toString(getValueAs<double>(row, column));
+    return -1;
 
   if (valueHasType<std::nullptr_t>(row, column))
-    return std::string();
+    return -1;
 
   if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column))
-    return Base64::bytesToBase64String(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).first.get(),
-                                       getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).second);
+    return -1;
 
   else [[unlikely]]
-    return "(unhandled type)";
+    return -1;
 }
 
-std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const &header) const
+long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
   if (i > -1) [[likely]]
-    return valueAsString(row, i);
-  return "(column not found)";
+    return valueAsInt(row, i);
+  return -1;
 }
