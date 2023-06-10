@@ -67,6 +67,8 @@ class SqliteDB
     void print(bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
     std::string valueAsString(size_t row, std::string const &header) const;
+    long long int valueAsInt(size_t row, size_t column) const;
+    long long int valueAsInt(size_t row, std::string const &header) const;
     inline std::string operator()(size_t row, std::string const &header) const;
     inline std::string operator()(std::string const &header) const;
     template <typename T>

@@ -226,20 +226,15 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     // get recipient_id for thread;
     SqliteDB::QueryResults recid;
+    long long int thread_recipient_id = -1;
     if (!d_database.exec("SELECT _id," + d_thread_recipient_id + " FROM thread WHERE _id = ?", t, &recid) ||
-        recid.rows() != 1)
+        recid.rows() != 1 || (thread_recipient_id = recid.valueAsInt(0, d_thread_recipient_id)) == -1)
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to find recipient_id for thread (" << t << ")... skipping" << std::endl;
       continue;
     }
     long long int thread_id = recid.getValueAs<long long int>(0, "_id");
-    long long int thread_recipient_id = -1;
-    if (recid.valueHasType<long long int>(0, d_thread_recipient_id))
-      thread_recipient_id = recid.getValueAs<long long int>(0, d_thread_recipient_id);
-    else // if (recid.valueHasType<std::string>(0, d_thread_recipient_id))
-      thread_recipient_id = bepaald::toNumber<long long int>(recid(d_thread_recipient_id));
-
 
     bool isgroup = false;
     SqliteDB::QueryResults groupcheck;
@@ -368,11 +363,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       {
 
         long long int msg_id = messages.getValueAs<long long int>(messagecount, "_id");
-        long long int msg_recipient_id = -1;
-        if (messages.valueHasType<long long int>(messagecount, d_mms_recipient_id))
-          msg_recipient_id = messages.getValueAs<long long int>(messagecount, d_mms_recipient_id); // for groups, this != thread_recipient_id on incoming messages
-        else // if == string type
-          msg_recipient_id = bepaald::toNumber<long long int>(messages(messagecount, d_mms_recipient_id));
+        long long int msg_recipient_id = messages.valueAsInt(messagecount, d_mms_recipient_id);
+        if (msg_recipient_id == -1) [[unlikely]]
+        {
+          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                    << ": Failed to get message recipient id. Skipping." << std::endl;
+          continue;
+        }
         std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
                                                           "%b %d, %Y %H:%M:%S");
         std::string readable_date_day = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,

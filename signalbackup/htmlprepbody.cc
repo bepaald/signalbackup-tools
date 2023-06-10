@@ -92,19 +92,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
           }
           case 2: // SPOILER
           {
-            //ranges.emplace_back(Range{start, length, "<<span class=\"spoiler\">", "", "</span>"});
-            /* PLUS:
-               .spoiler
-               {
-                 color: black;
-                 background-color: black;
-               }
-
-               .spoiler:hover
-               {
-                 background-color: white; // inherit/default?
-               }
-             */
+            //ranges.emplace_back(Range{start, length, "<span class=\"spoiler\">", "", "</span>"});
             break;
           }
           case 3: // STRIKETHROUGH
@@ -114,13 +102,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
           }
           case 4: // MONOSPACE
           {
-            // <span class=\"monospace\"> </span>
-            /* PLUS:
-               .monospace
-               {
-                 font-family: 'Roboto Mono', 'others...',  monospace;
-               }
-             */
+            ranges.emplace_back(Range{start, length, "<span class=\"monospace\">", "", "</span>"});
             break;
           }
           default:
