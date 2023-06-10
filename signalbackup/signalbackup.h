@@ -358,6 +358,7 @@ class SignalBackup
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
   void prepRanges(std::vector<Range> *ranges) const;
+  void prepRanges2(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
