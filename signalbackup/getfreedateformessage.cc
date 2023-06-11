@@ -23,13 +23,25 @@ long long int SignalBackup::getFreeDateForMessage(long long int targetdate, long
                                                   long long int from_recipient_id) const
 {
 
-  long long int freedate = d_database.getSingleResultAs<long long int>("SELECT min(unused_date) AS unused_date FROM "
-                                                                       "(SELECT min(" + d_mms_date_sent + ") + 1 AS unused_date FROM " + d_mms_table + " AS t1 WHERE "
-                                                                       "thread_id = ? AND "
-                                                                       "from_recipient_id = ? "
-                                                                       "AND " + d_mms_date_sent + " >= ? AND "
-                                                                       "NOT EXISTS (SELECT * FROM message AS t2 WHERE t2." + d_mms_date_sent + " = t1." + d_mms_date_sent + " + 1 AND thread_id = ? AND from_recipient_id = ?) UNION "
-                                                                       "SELECT ? FROM " + d_mms_table + " WHERE NOT EXISTS (SELECT * FROM " + d_mms_table + " WHERE " + d_mms_date_sent + " = ?))",
-                                                                       {thread_id, from_recipient_id, targetdate, thread_id, from_recipient_id, targetdate, targetdate}, -1);
-  return freedate;
+  // long long int freedate = d_database.getSingleResultAs<long long int>("SELECT min(unused_date) AS unused_date FROM "
+  //                                                                      "(SELECT min(" + d_mms_date_sent + ") + 1 AS unused_date FROM " + d_mms_table + " AS t1 WHERE "
+  //                                                                      "thread_id = ? AND "
+  //                                                                      "from_recipient_id = ? "
+  //                                                                      "AND " + d_mms_date_sent + " >= ? AND "
+  //                                                                      "NOT EXISTS (SELECT * FROM message AS t2 WHERE t2." + d_mms_date_sent + " = t1." + d_mms_date_sent + " + 1 AND thread_id = ? AND from_recipient_id = ?) UNION "
+  //                                                                      "SELECT ? FROM " + d_mms_table + " WHERE NOT EXISTS (SELECT * FROM " + d_mms_table + " WHERE " + d_mms_date_sent + " = ?))",
+  //                                                                      {thread_id, from_recipient_id, targetdate, thread_id, from_recipient_id, targetdate, targetdate}, -1);
+  int incr = 0;
+  long long int freedate = -1;
+  while ((freedate = d_database.getSingleResultAs<long long int>("SELECT " + d_mms_date_sent + " FROM " + d_mms_table + " WHERE thread_id = ? AND from_recipient_id = ? AND " + d_mms_date_sent + " = ?",
+                                                                 {thread_id, from_recipient_id, targetdate + incr}, -1)) != -1 && incr < 1000)
+  {
+    //std::cout << "date: " << freedate << " was taken" << std::endl;
+    ++incr;
+  }
+
+  if (freedate != -1)
+    return -1;
+
+  return targetdate + incr;
 }

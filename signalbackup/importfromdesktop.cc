@@ -550,7 +550,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
       bool outgoing = type == "outgoing";
-      bool incoming = (type == "incoming" || type == "profile-change" || type == "keychange" || type == "verified-change");
+      bool incoming = (type == "incoming" || type == "profile-change" || type == "keychange" || type == "verified-change" || type == "change-number-notification");
       long long int numattachments = results_all_messages_from_conversation.getValueAs<long long int>(j, "numattachments");
       long long int numreactions = results_all_messages_from_conversation.getValueAs<long long int>(j, "numreactions");
       long long int nummentions = results_all_messages_from_conversation.getValueAs<long long int>(j, "nummentions");
@@ -824,9 +824,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
             if (freedate == -1)
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting number-change into mms" << std::endl;
               continue;
             }
+
             if (originaldate != freedate)
               adjusted_timestamps[originaldate] = freedate;
 
@@ -889,7 +890,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
             if (freedate == -1)
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting keychange into mms" << std::endl;
               continue;
             }
             if (originaldate != freedate)
