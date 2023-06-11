@@ -18,6 +18,7 @@
 */
 
 #include "signalbackup.ih"
+#include "msgrange.h"
 
 void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const
 {
@@ -469,7 +470,8 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                                 mention_results.getValueAs<long long int>(m, "range_length"),
                                 "",
                                 "@" + displayname,
-                                ""});
+                                "",
+                                false});
     }
     applyRanges(&text, &ranges, nullptr);
 
