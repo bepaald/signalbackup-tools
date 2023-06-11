@@ -17,9 +17,28 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef MSGRANGE_H_
+#define MSGRANGE_H_
 
-#define VERSIONDATE "20230611.080829"
+// data that defines ranges in a message body to be replaced for html output
+struct Range
+{
+  long long int start;
+  long long int length;
+  std::string pre;
+  std::string replacement;
+  std::string post;
+  bool nobreak;
+  bool operator<(Range const &other) const
+  {
+    return (start < other.start) ||
+      (start == other.start && start + length < other.start + other.length) ||
+      (start == other.start && start + length == other.start + other.length && replacement < other.replacement);
+
+    //return std::tie(start, start + length, replacement) <
+    //  std::tie(other.start, other.start + other.length, other.replacement);
+
+  };
+};
 
 #endif
