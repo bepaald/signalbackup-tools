@@ -530,6 +530,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "json_extract(json, '$.source') AS sourcephone,"
                   "seenStatus,"
                   "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
+                  "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
                   "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
@@ -556,6 +557,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       bool hasquote = !results_all_messages_from_conversation.isNull(j, "quote");
       long long int flags = results_all_messages_from_conversation.getValueAs<long long int>(j, "flags");
       long long int haspreview = results_all_messages_from_conversation.getValueAs<long long int>(j, "haspreview");
+      long long int hasranges = results_all_messages_from_conversation.getValueAs<long long int>(j, "hasranges");
       bool issticker = results_all_messages_from_conversation.getValueAs<long long int>(j, "issticker");
 
       // get address (needed in both mms and sms databases)
@@ -655,8 +657,6 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " failed to get recipient id for message partner. Skipping message." << std::endl;
         continue;
       }
-
-
 
       // PROCESS THE MESSAGE
       if (type == "call-history")
@@ -780,6 +780,72 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting session reset into mms" << std::endl;
           }
         }
+        continue;
+      }
+      else if (type == "change-number-notification")
+      {
+        if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
+
+        if (d_database.containsTable("sms"))
+        {
+          if (!insertRow("sms", {{"thread_id", ttid},
+                                 {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {"type", Types::CHANGE_NUMBER_TYPE},
+                                 {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                 {d_sms_recipient_id, address}}))
+          {
+            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting number-change into sms" << std::endl;
+            return false;
+          }
+        }
+        else
+        {
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+          {
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, Types::CHANGE_NUMBER_TYPE},
+                                         {d_mms_recipient_id, address},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting number-change into mms" << std::endl;
+              ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              return false;
+            }
+          }
+          else
+          {
+            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // we try to get the first free date_sent
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
+            if (freedate == -1)
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting session reset into mms" << std::endl;
+              continue;
+            }
+            if (originaldate != freedate)
+              adjusted_timestamps[originaldate] = freedate;
+
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, freedate},
+                                         {"date_received", freedate},
+                                         {d_mms_type, Types::CHANGE_NUMBER_TYPE},
+                                         {d_mms_recipient_id, address},
+                                         {"to_recipient_id", d_selfid},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting number-change into mms" << std::endl;
+              ddb.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              return false;
+            }
+          }
+        }
+        if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
       }
       else if (type == "keychange")
@@ -1309,6 +1375,43 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
         //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
 
+        // add ranges if present
+        // note 'bodyRanges' on desktop is also used for mentions,
+        // in that case a range is {start, end, mentionUuid}, instead of {start, end, style}.
+        // (so style == NULL) these must be skipped here.
+        if (hasranges)
+        {
+          //ddb.prettyPrint("SELECT json_extract(json, '$.bodyRanges') FROM messages WHERE rowid IS ?", rowid);
+          BodyRanges bodyrangelist;
+          SqliteDB::QueryResults ranges_results;
+          for (uint r = 0; r < hasranges; ++r)
+          {
+            if (ddb.exec("SELECT "
+                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].start') AS range_start,"
+                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].length') AS range_length,"
+                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].style') AS range_style"
+                         " FROM messages WHERE rowid IS ?", rowid, &ranges_results))
+            {
+              if (ranges_results.isNull(0, "range_style"))
+                continue;
+
+              //ranges_results.prettyPrint();
+
+              BodyRange bodyrange;
+              if (ranges_results.getValueAs<long long int>(0, "range_start") != 0)
+                bodyrange.addField<1>(ranges_results.getValueAs<long long int>(0, "range_start"));
+              bodyrange.addField<2>(ranges_results.getValueAs<long long int>(0, "range_length"));
+              bodyrange.addField<4>(ranges_results.getValueAs<long long int>(0, "range_style") - 1); // NOTE desktop style enum starts at 1 (android 0)
+              bodyrangelist.addField<1>(bodyrange);
+            }
+          }
+          if (bodyrangelist.size())
+          {
+            std::pair<unsigned char *, size_t> bodyrangesdata(bodyrangelist.data(), bodyrangelist.size());
+            d_database.exec("UPDATE " + d_mms_table + " SET message_ranges = ? WHERE rowid = ?", {bodyrangesdata, new_mms_id});
+          }
+        }
+
         // insert message attachments
         if (d_verbose) [[unlikely]] std::cout << "Inserting attachments..." << std::flush;
         insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
@@ -1346,6 +1449,11 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             continue;
           }
           //std::cout << "  Mention " << k + 1 << "/" << nummentions << std::endl;
+
+          // NOTE Desktop uses the same bodyRanges field for styling {start,length,style} and mentions {start,length,mentionUuid}.
+          // if this is a style, mentionUuid will not exist, and we should skip it.
+          if (results_mentions.isNull(0, "mention_uuid"))
+            continue;
 
           long long int rec_id = getRecipientIdFromUuid(results_mentions.valueAsString(0, "mention_uuid"), &recipientmap, createmissingcontacts);
           if (rec_id == -1)

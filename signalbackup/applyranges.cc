@@ -178,6 +178,10 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
 
       ! NOTE neither <1> or <2> can have replacement **
 
+      !! NOTE CASE 4 (a&b) DO NOT SEEM TO BE ALLOWED IN SIGNAL
+      !!! NOTE IN CASE 4ab, ONE OF THE RANGES MUST BE BROKEN (IF BOTH
+          HAVE nobreak == true, ONE WILL BREAK ANYWAY)
+
     (5)
       O1: <1>                    </1>
       O2:      <2>    </2>
@@ -212,6 +216,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
                     << ": Illegal range-set (overlapping ranges both have replacement)." << std::endl;
           continue;
         }
+        //std::cout << "CASE 1" << std::endl;
         ranges->at(i - 1).pre += ranges->at(i).pre;
         ranges->at(i - 1).post = ranges->at(i).post + ranges->at(i - 1).post;
         if (!ranges->at(i).replacement.empty()) // only one can have replacement, if it's i-1 its already kept...
@@ -227,6 +232,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
                   << ": Illegal range-set (overlapping ranges both have replacement)." << std::endl;
         continue;
       }
+      //std::cout << "CASE 2" << std::endl;
       // ranges->at(i - 1).replacement is automatically kept if it has one
       ranges->at(i - 1).pre += ranges->at(i).pre;
       ranges->at(i).pre = "";
@@ -243,6 +249,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
         std::cout << "Warning. Illegal range-set (overlapping ranges both have replacement)." << std::endl;
         continue;
       }
+      //std::cout << "CASE 3" << std::endl;
       // ranges->at(i).replacement is automatically kept if it has one
       ranges->at(i).post = ranges->at(i).post + ranges->at(i - 1).post;
       ranges->at(1 - 1).post = "";
@@ -261,19 +268,28 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
           continue;
         }
 
-        Range newrange = {ranges->at(i).start,
-                          ranges->at(i - 1).length - (ranges->at(i).start - ranges->at(i - 1).start),
-                          ranges->at(i).pre,
-                          "",
-                          ranges->at(i).post + ranges->at(i - 1).post}; // N2
-        ranges->emplace_back(newrange);
+        if (false && ranges->at(i).nobreak && !ranges->at(i - 1).nobreak)
+        {
+          //std::cout << "CASE 4b" << std::endl;
+          // not yet (implemented)
+        }
+        else
+        {
+          //std::cout << "CASE 4a" << std::endl;
+          Range newrange = {ranges->at(i).start,
+                            ranges->at(i - 1).length - (ranges->at(i).start - ranges->at(i - 1).start),
+                            ranges->at(i).pre,
+                            "",
+                            ranges->at(i).post + ranges->at(i - 1).post,
+                            false}; // N2
+          ranges->emplace_back(newrange);
 
-        ranges->at(i - 1).length = newrange.start - ranges->at(i - 1).start; // N1
-        ranges->at(i - 1).post = "";
+          ranges->at(i - 1).length = newrange.start - ranges->at(i - 1).start; // N1
+          ranges->at(i - 1).post = "";
 
-        ranges->at(i).start = newrange.start + newrange.length; // N3
-        ranges->at(i).length -= newrange.length;
-
+          ranges->at(i).start = newrange.start + newrange.length; // N3
+          ranges->at(i).length -= newrange.length;
+        }
         return prepRanges2(ranges);
       }
       //if (ranges->at(i).start + ranges->at(i).length < ranges->at(i - 1).start + ranges->at(i - 1).length) // end sooner
@@ -283,11 +299,13 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
         std::cout << "Warning. Illegal range-set (overlapping ranges both have replacement)." << std::endl;
         continue;
       }
+      //std::cout << "CASE 5" << std::endl;
       Range newrange = {ranges->at(i).start + ranges->at(i).length,
                         ranges->at(i - 1).start + ranges->at(i - 1).length - (ranges->at(i).start + ranges->at(i).length),
                         "",
                         "",
-                        ranges->at(i - 1).post};
+                        ranges->at(i - 1).post,
+                        false};
       ranges->emplace_back(newrange);                                           // -> N3
 
       ranges->at(i - 1).post = "";

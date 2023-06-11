@@ -167,6 +167,11 @@ struct Types
     return (type & BASE_TYPE_MASK) == JOINED_TYPE;
   }
 
+  inline static bool isNumberChange(long type)
+  {
+    return type == CHANGE_NUMBER_TYPE;
+  }
+
   inline static bool isExpirationTimerUpdate(long type)
   {
     return (type & EXPIRATION_TIMER_UPDATE_BIT) != 0;
@@ -207,7 +212,8 @@ struct Types
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
-      isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE;
+      isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE ||
+      isNumberChange(type);
   }
 
 };

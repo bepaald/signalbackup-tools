@@ -123,6 +123,12 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       return "You marked your safety number with " + contactname + " unverified";
     return "You marked your safety number with " + contactname + " unverified from another device";
   }
+  if (Types::isNumberChange(type))
+  {
+    if (Types::isOutgoing(type))
+      return "You changed your phone number."; // doesnt exist
+    return contactname + " changed their phone number.";
+  }
   if (Types::isEndSession(type))
   {
     if (Types::isOutgoing(type))
