@@ -51,15 +51,15 @@
 //     repeated BodyRange ranges = 1;
 // }
 
-typedef ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::INT32, // int32 start
-                                                  protobuffer::optional::INT32, // int32 length
-                                                  protobuffer::optional::STRING,                   // \.
-                                                  protobuffer::optional::ENUM,                     //  \.
-                                                  protobuffer::optional::STRING,                   //   > ONE OF
-                                                  ProtoBufParser<protobuffer::optional::STRING,    //  /
-                                                                 protobuffer::optional::STRING>>>> // /
-BodyRanges;
+typedef ProtoBufParser<protobuffer::optional::INT32, // int32 start
+                       protobuffer::optional::INT32, // int32 length
+                       protobuffer::optional::STRING,                   // \.
+                       protobuffer::optional::ENUM,                     //  \.
+                       protobuffer::optional::STRING,                   //   > ONE OF
+                       ProtoBufParser<protobuffer::optional::STRING,    //  /
+                                      protobuffer::optional::STRING>>   // /
+BodyRange;
 
-
+typedef ProtoBufParser<std::vector<BodyRange>> BodyRanges;
 
 #endif

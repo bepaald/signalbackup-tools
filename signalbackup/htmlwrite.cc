@@ -888,6 +888,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--icon-f);
       }
 
+      .msg-status .msg-phone-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M17.21 22a8.08 8.08 0 0 1-2.66-.51 20.79 20.79 0 0 1-7.3-4.73 21 21 0 0 1-4.74-7.3c-.78-2.22-.67-4 .35-5.45h0a5 5 0 0 1 2-1.67 2.72 2.72 0 0 1 3.51.81l2.11 3a2.69 2.69 0 0 1-.35 3.49l-.93.85c-.09.08-.15.22-.08.31A20 20 0 0 0 11 13a20 20 0 0 0 2.21 1.91.24.24 0 0 0 .3-.08l.85-.93a2.68 2.68 0 0 1 3.49-.35l3 2.11a2.68 2.68 0 0 1 .85 3.43 5.22 5.22 0 0 1-1.71 2 4.69 4.69 0 0 1-2.78.91zM4.09 4.87c-.46.64-1 1.77-.16 4.08a19.28 19.28 0 0 0 4.38 6.74A19.49 19.49 0 0 0 15 20.07c2.31.81 3.44.3 4.09-.16a3.55 3.55 0 0 0 1.2-1.42A1.21 1.21 0 0 0 20 16.9l-3-2.12a1.18 1.18 0 0 0-1.53.15l-.82.9a1.72 1.72 0 0 1-2.33.29 21.9 21.9 0 0 1-2.37-2.05 22.2 22.2 0 0 1-2-2.37 1.71 1.71 0 0 1 .3-2.32l.89-.82A1.19 1.19 0 0 0 9.21 7L7.1 4a1.19 1.19 0 0 0-1.51-.38 3.72 3.72 0 0 0-1.5 1.25z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-video-call-incoming,
       .msg-status .msg-video-call-outgoing,
       .msg-status .msg-group-call,
@@ -908,7 +913,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-profile-icon,
       .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled,
-      .msg-status .msg-expiration-timer-set {
+      .msg-status .msg-expiration-timer-set,
+      .msg-status .msg-phone-icon {
         display: inline-block;
         height: 18px;
         aspect-ratio: 1 / 1;
@@ -1192,7 +1198,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         .msg-status .msg-members-icon, .msg-status .msg-member-approved-icon,
         .msg-status .msg-member-rejected-icon,
         .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
-        .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set {
+        .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
+        .msg-status .msg-phone-icon {
           print-color-adjust: exact;
           filter: brightness(0.5);
         }
@@ -1679,6 +1686,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     }
     else if (Types::isGroupUpdate(msg_info.type) && !Types::isGroupV2(msg_info.type))
       htmloutput << "<span class=\"msg-members-icon\"></span>";
+    else if (Types::isNumberChange(msg_info.type))
+      htmloutput << "<span class=\"msg-phone-icon\"></span>";
 
     // group v2 status msgs
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::TIMER_UPDATE)
