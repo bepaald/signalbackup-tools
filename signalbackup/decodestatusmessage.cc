@@ -129,6 +129,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       return "You changed your phone number."; // doesnt exist
     return contactname + " changed their phone number.";
   }
+  if (Types::isDonationRequest(type))
+  {
+    return "Like this new feature? Help support Signal with a one-time donation.";
+  }
   if (Types::isEndSession(type))
   {
     if (Types::isOutgoing(type))

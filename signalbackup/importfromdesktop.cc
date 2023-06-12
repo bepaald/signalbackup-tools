@@ -213,6 +213,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::cout << std::endl;
     return false;
   }
+  d_selfuuid = d_database.getSingleResultAs<std::string>("SELECT uuid FROM recipient WHERE _id = ?", d_selfid, std::string());
 
   if (configdir.empty() || databasedir.empty())
   {
@@ -329,10 +330,6 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
   // this map will map desktop-recipient-uuid's to android recipient._id's
   std::map<std::string, long long int> recipientmap;
-
-  // message types with warnings given, to suppress
-  // too many unsupported message warnings...
-  std::set<std::string> warnmessagetypesupport;
 
   // for each conversation
   for (uint i = 0; i < results_all_conversations.rows(); ++i)
@@ -669,15 +666,10 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       else if (type == "group-v2-change")
       {
         //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
-        handleDTGroupChangeMessage(ddb, rowid, ttid);
+        handleDTGroupChangeMessage(ddb, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, false);
 
-        if (!bepaald::contains(warnmessagetypesupport, type))
-        {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                    << ": Unsupported message type 'group-v2-change'. Skipping..."
-                    << " (this warning will be shown only once)" << std::endl;
-          warnmessagetypesupport.insert(type);
-        }
+        warnOnce("Unsupported message type 'group-v2-change'. Skipping..."
+                 " (this warning will be shown only once)");
         //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
       }
@@ -706,14 +698,14 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
         {
-          if (!bepaald::contains(warnmessagetypesupport, "'timer-notification (in group)'"))
+          if (createmissingcontacts)
+            handleDTGroupChangeMessage(ddb, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, true);
+          else
           {
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                      << ": Unsupported message type 'timer-notification (in group)'. Skipping..."
-                      << " (this warning will be shown only once)" << std::endl;
-            warnmessagetypesupport.insert("'timer-notification (in group)'");
+            warnOnce("Unsupported message type 'timer-notification (in group)'. Skipping... "
+                     "(this warning will be shown only once)");
+            //handleDTGroupChangeMessage(ddb, rowid, ttid, address, true);
           }
-          handleDTGroupChangeMessage(ddb, rowid, ttid);
           continue;
         }
 
@@ -1125,12 +1117,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       }
       else if (!outgoing && !incoming)
       {
-        if (!bepaald::contains(warnmessagetypesupport, type))
-        {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
-                    << type << "'. Skipping message." << " (this warning will be shown only once)" << std::endl;
-          warnmessagetypesupport.insert(type);
-        }
+        warnOnce("Unsupported message type '" + type + "'. Skipping message. "
+                 "(this warning will be shown only once)");
         continue;
       }
 

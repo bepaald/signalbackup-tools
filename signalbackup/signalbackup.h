@@ -89,6 +89,7 @@ class SignalBackup
   bool d_verbose;
   std::set<std::string> d_warningsgiven;
   long long int d_selfid;
+  std::string  d_selfuuid;
 
   enum DBLinkFlag : int
   {
@@ -306,7 +307,8 @@ class SignalBackup
                          long long int rowid, SqliteDB const &ddb, std::string const &where,
                          std::string const &databasedir, bool isquote, bool issticker);
   bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
-  void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id) const;
+  void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
+                                  long long int date, std::map<long long int, long long int> *adjusted_timestamps, std::map<std::string, long long int> *savedmap, bool istimermessage) const;
   bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int sent_at, long long int address) const;
   bool handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int timestamp,
                                 long long int address, std::map<std::string, long long int> *savedmap,

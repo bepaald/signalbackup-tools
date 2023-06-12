@@ -380,7 +380,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string body = messages.valueAsString(messagecount, "body");
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
-        bool isgroupupdatev1 = false;
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
 
         SqliteDB::QueryResults attachment_results;
@@ -414,13 +413,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           body = "Missed voice call";
         else if (Types::isGroupCall(type))
           body = "Group call";
-        else if (Types::isGroupUpdate(type)) // group v2: to do...
-        {
+        else if (Types::isGroupUpdate(type))
           body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
                                      type, recipient_info[msg_recipient_id].display_name, &icon);
-          if (!Types::isGroupV2(type)) // not sure if this is needed anymore...
-            isgroupupdatev1 = true;
-        }
         else if (Types::isProfileChange(type))
           body = decodeProfileChangeMessage(body, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
         else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
@@ -492,7 +487,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   is_viewonce,
                                   isgroup,
                                   incoming,
-                                  isgroupupdatev1,
                                   nobackground,
                                   hasquote,
                                   overwrite,

@@ -27,7 +27,6 @@ struct HTMLMessageInfo
   bool is_viewonce;
   bool isgroup;
   bool incoming;
-  bool isgroupupdatev1;
   bool nobackground;
   bool hasquote;
   bool overwrite;
