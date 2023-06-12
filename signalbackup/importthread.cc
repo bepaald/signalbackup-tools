@@ -156,8 +156,14 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
   }
 
+  // std::cout << "RECIPIENTS BEFORE CROP:" << std::endl;
+  // source->d_database.prettyPrint("SELECT _id, COALESCE(signal_profile_name, group_id) FROM recipient");
+
   // crop the source db to the specified thread
   source->cropToThread(thread);
+
+  // std::cout << "RECIPIENTS AFTER CROP:" << std::endl;
+  // source->d_database.prettyPrint("SELECT _id, COALESCE(signal_profile_name, group_id) FROM recipient");
 
   // remove any storage_key entries that are already in target...
   if (d_database.containsTable("storage_key") && source->d_database.containsTable("storage_key"))
@@ -221,6 +227,23 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
     if (count)
       std::cout << "  Deleted " << count << " existing cds's" << std::endl;
+  }
+
+  // delete double kyber prekey entries
+  if (d_database.containsTable("kyber_prekey") && source->d_database.containsTable("kyber_prekey"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT account_id, key_id FROM kyber_prekey", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM kyber_prekey WHERE account_id = ? AND key_id = ?", {res.value(i, "account_id"), res.value(i, "key_id")});
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing kyber_prekey's" << std::endl;
+
   }
 
   // delete double key_value entries (this table does not exist anymore currently)
@@ -349,87 +372,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   //source->d_database.exec("VACUUM");
 
-  /*
-  // make sure all id's are unique
-  long long int offsetthread = getMaxUsedId("thread") + 1 - source->getMinUsedId("thread");
-  long long int offsetsms = getMaxUsedId("sms") + 1 - source->getMinUsedId("sms");
-  long long int offsetmms = getMaxUsedId("mms") + 1 - source->getMinUsedId("mms");
-  long long int offsetpart = getMaxUsedId("part") + 1 - source->getMinUsedId("part");
-  long long int offsetrecipient = getMaxUsedId((d_databaseversion < 24) ? "recipient_preferences" : "recipient") + 1 - source->getMinUsedId((d_databaseversion < 24) ? "recipient_preferences" : "recipient");
-  long long int offsetgroups = getMaxUsedId("groups") + 1 - source->getMinUsedId("groups");
-  long long int offsetidentities = getMaxUsedId("identities") + 1 - source->getMinUsedId("identities");
-  long long int offsetgroup_receipts = getMaxUsedId("group_receipts") + 1 - source->getMinUsedId("group_receipts");
-  long long int offsetdrafts = getMaxUsedId("drafts") + 1 - source->getMinUsedId("drafts");
-  long long int offsetsticker = getMaxUsedId("sticker") + 1 - source->getMinUsedId("sticker");
-
-
-  long long int offsetmsl_payload = -1;
-  long long int offsetmsl_message = -1;
-  long long int offsetmsl_recipient = -1;
-  if (source->d_database.containsTable("msl_payload") &&
-      source->d_database.containsTable("msl_message") &&
-      source->d_database.containsTable("msl_recipient"))
-  {
-    offsetmsl_payload = getMaxUsedId("msl_payload") + 1 - source->getMinUsedId("msl_payload");
-    offsetmsl_message = getMaxUsedId("msl_message") + 1 - source->getMinUsedId("msl_message");
-    offsetmsl_recipient = getMaxUsedId("msl_recipient") + 1 - source->getMinUsedId("msl_recipient");
-  }
-
-  long long int offsetnotification_profile = -1;
-  long long int offsetnotification_profile_allowed_members = -1;
-  long long int offsetnotification_profile_schedule = -1;
-  if (source->d_database.containsTable("notification_profile") &&
-      source->d_database.containsTable("notification_profile_allowed_members") &&
-      source->d_database.containsTable("notification_profile_schedule"))
-  {
-    offsetnotification_profile = getMaxUsedId("notification_profile") + 1 - source->getMinUsedId("notification_profile");
-    offsetnotification_profile_allowed_members = getMaxUsedId("notification_profile_allowed_members") + 1 - source->getMinUsedId("notification_profile_allowed_members");
-    offsetnotification_profile_schedule = getMaxUsedId("notification_profile_schedule") + 1 - source->getMinUsedId("notification_profile_schedule");
-  }
-
-  // payments, sender_keys
-
-  long long int offsetgroup_call_ring = -1;
-  if (source->d_database.containsTable("group_call_ring"))
-    offsetgroup_call_ring = getMaxUsedId("group_call_ring") + 1 - source->getMinUsedId("group_call_ring");
-
-  long long int offsetmegaphone = -1;
-  if (source->d_database.containsTable("megaphone"))
-    offsetmegaphone = getMaxUsedId("megaphone") + 1 - source->getMinUsedId("megaphone");
-
-  long long int offsetremapped_recipients = -1;
-  if (source->d_database.containsTable("remapped_recipients"))
-    offsetremapped_recipients = getMaxUsedId("remapped_recipients") + 1 - source->getMinUsedId("remapped_recipients");
-
-  long long int offsetremapped_threads = -1;
-  if (source->d_database.containsTable("remapped_threads"))
-    offsetremapped_threads = getMaxUsedId("remapped_threads") + 1 - source->getMinUsedId("remapped_threads");
-
-  long long int offsetmention = -1;
-  if (source->d_database.containsTable("mention"))
-    offsetmention = getMaxUsedId("mention") + 1 - source->getMinUsedId("mention");
-
-  long long int offsetreaction = -1;
-  if (source->d_database.containsTable("reaction")) // dbv >= 121
-    offsetreaction = getMaxUsedId("reaction") + 1 - source->getMinUsedId("reaction");
-
-  // source->makeIdsUnique(offsetthread, offsetsms, offsetmms,
-  //                       offsetpart, offsetrecipient, offsetgroups,
-  //                       offsetidentities, offsetgroup_receipts, offsetdrafts,
-  //                       offsetsticker, offsetmegaphone, offsetremapped_recipients,
-  //                       offsetremapped_threads, offsetmention,
-  //                       offsetmsl_payload, offsetmsl_message, offsetmsl_recipient,
-  //                       offsetreaction, offsetgroup_call_ring,
-  //                       offsetnotification_profile, offsetnotification_profile_allowed_members,
-  //                       offsetnotification_profile_schedule);
-  */
+  // id's need to be unique
   makeIdsUnique(source);
-  // // export database
-  // std::cout << "Writing database..." << std::endl;
-  // SqliteDB database1("NEWSTYLE.1.sqlite", false);
-  // if (!SqliteDB::copyDb(source->d_database, database1))
-  //   std::cout << "Error exporting sqlite database" << std::endl;
-  // return;
 
   // delete double remapped_recipients
   if (d_database.containsTable("remapped_recipients") && source->d_database.containsTable("remapped_recipients"))
@@ -457,6 +401,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   if (targetthread > -1)
   {
     std::cout << "  Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
+
     if (source->d_database.containsTable("sms"))
       source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?", targetthread);
@@ -485,7 +430,61 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
     source->d_database.exec("DROP TABLE thread");
     source->d_database.exec("DROP TABLE identities");
-    source->d_database.exec((d_databaseversion < 24) ? "DROP TABLE recipient_preferences" : "DROP TABLE recipient");
+    // even though the thread already exists, not all recipients are guaranteed to
+    // exist in target. For example: current thread is group conversation, in the source
+    // a member was added, but this member did not yet exist in the target.
+    //
+    // the same probably goees for ancient (<24) databases, but I'll write that if someone ever
+    // tries to merge those.
+    //
+    // delete existsing recipients (recipient table has unique constraint on phone, uuid and group_id)
+    if (d_databaseversion < 24)
+      source->d_database.exec("DROP TABLE recipient_preferences");
+    else
+    {
+      // get the unique features of existing recipients
+      SqliteDB::QueryResults existing_rec;
+      if (d_database.tableContainsColumn("recipient", "group_type") &&
+          d_database.tableContainsColumn("recipient", "storage_service_key"))
+        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &existing_rec);
+      else
+        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &existing_rec);
+
+      // for each of them, check if they are also in source, and delete
+      int count = 0;
+      for (uint i = 0; i < results.rows(); ++i)
+      {
+        RecipientIdentification rec_id = {existing_rec(i, "uuid"), existing_rec(i, "phone"), existing_rec(i, "group_id"),
+                                          existing_rec.getValueAs<long long int>(i, "group_type"), existing_rec(i, "storage_service_key")};
+
+        if (d_database.tableContainsColumn("recipient", "group_type"))
+        {
+          source->d_database.exec("DELETE FROM recipient WHERE "
+                                  // one-of uuid/phone/group_id is set and equal to existing recipient
+                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
+                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "(group_id IS NOT NULL AND group_id IS ?)) OR "
+                                  // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
+                                  "(uuid IS NULL AND "
+                                  "phone IS NULL AND "
+                                  "group_id IS NULL AND "
+                                  "group_type IS 4  AND group_type IS ? AND "
+                                  "storage_service_key IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service_key});
+          count += source->d_database.changed();
+        }
+        else
+        {
+          source->d_database.exec("DELETE FROM recipient WHERE "
+                                  // one-of uuid/phone/group_id is set and equal to existing recipient
+                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
+                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
+          count += source->d_database.changed();
+        }
+      }
+      if (count)
+        std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
+    }
     source->d_database.exec("DROP TABLE groups");
     source->d_avatars.clear();
   }
