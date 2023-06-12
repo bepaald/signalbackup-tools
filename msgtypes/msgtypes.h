@@ -172,6 +172,11 @@ struct Types
     return type == CHANGE_NUMBER_TYPE;
   }
 
+  inline static bool isDonationRequest(long type)
+  {
+    return type == BOOST_REQUEST_TYPE;
+  }
+
   inline static bool isExpirationTimerUpdate(long type)
   {
     return (type & EXPIRATION_TIMER_UPDATE_BIT) != 0;
@@ -213,7 +218,7 @@ struct Types
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
       isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE ||
-      isNumberChange(type);
+      isNumberChange(type) || isDonationRequest(type);
   }
 
 };

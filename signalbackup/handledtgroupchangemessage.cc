@@ -33,8 +33,115 @@
 */
 
 void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid,
-                                              long long int thread_id [[maybe_unused]]) const
+                                              long long int thread_id, long long int address, long long int date,
+                                              std::map<long long int, long long int> *adjusted_timestamps,
+                                              std::map<std::string, long long int> *savedmap,
+                                              bool istimermessage) const
 {
+  if (date == -1)
+  {
+    // print wrn
+    return;
+  }
+
+  if (istimermessage)
+  {
+
+    SqliteDB::QueryResults timer_results;
+    if (!ddb.exec("SELECT "
+                  "type, "
+                  "conversationId, "
+                  "IFNULL(json_extract(json,'$.expirationTimerUpdate.fromGroupUpdate'), false) AS fromgroupupdate, "
+                  "IFNULL(json_extract(json,'$.expirationTimerUpdate.fromSync'), false) AS fromsync, "
+                  "IFNULL(json_extract(json,'$.expirationTimerUpdate.expireTimer'), 0) AS expiretimer, "
+                  "json_extract(json,'$.expirationTimerUpdate.source') AS source, "
+                  "json_extract(json,'$.expirationTimerUpdate.sourceUuid') AS sourceuuid "
+                  "FROM messages WHERE rowid = ?", rowid, &timer_results))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Querying database" << std::endl;
+      return;
+    }
+
+    bool incoming = timer_results("sourceuuid") != d_selfuuid;
+    long long int timer = timer_results.getValueAs<long long int>(0, "expiretimer");
+    long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
+      Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
+    // at this point address is the group_recipient. This is good for outgoing messages,
+    // but incoming should have individual_recipient
+    if (timer_results("sourceuuid").empty())
+      return;
+    if (incoming)
+      address = getRecipientIdFromUuid(timer_results("sourceuuid"), savedmap);
+
+    if (address == -1)
+    {
+      // print wrn
+      return;
+    }
+
+    //std::cout << "Got timer message: " << timer << std::endl;
+
+    DecryptedTimer dt;
+    dt.addField<1>(timer);
+    DecryptedGroupChange groupchange;
+    groupchange.addField<12>(dt);
+    DecryptedGroupV2Context groupv2ctx;
+    groupv2ctx.addField<2>(groupchange);
+    std::pair<unsigned char *, size_t> groupchange_data(groupv2ctx.data(), groupv2ctx.size());
+
+    // add message to database
+    // if (d_database.containsTable("sms"))
+    //   not going through the trouble
+    // else
+    // {
+    if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+    {
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, date},
+                                   {"date_received", date},
+                                   {"body", groupchange_data},
+                                   {d_mms_type, groupv2type},
+                                   {d_mms_recipient_id, address},
+                                   {"m_type", incoming ? 132 : 128},
+                                   {"read", 1}}))              // hardcoded to 1 in Signal Android
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
+        return;
+      }
+    }
+    else
+    {
+      //newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      //we try to get the first free date_sent
+      long long int freedate = getFreeDateForMessage(date, thread_id, Types::isOutgoing(groupv2type) ? d_selfid : address);
+      if (freedate == -1)
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                  << ": Getting free date for inserting verified-change message into mms" << std::endl;
+        return;
+      }
+      if (date != freedate)
+        (*adjusted_timestamps)[date] = freedate;
+
+      std::any newmms_id;
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, freedate},
+                                   {"date_received", freedate},
+                                   {"body", groupchange_data},
+                                   {d_mms_type, groupv2type},
+                                   {d_mms_recipient_id, incoming ? address : d_selfid},
+                                   {"to_recipient_id", incoming ? d_selfid : address},
+                                   {"m_type", incoming ? 132 : 128},
+                                   {"read", 1}}, "_id", &newmms_id))              // hardcoded to 1 in Signal Android
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
+        return;
+      }
+    }
+    return;
+  }
+
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
                 "json_extract(json, '$.groupV2Change.from') AS source,"

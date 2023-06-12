@@ -221,11 +221,13 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     // if (!results_attachment_data.isNull(0, "file_name"))
     //   attachmentdata.back().filename = results_attachment_data.valueAsString(0, "file_name");
 
-    if (amd.filename.empty() || amd.filesize == 0)
+    if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.getValueAs<long long int>(0, "size") != 0))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
       std::cout << "Pending: " << results_attachment_data.getValueAs<long long int>(0, "pending") << std::endl;
       //results_attachment_data.prettyPrint();
+      //std::cout << amd.filesize << std::endl;
+
       //std::cout << "Corresponding message:" << std::endl;
       //ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
       continue;
