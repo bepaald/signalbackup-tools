@@ -146,43 +146,6 @@ void SignalBackup::cleanDatabaseByMessages()
     }
 
     getGroupV1MigrationRecipients(&referenced_recipients);
-    /*
-    SqliteDB::QueryResults results;
-    if (d_database.exec("SELECT body FROM "s + (d_database.containsTable("sms") ? "sms" : d_mms_table) + " WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
-    {
-      //results.prettyPrint();
-      for (uint i = 0; i < results.rows(); ++i)
-      {
-        if (results.valueHasType<std::string>(i, "body"))
-        {
-          //std::cout << results.getValueAs<std::string>(i, "body") << std::endl;
-
-          std::string body = results.getValueAs<std::string>(i, "body");
-          std::string tmp; // to hold part of number while reading
-          unsigned int body_idx = 0;
-          while (true)
-          {
-            if (!std::isdigit(body[body_idx]) || body_idx >= body.length()) // we are reading '|', ',' or end of string
-            {
-              // deal with any number we have
-              if (tmp.size())
-              {
-                referenced_recipients.insert(bepaald::toNumber<int>(tmp));
-                if (d_verbose) [[unlikely]]
-                  std::cout << "    Got recipient from GV1_MIGRATION: " << tmp << std::endl;
-                tmp.clear();
-              }
-            }
-            else // we are reading (part of) a number
-              tmp += body[body_idx];
-            ++body_idx;
-            if (body_idx > body.length())
-              break;
-          }
-        }
-      }
-    }
-    */
 
     // get (former)group members
     SqliteDB::QueryResults results;
@@ -242,7 +205,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.tableContainsColumn(d_mms_table, "quote_author") ? " UNION SELECT DISTINCT quote_author FROM " +
                      d_mms_table + " WHERE quote_author IS NOT NULL"s : ""s) +
                     (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? " UNION SELECT DISTINCT to_recipient_id FROM " +
-                     d_mms_table + " WHERE to_recipient_id IS NOT NULL"s : ""s) +
+                     d_mms_table : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +

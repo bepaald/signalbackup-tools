@@ -100,7 +100,9 @@ class SignalBackup
 
   enum LinkFlag : int
   {
-    SET_UNIQUELY,
+    SET_UNIQUELY = (1 << 0),
+    //NEW_FLAG = (1 << 1),
+    //ANOTHER_FLAG = (1 << 2),
   };
 
   struct RecipientIdentification
