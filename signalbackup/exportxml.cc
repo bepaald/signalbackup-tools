@@ -669,7 +669,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM " + d_mms_table +
                       " WHERE "
                       + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND " +
-                      (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL AND " : "") +
+                      (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id IN (SELECT _id FROM recipient WHERE phone IS NOT NULL OR group_id IS NOT NULL) AND " : "") +
                       "(" + d_mms_type + " & ?) == 0 AND "
                       "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
