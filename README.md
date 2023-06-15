@@ -39,6 +39,8 @@ Current stable released versions of
 
 To compile the program, just running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqlite3` should generally do the trick. Add any compiler flags you feel useful, I personally use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++20` with `-std=c++17`.
 
+If you have `cmake` available on your system, running `cmake -B build && cmake --build build -j` inside the project directory should also produce a working binary in the directory 'build') and make use of multiple processors if available. 
+
 For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTI.bash44` for a faster build, and let me know if it works).
 
 For Arch users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
@@ -51,7 +53,9 @@ If for any reason you need to compile against cryptopp instead of openssl, run `
 
 **<span id="macos">macOs</span>**
 
-It should be possible to compile and run the program under macOS as well, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9), or more recently [here](https://github.com/bepaald/signalbackup-tools/issues/85). macOs users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
+A homebrew formula is provided in at [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). On modern macOs versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD [path/to/signalbackup-tools.rb]`.
+
+Manually compiling should also be possible assuming the dependencies are installed, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9), or more recently [here](https://github.com/bepaald/signalbackup-tools/issues/85). macOs users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
 
 **<span id="windows">Windows binary</span>**
 
@@ -350,7 +354,7 @@ Where `outputdirectory` is an existing directory.
 
 ##### Export to HTML
 
-_NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. Decoding of some group V2 status messages is not yet complete, these will simply show up as 'group V2 update'. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). At the moment, this function will only work with current database versions (at least version 170 and up, though some older versions work as well). If there is demand, support for older databases may be added in the future._
+_NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). It is possible that some (very) old backups are not supported. If there is demand, support for older databases may be added in the future._
 
 To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files wil be rewritten. Example:
 
