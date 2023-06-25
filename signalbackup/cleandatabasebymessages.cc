@@ -211,9 +211,11 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
+                    //",COALESCE(NULLIF(system_display_name, ''), NULLIF(profile_joined_name, ''), NULLIF(signal_profile_name, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), recipient._id) AS 'display_name',phone" +
                     (d_database.containsTable("distribution_list") ? ",distribution_list_id"s : ""s), &deleted_recipients);
     if (deleted_recipients.rows())
     {
+      //deleted_recipients.prettyPrint();
       std::cout << "  Deleted " << deleted_recipients.rows() << " unreferenced recipients" << std::endl;
       if (d_database.containsTable("distribution_list"))
       {

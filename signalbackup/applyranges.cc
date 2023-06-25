@@ -166,6 +166,8 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       N2:      <2>     </2></1>
       N3:              <2>        </2>
 
+      ! NOTE: <1> is unbroken!
+
       ! NOTE neither <1> or <2> can have replacement **
 
     (4b) ???
@@ -175,6 +177,8 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       N1: <1>  </1><2>
       N2:      <1>              </1>
       N3:                       ""      </2>
+
+      ! NOTE : <2> is unbroken!
 
       ! NOTE neither <1> or <2> can have replacement **
 
@@ -268,10 +272,23 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
           continue;
         }
 
-        if (false && ranges->at(i).nobreak && !ranges->at(i - 1).nobreak)
+        if (ranges->at(i).nobreak && !ranges->at(i - 1).nobreak)
         {
           //std::cout << "CASE 4b" << std::endl;
-          // not yet (implemented)
+          Range newrange = {ranges->at(i - 1).start,
+                            ranges->at(i).start - ranges->at(i - 1).start,
+                            ranges->at(i - 1).pre,
+                            "",
+                            ranges->at(i - 1).post + ranges->at(i).pre,
+                            false}; // N1
+          ranges->emplace_back(newrange);
+
+          ranges->at(i - 1).start = ranges->at(i).start;
+          ranges->at(i - 1).length = ranges->at(i - 1).length - newrange.length; // N2
+
+          ranges->at(i).start = ranges->at(i - 1).start + ranges->at(i - 1).length;
+          ranges->at(i).pre = "";
+          ranges->at(i).length = ranges->at(i).length - ranges->at(i - 1).length; // N3
         }
         else
         {

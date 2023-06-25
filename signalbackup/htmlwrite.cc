@@ -403,6 +403,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: block;
       }
 
+      .edited {
+        font-size: x-small;
+        opacity: 75%;
+        display: block;
+        margin-right: 5px;
+      }
+
       .checkmarks {
         margin-left: 5px;
       }
@@ -1742,6 +1749,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // insert msg-footer (date & checkmarks)
   htmloutput << std::string(extraindent, ' ') << "            <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">" << std::endl;
+  if (msg_info.original_message_id != -1)
+    htmloutput << std::string(extraindent, ' ') << "              <span class=\"edited\">edited</span>" << std::endl;
   htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << std::endl;
   if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
   {

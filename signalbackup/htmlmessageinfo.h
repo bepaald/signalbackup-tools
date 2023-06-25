@@ -34,6 +34,7 @@ struct HTMLMessageInfo
   long long int type;
   long long int msg_id;
   long long int msg_recipient_id;
+  long long int original_message_id;
   unsigned int idx;
 
   SqliteDB::QueryResults *messages;
