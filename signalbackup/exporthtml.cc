@@ -249,11 +249,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, "
+                    + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
+                    + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
                     "WHERE thread_id = ?"
                     + datewhereclause +
+                    + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
                     " ORDER BY date_received ASC", t, &messages);
     if (messages.rows() == 0)
       continue;
@@ -381,6 +384,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
+        long long int isedited = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
+                                  messages.valueAsInt(messagecount, "original_message_id") :
+                                  -1);
 
         SqliteDB::QueryResults attachment_results;
         d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
@@ -494,6 +500,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   type,
                                   msg_id,
                                   msg_recipient_id,
+                                  isedited,
                                   messagecount,
 
                                   &messages,
