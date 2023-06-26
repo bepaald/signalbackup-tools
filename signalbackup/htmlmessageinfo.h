@@ -41,6 +41,7 @@ struct HTMLMessageInfo
   SqliteDB::QueryResults *quote_attachment_results;
   SqliteDB::QueryResults *attachment_results;
   SqliteDB::QueryResults *reaction_results;
+  SqliteDB::QueryResults *edit_revisions;
 
   std::string body;
   std::string quote_body;

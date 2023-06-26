@@ -397,17 +397,24 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         align-items: center;
       }
 
-      .msg-data {
+      .msg-data,
+      .edited {
         font-size: x-small;
         opacity: 75%;
         display: block;
       }
 
       .edited {
-        font-size: x-small;
-        opacity: 75%;
-        display: block;
         margin-right: 5px;
+        position: relative;
+      }
+
+      .edited pre {
+        display: inline;
+      }
+
+      .edited-info-header {
+        font-style: italic;
       }
 
       .checkmarks {
@@ -667,6 +674,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-left: 5px;
       }
 
+      .edited-info,
       .msg-reaction .msg-reaction-info {
         display: block;
         position: absolute;
@@ -686,7 +694,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         transition: opacity 0.2s;
       }
 
+      .edited-info {
+        font-size: initial;
+      }
+
       /* Draw an arrow using border styles */
+      .edited-info::before,
       .msg-reaction .msg-reaction-info::before {
         content: "";
         position: absolute;
@@ -698,6 +711,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-color: #FFFFFF transparent transparent transparent;
       }
 
+      .edited:hover,
+      .edited:hover .edited-info,
       .msg-reaction:hover .msg-reaction-info {
         visibility: visible;
         opacity: 1;
@@ -1749,8 +1764,29 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // insert msg-footer (date & checkmarks)
   htmloutput << std::string(extraindent, ' ') << "            <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">" << std::endl;
-  if (msg_info.original_message_id != -1)
-    htmloutput << std::string(extraindent, ' ') << "              <span class=\"edited\">edited</span>" << std::endl;
+  if (msg_info.original_message_id != -1) // : is_edited = true
+  {
+    htmloutput << std::string(extraindent, ' ') << "              <div class=\"edited\"><span>edited</span>";
+    // add edit revisions...
+    if (msg_info.edit_revisions->rows())
+    {
+      htmloutput << "<div class=\"edited-info\">";
+      for (uint i = 0; i < msg_info.edit_revisions->rows(); ++i)
+      {
+        htmloutput << "<span class=\"edited-info-header\"> revision: </span>"
+                   << msg_info.edit_revisions->valueAsInt(i, "revision_number") << "<br>"
+                   << "<span class=\"edited-info-header\">body: </span>"
+                   << "<pre>" << msg_info.edit_revisions->valueAsString(i, "body") << "</pre>" << "<br>"
+                   << "<span class=\"edited-info-header\">date: </span>"
+                   << bepaald::toDateString(msg_info.edit_revisions->valueAsInt(i, "date_received") / 1000,
+                                            "%b %d, %Y %H:%M:%S");
+        if (i < msg_info.edit_revisions->rows() - 1)
+          htmloutput << "<hr>";
+      }
+      htmloutput << "</div>" << std::endl;
+    }
+    htmloutput << "</div>" << std::endl;
+  }
   htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << std::endl;
   if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
   {

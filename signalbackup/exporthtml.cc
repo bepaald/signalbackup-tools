@@ -384,9 +384,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
-        long long int isedited = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
-                                  messages.valueAsInt(messagecount, "original_message_id") :
-                                  -1);
+        long long int original_message_id = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
+                                             messages.valueAsInt(messagecount, "original_message_id") :
+                                             -1);
 
         SqliteDB::QueryResults attachment_results;
         d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
@@ -400,6 +400,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         SqliteDB::QueryResults reaction_results;
         d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received'"
                         "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+
+        SqliteDB::QueryResults edit_revisions;
+        if (d_database.tableContainsColumn(d_mms_table, "revision_number"))
+          d_database.exec("SELECT body,date_received,revision_number FROM " + d_mms_table + " WHERE _id = ? OR original_message_id = ? AND latest_revision_id IS NOT NULL ORDER BY revision_number ASC",
+                          {original_message_id, original_message_id}, &edit_revisions);
 
         bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
 
@@ -500,13 +505,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   type,
                                   msg_id,
                                   msg_recipient_id,
-                                  isedited,
+                                  original_message_id,
                                   messagecount,
 
                                   &messages,
                                   &quote_attachment_results,
                                   &attachment_results,
                                   &reaction_results,
+                                  &edit_revisions,
 
                                   body,
                                   quote_body,
