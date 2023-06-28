@@ -512,6 +512,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments,"
                   "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
                   "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS nummentions,"
+                  "IFNULL(json_array_length(json, '$.editHistory'), 0) AS editrevisions,"
                   "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
                   "IFNULL(json_extract(json, '$.flags'), 0) AS flags," // see 'if (type.empty())' below for FLAGS enum
                   "body,"

@@ -495,7 +495,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                << "chset=\"106\" "
                << "cd=\"null\" "
                << "fn=\"null\" "
-               << "cl=\"&lt;text" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << "&gt;\" "
+      //       << "cl=\"&lt;text" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << "&gt;\" "
                << "cl=\"text" << std::setw(6) << std::setfill('0') << mid << std::setw(0) << ".txt\" "
                << "ctt_s=\"null\" "
                << "ctt_t=\"null\" "
@@ -686,8 +686,8 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   }
 
   std::string date;
-  outputfile << "<smses count=" << bepaald::toString(sms_results.rows() + mms_results.rows())
-             << " backup_date=\"" << date << "\" type=\"full\">" << std::endl;
+  outputfile << "<smses count=\"" << bepaald::toString(sms_results.rows() + mms_results.rows())
+             << "\" backup_date=\"" << date << "\" type=\"full\">" << std::endl;
   uint sms_row = 0;
   uint mms_row = 0;
   while (sms_row < sms_results.rows() ||
