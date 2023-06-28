@@ -113,7 +113,6 @@ void SignalBackup::escapeXmlString(std::string *str) const
     // Beyond 0xffff is only 4 byte utf chars
     if ((str->at(pos) & 0b11111000) == 0b11110000) // or 0b11110000
     {
-
       if (pos + 3 >= str->size())
       {
         ++pos;
@@ -125,25 +124,22 @@ void SignalBackup::escapeXmlString(std::string *str) const
         UTF8:    11110XXX 10XXXXXX 10XXXXXX 10XXXXXX
         UNICODE: ........ ...XXX_XX XXXX_XXXX XX_XXXXXX {21}
         U' (UNICODE - 0x10000): yyyyyyyyyzzzzzzzzzz
-        UTF16 LOW: 110110yyyyyyyyyy
-        UTF16 HI : 110111zzzzzzzzzz
+        UTF16 LOW: 110110yyyyyyyyyy     // DONT REMEMBER WHY IM DOING THIS,
+        UTF16 HI : 110111zzzzzzzzzz     // THE ORIGINAL PROBABLY OUTPUT UTF16? BUT I DONT NEED TO
       */
-
       uint32_t unicode = 0;
       unicode += (static_cast<uint32_t>(str->at(pos) & 0b0000111) << 18);
       unicode += (static_cast<uint32_t>(str->at(pos + 1) & 0b0111111) << 12);
       unicode += (static_cast<uint32_t>(str->at(pos + 2) & 0b0111111) << 6);
       unicode += (static_cast<uint32_t>(str->at(pos + 3) & 0b0111111));
-      unicode -= 0x10000;
-
-      std::string rep = "&#" + bepaald::toString(0xd800 + (unicode >> 10)) + ";&#" + bepaald::toString(0xdc00 + (unicode & 0x3FF)) + ";";
+      //unicode -= 0x10000;
+      //std::string rep = "&#" + bepaald::toString(0xd800 + (unicode >> 10)) + ";&#" + bepaald::toString(0xdc00 + (unicode & 0x3FF)) + ";";
+      std::string rep = "&#" + bepaald::toString(unicode) + ";";
 
       str->replace(pos, 4, rep);
       pos += rep.length();
       continue;
     }
-
     ++pos;
-
   }
 }

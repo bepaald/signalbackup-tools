@@ -358,7 +358,7 @@ class SignalBackup
   void HTMLescapeUrl(std::string *in) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, int idx) const;
-  inline int bytesToUtf8CharSize(std::string const &body, int idx, int length = 1) const;
+  inline int bytesToUtf8CharSize(std::string const &body, int idx/*, int length = 1*/) const;
   //inline int utf8CharsToByteSize() const;
   inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
@@ -750,8 +750,17 @@ inline int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsig
   return bytecount;
 }
 
-inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx, int length) const
+inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx/*, int length*/) const
 {
+  if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
+    return 4;
+  else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
+    return 3;
+  else if ((static_cast<uint8_t>(body[idx]) & 0b11100000) == 0b11000000) // 2 byte char
+    return 2;
+  else
+    return 1;
+  /*
   int ret = 0;
   for (int i = idx; i < idx + length; ++i)
   {
@@ -765,6 +774,7 @@ inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx, i
       ret += 1;
   }
   return ret;
+  */
 }
 
 /*
