@@ -20,7 +20,9 @@
 #include "signalbackup.ih"
 
 #include <cmath>
+#if __cpp_lib_math_constants >= 201907L
 #include <numbers>
+#endif
 
 std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colordata) const
 {
@@ -88,7 +90,7 @@ std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::
 #if __cpp_lib_math_constants >= 201907L
       double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / std::numbers::pi;
 #else
-      double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / 3.14159;
+      double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / 3.14159265;
 #endif
       if (b > g)
         h = 360 - h;
