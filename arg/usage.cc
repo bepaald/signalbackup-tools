@@ -81,6 +81,9 @@ R"*(
                                          placed in a separate subdirectory.
    --limittothreads <LIST_OF_THREADS>    Optional modifier for `--exporthtml'. Only export the listed
                                          threads. List format same as `--croptothreads'
+   --limittothreads <LIST_OF_DATES>      Optional modifier for `--exporthtml'. Only export messages within
+                                         the ranges defined by LIST_OF_DATES. List format is the same as
+                                         `--croptodates'.
    --append                              Optional modifier for `--exporthtml'. Causes `--exporthtml' to
                                          not show an error when DIRECTORY is not empty, but also not
                                          overwrite existing media files. Still regenerates the HTML file.
@@ -95,6 +98,9 @@ R"*(
                                          javascript to the page, and sets a cookie when switching.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
+--exporthtml <DIRECTORY>                 Export the messages to plain text file. Attachments are omitted.
+                                         This option also supports the `--limittothreads' and
+                                         `--limittodates' modifiers as mentioned above.
 --overwrite                              Optional modifier for all output operations. Overwrite output
                                          files if they exist. When <OUTPUT> is a directory this will
                                          delete ALL directory contents.

@@ -326,6 +326,10 @@ int main(int argc, char *argv[])
                         arg.setselfid(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching()))
       return 1;
 
+  if (!arg.exporttxt().empty())
+    if (!sb->exportTxt(arg.exporttxt(), arg.limittothreads(), arg.limittodates(), arg.setselfid(), arg.overwrite()))
+      return 1;
+
   if (!arg.exportcsv().empty())
     for (uint i = 0; i < arg.exportcsv().size(); ++i)
       sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first);

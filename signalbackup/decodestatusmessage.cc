@@ -76,12 +76,22 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       return "You left the group.";
     return contactname + " left the group.";
   }
+
+  if (Types::isIncomingVideoCall(type))
+    return "Incoming video call";
+  if (Types::isOutgoingVideoCall(type))
+    return "Outgoing video call";
+  if (Types::isMissedVideoCall(type))
+    return "Missed video call";
   if (Types::isIncomingCall(type))
-    return contactname + "called you";
+    return "Incoming voice call";
   if (Types::isOutgoingCall(type))
-    return "You called";
+    return "Outgoing voice call";
   if (Types::isMissedCall(type))
-    return "Missed call";
+    return "Missed voice call";
+  if (Types::isGroupCall(type))
+    return "Group call";
+
   if (Types::isJoined(type))
     return contactname + " is on Signal!";
   if (Types::isExpirationTimerUpdate(type))
@@ -140,9 +150,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     return contactname + " reset the secure session.";
   }
   if (Types::isProfileChange(type))
-  {
     return decodeProfileChangeMessage(body, contactname);
-  }
   if (Types::isGroupUpdate(type) && Types::isGroupV2(type))
   {
 

@@ -133,6 +133,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
+  // get note-to-self-thread
   long long int note_to_self_thread_id = -1;
   if (selfphone.empty())
   {
@@ -410,6 +411,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         IconType icon = IconType::NONE;
 
+        /*
+          // all folded into decodeStatusMessage()
         if (Types::isIncomingVideoCall(type))
           body = "Incoming video call";
         else if (Types::isOutgoingVideoCall(type))
@@ -432,7 +435,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
                  Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
           body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
-        else if (Types::isStatusMessage(type))
+        else
+        */
+        if (Types::isStatusMessage(type))
           body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
 
         // prep body (scan emoji? -> in <span>) and handle mentions...
