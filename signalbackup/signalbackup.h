@@ -215,6 +215,8 @@ class SignalBackup
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
                   bool migrate, bool overwrite, bool append, bool theme, bool themeswitching) const;
+  bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
+                 std::vector<std::string> const &dateranges, std::string const &selfid, bool overwrite) const;
   bool findRecipient(long long int id) const;
 
   /* CUSTOMS */

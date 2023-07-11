@@ -92,6 +92,7 @@ Arg::Arg(int argc, char *argv[])
   d_checkdbintegrity(false),
   d_interactive(false),
   d_exporthtml(std::string()),
+  d_exporttxt(std::string()),
   d_append(false),
   d_split(1000),
   d_split_bool(false),
@@ -967,6 +968,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         d_exporthtml = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--exporttxt")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_exporttxt = arguments[++i];
       }
       else
       {
