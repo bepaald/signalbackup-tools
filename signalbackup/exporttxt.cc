@@ -21,7 +21,7 @@
 #include "msgrange.h"
 
 bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long int> const &limittothreads,
-                             std::vector<std::string> const &daterangelist, std::string const &selfphone,
+                             std::vector<std::string> const &daterangelist, std::string const &selfphone [[maybe_unused]],
                              bool overwrite) const
 {
   // check if dir exists, create if not
@@ -134,7 +134,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
     std::cout << "Dealing with thread " << t << std::endl;
 
-    bool is_note_to_self = false;//(t == note_to_self_thread_id);
+    //bool is_note_to_self = false;//(t == note_to_self_thread_id);
 
     // get recipient_id for thread;
     SqliteDB::QueryResults recid;
@@ -214,7 +214,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
         continue;
 
       long long int msg_id = messages.getValueAs<long long int>(i, "_id");
-      bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(i, d_mms_type));
+      //bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(i, d_mms_type));
       long long int msg_recipient_id = messages.valueAsInt(i, d_mms_recipient_id);
       if (msg_recipient_id == -1) [[unlikely]]
       {
