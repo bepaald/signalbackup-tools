@@ -19,9 +19,6 @@
 
 #include "cryptbase.ih"
 
-#ifndef USE_CRYPTOPP
-
-// openssl
 bool CryptBase::getBackupKey(std::string const &passphrase)
 {
   // convert passwords digits to unsigned char *
@@ -91,49 +88,3 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
 
   return true;
 }
-
-#else
-
-bool CryptBase::getBackupKey(std::string const &passphrase)
-{
-  // convert passwords digits to unsigned char *
-  size_t const passlength = 30;
-  unsigned char pass[passlength];
-  uint i = 0;
-  uint j = 0;
-  for (i = 0, j = 0; i < passlength && j < passphrase.size(); ++i, ++j)
-  {
-    while (!std::isdigit(passphrase[j])) // skip non digits
-      ++j;
-    pass[i] = passphrase[j];
-  }
-
-  while (j < passphrase.size() && !std::isdigit(passphrase[j])) // also eat any trailing non-digits
-    ++j;
-
-  if (i != passlength || j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
-    return false;
-
-  //DEBUGOUT("Passphrase: ", bepaald::bytesToHexString(pass, passlength));
-
-  CryptoPP::SHA512 hash;
-
-  CryptoPP::byte digest[CryptoPP::SHA512::DIGESTSIZE];
-  std::memcpy(digest, pass, passlength);
-
-  hash.Update(d_salt, d_salt_size);
-
-  for (i = 0; i < 250000; ++i)
-  {
-    hash.Update(digest, i > 0 ? static_cast<uint>(CryptoPP::SHA512::DIGESTSIZE) : passlength); // update with digest, first time
-    hash.CalculateDigest(digest, pass, passlength);                                            // it contains passphrase
-  }
-
-  d_backupkey_size = 32; // backupkey is digest trimmed to 32 bytes
-  d_backupkey = new unsigned char[d_backupkey_size];
-  std::memcpy(d_backupkey, digest, d_backupkey_size);
-
-  return true;
-}
-
-#endif

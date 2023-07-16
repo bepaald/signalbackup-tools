@@ -38,22 +38,12 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   d_hmackeysize(0),
   d_salt(nullptr),
   d_saltsize(0),
-#ifndef USE_CRYPTOPP
   d_digest(version >= 4 ? EVP_sha512() : EVP_sha1()),
   d_digestname_size((version >= 4 ? STRLEN("SHA512") : STRLEN("SHA1")) + 1),
   d_digestname(version >= 4 ?
                new char[d_digestname_size] {'S', 'H', 'A', '5', '1', '2', '\0'} :
                new char[d_digestname_size] {'S', 'H', 'A', '1', '\0'}),
   d_digestsize(EVP_MD_size(d_digest)),
-#else
-  d_pbkdf(version >= 4 ?
-          static_cast<CryptoPP::PasswordBasedKeyDerivationFunction *>(new CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA512>) :
-          static_cast<CryptoPP::PasswordBasedKeyDerivationFunction *>(new CryptoPP::PKCS5_PBKDF2_HMAC<CryptoPP::SHA1>)),
-  d_hmac(version >= 4 ?
-         static_cast<CryptoPP::HMAC_Base *>(new CryptoPP::HMAC<CryptoPP::SHA512>) :
-         static_cast<CryptoPP::HMAC_Base *>(new CryptoPP::HMAC<CryptoPP::SHA1>)),
-  d_digestsize(d_hmac->DigestSize()),
-#endif
   d_pagesize(version >= 4 ? 4096 : 1024),
   d_decrypteddata(nullptr),
   d_decrypteddatasize(0)
@@ -86,10 +76,6 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
 
   if (!getHmacKey())
     return;
-
-#ifdef USE_CRYPTOPP
-  d_hmac->SetKey(d_hmackey, d_hmackeysize);
-#endif
 
   if (!decryptData(&dbfile))
     return;

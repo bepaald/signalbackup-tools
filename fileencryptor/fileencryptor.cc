@@ -19,23 +19,26 @@
 
 #include "fileencryptor.ih"
 
-FileEncryptor::FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size)
+FileEncryptor::FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion)
   :
-  d_passphrase(passphrase)
+  d_passphrase(passphrase),
+  d_backupfileversion(backupfileversion)
 {
   d_ok = init(salt, salt_size, iv, iv_size);
 }
 
-FileEncryptor::FileEncryptor(std::string const &passphrase)
+FileEncryptor::FileEncryptor(std::string const &passphrase, uint32_t backupfileversion)
   :
-  d_passphrase(passphrase)
+  d_passphrase(passphrase),
+  d_backupfileversion(backupfileversion)
 {}
 
 FileEncryptor::FileEncryptor()
 {}
 
-bool FileEncryptor::init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size)
+bool FileEncryptor::init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion)
 {
   d_passphrase = passphrase;
+  d_backupfileversion = backupfileversion;
   return init(salt, salt_size, iv, iv_size);
 }

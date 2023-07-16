@@ -19,8 +19,6 @@
 
 #include "filedecryptor.ih"
 
-#ifndef USE_CRYPTOPP
-
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -831,12 +829,3 @@ void FileDecryptor::ashmorgan()
   }
 
 }
-#else
-
-void FileDecryptor::strugee(uint64_t pos) {}
-void FileDecryptor::strugee2() {}
-void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigned char[]>, uint64_t>> *macs_and_positions) {}
-void FileDecryptor::strugee3(uint64_t pos) {}
-void FileDecryptor::ashmorgan() {}
-
-#endif

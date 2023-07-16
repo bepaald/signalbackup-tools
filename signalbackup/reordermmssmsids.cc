@@ -53,6 +53,12 @@ bool SignalBackup::reorderMmsSmsIds() const
     if (d_database.containsTable("call")) // dbv >= ~168?
       if (!d_database.exec("UPDATE call SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid}))
         return false;
+    if (d_database.tableContainsColumn(d_mms_table, "original_message_id")) // dbv >= ~197
+      if (!d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = ? WHERE original_message_id = ?", {-1 * negative_id_tmp, oldid}))
+        return false;
+    if (d_database.tableContainsColumn(d_mms_table, "latest_revision_id")) // dbv >= ~197
+      if (!d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = ? WHERE latest_revision_id = ?", {-1 * negative_id_tmp, oldid}))
+        return false;
   }
 
   // now make all id's positive again
@@ -74,6 +80,12 @@ bool SignalBackup::reorderMmsSmsIds() const
       return false;
   if (d_database.containsTable("call")) // dbv >= ~168?
     if (!d_database.exec("UPDATE call SET message_id = message_id * -1 WHERE message_id < 0"))
+      return false;
+  if (d_database.tableContainsColumn(d_mms_table, "original_message_id")) // dbv >= ~197
+    if (!d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = original_message_id * -1 WHERE original_message_id < 0"))
+      return false;
+  if (d_database.tableContainsColumn(d_mms_table, "latest_revision_id")) // dbv >= ~197
+    if (!d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = latest_revision_id * -1 WHERE latest_revision_id < 0"))
       return false;
 
   // SAME FOR SMS

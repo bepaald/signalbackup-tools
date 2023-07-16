@@ -19,9 +19,6 @@
 
 #include "cryptbase.ih"
 
-#ifndef USE_CRYPTOPP
-
-// openssl
 bool CryptBase::getCipherAndMac(uint hashoutputsize, size_t outputsize)
 {
   std::unique_ptr<EVP_PKEY_CTX, decltype(&::EVP_PKEY_CTX_free)> pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr), &::EVP_PKEY_CTX_free);
@@ -61,31 +58,3 @@ bool CryptBase::getCipherAndMac(uint hashoutputsize, size_t outputsize)
 
   return true;
 }
-
-#else
-
-bool CryptBase::getCipherAndMac(uint hashoutputsize, long unsigned int outputsize)
-{
-  unsigned char *localsalt = new unsigned char[hashoutputsize]();
-  unsigned char *derived = new unsigned char[outputsize]();
-  unsigned int const info_size = 13;
-  unsigned char info[info_size] = {'B','a','c','k','u','p',' ','E','x','p','o','r','t'};
-
-  CryptoPP::HKDF<CryptoPP::SHA256> hkdf;
-  hkdf.DeriveKey(derived, outputsize, d_backupkey, d_backupkey_size, localsalt, hashoutputsize, info, info_size);
-
-  delete[] localsalt;
-
-  d_cipherkey_size = hashoutputsize;
-  d_cipherkey = new unsigned char[d_cipherkey_size];
-  std::memcpy(d_cipherkey, derived, hashoutputsize);
-
-  d_mackey_size = hashoutputsize;
-  d_mackey = new unsigned char[d_mackey_size];
-  std::memcpy(d_mackey, derived + hashoutputsize, hashoutputsize);
-
-  delete[] derived;
-  return true;
-}
-
-#endif

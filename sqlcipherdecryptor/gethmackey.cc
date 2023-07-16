@@ -33,12 +33,7 @@ bool SqlCipherDecryptor::getHmacKey()
   d_hmackeysize = 32;
   d_hmackey = new unsigned char[d_hmackeysize];
 
-#ifndef USE_CRYPTOPP
   return PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(d_key), d_keysize, hmac_salt.get(), hmac_saltsize, 2, d_digest, d_hmackeysize, d_hmackey) == 1;
-#else
-  d_pbkdf->DeriveKey(d_hmackey, d_hmackeysize, d_key, d_keysize,
-                     CryptoPP::MakeParameters(CryptoPP::Name::Salt(), CryptoPP::ConstByteArrayParameter(reinterpret_cast<CryptoPP::byte const *>(hmac_salt.get()), hmac_saltsize))("Iterations", 2));
-#endif
 
   return true;
 }

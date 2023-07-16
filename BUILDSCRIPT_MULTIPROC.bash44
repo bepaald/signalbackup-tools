@@ -30,12 +30,6 @@ if [ "$CONFIG" = "brew" ] ; then
   LDFLAGS="-Wall -Wextra -O3 -flto=auto"
 fi
 
-# CONFIG: cryptopp
-if [ "$CONFIG" = "cryptopp" ] ; then
-  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -DUSE_CRYPTOPP -O3 -flto"
-  LDLIBS="-lcryptopp -lsqlite3"
-fi
-
 # CONFIG: darwin
 if [ "$CONFIG" = "darwin" ] ; then
   LDFLAGS="-Wall -Wextra -flto -O3"

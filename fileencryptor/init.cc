@@ -55,6 +55,7 @@ bool FileEncryptor::init(unsigned char *salt, uint64_t salt_size, unsigned char 
   DEBUGOUT("BACKUPKEY: ", bepaald::bytesToHexString(d_backupkey, d_backupkey_size));
   DEBUGOUT("CIPHERKEY: ", bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size));
   DEBUGOUT("MACKEY: ", bepaald::bytesToHexString(d_mackey, d_mackey_size));
+  DEBUGOUT("BACKUPFILE VERSION: ", d_backupfileversion);
   DEBUGOUT("COUNTER: ", d_counter);
 
   d_ok = true;

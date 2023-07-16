@@ -19,8 +19,6 @@
 
 #include "fileencryptor.ih"
 
-#ifndef USE_CRYPTOPP
-
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned char *data, uint64_t length)
 {
   if (!d_ok)
@@ -90,32 +88,3 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
 
   return {encryptedframe.release(), length + MACSIZE};
 }
-
-#else
-
-std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned char *data, uint64_t length)
-{
-  if (!d_ok)
-    return {nullptr, 0};
-
-  unsigned char *encryptedframe = new unsigned char[length + MACSIZE];
-
-  // update iv:
-  uintToFourBytes(d_iv, d_counter++);
-  CryptoPP::CTR_Mode<CryptoPP::AES>::Encryption e(d_cipherkey, d_cipherkey_size, d_iv);
-  e.ProcessData(encryptedframe, data, length);
-  //std::cout << "Encrypted frame: " << bepaald::bytesToHexString(encryptedframe, length) << std::endl;
-
-  unsigned char ourMac[CryptoPP::HMAC<CryptoPP::SHA256>::DIGESTSIZE];
-  CryptoPP::HMAC<CryptoPP::SHA256> hmac(d_mackey, d_mackey_size);
-  hmac.Update(d_iv, d_iv_size);
-  hmac.Update(encryptedframe, length);
-  hmac.Final(ourMac);
-  //std::cout << "OUR MAC: " << bepaald::bytesToHexString(ourMac, MACSIZE) << std::endl;
-
-  std::memcpy(encryptedframe + length, ourMac, MACSIZE);
-
-  return {encryptedframe, length + MACSIZE};
-}
-
-#endif

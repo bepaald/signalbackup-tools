@@ -26,15 +26,7 @@
 #include "../common_be.h"
 
 
-#ifndef USE_CRYPTOPP
 struct evp_md_st;
-#else
-namespace CryptoPP
-{
-  class PasswordBasedKeyDerivationFunction;
-  class HMAC_Base;
-}
-#endif
 
 class SqlCipherDecryptor
 {
@@ -47,14 +39,9 @@ class SqlCipherDecryptor
   unsigned int d_hmackeysize;
   unsigned char *d_salt;
   unsigned int d_saltsize;
-#ifndef USE_CRYPTOPP
   evp_md_st const *d_digest;
   size_t d_digestname_size;
   char *d_digestname;
-#else
-  CryptoPP::PasswordBasedKeyDerivationFunction *d_pbkdf;
-  CryptoPP::HMAC_Base *d_hmac;
-#endif
   unsigned int d_digestsize;
   unsigned int d_pagesize;
   unsigned char *d_decrypteddata;

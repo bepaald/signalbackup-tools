@@ -38,7 +38,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     return false;
   }
 
-  if (!d_headerframe || !d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length()))
+  if (!d_headerframe || !d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length(), d_headerframe->version()))
   {
     std::cout << "Error initializing FileEncryptor" << std::endl;
     return false;

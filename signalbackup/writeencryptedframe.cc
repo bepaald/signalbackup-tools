@@ -30,7 +30,8 @@ bool SignalBackup::writeEncryptedFrameWithoutAttachment(std::ofstream &outputfil
     std::cout << "Failed to encrypt framedata" << std::endl;
     return false;
   }
-  bool writeok = writeFrameDataToFile(outputfile, encryptedframe);
+  bool writeok = !(outputfile.write(reinterpret_cast<char *>(encryptedframe.first), encryptedframe.second)).fail();
+
   delete[] encryptedframe.first;
   if (!writeok)
     std::cout << "Failed to write encrypted frame data to file" << std::endl;

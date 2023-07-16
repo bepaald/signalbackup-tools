@@ -56,7 +56,9 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
       {"reaction", "message_id", "is_mms IS 1", "", 0, 0, 167},
       {"reaction", "message_id", "", "", 0, 168},
       {"story_sends", "message_id"},
-      {"call", "message_id"}
+      {"call", "message_id"},
+      {"message", "latest_revision_id"},
+      {"message", "original_message_id"}
     },
     0
   },
