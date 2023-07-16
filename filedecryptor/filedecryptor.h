@@ -42,6 +42,7 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   std::vector<long long int> d_editattachments;
   bool d_verbose;
   bool d_stoponerror;
+  uint32_t d_backupfileversion;
 
  public:
   FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
@@ -49,6 +50,7 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   FileDecryptor operator=(FileDecryptor const &other) = delete;
   //inline ~FileDecryptor();
   inline bool ok() const;
+  std::unique_ptr<BackupFrame> getFrameOld();
   std::unique_ptr<BackupFrame> getFrame();
   inline uint64_t total() const;
   inline uint64_t curFilePos();
@@ -92,20 +94,20 @@ inline bool FileDecryptor::badMac() const
   return d_badmac;
 }
 
+// only used by getFrameOld(), used in older backups where frame length was not encrypted
 inline uint32_t FileDecryptor::getNextFrameBlockSize()
 {
   uint32_t headerlength = 0;
-  if (!d_file.read(reinterpret_cast<char *>(&headerlength), 4))
+  if (!d_file.read(reinterpret_cast<char *>(&headerlength), sizeof(decltype(headerlength))))
   {
     std::cout << "Failed to read 4 bytes from file to get next frame size... (" << d_file.tellg()
               << " / " << d_filesize << ")" << std::endl;
-    // print error
     return 0;
   }
-  headerlength = bepaald::swap_endian<uint32_t>(headerlength);
-  return headerlength;
+  return bepaald::swap_endian<uint32_t>(headerlength);
 }
 
+// only used by getFrameOld(), used in older backups where frame length was not encrypted
 inline bool FileDecryptor::getNextFrameBlock(unsigned char *data, size_t length)
 {
   //std::cout << "reading " << length << " bytes" << std::endl;

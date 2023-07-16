@@ -39,9 +39,6 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   //  operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   //};
 
-
-  #ifndef USE_CRYPTOPP
-
   std::ifstream filestream(file, std::ios_base::binary | std::ios_base::in);
   if (!filestream.is_open())
   {
@@ -211,8 +208,4 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
   }
   return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
-  #else
-  // todo, maybe? write this function for cryptopp
-  return AttachmentMetadata{-1, -1, std::string(), file_size, std::string, file};
-  #endif
 }

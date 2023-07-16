@@ -247,7 +247,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
                     "_id, " + d_mms_recipient_id + ", body, "
-                    "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
+                    "date_received, " + d_mms_date_sent + ", quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, "
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
@@ -374,9 +374,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     << ": Failed to get message recipient id. Skipping." << std::endl;
           continue;
         }
-        std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
+        long long int original_message_id = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
+                                             messages.valueAsInt(messagecount, "original_message_id") :
+                                             -1);
+        std::string readable_date =
+          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, (/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
                                                           "%b %d, %Y %H:%M:%S");
-        std::string readable_date_day = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "date_received") / 1000,
+        std::string readable_date_day =
+          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, (/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
                                                               "%b %d, %Y");
         bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));
         bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;
@@ -385,9 +390,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
-        long long int original_message_id = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
-                                             messages.valueAsInt(messagecount, "original_message_id") :
-                                             -1);
 
         SqliteDB::QueryResults attachment_results;
         d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
@@ -404,7 +406,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults edit_revisions;
         if (d_database.tableContainsColumn(d_mms_table, "revision_number"))
-          d_database.exec("SELECT body,date_received,revision_number FROM " + d_mms_table + " WHERE _id = ? OR original_message_id = ? AND latest_revision_id IS NOT NULL ORDER BY revision_number ASC",
+          d_database.exec("SELECT body,date_received," + d_mms_date_sent + ",revision_number FROM " + d_mms_table + " WHERE _id = ? OR original_message_id = ? ORDER BY " + d_mms_date_sent + " DESC",
                           {original_message_id, original_message_id}, &edit_revisions);
 
         bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));

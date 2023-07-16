@@ -107,25 +107,25 @@ inline uint64_t KeyValueFrame::dataSize() const
   {
     switch (std::get<0>(fd))
     {
-    case FIELD::KEY:
-    case FIELD::STRINGVALUE:
-    case FIELD::BLOBVALUE:
+      case FIELD::KEY:
+      case FIELD::STRINGVALUE:
+      case FIELD::BLOBVALUE:
       {
         uint64_t stringsize = std::get<2>(fd);
         size += varIntSize(stringsize);
         size += stringsize + 1; // +1 for fieldtype + wiretype
         break;
       }
-    case FIELD::INTEGERVALUE:
-    case FIELD::LONGVALUE:
-    case FIELD::BOOLEANVALUE:
+      case FIELD::INTEGERVALUE:
+      case FIELD::LONGVALUE:
+      case FIELD::BOOLEANVALUE:
       {
         uint64_t value = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
         size += varIntSize(value);
         size += 1; // for fieldtype + wiretype
         break;
       }
-    case FIELD::FLOATVALUE: // note, this is untested, none of my backups contain a KVFrame with this field
+      case FIELD::FLOATVALUE: // note, this is untested, none of my backups contain a KVFrame with this field
       {
         size += 5; // fixed32? +1 for fieldtype + wiretype
         break;

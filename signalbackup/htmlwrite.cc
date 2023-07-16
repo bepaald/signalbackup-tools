@@ -417,6 +417,27 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         font-style: italic;
       }
 
+      .history-header {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        font-style: italic;
+        margin-top: 3px;
+        margin-bottom: 3px;
+      }
+      .history-header::before,
+      .history-header::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid white;
+      }
+      .history-header:not(:empty)::before {
+        margin-right: .25em;
+      }
+      .history-header:not(:empty)::after {
+        margin-left: .25em;
+      }
+
       .checkmarks {
         margin-left: 5px;
       }
@@ -1773,14 +1794,14 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<div class=\"edited-info\">";
       for (uint i = 0; i < msg_info.edit_revisions->rows(); ++i)
       {
-        htmloutput << "<span class=\"edited-info-header\"> revision: </span>"
-                   << msg_info.edit_revisions->valueAsInt(i, "revision_number") << "<br>"
-                   << "<span class=\"edited-info-header\">body: </span>"
+        htmloutput << "<span class=\"edited-info-header\">body: </span>"
                    << "<pre>" << msg_info.edit_revisions->valueAsString(i, "body") << "</pre>" << "<br>"
                    << "<span class=\"edited-info-header\">date: </span>"
-                   << bepaald::toDateString(msg_info.edit_revisions->valueAsInt(i, "date_received") / 1000,
+                   << bepaald::toDateString(msg_info.edit_revisions->valueAsInt(i, d_mms_date_sent) / 1000,
                                             "%b %d, %Y %H:%M:%S");
-        if (i < msg_info.edit_revisions->rows() - 1)
+        if (i == 0)
+          htmloutput << "<div class=\"history-header\">Edit history</div>";
+        else if (i < msg_info.edit_revisions->rows() - 1)
           htmloutput << "<hr>";
       }
       htmloutput << "</div>" << std::endl;

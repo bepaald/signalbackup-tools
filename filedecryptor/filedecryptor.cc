@@ -30,7 +30,8 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   d_assumebadframesize(assumebadframesize),
   d_editattachments(editattachments),
   d_verbose(verbose),
-  d_stoponerror(stoponerror)
+  d_stoponerror(stoponerror),
+  d_backupfileversion(0)
 {
   if (!d_file.is_open())
   {
@@ -99,6 +100,8 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
     return;
   }
 
+  d_backupfileversion = reinterpret_cast<HeaderFrame *>(headerframe)->version();
+
   //headerframe->printInfo();
 
   DEBUGOUT("IV: ", bepaald::bytesToHexString(d_iv, d_iv_size));
@@ -106,6 +109,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   DEBUGOUT("BACKUPKEY: ", bepaald::bytesToHexString(d_backupkey, d_backupkey_size));
   DEBUGOUT("CIPHERKEY: ", bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size));
   DEBUGOUT("MACKEY: ", bepaald::bytesToHexString(d_mackey, d_mackey_size));
+  DEBUGOUT("BACKUPFILE VERSION: ", d_backupfileversion);
   DEBUGOUT("COUNTER: ", d_counter);
 
   std::cout << "IV: " << bepaald::bytesToHexString(d_iv, d_iv_size) << " (size: " << d_iv_size << ")" << std::endl;
@@ -113,6 +117,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   std::cout << "BACKUPKEY: " << bepaald::bytesToHexString(d_backupkey, d_backupkey_size) << " (size: " << d_backupkey_size << ")" << std::endl;
   std::cout << "CIPHERKEY: " << bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size) << " (size: " << d_cipherkey_size << ")" << std::endl;
   std::cout << "MACKEY: " << bepaald::bytesToHexString(d_mackey, d_mackey_size) << " (size: " << d_mackey_size << ")" << std::endl;
+  std::cout << "BACKUPFILE VERSION: " << d_backupfileversion << std::endl;
   std::cout << "COUNTER: " << d_counter << std::endl;
 
   d_headerframe.reset(headerframe);

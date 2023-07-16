@@ -29,7 +29,8 @@ class HeaderFrame : public BackupFrame
   {
    INVALID = 0,
    IV = 1,   // byte[]
-   SALT = 2  // byte[]
+   SALT = 2,  // byte[]
+   VERSION = 3 // uint32
   };
 
   static Registrar s_registrar;
@@ -43,6 +44,7 @@ class HeaderFrame : public BackupFrame
   inline uint64_t iv_length() const;
   inline unsigned char *salt() const;
   inline uint64_t salt_length() const;
+  inline uint32_t version() const;
   inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
   //inline static BackupFrame *createFromHumanData(std::ifstream *datastream, uint64_t count = 0);
   inline virtual void printInfo() const override;
@@ -103,6 +105,14 @@ inline uint64_t HeaderFrame::salt_length() const
   return 0;
 }
 
+inline uint32_t HeaderFrame::version() const
+{
+  for (auto const &p : d_framedata)
+    if (std::get<0>(p)  == FIELD::VERSION)
+      return bytesToUint32(std::get<1>(p), std::get<2>(p));
+  return 0;
+}
+
 inline BackupFrame *HeaderFrame::create(unsigned char *data, size_t length, uint64_t count) // static
 {
   return new HeaderFrame(data, length, count);
@@ -116,6 +126,7 @@ inline void HeaderFrame::printInfo() const
   std::cout << "        Type: HEADER" << std::endl;
   std::cout << "         - IV  : " << bepaald::bytesToHexString(iv(), iv_length()) << std::endl;
   std::cout << "         - SALT: " << bepaald::bytesToHexString(salt(), salt_length()) << std::endl;
+  std::cout << "         - VERSION: " << version() << std::endl;
 }
 
 inline uint64_t HeaderFrame::dataSize() const
@@ -123,10 +134,25 @@ inline uint64_t HeaderFrame::dataSize() const
   uint64_t size = 0;
   for (auto const &fd : d_framedata)
   {
-      uint64_t blobsize = std::get<2>(fd); // length of actual data
-      // length of length
-      size += varIntSize(blobsize);
-      size += blobsize + 1; // plus one for fieldtype + wiretype
+    switch (std::get<0>(fd))
+    {
+      case FIELD::IV:
+      case FIELD::SALT:
+      {
+        uint64_t blobsize = std::get<2>(fd); // length of actual data
+        // length of length
+        size += varIntSize(blobsize);
+        size += blobsize + 1; // plus one for fieldtype + wiretype
+        break;
+      }
+      case FIELD::VERSION:
+      {
+        uint64_t value = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
+        size += varIntSize(value);
+        size += 1; // for fieldtype + wiretype
+        break;
+      }
+    }
   }
   // for size of this entire frame.
   size += varIntSize(size);
@@ -143,7 +169,22 @@ inline std::pair<unsigned char *, uint64_t> HeaderFrame::getData() const
   datapos += setFrameSize(size, data + datapos);
 
   for (auto const &fd : d_framedata)
-    datapos += putLengthDelimType(fd, data + datapos);
+  {
+    switch (std::get<0>(fd))
+    {
+      case FIELD::IV:
+      case FIELD::SALT:
+      {
+        datapos += putLengthDelimType(fd, data + datapos);
+        break;
+      }
+      case FIELD::VERSION:
+      {
+        datapos += putVarIntType(fd, data + datapos);
+        break;
+      }
+    }
+  }
   return {data, size};
 }
 
@@ -153,10 +194,17 @@ inline std::string HeaderFrame::getHumanData() const
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::IV)
+    {
       data += "IV:bytes:";
+      data += Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p)) + "\n";
+    }
     else if (std::get<0>(p) == FIELD::SALT)
+    {
       data += "SALT:bytes:";
-    data += Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p)) + "\n";
+      data += Base64::bytesToBase64String(std::get<1>(p), std::get<2>(p)) + "\n";
+    }
+    else if (std::get<0>(p) == FIELD::VERSION)
+      data += "VERSION:uint32:" + bepaald::toString(bytesToUint32(std::get<1>(p), std::get<2>(p))) + "\n";
   }
   return data;
 }
@@ -191,6 +239,8 @@ inline unsigned int HeaderFrame::getField(std::string const &str) const
     return FIELD::IV;
   if (str == "SALT")
     return FIELD::SALT;
+  if (str == "VERSION")
+    return FIELD::VERSION;
   return FIELD::INVALID;
 }
 
