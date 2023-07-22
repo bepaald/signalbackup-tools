@@ -370,10 +370,19 @@ A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML
 
 ##### Export to TXT
 
-To export to plain text use `--exporttxt [DIRECTORY]`. This omits some data, such as all attachments, emoji reactions and quotes. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Example:
+To export to plain text use `--exporttxt [DIRECTORY]`. Some data is omitted from this export, such as attachment data and quotes. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Example:
 
 ```
 ./signalbackup-tools [input] [passphrase] --exporttxt [directory]
+```
+
+The output will look something like this:
+
+```
+[2023-07-10 01:23] <alice> Where are you?
+[2023-07-10 01:25] <bob> I'm at the beach.
+[2023-07-10 01:26] *** <bob> sent "Signal-1.jpeg"
+[2023-07-10 01:27] <alice> Come home. You haven't washed the dishes. (Bob: 😮)
 ```
 
 ##### Export to CSV
