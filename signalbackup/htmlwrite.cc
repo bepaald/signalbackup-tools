@@ -102,6 +102,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "        --mentionin-bc: " << (light ? "#C6C6C6;" : "#5E5E5E;") << std::endl;
   file << "        --msgreaction-bc: " << (light ? "#E7EBF3;" : "#303133;") << std::endl;
   file << "        --msgreaction-border: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
+  file << "        --msgreaction-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
+  file << "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;": "#505050;") << std::endl;
   file << "        --reactioncount-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --incominglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << std::endl;
   file << "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << std::endl;
@@ -131,6 +133,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "        --mentionin-bc: " << (!light ? "#C6C6C6;" : "#5E5E5E;") << std::endl;
     file << "        --msgreaction-bc: " << (!light ? "#E7EBF3;" : "#303133;") << std::endl;
     file << "        --msgreaction-border: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
+    file << "        --msgreaction-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
+    file << "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;": "#505050;") << std::endl;
     file << "        --reactioncount-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --incominglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << std::endl;
     file << "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << std::endl;
@@ -688,6 +692,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border: 1px solid var(--msgreaction-border);
         line-height: 150%;
         position: relative;
+        color: var(--msgreaction-c);
       }
 
       .reaction-count {
@@ -702,12 +707,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         z-index: 1;
         visibility: hidden;
         width: 250px;
-        background-color: #505050;
-        color: #FFFFFF;
+        background-color: var(--msgreactioninfo-bc);
         text-align: center;
         padding: 5px;
-        border: 1px solid #FFFFFF;
-        border-radius: 3px;
+        border-radius: 6px;
         margin-left: -131px;
         bottom: 125%;
         left: 50%;
@@ -729,7 +732,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-left: -5px;
         border-width: 5px;
         border-style: solid;
-        border-color: #FFFFFF transparent transparent transparent;
+        border-color: var(--msgreactioninfo-bc) transparent transparent transparent;
       }
 
       .edited:hover,

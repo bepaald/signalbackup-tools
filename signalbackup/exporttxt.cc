@@ -233,6 +233,11 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       if (d_database.containsTable("mention"))
         d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
 
+      SqliteDB::QueryResults reaction_results;
+      d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', "
+                      "DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received' "
+                      "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {
         std::string statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
@@ -253,7 +258,10 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
             attachment_filename = "of type " + content_type;
 
           txtoutput << "[" << readable_date << "] *** <" << user << "> sent file"
-                    << (attachment_filename.empty() ? "" : " " + attachment_filename) << std::endl;
+                    << (attachment_filename.empty() ? "" : " " + attachment_filename);
+          if (body.empty())
+            TXTaddReactions(&reaction_results, &txtoutput);
+          txtoutput << std::endl;
         }
         if (!body.empty())
         {
@@ -273,7 +281,9 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
           }
           applyRanges(&body, &ranges, nullptr);
 
-          txtoutput << "[" << readable_date << "] <" << user << "> " << body << std::endl;
+          txtoutput << "[" << readable_date << "] <" << user << "> " << body;
+          TXTaddReactions(&reaction_results, &txtoutput);
+          txtoutput << std::endl;
         }
       }
     }
