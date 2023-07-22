@@ -51,7 +51,7 @@ Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is a
 
 **<span id="macos">macOs</span>**
 
-A homebrew formula is provided in at [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). On modern macOs versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD [path/to/signalbackup-tools.rb]`.
+A homebrew formula is provided in at [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). On modern macOs versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD [path/to/signalbackup-tools.rb]`. Once installed, the program can be upgraded by running `brew upgrade --fetch-HEAD`.
 
 Manually compiling should also be possible assuming the dependencies are installed, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9), or more recently [here](https://github.com/bepaald/signalbackup-tools/issues/85). macOs users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
 
