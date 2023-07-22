@@ -98,7 +98,7 @@ R"*(
                                          javascript to the page, and sets a cookie when switching.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
---exporthtml <DIRECTORY>                 Export the messages to plain text file. Attachments are omitted.
+--exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
                                          This option also supports the `--limittothreads' and
                                          `--limittodates' modifiers as mentioned above.
 --overwrite                              Optional modifier for all output operations. Overwrite output
