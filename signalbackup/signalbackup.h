@@ -377,6 +377,7 @@ class SignalBackup
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
   inline std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
+  inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -845,6 +846,24 @@ inline std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string cons
 
   bepaald::replaceAll(&cleaned, "_", " ");
   return cleaned;
+}
+
+inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const
+{
+  if (reaction_results->rows() == 0) [[likely]]
+    return;
+
+  *out << " (";
+  for (uint r = 0; r < reaction_results->rows(); ++r)
+  {
+    std::string emojireaction = reaction_results->valueAsString(r, "emoji");
+    std::string authordisplayname = getNameFromRecipientId(reaction_results->getValueAs<long long int>(r, "author_id"));
+
+    *out << authordisplayname << ": " << emojireaction;
+    if (r < reaction_results->rows() - 1)
+      *out << "; ";
+  }
+  *out << ")";
 }
 
 #endif
