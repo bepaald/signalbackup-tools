@@ -253,7 +253,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
           std::string content_type = attachment_results.valueAsString(a, "ct");
           std::string attachment_filename;
           if (!attachment_results.isNull(a, "file_name") && !attachment_results(a, "file_name").empty())
-            attachment_filename = attachment_results(a, "file_name");
+            attachment_filename = '"' + attachment_results(a, "file_name") + '"';
           else if (!content_type.empty())
             attachment_filename = "of type " + content_type;
 
@@ -289,5 +289,5 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     }
   }
 
-  return false;
+  return true;
 }
