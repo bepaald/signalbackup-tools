@@ -1,0 +1,33 @@
+name: Test Linux build
+
+on:
+  workflow_dispatch:
+  push:
+    tags-ignore:
+      - '[0-9]*'
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
+      - '.github/workflows/*.yml'
+      - '**/autoversion.h'
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  do-build-tests:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
+
+      - name: Build new script
+        run: |
+          bash BUILDSCRIPT_MULTIPROC.bash44
