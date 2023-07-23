@@ -1,4 +1,4 @@
-name: Test Linux build
+name: Test Linux build (legacy)
 
 on:
   workflow_dispatch:
