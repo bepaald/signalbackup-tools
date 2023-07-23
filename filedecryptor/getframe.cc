@@ -74,7 +74,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
   if (EVP_MAC_update(hctx.get(), reinterpret_cast<unsigned char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength))) != 1) [[unlikely]]
 #else
-  if (HMAC_Update(hctx.get(), reinterpret_cast<unsigned char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength))) != 1)) [[unlikely]]
+  if (HMAC_Update(hctx.get(), reinterpret_cast<unsigned char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength))) != 1) [[unlikely]]
 #endif
   {
     std::cout << "Failed to update HMAC" << std::endl;
