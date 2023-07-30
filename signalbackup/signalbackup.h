@@ -216,7 +216,7 @@ class SignalBackup
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
                   bool migrate, bool overwrite, bool append, bool theme, bool themeswitching) const;
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
-                 std::vector<std::string> const &dateranges, std::string const &selfid, bool overwrite) const;
+                 std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite) const;
   bool findRecipient(long long int id) const;
 
   /* CUSTOMS */
@@ -410,6 +410,8 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 
   if (d_ok) // set by initfrom()
     d_ok = setColumnNames();
+
+  std::cout << "Database version: " << d_databaseversion << std::endl;
 
   checkDbIntegrity(true);
 }
