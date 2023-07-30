@@ -327,7 +327,8 @@ int main(int argc, char *argv[])
       return 1;
 
   if (!arg.exporttxt().empty())
-    if (!sb->exportTxt(arg.exporttxt(), arg.limittothreads(), arg.limittodates(), arg.setselfid(), arg.overwrite()))
+    if (!sb->exportTxt(arg.exporttxt(), arg.limittothreads(), arg.limittodates(), arg.setselfid(),
+                       arg.migratedb(), arg.overwrite()))
       return 1;
 
   if (!arg.exportcsv().empty())

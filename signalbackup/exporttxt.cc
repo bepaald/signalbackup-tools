@@ -22,8 +22,50 @@
 
 bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long int> const &limittothreads,
                              std::vector<std::string> const &daterangelist, std::string const &selfphone [[maybe_unused]],
-                             bool overwrite) const
+                             bool migrate, bool overwrite) const
 {
+  bool databasemigrated = false;
+  SqliteDB backup_database(":memory:");
+
+  // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
+  if (d_databaseversion == 167)
+  {
+    SqliteDB::copyDb(d_database, backup_database);
+    if (!migrateDatabase(167, 170))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
+                << " Please upgrade your database" << std::endl;
+      SqliteDB::copyDb(backup_database, d_database);
+      return false;
+    }
+    else
+      databasemigrated = true;
+  }
+  else if (d_databaseversion < 167)
+  {
+    if (!migrate)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Currently unsupported database version (" << d_databaseversion << ")."
+                << " Please upgrade" << std::endl
+                << "       your database or append the `--migratedb' option to attempt to" << std::endl
+                << "       migrate this database to a supported version." << std::endl;
+      return false;
+    }
+    SqliteDB::copyDb(d_database, backup_database);
+    if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
+                << " Please upgrade your database" << std::endl;
+      SqliteDB::copyDb(backup_database, d_database);
+      return false;
+    }
+    else
+      databasemigrated = true;
+  }
+
   // check if dir exists, create if not
   if (!bepaald::fileOrDirExists(directory))
   {
@@ -43,6 +85,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
           std::cout << "Backup size: " << d_fd->total() << std::endl;
         }
       }
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
   }
@@ -53,6 +97,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
               << ": `" << directory << "' is not a directory." << std::endl;
+    if (databasemigrated)
+      SqliteDB::copyDb(backup_database, d_database);
     return false;
   }
 
@@ -63,6 +109,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export." << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
     std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
@@ -70,6 +118,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Failed to empty directory '" << directory << "'" << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
   }
@@ -159,14 +209,18 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
                     "_id, " + d_mms_recipient_id + ", body, "
-                    "date_received, quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
-                    "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, "
-                    + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
-                    + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
-                    "json_extract(link_previews, '$[0].title') AS link_preview_title, "
-                    "json_extract(link_previews, '$[0].description') AS link_preview_description "
-                    "FROM " + d_mms_table + " "
+                    "date_received, " + d_mms_type + ", "
+                    //"quote_id, quote_author, quote_body, quote_mentions, "
+                    //"delivery_receipt_count, read_receipt_count, "
+                    "IFNULL(remote_deleted, 0) AS remote_deleted, "
+                    "IFNULL(view_once, 0) AS view_once, "
+                    "expires_in"
+                    //, message_ranges, "
+                    //+ (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
+                    //+ (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
+                    //"json_extract(link_previews, '$[0].title') AS link_preview_title, "
+                    //"json_extract(link_previews, '$[0].description') AS link_preview_description "
+                    " FROM " + d_mms_table + " "
                     "WHERE thread_id = ?"
                     + datewhereclause +
                     + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
@@ -195,6 +249,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
                 << ": Refusing to overwrite existing file" << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
 
@@ -203,6 +259,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     {
       std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
                 << ": Failed to open '" << directory << "/" << filename << " for writing." << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
 
@@ -289,5 +347,11 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     }
   }
 
+  std::cout << "All done!" << std::endl;
+  if (databasemigrated)
+  {
+    std::cout << "restoring migrated database..." << std::endl;
+    SqliteDB::copyDb(backup_database, d_database);
+  }
   return true;
 }

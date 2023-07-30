@@ -81,7 +81,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-// decrypt encrypted_encryptedframelength
+  // decrypt encrypted_encryptedframelength
   uintToFourBytes(d_iv, d_counter++);
 
   // create context

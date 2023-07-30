@@ -104,6 +104,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
 
   //headerframe->printInfo();
 
+  /*
   DEBUGOUT("IV: ", bepaald::bytesToHexString(d_iv, d_iv_size));
   DEBUGOUT("SALT: ", bepaald::bytesToHexString(d_salt, d_salt_size));
   DEBUGOUT("BACKUPKEY: ", bepaald::bytesToHexString(d_backupkey, d_backupkey_size));
@@ -111,6 +112,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   DEBUGOUT("MACKEY: ", bepaald::bytesToHexString(d_mackey, d_mackey_size));
   DEBUGOUT("BACKUPFILE VERSION: ", d_backupfileversion);
   DEBUGOUT("COUNTER: ", d_counter);
+  */
 
   std::cout << "IV: " << bepaald::bytesToHexString(d_iv, d_iv_size) << " (size: " << d_iv_size << ")" << std::endl;
   std::cout << "SALT: " << bepaald::bytesToHexString(d_salt, d_salt_size) << " (size: " << d_salt_size << ")" << std::endl;
