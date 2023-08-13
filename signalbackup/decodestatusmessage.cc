@@ -46,7 +46,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         // get name from members string
         SqliteDB::QueryResults res;
         if (d_databaseversion >= 24)
-          d_database.exec("SELECT COALESCE(recipient.system_display_name, recipient.signal_profile_name) AS 'name' FROM recipient WHERE phone = ?", field4[k], &res);
+          d_database.exec("SELECT COALESCE(recipient." + d_recipient_system_joined_name + ", recipient." + d_recipient_profile_given_name + ") AS 'name' FROM recipient WHERE " + d_recipient_e164 + " = ?", field4[k], &res);
         else
           d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'name' FROM recipient_preferences WHERE recipient_preferences.recipient_ids = ?", field4[k], &res);
 

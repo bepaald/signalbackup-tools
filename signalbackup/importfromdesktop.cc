@@ -203,7 +203,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                      bool autodates, bool ignorewal, std::string const &selfphone)
 {
 
-  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE phone = ?", selfphone, -1);
+  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
   if (d_selfid == -1)
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
@@ -213,7 +213,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::cout << std::endl;
     return false;
   }
-  d_selfuuid = d_database.getSingleResultAs<std::string>("SELECT uuid FROM recipient WHERE _id = ?", d_selfid, std::string());
+  d_selfuuid = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string());
 
   if (configdir.empty() || databasedir.empty())
   {

@@ -630,35 +630,46 @@ inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
 inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1) [[likely]]
-    return d_values[row][i];
-  return std::any{nullptr};
+  if (i == -1) [[unlikely]]
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Column `" << header << "' not found in query results" << std::endl;
+    return std::any{nullptr};
+  }
+  return d_values[row][i];
 }
 
 template <typename T>
 inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1) [[likely]]
+  if (i == -1) [[unlikely]]
   {
-    if (d_values[row][i].type() != typeid(T)) [[unlikely]]
-    {
-      std::cout << "Getting value of field '" << header << "' (idx " << i << "). Value as string: " << valueAsString(row, i) << std::endl;
-      std::cout << "Type: " << d_values[row][i].type().name() << " Requested type: " << typeid(T).name() << std::endl;
-      //return T{};
-    }
-    return std::any_cast<T>(d_values[row][i]);
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Column `" << header << "' not found in query results" << std::endl;
+    return T{};
   }
-  return T{};
+
+  if (d_values[row][i].type() != typeid(T)) [[unlikely]]
+  {
+    std::cout << "Getting value of field '" << header << "' (idx " << i << "). Value as string: " << valueAsString(row, i) << std::endl;
+    std::cout << "Type: " << d_values[row][i].type().name() << " Requested type: " << typeid(T).name() << std::endl;
+    //return T{};
+  }
+  return std::any_cast<T>(d_values[row][i]);
 }
 
 template <typename T>
 inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1) [[likely]]
-    return (d_values[row][i].type() == typeid(T));
-  return false;
+  if (i == -1) [[unlikely]]
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Column `" << header << "' not found in query results" << std::endl;
+    return false;
+  }
+  return (d_values[row][i].type() == typeid(T));
 }
 
 template <typename T>

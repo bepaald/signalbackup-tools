@@ -72,6 +72,11 @@ class SignalBackup
   std::string d_mms_recipient_device_id;
   std::string d_mms_type;
   std::string d_mms_previews;
+  std::string d_recipient_aci;
+  std::string d_recipient_e164;
+  std::string d_recipient_avatar_color;
+  std::string d_recipient_system_joined_name;
+  std::string d_recipient_profile_given_name;
 
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
@@ -676,11 +681,12 @@ inline void SignalBackup::showDBInfo() const
 inline std::string SignalBackup::getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def) const
 {
   std::string tmp(def);
-  if (results.valueHasType<std::string>(i, columnname))
-  {
-    tmp = results.getValueAs<std::string>(i, columnname);
-    escapeXmlString(&tmp);
-  }
+  if (bepaald::contains(results.headers(), columnname))    // to prevent warning in this case, we check the
+    if (results.valueHasType<std::string>(i, columnname))  // column name. This function expect it may fail
+    {
+      tmp = results.getValueAs<std::string>(i, columnname);
+      escapeXmlString(&tmp);
+    }
   return tmp;
 }
 
@@ -688,8 +694,9 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
                                      std::string const &columnname, long long int def) const
 {
   long long int temp = def;
-  if (results.valueHasType<long long int>(i, columnname))
-    temp = results.getValueAs<long long int>(i, columnname);
+  if (bepaald::contains(results.headers(), columnname))     // to prevent warning in this case, we check the
+    if (results.valueHasType<long long int>(i, columnname)) // column name. This function expect it may fail
+      temp = results.getValueAs<long long int>(i, columnname);
   return temp;
 }
 

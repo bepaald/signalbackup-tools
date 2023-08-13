@@ -22,10 +22,10 @@
 std::string SignalBackup::getNameFromRecipientId(long long int rid) const
 {
   SqliteDB::QueryResults results;
-  if (d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
+  if (d_database.exec("SELECT COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
-                      "NULLIF(recipient.signal_profile_name, ''), NULLIF(groups.title, ''), NULLIF(recipient.uuid, ''), NULLIF(recipient.phone, ''), "
-                      " recipient._id) AS 'display_name',recipient.phone,recipient.username,recipient.uuid "
+                      "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), NULLIF(recipient." + d_recipient_aci + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), "
+                      " recipient._id) AS 'display_name',recipient." + d_recipient_e164 + ",recipient.username,recipient." + d_recipient_aci + " "
                       "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?", rid, &results) &&
       results.rows() == 1 &&
       results.valueHasType<std::string>(0, "display_name"))

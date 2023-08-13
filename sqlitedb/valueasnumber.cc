@@ -52,7 +52,11 @@ long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column) cons
 long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1) [[likely]]
-    return valueAsInt(row, i);
-  return -1;
+  if (i == -1) [[unlikely]]
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Column `" << header << "' not found in query results" << std::endl;
+    return -1;
+  }
+  return valueAsInt(row, i);
 }

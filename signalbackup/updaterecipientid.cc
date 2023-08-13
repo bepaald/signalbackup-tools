@@ -22,11 +22,11 @@
 void SignalBackup::updateRecipientId(long long int targetid, long long int sourceid)
 {
   std::cout << "  Mapping " << sourceid << " -> " << targetid;
-  if (d_database.tableContainsColumn("recipient", "uuid", "phone", "group_id", "notification_channel", "distribution_list_id"))
+  if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id", "notification_channel", "distribution_list_id"))
   {
     SqliteDB::QueryResults r;
-    if (d_database.exec("SELECT CASE WHEN uuid IS NULL THEN '' ELSE 'u' END || "
-                        "CASE WHEN phone IS NULL THEN '' ELSE 'p' END || "
+    if (d_database.exec("SELECT CASE WHEN " + d_recipient_aci + " IS NULL THEN '' ELSE 'u' END || "
+                        "CASE WHEN " + d_recipient_e164 + " IS NULL THEN '' ELSE 'p' END || "
                         "CASE WHEN group_id IS NULL THEN '' ELSE 'g' END || "
                         "CASE WHEN distribution_list_id IS NULL THEN '' ELSE 'd' END || "
                         "CASE WHEN notification_channel IS NULL THEN '' ELSE 'n' END "
@@ -284,8 +284,8 @@ void SignalBackup::updateRecipientId(long long int targetid, RecipientIdentifica
   // get the current (to be deleted) recipient._id for this identifier (=phone,group_id,possibly uuid)
   SqliteDB::QueryResults results;
   d_database.exec("SELECT _id FROM recipient WHERE "
-                  "(uuid IS NOT NULL AND uuid IS ?) OR "
-                  "(phone IS NOT NULL AND phone IS ?) OR "
+                  "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                   "(group_id IS NOT NULL AND group_id IS ?)",
                   {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
 

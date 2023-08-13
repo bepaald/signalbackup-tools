@@ -38,7 +38,7 @@ long long int SignalBackup::scanSelf() const
     }
   if (!identity_public_key.empty())
   {
-    long long int selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE uuid IN "
+    long long int selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_aci + " IN "
                                                                        "(SELECT address FROM identities WHERE identity_key IS ?)",
                                                                        identity_public_key, -1);
     if (selfid != -1)
@@ -55,7 +55,7 @@ long long int SignalBackup::scanSelf() const
     }
   if (!identity_public_key.empty())
   {
-    long long int selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE uuid IN "
+    long long int selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_aci + " IN "
                                                                        "(SELECT address FROM identities WHERE identity_key IS ?)",
                                                                        identity_public_key, -1);
     if (selfid != -1)

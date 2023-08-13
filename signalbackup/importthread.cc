@@ -117,8 +117,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
     source->d_database.exec("SELECT "
-                            "IFNULL(uuid, '') AS uuid, "
-                            "IFNULL(phone, '') AS phone, "
+                            "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                            "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                             "IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
     if (results.rows() != 1)
     {
@@ -143,8 +143,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id"), -1, std::string()};
 
     d_database.exec("SELECT _id FROM recipient WHERE "
-                    "(uuid IS NOT NULL AND uuid IS ?) OR "
-                    "(phone IS NOT NULL AND phone IS ?) OR "
+                    "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                    "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                     "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<long long int>(0, 0))
@@ -415,9 +415,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
       if (d_database.tableContainsColumn("recipient", "group_type") &&
           d_database.tableContainsColumn("recipient", "storage_service_key"))
-        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
+        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
       else
-        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
+        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
 
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
@@ -446,9 +446,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       SqliteDB::QueryResults existing_rec;
       if (d_database.tableContainsColumn("recipient", "group_type") &&
           d_database.tableContainsColumn("recipient", "storage_service_key"))
-        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &existing_rec);
+        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &existing_rec);
       else
-        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &existing_rec);
+        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &existing_rec);
 
       // for each of them, check if they are also in source, and delete
       int count = 0;
@@ -461,12 +461,12 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
-                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?)) OR "
                                   // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
-                                  "(uuid IS NULL AND "
-                                  "phone IS NULL AND "
+                                  "(" + d_recipient_aci + " IS NULL AND "
+                                  + d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
                                   "group_type IS 4  AND group_type IS ? AND "
                                   "storage_service_key IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service_key});
@@ -476,8 +476,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
-                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
           count += source->d_database.changed();
         }
@@ -505,14 +505,14 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       // get all phonenums/groups_ids for all in identities
-      d_database.exec("SELECT IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
+      d_database.exec("SELECT IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), -1, std::string()};
         // source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
         source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE "
-                                "(uuid IS NOT NULL AND uuid IS ?) OR "
-                                "(phone IS NOT NULL AND phone IS ?) OR "
+                                "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                                "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                                 "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
       }
     }
@@ -530,9 +530,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
       if (d_database.tableContainsColumn("recipient", "group_type") &&
           d_database.tableContainsColumn("recipient", "storage_service_key"))
-        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
+        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
       else
-        d_database.exec("SELECT _id, IFNULL(uuid, '') AS uuid, IFNULL(phone, '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
+        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
       std::cout << "  updateRecipientIds (2)" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
       {
@@ -555,12 +555,12 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
-                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?)) OR "
                                   // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
-                                  "(uuid IS NULL AND "
-                                  "phone IS NULL AND "
+                                  "(" + d_recipient_aci + " IS NULL AND "
+                                  + d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
                                   "group_type IS 4  AND group_type IS ? AND "
                                   "storage_service_key IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service_key});
@@ -570,8 +570,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((uuid IS NOT NULL AND uuid IS ?) OR "
-                                  "(phone IS NOT NULL AND phone IS ?) OR "
+                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
           count = source->d_database.changed();
         }
