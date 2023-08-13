@@ -441,9 +441,11 @@ To import conversations from a Signal-Desktop installation, run:
 signalbackup-tools [input] [passphrase] --importfromdesktop --output [output] (--opassphrase [newpassphrase])
 ```
 
+As with all commands this program supports, `[input]` is an existing Signal Android backup file. The messages from the desktop are imported into this backup file.
+
 Make sure your Signal-Desktop instance is cleanly shut down before running, if this fails for some reason the option `--ignorewal` can be added (the program will warn about this and exit if necessary), but this may cause the database appears in an out-of-date state. `--importfromdesktop` optionally takes two arguments specifying the locations of the `config.json` and `sql/db.sqlite` files respectively. Again, the program will warn and exit if it fails to find them at their default locations (Linux: `~/.config/Signal/`, macOS: `~/Library/Application Support/Signal/`, Windows: `C:/Users/<Username>/AppData/Roaming/Signal/`).
 
-To limit the message import to a certain time frame, the option `--limittodates <LIST OF DATES>` can be added. The format of the list of dates is identical to that of the [croptodates function](#crop). If your backup file is newer than you Signal-Desktop data, the option `--autolimitdates` can be used to automatically only import messages from before the first message in the input backup.
+To limit the message import to a certain time frame, the option `--limittodates <LIST OF DATES>` can be added. The format of the list of dates is identical to that of the [croptodates function](#crop). If your input backup file is newer than your Signal-Desktop data, the option `--autolimitdates` can be used to automatically only import messages from before the first message in the input backup.
 
 This function has some limitations, most notably the contacts referenced in the data that is to be imported must be present in the Android backup. If a message is found that is sent by/to an unknown contact, it is skipped. For other limitations see [here](https://github.com/bepaald/signalbackup-tools/issues/57#issuecomment-1329475240).
 

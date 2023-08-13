@@ -84,6 +84,10 @@ R"*(
    --limittothreads <LIST_OF_DATES>      Optional modifier for `--exporthtml'. Only export messages within
                                          the ranges defined by LIST_OF_DATES. List format is the same as
                                          `--croptodates'.
+   --migratedb                           Optional modifier for `--exporthtml'. Some older databases require
+                                         this option to (attempt) to update the database format to a newer
+                                         supported format. The program will tell you when you need to add
+                                         this option.
    --append                              Optional modifier for `--exporthtml'. Causes `--exporthtml' to
                                          not show an error when DIRECTORY is not empty, but also not
                                          overwrite existing media files. Still regenerates the HTML file.
@@ -99,8 +103,8 @@ R"*(
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
-                                         This option also supports the `--limittothreads' and
-                                         `--limittodates' modifiers as mentioned above.
+                                         This option also supports the `--limittothreads', `--limittodates'
+                                         and `--migratedb' modifiers as mentioned above.
 --overwrite                              Optional modifier for all output operations. Overwrite output
                                          files if they exist. When <OUTPUT> is a directory this will
                                          delete ALL directory contents.
