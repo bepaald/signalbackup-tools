@@ -27,6 +27,30 @@ bool SignalBackup::setColumnNames()
       !d_database.containsTable("message"))
     d_mms_table = "mms";
 
+
+  d_recipient_aci = "aci";
+  if (d_database.tableContainsColumn("recipient", "uuid")) // before dbv200
+    d_recipient_aci = "uuid";
+
+  d_recipient_e164 = "e164";
+  if (d_database.tableContainsColumn("recipient", "phone")) // before dbv201
+    d_recipient_e164 = "phone";
+
+  d_recipient_avatar_color = "avatar_color";
+  if (d_database.tableContainsColumn("recipient", "color")) // before dbv201
+    d_recipient_avatar_color = "color";
+
+  d_recipient_system_joined_name = "system_joined_name";
+  if (d_database.tableContainsColumn("recipient", "system_display_name")) // before dbv201
+    d_recipient_system_joined_name = "system_display_name";
+
+  d_recipient_profile_given_name = "profile_given_name";
+  if (d_database.tableContainsColumn("recipient", "signal_profile_name")) // before dbv201
+    d_recipient_profile_given_name = "signal_profile_name";
+
+
+
+
   // started at dbv166
   d_thread_recipient_id = "recipient_id";
   // from dbv 108

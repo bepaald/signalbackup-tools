@@ -53,7 +53,11 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
 std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const &header) const
 {
   int i = idxOfHeader(header);
-  if (i > -1) [[likely]]
-    return valueAsString(row, i);
-  return "(column not found)";
+  if (i == -1) [[unlikely]]
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Column `" << header << "' not found in query results" << std::endl;
+    return "(column not found)";
+  }
+  return valueAsString(row, i);
 }

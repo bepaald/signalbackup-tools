@@ -91,7 +91,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     std::any new_rid;
     if (!insertRow("recipient",
                    {{"group_id", group_id},
-                    {"color", res.value(0, "color")}}, "_id", &new_rid))
+                    {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new (group) recipient into database." << std::endl;
       return -1;
@@ -192,7 +192,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
             // check if uuid is an actual member:
             long long int uuidpresent = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM group_membership WHERE "
-                                                                                    "recipient_id IS (SELECT _id FROM recipient WHERE uuid = ?) AND "
+                                                                                    "recipient_id IS (SELECT _id FROM recipient WHERE " + d_recipient_aci + " = ?) AND "
                                                                                     "group_id = ?", {memberrole_results(mr, "uuid"), group_id}, 0);
             if (uuidpresent)
               memberroles[memberrole_results(mr, "uuid")] = memberrole_results.getValueAs<long long int>(mr, "role");
@@ -285,12 +285,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   std::any new_rid;
   if (!insertRow("recipient",
-                 {{"signal_profile_name", res.value(0, "profileName")},
+                 {{d_recipient_profile_given_name, res.value(0, "profileName")},
                   {"profile_family_name", res.value(0, "profileFamilyName")},
                   {"profile_joined_name", res.value(0, "profileFullName")},
-                  {"phone", res.value(0, "e164")},
-                  {"uuid", res.value(0, "uuid")},
-                  {"color", res.value(0, "color")}}, "_id", &new_rid))
+                  {d_recipient_e164, res.value(0, "e164")},
+                  {d_recipient_aci, res.value(0, "uuid")},
+                  {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new recipient into database." << std::endl;
     return -1;

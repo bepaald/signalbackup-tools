@@ -52,11 +52,11 @@ bool SignalBackup::findRecipient(long long int id) const
   std::string uuid;
   std::string phone;
   SqliteDB::QueryResults res;
-  if (!d_database.exec("SELECT phone, uuid FROM recipient WHERE _id = ?", id, &res) ||
+  if (!d_database.exec("SELECT " + d_recipient_e164 + ", " + d_recipient_aci + " FROM recipient WHERE _id = ?", id, &res) ||
       res.rows() != 1)
     return false;
-  uuid = res("uuid");
-  phone = res("phone");
+  uuid = res(d_recipient_aci);
+  phone = res(d_recipient_e164);
 
   // check in identities
   if (d_database.containsTable("identities") &&

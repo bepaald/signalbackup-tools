@@ -30,12 +30,13 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
 
     // get info
     SqliteDB::QueryResults results;
-    d_database.exec("SELECT COALESCE(NULLIF(recipient.system_display_name, ''), " +
+    d_database.exec("SELECT COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                     (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
-                    "NULLIF(recipient.signal_profile_name, ''), NULLIF(groups.title, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), "
-                    " recipient._id) AS 'display_name', recipient.phone, recipient.username, recipient.uuid, " +
-                    (d_database.tableContainsColumn("recipient", "chat_colors") ? "NULLIF(recipient.chat_colors, ''),"s : ""s) + //wallpaper_file, custom_chat_colors_id
-                    "recipient.group_id, recipient.color, recipient.wallpaper "
+                    "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), "
+                    "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+                    " recipient._id) AS 'display_name', recipient." + d_recipient_e164 + ", recipient.username, recipient." + d_recipient_aci + ", " +
+                    (d_database.tableContainsColumn("recipient", "chat_colors") ? "NULLIF(recipient.chat_colors, '') AS chat_colors,"s : ""s) + //wallpaper_file, custom_chat_colors_id
+                    "recipient.group_id, recipient." + d_recipient_avatar_color + ", recipient.wallpaper "
                     "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?", rid, &results);
 
     std::string display_name = results.valueAsString(0, "display_name");
@@ -71,8 +72,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
       initial = "#";
 
     std::string color = results.isNull(0, "group_id") ? "555555" : s_html_colormap.at("group_color");
-    if (bepaald::contains(s_html_colormap, results.valueAsString(0, "color")))
-      color = s_html_colormap.at(results.valueAsString(0, "color"));
+    if (bepaald::contains(s_html_colormap, results.valueAsString(0, d_recipient_avatar_color)))
+      color = s_html_colormap.at(results.valueAsString(0, d_recipient_avatar_color));
 
     // custom color?
     if (!results.isNull(0, "chat_colors"))
@@ -102,8 +103,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     (*recipientinfo)[rid] = {display_name,
                              initial,
                              initial_is_emoji,
-                             results.valueAsString(0, "uuid"),
-                             results.valueAsString(0, "phone"),
+                             results.valueAsString(0, d_recipient_aci),
+                             results.valueAsString(0, d_recipient_e164),
                              results.valueAsString(0, "username"),
                              color,
                              wall_light,

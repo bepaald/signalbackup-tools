@@ -204,27 +204,33 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     // if (groupcheck.rows())
     //   isgroup = true;
 
-
     // now get all messages
     SqliteDB::QueryResults messages;
-    d_database.exec("SELECT "s
-                    "_id, " + d_mms_recipient_id + ", body, "
-                    "date_received, " + d_mms_type + ", "
-                    //"quote_id, quote_author, quote_body, quote_mentions, "
-                    //"delivery_receipt_count, read_receipt_count, "
-                    "IFNULL(remote_deleted, 0) AS remote_deleted, "
-                    "IFNULL(view_once, 0) AS view_once, "
-                    "expires_in"
-                    //, message_ranges, "
-                    //+ (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
-                    //+ (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
-                    //"json_extract(link_previews, '$[0].title') AS link_preview_title, "
-                    //"json_extract(link_previews, '$[0].description') AS link_preview_description "
-                    " FROM " + d_mms_table + " "
-                    "WHERE thread_id = ?"
-                    + datewhereclause +
-                    + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
-                    " ORDER BY date_received ASC", t, &messages);
+    if (!d_database.exec("SELECT "s
+                         "_id, " + d_mms_recipient_id + ", body, "
+                         "date_received, " + d_mms_type + ", "
+                         //"quote_id, quote_author, quote_body, quote_mentions, "
+                         //"delivery_receipt_count, read_receipt_count, "
+                         "IFNULL(remote_deleted, 0) AS remote_deleted, "
+                         "IFNULL(view_once, 0) AS view_once, "
+                         "expires_in"
+                         //, message_ranges, "
+                         //+ (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
+                         //+ (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
+                         //"json_extract(link_previews, '$[0].title') AS link_preview_title, "
+                         //"json_extract(link_previews, '$[0].description') AS link_preview_description "
+                         " FROM " + d_mms_table + " "
+                         "WHERE thread_id = ?"
+                         + datewhereclause +
+                         + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
+                         " ORDER BY date_received ASC", t, &messages))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to query database for messages" << std::endl;
+      if (databasemigrated)
+        SqliteDB::copyDb(backup_database, d_database);
+      return false;
+    }
     if (messages.rows() == 0)
       continue;
 

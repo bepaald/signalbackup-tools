@@ -146,7 +146,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
   else
     note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS "
-                                                                         "(SELECT _id FROM recipient WHERE phone = ?)", selfphone, -1);
+                                                                         "(SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?)", selfphone, -1);
 
   std::vector<long long int> threads = ((limittothreads.empty() || (limittothreads.size() == 1 && limittothreads[0] == -1)) ?
                                         threadIds() : limittothreads);

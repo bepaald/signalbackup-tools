@@ -131,15 +131,14 @@ void SignalBackup::removeDoubles()
   // remove msl_message
   if (d_database.containsTable("msl_message"))
   {
+    std::cout << "  Deleting entries from 'msl_message' not belonging to remaining messages" << std::endl;
     if (d_database.containsTable("sms"))
     {
-      std::cout << "  Deleting entries from 'msl_message' not belonging to remaining sms entries" << std::endl;
       d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT DISTINCT _id FROM sms)");
+      d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
     }
-    std::cout << "  Deleting entries from 'msl_message' not belonging to remaining mms entries" << std::endl;
-    d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")" +
-                    (d_database.tableContainsColumn("msl_message", "is_mms") ? " AND is_mms IS 1" : ""));
-
+    else
+      d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
 
     // now delete msl_payloads from non-existing msl_messages ?
     d_database.exec("DELETE FROM msl_payload WHERE _id NOT IN (SELECT DISTINCT payload_id FROM msl_message)");

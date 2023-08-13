@@ -45,7 +45,7 @@ void SignalBackup::mergeRecipients(std::vector<std::string> const &addresses, bo
     for (uint i = 0; i < r_ids.size(); ++i)
     {
       SqliteDB::QueryResults res;
-      d_database.exec("SELECT _id FROM recipient WHERE phone = ?", r_ids[i], &res);
+      d_database.exec("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", r_ids[i], &res);
       if (res.rows() != 1 || res.columns() != 1 ||
           !res.valueHasType<long long int>(0, 0))
       {

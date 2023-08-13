@@ -52,7 +52,7 @@ bool SignalBackup::getGroupMembersOld(std::vector<long long int> *members, std::
   if (r.rows() == 0) // no results
     return true;
 
-  if (r.rows() > 1 || r.valueHasType<std::string>(0, "group_id"))
+  if (r.rows() > 1 || !r.valueHasType<std::string>(0, column))
     return false;
 
   // tokenize

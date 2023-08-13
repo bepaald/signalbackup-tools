@@ -71,7 +71,7 @@ bool SignalBackup::scramble() const
   if (!scrambleHelper(d_mms_table, {"body", "quote_body"}))
     return false;
 
-  if (!scrambleHelper("recipient", {"system_display_name", "profile_joined_name", "signal_profile_name", "profile_family_name", "system_family_name", "system_given_name"}))
+  if (!scrambleHelper("recipient", {d_recipient_system_joined_name, "profile_joined_name", d_recipient_profile_given_name, "profile_family_name", "system_family_name", "system_given_name"}))
     return false;
 
   if (!scrambleHelper("thread", {"snippet"}))

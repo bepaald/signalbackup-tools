@@ -21,8 +21,6 @@
 
 void SignalBackup::listThreads() const
 {
-  std::cout << "Database version: " << d_databaseversion << std::endl;
-
   SqliteDB::QueryResults results;
 
   if (d_database.containsTable("sms"))
@@ -37,14 +35,14 @@ void SignalBackup::listThreads() const
     d_database.exec("SELECT thread._id, thread." + d_thread_recipient_id + ", thread.snippet, COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient_preferences ON thread." + d_thread_recipient_id + " = recipient_preferences.recipient_ids LEFT JOIN groups ON thread." + d_thread_recipient_id + " = groups.group_id ORDER BY thread._id ASC", &results);
   else // has recipient table
   {
-    bool uuid = d_database.tableContainsColumn("recipient", "uuid");
+    bool uuid = d_database.tableContainsColumn("recipient", d_recipient_aci);
     bool profile_joined_name = d_database.tableContainsColumn("recipient", "profile_joined_name");
 
     // std::cout << d_thread_recipient_id << std::endl;
     // std::cout << d_sms_recipient_id << std::endl;
     // std::cout << d_mms_recipient_id << std::endl;
 
-    d_database.exec("SELECT thread._id, COALESCE(recipient.phone, recipient.group_id" + (uuid ? ", recipient.uuid"s : ""s) + ") AS 'recipient_ids', thread.snippet, COALESCE(recipient.system_display_name, " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient.signal_profile_name, groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+    d_database.exec("SELECT thread._id, COALESCE(recipient." + d_recipient_e164 + ", recipient.group_id" + (uuid ? ", recipient."s + d_recipient_aci : ""s) + ") AS 'recipient_ids', thread.snippet, COALESCE(recipient." + d_recipient_system_joined_name +", " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient." + d_recipient_profile_given_name + ", groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
 
     // results.prettyPrint();
 

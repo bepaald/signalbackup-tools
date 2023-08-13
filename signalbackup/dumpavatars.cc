@@ -63,7 +63,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     SqliteDB::QueryResults results;
 
-    std::string query = "SELECT COALESCE(groups.title, recipient.system_display_name, recipient.profile_joined_name, recipient.signal_profile_name) AS 'chatpartner' FROM recipient "
+    std::string query = "SELECT COALESCE(groups.title, recipient." + d_recipient_system_joined_name + ", recipient.profile_joined_name, recipient." + d_recipient_profile_given_name + ") AS 'chatpartner' FROM recipient "
       "LEFT JOIN groups ON recipient.group_id == groups.group_id "
       "WHERE recipient._id == ?";
 
