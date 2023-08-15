@@ -40,12 +40,15 @@ class Arg
   std::string d_input;
   std::string d_passphrase;
   std::vector<long long int> d_importthreads;
+  std::vector<std::string> d_importthreads_failed;
   std::vector<long long int> d_limittothreads;
+  std::vector<std::string> d_limittothreads_failed;
   std::string d_output;
   std::string d_opassphrase;
   std::string d_source;
   std::string d_sourcepassphrase;
   std::vector<long long int> d_croptothreads;
+  std::vector<std::string> d_croptothreads_failed;
   std::vector<std::string> d_croptodates;
   std::vector<std::string> d_mergerecipients;
   std::vector<std::string> d_mergegroups;
@@ -124,7 +127,9 @@ class Arg
   inline std::string const &passphrase() const;
   inline void setpassphrase(std::string const &val);
   inline std::vector<long long int> const &importthreads() const;
+  inline std::vector<std::string> const &importthreads_failed() const;
   inline std::vector<long long int> const &limittothreads() const;
+  inline std::vector<std::string> const &limittothreads_failed() const;
   inline std::string const &output() const;
   inline std::string const &opassphrase() const;
   inline void setopassphrase(std::string const &val);
@@ -132,6 +137,7 @@ class Arg
   inline std::string const &sourcepassphrase() const;
   inline void setsourcepassphrase(std::string const &val);
   inline std::vector<long long int> const &croptothreads() const;
+  inline std::vector<std::string> const &croptothreads_failed() const;
   inline std::vector<std::string> const &croptodates() const;
   inline std::vector<std::string> const &mergerecipients() const;
   inline std::vector<std::string> const &mergegroups() const;
@@ -208,7 +214,7 @@ class Arg
   template <typename T, typename U>
   inline bool parsePairList(std::string const &pairlist, std::string const &delim, std::vector<std::pair<T, U>> *list, std::string *error) const;
   template <typename T>
-  bool parseNumberList(std::string const &strlist, std::vector<T> *list) const;
+  bool parseNumberList(std::string const &strlist, std::vector<T> *list, std::vector<std::string> *faillist = nullptr) const;
   template <typename T, typename U>
   bool parsePair(std::string const &token, std::string const &delim, std::pair<T, U> *pair, std::string *error) const;
   template <typename T>
@@ -236,9 +242,19 @@ inline std::vector<long long int> const &Arg::importthreads() const
   return d_importthreads;
 }
 
+inline std::vector<std::string> const &Arg::importthreads_failed() const
+{
+  return d_importthreads_failed;
+}
+
 inline std::vector<long long int> const &Arg::limittothreads() const
 {
   return d_limittothreads;
+}
+
+inline std::vector<std::string> const &Arg::limittothreads_failed() const
+{
+  return d_limittothreads_failed;
 }
 
 inline std::string const &Arg::output() const
@@ -274,6 +290,11 @@ inline void Arg::setsourcepassphrase(std::string const &val)
 inline std::vector<long long int> const &Arg::croptothreads() const
 {
   return d_croptothreads;
+}
+
+inline std::vector<std::string> const &Arg::croptothreads_failed() const
+{
+  return d_croptothreads_failed;
 }
 
 inline std::vector<std::string> const &Arg::croptodates() const
@@ -666,7 +687,7 @@ inline bool Arg::parsePairList(std::string const &pairlist, std::string const &d
 }
 
 template <typename T>
-bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list) const
+bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, std::vector<std::string> *faillist) const
 {
   std::string tr = strlist;
 
@@ -675,11 +696,21 @@ bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list) cons
   while ((pos = tr.find(',', start)) != std::string::npos)
   {
     if (!parseNumberListToken(tr.substr(start, pos - start), list))  // get&parse token
-      return false;
+    {
+      if (faillist)
+        faillist->push_back(tr.substr(start, pos - start));
+      else
+        return false;
+    }
     start = pos + 1;
   }
   if (!parseNumberListToken(tr.substr(start), list)) // get last bit
-    return false;
+  {
+    if (faillist)
+      faillist->push_back(tr.substr(start));
+    else
+      return false;
+  }
 
   std::sort(list->begin(), list->end());
 

@@ -164,7 +164,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ++i;
           continue;
         }
-        if (!parseNumberList(arguments[++i], &d_importthreads))
+        if (!parseNumberList(arguments[++i], &d_importthreads, &d_importthreads_failed))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -181,20 +181,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
-        {
-          long long int tmp;
-          if (!ston(&tmp, std::string("-1")))
-          {
-            std::cerr << "Bad special value in argument spec file!" << std::endl;
-            ok = false;
-          }
-          d_limittothreads.clear();
-          d_limittothreads.push_back(tmp);
-          ++i;
-          continue;
-        }
-        if (!parseNumberList(arguments[++i], &d_limittothreads))
+        if (!parseNumberList(arguments[++i], &d_limittothreads, &d_limittothreads_failed))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -263,7 +250,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_croptothreads))
+        if (!parseNumberList(arguments[++i], &d_croptothreads, &d_croptothreads_failed))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -716,19 +703,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
-        {
-          long long int tmp;
-          if (!ston(&tmp, std::string("-1")))
-          {
-            std::cerr << "Bad special value in argument spec file!" << std::endl;
-            ok = false;
-          }
-          d_onlyinthreads.clear();
-          d_onlyinthreads.push_back(tmp);
-          ++i;
-          continue;
-        }
         if (!parseNumberList(arguments[++i], &d_onlyinthreads))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;

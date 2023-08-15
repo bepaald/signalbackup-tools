@@ -226,6 +226,20 @@ int main(int argc, char *argv[])
         std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
     }
 
+    // add any threads listed by thread name
+    if (arg.importthreads_failed().size())
+    {
+      if (!source)
+        source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
+      if (!source->ok())
+      {
+        std::cout << "Error opening source database" << std::endl;
+        return 1;
+      }
+      if (!addThreadIdsFromString(source.get(), arg.importthreads_failed(), &threads))
+        return 1;
+    }
+
     for (uint i = 0; i < threads.size(); ++i)
     {
 
@@ -428,6 +442,33 @@ int main(int argc, char *argv[])
   MEMINFO("At program end");
 
   return 0;
+}
+
+bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::string> const &names, std::vector<long long int> *threads)
+{
+  for (uint i = 0; i < names.size(); ++i)
+  {
+
+    long long int r = backup->getRecipientIdFromName(names[i]);
+    if (r == -1)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
+                << "Failed to find threadId for recipient `" << names[i] << "'"<< std::endl;
+      return false;
+    }
+
+    long long int t = backup->getThreadIdFromRecipient(r);
+    if (t == -1)
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
+                << "Failed to find threadId for recipient `" << names[i] << "'"<< std::endl;
+      return false;
+    }
+    if (!bepaald::contains(threads, t))
+      threads->push_back(t);
+  }
+  std::sort(threads->begin(), threads->end());
+  return true;
 }
 
 
