@@ -30,6 +30,8 @@
 #include <termios.h>
 #endif
 
+class SignalBackup;
+
 inline bool getPassword(std::string *pw)
 {
   if (!pw)
@@ -101,5 +103,9 @@ inline bool getPassword(std::string *pw)
 
   return true;
 }
+
+inline bool addThreadIdsFromString(SignalBackup const *const backup,
+                                   std::vector<std::string> const &names,
+                                   std::vector<long long int> *threads);
 
 #endif

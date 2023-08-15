@@ -223,6 +223,9 @@ class SignalBackup
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite) const;
   bool findRecipient(long long int id) const;
+  long long int getRecipientIdFromName(std::string const &name) const;
+  long long int getThreadIdFromRecipient(std::string const &recipient) const;
+  inline long long int getThreadIdFromRecipient(long long int recipientid) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -279,7 +282,6 @@ class SignalBackup
   void updateReactionAuthors(long long int id1, long long int id2 = -1) const; // idem.
   void updateGV1MigrationMessage(long long int id1, long long int id2 = -1) const; // idem.
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
-  long long int getThreadIdFromRecipient(std::string const &recipient) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;
   void duplicateQuotes(std::string *s) const;
@@ -676,6 +678,11 @@ inline void SignalBackup::showDBInfo() const
 {
   std::cout << "Database version: " << d_databaseversion << std::endl;
   d_database.print("SELECT m.name as TABLE_NAME, p.name as COLUMN_NAME FROM sqlite_master m LEFT OUTER JOIN pragma_table_info((m.name)) p ON m.name <> p.name ORDER BY TABLE_NAME, COLUMN_NAME");
+}
+
+inline long long int SignalBackup::getThreadIdFromRecipient(long long int recipientid) const
+{
+  return getThreadIdFromRecipient(bepaald::toString(recipientid));
 }
 
 inline std::string SignalBackup::getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def) const
