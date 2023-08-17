@@ -164,7 +164,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 
 
 //   // get group members:
-//   for (auto const &members : {"members", "former_v1_members"})
+//   for (auto const &members : {"members"s, d_groups_v1_members})
 //   {
 
 //     if (!d_database.tableContainsColumn("recipient", members))

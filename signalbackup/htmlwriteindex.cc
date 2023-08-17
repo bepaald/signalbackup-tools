@@ -21,7 +21,7 @@
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool overwrite, bool append, bool light, bool themeswitching) const
+                                  bool calllog [[maybe_unused]], bool overwrite, bool append, bool light, bool themeswitching) const
 {
 
   std::cout << "Writing index.html..." << std::endl;
@@ -43,6 +43,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     return;
   }
 
+  // build string of requested threads
   std::string threadlist;
   for (uint i = 0; i < threads.size(); ++i)
   {
@@ -65,7 +66,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
-                       "WHERE thread._id IN (" + threadlist +") AND " + d_thread_message_count + " > 0 ORDER BY "
+                       "WHERE thread._id IN (" + threadlist + ") AND " + d_thread_message_count + " > 0 ORDER BY "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, " : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
                        "date DESC", &results)) // order by pinned DESC archived ASC date DESC??

@@ -142,5 +142,13 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn(d_mms_table, "previews"))
     d_mms_previews = "previews";
 
+
+
+  d_groups_v1_members = "unmigrated_v1_members";
+  if (!d_database.tableContainsColumn("groups", "unmigrated_v1_members") &&
+      d_database.tableContainsColumn("groups", "former_v1_members"))
+    d_groups_v1_members = "former_v1_members";
+
+
   return true;
 }

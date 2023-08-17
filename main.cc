@@ -337,7 +337,8 @@ int main(int argc, char *argv[])
 
   if (!arg.exporthtml().empty())
     if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
-                        arg.setselfid(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching()))
+                        arg.setselfid(), arg.includecalllog(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(),
+                        arg.themeswitching()))
       return 1;
 
   if (!arg.exporttxt().empty())

@@ -29,7 +29,7 @@
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
-                              std::string const &selfphone, bool migrate, bool overwrite, bool append,
+                              std::string const &selfphone, bool calllog, bool migrate, bool overwrite, bool append,
                               bool lighttheme, bool themeswitching) const
 {
   bool databasemigrated = false;
@@ -653,8 +653,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
+  // disable calllog if not presents in database
+  if (!d_database.containsTable("call") && calllog)
+    calllog = false;
+
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
-                 overwrite, append, lighttheme, themeswitching);
+                 calllog, overwrite, append, lighttheme, themeswitching);
+
+  if (calllog)
+    HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
+                     overwrite, append, lighttheme, themeswitching);
 
   std::cout << "All done!" << std::endl;
   if (databasemigrated)

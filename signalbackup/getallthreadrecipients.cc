@@ -68,8 +68,8 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
     // for (long long int id : groupmembers)
     //   std::cout << "INSERTING (0): "  << id << std::endl;
 
-    if (d_database.tableContainsColumn("groups", "former_v1_members"))
-      getGroupMembersOld(&groupmembers, group_id, "former_v1_members");
+    if (d_database.tableContainsColumn("groups", d_groups_v1_members))
+      getGroupMembersOld(&groupmembers, group_id, d_groups_v1_members);
 
     for (long long int id : groupmembers)
     {
