@@ -149,7 +149,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
     // get (former)group members
     SqliteDB::QueryResults results;
-    for (auto const &members : {"members", "former_v1_members"})
+    for (auto const &members : {"members"s, d_groups_v1_members})
     {
       if (!d_database.tableContainsColumn("groups", members))
         continue;

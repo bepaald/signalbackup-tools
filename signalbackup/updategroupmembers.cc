@@ -21,7 +21,7 @@
 
 void SignalBackup::updateGroupMembers(long long int id1, long long int id2) const // if id2 == -1, id1 is an offset
 {                                                                                 // else, change id1 into id2
-  for (auto const &members : {"members", "former_v1_members"})
+  for (auto const &members : {"members"s, d_groups_v1_members})
   {
     if (!d_database.tableContainsColumn("groups", members))
       continue;

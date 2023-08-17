@@ -92,6 +92,7 @@ Arg::Arg(int argc, char *argv[])
   d_checkdbintegrity(false),
   d_interactive(false),
   d_exporthtml(std::string()),
+  d_includecalllog(false),
   d_exporttxt(std::string()),
   d_append(false),
   d_split(1000),
@@ -948,6 +949,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--includecalllog")
+    {
+      d_includecalllog = true;
+      continue;
+    }
+    if (option == "--no-includecalllog")
+    {
+      d_includecalllog = false;
       continue;
     }
     if (option == "--exporttxt")

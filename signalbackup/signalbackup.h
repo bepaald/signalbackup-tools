@@ -77,6 +77,7 @@ class SignalBackup
   std::string d_recipient_avatar_color;
   std::string d_recipient_system_joined_name;
   std::string d_recipient_profile_given_name;
+  std::string d_groups_v1_members;
 
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
@@ -219,7 +220,7 @@ class SignalBackup
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
-                  bool migrate, bool overwrite, bool append, bool theme, bool themeswitching) const;
+                  bool calllog, bool migrate, bool overwrite, bool append, bool theme, bool themeswitching) const;
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite) const;
   bool findRecipient(long long int id) const;
@@ -361,8 +362,11 @@ class SignalBackup
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
-                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool overwrite,
-                      bool append, bool light, bool themeswitching) const;
+                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
+                      bool overwrite, bool append, bool light, bool themeswitching) const;
+  void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
+                        std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid,
+                        bool overwrite, bool append, bool light, bool themeswitching) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
