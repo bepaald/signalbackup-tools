@@ -653,8 +653,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  // disable calllog if not presents in database
-  if (!d_database.containsTable("call") && calllog)
+  // disable calllog if not presents in database, or it is empty
+  if (!d_database.containsTable("call") ||
+      d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM call", -1) == 0)
     calllog = false;
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
