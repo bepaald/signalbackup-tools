@@ -363,7 +363,7 @@ class SignalBackup
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                       std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
-                      bool overwrite, bool append, bool light, bool themeswitching) const;
+                      bool searchpage, bool overwrite, bool append, bool light, bool themeswitching) const;
   void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                         std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid,
                         bool overwrite, bool append, bool light, bool themeswitching) const;

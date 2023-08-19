@@ -21,7 +21,8 @@
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool calllog [[maybe_unused]], bool overwrite, bool append, bool light, bool themeswitching) const
+                                  bool calllog, bool searchpage, bool overwrite, bool append, bool light,
+                                  bool themeswitching) const
 {
 
   std::cout << "Writing index.html..." << std::endl;
@@ -303,7 +304,28 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "      .menu-item > div {" << std::endl
     << "        margin-right: 5px;" << std::endl
     << "      }" << std::endl
-    << std::endl
+    << std::endl;
+  if (calllog || searchpage)
+  {
+    outputfile
+      << "      #menu {" << std::endl
+      << "        display: flex;" << std::endl
+      << "        flex-direction: column;" << std::endl
+      << "        position: fixed;" << std::endl
+      << "        top: 20px;" << std::endl
+      << "        left: 20px;" << std::endl
+      << "      }" << std::endl
+      << std::endl
+      << "      #menu a:link," << std::endl
+      << "      #menu a:visited," << std::endl
+      << "      #menu a:hover," << std::endl
+      << "      #menu a:active {" << std::endl
+      << "        color: #FFFFFF;" << std::endl
+      << "        text-decoration: none;" << std::endl
+      << "      }" << std::endl
+      << std::endl;
+  }
+  outputfile
     << "      .menu-icon {" << std::endl
     << "        margin-right: 0px;" << std::endl
     << "        width: 30px;" << std::endl
@@ -329,13 +351,39 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "       top: 20px;" << std::endl
     << "       right: 20px;" << std::endl
     << "      }" << std::endl
-    << std::endl
-    << "      .themebutton {" << std::endl
-    << "        display: block;" << std::endl
-    << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g id=\"g_0\"><path d=\"M11.5 7.75c0-0.4 0.34-0.77 0.78-0.74C14.9 7.15 17 9.33 17 12c0 2.67-2.09 4.85-4.72 5-0.44 0.02-0.78-0.34-0.78-0.75v-8.5Z\"/><path d=\"M12.97 0.73c-0.53-0.53-1.4-0.53-1.94 0L8.39 3.38H4.75c-0.76 0-1.37 0.61-1.37 1.37v3.64l-2.65 2.64c-0.53 0.53-0.53 1.4 0 1.94l2.65 2.64v3.64c0 0.76 0.61 1.38 1.37 1.38h3.64l2.64 2.64c0.53 0.53 1.4 0.53 1.94 0l2.64-2.63 3.64-0.01c0.76 0 1.38-0.62 1.38-1.38v-3.64l2.63-2.64c0.54-0.53 0.54-1.4 0-1.94l-2.62-2.61-0.01-3.67c0-0.76-0.62-1.38-1.38-1.38h-3.64l-2.64-2.64Zm-3.45 4L12 2.22l2.48 2.5c0.26 0.25 0.61 0.4 0.98 0.4h3.42v3.45c0.01 0.36 0.16 0.71 0.41 0.97L21.76 12l-2.48 2.48c-0.26 0.26-0.4 0.61-0.4 0.98v3.42h-3.43c-0.36 0.01-0.7 0.15-0.96 0.4L12 21.77l-2.48-2.48c-0.26-0.26-0.61-0.4-0.98-0.4H5.13v-3.42c0-0.37-0.15-0.72-0.4-0.98L2.22 12l2.5-2.48c0.25-0.26 0.4-0.61 0.4-0.98V5.13h3.41c0.37 0 0.72-0.15 0.98-0.4Z\"></path></g></svg>');" << std::endl
-    << "        filter: var(--icon-f);" << std::endl
-    << "      }" << std::endl
-    << std::endl
+    << std::endl;
+  if (themeswitching)
+  {
+    outputfile
+      << "      .themebutton {" << std::endl
+      << "        display: block;" << std::endl
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g id=\"g_0\"><path d=\"M11.5 7.75c0-0.4 0.34-0.77 0.78-0.74C14.9 7.15 17 9.33 17 12c0 2.67-2.09 4.85-4.72 5-0.44 0.02-0.78-0.34-0.78-0.75v-8.5Z\"/><path d=\"M12.97 0.73c-0.53-0.53-1.4-0.53-1.94 0L8.39 3.38H4.75c-0.76 0-1.37 0.61-1.37 1.37v3.64l-2.65 2.64c-0.53 0.53-0.53 1.4 0 1.94l2.65 2.64v3.64c0 0.76 0.61 1.38 1.37 1.38h3.64l2.64 2.64c0.53 0.53 1.4 0.53 1.94 0l2.64-2.63 3.64-0.01c0.76 0 1.38-0.62 1.38-1.38v-3.64l2.63-2.64c0.54-0.53 0.54-1.4 0-1.94l-2.62-2.61-0.01-3.67c0-0.76-0.62-1.38-1.38-1.38h-3.64l-2.64-2.64Zm-3.45 4L12 2.22l2.48 2.5c0.26 0.25 0.61 0.4 0.98 0.4h3.42v3.45c0.01 0.36 0.16 0.71 0.41 0.97L21.76 12l-2.48 2.48c-0.26 0.26-0.4 0.61-0.4 0.98v3.42h-3.43c-0.36 0.01-0.7 0.15-0.96 0.4L12 21.77l-2.48-2.48c-0.26-0.26-0.61-0.4-0.98-0.4H5.13v-3.42c0-0.37-0.15-0.72-0.4-0.98L2.22 12l2.5-2.48c0.25-0.26 0.4-0.61 0.4-0.98V5.13h3.41c0.37 0 0.72-0.15 0.98-0.4Z\"></path></g></svg>');" << std::endl
+      << "        filter: var(--icon-f);" << std::endl
+      << "      }" << std::endl
+      << std::endl;
+  }
+  if (calllog)
+  {
+    outputfile
+      << "      .calllog-icon {" << std::endl
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M17.21 22a8.08 8.08 0 0 1-2.66-.51 20.79 20.79 0 0 1-7.3-4.73 21 21 0 0 1-4.74-7.3c-.78-2.22-.67-4 .35-5.45h0a5 5 0 0 1 2-1.67 2.72 2.72 0 0 1 3.51.81l2.11 3a2.69 2.69 0 0 1-.35 3.49l-.93.85c-.09.08-.15.22-.08.31A20 20 0 0 0 11 13a20 20 0 0 0 2.21 1.91.24.24 0 0 0 .3-.08l.85-.93a2.68 2.68 0 0 1 3.49-.35l3 2.11a2.68 2.68 0 0 1 .85 3.43 5.22 5.22 0 0 1-1.71 2 4.69 4.69 0 0 1-2.78.91zM4.09 4.87c-.46.64-1 1.77-.16 4.08a19.28 19.28 0 0 0 4.38 6.74A19.49 19.49 0 0 0 15 20.07c2.31.81 3.44.3 4.09-.16a3.55 3.55 0 0 0 1.2-1.42A1.21 1.21 0 0 0 20 16.9l-3-2.12a1.18 1.18 0 0 0-1.53.15l-.82.9a1.72 1.72 0 0 1-2.33.29 21.9 21.9 0 0 1-2.37-2.05 22.2 22.2 0 0 1-2-2.37 1.71 1.71 0 0 1 .3-2.32l.89-.82A1.19 1.19 0 0 0 9.21 7L7.1 4a1.19 1.19 0 0 0-1.51-.38 3.72 3.72 0 0 0-1.5 1.25z\"></path></svg>');" << std::endl
+      << "        filter: var(--icon-f);" << std::endl
+      << "    }" << std::endl
+      << std::endl;
+  }
+
+  if (searchpage)
+  {
+    outputfile
+      << "" << std::endl
+      << std::endl;
+  }
+
+  if (searchpage && calllog)
+  {
+  }
+
+  outputfile
     << "      @media print {" << std::endl
     << "        .conversation-list-header {" << std::endl
     << "          padding: 0;" << std::endl
@@ -532,7 +580,24 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "          <span>" << date_time << "</span>" << std::endl
       << "        </div>" << std::endl
       << "      </div>" << std::endl
-      << "" << std::endl;
+      << std::endl;
+  }
+
+  if (calllog)
+  {
+    outputfile
+      << "    <div id=\"menu\">" << std::endl
+      << "      <a href=\"calllog.html\">" << std::endl
+      << "        <div class=\"menu-item\">" << std::endl
+      << "          <div class=\"menu-icon calllog-icon\">" << std::endl
+      << "          </div>" << std::endl
+      << "          <div>" << std::endl
+      << "            call log" << std::endl
+      << "          </div>" << std::endl
+      << "        </div>" << std::endl
+      << "      </a>" << std::endl
+      << "    </div>" << std::endl
+      << std::endl;
   }
 
   if (themeswitching)
