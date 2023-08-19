@@ -352,6 +352,10 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        display: flex;" << std::endl
     << "      }" << std::endl
     << std::endl
+    << "      .snippet-missed {" << std::endl
+    << "        color: red;" << std::endl
+    << "      }" << std::endl
+    << std::endl
     << "      .calltype-video-icon {" << std::endl
     << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" stroke=\"none\" fill=\"white\"><path d=\"M14.23,4.16a1.23,1.23 0,0 0,-1.36 0.27L11,6.29L11,4.75A1.76,1.76 0,0 0,9.25 3L2.75,3A1.76,1.76 0,0 0,1 4.75v6.5A1.76,1.76 0,0 0,2.75 13h6.5A1.76,1.76 0,0 0,11 11.25L11,9.71l1.87,1.86a1.23,1.23 0,0 0,0.88 0.37,1.18 1.18,0 0,0 0.48,-0.1A1.23,1.23 0,0 0,15 10.69L15,5.31A1.23,1.23 0,0 0,14.23 4.16ZM10,11.25a0.76,0.76 0,0 1,-0.75 0.75L2.75,12A0.76,0.76 0,0 1,2 11.25L2,4.75A0.76,0.76 0,0 1,2.75 4h6.5a0.76,0.76 0,0 1,0.75 0.75ZM14,10.69a0.25,0.25 0,0 1,-0.15 0.23,0.26 0.26,0 0,1 -0.28,-0.05L11,8.29L11,7.71l2.57,-2.58a0.26,0.26 0,0 1,0.28 0,0.25 0.25,0 0,1 0.15,0.23Z\"></path></svg>');" << std::endl
     << "        filter: var(--icon-f);" << std::endl
@@ -475,7 +479,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     bool hasavatar = getRecipientInfoFromMap(recipientinfo, peer).hasavatar;
     bool emoji_initial = getRecipientInfoFromMap(recipientinfo, peer).initial_is_emoji;
     long long int datetime = results.getValueAs<long long int>(i, "timestamp");
-    std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
+    std::string date_date = bepaald::toDateString(datetime / 1000, "%H:%M %b %d, %Y");
     long long int type = results.valueAsInt(i, "type");
     long long int event = results.valueAsInt(i, "event");
     long long int direction = results.valueAsInt(i, "direction");
@@ -490,7 +494,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       << "          </div>" << std::endl
       << "          <div class=\"name-and-snippet\">" << std::endl
       << "            <pre class=\"name\">" << getRecipientInfoFromMap(recipientinfo, peer).display_name << "</pre>" << std::endl
-      << "            <div class=\"snippet2\">" << std::endl;
+      << "            <div class=\"snippet2" << (event == 3 /*missed*/? " snippet-missed" : "") << "\">" << std::endl;
     if (event == 1) // 'accepted'
       outputfile << "              <div class=\"callstatus-" << (direction == 0 ? "incoming" : "outgoing") << "-icon\"></div>" << std::endl;
     else if (event == 3) // 'missed'

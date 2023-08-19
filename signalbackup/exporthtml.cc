@@ -659,7 +659,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     calllog = false;
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
-                 calllog, overwrite, append, lighttheme, themeswitching);
+                 calllog, false/*searchpage*/, overwrite, append, lighttheme, themeswitching);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
