@@ -28,12 +28,15 @@ Arg::Arg(int argc, char *argv[])
   d_input(std::string()),
   d_passphrase(std::string()),
   d_importthreads(std::vector<long long int>()),
+  d_importthreadsbyname(std::vector<std::string>()),
   d_limittothreads(std::vector<long long int>()),
+  d_limittothreadsbyname(std::vector<std::string>()),
   d_output(std::string()),
   d_opassphrase(std::string()),
   d_source(std::string()),
   d_sourcepassphrase(std::string()),
   d_croptothreads(std::vector<long long int>()),
+  d_croptothreadsbyname(std::vector<std::string>()),
   d_croptodates(std::vector<std::string>()),
   d_mergerecipients(std::vector<std::string>()),
   d_mergegroups(std::vector<std::string>()),
@@ -165,7 +168,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ++i;
           continue;
         }
-        if (!parseNumberList(arguments[++i], &d_importthreads, &d_importthreads_failed))
+        if (!parseNumberList(arguments[++i], &d_importthreads))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--importthreadsbyname")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_importthreadsbyname))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -182,7 +202,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_limittothreads, &d_limittothreads_failed))
+        if (!parseNumberList(arguments[++i], &d_limittothreads))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limittothreadsbyname")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_limittothreadsbyname))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -251,7 +288,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_croptothreads, &d_croptothreads_failed))
+        if (!parseNumberList(arguments[++i], &d_croptothreads))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--croptothreadsbyname")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_croptothreadsbyname))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;

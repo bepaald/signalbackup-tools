@@ -64,8 +64,11 @@ changes, you must provide one of the output options.
 --dumpmedia <DIRECTORY>                  Save all media attachments to DIRECTORY. An attempt is made to
                                          give each attachment a correct name and timestamp as well as to
                                          place the attachments in subfolders for each conversation.
-   --limittothreads <LIST_OF_THREADS>    Optional modifier for `--dumpmedia'. Only save the attachments
+   --limittothreads <THREADS_LIST>       Optional modifier for `--dumpmedia'. Only save the attachments
                                          from the listed threads. List format same as `--croptothreads'
+   --limittothreadsbyname <THREADS_LIST> Optional modifier for `--dumpmedia'. Only save the attachments
+                                         from the listed threads. List format same as
+                                         `--croptothreadsbyname'
 --dumpavatars <DIRECTORY>                Save all avatars to DIRECTORY.
    --limitcontacts <CONTACTS>            Optional modifier for `--dumpavatars'. Only the avatars of
                                          listed contacts are saved. CONTACTS is a list "Name 1,Name
@@ -79,9 +82,12 @@ changes, you must provide one of the output options.
 R"*(
 --exporthtml <DIRECTORY>                 Export the messages to HTML files. Each conversation will be
                                          placed in a separate subdirectory.
-   --limittothreads <LIST_OF_THREADS>    Optional modifier for `--exporthtml'. Only export the listed
+   --limittothreads <THREADS_LIST>       Optional modifier for `--exporthtml'. Only export the listed
                                          threads. List format same as `--croptothreads'
-   --limittothreads <LIST_OF_DATES>      Optional modifier for `--exporthtml'. Only export messages within
+   --limittothreadsbyname <THREADS_LIST> Optional modifier for `--exporthtml'. Only save the attachments
+                                         from the listed threads. List format same as
+                                         `--croptothreadsbyname'
+   --limittodates <LIST_OF_DATES>        Optional modifier for `--exporthtml'. Only export messages within
                                          the ranges defined by LIST_OF_DATES. List format is the same as
                                          `--croptodates'.
    --migratedb                           Optional modifier for `--exporthtml'. Some older databases require
@@ -103,17 +109,20 @@ R"*(
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
-                                         This option also supports the `--limittothreads', `--limittodates'
-                                         and `--migratedb' modifiers as mentioned above.
+                                         This option also supports the `--limittothreads',
+                                         `--limittothreadbybame', `--limittodates', and `--migratedb'
+                                         modifiers as mentioned above.
 --overwrite                              Optional modifier for all output operations. Overwrite output
                                          files if they exist. When <OUTPUT> is a directory this will
                                          delete ALL directory contents.
 
  = EDITING OPTIONS =
---croptothreads <LIST_OF_THREADS>        Crop database to list of threads. The list supports comma
+--croptothreads <THREADS_LIST>           Crop database to list of threads. The list supports comma
                                          separated numbers or ranges (for example: "1,3,4-8,13") or the
                                          special keyword `ALL'. Threads are specified by their id (see:
                                          `--listthreads').
+--croptothreadsbyname <THREADS_LIST>     Crop database to list of threads. The list is a comma separated
+                                         list of conversation names (for example: "Alice","Bobby C.")
 --croptodates <LIST_OF_DATES>            Crop database to certain time periods. The list of dates is
                                          structured as `begindate1,enddate1(,begindate2,enddate2,...)',
                                          where a date is either "YYYY-MM-DD hh:mm:ss" or a date in
