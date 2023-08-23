@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
   MEMINFO("Input opened");
 
   std::vector<long long int> limittothreads = arg.limittothreads();
-  if (!addThreadIdsFromString(sb.get(), arg.limittothreads_failed(), &limittothreads))
+  if (!addThreadIdsFromString(sb.get(), arg.limittothreadsbyname(), &limittothreads))
     return 1;
 
   if (arg.listthreads())
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
     }
 
     // add any threads listed by thread name
-    if (arg.importthreads_failed().size())
+    if (arg.importthreadsbyname().size())
     {
       if (!source)
         source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
         std::cout << "Error opening source database" << std::endl;
         return 1;
       }
-      if (!addThreadIdsFromString(source.get(), arg.importthreads_failed(), &threads))
+      if (!addThreadIdsFromString(source.get(), arg.importthreadsbyname(), &threads))
         return 1;
     }
 
@@ -298,10 +298,10 @@ int main(int argc, char *argv[])
     // e.g.: sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
   }
 
-  if (!arg.croptothreads().empty() || !arg.croptothreads_failed().empty())
+  if (!arg.croptothreads().empty() || !arg.croptothreadsbyname().empty())
   {
     std::vector<long long int> threads = arg.croptothreads();
-    if (!addThreadIdsFromString(sb.get(), arg.importthreads_failed(), &threads))
+    if (!addThreadIdsFromString(sb.get(), arg.importthreadsbyname(), &threads))
       return 1;
     sb->cropToThread(threads);
   }

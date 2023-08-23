@@ -356,7 +356,7 @@ Where `outputdirectory` is an existing directory.
 
 _NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). It is possible that some (very) old backups are not supported. If there is demand, support for older databases may be added in the future._
 
-To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files wil be rewritten. Example:
+To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files wil be rewritten. Example:
 
 ```
 ./signalbackup-tools [input] [passphrase] --exporthtml [directory]
@@ -370,7 +370,7 @@ A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML
 
 ##### Export to TXT
 
-To export to plain text use `--exporttxt [DIRECTORY]`. Some data is omitted from this export, such as attachment data and quotes. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Example:
+To export to plain text use `--exporttxt [DIRECTORY]`. Some data is omitted from this export, such as attachment data and quotes. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be specified with `--limittothreadsbyname "Alice","Bob","Group Name"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Example:
 
 ```
 ./signalbackup-tools [input] [passphrase] --exporttxt [directory]
@@ -406,7 +406,7 @@ To crop a backup file to certain threads, run:
 signalbackup-tools [input] [passphrase] --croptothreads [list-of-threads] --output [output] (--passphrase [newpassphrase])
 ```
 
-Where the list of threads are the ids as reported by `signalbackup-tools [input] [passphrase] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`.
+Where the list of threads are the ids as reported by `signalbackup-tools [input] [passphrase] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`. Additionally, threads can be specified by name: `--croptothreadsbyname "Alice","Bob","Some Group"`.
 
 ##### Crop to dates
 
@@ -428,7 +428,7 @@ To merge two backups, the backups must be at compatible database versions. The d
 signalbackup-tools [first_database] [passphrase] --importthreads ALL --source [second_database] --sourcepassphrase [passphrase] --output [output_file] (--opassphrase [output passphrase])
 ```
 
-It is recommended to use the larger (containing the most data (contacts, threads,...)) as the 'first_database' and the smaller one source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`.
+It is recommended to use the larger (containing the most data (contacts, threads,...)) as the 'first_database' and the smaller one source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`. Threads can additionally be specified by name using `--importthreadsbyname "Bob","Alice"`.
 
 If you use this option and read this line, I would really appreciate it if you let me know the results. Either send me a mail (basjetimmer at yahoo-dot-com) or feel free to just open an issue on the tracker for feedback.
 

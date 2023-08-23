@@ -33,22 +33,22 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 82> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--limittothreads", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--includecalllog", "--exporttxt", "--append", "--split", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--themeswitching", "--findrecipient"};
+  std::array<std::string, 85> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--overwrite", "--listthreads", "--listrecipients", "--editgroupmembers", "--showprogress", "--removedoubles", "--reordermmssmsids", "--stoponerror", "-v", "--verbose", "--strugee", "--strugee3", "--ashmorgan", "--strugee2", "--deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--scanmissingattachments", "--showdbinfo", "--scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--ignorewal", "--includemms", "--checkdbintegrity", "--interactive", "--exporthtml", "--includecalllog", "--exporttxt", "--append", "--split", "--desktopdbversion", "--migratedb", "--addincompletedataforhtmlexport", "--light", "--themeswitching", "--findrecipient"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
   std::string d_input;
   std::string d_passphrase;
   std::vector<long long int> d_importthreads;
-  std::vector<std::string> d_importthreads_failed;
+  std::vector<std::string> d_importthreadsbyname;
   std::vector<long long int> d_limittothreads;
-  std::vector<std::string> d_limittothreads_failed;
+  std::vector<std::string> d_limittothreadsbyname;
   std::string d_output;
   std::string d_opassphrase;
   std::string d_source;
   std::string d_sourcepassphrase;
   std::vector<long long int> d_croptothreads;
-  std::vector<std::string> d_croptothreads_failed;
+  std::vector<std::string> d_croptothreadsbyname;
   std::vector<std::string> d_croptodates;
   std::vector<std::string> d_mergerecipients;
   std::vector<std::string> d_mergegroups;
@@ -128,9 +128,9 @@ class Arg
   inline std::string const &passphrase() const;
   inline void setpassphrase(std::string const &val);
   inline std::vector<long long int> const &importthreads() const;
-  inline std::vector<std::string> const &importthreads_failed() const;
+  inline std::vector<std::string> const &importthreadsbyname() const;
   inline std::vector<long long int> const &limittothreads() const;
-  inline std::vector<std::string> const &limittothreads_failed() const;
+  inline std::vector<std::string> const &limittothreadsbyname() const;
   inline std::string const &output() const;
   inline std::string const &opassphrase() const;
   inline void setopassphrase(std::string const &val);
@@ -138,7 +138,7 @@ class Arg
   inline std::string const &sourcepassphrase() const;
   inline void setsourcepassphrase(std::string const &val);
   inline std::vector<long long int> const &croptothreads() const;
-  inline std::vector<std::string> const &croptothreads_failed() const;
+  inline std::vector<std::string> const &croptothreadsbyname() const;
   inline std::vector<std::string> const &croptodates() const;
   inline std::vector<std::string> const &mergerecipients() const;
   inline std::vector<std::string> const &mergegroups() const;
@@ -244,9 +244,9 @@ inline std::vector<long long int> const &Arg::importthreads() const
   return d_importthreads;
 }
 
-inline std::vector<std::string> const &Arg::importthreads_failed() const
+inline std::vector<std::string> const &Arg::importthreadsbyname() const
 {
-  return d_importthreads_failed;
+  return d_importthreadsbyname;
 }
 
 inline std::vector<long long int> const &Arg::limittothreads() const
@@ -254,9 +254,9 @@ inline std::vector<long long int> const &Arg::limittothreads() const
   return d_limittothreads;
 }
 
-inline std::vector<std::string> const &Arg::limittothreads_failed() const
+inline std::vector<std::string> const &Arg::limittothreadsbyname() const
 {
-  return d_limittothreads_failed;
+  return d_limittothreadsbyname;
 }
 
 inline std::string const &Arg::output() const
@@ -294,9 +294,9 @@ inline std::vector<long long int> const &Arg::croptothreads() const
   return d_croptothreads;
 }
 
-inline std::vector<std::string> const &Arg::croptothreads_failed() const
+inline std::vector<std::string> const &Arg::croptothreadsbyname() const
 {
-  return d_croptothreads_failed;
+  return d_croptothreadsbyname;
 }
 
 inline std::vector<std::string> const &Arg::croptodates() const
