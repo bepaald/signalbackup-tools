@@ -177,6 +177,10 @@ int main(int argc, char *argv[])
 
   MEMINFO("Input opened");
 
+  std::vector<long long int> limittothreads = arg.limittothreads();
+  if (!addThreadIdsFromString(sb.get(), arg.limittothreads_failed(), &limittothreads))
+    return 1;
+
   if (arg.listthreads())
     sb->listThreads();
 
@@ -294,8 +298,13 @@ int main(int argc, char *argv[])
     // e.g.: sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
   }
 
-  if (!arg.croptothreads().empty())
-    sb->cropToThread(arg.croptothreads());
+  if (!arg.croptothreads().empty() || !arg.croptothreads_failed().empty())
+  {
+    std::vector<long long int> threads = arg.croptothreads();
+    if (!addThreadIdsFromString(sb.get(), arg.importthreads_failed(), &threads))
+      return 1;
+    sb->cropToThread(threads);
+  }
 
   if (!arg.mergerecipients().empty())
   {
@@ -310,7 +319,7 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.dumpmedia().empty())
-    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittothreads(), arg.overwrite()))
+    if (!sb->dumpMedia(arg.dumpmedia(), limittothreads, arg.overwrite()))
       return 1;
 
   if (!arg.dumpavatars().empty())
@@ -336,13 +345,13 @@ int main(int argc, char *argv[])
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
   if (!arg.exporthtml().empty())
-    if (!sb->exportHtml(arg.exporthtml(), arg.limittothreads(), arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
+    if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
                         arg.setselfid(), arg.includecalllog(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(),
                         arg.themeswitching()))
       return 1;
 
   if (!arg.exporttxt().empty())
-    if (!sb->exportTxt(arg.exporttxt(), arg.limittothreads(), arg.limittodates(), arg.setselfid(),
+    if (!sb->exportTxt(arg.exporttxt(), limittothreads, arg.limittodates(), arg.setselfid(),
                        arg.migratedb(), arg.overwrite()))
       return 1;
 
@@ -450,11 +459,11 @@ bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::s
   for (uint i = 0; i < names.size(); ++i)
   {
 
-    long long int r = backup->getRecipientIdFromName(names[i]);
+    long long int r = backup->getRecipientIdFromName(names[i], true);
     if (r == -1)
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
-                << "Failed to find threadId for recipient `" << names[i] << "'"<< std::endl;
+                << "Failed to find threadId for recipient '" << names[i] << "'"<< std::endl;
       return false;
     }
 

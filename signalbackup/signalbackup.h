@@ -224,7 +224,7 @@ class SignalBackup
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite) const;
   bool findRecipient(long long int id) const;
-  long long int getRecipientIdFromName(std::string const &name) const;
+  long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   inline long long int getThreadIdFromRecipient(long long int recipientid) const;
 
