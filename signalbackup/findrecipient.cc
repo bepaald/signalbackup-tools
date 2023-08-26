@@ -26,6 +26,9 @@ bool SignalBackup::findRecipient(long long int id) const
     if (dbl.table != "recipient")
       continue;
 
+    if (!d_database.containsTable(dbl.table)) [[unlikely]]
+      continue;
+
     for (auto const &c : dbl.connections)
     {
       if (d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))

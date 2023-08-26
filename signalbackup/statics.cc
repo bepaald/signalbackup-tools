@@ -257,7 +257,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     SKIP // deleted in importThread()
   },
   {
-    "push",
+    "push", // this table was dropped around dbv205
     "_id",
     {},
     SKIP // cleared in importThread()
