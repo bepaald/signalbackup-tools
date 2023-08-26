@@ -41,6 +41,9 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
     if (dbl.table != "recipient")
       continue;
 
+    if (!d_database.containsTable(dbl.table)) [[unlikely]]
+      continue;
+
     for (auto const &c : dbl.connections)
       if (d_databaseversion >= c.mindbvversion && d_databaseversion <= c.maxdbvversion &&
           d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))

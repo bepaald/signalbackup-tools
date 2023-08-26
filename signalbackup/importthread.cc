@@ -284,7 +284,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   // the target will have its own job_spec etc...
   if (source->d_database.containsTable("job_spec"))
     source->d_database.exec("DELETE FROM job_spec");
-  source->d_database.exec("DELETE FROM push");
+  if (source->d_database.containsTable("push")) // dropped around dbv205
+    source->d_database.exec("DELETE FROM push");
   if (source->d_database.containsTable("constraint_spec"))
     source->d_database.exec("DELETE FROM constraint_spec"); // has to do with job_spec, references it...
   if (source->d_database.containsTable("dependency_spec"))

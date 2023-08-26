@@ -50,6 +50,10 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
       {
         if (dbl.flags & SKIP)
           continue;
+
+        if (!d_database.containsTable(dbl.table)) [[unlikely]]
+          continue;
+
         if (table == dbl.table)
         {
           for (auto const &c : dbl.connections)
