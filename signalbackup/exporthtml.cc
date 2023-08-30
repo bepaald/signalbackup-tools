@@ -29,8 +29,8 @@
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
-                              std::string const &selfphone, bool calllog, bool migrate, bool overwrite, bool append,
-                              bool lighttheme, bool themeswitching) const
+                              std::string const &selfphone, bool calllog, bool searchpage, bool migrate,
+                              bool overwrite, bool append, bool lighttheme, bool themeswitching) const
 {
   bool databasemigrated = false;
   SqliteDB backup_database(":memory:");
@@ -213,8 +213,27 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   //       std::cout << "KEY: " << skv->key() << std::endl;
   // }
 
-  for (int t : threads)
+
+  std::ofstream searchidx;
+  bool searchidx_write_started = false;
+  // start search index page
+  if (searchpage)
   {
+    searchidx.open(directory + "/" + "searchidx.js");
+    if (!searchidx.is_open())
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to open 'searchidx.js' for writing" << std::endl;
+     return false;
+    }
+    searchidx << "message_idx = [" << std::endl;
+  }
+
+
+  for (uint t_idx = 0; t_idx < threads.size(); ++t_idx)
+  {
+    int t = threads[t_idx];
+
     // if (t == releasechannel)
     // {
     //   std::cout << "INFO: Skipping releasechannel thread..." << std::endl;
@@ -362,7 +381,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
                      all_recipients_ids, &recipient_info, &written_avatars, overwrite, append,
-                     lighttheme, themeswitching);
+                     lighttheme, themeswitching, searchpage);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -526,11 +545,34 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   readable_date,
                                   directory,
                                   threaddir,
+                                  filename,
                                   messages(messagecount, "link_preview_title"),
                                   messages(messagecount, "link_preview_description"),
                                   icon
           });
-        HTMLwriteMessage(htmloutput, msg_info, &recipient_info);
+        HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage);
+
+        if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
+        {
+          // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
+          std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object("
+                                                                       "'_id', " + d_mms_table + "._id, "
+                                                                       "'body', " + d_mms_table + ".body, "
+                                                                       "'from', " + d_mms_table + "." + d_mms_recipient_id + ", "
+                                                                       "'thread_recipient_id', thread." + d_thread_recipient_id + ", "
+                                                                       "'outgoing', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
+                                                                       "'date', " + d_mms_table + ".date_received, "
+                                                                       "'page', " + "\"" + msg_info.threaddir + "/" + msg_info.filename + "\"" + ") "
+                                                                       "FROM " + d_mms_table + " "
+                                                                       "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
+                                                                       "WHERE " + d_mms_table + "._id = ?",
+                                                                       msg_info.msg_id, std::string());
+          if (searchidx_write_started) [[likely]]
+            searchidx << "," << std::endl;
+
+          searchidx << "  " << line;
+          searchidx_write_started = true;
+        }
 
         if (++messagecount >= messages.rows())
           break;
@@ -653,17 +695,38 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
+  if (searchpage)
+  {
+    if (searchidx_write_started) [[likely]]
+      searchidx << std::endl << "];" << std::endl;
+
+    // write recipient info:
+    //std::map<long long int, RecipientInfo> recipient_info;
+    searchidx << "recipient_idx = [" << std::endl;
+    for (auto r = recipient_info.begin(); r != recipient_info.end(); ++r)
+    {
+      searchidx << "  {\"_id\":" << r->first << ",\"display_name\":\"" << r->second.display_name << "\"}";
+      if (std::next(r) != recipient_info.end()) [[likely]]
+        searchidx << "," << std::endl;
+      else
+        searchidx << std::endl << "];" << std::endl;
+    }
+  }
+
   // disable calllog if not presents in database, or it is empty
   if (!d_database.containsTable("call") ||
       d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM call", -1) == 0)
     calllog = false;
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
-                 calllog, false/*searchpage*/, overwrite, append, lighttheme, themeswitching);
+                 calllog, searchpage, overwrite, append, lighttheme, themeswitching);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
                      overwrite, append, lighttheme, themeswitching);
+
+  //if (searchpage)
+  //  HTMLwriteSearchPage();
 
   std::cout << "All done!" << std::endl;
   if (databasemigrated)

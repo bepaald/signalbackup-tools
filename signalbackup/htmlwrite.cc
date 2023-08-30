@@ -44,7 +44,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
                                   bool isnotetoself, std::set<long long int> const &recipient_ids,
                                   std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
-                                  bool overwrite, bool append, bool light, bool themeswitch) const
+                                  bool overwrite, bool append, bool light, bool themeswitch,
+                                  bool searchpage [[maybe_unused]]) const
 {
 
   std::vector<long long int> groupmembers;
@@ -1583,7 +1584,8 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
 }
 
 void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info,
-                                    std::map<long long int, RecipientInfo> *recipient_info) const
+                                    std::map<long long int, RecipientInfo> *recipient_info,
+                                    bool searchpage) const
 {
   int extraindent = 0;
   // insert message
@@ -1591,6 +1593,9 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   long long int quote_author_id = bepaald::toNumber<long long int>(msg_info.messages->valueAsString(msg_info.idx, "quote_author"));
 
   htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->" << std::endl;
+
+  if (searchpage) // output an anchor to link to in sarch results
+    htmloutput << "          <a id=\"" << msg_info.msg_id << "\"></a>" << std::endl;
 
   // for incoming group (normal) message: insert avatar with initial
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
