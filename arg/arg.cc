@@ -105,6 +105,7 @@ Arg::Arg(int argc, char *argv[])
   d_addincompletedataforhtmlexport(false),
   d_light(false),
   d_themeswitching(false),
+  d_searchpage(false),
   d_findrecipient(-1)
 {
   // vector to hold arguments
@@ -1108,6 +1109,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-themeswitching")
     {
       d_themeswitching = false;
+      continue;
+    }
+    if (option == "--searchpage")
+    {
+      d_searchpage = true;
+      continue;
+    }
+    if (option == "--no-searchpage")
+    {
+      d_searchpage = false;
       continue;
     }
     if (option == "--findrecipient")

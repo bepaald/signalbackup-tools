@@ -52,19 +52,20 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
   }
   SqliteDB::QueryResults results;
   if (!d_database.exec("SELECT "
-                       "_id,call_id,message_id,peer,type,direction,event,timestamp,ringer,deletion_timestamp "
+                       //"_id, "
+                       "message_id, peer, type, direction, event, timestamp "
+                       //", ringer, deletion_timestamp, "
+                       //"datetime((timestamp / 1000), 'unixepoch', 'localtime') "
                        "FROM call WHERE "
                        "message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id IN (" + threadlist + ")) "
                        "ORDER BY timestamp DESC",
                        &results))
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to query database for thread snippets." << std::endl;
+              << ": Failed to query database for call data." << std::endl;
     return;
   }
-
-  results.prettyPrint();
-  //return;
+  //results.prettyPrint();
 
   /*
     CALL LOG:
@@ -72,7 +73,6 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     enum class Direction(private val code: Int) {
     INCOMING(0),
     OUTGOING(1);
-
 
     enum class Type(private val code: Int) {
     AUDIO_CALL(0),
@@ -495,28 +495,70 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       << "          <div class=\"name-and-snippet\">" << std::endl
       << "            <pre class=\"name\">" << getRecipientInfoFromMap(recipientinfo, peer).display_name << "</pre>" << std::endl
       << "            <div class=\"snippet2" << (event == 3 /*missed*/? " snippet-missed" : "") << "\">" << std::endl;
-    if (event == 1) // 'accepted'
-      outputfile << "              <div class=\"callstatus-" << (direction == 0 ? "incoming" : "outgoing") << "-icon\"></div>" << std::endl;
-    else if (event == 3) // 'missed'
+
+    /*
+      to display the correct status icon and text, 'messagetype' is used. But while it's value is set to
+      an existing message type, it is not taken from the actual message table (message.type), but set
+      as follows:
+     */
+    long long int messagetype;
+    if (type == 3) // 'GROUP_CALL'
+      messagetype = Types::GROUP_CALL_TYPE;
+    else if (direction == 0 /* incoming */ && event == 3 /* missed */)
+      messagetype = (type == 1 /* VIDEO_CALL */ ? Types::MISSED_VIDEO_CALL_TYPE : Types::MISSED_AUDIO_CALL_TYPE);
+    else if (direction == 0) // incoming
+      messagetype = (type == 1 /* VIDEO_CALL */ ? Types::INCOMING_VIDEO_CALL_TYPE : Types::INCOMING_AUDIO_CALL_TYPE);
+    else // outgoing
+      messagetype = (type == 1 /* VIDEO_CALL */ ? Types::OUTGOING_VIDEO_CALL_TYPE : Types::OUTGOING_AUDIO_CALL_TYPE);
+
+    // output status icon
+    if (messagetype == Types::MISSED_VIDEO_CALL_TYPE || messagetype == Types::MISSED_AUDIO_CALL_TYPE)
       outputfile << "              <div class=\"callstatus-missed-icon\"></div>" << std::endl;
-    else if (event == 5) // 'generic group call'
-      outputfile << "              <div class=\"callstatus-group-icon\"></div>" << std::endl;
+    else if (messagetype == Types::INCOMING_AUDIO_CALL_TYPE || messagetype == Types::INCOMING_VIDEO_CALL_TYPE)
+      outputfile << "              <div class=\"callstatus-incoming-icon\"></div>" << std::endl;
+    else if (messagetype == Types::OUTGOING_AUDIO_CALL_TYPE || messagetype == Types::OUTGOING_VIDEO_CALL_TYPE)
+      outputfile << "              <div class=\"callstatus-outgoing-icon\"></div>" << std::endl;
+    else if (messagetype == Types::GROUP_CALL_TYPE)
+    {
+      if (event == 3) // missed
+        outputfile << "              <div class=\"callstatus-missed-icon\"></div>" << std::endl;
+      else if (event == 5 || event == 6) // 'generic group call', 'joined'
+        outputfile << "              <div class=\"callstatus-group-icon\"></div>" << std::endl;
+      else if (direction == 0) // incoming
+        outputfile << "              <div class=\"callstatus-incoming-icon\"></div>" << std::endl;
+      else if (direction == 1) // outgoing
+        outputfile << "              <div class=\"callstatus-outgoing-icon\"></div>" << std::endl;
+    }
+
     outputfile
       << "              <div>";
-    if (event == 1) // 'accepted'
-      outputfile << (direction == 0 ? "Incoming" : "Outgoing");
-    else if (event == 3) // 'missed'
+
+    // output status text
+    if (messagetype == Types::MISSED_VIDEO_CALL_TYPE || messagetype == Types::MISSED_AUDIO_CALL_TYPE)
       outputfile << "Missed";
-    else if (event == 5) // 'generic group call'
-      outputfile << "Group call";
+    else if (messagetype == Types::INCOMING_AUDIO_CALL_TYPE || messagetype == Types::INCOMING_VIDEO_CALL_TYPE)
+      outputfile << "Incoming";
+    else if (messagetype == Types::OUTGOING_AUDIO_CALL_TYPE || messagetype == Types::OUTGOING_VIDEO_CALL_TYPE)
+      outputfile << "Outgoing";
+    else if (messagetype == Types::GROUP_CALL_TYPE)
+    {
+      if (event == 3) // missed
+        outputfile << "Missed";
+      else if (event == 5 || event == 6) // 'generic group call', 'joined'
+        outputfile << "Group call";
+      else if (direction == 0) // incoming
+        outputfile << "Incoming";
+      else if (direction == 1) // outgoing
+        outputfile << "Outgoing";
+    }
+
     outputfile << "<span class=\"middot\">&middot;</span>" << date_date << "</div>" << std::endl
-      << "            </div>" << std::endl
-      << "          </div>" << std::endl;
+               << "            </div>" << std::endl
+               << "          </div>" << std::endl;
     if (type == 0) // 'audio call'
       outputfile << "          <div class=\"calltype-audio-icon\"></div>" << std::endl;
-    else if (type == 1 || type == 3) // 'video'/'group'
+    else if (type == 1 || type == 3 || type == 4) // 'video'/'group'/'ad hoc'
       outputfile << "          <div class=\"calltype-video-icon\"></div>" << std::endl;
-    // else type == 4 'ad hoc'???
     outputfile
       << "        </div>" << std::endl
       << std::endl;

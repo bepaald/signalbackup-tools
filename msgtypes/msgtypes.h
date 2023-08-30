@@ -27,9 +27,12 @@ struct Types
 {
   static uint64_t constexpr BASE_TYPE_MASK                     = 0x1F;
 
-  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1; // INCOMING_AUDIO_CALL_TYPE
-  static uint64_t constexpr OUTGOING_CALL_TYPE                 = 2; // OUTGOING_AUDIO_CALL_TYPE
-  static uint64_t constexpr MISSED_CALL_TYPE                   = 3; // MISSED_AUDIO_CALL_TYPE
+  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1; // LATER: INCOMING_AUDIO_CALL_TYPE
+  static uint64_t constexpr INCOMING_AUDIO_CALL_TYPE           = 1;
+  static uint64_t constexpr OUTGOING_CALL_TYPE                 = 2; // LATER: OUTGOING_AUDIO_CALL_TYPE
+  static uint64_t constexpr OUTGOING_AUDIO_CALL_TYPE           = 2;
+  static uint64_t constexpr MISSED_CALL_TYPE                   = 3; // LATER: MISSED_AUDIO_CALL_TYPE
+  static uint64_t constexpr MISSED_AUDIO_CALL_TYPE             = 3;
   static uint64_t constexpr JOINED_TYPE                        = 4;
   static uint64_t constexpr UNSUPPORTED_MESSAGE_TYPE           = 5;
   static uint64_t constexpr INVALID_MESSAGE_TYPE               = 6;
