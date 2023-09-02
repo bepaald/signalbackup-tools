@@ -391,6 +391,7 @@ class SignalBackup
   inline std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
+  inline void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -886,6 +887,28 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
       *out << "; ";
   }
   *out << ")";
+}
+
+inline void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const
+{
+  for (uint ai = 0; ai < attachment_results->rows(); ++ai)
+  {
+    if (attachment_results->valueAsString(ai, "ct") == "text/x-signal-plain") [[unlikely]]
+    {
+      //std::cout << "Got long message!" << std::endl;
+      SqliteDB::QueryResults longmessage = attachment_results->getRow(ai);
+      attachment_results->removeRow(ai);
+      // get message:
+      long long int rowid = longmessage.valueAsInt(0, "_id");
+      long long int uniqueid = longmessage.valueAsInt(0, "unique_id");
+      if (!bepaald::contains(d_attachments, std::pair{rowid, uniqueid})) [[unlikely]]
+        continue;
+      AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
+      *body = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+      a->clearData();
+      break; // always max 1?
+    }
+  }
 }
 
 #endif

@@ -75,6 +75,7 @@ class SqliteDB
     inline bool contains(T const &value) const;
     bool removeColumn(uint idx);
     inline bool removeRow(uint idx);
+    inline QueryResults getRow(uint idx);
 
    private:
     //std::wstring wideString(std::string const &narrow) const;
@@ -779,6 +780,14 @@ inline bool SqliteDB::QueryResults::removeRow(uint idx)
 
   d_values.erase(d_values.begin() + idx);
   return true;
+}
+
+inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(uint idx)
+{
+  QueryResults tmp;
+  tmp.d_headers = d_headers;
+  tmp.d_values.push_back(d_values[idx]);
+  return tmp;
 }
 
 inline bool SqliteDB::registerCustoms() const

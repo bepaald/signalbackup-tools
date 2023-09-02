@@ -412,6 +412,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults attachment_results;
         d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+        // check attachments for long message body -> replace cropped body & remove from attachment results
+        setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
         d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
@@ -554,6 +556,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
+          // maybe get long-message-bodies as well (from attachment?) + maybe add 'has_attachment' field?
+
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
           std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object("
                                                                        "'_id', " + d_mms_table + "._id, "
@@ -705,7 +709,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     searchidx << "recipient_idx = [" << std::endl;
     for (auto r = recipient_info.begin(); r != recipient_info.end(); ++r)
     {
-      searchidx << "  {\"_id\":" << r->first << ",\"display_name\":\"" << r->second.display_name << "\"}";
+      std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'display_name', ?)", {r->first, r->second.display_name}, std::string());
+      if (line.empty()) [[unlikely]]
+        continue;
+
+      searchidx << "  " << line;
       if (std::next(r) != recipient_info.end()) [[likely]]
         searchidx << "," << std::endl;
       else
