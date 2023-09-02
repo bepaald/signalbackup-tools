@@ -292,6 +292,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                                                           "%b %d, %Y %H:%M:%S");
       SqliteDB::QueryResults attachment_results;
       d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+        // check attachments for long message body -> replace cropped body & remove from attachment results
+        setLongMessageBody(&body, &attachment_results);
 
       SqliteDB::QueryResults mention_results;
       if (d_database.containsTable("mention"))
