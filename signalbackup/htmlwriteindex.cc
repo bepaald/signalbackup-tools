@@ -90,7 +90,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
              << "    <title>Signal conversation list</title>" << std::endl
              << "    <style>" << std::endl
              << "    :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
-             << "        /* " << (light ? "light" : "dark") << "*/" << std::endl
+             << "        /* " << (light ? "light" : "dark") << " */" << std::endl
              << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl
              << "        --conversationlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --conversationlist-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
@@ -105,7 +105,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   {
     outputfile
       << "    :root[data-theme=\"" + (!light ? "light"s : "dark") + "\"] {" << std::endl
-      << "        /* " << (!light ? "light" : "dark") << "*/" << std::endl
+      << "        /* " << (!light ? "light" : "dark") << " */" << std::endl
       << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl
       << "        --conversationlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --conversationlist-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl

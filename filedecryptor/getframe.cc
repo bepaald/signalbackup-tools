@@ -114,6 +114,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11)
   {
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    if (d_framecount == 1)
+      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -161,7 +163,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
 
     if (d_framecount == 1) [[unlikely]]
-      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSWORD WAS PROVIDED ***" << bepaald::bold_off << std::endl;
+      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
 
     d_badmac = true;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -324,7 +326,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
 
     if (d_framecount == 1) [[unlikely]]
-      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSWORD WAS PROVIDED ***" << bepaald::bold_off << std::endl;
+      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
 
     d_badmac = true;
     if (d_stoponerror)

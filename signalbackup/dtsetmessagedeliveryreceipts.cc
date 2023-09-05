@@ -35,7 +35,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
   SqliteDB::QueryResults status_results;
   if (!ddb.exec("SELECT "
                 "delivery_details.key AS conv_id,"
-                "conversations.uuid AS uuid,"
+                "conversations." + d_dt_c_uuid + " AS uuid,"
                 "conversations.e164 AS e164,"
                 "json_extract(delivery_details.value, '$.status') AS status,"
                 "COALESCE(json_extract(delivery_details.value, '$.updatedAt'), delivery_details.sent_at) AS updated_timestamp"

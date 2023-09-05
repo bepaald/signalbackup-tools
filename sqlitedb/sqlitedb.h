@@ -576,7 +576,7 @@ inline bool SqliteDB::containsTable(std::string const &tablename) const
 inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname) const
 {
   QueryResults tmp;
-  if (exec("SELECT 1 FROM PRAGMA_TABLE_INFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp))
+  if (exec("SELECT 1 FROM PRAGMA_TABLE_XINFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp))
     return (tmp.rows() > 0);
   return false;
 }

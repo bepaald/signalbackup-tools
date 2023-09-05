@@ -79,6 +79,10 @@ class SignalBackup
   std::string d_recipient_profile_given_name;
   std::string d_groups_v1_members;
 
+  // table/column names for desktop db
+  std::string d_dt_c_uuid;
+  std::string d_dt_m_sourceuuid;
+
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
   std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
@@ -302,6 +306,7 @@ class SignalBackup
   bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
   std::string sanitizeFilename(std::string const &filename) const;
   bool setColumnNames();
+  void dtSetColumnNames(SqliteDB *ddb);
   long long int scanSelf() const;
   bool cleanAttachments();
   AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
@@ -319,7 +324,7 @@ class SignalBackup
   bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
                          long long int rowid, SqliteDB const &ddb, std::string const &where,
                          std::string const &databasedir, bool isquote, bool issticker);
-  bool handleDTCallTypeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int address) const;
+  bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address, bool insertincompletedataforexport) const;
   void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
                                   long long int date, std::map<long long int, long long int> *adjusted_timestamps, std::map<std::string, long long int> *savedmap, bool istimermessage) const;
   bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int sent_at, long long int address) const;
@@ -366,6 +371,7 @@ class SignalBackup
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                       std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
                       bool searchpage, bool overwrite, bool append, bool light, bool themeswitching) const;
+  void HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const;
   void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                         std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid,
                         bool overwrite, bool append, bool light, bool themeswitching) const;

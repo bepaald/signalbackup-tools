@@ -45,7 +45,7 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
                   "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId') AS from_id,"
 
                   //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].source') AS source" // ???
-                  "conversations.uuid AS uuid,"
+                  "conversations." + d_dt_c_uuid + " AS uuid,"
                   "conversations.e164 AS phone"
                   " FROM messages LEFT JOIN conversations ON"
                   " (conversations.id IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId')"

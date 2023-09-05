@@ -33,7 +33,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
     {
       std::string convuuid = results_droppedmembers.valueAsString(dm, "droppedmember");
       SqliteDB::QueryResults dm_id;
-      if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
+      if (!ddb.exec("SELECT COALESCE(" + d_dt_c_uuid + ",e164) AS rid FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
           dm_id.rows() != 1)
         continue;
       long long int recid = getRecipientIdFromUuid(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
@@ -44,7 +44,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
         // let's just check the uuid's aren't recipient uuid's to make sure
         // this can go when we know it's working
         SqliteDB::QueryResults test_results;
-        if (ddb.exec("SELECT uuid FROM conversations WHERE uuid IS ?", dm_id.valueAsString(0, "rid"), &test_results))
+        if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE " + d_dt_c_uuid + " IS ?", dm_id.valueAsString(0, "rid"), &test_results))
           if (test_results.rows())
             std::cout << " *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (droppedMembers) ***" << std::endl;
 
@@ -74,7 +74,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
   SqliteDB::QueryResults results_invitedmembers;
   //if (ddb.exec("SELECT json_extract(value, '$.conversationId') AS conversationId, json_extract(value, '$.uuid') AS uuid"
   //             " FROM messages, json_each(messages.json, '$.groupMigration.invitedMembers') AS TREE WHERE messages.rowid = ?", rowid, &results_invitedmembers))
-  if (ddb.exec("SELECT COALESCE(json_extract(value, '$.conversationId'), json_extract(value, '$.uuid')) AS convuuid, "
+  if (ddb.exec("SELECT COALESCE(json_extract(value, '$.conversationId'), COALESCE(json_extract(value, '$.aci'), json_extract(value, '$.uuid'))) AS convuuid, "
                "json_extract(value, '$.conversationId') IS NULL AS is_uuid " // just to remember if this was gotten from "conversationId' or 'uuid' for testing
                "FROM messages, json_each(messages.json, '$.groupMigration.invitedMembers') AS TREE WHERE messages.rowid = ?", rowid, &results_invitedmembers))
   {
@@ -84,7 +84,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
       if (!convuuid.empty())
       {
         SqliteDB::QueryResults im_id;
-        if (!ddb.exec("SELECT COALESCE(uuid,e164) AS rid FROM conversations WHERE id IS ?", convuuid, &im_id) ||
+        if (!ddb.exec("SELECT COALESCE(" + d_dt_c_uuid + ", e164) AS rid FROM conversations WHERE id IS ?", convuuid, &im_id) ||
             im_id.rows() != 1)
           continue;
         long long int recid = getRecipientIdFromUuid(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
@@ -95,7 +95,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
           // let's just check the uuid's aren't recipient uuid's to make sure
           // this can go when we know it's working (and the SELECT can be shortened!)
           SqliteDB::QueryResults test_results;
-          if (ddb.exec("SELECT uuid FROM conversations WHERE uuid IS ?", im_id.valueAsString(0, "rid"), &test_results))
+          if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE " + d_dt_c_uuid + " IS ?", im_id.valueAsString(0, "rid"), &test_results))
             if (test_results.rows())
               std::cout << " *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (invitedMembers, uuid: "
                         << im_id.valueAsString(0, "is_uuid") << ") ***" << std::endl;
