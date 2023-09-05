@@ -502,6 +502,7 @@ body {
       var recipient = -1;
       if (document.getElementById('enable_recipient').checked)
       {
+        recipient = document.getElementById("recipientselector").value;
       }
 
       if (regex == true)
