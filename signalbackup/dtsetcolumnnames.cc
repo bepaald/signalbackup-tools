@@ -17,9 +17,22 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20230905.084322"
+void SignalBackup::dtSetColumnNames(SqliteDB *ddb)
+{
 
-#endif
+  // conversations.uuid -> conversations.sourceid
+  if (ddb->tableContainsColumn("conversations", "serviceId"))
+    d_dt_c_uuid = "serviceId";
+  else if (ddb->tableContainsColumn("conversations", "uuid"))
+    d_dt_c_uuid = "uuid";
+
+
+  // messages.sourceuuid -> messages.sourceserviceid
+  if (ddb->tableContainsColumn("messages", "sourceServiceId"))
+    d_dt_m_sourceuuid = "sourceServiceId";
+  else if (ddb->tableContainsColumn("messages", "sourceUuid"))
+    d_dt_m_sourceuuid = "sourceUuid";
+
+}

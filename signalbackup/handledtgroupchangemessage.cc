@@ -55,7 +55,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                   "IFNULL(json_extract(json,'$.expirationTimerUpdate.fromSync'), false) AS fromsync, "
                   "IFNULL(json_extract(json,'$.expirationTimerUpdate.expireTimer'), 0) AS expiretimer, "
                   "json_extract(json,'$.expirationTimerUpdate.source') AS source, "
-                  "json_extract(json,'$.expirationTimerUpdate.sourceUuid') AS sourceuuid "
+                  "COALESCE(json_extract(json,'$.expirationTimerUpdate.sourceServiceId'), json_extract(json,'$.expirationTimerUpdate.sourceUuid')) AS sourceuuid "
                   "FROM messages WHERE rowid = ?", rowid, &timer_results))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
@@ -156,7 +156,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   {
     if (!ddb.exec("SELECT "
                   "json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].type') AS type,"
-                  "json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].uuid') AS uuid"
+                  "COALESCE(json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].aci'), json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].uuid')) AS uuid"
                   " FROM messages WHERE rowid = ?", rowid, &res))
       continue;
 

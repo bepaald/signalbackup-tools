@@ -33,14 +33,13 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                 "IFNULL(json_extract(json,'$.expirationTimerUpdate.fromSync'), false) AS fromsync, "
                 "IFNULL(json_extract(json,'$.expirationTimerUpdate.expireTimer'), 0) AS expiretimer, "
                 "json_extract(json,'$.expirationTimerUpdate.source') AS source, "
-                "json_extract(json,'$.expirationTimerUpdate.sourceUuid') AS sourceuuid "
+                "COALESCE(json_extract(json,'$.expirationTimerUpdate.sourceServiceId'), json_extract(json,'$.expirationTimerUpdate.sourceUuid')) AS sourceuuid "
                 "FROM messages WHERE rowid = ?", rowid, &timer_results))
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
               << ": Querying database" << std::endl;
     return false;
   }
-
   // 'from sync' timer updates do not have any info on who set the timer.
   // On Android, the message must be either incoming or outgoing, but I can
   // only guess. 50-50 of having correct or incorrect info in the database,
@@ -58,12 +57,11 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
   bool incoming = (timer_results.valueAsString(0, "type") == "incoming");
   if (!incoming)
   {
-    // source is conversationId if timer was set by self (=outgoing)
-    // else it is uuid/phone of conversation partner
+    // source is often uuid/phone of whoever set the timer? (maybe not on old messages
     std::string source = timer_results.valueAsString(0, "source");
 
     SqliteDB::QueryResults convresults;
-    if (ddb.exec("SELECT id FROM conversations WHERE e164 = ? OR uuid = ?", {source, source}, &convresults) &&
+    if (ddb.exec("SELECT id FROM conversations WHERE e164 = ? OR " + d_dt_c_uuid + " = ?", {source, source}, &convresults) &&
         convresults.rows() == 1)
       if (convresults.valueAsString(0, "id") == timer_results.valueAsString(0, "conversationId"))
       {
@@ -73,8 +71,8 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
 
     // if it is outgoing, source would be a conversationId in conversations
     SqliteDB::QueryResults sourceresults;
-    if (ddb.exec("SELECT uuid FROM conversations WHERE id IS ?", source, &sourceresults) && // source is conversationId if timer was set by self (=outgoing)
-        sourceresults.rows() != 1)                                                          // else it is uuid/phone of conversation partner
+    if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE id IS ? OR e164 = ?", {source, source}, &sourceresults) &&
+        sourceresults.rows() != 1)
       incoming = true;
   }
 

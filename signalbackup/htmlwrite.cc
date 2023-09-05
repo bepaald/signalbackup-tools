@@ -86,11 +86,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     <style>)" << std::endl;
 
   file << "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
-  file << "        /* " << (light ? "light" : "dark") << "*/" << std::endl;
+  file << "        /* " << (light ? "light" : "dark") << " */" << std::endl;
   file << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl;
   file << "        --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-//file << "        --conversationbox-bc: " << (light ? (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light.empty() ? "#FBFCFF;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light + ";") : (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark.empty() ? "#1B1C1F;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark + ";")) << std::endl;
   file << "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << std::endl;
   file << "        --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
@@ -117,7 +116,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   if (themeswitch)
   {
     file << "      :root[data-theme=\"" << (!light ? "light" : "dark") << "\"] {" << std::endl;
-    file << "        /* " << (!light ? "light" : "dark") << "*/" << std::endl;
+    file << "        /* " << (!light ? "light" : "dark") << " */" << std::endl;
     file << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl;
     file << "        --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;

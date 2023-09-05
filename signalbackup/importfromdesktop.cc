@@ -258,6 +258,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     return false;
   }
 
+  dtSetColumnNames(&ddb);
+
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
     for (uint i = 0; i < daterangelist.size(); i += 2)
@@ -315,7 +317,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                 "id,"
                 "e164,"
                 "type,"
-                "LOWER(uuid) AS 'uuid',"
+                "LOWER(" + d_dt_c_uuid + ") AS 'uuid',"
                 "groupId,"
                 "IFNULL(json_extract(json,'$.isArchived'), false) AS 'is_archived',"
                 "IFNULL(json_extract(json,'$.isPinned'), false) AS 'is_pinned',"
@@ -524,11 +526,12 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "IFNULL(isErased, 0) AS isErased,"
                   "IFNULL(isViewOnce, 0) AS isViewOnce,"
                   "serverGuid,"
-                  "LOWER(sourceUuid) AS 'sourceUuid',"
+                  "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
                   "json_extract(json, '$.source') AS sourcephone,"
                   "seenStatus,"
                   "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                   "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
+                  "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
                   "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                   "isStory"
                   " FROM messages WHERE conversationId = ?" + datewhereclause,
@@ -580,7 +583,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         SqliteDB::QueryResults statusmsguuid;
         if (type == "profile-change")
         {
-          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE "
+          if (!ddb.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
                         "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?) OR "
                         "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)", // maybe id can be a phone number?
                         {rowid, rowid}, &statusmsguuid))
@@ -592,8 +595,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else if (type == "keychange")
         {
-          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE "
-                        "uuid IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?) OR "
+          if (!ddb.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
+                        + d_dt_c_uuid + " IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?) OR "
                         "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?)",     // 'key_changed' can be a phone number (confirmed)
                         {rowid, rowid}, &statusmsguuid))
           {
@@ -604,7 +607,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         }
         else if (type == "verified-change")
         {
-          if (!ddb.exec("SELECT uuid, e164 FROM conversations WHERE "
+          if (!ddb.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
                         "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?) OR "
                         "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?)",// maybe id can be a phone number?
                         {rowid, rowid}, &statusmsguuid))
@@ -660,7 +663,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       if (type == "call-history")
       {
         if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
-        handleDTCallTypeMessage(ddb, rowid, ttid, address);
+        handleDTCallTypeMessage(ddb, results_all_messages_from_conversation(j, "callId"), rowid, ttid, address, createmissingcontacts);
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
       }
@@ -1159,7 +1162,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (!ddb.exec("SELECT "
                         "json_extract(messages.json, '$.quote.id') AS quote_id,"
                         "json_extract(messages.json, '$.quote.author') AS quote_author_phone,"     // in old databases, authorUuid does not exist, but this holds the phone number
-                        "conversations.uuid AS quote_author_uuid_from_phone,"                      // this is filled from a left join on the possible phone number above
+                        "conversations." + d_dt_c_uuid + " AS quote_author_uuid_from_phone,"       // this is filled from a left join on the possible phone number above
+                        "LOWER(json_extract(messages.json, '$.quote.authorAci')) AS quote_author_aci," // in newer databases, this replaces the 'authorUuid'
                         "LOWER(json_extract(messages.json, '$.quote.authorUuid')) AS quote_author_uuid,"
                         "json_extract(messages.json, '$.quote.text') AS quote_text,"
                         "IFNULL(json_array_length(messages.json, '$.quote.attachments'), 0) AS num_quote_attachments,"
@@ -1176,7 +1180,9 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           }
 
           // try to set quote author from uuid or phone
-          mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid");
+          mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_aci");
+          if (mmsquote_author_uuid.empty()) // possibly older database, try authorUuid
+            mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid");
           if (mmsquote_author_uuid.empty()) // possibly old database, try conversations.uuid
             mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid_from_phone");
           if (mmsquote_author_uuid.empty()) // failed to get uuid from desktopdatabase, try matching on phone number
@@ -1258,7 +1264,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               if (!ddb.exec("SELECT "
                             "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
                             "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].length') AS qbr_length,"
-                            "LOWER(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid')) AS qbr_uuid"
+                            "LOWER(COALESCE(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionAci'), json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid'))) AS qbr_uuid"
                             " FROM messages WHERE rowid = ?", rowid, &qbrres))
               {
                 std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Retrieving quote bodyranges" << std::endl;
@@ -1432,7 +1438,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           if (!ddb.exec("SELECT "
                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].start') AS start,"
                         "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].length') AS length,"
-                        "LOWER(json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionUuid')) AS mention_uuid"
+                        "LOWER(COALESCE(json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionAci'), json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionUuid'))) AS mention_uuid"
                         " FROM messages WHERE rowid = ?", rowid, &results_mentions))
           {
             std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to retrieve mentions. Skipping." << std::endl;
@@ -1519,7 +1525,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   for (auto const &r : recipientmap)
   {
     //std::cout << "Recpients in map: " << r.first << " : " << r.second << std::endl;
-    long long int profile_date_desktop = ddb.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE uuid = ? OR groupId = ? OR e164 = ?", {r.first, r.first, r.first}, 0);
+    long long int profile_date_desktop = ddb.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE " + d_dt_c_uuid + " = ? OR groupId = ? OR e164 = ?", {r.first, r.first, r.first}, 0);
     long long int profile_date_android = d_database.getSingleResultAs<long long int>("SELECT last_profile_fetch FROM recipient WHERE _id = ?", r.second, 0);
 
     if (profile_date_desktop > profile_date_android)

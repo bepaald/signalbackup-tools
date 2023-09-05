@@ -219,7 +219,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   // start search index page
   if (searchpage)
   {
-    searchidx.open(directory + "/" + "searchidx.js");
+    searchidx.open(directory + "/" + "searchidx.js", std::ios_base::binary);
     if (!searchidx.is_open())
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
@@ -733,8 +733,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
                      overwrite, append, lighttheme, themeswitching);
 
-  //if (searchpage)
-  //  HTMLwriteSearchPage();
+  if (searchpage)
+    HTMLwriteSearchpage(directory, lighttheme, themeswitching);
 
   std::cout << "All done!" << std::endl;
   if (databasemigrated)

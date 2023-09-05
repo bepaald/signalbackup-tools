@@ -30,12 +30,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, profileFamilyName, "
-                "profileFullName, e164, uuid, json_extract(json,'$.color') AS color, "
+                "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(json,'$.color') AS color, "
                 "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
                 "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
                 "TOKENCOUNT(members) AS nummembers, json_extract(json, '$.masterKey') AS masterKey "
-                "FROM conversations WHERE uuid = ? OR e164 = ? OR groupId = ?",
+                "FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
                 {id, phone, groupidb64}, &res))
   {
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
@@ -83,7 +83,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Group name of new recipient is empty." <<
         "Here is the data from the Desktop db:" << std::endl;
-      ddb.printLineMode("SELECT * FROM conversations WHERE uuid = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
+      ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
     }
 
     d_database.exec("BEGIN TRANSACTION"); // things could still go bad...
@@ -180,7 +180,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       // get member role (0 = unknown, 1 = normal, 2 = admin)
         SqliteDB::QueryResults memberrole_results;
         if (ddb.exec("SELECT json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].role') AS role, "
-                     "json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].uuid') AS uuid "
+                     "COALESCE(json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].aci'), json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].uuid')) AS uuid "
                      "FROM conversations WHERE groupId = ?", groupidb64, &memberrole_results))
         {
           //memberrole_results.prettyPrint();
@@ -280,7 +280,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": All relevant info on new recipient is empty." <<
       "Here is the data from the Desktop db:" << std::endl;
-    ddb.printLineMode("SELECT * FROM conversations WHERE uuid = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
+    ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
   }
 
   std::any new_rid;
