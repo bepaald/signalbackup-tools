@@ -473,18 +473,14 @@ body {
 
     function getSearchFieldAndSearch()
     {
-        str = document.getElementById('search_field').value;
-        if (!str || str.length === 0 )
+        searchstr = document.getElementById('search_field').value;
+        if (!searchstr || searchstr.length === 0 )
             return;
-
-        start = performance.now();
-
-        var r = search(message_idx, str, document.getElementById('enable_regex').checked);
-
-        end = performance.now();
-        console.log(`Execution time: ${end - start} ms`);
-
-        showResults(r);
+        //start = performance.now();
+        var r = search(message_idx, searchstr, document.getElementById('enable_regex').checked);
+        //end = performance.now();
+        //console.log(`Execution time: ${end - start} ms`);
+        showResults(r, searchstr);
     }
 
     function search(obj, term, regex)
@@ -510,14 +506,40 @@ body {
         const regex = RegExp(term, "i");
         return obj.filter(element => regex.test(element.body) &&
                                      (document.getElementById('enable_date').checked === false || (element.date >= mindate && element.date <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || (element.from == recipient || element.thread_id == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                     (document.getElementById('enable_recipient').checked === false || (element.from == recipient || element.thread_recipient_id == recipient))).sort((r1, r2) => r1.date - r2.date);
       }
       return obj.filter(element => element.body.toUpperCase().includes(term.toUpperCase()) &&
                                    (document.getElementById('enable_date').checked === false || (element.date >= mindate && element.date <= maxdate)) &&
-                                   (document.getElementById('enable_recipient').checked === false || (element.from == recipient || element.thread_id == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                   (document.getElementById('enable_recipient').checked === false || (element.from == recipient || element.thread_recipient_id == recipient))).sort((r1, r2) => r1.date - r2.date);
     }
 
-    function showResults(results)
+    function stringinsert(str, index, value)
+    {
+      return str.substr(0, index) + value + str.substr(index);
+    }
+
+    function surroundregex(rgxstr, str, pre, post)
+    {
+      console.log(rgxstr);
+      const regex1 = RegExp(rgxstr, 'gdi');
+      let array1;
+      var marked = 0;
+      while ((array1 = regex1.exec(str)) !== null)
+      {
+        //console.log(`Found ${array1[0]}. Next starts at ${regex1.lastIndex}.`);
+        //console.log(array1.indices[0]);
+        str = stringinsert(str, array1.indices[0][0], pre);
+        str = stringinsert(str, array1.indices[0][1] + pre.length, post);
+        //console.log(str);
+        regex1.lastIndex += pre.length + post.length;
+        ++marked;
+        if (marked > 10) // for safety, searching for '$' for example, would lead to infinite loop if regex was checked
+          break;
+      }
+      return str;
+    }
+
+    function showResults(results, searchstring)
     {
     // remove old search results
         const elements = document.getElementsByClassName("searchresults");
@@ -582,6 +604,23 @@ body {
             var prebody = document.createElement('pre');
             var body = document.createTextNode(results[i].body);
             prebody.append(body);
+
+            // mark the found searchstring in html
+            var markedbody = prebody.innerHTML;
+            //console.log(markedbody);
+            if (!document.getElementById('enable_regex').checked)
+            {
+              // escape any characters that happen to be special in regex
+              var rgx = searchstring.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+            }
+            else
+            {
+              var rgx = searchstring;
+            }
+            markedbody = surroundregex(rgx, markedbody, '<mark>', '</mark>');
+            //console.log(markedbody);
+
+            prebody.innerHTML = markedbody;
             msgbody.append(prebody);
             linkdiv.append(msgbody);
 
@@ -604,6 +643,7 @@ body {
   </script>
 
   </body>
-</html>)code";
+</html>
+)code";
 
 }
