@@ -191,29 +191,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   //   if (skv->key() == "releasechannel.recipient_id")
   //     releasechannel = bepaald::toNumber<int>(skv->value());
 
-  // // get theme
-  // bool lighttheme = false;
-  // if (theme == 1)
-  //   lighttheme = true;
-  // else if (theme == 0)
-  // {
-  //   std::string theme_val;
-  //   for (auto const &skv : d_keyvalueframes)
-  //     if (skv->key() == "settings.theme")
-  //     {
-  //       if (skv->value() == "light")
-  //         lighttheme = true;
-
-  //       std::cout << "AUTO THEME : " << skv->value() << std::endl;
-
-  //       //else if (skv->value() == "dark") || "system" ( <- default dark)
-  //       //  lighttheme = false;
-  //     }
-  //     else
-  //       std::cout << "KEY: " << skv->key() << std::endl;
-  // }
-
-
+  SqliteDB::QueryResults search_idx_results;
   std::ofstream searchidx;
   bool searchidx_write_started = false;
   // start search index page
@@ -228,7 +206,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
     searchidx << "message_idx = [" << std::endl;
   }
-
 
   for (uint t_idx = 0; t_idx < threads.size(); ++t_idx)
   {
@@ -556,21 +533,47 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
-          // maybe get long-message-bodies as well (from attachment?) + maybe add 'has_attachment' field?
-
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
-          std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object("
-                                                                       "'_id', " + d_mms_table + "._id, "
-                                                                       "'body', " + d_mms_table + ".body, "
-                                                                       "'from', " + d_mms_table + "." + d_mms_recipient_id + ", "
-                                                                       "'thread_recipient_id', thread." + d_thread_recipient_id + ", "
-                                                                       "'outgoing', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
-                                                                       "'date', " + d_mms_table + ".date_received, "
-                                                                       "'page', " + "\"" + msg_info.threaddir + "/" + msg_info.filename + "\"" + ") "
-                                                                       "FROM " + d_mms_table + " "
-                                                                       "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
-                                                                       "WHERE " + d_mms_table + "._id = ?",
-                                                                       msg_info.msg_id, std::string());
+          if (!d_database.exec("SELECT json_object("
+                               "'id', " + d_mms_table + "._id, "
+                               "'b', " + d_mms_table + ".body, "
+                               "'f', " + d_mms_table + "." + d_mms_recipient_id + ", "
+                               "'trid', thread." + d_thread_recipient_id + ", "
+                               "'o', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
+                               "'d', " + d_mms_table + ".date_received, "
+                               "'p', " + "\"" + msg_info.threaddir + "/" + msg_info.filename + "\"" + ") AS line, "
+                               "part._id AS rowid, "
+                               "part.unique_id AS uniqueid "
+                               "FROM " + d_mms_table + " "
+                               "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
+                               "LEFT JOIN part ON part.mid IS " + d_mms_table + "._id AND part.ct = 'text/x-signal-plain' "
+                               "WHERE " + d_mms_table + "._id = ?",
+                               msg_info.msg_id, &search_idx_results) ||
+              search_idx_results.rows() != 1)
+          {
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                      << ": search_idx query failed " << search_idx_results.rows() << " results" << std::endl;
+            continue;
+          }
+
+          std::string line = search_idx_results("line");
+          if (line.empty()) [[unlikely]]
+            continue;
+
+          if (search_idx_results.valueAsInt(0, "rowid") != -1 &&
+              search_idx_results.valueAsInt(0, "uniqueid") != -1) [[unlikely]]
+          {
+            long long int rowid = search_idx_results.valueAsInt(0, "rowid");
+            long long int uniqueid = search_idx_results.valueAsInt(0, "uniqueid");
+            AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
+            std::string longbody = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+            a->clearData();
+
+            longbody = d_database.getSingleResultAs<std::string>("SELECT json_set(?, '$.b', ?)", {line, longbody}, std::string());
+            if (!longbody.empty()) [[likely]]
+              line = longbody;
+          }
+
           if (searchidx_write_started) [[likely]]
             searchidx << "," << std::endl;
 
