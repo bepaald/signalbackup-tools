@@ -48,6 +48,46 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
   background: red;
 }
 
+#summary-box {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0px 10px 0px;
+}
+
+#searchprev,
+#searchnext,
+#summary {
+  display: inline-block;
+  vertical-align: top;
+}
+
+#summary {
+  text-align: center;
+  min-width: 300px;
+  padding: 0px 30px 0px 30px;
+}
+
+#searchprev.disabled,
+#searchnext.disabled {
+  color: #AAAAAA;
+  visibility: hidden;
+}
+
+#searchprev.enabled,
+#searchnext.enabled {
+  color: inherit;
+}
+
+#searchprev:hover,
+#searchnext:hover {
+  cursor: default;
+}
+
+#searchprev.enabled:hover,
+#searchnext.enabled:hover {
+  cursor: pointer;
+}
+
 )";
 
   outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
@@ -356,11 +396,14 @@ body {
                   <select class="limitrecipient" name="recipientselector" id="recipientselector" disabled>
                   </select>
                 </div>
-
               </div>
-
             </div>
             <div class="conversation-box" id="search_results">
+              <div id="summary-box">
+                <div id="searchprev" class="disabled">&#x23F4;</div>
+                <div id="summary"></div>
+                <div id="searchnext" class="disabled">&#x23F5;</div>
+              </div>
             </div>
           </div>
         </div>
@@ -440,8 +483,9 @@ body {
 
   if (themeswitching)
   {
-    outputfile <<
-      R"(const themeSwitch = document.querySelector('#theme-switch');
+    outputfile << R"(
+    const themeSwitch = document.querySelector('#theme-switch');
+
     themeSwitch.addEventListener('change', function(e)
     {
       if (e.currentTarget.checked === true)
@@ -471,16 +515,24 @@ body {
                                }
                            });
 
+    var global_results;
+    var global_searchstring;
+    var global_page = 0;
+    var prevbutton = document.getElementById("searchprev");
+    var nextbutton = document.getElementById("searchnext");
+
     function getSearchFieldAndSearch()
     {
-        searchstr = document.getElementById('search_field').value;
-        if (!searchstr || searchstr.length === 0 )
-            return;
-        //start = performance.now();
-        var r = search(message_idx, searchstr, document.getElementById('enable_regex').checked);
-        //end = performance.now();
-        //console.log(`Execution time: ${end - start} ms`);
-        showResults(r, searchstr);
+      searchstr = document.getElementById('search_field').value;
+      if (!searchstr || searchstr.length === 0)
+        return;
+      //start = performance.now();
+      global_results = search(message_idx, searchstr, document.getElementById('enable_regex').checked);
+      //end = performance.now();
+      //console.log(`Execution time: ${end - start} ms`);
+      global_searchstring = searchstr;
+      global_page = 0;
+      showResults();
     }
 
     function search(obj, term, regex)
@@ -504,13 +556,13 @@ body {
       if (regex == true)
       {
         const regex = RegExp(term, "i");
-        return obj.filter(element => regex.test(element.body) &&
-                                     (document.getElementById('enable_date').checked === false || (element.date >= mindate && element.date <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || (element.from == recipient || element.thread_recipient_id == recipient))).sort((r1, r2) => r1.date - r2.date);
+        return obj.filter(element => regex.test(element.b) &&
+                                     (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
+                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.trid == recipient))).sort((r1, r2) => r1.date - r2.date);
       }
-      return obj.filter(element => element.body.toUpperCase().includes(term.toUpperCase()) &&
-                                   (document.getElementById('enable_date').checked === false || (element.date >= mindate && element.date <= maxdate)) &&
-                                   (document.getElementById('enable_recipient').checked === false || (element.from == recipient || element.thread_recipient_id == recipient))).sort((r1, r2) => r1.date - r2.date);
+      return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
+                                   (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
+                                   (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.trid == recipient))).sort((r1, r2) => r1.date - r2.date);
     }
 
     function stringinsert(str, index, value)
@@ -520,7 +572,7 @@ body {
 
     function surroundregex(rgxstr, str, pre, post)
     {
-      console.log(rgxstr);
+      //console.log(rgxstr);
       const regex1 = RegExp(rgxstr, 'gdi');
       let array1;
       var marked = 0;
@@ -539,107 +591,146 @@ body {
       return str;
     }
 
-    function showResults(results, searchstring)
+    function showResults()
     {
-    // remove old search results
-        const elements = document.getElementsByClassName("searchresults");
-        while (elements.length > 0)
-            elements[0].parentNode.removeChild(elements[0]);
+      var max_per_page = 200;
 
-        if (results.length == 0)
+      // remove old search results
+      const elements = document.getElementsByClassName("searchresults");
+      while (elements.length > 0)
+        elements[0].parentNode.removeChild(elements[0]);
+
+      summary = document.getElementById("summary");
+      if (global_results.length == 0)
+        summary.innerHTML = "(no results)";
+      else
+        summary.innerHTML = "Results " + (global_page * max_per_page + 1) + " - " + Math.min(global_page * max_per_page + max_per_page, global_results.length) + " out of " + global_results.length;
+
+      for (i = global_page * max_per_page; i < Math.min(global_page * max_per_page + max_per_page, global_results.length); ++i)
+      {
+        // get displayname of 'from' id
+        var index = recipient_idx.findIndex(function(item) {
+          return item._id === global_results[i].f;
+        });
+        var displayname = recipient_idx[index].display_name;
+
+        // get name of 'thread' id
+        var index = recipient_idx.findIndex(function(item){
+          return item._id === global_results[i].trid;
+        });
+        var threadname = recipient_idx[index].display_name;
+
+        // add searchresults
+        var elem = document.createElement('a');
+        elem.classList.add("searchresults");
+        elem.classList.add("msg");
+        if (global_results[i].o == 1)
+          elem.classList.add("msg-outgoing");
+        else
+          elem.classList.add("msg-incoming");
+        elem.setAttribute('href', encodeURI(global_results[i].p + '#' + global_results[i].id));
+
+        var linkdiv = document.createElement('div');
+
+        var fromspan = document.createElement('span');
+        fromspan.classList.add("msg-name");
+        if (global_results[i].o == 0)
+          fromspan.classList.add("msg-name-" + global_results[i].f);
+
+        if (global_results[i].o == 1)
+          fromspan.innerHTML = displayname + " (to <i>" + threadname + "</i>)";
+        else
         {
-            // add element saying 'Too many results, showing 100'
-            console.log("No results!");
+          if (global_results[i].f === global_results[i].trid)
+            fromspan.innerHTML = displayname;
+          else
+            fromspan.innerHTML = displayname + " (in <i>" + threadname + "</i>)";
         }
+        linkdiv.append(fromspan);
 
-        if (results.length > 100)
+        var msgbody = document.createElement('div');
+        var prebody = document.createElement('pre');
+        var body = document.createTextNode(global_results[i].b);
+        prebody.append(body);
+
+        // mark the found searchstring in html
+        var markedbody = prebody.innerHTML;
+        //console.log(markedbody);
+        if (!document.getElementById('enable_regex').checked)
         {
-            // add element saying 'Too many results, showing 100'
-            console.log("too many results!");
+          // escape any characters that happen to be special in regex
+          var rgx = global_searchstring.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
         }
-
-        for (i = 0; i < Math.min(100, results.length); ++i)
+        else
         {
-            // get displayname of 'from' id
-            var index = recipient_idx.findIndex(function(item){
-                return item._id === results[i].from;
-            });
-            var displayname = recipient_idx[index].display_name;
-
-            // get name of 'thread' id
-            var index = recipient_idx.findIndex(function(item){
-                return item._id === results[i].thread_recipient_id;
-            });
-            var threadname = recipient_idx[index].display_name;
-
-            // add searchresults
-            var elem = document.createElement('a');
-            elem.classList.add("searchresults");
-            elem.classList.add("msg");
-            if (results[i].outgoing == 1)
-              elem.classList.add("msg-outgoing");
-            else
-              elem.classList.add("msg-incoming");
-            elem.setAttribute('href', encodeURI(results[i].page + '#' + results[i]._id));
-
-            var linkdiv = document.createElement('div');
-
-            var fromspan = document.createElement('span');
-            fromspan.classList.add("msg-name");
-            if (results[i].outgoing == 0)
-              fromspan.classList.add("msg-name-" + results[i].from);
-
-            if (results[i].outgoing == 1)
-                fromspan.innerHTML = displayname + " (to <i>" + threadname + "</i>)";
-            else
-            {
-              if (results[i].from === results[i].thread_recipient_id)
-                fromspan.innerHTML = displayname;
-              else
-                fromspan.innerHTML = displayname + " (in <i>" + threadname + "</i>)";
-            }
-            linkdiv.append(fromspan);
-
-            var msgbody = document.createElement('div');
-            var prebody = document.createElement('pre');
-            var body = document.createTextNode(results[i].body);
-            prebody.append(body);
-
-            // mark the found searchstring in html
-            var markedbody = prebody.innerHTML;
-            //console.log(markedbody);
-            if (!document.getElementById('enable_regex').checked)
-            {
-              // escape any characters that happen to be special in regex
-              var rgx = searchstring.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
-            }
-            else
-            {
-              var rgx = searchstring;
-            }
-            markedbody = surroundregex(rgx, markedbody, '<mark>', '</mark>');
-            //console.log(markedbody);
-
-            prebody.innerHTML = markedbody;
-            msgbody.append(prebody);
-            linkdiv.append(msgbody);
-
-            var d = new Date(results[i].date);
-
-            var msgdate = document.createElement('div');
-            msgdate.classList.add("footer");
-            var msgdatespan = document.createElement('span');
-            msgdatespan.classList.add("msg-data");
-            var date = document.createTextNode(d.toLocaleTimeString('en-us', {hour12: false, year:"numeric", month:"short", day:"numeric"}));
-            msgdatespan.append(date);
-            msgdate.append(msgdatespan);
-            linkdiv.append(msgdate);
-            elem.append(linkdiv);
-
-            searchresultsdiv = document.getElementById("search_results");
-            searchresultsdiv.append(elem);
+          var rgx = global_searchstring;
         }
+        markedbody = surroundregex(rgx, markedbody, '<mark>', '</mark>');
+        //console.log(markedbody);
+
+        prebody.innerHTML = markedbody;
+        msgbody.append(prebody);
+        linkdiv.append(msgbody);
+
+        var d = new Date(global_results[i].d);
+
+        var msgdate = document.createElement('div');
+        msgdate.classList.add("footer");
+        var msgdatespan = document.createElement('span');
+        msgdatespan.classList.add("msg-data");
+        var date = document.createTextNode(d.toLocaleTimeString('en-us', {hour12: false, year:"numeric", month:"short", day:"numeric"}));
+        msgdatespan.append(date);
+        msgdate.append(msgdatespan);
+        linkdiv.append(msgdate);
+        elem.append(linkdiv);
+
+        searchresultsdiv = document.getElementById("search_results");
+        searchresultsdiv.append(elem);
+      }
+
+      if (global_page <= 0 || global_results.length == 0)
+      {
+        prevbutton.classList.remove("enabled");
+        prevbutton.classList.add("disabled");
+        prevbutton.removeEventListener("click", showResultsPrev);
+      }
+      else
+      {
+        prevbutton.classList.remove("disabled");
+        prevbutton.classList.add("enabled");
+        prevbutton.removeEventListener("click", showResultsPrev);
+        prevbutton.addEventListener("click", showResultsPrev);
+      }
+
+      if ((global_page * max_per_page + max_per_page) >= global_results.length || global_results.length == 0)
+      {
+        nextbutton.classList.add("disabled");
+        nextbutton.classList.remove("enabled");
+        nextbutton.removeEventListener("click", showResultsNext);
+      }
+      else
+      {
+        nextbutton.classList.remove("disabled");
+        nextbutton.classList.add("enabled");
+        nextbutton.removeEventListener("click", showResultsNext);
+        nextbutton.addEventListener("click", showResultsNext);
+      }
     }
+
+    function showResultsPrev()
+    {
+      --global_page;
+      if (global_page < 0)
+        global_page = 0;
+      showResults();
+    }
+
+    function showResultsNext()
+    {
+      ++global_page;
+      showResults();
+    }
+
   </script>
 
   </body>
