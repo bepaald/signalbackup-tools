@@ -33,6 +33,7 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
     R"(<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>Signal conversation search</title>
     <style>
 .searchresults {
