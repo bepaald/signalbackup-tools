@@ -334,20 +334,20 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        padding: 0px;" << std::endl
     << "      }" << std::endl
     << std::endl
-    << "      .groupsender {" << std::endl
-    << "        font-weight: 500;" << std::endl
-    << "      }" << std::endl
-    << std::endl
-    << "      .snippet {" << std::endl
-    << "        display: -webkit-box;" << std::endl
-    << "        -webkit-line-clamp: 2;" << std::endl
-    << "/*        line-clamp: 2; This is still in working draft, though the vendor extension version is well supported */" << std::endl
-    << "        -webkit-box-orient: vertical;" << std::endl
-    << "/*        box-orient: vertical; */" << std::endl
-    << "        overflow: hidden;" << std::endl
-    << "        text-overflow: ellipsis;" << std::endl
-    << "      }" << std::endl
-    << std::endl
+    // << "      .groupsender {" << std::endl
+    // << "        font-weight: 500;" << std::endl
+    // << "      }" << std::endl
+    // << std::endl
+    // << "      .snippet {" << std::endl
+    // << "        display: -webkit-box;" << std::endl
+    // << "        -webkit-line-clamp: 2;" << std::endl
+    // << "/*        line-clamp: 2; This is still in working draft, though the vendor extension version is well supported */" << std::endl
+    // << "        -webkit-box-orient: vertical;" << std::endl
+    // << "/*        box-orient: vertical; */" << std::endl
+    // << "        overflow: hidden;" << std::endl
+    // << "        text-overflow: ellipsis;" << std::endl
+    // << "      }" << std::endl
+    // << std::endl
     << "      .snippet2 {" << std::endl
     << "        display: flex;" << std::endl
     << "      }" << std::endl
@@ -408,7 +408,49 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "      margin-left: 5px;" << std::endl
     << "      margin-right: 5px;" << std::endl
     << "    }" << std::endl
+    << std::endl;
+
+  outputfile
+    << "      @media print {" << std::endl
+    << "        .conversation-list-header {" << std::endl
+    << "          padding: 0;" << std::endl
+    << "        }" << std::endl
     << std::endl
+    << "        .conversation-list-item {" << std::endl
+    << "          break-inside: avoid;" << std::endl
+    << "        }" << std::endl
+    << std::endl
+    << "        .conversation-list {" << std::endl
+    << "          margin: 0 auto;" << std::endl
+    << "          display: block;" << std::endl
+    << "          border-radius: 0;" << std::endl
+    << "        }" << std::endl
+    << std::endl
+    << "        .avatar {" << std::endl
+    << "          -webkit-print-color-adjust: exact;" << std::endl
+    << "          color-adjust: exact;" << std::endl
+    << "          print-color-adjust: exact;" << std::endl
+    << "          flex-shrink: 0;" << std::endl
+    << "        }" << std::endl
+    << std::endl
+    << "        #menu {" << std::endl
+    << "          display: none;" << std::endl
+    << "        }" << std::endl
+    << std::endl
+    << "        #theme {" << std::endl
+    << "          display: none;" << std::endl
+    << "        }" << std::endl
+    << std::endl
+    << "        .callstatus-group-icon, .callstatus-missed-icon," << std::endl
+    << "        .callstatus-incoming-icon, .callstatus-outgoing-icon, " << std::endl
+    << "        .calltype-audio-icon, .calltype-video-icon {" << std::endl
+    << "          print-color-adjust: exact;" << std::endl
+    << "          filter: brightness(0.5);" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << std::endl;
+
+  outputfile
     << "    </style>" << std::endl
     << "  </head>" << std::endl;
 
@@ -427,7 +469,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
           date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
           expires = "; expires=" + date.toUTCString();
         }
-        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        document.cookie = name + "=" + (value || "")  + expires + "; SameSite=None; Secure; path=/";
       }
 
       function getCookie(name)

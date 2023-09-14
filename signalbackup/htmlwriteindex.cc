@@ -346,10 +346,10 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << std::endl
     << "      #theme {" << std::endl
     << "        display: flex;" << std::endl
-    << "        flex-direction: column;" << std::endl
+    << "        flex-direction: row;" << std::endl
     << "        position: fixed;" << std::endl
-    << "       top: 20px;" << std::endl
-    << "       right: 20px;" << std::endl
+    << "        top: 20px;" << std::endl
+    << "        right: 20px;" << std::endl
     << "      }" << std::endl
     << std::endl;
   if (themeswitching)
@@ -362,6 +362,18 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "      }" << std::endl
       << std::endl;
   }
+
+  if (searchpage)
+  {
+    outputfile
+      << "    .searchbutton {" << std::endl
+      << "      display: block;" << std::endl
+      << "      background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g><path d=\"M10 2.125a7.875 7.875 0 1 0 4.716 14.182l4.989 4.989a1.125 1.125 0 0 0 1.59-1.591l-4.988-4.989A7.875 7.875 0 0 0 10 2.125zM3.875 10a6.125 6.125 0 1 1 12.25 0 6.125 6.125 0 0 1-12.25 0z\"></path></g></svg>');" << std::endl
+      << "      filter: var(--icon-f);" << std::endl
+      << "    }" << std::endl
+      << std::endl;
+  }
+
   if (calllog)
   {
     outputfile
@@ -370,17 +382,6 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "        filter: var(--icon-f);" << std::endl
       << "    }" << std::endl
       << std::endl;
-  }
-
-  if (searchpage)
-  {
-    outputfile
-      << "" << std::endl
-      << std::endl;
-  }
-
-  if (searchpage && calllog)
-  {
   }
 
   outputfile
@@ -430,7 +431,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
           date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
           expires = "; expires=" + date.toUTCString();
         }
-        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+        document.cookie = name + "=" + (value || "")  + expires + "; SameSite=None; Secure; path=/";
       }
 
       function getCookie(name)
@@ -600,18 +601,30 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << std::endl;
   }
 
-  if (themeswitching)
+  if (themeswitching || searchpage)
   {
-    outputfile
-      << "    <div id=\"theme\">" << std::endl
-      << "      <div class=\"menu-item\">" << std::endl
-      << "        <label for=\"theme-switch\">" << std::endl
-      << "          <span class=\"menu-icon themebutton\">" << std::endl
-      << "         </span>" << std::endl
-      << "       </label>" << std::endl
-      << "      </div>" << std::endl
-      << "    </div>" << std::endl
-      << std::endl;
+    outputfile << "    <div id=\"theme\">" << std::endl;
+    if (searchpage)
+    {
+      outputfile
+        << "      <div class=\"menu-item\">" << std::endl
+        << "        <a href=\"searchpage.html\">" << std::endl
+        << "          <span class=\"menu-icon searchbutton\">" << std::endl
+        << "          </span>" << std::endl
+        << "        </a>" << std::endl
+        << "      </div>" << std::endl;
+    }
+    if (themeswitching)
+    {
+      outputfile
+        << "      <div class=\"menu-item\">" << std::endl
+        << "        <label for=\"theme-switch\">" << std::endl
+        << "          <span class=\"menu-icon themebutton\">" << std::endl
+        << "          </span>" << std::endl
+        << "        </label>" << std::endl
+        << "      </div>" << std::endl;
+    }
+    outputfile << "    </div>" << std::endl;
   }
   outputfile
     << "    </div>" << std::endl

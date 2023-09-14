@@ -21,6 +21,9 @@
 
 void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const
 {
+
+  std::cout << "Writing searchpage.html..." << std::endl;
+
   std::ofstream outputfile(dir + "/" + "searchpage.html", std::ios_base::binary);
   if (!outputfile.is_open())
   {
@@ -33,21 +36,9 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
     R"(<!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <title>Signal conversation search</title>
     <style>
-.searchresults {
-  border: 1px solid black;
-  margin: 5px;
-  padding: 5px;
-  max-width: 50%;
-  color: inherit;
-  text-decoration: inherit;
-}
-
-.searchresults:hover {
-  background: red;
-}
-
 #summary-box {
   display: flex;
   justify-content: center;
@@ -100,6 +91,7 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
   outputfile << "  --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
   outputfile << "  --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl;
   outputfile << "  --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
+  outputfile << "  --msg-incoming-bc-hover: " << (light ? "#F9FEFF;" : "#46474A;") << std::endl;
   outputfile << "}" << std::endl;
   outputfile << std::endl;
   if (themeswitching)
@@ -114,6 +106,7 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
     outputfile << "  --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
     outputfile << "  --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl;
     outputfile << "  --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
+    outputfile << "  --msg-incoming-bc-hover: " << (!light ? "#F9FEFF;" : "#46474A;") << std::endl;
     outputfile << "}" << std::endl;
     outputfile << std::endl;
   }
@@ -180,29 +173,31 @@ body {
   flex-direction: row;
 }
 
-.msg-incoming {
-  align-self: flex-start;
-  background: var(--msgincoming-b);
-}
-
-.msg-sender-2 { background: #AA377A;}
-.msg-sender-5 { background: #336BA3;}
-
-.msg-name-2 { color: #AA377A;}
-.msg-name-5 { color: #336BA3;}
-
-.msg-outgoing {
-  align-self: flex-end;
-  background: #336BA3;
-  color: var(--msgoutgoing-c);
-}
-
 .msg {
+  color: inherit;
+  text-decoration: inherit;
+  border: 1px solid var(--conversationbox-c);
   max-width: 50%;
   border-radius: .6em;
   margin: 7px 0;
   padding: 10px;
   position: relative;
+  transition: background-color .1s;
+}
+
+.msg:hover {
+  border: 2px solid var(--conversationbox-c);
+  padding: 9px;
+}
+
+.msg-incoming:hover {
+  background-color: var(--msg-incoming-bc-hover);
+  transition: background-color .1s;
+}
+
+.msg-outgoing:hover {
+  background-color: #4999E9;
+  transition: background-color .1s;
 }
 
 .msg pre {
@@ -218,6 +213,16 @@ body {
   text-decoration: underline;
 }
 
+.msg-incoming {
+  align-self: flex-start;
+  background: var(--msgincoming-b);
+}
+
+.msg-outgoing {
+  align-self: flex-end;
+  background: #336BA3;
+  color: var(--msgoutgoing-c);
+}
 
 .styled-link:link,
 .styled-link:visited,
@@ -333,7 +338,7 @@ body {
               date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
               expires = "; expires=" + date.toUTCString();
           }
-          document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+          document.cookie = name + "=" + (value || "")  + expires + "; SameSite=None; Secure; path=/";
       }
 
       function getCookie(name)
@@ -410,7 +415,7 @@ body {
       </div>
 
       <div id="menu">
-        <a href="../index.html">
+        <a href="index.html">
           <div class="menu-item">
             <div class="menu-icon nav-up">
             </div>
@@ -470,14 +475,24 @@ body {
       maxdates = document.getElementById('maxdate');
       maxdate.value = today.toISOString().substring(0, 10);
 
-      function mindateset(e)
+      /* set initial recipient */
+      const url_params = new URLSearchParams(window.location.search);
+      const recipientparam = url_params.get('recipient');
+      var onlythread = false;
+      if (recipientparam)
       {
-          // also change maxdate unless it's already set...
-          if (document.getElementById("maxdate").value === "")
+        var rlimit = document.getElementById("recipientselector");
+        for (var i, j = 0; i = rlimit.options[j]; ++j)
+        {
+          if (i.value == recipientparam)
           {
-              console.log('setting');
-              document.getElementById("maxdate").value = document.getElementById("mindate").value;
+            rlimit.selectedIndex = j;
+            var rlimit_enable = document.getElementById("enable_recipient");
+            onlythread = true;
+            rlimit_enable.click();
+            break;
           }
+        }
       }
 )";
 
@@ -562,7 +577,7 @@ body {
       }
       return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
                                    (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                   (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.trid == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                   (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.trid == recipient))).sort((r1, r2) => r1.date - r2.date);
     }
 
     function stringinsert(str, index, value)
