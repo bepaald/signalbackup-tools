@@ -1272,6 +1272,24 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               }
               //qbrres.prettyPrint();
 
+              long long int rec_id = getRecipientIdFromUuid(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
+              if (rec_id == -1)
+              {
+                if (createmissingcontacts)
+                {
+                  if ((rec_id = dtCreateRecipient(ddb, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
+                  {
+                    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to create recipient for quote-mention. Skipping." << std::endl;
+                    continue;
+                  }
+                }
+                else
+                {
+                  std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to find recipient for quote-mention. Skipping." << std::endl;
+                  continue;
+                }
+              }
+
               ProtoBufParser<protobuffer::optional::INT32, // int32 start
                              protobuffer::optional::INT32, // int32 length
                              protobuffer::optional::STRING // in place of the oneof?

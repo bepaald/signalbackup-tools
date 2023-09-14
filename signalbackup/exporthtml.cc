@@ -657,15 +657,27 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "        </a>" << std::endl;
       htmloutput << "      </div>" << std::endl;
       htmloutput << "" << std::endl;
-      if (themeswitching)
+      if (themeswitching || searchpage)
       {
         htmloutput << "      <div id=\"theme\">" << std::endl;
-        htmloutput << "        <div class=\"menu-item\">" << std::endl;
-        htmloutput << "          <label for=\"theme-switch\">" << std::endl;
-        htmloutput << "            <span class=\"menu-icon themebutton\">" << std::endl;
-        htmloutput << "            </span>" << std::endl;
-        htmloutput << "          </label>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
+        if (searchpage)
+        {
+          htmloutput << "        <div class=\"menu-item\">" << std::endl;
+          htmloutput << "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\">" << std::endl;
+          htmloutput << "            <span class=\"menu-icon searchbutton\">" << std::endl;
+          htmloutput << "            </span>" << std::endl;
+          htmloutput << "          </a>" << std::endl;
+          htmloutput << "        </div>" << std::endl;
+        }
+        if (themeswitching)
+        {
+          htmloutput << "        <div class=\"menu-item\">" << std::endl;
+          htmloutput << "          <label for=\"theme-switch\">" << std::endl;
+          htmloutput << "            <span class=\"menu-icon themebutton\">" << std::endl;
+          htmloutput << "            </span>" << std::endl;
+          htmloutput << "          </label>" << std::endl;
+          htmloutput << "        </div>" << std::endl;
+        }
         htmloutput << "      </div>" << std::endl;
         htmloutput << std::endl;
       }
