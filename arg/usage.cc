@@ -106,6 +106,7 @@ R"*(
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
                                          to switch the theme between light and dark. This adds a bit of
                                          javascript to the page, and sets a cookie when switching.
+   --includecalllog                      Optional modifier for `--exporthtml'. Generate a call log-page.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
