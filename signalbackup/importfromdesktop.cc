@@ -1254,16 +1254,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             //     repeated BodyRange ranges = 1;
             // }
 
-            ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::INT32, // int32 start
-                                                      protobuffer::optional::INT32, // int32 length
-                                                      protobuffer::optional::STRING // in place of the oneof?
-                                                      >>> bodyrangelist;
+            // ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::INT32, // int32 start
+            //                                           protobuffer::optional::INT32, // int32 length
+            //                                           protobuffer::optional::STRING // in place of the oneof?
+            //                                           >>> bodyrangelist;
+            BodyRanges bodyrangelist;
             for (uint qbr = 0; qbr < quote_results.getValueAs<long long int>(0, "num_quote_bodyranges"); ++qbr)
             {
               SqliteDB::QueryResults qbrres;
               if (!ddb.exec("SELECT "
                             "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
                             "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].length') AS qbr_length,"
+                            "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].style') AS qbr_style,"
                             "LOWER(COALESCE(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionAci'), json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid'))) AS qbr_uuid"
                             " FROM messages WHERE rowid = ?", rowid, &qbrres))
               {
@@ -1272,31 +1274,42 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               }
               //qbrres.prettyPrint();
 
-              long long int rec_id = getRecipientIdFromUuid(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
-              if (rec_id == -1)
+              long long int rec_id = -1;
+              if (qbrres.isNull(0, "qbr_style"))
               {
-                if (createmissingcontacts)
+                rec_id = getRecipientIdFromUuid(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
+                if (rec_id == -1)
                 {
-                  if ((rec_id = dtCreateRecipient(ddb, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
+                  if (createmissingcontacts)
                   {
-                    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to create recipient for quote-mention. Skipping." << std::endl;
+                    if ((rec_id = dtCreateRecipient(ddb, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
+                                                    databasedir, &recipientmap, &warned_createcontacts)) == -1)
+                    {
+                      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to create recipient for quote-mention. Skipping." << std::endl;
+                      continue;
+                    }
+                  }
+                  else
+                  {
+                    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to find recipient for quote-mention. Skipping." << std::endl;
                     continue;
                   }
                 }
-                else
-                {
-                  std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to find recipient for quote-mention. Skipping." << std::endl;
-                  continue;
-                }
               }
 
-              ProtoBufParser<protobuffer::optional::INT32, // int32 start
-                             protobuffer::optional::INT32, // int32 length
-                             protobuffer::optional::STRING // in place of the oneof?
-                             > bodyrange;
+              // ProtoBufParser<protobuffer::optional::INT32, // int32 start
+              //                protobuffer::optional::INT32, // int32 length
+              //                protobuffer::optional::STRING // in place of the oneof?
+              //                > bodyrange;
+              BodyRange bodyrange;
               bodyrange.addField<1>(qbrres.getValueAs<long long int>(0, "qbr_start"));
               bodyrange.addField<2>(qbrres.getValueAs<long long int>(0, "qbr_length"));
-              bodyrange.addField<3>(qbrres.valueAsString(0, "qbr_uuid"));
+
+              if (qbrres.isNull(0, "qbr_style"))
+                bodyrange.addField<3>(qbrres.valueAsString(0, "qbr_uuid"));
+              else
+                bodyrange.addField<4>(qbrres.getValueAs<long long int>(0, "qbr_style") - 1); // NOTE desktop style enum starts at 1 (android at 0)
+
               bodyrangelist.addField<1>(bodyrange);
             }
 #if __cpp_lib_shared_ptr_arrays >= 201707L
