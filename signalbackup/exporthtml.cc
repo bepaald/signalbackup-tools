@@ -610,8 +610,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       }
 
       htmloutput << "        </div>" << std::endl; // closes conversation-box
+      htmloutput << "        <a id=\"pagebottom\"></a>" << std::endl;
       htmloutput << "      </div>" << std::endl; // closes conversation-wrapper
-      htmloutput << "" << std::endl;
+      htmloutput << std::endl;
 
       HTMLescapeUrl(&raw_base_filename);
 
@@ -641,10 +642,18 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "      </div>" << std::endl;
-        htmloutput << "" << std::endl;
+        htmloutput << std::endl;
       }
-      htmloutput << "    </div>" << std::endl; // closes controls-wrapper
-      htmloutput << "" << std::endl;
+      htmloutput << "     </div>" << std::endl; // closes controls-wrapper
+      htmloutput << std::endl;
+      htmloutput << "       <div id=\"bottom\">" << std::endl;
+      htmloutput << "         <a href=\"#pagebottom\">" << std::endl;
+      htmloutput << "           <div class=\"menu-item\">" << std::endl;
+      htmloutput << "             <span class=\"menu-icon nav-up nav-bottom\">" << std::endl;
+      htmloutput << "             </span>" << std::endl;
+      htmloutput << "           </div>" << std::endl;
+      htmloutput << "         </a>" << std::endl;
+      htmloutput << "      </div>" << std::endl;
       htmloutput << "      <div id=\"menu\">" << std::endl;
       htmloutput << "        <a href=\"../index.html\">" << std::endl;
       htmloutput << "          <div class=\"menu-item\">" << std::endl;
@@ -656,7 +665,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "          </div>" << std::endl;
       htmloutput << "        </a>" << std::endl;
       htmloutput << "      </div>" << std::endl;
-      htmloutput << "" << std::endl;
+      htmloutput << std::endl;
       if (themeswitching || searchpage)
       {
         htmloutput << "      <div id=\"theme\">" << std::endl;

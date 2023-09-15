@@ -1254,10 +1254,6 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
             //     repeated BodyRange ranges = 1;
             // }
 
-            // ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::INT32, // int32 start
-            //                                           protobuffer::optional::INT32, // int32 length
-            //                                           protobuffer::optional::STRING // in place of the oneof?
-            //                                           >>> bodyrangelist;
             BodyRanges bodyrangelist;
             for (uint qbr = 0; qbr < quote_results.getValueAs<long long int>(0, "num_quote_bodyranges"); ++qbr)
             {
@@ -1274,9 +1270,17 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
               }
               //qbrres.prettyPrint();
 
+
               long long int rec_id = -1;
               if (qbrres.isNull(0, "qbr_style"))
               {
+                if (qbrres.isNull(0, "qbr_uuid")) [[unlikely]]
+                {
+                  std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << ": Quote-bodyrange contains no recipient and no style. Skipping." << std::endl;
+                  ddb.prettyPrint("SELECT json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "] FROM messages WHERE rowid = ?", rowid);
+                  continue;
+                }
+
                 rec_id = getRecipientIdFromUuid(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
                 if (rec_id == -1)
                 {
@@ -1285,22 +1289,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                     if ((rec_id = dtCreateRecipient(ddb, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
                                                     databasedir, &recipientmap, &warned_createcontacts)) == -1)
                     {
-                      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to create recipient for quote-mention. Skipping." << std::endl;
+                      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << ": Failed to create recipient for quote-mention. Skipping." << std::endl;
                       continue;
                     }
                   }
                   else
                   {
-                    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed to find recipient for quote-mention. Skipping." << std::endl;
+                    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << ": Failed to find recipient for quote-mention. Skipping." << std::endl;
                     continue;
                   }
                 }
               }
 
-              // ProtoBufParser<protobuffer::optional::INT32, // int32 start
-              //                protobuffer::optional::INT32, // int32 length
-              //                protobuffer::optional::STRING // in place of the oneof?
-              //                > bodyrange;
               BodyRange bodyrange;
               bodyrange.addField<1>(qbrres.getValueAs<long long int>(0, "qbr_start"));
               bodyrange.addField<2>(qbrres.getValueAs<long long int>(0, "qbr_length"));
