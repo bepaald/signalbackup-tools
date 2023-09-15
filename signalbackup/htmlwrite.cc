@@ -1012,6 +1012,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         background-repeat: no-repeat;
         background-size: cover;
       }
+
+      #bottom {
+        display: flex;
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+      }
 )" << std::endl;
 
   if (themeswitch || searchpage)
@@ -1053,6 +1060,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .nav-up {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"></path></svg>');
         filter: var(--icon-f);
+      }
+
+      .nav-bottom {
+        transform: rotate(270deg);
       }
 
       .nav-one {
@@ -1315,6 +1326,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         }
 
         .columnview-header {
+          display: none;
+        }
+
+        #bottom {
           display: none;
         }
 
