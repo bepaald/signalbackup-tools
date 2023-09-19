@@ -538,7 +538,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "'id', " + d_mms_table + "._id, "
                                "'b', " + d_mms_table + ".body, "
                                "'f', " + d_mms_table + "." + d_mms_recipient_id + ", "
-                               "'trid', thread." + d_thread_recipient_id + ", "
+                               "'tr', thread." + d_thread_recipient_id + ", "
                                "'o', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
                                "'d', " + d_mms_table + ".date_received, "
                                "'p', " + "\"" + msg_info.threaddir + "/" + msg_info.filename + "\"" + ") AS line, "
@@ -621,7 +621,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << std::endl;
         htmloutput << "        <div title=\"First page\">" << std::endl;
         htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + ".html") << "\">" << std::endl;
-        htmloutput << "            <div class=\"menu-icon nav-max " << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
+        htmloutput << "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "        <div title=\"Previous page\">" << std::endl;
@@ -647,9 +647,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "     </div>" << std::endl; // closes controls-wrapper
       htmloutput << std::endl;
       htmloutput << "       <div id=\"bottom\">" << std::endl;
-      htmloutput << "         <a href=\"#pagebottom\">" << std::endl;
-      htmloutput << "           <div class=\"menu-item\">" << std::endl;
-      htmloutput << "             <span class=\"menu-icon nav-up nav-bottom\">" << std::endl;
+      htmloutput << "         <a href=\"#pagebottom\" title=\"Jump to bottom\">" << std::endl;
+      htmloutput << "           <div class=\"menu-item-bottom\">" << std::endl;
+      htmloutput << "             <span class=\"menu-icon nav-one nav-bottom\">" << std::endl;
       htmloutput << "             </span>" << std::endl;
       htmloutput << "           </div>" << std::endl;
       htmloutput << "         </a>" << std::endl;
@@ -672,7 +672,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (searchpage)
         {
           htmloutput << "        <div class=\"menu-item\">" << std::endl;
-          htmloutput << "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\">" << std::endl;
+          htmloutput << "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\" title=\"Search\">" << std::endl;
           htmloutput << "            <span class=\"menu-icon searchbutton\">" << std::endl;
           htmloutput << "            </span>" << std::endl;
           htmloutput << "          </a>" << std::endl;

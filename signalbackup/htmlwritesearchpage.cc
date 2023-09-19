@@ -39,12 +39,20 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
     <meta charset="utf-8">
     <title>Signal conversation search</title>
     <style>
+
+.advancedsearch {
+  padding: 5px;
+}
+
 #summary-box {
   display: flex;
   justify-content: center;
   padding: 10px 0px 10px 0px;
+  align-items: center;
 }
 
+#searchfirst,
+#searchlast,
 #searchprev,
 #searchnext,
 #summary {
@@ -58,22 +66,30 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
   padding: 0px 30px 0px 30px;
 }
 
+#searchfirst.disabled,
+#searchlast.disabled,
 #searchprev.disabled,
 #searchnext.disabled {
   color: #AAAAAA;
   visibility: hidden;
 }
 
+#searchfirst.enabled,
+#searchlast.enabled,
 #searchprev.enabled,
 #searchnext.enabled {
   color: inherit;
 }
 
+#searchfirst:hover,
+#searchlast:hover,
 #searchprev:hover,
 #searchnext:hover {
   cursor: default;
 }
 
+#searchfirst.enabled:hover,
+#searchlast.enabled:hover,
 #searchprev.enabled:hover,
 #searchnext.enabled:hover {
   cursor: pointer;
@@ -166,11 +182,6 @@ body {
   font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
   border-radius: 10px;
   width: calc(100% - 60px);
-}
-
-.incoming-group-msg {
-  display: flex;
-  flex-direction: row;
 }
 
 .msg {
@@ -319,6 +330,94 @@ body {
   background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"></path></svg>');
   filter: var(--icon-f);
 }
+
+.nav-one {
+  background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 1.5;" d="M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131"></path></svg>');
+  filter: var(--icon-f);
+}
+
+.nav-max {
+  background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 1.5;" d="M 10.746186,2.9378689 3.6836603,10.000394 10.745399,17.062131"></path><path style="stroke-width: 1.5;" d="M 16.846186,2.9378689 9.7836603,10.000394 16.845399,17.062131"></path></svg>');
+  filter: var(--icon-f);
+}
+
+.nav-fwd {
+  transform: scaleX(-1);
+}
+
+.searchnav {
+  margin-right: 0px;
+  width: 15px;
+  height: 15px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+#searchfirst, #searchlast {
+  margin: 7px;
+}
+
+@media print {
+  #menu, #theme, #searchfirst, #searchlast, #searchprev, #searchnext {
+    display: none;
+  }
+
+  .msg {
+    break-inside: avoid;
+    /* both fit-content and max-content seem fine here, so just including both as fall back */
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+    width: fit-content;
+    /*leave it up to print settings */
+    /*background-color: transparent;*/
+  }
+
+  .msg-incoming, .msg-outgoing {
+    border: 1px solid black;
+    display: block;
+  }
+
+  .msg.msg-incoming {
+   margin-right: auto;
+  }
+
+  .msg.msg-outgoing {
+    margin-left: auto;
+  }
+
+  .conversation-wrapper {
+    width: 100%;
+  }
+
+  body, .controls-wrapper, .conversation-wrapper, .conversation-box {
+    display: block;
+    /*leave it up to print settings */
+    /*background-color: transparent;*/
+  }
+
+  .conversation-box {
+    padding: 0 3px;
+    margin: 0;
+    box-sizing: border-box;
+    width: 100%;
+    border-radius: 0;
+    /*leave it up to print settings */
+    /*color: black; */
+  }
+
+  #message-header {
+    padding-top: 0;
+    padding-bottom: 10px;
+    margin: auto;
+    width: fit-content;
+    /*leave it up to print settings */
+    /* color: black;*/
+  }
+
+  /* todo: print style for audio, video and attachment previews */
+} /* end @media print */
+
     </style>
   </head>
 
@@ -383,7 +482,7 @@ body {
               <input type="checkbox" id="enable_regex" name="enable_regex">
               <label for="enable_regex">Regex</label>
 
-              <div class="advancedsearch" style="padding: 5px;">
+              <div class="advancedsearch">
 
                 <div style="text-align: left;">
                   <input type="checkbox" id="enable_date" name="enable_date" onclick="toggleAdvancedSearch('enable_date', 'limitdate')">
@@ -405,9 +504,11 @@ body {
             </div>
             <div class="conversation-box" id="search_results">
               <div id="summary-box">
-                <div id="searchprev" class="disabled">&#x23F4;</div>
+                <div id="searchfirst" class="searchnav nav-max disabled"></div>
+                <div id="searchprev" class="searchnav nav-one disabled"></div>
                 <div id="summary"></div>
-                <div id="searchnext" class="disabled">&#x23F5;</div>
+                <div id="searchnext" class="searchnav nav-one nav-fwd disabled"></div>
+                <div id="searchlast" class="searchnav nav-max nav-fwd disabled"></div>
               </div>
             </div>
           </div>
@@ -530,11 +631,14 @@ body {
                                }
                            });
 
+    var max_per_page = 200;
     var global_results;
     var global_searchstring;
     var global_page = 0;
     var prevbutton = document.getElementById("searchprev");
     var nextbutton = document.getElementById("searchnext");
+    var firstbutton = document.getElementById("searchfirst");
+    var lastbutton = document.getElementById("searchlast");
 
     function getSearchFieldAndSearch()
     {
@@ -573,11 +677,11 @@ body {
         const regex = RegExp(term, "i");
         return obj.filter(element => regex.test(element.b) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.trid == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
       }
       return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
                                    (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                   (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.trid == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                   (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
     }
 
     function stringinsert(str, index, value)
@@ -608,8 +712,6 @@ body {
 
     function showResults()
     {
-      var max_per_page = 200;
-
       // remove old search results
       const elements = document.getElementsByClassName("searchresults");
       while (elements.length > 0)
@@ -631,7 +733,7 @@ body {
 
         // get name of 'thread' id
         var index = recipient_idx.findIndex(function(item){
-          return item._id === global_results[i].trid;
+          return item._id === global_results[i].tr;
         });
         var threadname = recipient_idx[index].display_name;
 
@@ -656,7 +758,7 @@ body {
           fromspan.innerHTML = displayname + " (to <i>" + threadname + "</i>)";
         else
         {
-          if (global_results[i].f === global_results[i].trid)
+          if (global_results[i].f === global_results[i].tr)
             fromspan.innerHTML = displayname;
           else
             fromspan.innerHTML = displayname + " (in <i>" + threadname + "</i>)";
@@ -708,6 +810,9 @@ body {
         prevbutton.classList.remove("enabled");
         prevbutton.classList.add("disabled");
         prevbutton.removeEventListener("click", showResultsPrev);
+        firstbutton.classList.remove("enabled");
+        firstbutton.classList.add("disabled");
+        firstbutton.removeEventListener("click", showResultsFirst);
       }
       else
       {
@@ -715,6 +820,10 @@ body {
         prevbutton.classList.add("enabled");
         prevbutton.removeEventListener("click", showResultsPrev);
         prevbutton.addEventListener("click", showResultsPrev);
+        firstbutton.classList.remove("disabled");
+        firstbutton.classList.add("enabled");
+        firstbutton.removeEventListener("click", showResultsFirst);
+        firstbutton.addEventListener("click", showResultsFirst);
       }
 
       if ((global_page * max_per_page + max_per_page) >= global_results.length || global_results.length == 0)
@@ -722,6 +831,9 @@ body {
         nextbutton.classList.add("disabled");
         nextbutton.classList.remove("enabled");
         nextbutton.removeEventListener("click", showResultsNext);
+        lastbutton.classList.add("disabled");
+        lastbutton.classList.remove("enabled");
+        lastbutton.removeEventListener("click", showResultsLast);
       }
       else
       {
@@ -729,7 +841,17 @@ body {
         nextbutton.classList.add("enabled");
         nextbutton.removeEventListener("click", showResultsNext);
         nextbutton.addEventListener("click", showResultsNext);
+        lastbutton.classList.remove("disabled");
+        lastbutton.classList.add("enabled");
+        lastbutton.removeEventListener("click", showResultsLast);
+        lastbutton.addEventListener("click", showResultsLast);
       }
+    }
+
+    function showResultsFirst()
+    {
+      global_page = 0;
+      showResults();
     }
 
     function showResultsPrev()
@@ -743,6 +865,12 @@ body {
     function showResultsNext()
     {
       ++global_page;
+      showResults();
+    }
+
+    function showResultsLast()
+    {
+      global_page = Math.floor(global_results.length / max_per_page) - ((global_results.length % max_per_page) == 0);
       showResults();
     }
 
