@@ -110,6 +110,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "        --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl;
   file << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << std::endl;
+  file << "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << std::endl;
   file << "      }" << std::endl;
   file << std::endl;
 
@@ -141,6 +142,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl;
     file << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << std::endl;
+    file << "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << std::endl;
     file << "      }";
     file << std::endl;
   }
@@ -1057,284 +1059,293 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   }
 
     file << R"(
-      .nav-up {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"></path></svg>');
-        filter: var(--icon-f);
+    .nav-up {
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"></path></svg>');
+      filter: var(--icon-f);
+    }
+
+    .menu-item-bottom {
+      display: flex;
+      color: var(--menuitem-c);
+      border-radius: 50%;
+      background-color: var(--msgreactioninfo-bc);
+      width: 40px;
+      height: 40px;
+      align-items: center;
+      justify-content: center;
+      padding: 0px;
+    }
+
+    .nav-bottom {
+      transform: rotate(270deg);
+      width: 25px;
+      height: 25px;
+    }
+
+    .nav-one {
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131"></path></svg>');
+      filter: var(--icon-f);
+    }
+
+    .nav-max {
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 10.746186,2.9378689 3.6836603,10.000394 10.745399,17.062131"></path><path style="stroke-width: 3;" d="M 16.846186,2.9378689 9.7836603,10.000394 16.845399,17.062131"></path></svg>');
+      filter: var(--icon-f);
+    }
+
+    .nav-fwd {
+      transform: scaleX(-1);
+    }
+
+    .nav-disabled {
+      filter: var(--nav-disabled-f);
+    }
+
+    .conversation-link {
+      display: flex;
+    }
+
+    .conversation-link-left {
+      padding-right: 20px;
+      order: -1;
+    }
+
+    .conversation-link-right {
+      padding-left: 20px;
+      order: 1;
+    }
+
+    .conversation-link > div {
+      align-self: flex-end;
+      position: sticky;
+      bottom: 30px;
+      padding-right: 5px;
+      padding-left: 5px;
+      padding-top: 5px;
+    }
+
+    .groupdetails {
+      display: block;
+      max-height: 0px;
+      max-width: 90%;
+      margin-left: auto;
+      margin-right: auto;
+      overflow: hidden;
+      padding-top: 0px;
+      padding-bottom: 0px;
+      transition: padding-top 0.05s ease, padding-bottom 0.05s ease, max-height 0.25s ease;
+    }
+
+    .columnview {
+      display: flex;
+      flex-flow: row wrap;
+      justify-content: space-between;
+      overflow-wrap: anywhere;
+    }
+
+    .left-column,
+    .right-column {
+      flex: 0 0 49%;
+    }
+
+    .left-column {
+      padding-right: 1%;
+      text-align: right;
+    }
+
+    .right-column {
+      padding-left: 1%;
+      text-align: left;
+    }
+
+    .columnview-header {
+      flex: 0 0 100%;
+      text-align: center;
+      font-style: italic;
+    }
+
+    #thread-subtitle input[type=checkbox]:checked ~ label > .groupdetails {
+      max-height: none;
+      padding-top: 5px;
+      padding-bottom: 5px;
+      overflow: visible;
+      transition: padding-top 0.2s ease, padding-bottom 0.2s ease, max-height 0.4s ease;
+    }
+
+    #thread-subtitle input[type=checkbox] ~ label > small::before {
+      content: '(show';
+    }
+
+    #thread-subtitle input[type=checkbox]:checked ~ label >  small::before {
+      content: '(hide';
+    }
+
+    @media print {
+      #menu {
+        display: none;
       }
 
-      .nav-bottom {
-        transform: rotate(270deg);
+      #theme {
+        display: none;
       }
 
-      .nav-one {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131"></path></svg>');
-        filter: var(--icon-f);
+      #thread-subtitle > label > small {
+        display: none;
       }
 
-      .nav-max {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 10.746186,2.9378689 3.6836603,10.000394 10.745399,17.062131"></path><path style="stroke-width: 3;" d="M 16.846186,2.9378689 9.7836603,10.000394 16.845399,17.062131"></path></svg>');
-        filter: var(--icon-f);
+      .msg {
+        break-inside: avoid;
+        /* both fit-content and max-content seem fine here, so just including both as fall back */
+        width: -webkit-fit-content;
+        width: -moz-fit-content;
+        width: fit-content;
+        /*leave it up to print settings */
+        /*background-color: transparent;*/
       }
 
-      .nav-fwd {
-        transform: scaleX(-1);
+      .msg-incoming, .msg-outgoing {
+        border: 1px solid black;
+        display: block;
       }
 
-      .nav-disabled {
-        filter: brightness(50%);
+      .msg-incoming .spoiler,
+      .msg-outgoing .spoiler {
+        filter: none;
+        background: rgba(0, 0, 0, .2);
       }
 
-      .conversation-link {
-        display: flex;
-      }
-
-      .conversation-link-left {
-        padding-right: 20px;
-        order: -1;
-      }
-
-      .conversation-link-right {
-        padding-left: 20px;
-        order: 1;
-      }
-
-      .conversation-link > div {
-        align-self: flex-end;
-        position: sticky;
-        bottom: 30px;
-        padding-right: 5px;
-        padding-left: 5px;
-        padding-top: 5px;
+      .no-bg-bubble {
+        border: 0;
       }
 
       .groupdetails {
-        display: block;
-        max-height: 0px;
-        max-width: 90%;
-        margin-left: auto;
-        margin-right: auto;
-        overflow: hidden;
-        padding-top: 0px;
-        padding-bottom: 0px;
-        transition: padding-top 0.05s ease, padding-bottom 0.05s ease, max-height 0.25s ease;
-      }
-
-      .columnview {
-        display: flex;
-        flex-flow: row wrap;
-        justify-content: space-between;
-        overflow-wrap: anywhere;
-      }
-
-      .left-column,
-      .right-column {
-        flex: 0 0 49%;
-      }
-
-      .left-column {
-        padding-right: 1%;
-        text-align: right;
-      }
-
-      .right-column {
-        padding-left: 1%;
-        text-align: left;
-      }
-
-      .columnview-header {
-        flex: 0 0 100%;
-        text-align: center;
-        font-style: italic;
-      }
-
-      #thread-subtitle input[type=checkbox]:checked ~ label > .groupdetails {
         max-height: none;
         padding-top: 5px;
         padding-bottom: 5px;
         overflow: visible;
-        transition: padding-top 0.2s ease, padding-bottom 0.2s ease, max-height 0.4s ease;
       }
 
-      #thread-subtitle input[type=checkbox] ~ label > small::before {
-        content: '(show';
+      .incoming-group-msg {
+        display: block;
       }
 
-      #thread-subtitle input[type=checkbox]:checked ~ label >  small::before {
-        content: '(hide';
+      .incoming-group-msg > .msg-incoming {
+        display: inline-block;
       }
 
-      @media print {
-        #menu {
-          display: none;
-        }
+      .msg.msg-incoming, .incoming-group-msg {
+        margin-right: auto;
+      }
 
-        #theme {
-          display: none;
-        }
+      .msg.msg-outgoing {
+        margin-left: auto;
+      }
 
-        #thread-subtitle > label > small {
-          display: none;
-        }
+      .msg-status, .msg-date-change {
+        margin: 0 auto;
+      }
 
-        .msg {
-          break-inside: avoid;
-          /* both fit-content and max-content seem fine here, so just including both as fall back */
-          width: -webkit-fit-content;
-          width: -moz-fit-content;
-          width: fit-content;
+      .conversation-wrapper {
+        width: 100%;
+      }
 
-         /*leave it up to print settings */
-         /*background-color: transparent;*/
-        }
+      body, .controls-wrapper, .conversation-wrapper, .conversation-box {
+        display: block;
+        /*leave it up to print settings */
+        /*background-color: transparent;*/
+      }
 
-        .msg-incoming, .msg-outgoing {
-          border: 1px solid black;
-          display: block;
-        }
+      .conversation-box {
+        padding: 0 3px;
+        margin: 0;
+        box-sizing: border-box;
+        width: 100%;
+        border-radius: 0;
+        /*leave it up to print settings */
+        /*color: black; */
+      }
 
-        .msg-incoming .spoiler,
-        .msg-outgoing .spoiler {
-          filter: none;
-          background: rgba(0, 0, 0, .2);
-        }
+      .msg-reaction {
+        border: none;
+      }
 
-        .no-bg-bubble {
-          border: 0;
-        }
+      #message-header {
+        padding-top: 0;
+        padding-bottom: 10px;
+        /*leave it up to print settings */
+        /* color: black;*/
+      }
 
-        .groupdetails {
-          max-height: none;
-          padding-top: 5px;
-          padding-bottom: 5px;
-          overflow: visible;
-        }
+      .msg-quote {
+        border: 1px solid grey;
+        border-left: 5px solid grey;
+      }
 
-        .incoming-group-msg {
-          display: block;
-        }
+      .msg-status .msg-video-call-incoming, .msg-status .msg-video-call-outgoing,
+      .msg-status .msg-group-call, .msg-status .msg-call-incoming,
+      .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
+      .msg-status .msg-info-icon, .msg-status .msg-security-icon,
+      .msg-status .msg-pencil-icon, .msg-status .msg-megaphone-icon,
+      .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
+      .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
+      .msg-status .msg-members-icon, .msg-status .msg-member-approved-icon,
+      .msg-status .msg-member-rejected-icon,
+      .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
+      .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
+      .msg-status .msg-phone-icon {
+        print-color-adjust: exact;
+        filter: brightness(0.5);
+      }
 
-        .incoming-group-msg > .msg-incoming {
-          display: inline-block;
-        }
+      .status-text > div, .checkmarks {
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+        print-color-adjust: exact;
+        filter: var(--media-status-checkmarks-f);
+      }
 
-        .msg.msg-incoming, .incoming-group-msg {
-          margin-right: auto;
-        }
+      .status-text > div.msg-call-missed {
+        filter: none;
+      }
 
-        .msg.msg-outgoing {
-          margin-left: auto;
-        }
+      .avatar {
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+        print-color-adjust: exact;
+        display: inline-block;
+      }
 
-        .msg-status, .msg-date-change {
-          margin: 0 auto;
-        }
+      .convo-avatar, .incoming-group-msg, .msg {
+        break-inside: avoid;
+       }
 
-        .conversation-wrapper {
-          width: 100%;
-        }
+      .convo-avatar {
+        vertical-align: bottom;
+      }
 
-        body, .controls-wrapper, .conversation-wrapper, .conversation-box {
-          display: block;
+      .right-column,
+      .left-column {
+        padding: 0px;
+        text-align: left;
+        flex: 0 0 100%;
+      }
 
-          /*leave it up to print settings */
-          /*background-color: transparent;*/
-        }
+      .left-column {
+        font-style: italic;
+      }
 
-        .conversation-box {
-          padding: 0 3px;
-          margin: 0;
-          box-sizing: border-box;
-          width: 100%;
-          border-radius: 0;
+      .left-column::before {
+        content: '- ';
+      }
 
-          /*leave it up to print settings */
-          /*color: black; */
-        }
+      .columnview-header {
+        display: none;
+      }
 
-        .msg-reaction {
-          border: none;
-        }
-
-        #message-header {
-          padding-top: 0;
-          padding-bottom: 10px;
-
-          /*leave it up to print settings */
-          /* color: black;*/
-        }
-
-        .msg-quote {
-          border: 1px solid grey;
-          border-left: 5px solid grey;
-        }
-
-        .msg-status .msg-video-call-incoming, .msg-status .msg-video-call-outgoing,
-        .msg-status .msg-group-call, .msg-status .msg-call-incoming,
-        .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
-        .msg-status .msg-info-icon, .msg-status .msg-security-icon,
-        .msg-status .msg-pencil-icon, .msg-status .msg-megaphone-icon,
-        .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
-        .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
-        .msg-status .msg-members-icon, .msg-status .msg-member-approved-icon,
-        .msg-status .msg-member-rejected-icon,
-        .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
-        .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
-        .msg-status .msg-phone-icon {
-          print-color-adjust: exact;
-          filter: brightness(0.5);
-        }
-
-        .status-text > div, .checkmarks {
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
-          print-color-adjust: exact;
-          filter: var(--media-status-checkmarks-f);
-        }
-
-        .status-text > div.msg-call-missed {
-          filter: none;
-        }
-
-        .avatar {
-          -webkit-print-color-adjust: exact;
-          color-adjust: exact;
-          print-color-adjust: exact;
-          display: inline-block;
-        }
-
-        .convo-avatar, .incoming-group-msg, .msg {
-          break-inside: avoid;
-        }
-
-        .convo-avatar {
-          vertical-align: bottom;
-        }
-
-        .right-column,
-        .left-column {
-          padding: 0px;
-          text-align: left;
-          flex: 0 0 100%;
-        }
-
-        .left-column {
-          font-style: italic;
-        }
-
-        .left-column::before {
-          content: '- ';
-        }
-
-        .columnview-header {
-          display: none;
-        }
-
-        #bottom {
-          display: none;
-        }
-
-        /* todo: print style for audio, video and attachment previews */
-      } /* end @media print */
+      #bottom {
+        display: none;
+      }
+      /* todo: print style for audio, video and attachment previews */
+    } /* end @media print */
 
     </style>
   </head>
