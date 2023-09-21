@@ -53,7 +53,8 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
     int l = static_cast<int>(sizeof(uint32_t) + length);
     uint32_t length_data = bepaald::swap_endian<uint32_t>(length + MACSIZE);
 
-    //std::cout << "Encrypting length data: " << length_data << " -> ";
+    if (d_verbose) [[unlikely]]
+      std::cout << "Encrypting framelength: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << length_data << " -> ";
 
     if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, reinterpret_cast<unsigned char *>(&length_data), sizeof(uint32_t)) != 1)
     {
@@ -61,11 +62,15 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
       return {nullptr, 0};
     }
     encryptedframepos = l;
-    //std::cout << bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(encryptedframe.get()), 4) << std::endl;
+
+    if (d_verbose) [[unlikely]]
+      std::cout << bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(encryptedframe.get()), 4) << std::endl;
   }
   else [[unlikely]] // old backup file format, had RAW frame length
   {
     uint32_t rawlength = bepaald::swap_endian<uint32_t>(length + MACSIZE);
+    if (d_verbose) [[unlikely]]
+      std::cout << "Writing raw framelength: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << rawlength << std::endl;
     std::memcpy(encryptedframe.get(), reinterpret_cast<unsigned char *>(&rawlength), 4);
     encryptedframepos = 4;
   }

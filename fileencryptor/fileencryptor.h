@@ -30,13 +30,14 @@ class FileEncryptor : public CryptBase
 {
   std::string d_passphrase;
   uint32_t d_backupfileversion;
+  bool d_verbose;
  public:
-  FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion);
-  explicit FileEncryptor(std::string const &passphrase, uint32_t backupfileversion);
+  FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
+  explicit FileEncryptor(std::string const &passphrase, uint32_t backupfileversion, bool verbose);
   FileEncryptor();
   FileEncryptor(FileEncryptor const &other) = delete;
   FileEncryptor operator=(FileEncryptor const &other) = delete;
-  bool init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion);
+  bool init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   bool init(unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size);
   std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<unsigned char *, uint64_t> const &data);
   std::pair<unsigned char *, uint64_t> encryptFrame(unsigned char *data, uint64_t length);
