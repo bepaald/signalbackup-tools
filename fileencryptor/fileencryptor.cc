@@ -19,26 +19,29 @@
 
 #include "fileencryptor.ih"
 
-FileEncryptor::FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion)
+FileEncryptor::FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose)
   :
   d_passphrase(passphrase),
-  d_backupfileversion(backupfileversion)
+  d_backupfileversion(backupfileversion),
+  d_verbose(verbose)
 {
   d_ok = init(salt, salt_size, iv, iv_size);
 }
 
-FileEncryptor::FileEncryptor(std::string const &passphrase, uint32_t backupfileversion)
+FileEncryptor::FileEncryptor(std::string const &passphrase, uint32_t backupfileversion, bool verbose)
   :
   d_passphrase(passphrase),
-  d_backupfileversion(backupfileversion)
+  d_backupfileversion(backupfileversion),
+  d_verbose(verbose)
 {}
 
 FileEncryptor::FileEncryptor()
 {}
 
-bool FileEncryptor::init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion)
+bool FileEncryptor::init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose)
 {
   d_passphrase = passphrase;
   d_backupfileversion = backupfileversion;
+  d_verbose = verbose;
   return init(salt, salt_size, iv, iv_size);
 }

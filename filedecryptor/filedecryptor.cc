@@ -111,15 +111,20 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   DEBUGOUT("CIPHERKEY: ", bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size));
   DEBUGOUT("MACKEY: ", bepaald::bytesToHexString(d_mackey, d_mackey_size));
   DEBUGOUT("BACKUPFILE VERSION: ", d_backupfileversion);
+  DEBUGOUT("BACKUPFILE SIZE: ", d_filesize);
   DEBUGOUT("COUNTER: ", d_counter);
   */
 
-  std::cout << "IV: " << bepaald::bytesToHexString(d_iv, d_iv_size) << " (size: " << d_iv_size << ")" << std::endl;
-  std::cout << "SALT: " << bepaald::bytesToHexString(d_salt, d_salt_size) << " (size: " << d_salt_size << ")" << std::endl;
-  std::cout << "BACKUPKEY: " << bepaald::bytesToHexString(d_backupkey, d_backupkey_size) << " (size: " << d_backupkey_size << ")" << std::endl;
-  std::cout << "CIPHERKEY: " << bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size) << " (size: " << d_cipherkey_size << ")" << std::endl;
-  std::cout << "MACKEY: " << bepaald::bytesToHexString(d_mackey, d_mackey_size) << " (size: " << d_mackey_size << ")" << std::endl;
+  if (d_verbose) [[unlikely]]
+  {
+    std::cout << "IV: " << bepaald::bytesToHexString(d_iv, d_iv_size) << " (size: " << d_iv_size << ")" << std::endl;
+    std::cout << "SALT: " << bepaald::bytesToHexString(d_salt, d_salt_size) << " (size: " << d_salt_size << ")" << std::endl;
+    std::cout << "BACKUPKEY: " << bepaald::bytesToHexString(d_backupkey, d_backupkey_size) << " (size: " << d_backupkey_size << ")" << std::endl;
+    std::cout << "CIPHERKEY: " << bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size) << " (size: " << d_cipherkey_size << ")" << std::endl;
+    std::cout << "MACKEY: " << bepaald::bytesToHexString(d_mackey, d_mackey_size) << " (size: " << d_mackey_size << ")" << std::endl;
+  }
   std::cout << "BACKUPFILE VERSION: " << d_backupfileversion << std::endl;
+  std::cout << "BACKUPFILE SIZE: " << d_filesize << std::endl;
   std::cout << "COUNTER: " << d_counter << std::endl;
 
   d_headerframe.reset(headerframe);
