@@ -249,8 +249,18 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
   // AVATAR
   std::cout << "Writing Avatars..." << std::endl;
   for (auto const &a : d_avatars)
+  {
+
+    if (d_verbose && !a.second.get()) [[unlikely]]
+    {
+      std::cout << "ASKED TO WRITE NULLPTR-AVATAR. THIS SHOULD BE AN ERROR" << std::endl;
+      std::cout << "BUT I'M PRETENDING IT DIDN'T HAPPEN TO FIND THE CAUSE OF IT" << std::endl;
+      std::cout << "THE PROGRAM WILL LIKELY CRASH NOW..." << std::endl;
+    }
+
     if (!writeEncryptedFrame(outputfile, a.second.get()))
       return false;
+  }
 
   // END
   std::cout << "Writing EndFrame..." << std::endl;

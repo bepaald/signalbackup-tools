@@ -54,7 +54,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
     int32_t length_data = bepaald::swap_endian<int32_t>(length + MACSIZE);
 
     if (d_verbose) [[unlikely]]
-      std::cout << "Encrypting framelength: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << length_data << " -> ";
+      std::cout << "Encrypting frame. Length: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << length_data << " -> " << std::flush;
 
     if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, reinterpret_cast<unsigned char *>(&length_data), sizeof(int32_t)) != 1)
     {
