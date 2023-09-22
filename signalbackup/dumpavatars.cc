@@ -63,9 +63,12 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     SqliteDB::QueryResults results;
 
-    std::string query = "SELECT COALESCE(groups.title, recipient." + d_recipient_system_joined_name + ", recipient.profile_joined_name, recipient." + d_recipient_profile_given_name + ") AS 'chatpartner' FROM recipient "
-      "LEFT JOIN groups ON recipient.group_id == groups.group_id "
-      "WHERE recipient._id == ?";
+    std::string query = "SELECT COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+      (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+      "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), "
+      "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+      " recipient._id) AS 'chatpartner' "
+      "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?";
 
     // if ! limit.empty()
     // query += " AND _id == something, or chatpartner == ''
@@ -87,8 +90,8 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
       continue;
 
     std::string filename = sanitizeFilename(name + ".jpg");
-    if (filename.empty()) // filename was not set in database or was not impossible
-                          // to sanitize (eg reserved name in windows 'COM1')
+    if (filename.empty() || filename == ".jpg") // filename was not set in database or was not impossible
+                                                // to sanitize (eg reserved name in windows 'COM1')
       filename = af->recipient() + ".jpg";
 
     // make filename unique
