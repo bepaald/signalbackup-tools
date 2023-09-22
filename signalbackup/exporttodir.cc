@@ -182,7 +182,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
   //   write('BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE');
   if (d_found_sqlite_sequence_in_backup)
   {
-    std::ofstream bft(directory + "/BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE");
+    std::ofstream bft(directory + "/BUILT_FOR_TESTING_FOUND_SQLITE_SEQUENCE", std::ios_base::binary);
     bft.close();
   }
 #endif

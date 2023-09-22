@@ -260,7 +260,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       return false;
     }
 
-    std::ofstream txtoutput(directory + "/" + filename);
+    std::ofstream txtoutput(directory + "/" + filename, std::ios_base::binary);
     if (!txtoutput.is_open())
     {
       std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
