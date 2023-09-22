@@ -24,6 +24,9 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   if (!d_ok)
     return {nullptr, 0};
 
+  if (d_verbose) [[unlikely]]
+    std::cout << "Encrypting attachment. Length: " << length << "..." << std::flush;
+
   // update iv:
   uintToFourBytes(d_iv, d_counter++);
 
@@ -85,6 +88,9 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   }
 #endif
   std::memcpy(encryptedframe.get() + length, hash, 10);
+
+  if (d_verbose) [[unlikely]]
+     std::cout << "done!" << std::endl;
 
   return {encryptedframe.release(), length + MACSIZE};
 }
