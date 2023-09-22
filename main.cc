@@ -50,11 +50,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef VERSIONDATE
-#ifndef USE_CRYPTOPP
-  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE << " (OpenSSL)" << std::endl;
-#else
-  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE << " (CryptoPP)" << std::endl;
-#endif
+  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE << std::endl;
 #endif
 
   Arg arg(argc, argv);
