@@ -22,6 +22,10 @@
 bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
                                    long long int aid, std::string const &databasedir)
 {
+
+  if (d_verbose) [[unlikely]]
+    std::cout << "Updating profile for id: " << dtid << std::endl;
+
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, IFNULL(profileFamilyName, '') AS profileFamilyName, profileFullName, "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
@@ -81,8 +85,11 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
       return false;
     }
 
-    //std::cout << "Updating profile:" << std::endl;
-    //res.prettyPrint();
+    // if (d_verbose) [[unlikely]]
+    // {
+    //   std::cout << "Updating profile:" << std::endl;
+    //   res.prettyPrint();
+    // }
 
     // update name info
     if (!d_database.exec("UPDATE recipient SET "
@@ -97,6 +104,9 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
   // update avatar
   if (!res("avatar").empty())
   {
+    if (d_verbose) [[unlikely]]
+      std::cout << "Updating avatar" << std::endl;
+
     // find current
     auto pos = std::find_if(d_avatars.begin(), d_avatars.end(),
                             [aid](auto const &p) { return p.first == bepaald::toString(aid); });
@@ -108,7 +118,21 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
     }
 
     if (!dtSetAvatar(res("avatar"), aid, databasedir))
+    {
+      if (d_verbose) [[unlikely]]
+        std::cout << "Failed to set new avatar, restoring previous..." << std::endl;
       d_avatars.emplace_back(std::make_pair(bepaald::toString(aid), std::move(backup)));
+    }
+    else
+    {
+      if (d_verbose) [[unlikely]]
+      {
+        std::cout << "Set new avatar. Info:" << std::endl;
+        for (auto const &a : d_avatars)
+          if (a.first == bepaald::toString(aid))
+            a.second->printInfo();
+      }
+    }
   }
 
   return true;

@@ -424,7 +424,8 @@ int main(int argc, char *argv[])
     sb->checkDbIntegrity(true);
     if (!sb->exportBackup(arg.output(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
     {
-      std::cout << "Failed to export backup to '" << arg.output() << "'" << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
+                << "Failed to export backup to '" << arg.output() << "'" << std::endl;
       return 1;
     }
   }
