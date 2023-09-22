@@ -50,7 +50,11 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef VERSIONDATE
-  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE << std::endl;
+  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE;
+  #if defined(_WIN32) || defined(__MINGW64__)
+  std::cout << " (Win)";
+  #endif
+  std::cout << std::endl;
 #endif
 
   Arg arg(argc, argv);
@@ -60,6 +64,10 @@ int main(int argc, char *argv[])
     std::cout << "Try '" << argv[0] << " --help' for available options" << std::endl;
     return 1;
   }
+
+  if (arg.verbose()) [[unlikely]]
+    std::cout << "Parsed command line arguments." << std::endl;
+
 
   if (arg.help())
   {
@@ -161,6 +169,8 @@ int main(int argc, char *argv[])
   MEMINFO("Start of program, before opening input");
 
   // open input
+  if (arg.verbose()) [[unlikely]]
+    std::cout << "Opening input" << std::endl;
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.passphrase(), arg.verbose(), arg.showprogress(),
                                                     arg.replaceattachments_bool(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
@@ -170,6 +180,8 @@ int main(int argc, char *argv[])
     std::cout << "Failed to open backup" << std::endl;
     return 1;
   }
+  if (arg.verbose()) [[unlikely]]
+    std::cout << "Input opened successfully" << std::endl;
 
   MEMINFO("Input opened");
 

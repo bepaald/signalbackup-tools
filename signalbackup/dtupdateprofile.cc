@@ -120,8 +120,14 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
     if (!dtSetAvatar(res("avatar"), aid, databasedir))
     {
       if (d_verbose) [[unlikely]]
-        std::cout << "Failed to set new avatar, restoring previous..." << std::endl;
-      d_avatars.emplace_back(std::make_pair(bepaald::toString(aid), std::move(backup)));
+        std::cout << "Failed to set new avatar" << std::endl;
+      if (backup)
+      {
+        std::cout << ", restoring previous..." << std::flush;
+        d_avatars.emplace_back(std::make_pair(bepaald::toString(aid), std::move(backup)));
+      }
+      if (d_verbose) [[unlikely]]
+        std::cout << std::endl;
     }
     else
     {
