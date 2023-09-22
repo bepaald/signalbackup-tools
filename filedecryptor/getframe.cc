@@ -94,7 +94,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     return 0;
   }
 
-  int32_t encryptedframelength = 0;
+  uint32_t encryptedframelength = 0;
   int encryptedframelength_size = sizeof(decltype(encryptedframelength));
   if (EVP_DecryptUpdate(ctx.get(), reinterpret_cast<unsigned char *>(&encryptedframelength), &encryptedframelength_size,
                         reinterpret_cast<unsigned char *>(&encrypted_encryptedframelength),
@@ -104,7 +104,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     return 0;
   }
 
-  encryptedframelength = bepaald::swap_endian<int32_t>(encryptedframelength);
+  encryptedframelength = bepaald::swap_endian<uint32_t>(encryptedframelength);
 
   DEBUGOUT("Framelength: ", encryptedframelength);
   if (d_verbose) [[unlikely]]
@@ -276,7 +276,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     return frame;
   }
 
-  int32_t encryptedframelength = getNextFrameBlockSize();
+  uint32_t encryptedframelength = getNextFrameBlockSize();
   //if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   //{
   //  std::cout << "Suspicious framelength" << std::endl;

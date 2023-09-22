@@ -50,13 +50,13 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
   // in newer backup file versions, the length is encrypted
   if (d_backupfileversion >= 1) [[likely]]
   {
-    int l = static_cast<int>(sizeof(int32_t) + length);
-    int32_t length_data = bepaald::swap_endian<int32_t>(length + MACSIZE);
+    int l = static_cast<int>(sizeof(uint32_t) + length);
+    uint32_t length_data = bepaald::swap_endian<uint32_t>(length + MACSIZE);
 
     if (d_verbose) [[unlikely]]
       std::cout << "Encrypting frame. Length: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << length_data << " -> " << std::flush;
 
-    if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, reinterpret_cast<unsigned char *>(&length_data), sizeof(int32_t)) != 1)
+    if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, reinterpret_cast<unsigned char *>(&length_data), sizeof(uint32_t)) != 1)
     {
       std::cout << "ENCRYPT FAILED" << std::endl;
       return {nullptr, 0};
@@ -68,10 +68,10 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
   }
   else [[unlikely]] // old backup file format, had RAW frame length
   {
-    int32_t rawlength = bepaald::swap_endian<int32_t>(length + MACSIZE);
+    uint32_t rawlength = bepaald::swap_endian<uint32_t>(length + MACSIZE);
     if (d_verbose) [[unlikely]]
       std::cout << "Writing raw framelength: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << rawlength << std::endl;
-    std::memcpy(encryptedframe.get(), reinterpret_cast<unsigned char *>(&rawlength), sizeof(int32_t));
+    std::memcpy(encryptedframe.get(), reinterpret_cast<unsigned char *>(&rawlength), sizeof(uint32_t));
     encryptedframepos = 4;
   }
 
@@ -86,12 +86,12 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
   HMAC(EVP_sha256(), d_mackey, d_mackey_size,
-       encryptedframe.get() + (d_backupfileversion >= 1 ? 0 : sizeof(int32_t)),
-       length + (d_backupfileversion >= 1 ? sizeof(int32_t) : 0),
+       encryptedframe.get() + (d_backupfileversion >= 1 ? 0 : sizeof(uint32_t)),
+       length + (d_backupfileversion >= 1 ? sizeof(uint32_t) : 0),
        hash, &digest_size);
-  std::memcpy(encryptedframe.get() + sizeof(int32_t) + length, hash, 10);
+  std::memcpy(encryptedframe.get() + sizeof(uint32_t) + length, hash, 10);
 
   //std::cout << "                                   : " << bepaald::bytesToHexString(hash, digest_size) << std::endl;
 
-  return {encryptedframe.release(), sizeof(int32_t) + length + MACSIZE};
+  return {encryptedframe.release(), sizeof(uint32_t) + length + MACSIZE};
 }

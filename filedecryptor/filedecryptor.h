@@ -65,7 +65,7 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   void strugee3(uint64_t pos);
 
  private:
-  inline int32_t getNextFrameBlockSize();
+  inline uint32_t getNextFrameBlockSize();
   inline bool getNextFrameBlock(unsigned char *data, size_t length);
   BackupFrame *initBackupFrame(unsigned char *data, size_t length, uint64_t count = 0) const;
   //virtual int getAttachment(FrameWithAttachment *frame) override;
@@ -95,16 +95,16 @@ inline bool FileDecryptor::badMac() const
 }
 
 // only used by getFrameOld(), used in older backups where frame length was not encrypted
-inline int32_t FileDecryptor::getNextFrameBlockSize()
+inline uint32_t FileDecryptor::getNextFrameBlockSize()
 {
-  int32_t headerlength = 0;
+  uint32_t headerlength = 0;
   if (!d_file.read(reinterpret_cast<char *>(&headerlength), sizeof(decltype(headerlength))))
   {
     std::cout << "Failed to read 4 bytes from file to get next frame size... (" << d_file.tellg()
               << " / " << d_filesize << ")" << std::endl;
     return 0;
   }
-  return bepaald::swap_endian<int32_t>(headerlength);
+  return bepaald::swap_endian<uint32_t>(headerlength);
 }
 
 // only used by getFrameOld(), used in older backups where frame length was not encrypted
