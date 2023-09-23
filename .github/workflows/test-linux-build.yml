@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  Linux build:
+  Linux-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
