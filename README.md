@@ -28,7 +28,7 @@ Signal is an actively developed application and consequently, the database forma
 
 ### Requirements
 
-Current stable released versions of
+To compile this project, current stable released versions of the following are needed:
 - a c++ compiler supporting at least the c++17 standard (tested with [GCC](https://gcc.gnu.org) 13.1.1 and [Clang](https://clang.llvm.org) 15.0.7, also tested and working with a few older compiler versions)
 - [OpenSSL](https://www.openssl.org/) (tested with 3.1.1, but should also work with 1.1 versions).
 - [SQLite3](https://www.sqlite.org/) (tested with 3.42.0)
@@ -58,6 +58,8 @@ Manually compiling should also be possible assuming the dependencies are install
 **<span id="windows">Windows binary</span>**
 
 For the most recent Windows executable, check [the releases page](https://github.com/bepaald/signalbackup-tools/releases). This executable is a static build, cross compiled from my Arch Linux system. It is only minimally tested, but generally appears to work just fine.
+
+Note for Windows users: this is a command line application. This means you can not just double-click the executable to run it, you need to run it from a terminal. Common terminals for Windows are `cmd` (Command shell) and `PowerShell`.
 
 ### Running
 
