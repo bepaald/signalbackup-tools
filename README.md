@@ -59,7 +59,7 @@ Manually compiling should also be possible assuming the dependencies are install
 
 For the most recent Windows executable, check [the releases page](https://github.com/bepaald/signalbackup-tools/releases). This executable is a static build, cross compiled from my Arch Linux system. It is only minimally tested, but generally appears to work just fine.
 
-Note for Windows users: this is a command line application. This means you can not just double-click the executable to run it, you need to run it from a terminal. Common terminals for Windows are `cmd` (Command shell) and `PowerShell`.
+Note for Windows users: this is a command line application. This means you can not just double-click the executable to run it, you need to run it from a terminal. Common terminals for Windows are `cmd` (Command Prompt) and `PowerShell`. An example of running the program on Windows 10 can be seen [here](https://github.com/bepaald/signalbackup-tools/issues/148#issuecomment-1732375861).
 
 ### Running
 
