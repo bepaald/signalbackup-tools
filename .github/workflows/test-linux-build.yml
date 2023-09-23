@@ -20,13 +20,18 @@ jobs:
   Linux build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
       - name: Install dependencies
+        uses: actions/checkout@v3
         run: |
           set -x
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
-
       - name: Build new script
         run: |
           bash BUILDSCRIPT_MULTIPROC.bash44
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: linux-amd64
+          path: |
+            signalbackup-tools
