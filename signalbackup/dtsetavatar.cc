@@ -36,6 +36,7 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, long long int rid,
   {
     new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
     d_avatars.emplace_back(std::make_pair(bepaald::toString(rid), std::move(new_avatar_frame)));
+    return true;
   }
-  return true;
+  return false;
 }

@@ -438,6 +438,8 @@ If you use this option and read this line, I would really appreciate it if you l
 
 _NOTE: This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
+_NOTE 2: While this program will compile and work with almost any version of sqlite3, this specific feature requires that the sqlite3 version used is at least as new as the one used by Signal Desktop. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
+
 To import conversations from a Signal-Desktop installation, run:
 ```
 signalbackup-tools [input] [passphrase] --importfromdesktop --output [output] (--opassphrase [newpassphrase])
