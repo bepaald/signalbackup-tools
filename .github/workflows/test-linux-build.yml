@@ -25,6 +25,9 @@ jobs:
       - name: Install dependencies
         run: |
           set -x
+          # add ppa to get latest sqllite3
+          sudo add-apt-repository --yes ppa:linuxgndu/sqlitebrowser 
+          apt show libsqlite3-dev
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
       - name: Build new script
@@ -33,6 +36,6 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
-          name: linux-amd64
+          name: signalbackup-tools-linux-amd64
           path: |
             signalbackup-tools
