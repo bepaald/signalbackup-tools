@@ -20,8 +20,9 @@ jobs:
   Linux build:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
+      - name: Checkout repo
         uses: actions/checkout@v3
+      - name: Install dependencies
         run: |
           set -x
           sudo apt-get update
