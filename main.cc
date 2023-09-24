@@ -68,11 +68,19 @@ int main(int argc, char *argv[])
   if (arg.verbose()) [[unlikely]]
     std::cout << "Parsed command line arguments." << std::endl;
 
-
   if (arg.help())
   {
     arg.usage();
     return 0;
+  }
+
+  // at the very least an input file is needed
+  if (arg.input().empty() && !arg.help())
+  {
+    std::cout << "Error: No input provided." << std::endl;
+    std::cout << "Run with `" << argv[0] << " <INPUT> [<PASSPHRASE>] [OPTIONS]'" << std::endl;
+    std::cout << "Try '" << argv[0] << " --help' for available options" << std::endl;
+    return 1;
   }
 
   bool ipw_interactive = false;
