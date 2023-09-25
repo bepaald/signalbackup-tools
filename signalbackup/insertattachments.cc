@@ -58,6 +58,8 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
   //if (numattachments)
   //  std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
 
+
+  // for each attachment:
   SqliteDB::QueryResults results_attachment_data;
   for (int k = 0; k < numattachments; ++k)
   {
@@ -83,6 +85,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     if (quoted_linkpreview)
       jsonpath = "$.preview[0].image";
 
+    // get the attachment info (content-type, size, path, ...)
     if (!ddb.exec("SELECT "
                   "json_extract(json, '" + jsonpath + ".path') AS path,"
                   "json_extract(json, '" + jsonpath + ".contentType') AS content_type,"
@@ -107,6 +110,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       continue;
     }
 
+    // insert any attachments with missing data. (pending != 0)
     if (results_attachment_data.valueAsString(0, "path").empty())
     {
       if (results_attachment_data.getValueAs<long long int>(0, "pending") != 0)
@@ -197,6 +201,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
         bepaald::replaceAll(&linkpreview_as_string, '\'', R"('')");
 
         d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
+
         //d_database.print("SELECT _id,link_previews FROM message WHERE _id = ?", mms_id);
       }
 
@@ -207,7 +212,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       // std::string convuuid = res.valueAsString(0, "conversationId");
       // ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
       continue;
-    }
+    } // if (path.empty())
 
     AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
     // PROBABLY JUST NOT AN IMAGE, WE STILL WANT THE HASH
@@ -230,6 +235,12 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
       //std::cout << "Corresponding message:" << std::endl;
       //ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
+      continue;
+    }
+
+    if (amd.filesize == 0 || results_attachment_data.getValueAs<long long int>(0, "size") == 0)
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Skipping 0 byte attachment. Not supported in Signal Android." << std::endl;
       continue;
     }
 
