@@ -45,7 +45,7 @@ For people not comfortable compiling source code, a script is provided that shou
 
 For Arch users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
 
-The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/).
+The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/). For those looking for more information on installing and running the Nix package, or those wanting to help others, there is an issue where information can be found and posted [here](https://github.com/bepaald/signalbackup-tools/issues/149).
 
 Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is available at his gitlab page: <https://gitlab.com/splatops/cntn-signalbackup-tools>.
 
