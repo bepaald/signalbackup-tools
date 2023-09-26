@@ -469,19 +469,23 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     else if (results2.rows() == 0) // the query was succesful, but yielded no results -> create thread
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. ("
-                << (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)) << ")" << std::endl;
+                << (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)) << std::flush;
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, recipientid_for_thread},
+                      {"active", 1},
                       {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")},
                       {"pinned", results_all_conversations.getValueAs<long long int>(i, "is_pinned")}},
                      "_id", &new_thread_id))
       {
+        std::cout << std::endl;
         std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for desktop conversation. ("
                   << (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)) << "), skipping." << std::endl;
         continue;
       }
       //std::cout << "Raw any_cast 1" << std::endl;
+      std::cout << ", thread_id: " << std::any_cast<long long int>(new_thread_id) << ")" << std::endl;
+
       ttid = std::any_cast<long long int>(new_thread_id);
     }
     if (ttid < 0)
