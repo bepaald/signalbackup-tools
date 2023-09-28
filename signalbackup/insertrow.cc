@@ -29,7 +29,9 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
   // check if columns exist...
   for (auto it = data.begin(); it != data.end();)
   {
-    if (!d_database.tableContainsColumn(table, it->first))
+    if (it->first.empty())
+      it = data.erase(it);
+    else if (!d_database.tableContainsColumn(table, it->first))
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
                 << ": Table '" << table << "' does not contain any column '" << it->first
@@ -48,7 +50,6 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
     query += "?"s + (i < data.size() -1 ? ", " : ")");
   if (!returnfield.empty() && returnvalue)
     query += " RETURNING " + returnfield;
-
 
   SqliteDB::QueryResults res;
 #if __cpp_lib_ranges >= 201911L && !defined(__clang__)
