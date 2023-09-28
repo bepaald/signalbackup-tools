@@ -238,7 +238,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       continue;
     }
 
-    if (amd.filesize == 0 || results_attachment_data.valueAsInt(0, "size", 0) == 0)
+    if (amd.filesize == 0)
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Skipping 0 byte attachment. Not supported in Signal Android." << std::endl;
       continue;
@@ -250,7 +250,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                    {{"mid", mms_id},
                     {"ct", results_attachment_data.value(0, "content_type")},
                     {"pending_push", 0},
-                    {"data_size", results_attachment_data.value(0, "size")},
+                    {"data_size", amd.filesize},
                     {"unique_id", unique_id},
                     {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.valueAsInt(0, "flags", 0) == 1 ? 1 : 0)},
                     {"width", amd.width == -1 ? 0 : amd.width},
