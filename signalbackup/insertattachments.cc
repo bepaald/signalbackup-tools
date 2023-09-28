@@ -122,7 +122,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                         {"data_size", results_attachment_data.value(0, "size")},
                         {"file_name", results_attachment_data.value(0, "file_name")},
                         {"unique_id", unique_id},
-                        {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.getValueAs<long long int>(0, "flags") == 1 ? 1 : 0)},
+                        {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.valueAsInt(0, "flags", 0) == 1 ? 1 : 0)},
                         {"width", 0},
                         {"height", 0},
                         {"quote", isquote ? 1 : 0},
@@ -226,10 +226,10 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     // if (!results_attachment_data.isNull(0, "file_name"))
     //   attachmentdata.back().filename = results_attachment_data.valueAsString(0, "file_name");
 
-    if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.getValueAs<long long int>(0, "size") != 0))
+    if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.valueAsInt(0, "size", 0) != 0))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
-      std::cout << "Pending: " << results_attachment_data.getValueAs<long long int>(0, "pending") << std::endl;
+      std::cout << "Pending: " << results_attachment_data.valueAsInt(0, "pending") << std::endl;
       //results_attachment_data.prettyPrint();
       //std::cout << amd.filesize << std::endl;
 
@@ -238,7 +238,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       continue;
     }
 
-    if (amd.filesize == 0 || results_attachment_data.getValueAs<long long int>(0, "size") == 0)
+    if (amd.filesize == 0 || results_attachment_data.valueAsInt(0, "size", 0) == 0)
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Skipping 0 byte attachment. Not supported in Signal Android." << std::endl;
       continue;
@@ -252,7 +252,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                     {"pending_push", 0},
                     {"data_size", results_attachment_data.value(0, "size")},
                     {"unique_id", unique_id},
-                    {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.getValueAs<long long int>(0, "flags") == 1 ? 1 : 0)},
+                    {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.valueAsInt(0, "flags", 0) == 1 ? 1 : 0)},
                     {"width", amd.width == -1 ? 0 : amd.width},
                     {"height", amd.height == -1 ? 0 : amd.height},
                     {"quote", isquote ? 1 : 0},

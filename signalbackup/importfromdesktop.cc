@@ -484,9 +484,8 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         continue;
       }
       //std::cout << "Raw any_cast 1" << std::endl;
-      std::cout << ", thread_id: " << std::any_cast<long long int>(new_thread_id) << ")" << std::endl;
-
       ttid = std::any_cast<long long int>(new_thread_id);
+      std::cout << ", thread_id: " << ttid << ")" << std::endl;
     }
     if (ttid < 0)
     {

@@ -19,10 +19,10 @@
 
 #include "sqlitedb.ih"
 
-long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column) const
+long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column, long long int def) const
 {
   if (valueHasType<std::string>(row, column))
-    return bepaald::toNumber<long long int>(getValueAs<std::string>(row, column));
+    return bepaald::toNumber<long long int>(getValueAs<std::string>(row, column), def);
 
   if (valueHasType<unsigned int>(row, column))
     return getValueAs<unsigned int>(row, column);
@@ -37,26 +37,26 @@ long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column) cons
     return getValueAs<long long int>(row, column);
 
   if (valueHasType<double>(row, column))
-    return -1;
+    return def;
 
   if (valueHasType<std::nullptr_t>(row, column))
-    return -1;
+    return def;
 
   if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column))
-    return -1;
+    return def;
 
   else [[unlikely]]
-    return -1;
+    return def;
 }
 
-long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string const &header) const
+long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string const &header, long long int def) const
 {
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
   {
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
               << ": Column `" << header << "' not found in query results" << std::endl;
-    return -1;
+    return def;
   }
-  return valueAsInt(row, i);
+  return valueAsInt(row, i, def);
 }

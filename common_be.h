@@ -70,7 +70,7 @@ namespace bepaald
   inline void log(Args && ...args);
 #endif
   template <typename T>
-  T toNumber(std::string const &str);
+  T toNumber(std::string const &str, T def = 0);
   std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
@@ -178,11 +178,12 @@ inline void bepaald::log(Args && ...args)
 #endif
 
 template <typename T>
-T bepaald::toNumber(std::string const &str)
+T bepaald::toNumber(std::string const &str, T def)
 {
   std::istringstream s(str);
-  T i = 0;
-  s >> i;
+  T i = def;
+  if (!(s >> i)) [[unlikely]]
+    return def;
   return i;
 }
 
