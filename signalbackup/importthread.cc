@@ -415,15 +415,24 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     {
       //d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
       if (d_database.tableContainsColumn("recipient", "group_type") &&
-          d_database.tableContainsColumn("recipient", "storage_service_key"))
-        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
+          d_database.tableContainsColumn("recipient", d_recipient_storage_service))
+        d_database.exec("SELECT _id, "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "group_type, " + d_recipient_storage_service + " FROM recipient", &results);
       else
-        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
+        d_database.exec("SELECT _id, "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "-1 AS 'group_type', "
+                        "NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
 
       std::cout << "  updateRecipientIds" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
       {
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, "storage_service_key")};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
       }
@@ -446,17 +455,25 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       // get the unique features of existing recipients
       SqliteDB::QueryResults existing_rec;
       if (d_database.tableContainsColumn("recipient", "group_type") &&
-          d_database.tableContainsColumn("recipient", "storage_service_key"))
-        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &existing_rec);
+          d_database.tableContainsColumn("recipient", d_recipient_storage_service))
+        d_database.exec("SELECT _id, "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "group_type, " + d_recipient_storage_service + " FROM recipient", &existing_rec);
       else
-        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &existing_rec);
+        d_database.exec("SELECT _id, "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "-1 AS 'group_type', NULL AS '" + d_recipient_storage_service + "' FROM recipient", &existing_rec);
 
       // for each of them, check if they are also in source, and delete
       int count = 0;
       for (uint i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {existing_rec(i, "uuid"), existing_rec(i, "phone"), existing_rec(i, "group_id"),
-                                          existing_rec.getValueAs<long long int>(i, "group_type"), existing_rec(i, "storage_service_key")};
+                                          existing_rec.getValueAs<long long int>(i, "group_type"), existing_rec(i, d_recipient_storage_service)};
 
         if (d_database.tableContainsColumn("recipient", "group_type"))
         {
@@ -470,7 +487,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                                   + d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
                                   "group_type IS 4  AND group_type IS ? AND "
-                                  "storage_service_key IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service_key});
+                                  + d_recipient_storage_service + " IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
           count += source->d_database.changed();
         }
         else
@@ -530,10 +547,18 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     {
       //d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
       if (d_database.tableContainsColumn("recipient", "group_type") &&
-          d_database.tableContainsColumn("recipient", "storage_service_key"))
-        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, group_type, storage_service_key FROM recipient", &results);
+          d_database.tableContainsColumn("recipient", d_recipient_storage_service))
+        d_database.exec("SELECT _id, "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "group_type, " + d_recipient_storage_service + " FROM recipient", &results);
       else
-        d_database.exec("SELECT _id, IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id, -1 AS 'group_type', NULL AS 'storage_service_key' FROM recipient", &results);
+        d_database.exec("SELECT _id, "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "-1 AS 'group_type', NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
       std::cout << "  updateRecipientIds (2)" << std::endl;
       for (uint i = 0; i < results.rows(); ++i)
       {
@@ -542,7 +567,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         // which was made unique above. If we just delete the doubles (by phone/group_id,
         // and in the future probably uuid), the fields in other tables will point
         // to random or non-existing recipients, so we need to remap them:
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, "storage_service_key")};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
@@ -564,7 +589,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                                   + d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
                                   "group_type IS 4  AND group_type IS ? AND "
-                                  "storage_service_key IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service_key});
+                                  + d_recipient_storage_service + " IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
           count = source->d_database.changed();
         }
         else

@@ -48,6 +48,11 @@ bool SignalBackup::setColumnNames()
   if (d_database.tableContainsColumn("recipient", "signal_profile_name")) // before dbv201
     d_recipient_profile_given_name = "signal_profile_name";
 
+  d_recipient_storage_service = "storage_service_id";
+  if (!d_database.tableContainsColumn("recipient", "storage_service_id") &&
+      d_database.tableContainsColumn("recipient", "storage_service_key"))
+    d_recipient_storage_service = "storage_service_key";
+
 
 
 

@@ -77,6 +77,7 @@ class SignalBackup
   std::string d_recipient_avatar_color;
   std::string d_recipient_system_joined_name;
   std::string d_recipient_profile_given_name;
+  std::string d_recipient_storage_service;
   std::string d_groups_v1_members;
 
   // table/column names for desktop db
@@ -121,7 +122,7 @@ class SignalBackup
     std::string phone;
     std::string group_id;
     long long int group_type; //    NONE(0), MMS(1), SIGNAL_V1(2), SIGNAL_V2(3), DISTRIBUTION_LIST(4);
-    std::string storage_service_key;
+    std::string storage_service;
   };
 
   struct TableConnection
