@@ -93,7 +93,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
 
     // update name info
     if (!d_database.exec("UPDATE recipient SET "
-                          + d_recipient_profile_given_name + " = ?, "
+                         + d_recipient_profile_given_name + " = ?, "
                          "profile_family_name = ?, "
                          "profile_joined_name = ? "
                          "WHERE _id = ?",
