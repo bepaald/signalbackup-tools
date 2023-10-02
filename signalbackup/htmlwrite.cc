@@ -111,6 +111,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << std::endl;
   file << "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << std::endl;
+  file << "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << std::endl;
+  file << "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << std::endl;
   file << "      }" << std::endl;
   file << std::endl;
 
@@ -143,6 +145,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << std::endl;
     file << "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << std::endl;
+    file << "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << std::endl;
+    file << "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << std::endl;
     file << "      }";
     file << std::endl;
   }
@@ -565,6 +569,46 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: block;
       }
 
+      .shared-contact-avatar-default {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" width="256" height="256" fill="white"><path d="M174.1 188.5c-13.6 7.7-29.4 12.2-46.1 12.2s-32.5-4.4-46.1-12.2C45.7 199.6 18.1 224 10 256h236c-8.1-32-35.7-56.5-71.9-67.5zM128 20c-44.8 0-81.1 36.3-81.1 81.1s36.3 81.1 81.1 81.1 81.1-36.3 81.1-81.1S172.8 20 128 20zm0 142c-25.8 0-47.8-16-56.7-38.7h113.4C175.8 146 153.8 162 128 162z"></path></svg>');
+      }
+
+      .shared-contact-avatar {
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        aspect-ratio: 1 / 1;
+        height: 50px;
+        border-radius: 50%;
+      }
+
+      .msg-incoming .shared-contact-avatar-default {
+        filter: var(--shared-contact-incoming-f);
+      }
+
+      .msg-outgoing .shared-contact-avatar-default {
+        filter: var(--shared-contact-outgoing-f);
+      }
+
+      .shared-contact-info {
+        margin-left: 5px;
+      }
+
+      .shared-contact {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .shared-contact-name {
+        font-weight: bold;
+        margin-bottom: 5px;
+        display: block;
+      }
+
+      .shared-contact pre {
+        font-size: small;
+      }
+
       .msg p {
         margin-top: 0;
         margin-bottom: 5px;
@@ -585,19 +629,28 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         width: 400px;
       }
 
+      .shared-contact-avatar input[type=checkbox],
       .msg-img-container input[type=checkbox],
       .msg-linkpreview-img-container input[type=checkbox],
       #thread-subtitle input[type=checkbox] {
         display: none;
       }
 
+      .shared-contact-avatar img,
       .msg-img-container img {
-        border-radius: 0.6em;
         cursor: zoom-in;
         z-index: 1;
         position: relative;
         transition: z-index, transform .25s ease;
         transition-delay: .25s, 0s;
+      }
+
+      .msg-img-container img {
+        border-radius: 0.6em;
+      }
+
+      .shared-contact-avatar img {
+        border-radius: 50%;
       }
 
       .msg-linkpreview-img-container img {
@@ -631,14 +684,23 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .linkpreview_description {
       }
 
+      .shared-contact-avatar input[type=checkbox]:checked ~ label > img,
       .msg-img-container input[type=checkbox]:checked ~ label > img,
       .msg-linkpreview-img-container input[type=checkbox]:checked ~ label > img {
-        transform: scale(2.5);
         border-radius: 0;
         cursor: zoom-out;
         z-index: 2;
         position: relative;
         transition: transform .25s ease;
+      }
+
+      .msg-img-container input[type=checkbox]:checked ~ label > img,
+      .msg-linkpreview-img-container input[type=checkbox]:checked ~ label > img {
+        transform: scale(2.5);
+      }
+
+      .shared-contact-avatar input[type=checkbox]:checked ~ label > img {
+        transform: scale(10);
       }
 
       .pending-attachment {
@@ -1291,7 +1353,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-member-rejected-icon,
       .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
-      .msg-status .msg-phone-icon {
+      .msg-status .msg-phone-icon,
+      .msg-incoming .shared-contact-avatar-default,
+      .msg-outgoing .shared-contact-avatar-default {
         print-color-adjust: exact;
         filter: brightness(0.5);
       }
@@ -1631,6 +1695,104 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
   }
 }
 
+void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
+                                             std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const
+{
+  if (d_database.getSingleResultAs<long long int>("SELECT json_array_length('" + shared_contact + "', '$')", 0) > 0)
+  {
+    std::string contact_name = "Unknown contact";
+    std::string contact_info;
+    SqliteDB::QueryResults sc;
+    d_database.exec("SELECT "
+                    "json_extract('" + shared_contact + "', '$[0].name.displayName') AS display_name, "
+                    "IFNULL(json_array_length('" + shared_contact + "', '$[0].phoneNumbers'), 0) AS num_numbers, "
+                    "IFNULL(json_array_length('" + shared_contact + "', '$[0].emails'), 0) AS num_emails, "
+                    "json_extract('" + shared_contact + "', '$[0].avatar.attachmentId.rowId') AS avatar_rowid, "
+                    "json_extract('" + shared_contact + "', '$[0].avatar.attachmentId.uniqueId') AS avatar_uniqueid", &sc
+                    );
+
+    if (!sc("display_name").empty())
+      contact_name = sc("display_name");
+
+    long long int rowid = sc.valueAsInt(0, "avatar_rowid", -1);
+    long long int uniqueid = sc.valueAsInt(0, "avatar_uniqueid", -1);
+    if (rowid >= 0 && uniqueid >= 0)
+    {
+      // write the attachment data
+      HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, overwrite, append);
+    }
+
+    // prefer phone number
+    int phones = sc.valueAsInt(0, "num_numbers", 0);
+    int emails = sc.valueAsInt(0, "num_emails", 0);
+    if (phones > 0)
+    {
+      // prefer 'MOBILE' (-> 'HOME' -> 'WORK' ?)
+      for (int i = 0; i < phones; ++i)
+      {
+        d_database.exec("SELECT "
+                        "json_extract('" + shared_contact + "', '$[0].phoneNumbers[" + bepaald::toString(i) + "].number') AS number, "
+                        "json_extract('" + shared_contact + "', '$[0].phoneNumbers[" + bepaald::toString(i) + "].type') AS type", &sc);
+
+        if (sc("type") == "CUSTOM" && contact_info.empty())
+          contact_info = sc("number");
+        else if (sc("type") == "WORK" && contact_info.empty())
+          contact_info = sc("number");
+        else if (sc("type") == "HOME")
+          contact_info = sc("number");
+        else if (sc("type") == "MOBILE")
+        {
+          contact_info = sc("number");
+          break;
+        }
+      }
+    }
+    else if (emails > 0)
+    {
+      // prefer 'HOME' (-> 'WORK' -> 'MOBILE' ?)
+      for (int i = 0; i < emails; ++i)
+      {
+        d_database.exec("SELECT "
+                        "json_extract('" + shared_contact + "', '$[0].emails[" + bepaald::toString(i) + "].email') AS email, "
+                        "json_extract('" + shared_contact + "', '$[0].emails[" + bepaald::toString(i) + "].type') AS type", &sc);
+
+        if (sc("type") == "CUSTOM" && contact_info.empty())
+          contact_info = sc("email");
+        else if (sc("type") == "OTHER" && contact_info.empty())
+          contact_info = sc("email");
+        else if (sc("type") == "WORK")
+          contact_info = sc("email");
+        else if (sc("type") == "HOME")
+        {
+          contact_info = sc("email");
+          break;
+        }
+      }
+    }
+
+    //htmloutput << std::string(indent, ' ') << "<div class=\"attachment attachment-unknown-type\">" << std::endl;
+
+    htmloutput << std::string(indent, ' ') << "<div class=\"shared-contact\">" << std::endl;
+    if (rowid > -1 && uniqueid > -1)
+    {
+      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << ".bin" << "');\";>";
+      htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "    </label>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  </div>";
+    }
+    else
+      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar shared-contact-avatar-default\"></div>" << std::endl;
+
+    htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-info\">" << std::endl;
+    htmloutput << std::string(indent, ' ') << "    <span class=\"shared-contact-name\">" << contact_name << "</span>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "    <pre>" << contact_info << "</pre>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
+  }
+}
+
 void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info,
                                     std::map<long long int, RecipientInfo> *recipient_info,
                                     bool searchpage) const
@@ -1704,10 +1866,15 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   }
 
   // insert attachment?
-  HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
-                         msg_info.directory, msg_info.threaddir,
-                         (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
-                         msg_info.overwrite, msg_info.append);
+  if (msg_info.shared_contacts.empty()) [[likely]] // if we have an attachment with a shared contact, it's an avatar
+    HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
+                           msg_info.directory, msg_info.threaddir,
+                           (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
+                           msg_info.overwrite, msg_info.append);
+
+  if (!msg_info.shared_contacts.empty()) [[unlikely]]
+    HTMLwriteSharedContactDiv(htmloutput, msg_info.shared_contacts, 12 + extraindent,
+                           msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
 
   // insert link_preview data?
   if (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty())

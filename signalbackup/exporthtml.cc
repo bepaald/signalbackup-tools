@@ -245,7 +245,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "_id, " + d_mms_recipient_id + ", body, "
                     "date_received, " + d_mms_date_sent + ", quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
                     "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
-                    "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, "
+                    "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, shared_contacts, "
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
@@ -383,6 +383,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;
         bool is_viewonce = messages.getValueAs<long long int>(messagecount, "view_once") == 1;
         std::string body = messages.valueAsString(messagecount, "body");
+        std::string shared_contacts = messages.valueAsString(messagecount, "shared_contacts");
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
@@ -527,6 +528,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   filename,
                                   messages(messagecount, "link_preview_title"),
                                   messages(messagecount, "link_preview_description"),
+                                  shared_contacts,
+
                                   icon
           });
         HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage);
