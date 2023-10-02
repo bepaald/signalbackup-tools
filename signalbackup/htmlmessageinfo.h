@@ -51,6 +51,7 @@ struct HTMLMessageInfo
   std::string filename;
   std::string link_preview_title;
   std::string link_preview_description;
+  std::string shared_contacts;
 
   IconType icon;
 };

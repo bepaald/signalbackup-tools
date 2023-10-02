@@ -352,6 +352,9 @@ class SignalBackup
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool is_image_preview,
                               bool overwrite, bool append) const;
+  void HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
+                                 std::string const &directory, std::string const &threaddir,
+                                 bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
                            long long int uniqueid, bool overwrite, bool append) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
