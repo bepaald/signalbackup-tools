@@ -534,6 +534,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "seenStatus,"
                   "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                   "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
+                  "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
                   "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
                   "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                   "isStory"
@@ -562,7 +563,15 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       long long int flags = results_all_messages_from_conversation.getValueAs<long long int>(j, "flags");
       long long int haspreview = results_all_messages_from_conversation.getValueAs<long long int>(j, "haspreview");
       long long int hasranges = results_all_messages_from_conversation.getValueAs<long long int>(j, "hasranges");
+      long long int hassharedcontact = results_all_messages_from_conversation.getValueAs<long long int>(j, "hassharedcontact");
       bool issticker = results_all_messages_from_conversation.getValueAs<long long int>(j, "issticker");
+
+      // TEMP
+      if (hassharedcontact)
+      {
+        warnOnce("Message is 'contact share'. This is not yet supported, skipping...");
+        continue;
+      }
 
       // get address (needed in both mms and sms databases)
       // for 1-on-1 messages, address is conversation partner (with uuid 'person_or_group_id')
