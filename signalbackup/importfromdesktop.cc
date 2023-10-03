@@ -566,13 +566,6 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       long long int hassharedcontact = results_all_messages_from_conversation.getValueAs<long long int>(j, "hassharedcontact");
       bool issticker = results_all_messages_from_conversation.getValueAs<long long int>(j, "issticker");
 
-      // TEMP
-      if (hassharedcontact)
-      {
-        warnOnce("Message is 'contact share'. This is not yet supported, skipping...");
-        continue;
-      }
-
       // get address (needed in both mms and sms databases)
       // for 1-on-1 messages, address is conversation partner (with uuid 'person_or_group_id')
       // for group messages, incoming: address is person originating the message (sourceUuid)
@@ -1138,12 +1131,20 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
         continue;
       }
 
-
       // skip viewonce messages
       if (results_all_messages_from_conversation.valueHasType<long long int>(j, "isViewOnce") != 0 &&
           results_all_messages_from_conversation.getValueAs<long long int>(j, "isViewOnce") != 0 &&
           !createmissingcontacts)
         continue;
+
+      std::string shared_contacts_json;
+      if (hassharedcontact)
+      {
+        shared_contacts_json = dtSetSharedContactsJsonString(ddb, rowid);
+        //std::cout << shared_contacts_json << std::endl;
+        //warnOnce("Message is 'contact share'. This is not yet supported, skipping...");
+        //continue;
+      }
 
       // get emoji reactions
       if (d_verbose) [[unlikely]] std::cout << "Handling reactions..." << std::flush;
@@ -1360,6 +1361,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
                                        {"quote_missing", hasquote ? mmsquote_missing : 0},
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                       {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
                                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
                                        {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
                                        {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
@@ -1399,6 +1401,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                        //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
                                        {"quote_missing", hasquote ? mmsquote_missing : 0},
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                       {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
                                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
                                        {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
                                        {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))

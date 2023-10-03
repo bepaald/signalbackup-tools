@@ -395,6 +395,7 @@ class SignalBackup
                                   bool *warn);
   bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
   bool dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
+  std::string dtSetSharedContactsJsonString(SqliteDB const &ddb, long long int rowid) const;
   inline void warnOnce(std::string const &msg, bool error = false);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
