@@ -338,11 +338,13 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   {
     // skip convo's with no messages...
     SqliteDB::QueryResults messagecount;
-    if (ddb.exec("SELECT COUNT(*) AS count FROM messages WHERE conversationId = ?", results_all_conversations(i, "id"), &messagecount))
+    if (ddb.exec("SELECT COUNT(*) AS count FROM messages WHERE conversationId = ?" + datewhereclause, results_all_conversations(i, "id"), &messagecount))
       if (messagecount.rows() == 1 &&
           messagecount.getValueAs<long long int>(0, "count") == 0)
       {
-        std::cout << "Skipping conversation, conversation has no messages (" << i + 1 << "/" << results_all_conversations.rows() << ")" << std::endl;
+        std::cout << "Skipping conversation, conversation has no messages "
+                  << (datewhereclause.empty() ? "" : "in requested time period ")
+                  << "(" << i + 1 << "/" << results_all_conversations.rows() << ")" << std::endl;
         continue;
       }
 
@@ -544,7 +546,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to retrieve message from this conversation." << std::endl;
       continue;
     }
-    //results_all_messages_from_conversation.prettyPrint();
+    //results_all_messages_from_conversation.printLineMode();
 
     std::cout << " - Importing " << results_all_messages_from_conversation.rows() << " messages into thread._id " << ttid << std::endl;
     for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
