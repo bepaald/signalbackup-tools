@@ -106,6 +106,9 @@ ThreadTable::
                         &results2);
       }
 
+      if (results.rows() == 0)
+        continue;
+
       std::any date = results2.value(0, "union_date");
       if (date.type() == typeid(long long int))
       {

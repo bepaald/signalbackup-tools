@@ -55,6 +55,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       numattachments = 1;
   }
 
+  //std::cout << "rowid: " << rowid << std::endl;
   //if (numattachments)
   //  std::cout << "  " << numattachments << " attachments" << (isquote ? " (in quote)" : "") << std::endl;
 
