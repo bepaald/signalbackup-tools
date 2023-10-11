@@ -106,7 +106,7 @@ ThreadTable::
                         &results2);
       }
 
-      if (results.rows() == 0)
+      if (results2.rows() == 0)
         continue;
 
       std::any date = results2.value(0, "union_date");
