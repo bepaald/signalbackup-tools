@@ -405,39 +405,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults edit_revisions;
         if (d_database.tableContainsColumn(d_mms_table, "revision_number"))
-          d_database.exec("SELECT body,date_received," + d_mms_date_sent + ",revision_number FROM " + d_mms_table + " WHERE _id = ? OR original_message_id = ? ORDER BY " + d_mms_date_sent + " DESC",
+          d_database.exec("SELECT _id,body,date_received," + d_mms_date_sent + ",revision_number FROM " + d_mms_table +
+                          " WHERE _id = ? OR original_message_id = ? ORDER BY " + d_mms_date_sent + " ASC", // skip actual current message
                           {original_message_id, original_message_id}, &edit_revisions);
 
         bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
 
         IconType icon = IconType::NONE;
-
-        /*
-          // all folded into decodeStatusMessage()
-        if (Types::isIncomingVideoCall(type))
-          body = "Incoming video call";
-        else if (Types::isOutgoingVideoCall(type))
-          body = "Outgoing video call";
-        else if (Types::isMissedVideoCall(type))
-          body = "Missed video call";
-        else if (Types::isIncomingCall(type))
-          body = "Incoming voice call";
-        else if (Types::isOutgoingCall(type))
-          body = "Outgoing voice call";
-        else if (Types::isMissedCall(type))
-          body = "Missed voice call";
-        else if (Types::isGroupCall(type))
-          body = "Group call";
-        else if (Types::isGroupUpdate(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
-                                     type, recipient_info[msg_recipient_id].display_name, &icon);
-        else if (Types::isProfileChange(type))
-          body = decodeProfileChangeMessage(body, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
-        else if (Types::isIdentityUpdate(type) || Types::isIdentityVerified(type) || Types::isIdentityDefault(type) ||
-                 Types::isExpirationTimerUpdate(type) || Types::isJoined(type) || Types::isProfileChange(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
-        else
-        */
         if (Types::isStatusMessage(type))
           body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
 

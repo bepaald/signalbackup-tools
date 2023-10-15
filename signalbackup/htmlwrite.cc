@@ -432,14 +432,15 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         align-items: center;
         text-align: center;
         font-style: italic;
-        margin-top: 3px;
-        margin-bottom: 3px;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        color: var(--conversationbox-c);
       }
       .history-header::before,
       .history-header::after {
         content: '';
         flex: 1;
-        border-bottom: 1px solid white;
+        border-bottom: 1px solid var(--conversationbox-c);
       }
       .history-header:not(:empty)::before {
         margin-right: .25em;
@@ -772,7 +773,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         visibility: hidden;
         width: 250px;
         background-color: var(--msgreactioninfo-bc);
-        text-align: center;
         padding: 5px;
         border-radius: 6px;
         margin-left: -131px;
@@ -782,8 +782,18 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         transition: opacity 0.2s;
       }
 
+      .msg-reaction .msg-reaction-info {
+        text-align: center;
+      }
+
       .edited-info {
         font-size: initial;
+        text-align: inherit;
+        width: 300px;
+      }
+
+      .edited-info > .msg {
+        max-width: 100%;
       }
 
       /* Draw an arrow using border styles */
@@ -836,6 +846,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .msg-quote-attach {
         flex-grow: 1;
+        min-width: 30%;
         max-width: 30%;
         margin-right: 5px;
         text-align: right;
@@ -2015,17 +2026,27 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     if (msg_info.edit_revisions->rows())
     {
       htmloutput << "<div class=\"edited-info\">";
-      for (uint i = 0; i < msg_info.edit_revisions->rows(); ++i)
+      for (uint i = 0; i < msg_info.edit_revisions->rows() - 1; ++i) // -1, skip last one: it is current message
       {
-        htmloutput << "<span class=\"edited-info-header\">body: </span>"
-                   << "<pre>" << msg_info.edit_revisions->valueAsString(i, "body") << "</pre>" << "<br>"
-                   << "<span class=\"edited-info-header\">date: </span>"
-                   << bepaald::toDateString(msg_info.edit_revisions->valueAsInt(i, d_mms_date_sent) / 1000,
-                                            "%b %d, %Y %H:%M:%S");
+
         if (i == 0)
           htmloutput << "<div class=\"history-header\">Edit history</div>";
-        else if (i < msg_info.edit_revisions->rows() - 1)
+
+        // add earlier revision
+        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, recipient_info);
+
+        if (i < msg_info.edit_revisions->rows() - 2)
           htmloutput << "<hr>";
+
+        // htmloutput << "<span class=\"edited-info-header\">body: </span>"
+        //            << "<pre>" << msg_info.edit_revisions->valueAsString(i, "body") << "</pre>" << "<br>"
+        //            << "<span class=\"edited-info-header\">date: </span>"
+        //            << bepaald::toDateString(msg_info.edit_revisions->valueAsInt(i, d_mms_date_sent) / 1000,
+        //                                     "%b %d, %Y %H:%M:%S");
+        // if (i == 0)
+        //   htmloutput << "<div class=\"history-header\">Edit history</div>";
+        // else if (i < msg_info.edit_revisions->rows() - 1)
+        //   htmloutput << "<hr>";
       }
       htmloutput << "</div>" << std::endl;
     }
