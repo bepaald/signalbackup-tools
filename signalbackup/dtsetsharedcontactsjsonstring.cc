@@ -38,7 +38,7 @@
             "organization":null,           <--------------------------------------------------- never seen this filled
             "phoneNumbers":[
               {
-                "number":"0505417011",
+                "number":"0201234567",
                 "type":"HOME",
                 "label":"home"
               },
@@ -50,12 +50,12 @@
             ],
             "emails":[
                {
-                 "email":"balabla@vakv.bl",
+                 "email":"balabla@something.fake",
                  "type":"WORK",
                  "label":"work"
                },
                {
-                 "email":"basjetimmer2@yahoo.com",
+                 "email":"anotherfake@email.address",
                  "type":"HOME",
                  "label":"home"
                }

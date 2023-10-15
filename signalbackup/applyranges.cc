@@ -112,7 +112,7 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
 }
 
 /*
-  This should work for (possible) overlapping ranges with the
+  This should work for (possible) overlapping ranges
   depending on how html renders certain things.
 */
 void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
@@ -238,7 +238,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       }
       //std::cout << "CASE 2" << std::endl;
       // ranges->at(i - 1).replacement is automatically kept if it has one
-      ranges->at(i - 1).pre += ranges->at(i).pre;
+      ranges->at(i - 1).pre = ranges->at(i).pre + ranges->at(i - 1).pre;
       ranges->at(i).pre = "";
       ranges->at(i).start = ranges->at(i - 1).start + ranges->at(i - 1).length;
       ranges->at(i).length -= ranges->at(i - 1).length;
