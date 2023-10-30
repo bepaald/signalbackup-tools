@@ -297,6 +297,12 @@ int main(int argc, char *argv[])
     MEMINFO("After importfromdesktop");
   }
 
+  if (!arg.importtelegram().empty())
+  {
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.mapjsoncontacts()))
+      return 1;
+  }
+
   if (arg.removedoubles())
     sb->removeDoubles();
 

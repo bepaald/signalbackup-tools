@@ -233,6 +233,7 @@ class SignalBackup
   long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   inline long long int getThreadIdFromRecipient(long long int recipientid) const;
+  bool importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
