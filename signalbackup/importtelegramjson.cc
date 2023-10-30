@@ -51,7 +51,8 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   // create table
   SqliteDB telegram_db(":memory:");
   if (!telegram_db.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
-      !telegram_db.exec("CREATE TABLE messages(chatidx INT, type TEXT, date INT, from_name TEXT, body TEXT, "
+      !telegram_db.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, from_name TEXT, body TEXT, "
+                        "reply_to_id INT, "
                         "photo TEXT, width INT, height INT, "
                         "file TEXT, media_type TEXT, mime_type TEXT)"))
   {
@@ -72,10 +73,12 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
                         "SELECT "
                         "tree2.key, "
 
+                        "json_extract(each.value, '$.id'), "
                         "json_extract(each.value, '$.type'), "
                         "json_extract(each.value, '$.date_unixtime'), "
                         "json_extract(each.value, '$.from'), "
                         "json_extract(each.value, '$.text_entities'), "
+                        "json_extract(each.value, '$.reply_to_message_id'), "
 
                         "json_extract(each.value, '$.photo'), "
                         "json_extract(each.value, '$.width'), "
@@ -147,6 +150,90 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   std::cout << "CONTACT MAP: " << std::endl;
   for (uint i = 0; i < contactmap.size(); ++i)
     std::cout << contactmap[i].first << " -> " << contactmap[i].second << std::endl;
+
+  SqliteDB::QueryResults chats;
+  if (!telegram_db.exec("SELECT idx, name, type FROM chats", &chats))
+    return false;
+
+  // for each chat, get the messages and insert
+  for (uint i = 0; i < chats.rows(); ++i)
+  {
+    std::cout << "dealing with conversation " << i + 1 << "/" << chats.rows() << std::endl;
+
+    if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
+      importJsonMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, true); // deal with group chat
+    else if (chats.valueAsString(i, "type") == "personal_chat") // ????
+      importJsonMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
+    else
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Unsupported chat type `" << chats.valueAsString(i, "type") << "'. Skipping..." << std::endl;
+      continue;
+    }
+  }
+
+  return false;
+}
+
+bool SignalBackup::importJsonMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
+                                      std::string const &threadname, long long int chat_idx, bool isgroup [[maybe_unused]]) const
+{
+  // get recipient id for conversation
+  auto it = std::find_if(contactmap.begin(), contactmap.end(),
+                         [threadname](auto const &iter){ return iter.first == threadname; });
+  if (it == contactmap.end())
+  {
+    std::cout << "error" << std::endl; // shouldnt be possible
+    return false;
+  }
+
+  // get or create thread_id
+  long long int thread_id = getThreadIdFromRecipient(it->second);
+  if (thread_id == -1)
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. ("
+              << threadname << " (id: " << it->second << ")" << std::flush;
+    std::any new_thread_id;
+    if (!insertRow("thread",
+                   {{d_thread_recipient_id, it->second},
+                    {"active", 1},
+                    {"archived", 0},
+                    {"pinned", 0}},
+                   "_id", &new_thread_id))
+    {
+      std::cout << std::endl;
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for conversation." << std::endl;
+      return false;
+    }
+    //std::cout << "Raw any_cast 1" << std::endl;
+    thread_id = std::any_cast<long long int>(new_thread_id);
+    std::cout << ", thread_id: " << thread_id << ")" << std::endl;
+  }
+
+  // loop over messages and insert
+  SqliteDB::QueryResults message_data;
+  if (!db.exec("SELECT type, date, from_name, body, id, reply_to_id, photo, width, height, file, media_type, mime_type FROM messages "
+               "WHERE chatidx = ? "
+               "ORDER BY date ASC",
+               chat_idx, &message_data))
+    return false;
+
+  for (uint i = 0; i < message_data.rows(); ++i)
+  {
+    std::cout << "Dealing with message " << i + 1 << "/" << message_data.rows() << std::endl;
+
+    if (message_data.valueAsString(i, "type") == "message")
+    {
+      // deal with message
+    }
+    // else if...
+    else
+    {
+      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+                << ": Unsupported message type `" << message_data.valueAsString(i, "type") << "'. Skipping..." << std::endl;
+      continue;
+    }
+  }
 
   return false;
 }

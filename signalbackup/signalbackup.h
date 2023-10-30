@@ -406,6 +406,8 @@ class SignalBackup
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
   inline void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
+  bool importJsonMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
+                          std::string const &threadname, long long int chat_idx, bool isgroup) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
