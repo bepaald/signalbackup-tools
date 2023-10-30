@@ -43,7 +43,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   if (!filestream.is_open())
   {
     std::cout << "Failed to open image for reading: " << file << std::endl;
-          return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
+    return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
   }
 
   filestream.seekg(0, std::ios_base::end);

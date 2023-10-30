@@ -106,7 +106,9 @@ Arg::Arg(int argc, char *argv[])
   d_light(false),
   d_themeswitching(false),
   d_searchpage(false),
-  d_findrecipient(-1)
+  d_findrecipient(-1),
+  d_importtelegram(std::string()),
+  d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>())
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -1128,6 +1130,37 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         if (!ston(&d_findrecipient, arguments[++i]))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--importtelegram" || option == "--importjson")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_importtelegram = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapjsoncontacts")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapjsoncontacts, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
         }
       }
