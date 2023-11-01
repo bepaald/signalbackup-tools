@@ -17,11 +17,36 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/*
+  some known issues:
+
+  - Overlapping text styles are not exported properly by telegram
+  - Message delivery info might not be available in json
+  - Message types other than 'message' (eg 'service') are currently skipped
+  - Messages with multiple attachments are not unambiguously exported by telegram -> separate messages
+  - underline style is not supported by signal
+  - quotes?
+  -
+
+ */
+
 #include "signalbackup.ih"
 
-bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap) const
+bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap, std::string const &selfphone)
 {
   std::cout << "Import from Telegram json export" << std::endl;
+
+  // check and warn about selfid
+  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
+  if (d_selfid == -1)
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": Failed to determine id of 'self'.";
+    if (selfphone.empty())
+      std::cout << "Please pass `--setselfid \"[phone]\"' to set it manually";
+    std::cout << std::endl;
+    return false;
+  }
 
   std::cout << "CONTACT MAP: " << std::endl;
   for (uint i = 0; i < contactmap.size(); ++i)
@@ -161,9 +186,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     std::cout << "dealing with conversation " << i + 1 << "/" << chats.rows() << std::endl;
 
     if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
-      importJsonMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, true); // deal with group chat
+      tgImportMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, true); // deal with group chat
     else if (chats.valueAsString(i, "type") == "personal_chat") // ????
-      importJsonMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
+      tgImportMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
     else
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
@@ -172,11 +197,15 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     }
   }
 
+  reorderMmsSmsIds();
+  updateThreadsEntries();
+  return checkDbIntegrity();
+
   return false;
 }
 
-bool SignalBackup::importJsonMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
-                                      std::string const &threadname, long long int chat_idx, bool isgroup [[maybe_unused]]) const
+bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
+                                    std::string const &threadname, long long int chat_idx, bool isgroup)
 {
   // get recipient id for conversation
   auto it = std::find_if(contactmap.begin(), contactmap.end(),
@@ -187,8 +216,11 @@ bool SignalBackup::importJsonMessages(SqliteDB const &db, std::vector<std::pair<
     return false;
   }
 
+  // save thread recipient
+  long long thread_recipient_id = it->second;
+
   // get or create thread_id
-  long long int thread_id = getThreadIdFromRecipient(it->second);
+  long long int thread_id = getThreadIdFromRecipient(thread_recipient_id);
   if (thread_id == -1)
   {
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. ("
@@ -218,22 +250,99 @@ bool SignalBackup::importJsonMessages(SqliteDB const &db, std::vector<std::pair<
                chat_idx, &message_data))
     return false;
 
+  // we save the android message id that was created from telegram message id to be able to
+  // properly handle quotes...
+  std::map<long long int, long long int> telegram_msg_id_to_adb_msg_id;
+
   for (uint i = 0; i < message_data.rows(); ++i)
   {
     std::cout << "Dealing with message " << i + 1 << "/" << message_data.rows() << std::endl;
 
     if (message_data.valueAsString(i, "type") == "message")
     {
-      // deal with message
+      // gather data
+      std::string body = tgBuildBody(message_data.valueAsString(i, "body"));
+
+      std::string from = message_data.valueAsString(i, "from_name");
+      it = std::find_if(contactmap.begin(), contactmap.end(),
+                        [from](auto const &iter){ return iter.first == from; });
+      if (it == contactmap.end())
+      {
+        std::cout << "error" << std::endl; // shouldnt be possible
+        return false;
+      }
+      long long int from_recid = it->second;
+
+      bool incoming = from_recid != d_selfid;
+      long long int address = !isgroup ? from_recid : (incoming ? from_recid : thread_recipient_id);
+
+
+      // make sure date/from/thread is available
+      long long int date = message_data.valueAsInt(i, "date") * 1000;
+      long long int freedate = getFreeDateForMessage(date, thread_id, incoming ? address : d_selfid);
+      if (freedate == -1)
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting message into mms" << std::endl;
+        continue;
+      }
+
+      // insert message
+      std::any retval;
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, freedate},
+                                   {"date_received", freedate},
+                                   {"date_server", freedate},
+                                   {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                   {"body", body.empty() ? std::any(nullptr) : std::any(body)},
+                                   {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+                                   //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
+                                   //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
+                                   {d_mms_recipient_id, incoming ? address : d_selfid},
+                                   {"to_recipient_id", incoming ? d_selfid : address},
+                                   {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+                                   //{"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
+                                   //{"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+                                   //{"quote_body", hasquote ? mmsquote_body : nullptr},
+                                   //{"quote_missing", hasquote ? mmsquote_missing : 0},
+                                   //{"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                   //{"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
+                                   {"remote_deleted", 0},
+                                   {"view_once", 0}//, // if !createrecipient -> this message was already skipped
+                                   /*{"quote_type", hasquote ? mmsquote_type : 0}*/}, "_id", &retval))
+      {
+        std::cout << "errro inserting message" << std::endl;
+        continue;
+      }
+      long long int new_msg_id = std::any_cast<long long int>(retval);
+      telegram_msg_id_to_adb_msg_id[message_data.valueAsInt(i, "id")] = new_msg_id; // save to map for quotes
+
+      // deal with quotes
+      if (!message_data.isNull(i, "reply_to_id"))
+      {
+        long long int quotesmsg = message_data.valueAsInt(i, "reply_to_id");
+        // handle quote
+      }
+
+      // set body ranges
+      if (!tgSetBodyRanges(message_data.valueAsString(i, "body"), new_msg_id))
+      {
+        // warn?
+        // error?
+        // return false?
+        continue;
+      }
+
+      // add attachments
+
+
     }
     // else if...
     else
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Unsupported message type `" << message_data.valueAsString(i, "type") << "'. Skipping..." << std::endl;
+      warnOnce("Unsupported message type `" + message_data.valueAsString(i, "type") + "'. Skipping...");
       continue;
     }
   }
 
-  return false;
+  return true;
 }

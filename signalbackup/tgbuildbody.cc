@@ -17,9 +17,21 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20231101.173931"
+std::string SignalBackup::tgBuildBody(std::string const &bodyjson) const
+{
+  long long int fragments = d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", bodyjson, -1);
+  if (fragments == -1)
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": Failed to get number of text fragments from message body. Body data: '" + bodyjson + "'";
+    return std::string();
+  }
 
-#endif
+  std::string body;
+  for (uint i = 0; i < fragments; ++i)
+    body += d_database.getSingleResultAs<std::string>("SELECT json_extract(?, '$[" + bepaald::toString(i) + "].text')", bodyjson, std::string());
+
+  return body;
+}
