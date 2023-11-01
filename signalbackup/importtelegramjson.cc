@@ -319,8 +319,16 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       // deal with quotes
       if (!message_data.isNull(i, "reply_to_id"))
       {
-        long long int quotesmsg = message_data.valueAsInt(i, "reply_to_id");
-        // handle quote
+        long long int quotemsg = message_data.valueAsInt(i, "reply_to_id");
+        if (bepaald::contains(telegram_msg_id_to_adb_msg_id, quotemsg))
+        {
+          std::cout << "Found quote: " << telegram_msg_id_to_adb_msg_id[quotemsg] << std::endl;
+        }
+        else
+        {
+          // warn
+          // std::cout << "Message was quote, but quoted message not found..." << std::endl;
+        }
       }
 
       // set body ranges
