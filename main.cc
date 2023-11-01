@@ -298,10 +298,8 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.importtelegram().empty())
-  {
-    if (!sb->importTelegramJson(arg.importtelegram(), arg.mapjsoncontacts()))
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.mapjsoncontacts(), arg.setselfid()))
       return 1;
-  }
 
   if (arg.removedoubles())
     sb->removeDoubles();

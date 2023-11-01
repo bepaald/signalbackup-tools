@@ -233,7 +233,8 @@ class SignalBackup
   long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   inline long long int getThreadIdFromRecipient(long long int recipientid) const;
-  bool importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap) const;
+  bool importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap,
+                          std::string const &selfphone);
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -406,8 +407,10 @@ class SignalBackup
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
   inline void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
-  bool importJsonMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
-                          std::string const &threadname, long long int chat_idx, bool isgroup) const;
+  bool tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
+                        std::string const &threadname, long long int chat_idx, bool isgroup);
+  std::string tgBuildBody(std::string const &bodyjson) const;
+  bool tgSetBodyRanges(std::string const &bodyjson, long long int message_id);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
