@@ -451,7 +451,7 @@ inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out,
     if (c <= 'F' && c >= 'A')
       return c - 'A' + 10;
     //if (c <= 'f' && c >= 'a') // guaranteed at this point
-      return c - 'a' + 10;
+    return c - 'a' + 10;
   };
 
   uint64_t outpos = 0;
