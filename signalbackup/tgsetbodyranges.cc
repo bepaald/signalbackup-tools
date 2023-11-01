@@ -55,7 +55,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
 
     if (br("type") == "plain") [[likely]]
       ;
-    else if (bepaald::contains(std::array{"bold", "italic", "spoiler", "strikethrough", "code"}, br("type")))
+    else if (bepaald::contains(std::vector{"bold", "italic", "spoiler", "strikethrough", "code"}, br("type")))
     {
       // start pos
       if (currentpos != 0)
