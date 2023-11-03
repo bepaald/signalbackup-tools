@@ -73,6 +73,12 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     return false;
   }
 
+  // get base path of file (we need it to set the resolve relative paths
+  // referenced in the JSON data
+  std::string datapath;
+  std::filesystem::path p(file);
+  datapath = p.parent_path().string() + std::filesystem::path::preferred_separator;
+
   // create table
   SqliteDB telegram_db(":memory:");
   if (!telegram_db.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
@@ -186,9 +192,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     std::cout << "dealing with conversation " << i + 1 << "/" << chats.rows() << std::endl;
 
     if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
-      tgImportMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, true); // deal with group chat
+      tgImportMessages(telegram_db, contactmap, datapath, chats.valueAsString(i, "name"), i, true); // deal with group chat
     else if (chats.valueAsString(i, "type") == "personal_chat") // ????
-      tgImportMessages(telegram_db, contactmap, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
+      tgImportMessages(telegram_db, contactmap, datapath, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
     else
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
@@ -205,7 +211,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 }
 
 bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
-                                    std::string const &threadname, long long int chat_idx, bool isgroup)
+                                    std::string const &datapath, std::string const &threadname, long long int chat_idx, bool isgroup)
 {
   // get recipient id for conversation
   auto it = std::find_if(contactmap.begin(), contactmap.end(),
@@ -310,11 +316,26 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                                    {"view_once", 0}//, // if !createrecipient -> this message was already skipped
                                    /*{"quote_type", hasquote ? mmsquote_type : 0}*/}, "_id", &retval))
       {
-        std::cout << "errro inserting message" << std::endl;
+        std::cout << "error inserting message" << std::endl;
         continue;
       }
       long long int new_msg_id = std::any_cast<long long int>(retval);
-      telegram_msg_id_to_adb_msg_id[message_data.valueAsInt(i, "id")] = new_msg_id; // save to map for quotes
+
+      // add attachments
+      if (!tgSetAttachment(message_data, datapath, i, new_msg_id))
+      {
+        if (body.empty())
+        {
+          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set attachment on otherwise empty message. Deleting message..." << std::endl;
+          d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id);
+        }
+        else
+          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set attachment" << std::endl;
+      }
+
+      // save to map for quotes, we do this AFTER adding attachment, because that
+      // may delete the new message on failure...
+      telegram_msg_id_to_adb_msg_id[message_data.valueAsInt(i, "id")] = new_msg_id;
 
       // deal with quotes
       if (!message_data.isNull(i, "reply_to_id"))
@@ -339,9 +360,6 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         // return false?
         continue;
       }
-
-      // add attachments
-
 
     }
     // else if...
