@@ -408,9 +408,11 @@ class SignalBackup
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
   inline void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
   bool tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::string, long long int>> const &contactmap,
-                        std::string const &threadname, long long int chat_idx, bool isgroup);
+                        std::string const &datapath, std::string const &threadname, long long int chat_idx, bool isgroup);
   std::string tgBuildBody(std::string const &bodyjson) const;
   bool tgSetBodyRanges(std::string const &bodyjson, long long int message_id);
+  bool tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
+                       long long int r, long long int new_msg_id);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
