@@ -151,19 +151,19 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     if (std::memcmp(buf.get() + 12, "VP8 ", 4) == 0) // 'lossless'
     {
       //std::cout << "lossy" << std::endl;
-      uint w = ((buf[26] | buf[27] << 8) & 0x3fff);
-      uint h = ((buf[28] | buf[29] << 8) & 0x3fff);
+      int w = ((buf[26] | buf[27] << 8) & 0x3fff);
+      int h = ((buf[28] | buf[29] << 8) & 0x3fff);
       //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
-      return AttachmentMetadata(w, h, "image/webp", file_size, hash, file);
+      return AttachmentMetadata{w, h, "image/webp", file_size, hash, file};
     }
     else if (std::memcmp(buf.get() + 12, "VP8L", 4) == 0) // 'lossy'
     {
       //std::cout << "lossless" << std::endl;
       uint32_t size = (buf[21] | (buf[22] << 8) | (buf[23] << 16) | (buf[24] << 24));
-      uint w = (size & 0x3fff) + 1;
-      uint h = ((size >> 14) & 0x3fff) + 1;
+      int w = (size & 0x3fff) + 1;
+      int h = ((size >> 14) & 0x3fff) + 1;
       //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
-      return AttachmentMetadata(w, h, "image/webp", file_size, hash, file);
+      return AttachmentMetadata{w, h, "image/webp", file_size, hash, file};
     }
     else if (std::memcmp(buf.get() + 12, "VP8X", 4) == 0) // 'extended'
     {
@@ -179,16 +179,16 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       if ((buf[20] & 0b11000000) == 0 &&
           (buf[20] & 0b00000001) == 0)
       {
-        uint w = (buf[24] | (buf[25] << 8) | (buf[26] << 16)) + 1;
-        uint h = (buf[27] | (buf[28] << 8) | (buf[29] << 16)) + 1;
+        int w = (buf[24] | (buf[25] << 8) | (buf[26] << 16)) + 1;
+        int h = (buf[27] | (buf[28] << 8) | (buf[29] << 16)) + 1;
         //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
-        return AttachmentMetadata(w, h, "image/webp", file_size, hash, file);
+        return AttachmentMetadata{w, h, "image/webp", file_size, hash, file};
       }
       else
-        return AttachmentMetadata(-1, -1, "image/webp", file_size, hash, file);
+        return AttachmentMetadata{-1, -1, "image/webp", file_size, hash, file};
     }
     else
-      return AttachmentMetadata(-1, -1, "image/webp", file_size, hash, file);
+      return AttachmentMetadata{-1, -1, "image/webp", file_size, hash, file};
   }
 
 
