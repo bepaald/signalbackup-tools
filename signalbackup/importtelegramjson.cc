@@ -78,7 +78,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   // referenced in the JSON data
   std::string datapath;
   std::filesystem::path p(file);
-  datapath = p.parent_path().string() + std::filesystem::path::preferred_separator;
+  datapath = p.parent_path().string() + static_cast<char>(std::filesystem::path::preferred_separator);
 
   // create table
   SqliteDB telegram_db(":memory:");
