@@ -44,6 +44,7 @@ class SqliteDB
     inline void emplaceHeader(std::string &&h);
     inline std::vector<std::string> const &headers() const;
     inline std::string const &header(size_t idx) const;
+    inline bool hasColumn(std::string const &h) const;
     inline void emplaceValue(size_t row, std::any &&a);
     inline std::any value(size_t row, std::string const &header) const;
     template <typename T>
@@ -605,6 +606,11 @@ inline std::string const &SqliteDB::QueryResults::header(size_t idx) const
 inline std::vector<std::string> const &SqliteDB::QueryResults::headers() const
 {
   return d_headers;
+}
+
+inline bool SqliteDB::QueryResults::hasColumn(std::string const &h) const
+{
+  return bepaald::contains(d_headers, h);
 }
 
 inline void SqliteDB::QueryResults::emplaceValue(size_t row, std::any &&a)

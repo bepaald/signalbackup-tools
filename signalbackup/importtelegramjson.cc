@@ -26,7 +26,8 @@
   - Messages with multiple attachments are not unambiguously exported by telegram -> separate messages
   - underline style is not supported by signal
   - quotes?
-  -
+  - stickers turn into normal attachments?
+  - 'forwarded from' is not an existing attribute in signal
 
  */
 
@@ -85,7 +86,8 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
       !telegram_db.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, from_name TEXT, body TEXT, "
                         "reply_to_id INT, "
                         "photo TEXT, width INT, height INT, "
-                        "file TEXT, media_type TEXT, mime_type TEXT)"))
+                        "file TEXT, media_type TEXT, mime_type TEXT, "
+                        "poll)"))
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
               << ": Failed to set up sql table" << std::endl;
@@ -117,7 +119,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 
                         "json_extract(each.value, '$.file'), "
                         "json_extract(each.value, '$.media_type'), " // could be 'voice_message
-                        "json_extract(each.value, '$.mime_type') "
+                        "json_extract(each.value, '$.mime_type'), "
+
+                        "json_extract(each.value, '$.poll') " // not yet supported, just selected to skip cleanly
 
                         "FROM json_tree(?, '$.chats.list') AS tree, json_each(tree.value) AS each "
                         "LEFT JOIN json_tree(?, '$.chats.list') AS tree2 ON tree2.fullkey || '.messages' IS tree.fullkey "
@@ -250,7 +254,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
   // loop over messages and insert
   SqliteDB::QueryResults message_data;
-  if (!db.exec("SELECT type, date, from_name, body, id, reply_to_id, photo, width, height, file, media_type, mime_type FROM messages "
+  if (!db.exec("SELECT type, date, from_name, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, poll FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
                chat_idx, &message_data))
@@ -263,6 +267,12 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   for (uint i = 0; i < message_data.rows(); ++i)
   {
     std::cout << "Dealing with message " << i + 1 << "/" << message_data.rows() << std::endl;
+
+    if (!message_data.isNull(i, "poll"))
+    {
+      warnOnce("Message is 'poll'. This is not supported in Signal. Skipping...");
+      continue;
+    }
 
     if (message_data.valueAsString(i, "type") == "message")
     {
@@ -344,6 +354,42 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         if (bepaald::contains(telegram_msg_id_to_adb_msg_id, quotemsg))
         {
           std::cout << "Found quote: " << telegram_msg_id_to_adb_msg_id[quotemsg] << std::endl;
+
+          SqliteDB::QueryResults quote_res;
+          if (!d_database.exec("SELECT body, " + d_mms_recipient_id + ", " + d_mms_date_sent + " FROM " + d_mms_table + " "
+                               "WHERE _id = ?", telegram_msg_id_to_adb_msg_id[quotemsg], &quote_res) ||
+              quote_res.rows() != 1)
+            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get quote data." << std::endl;
+          else
+          {
+            long long int quote_id = quote_res.valueAsInt(0, d_mms_date_sent, -1);
+            long long int quote_author = quote_res.valueAsInt(0, d_mms_recipient_id, -1);
+            std::string quote_body = quote_res.valueAsString(0, "body");
+            if (quote_id == -1 || quote_author == -1)
+              std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get quote data." << std::endl;
+            else if (!d_database.exec("UPDATE " + d_mms_table + " SET "
+                                      "quote_id = ?, "
+                                      "quote_author = ?, "
+                                      "quote_body = ?, "
+                                      "quote_type = 0, "
+                                      "quote_missing = 0 "
+                                      "WHERE _id = ?",
+                                      {quote_id,
+                                       quote_author,
+                                       (quote_res.isNull(0, "body") ? std::any(nullptr) : std::any(quote_body)),
+                                       new_msg_id}))
+              std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set quote data." << std::endl;
+            else
+            {
+              // set attachment data?
+              SqliteDB::QueryResults quote_att_res;
+              if (d_database.exec("SELECT _id FROM part WHERE mid = ?", telegram_msg_id_to_adb_msg_id[quotemsg], &quote_att_res) &&
+                  quote_att_res.rows() == 1)
+              {
+                std::cout << "Need to add attachemnt to quote!" << std::endl;
+              }
+            }
+          }
         }
         else
         {

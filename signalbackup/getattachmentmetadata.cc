@@ -81,8 +81,9 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   // rewind and reset
   filestream.clear();
   filestream.seekg(0, std::ios_base::beg);
-  int bufsize = 24;
+  int bufsize = std::min(file_size, 30ul);
 
+  // no longer possible
   if (file_size < static_cast<unsigned int>(bufsize))
   {
     //std::cout << "File unexpectedly small" << std::endl; // only unexpected when it is _supposed_ to be png/jpg/gif
@@ -92,12 +93,20 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   std::unique_ptr<unsigned char[]> buf(new unsigned char[bufsize]);
   if (!filestream.read(reinterpret_cast<char *>(buf.get()), bufsize))
   {
-    std::cout << "Failed to read 24 bytes from file" << std::endl;
+    std::cout << "Failed to read " << bufsize << " bytes from file" << std::endl;
     return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
   }
 
+
+
+
+
+
+
   // PNG: the first frame is by definition an IHDR frame, which gives dimensions
-  if (buf[0] == 0x89 && buf[1] == 'P' && buf[2] == 'N' && buf[3] == 'G' && buf[4] == 0x0D && buf[5] == 0x0A && buf[6] == 0x1A && buf[7] == 0x0A &&
+  // NEED 24 bytes
+  if (bufsize >= 24 &&
+      buf[0] == 0x89 && buf[1] == 'P' && buf[2] == 'N' && buf[3] == 'G' && buf[4] == 0x0D && buf[5] == 0x0A && buf[6] == 0x1A && buf[7] == 0x0A &&
       buf[12] == 'I' && buf[13] == 'H' && buf[14] == 'D' && buf[15] == 'R')
   {
     //*x = (buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0);
@@ -107,8 +116,16 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       "image/png", file_size, hash, file};
   }
 
+
+
+
+
+
+
   // GIF: first three bytes say "GIF", next three give version number. Then dimensions
-  if (buf[0] == 'G' && buf[1] == 'I' && buf[2] == 'F')
+  // NEEDS 10 bytes
+  if (bufsize >= 10 &&
+      buf[0] == 'G' && buf[1] == 'I' && buf[2] == 'F')
   {
     //*x = buf[6] + (buf[7] << 8);
     //*y = buf[8] + (buf[9] << 8);
@@ -116,6 +133,67 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       buf[6] + (buf[7] << 8),
       "image/gif", file_size, hash, file};
   }
+
+
+
+
+
+
+
+
+  // WEBP
+  // https://developers.google.com/speed/webp/docs/riff_container
+  // Starts with 'R','I','F','F','?','?','?','?','W','E','B','P'
+  if (bufsize >= 30 &&
+      buf[0] == 'R' && buf[1] == 'I' && buf[2] == 'F' && buf[3] == 'F' &&
+      buf[8] == 'W' && buf[9] == 'E' && buf[10] == 'B' && buf[11] == 'P')
+  {
+    if (std::memcmp(buf.get() + 12, "VP8 ", 4) == 0) // 'lossless'
+    {
+      //std::cout << "lossy" << std::endl;
+      uint w = ((buf[26] | buf[27] << 8) & 0x3fff);
+      uint h = ((buf[28] | buf[29] << 8) & 0x3fff);
+      //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
+      return AttachmentMetadata(w, h, "image/webp", file_size, hash, file);
+    }
+    else if (std::memcmp(buf.get() + 12, "VP8L", 4) == 0) // 'lossy'
+    {
+      //std::cout << "lossless" << std::endl;
+      uint32_t size = (buf[21] | (buf[22] << 8) | (buf[23] << 16) | (buf[24] << 24));
+      uint w = (size & 0x3fff) + 1;
+      uint h = ((size >> 14) & 0x3fff) + 1;
+      //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
+      return AttachmentMetadata(w, h, "image/webp", file_size, hash, file);
+    }
+    else if (std::memcmp(buf.get() + 12, "VP8X", 4) == 0) // 'extended'
+    {
+      //std::cout << "extended" << std::endl;
+
+      // first byte of VPX8 header = RrILEXAR
+      //    where Rr = reserved 00
+      //    R = reserved 0
+      //    (ILEXA are all 1 bit flags for something)
+      // then 24 bits reserved 0
+      // then 24 bits canvas width - 1
+      // then 24 bits canvas height - 1
+      if ((buf[20] & 0b11000000) == 0 &&
+          (buf[20] & 0b00000001) == 0)
+      {
+        uint w = (buf[24] | (buf[25] << 8) | (buf[26] << 16)) + 1;
+        uint h = (buf[27] | (buf[28] << 8) | (buf[29] << 16)) + 1;
+        //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
+        return AttachmentMetadata(w, h, "image/webp", file_size, hash, file);
+      }
+      else
+        return AttachmentMetadata(-1, -1, "image/webp", file_size, hash, file);
+    }
+    else
+      return AttachmentMetadata(-1, -1, "image/webp", file_size, hash, file);
+  }
+
+
+
+
 
   // JPEG
   // For jpeg we read the width and height from JPEG header, more precisely, the frame marked 0xFFC0.
