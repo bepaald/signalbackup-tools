@@ -637,6 +637,23 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: none;
       }
 
+      .msg-img-container,
+      .msg-vid-container {
+        text-align: center;
+        padding-bottom: 5px;
+      }
+
+      .msg-img-container label {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0px;
+        align-items: flex-start;
+      }
+
+      .caption {
+        font-size: small;
+      }
+
       .shared-contact-avatar img,
       .msg-img-container img {
         cursor: zoom-in;
@@ -1668,17 +1685,25 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
                  << "_" << uniqueid << ".bin\" alt=\"Image attachment\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    </label>" << std::endl;
+      if (attachment_results.hasColumn("caption") &&
+          !attachment_results.isNull(a, "caption"))
+        htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>" << std::endl;
       htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
     }
     else if (STRING_STARTS_WITH(content_type, "video/") ||
              STRING_STARTS_WITH(content_type, "audio/"))
     {
-      htmloutput << std::string(indent, ' ') << "  <" << content_type.substr(0, 5) << " controls>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    <source src=\"media/Attachment_" << rowid
+      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "    <" << content_type.substr(0, 5) << " controls>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "      <source src=\"media/Attachment_" << rowid
                  << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+      htmloutput << std::string(indent, ' ') << "      Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
                  << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  </" << content_type.substr(0, 5) << ">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "    </" << content_type.substr(0, 5) << ">" << std::endl;
+      if (attachment_results.hasColumn("caption") &&
+          !attachment_results.isNull(a, "caption"))
+        htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
     }
     else if (content_type.empty())
     {
@@ -1786,12 +1811,13 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
     htmloutput << std::string(indent, ' ') << "<div class=\"shared-contact\">" << std::endl;
     if (rowid > -1 && uniqueid > -1)
     {
-      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << ".bin" << "');\";>";
+      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << ".bin" << "');\">"
+                 << std::endl;
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\">" << std::endl;
       htmloutput << std::string(indent, ' ') << "    </label>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  </div>";
+      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
     }
     else
       htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar shared-contact-avatar-default\"></div>" << std::endl;
