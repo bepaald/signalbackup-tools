@@ -23,11 +23,12 @@
   - Overlapping text styles are not exported properly by telegram
   - Message delivery info might not be available in json
   - Message types other than 'message' (eg 'service') are currently skipped
-  - Messages with multiple attachments are not unambiguously exported by telegram -> separate messages
   - underline style is not supported by signal
-  - quotes?
+  - quote attachments
   - stickers turn into normal attachments?
   - 'forwarded from' is not an existing attribute in signal
+  - message reaction are not exported by Telegram
+  - poll-attachments skipped
 
  */
 
@@ -267,6 +268,9 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   // properly handle quotes...
   std::map<long long int, long long int> telegram_msg_id_to_adb_msg_id;
 
+  // save timestamp of previous message (to merge messages with multiple attachments)
+  std::pair<long long int, long long int> prevtimestamp_to_id;
+
   for (uint i = 0; i < message_data.rows(); ++i)
   {
     std::cout << "Dealing with message " << i + 1 << "/" << message_data.rows() << std::endl;
@@ -295,6 +299,20 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       bool incoming = from_recid != d_selfid;
       long long int address = !isgroup ? from_recid : (incoming ? from_recid : thread_recipient_id);
 
+      // check if we need to merge message
+      if (message_data.valueAsInt(i, "date") == prevtimestamp_to_id.first &&
+          body.empty() &&
+          message_data.isNull(i, "reply_to_id") &&
+          (!message_data(i, "file").empty() || !message_data(i, "photo").empty()) &&
+          from_recid == d_database.getSingleResultAs<long long int>("SELECT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE _id = ?", prevtimestamp_to_id.second, -1) &&
+          d_database.getSingleResultAs<long long int>("SELECT _id FROM part WHERE mid = ? LIMIT 1", prevtimestamp_to_id.second, -1) != -1)
+      {
+        std::cout << "Assuming attachment belongs to previous message" << std::endl;
+
+        // add attachments
+        tgSetAttachment(message_data, datapath, i, prevtimestamp_to_id.second);
+        continue;
+      }
 
       // make sure date/from/thread is available
       long long int date = message_data.valueAsInt(i, "date") * 1000;
@@ -326,8 +344,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                                    //{"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                    //{"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
                                    {"remote_deleted", 0},
-                                   {"view_once", 0}//, // if !createrecipient -> this message was already skipped
-                                   /*{"quote_type", hasquote ? mmsquote_type : 0}*/}, "_id", &retval))
+                                   {"view_once", 0}}, // if !createrecipient -> this message was already skipped
+                     "_id", &retval))
       {
         std::cout << "error inserting message" << std::endl;
         continue;
@@ -349,6 +367,9 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       // save to map for quotes, we do this AFTER adding attachment, because that
       // may delete the new message on failure...
       telegram_msg_id_to_adb_msg_id[message_data.valueAsInt(i, "id")] = new_msg_id;
+
+      // save message timestamp and id
+      prevtimestamp_to_id = {message_data.valueAsInt(i, "date"), new_msg_id};
 
       // deal with quotes
       if (!message_data.isNull(i, "reply_to_id"))
