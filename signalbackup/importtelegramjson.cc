@@ -49,9 +49,12 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     return false;
   }
 
-  std::cout << "CONTACT MAP: " << std::endl;
-  for (uint i = 0; i < contactmap.size(); ++i)
-    std::cout << contactmap[i].first << " -> " << contactmap[i].second << std::endl;
+  if (contactmap.size())
+  {
+    std::cout << "CONTACT MAP: " << std::endl;
+    for (uint i = 0; i < contactmap.size(); ++i)
+      std::cout << contactmap[i].first << " -> " << contactmap[i].second << std::endl;
+  }
 
   std::ifstream sourcefile(file, std::ios_base::binary | std::ios_base::in);
   if (!sourcefile.is_open())
@@ -136,10 +139,10 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 
   bepaald::destroyPtr(&data, &datasize);
 
-  std::cout << std::endl << "CHATS: " << std::endl;
-  telegram_db.prettyPrint("SELECT * FROM chats");
-  std::cout << std::endl << "MESSAGES: " << std::endl;
-  telegram_db.prettyPrint("SELECT * FROM messages");
+  // std::cout << std::endl << "CHATS: " << std::endl;
+  // telegram_db.prettyPrint("SELECT * FROM chats");
+  // std::cout << std::endl << "MESSAGES: " << std::endl;
+  // telegram_db.prettyPrint("SELECT * FROM messages");
 
   // get all contacts in json data
   SqliteDB::QueryResults json_contacts;
@@ -405,6 +408,16 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         // error?
         // return false?
         continue;
+      }
+
+
+      if (d_database.getSingleResultAs<std::string>("SELECT body FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, std::string()).empty() && // no message body
+          d_database.getSingleResultAs<long long int>("SELECT _id FROM part WHERE mid = ?", new_msg_id, -1) == -1 &&                            // no attachment
+          d_database.getSingleResultAs<long long int>("SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, 0) == 0)            // no quote
+      {
+        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Maybe inserted empty message." << std::endl;
+        std::cout << "Data:" << std::endl;
+        message_data.getRow(i).prettyPrint();
       }
 
     }
