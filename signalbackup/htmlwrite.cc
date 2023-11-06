@@ -643,6 +643,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding-bottom: 5px;
       }
 
+      .msg-vid-container video {
+        display: flex;
+      }
+
       .msg-img-container label {
         display: flex;
         flex-direction: column;
