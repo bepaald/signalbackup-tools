@@ -1388,6 +1388,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-phone-icon,
       .msg-incoming .shared-contact-avatar-default,
       .msg-outgoing .shared-contact-avatar-default {
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
         print-color-adjust: exact;
         filter: brightness(0.5);
       }
