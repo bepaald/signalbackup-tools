@@ -52,6 +52,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline uint64_t rowId() const;
   inline void setRowId(uint64_t rid);
   inline uint64_t attachmentId() const;
+  inline void setAttachmentId(uint64_t rid);
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
@@ -178,6 +179,22 @@ inline uint64_t AttachmentFrame::attachmentId() const
     if (std::get<0>(p) == FIELD::ATTACHMENTID)
       return bytesToUint64(std::get<1>(p), std::get<2>(p));
   return 0;
+}
+
+inline void AttachmentFrame::setAttachmentId(uint64_t aid)
+{
+  for (auto &p : d_framedata)
+    if (std::get<0>(p) == FIELD::ATTACHMENTID)
+    {
+      if (sizeof(aid) != std::get<2>(p)) [[unlikely]]
+      {
+        //std::cout << "       ************        DAMN!        **********        " << std::endl;
+        return;
+      }
+      uint64_t val = bepaald::swap_endian(aid);
+      std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&val), sizeof(val));
+      return;
+    }
 }
 
 inline uint64_t AttachmentFrame::dataSize() const

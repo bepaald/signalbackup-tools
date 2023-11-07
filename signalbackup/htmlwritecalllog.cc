@@ -444,6 +444,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        .callstatus-group-icon, .callstatus-missed-icon," << std::endl
     << "        .callstatus-incoming-icon, .callstatus-outgoing-icon, " << std::endl
     << "        .calltype-audio-icon, .calltype-video-icon {" << std::endl
+    << "          -webkit-print-color-adjust: exact;" << std::endl
     << "          print-color-adjust: exact;" << std::endl
     << "          filter: brightness(0.5);" << std::endl
     << "        }" << std::endl

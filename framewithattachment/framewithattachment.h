@@ -143,6 +143,7 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &
     d_mackey = std::move(other.d_mackey);
     d_cipherkey_size = std::move(other.d_cipherkey_size);
     d_cipherkey = std::move(other.d_cipherkey);
+    d_filename = std::move(other.d_filename);
     //d_dec = std::move(other.d_dec);
 
     other.d_attachmentdata = nullptr;
@@ -169,7 +170,8 @@ inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment const &other
   d_mackey_size(other.d_mackey_size),
   d_mackey(nullptr),
   d_cipherkey_size(other.d_cipherkey_size),
-  d_cipherkey(nullptr)
+  d_cipherkey(nullptr),
+  d_filename(other.d_filename)
   //d_dec(other.d_dec)
 {
   if (other.d_attachmentdata)
@@ -212,6 +214,7 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment c
     d_mackey_size = other.d_mackey_size;
     d_cipherkey_size = other.d_cipherkey_size;
     d_filepos = other.d_filepos;
+    d_filename = other.d_filename;
     //d_dec = other.d_dec;
 
     if (other.d_attachmentdata)

@@ -78,9 +78,8 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
                     {"voice_note", voice_note},
                     {"width", amd.width == -1 ? w : amd.width},
                     {"height", amd.height == -1 ? h : amd.height},
-                    //{"quote", isquote ? 1 : 0},
                     {"quote", 0},
-                    {"data_hash", amd.hash},
+                    {"data_hash", amd.hash}
                     //{"upload_timestamp", results_attachment_data.value(0, "upload_timestamp")},      // will be 0 on sticker
                     //{"cdn_number", results_attachment_data.value(0, "cdn_number")}, // will be 0 on sticker, usually 0 or 2, but I dont know what it means
                     //{"file_name", results_attachment_data.value(0, "file_name")}},

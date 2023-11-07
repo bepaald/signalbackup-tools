@@ -413,6 +413,7 @@ class SignalBackup
   bool tgSetBodyRanges(std::string const &bodyjson, long long int message_id);
   bool tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
                        long long int r, long long int new_msg_id);
+  bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

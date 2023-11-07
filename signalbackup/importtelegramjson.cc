@@ -378,42 +378,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         if (bepaald::contains(telegram_msg_id_to_adb_msg_id, quotemsg))
         {
           std::cout << "Found quote: " << telegram_msg_id_to_adb_msg_id[quotemsg] << std::endl;
-
-          SqliteDB::QueryResults quote_res;
-          if (!d_database.exec("SELECT body, " + d_mms_recipient_id + ", " + d_mms_date_sent + " FROM " + d_mms_table + " "
-                               "WHERE _id = ?", telegram_msg_id_to_adb_msg_id[quotemsg], &quote_res) ||
-              quote_res.rows() != 1)
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get quote data." << std::endl;
-          else
-          {
-            long long int quote_id = quote_res.valueAsInt(0, d_mms_date_sent, -1);
-            long long int quote_author = quote_res.valueAsInt(0, d_mms_recipient_id, -1);
-            std::string quote_body = quote_res.valueAsString(0, "body");
-            if (quote_id == -1 || quote_author == -1)
-              std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get quote data." << std::endl;
-            else if (!d_database.exec("UPDATE " + d_mms_table + " SET "
-                                      "quote_id = ?, "
-                                      "quote_author = ?, "
-                                      "quote_body = ?, "
-                                      "quote_type = 0, "
-                                      "quote_missing = 0 "
-                                      "WHERE _id = ?",
-                                      {quote_id,
-                                       quote_author,
-                                       (quote_res.isNull(0, "body") ? std::any(nullptr) : std::any(quote_body)),
-                                       new_msg_id}))
-              std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set quote data." << std::endl;
-            else
-            {
-              // set attachment data?
-              SqliteDB::QueryResults quote_att_res;
-              if (d_database.exec("SELECT _id FROM part WHERE mid = ?", telegram_msg_id_to_adb_msg_id[quotemsg], &quote_att_res) &&
-                  quote_att_res.rows() == 1)
-              {
-                std::cout << "Need to add attachemnt to quote!" << std::endl;
-              }
-            }
-          }
+          tgSetQuote(telegram_msg_id_to_adb_msg_id[quotemsg], new_msg_id);
         }
         else
         {
