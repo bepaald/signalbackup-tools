@@ -774,6 +774,7 @@ class MimeTypes
     {"text/x-opml","opml"},
     {"text/x-pascal","p"},
     {"text/x-setext","etx"},
+    {"text/x-signal-plain","txt"}, // the (custom) type used for too large message bodies
     {"text/x-sfv","sfv"},
     {"text/x-uuencode","uu"},
     {"text/x-vcalendar","vcs"},

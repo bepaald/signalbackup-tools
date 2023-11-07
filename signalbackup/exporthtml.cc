@@ -99,8 +99,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  // directory exists, but
-  // is it a dir?
+  // directory exists, but is it a dir?
   if (!bepaald::isDir(directory))
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
