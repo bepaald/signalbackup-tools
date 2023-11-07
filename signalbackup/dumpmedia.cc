@@ -29,12 +29,28 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
     return false;
   }
 
+  // check if dir exists, create if not
+  if (!bepaald::fileOrDirExists(dir))
+  {
+    // try to create
+    if (!bepaald::createDir(dir))
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+                << ": Failed to create directory `" << dir << "'"
+                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
+      return false;
+    }
+  }
+
+  // directory exists, but is it a dir?
   if (!bepaald::isDir(dir))
   {
-    std::cout << "Output directory '" << dir << "' does not exist or is not a directory" << std::endl;
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+              << ": `" << dir << "' is not a directory." << std::endl;
     return false;
   }
 
+  // and is it empty?
   if (!bepaald::isEmpty(dir))
   {
     if (!overwrite)
