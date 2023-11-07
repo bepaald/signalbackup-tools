@@ -1440,6 +1440,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       #bottom {
         display: none;
       }
+
+      video::-webkit-media-controls-panel {
+        display: none !important;
+      }
       /* todo: print style for audio, video and attachment previews */
     } /* end @media print */
 
