@@ -30,41 +30,44 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
   }
 
   // check if dir exists, create if not
-  if (!bepaald::fileOrDirExists(dir))
-  {
-    // try to create
-    if (!bepaald::createDir(dir))
-    {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to create directory `" << dir << "'"
-                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
-      return false;
-    }
-  }
-
-  // directory exists, but is it a dir?
-  if (!bepaald::isDir(dir))
-  {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": `" << dir << "' is not a directory." << std::endl;
+  if (!prepareOutputDirectory(dir, overwrite))
     return false;
-  }
 
-  // and is it empty?
-  if (!bepaald::isEmpty(dir))
-  {
-    if (!overwrite)
-    {
-      std::cout << "Directory '" << dir << "' is not empty. Use --overwrite to clear directory before dump" << std::endl;
-      return false;
-    }
-    std::cout << "Clearing contents of directory '" << dir << "'..." << std::endl;
-    if (!bepaald::clearDirectory(dir))
-    {
-      std::cout << "Failed to empty directory '" << dir << "'" << std::endl;
-      return false;
-    }
-  }
+  // if (!bepaald::fileOrDirExists(dir))
+  // {
+  //   // try to create
+  //   if (!bepaald::createDir(dir))
+  //   {
+  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+  //               << ": Failed to create directory `" << dir << "'"
+  //               << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
+  //     return false;
+  //   }
+  // }
+
+  // // directory exists, but is it a dir?
+  // if (!bepaald::isDir(dir))
+  // {
+  //   std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+  //             << ": `" << dir << "' is not a directory." << std::endl;
+  //   return false;
+  // }
+
+  // // and is it empty?
+  // if (!bepaald::isEmpty(dir))
+  // {
+  //   if (!overwrite)
+  //   {
+  //     std::cout << "Directory '" << dir << "' is not empty. Use --overwrite to clear directory before dump" << std::endl;
+  //     return false;
+  //   }
+  //   std::cout << "Clearing contents of directory '" << dir << "'..." << std::endl;
+  //   if (!bepaald::clearDirectory(dir))
+  //   {
+  //     std::cout << "Failed to empty directory '" << dir << "'" << std::endl;
+  //     return false;
+  //   }
+  // }
 
   MimeTypes mimetypes;
   std::pair<std::vector<int>, std::vector<std::string>> conversations; // links thread_id to thread title, if the

@@ -481,6 +481,8 @@ body {
               <button id="search_button" onclick="getSearchFieldAndSearch()">Search</button>
               <input type="checkbox" id="enable_regex" name="enable_regex">
               <label for="enable_regex">Regex</label>
+              <input type="checkbox" id="enable_case_sensitive" name="enable_case_sensitive">
+              <label for="enable_case_sensitive">Case sensitive</label>
 
               <div class="advancedsearch">
 
@@ -646,15 +648,15 @@ body {
       if (!searchstr || searchstr.length === 0)
         return;
       //start = performance.now();
-      global_results = search(message_idx, searchstr, document.getElementById('enable_regex').checked);
+      global_results = search(message_idx, searchstr, document.getElementById('enable_regex').checked, document.getElementById('enable_case_sensitive').checked);
       //end = performance.now();
       //console.log(`Execution time: ${end - start} ms`);
       global_searchstring = searchstr;
       global_page = 0;
-      showResults();
+      showResults(document.getElementById('enable_case_sensitive').checked);
     }
 
-    function search(obj, term, regex)
+    function search(obj, term, regex, case_sensitive)
     {
       var mindate = 0;
       var maxdate = 0;
@@ -674,14 +676,24 @@ body {
 
       if (regex == true)
       {
-        const regex = RegExp(term, "i");
+        var flags = '';
+        if (!case_sensitive)
+          flags += 'i';
+        const regex = RegExp(term, flags);
+        //console.log(regex.flags);
+
         return obj.filter(element => regex.test(element.b) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
                                      (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
       }
-      return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
-                                   (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                   (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
+      if (case_sensitive == false)
+        return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
+                                     (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
+                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
+      else
+        return obj.filter(element => element.b.includes(term) &&
+                                     (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
+                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
     }
 
     function stringinsert(str, index, value)
@@ -689,10 +701,14 @@ body {
       return str.substr(0, index) + value + str.substr(index);
     }
 
-    function surroundregex(rgxstr, str, pre, post)
+    function surroundregex(rgxstr, str, pre, post, case_sensitive)
     {
       //console.log(rgxstr);
-      const regex1 = RegExp(rgxstr, 'gdi');
+      var flags = 'gd';
+      //console.log(case_sensitive)
+      if (!case_sensitive)
+        flags += 'i';
+      const regex1 = RegExp(rgxstr, flags);
       let array1;
       var marked = 0;
       while ((array1 = regex1.exec(str)) !== null)
@@ -710,7 +726,7 @@ body {
       return str;
     }
 
-    function showResults()
+    function showResults(case_sensitive)
     {
       // remove old search results
       const elements = document.getElementsByClassName("searchresults");
@@ -782,7 +798,7 @@ body {
         {
           var rgx = global_searchstring;
         }
-        markedbody = surroundregex(rgx, markedbody, '<mark>', '</mark>');
+        markedbody = surroundregex(rgx, markedbody, '<mark>', '</mark>', case_sensitive);
         //console.log(markedbody);
 
         prebody.innerHTML = markedbody;

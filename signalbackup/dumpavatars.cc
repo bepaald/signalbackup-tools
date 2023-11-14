@@ -29,26 +29,28 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
     return false;
   }
 
-  if (!bepaald::isDir(dir))
-  {
-    std::cout << "Output directory '" << dir << "' does not exist or is not a directory" << std::endl;
+  if (!prepareOutputDirectory(dir, overwrite))
     return false;
-  }
+  // if (!bepaald::isDir(dir))
+  // {
+  //   std::cout << "Output directory '" << dir << "' does not exist or is not a directory" << std::endl;
+  //   return false;
+  // }
 
-  if (!bepaald::isEmpty(dir))
-  {
-    if (!overwrite)
-    {
-      std::cout << "Directory '" << dir << "' is not empty. Use --overwrite to clear directory before dump" << std::endl;
-      return false;
-    }
-    std::cout << "Clearing contents of directory '" << dir << "'..." << std::endl;
-    if (!bepaald::clearDirectory(dir))
-    {
-      std::cout << "Failed to empty directory '" << dir << "'" << std::endl;
-      return false;
-    }
-  }
+  // if (!bepaald::isEmpty(dir))
+  // {
+  //   if (!overwrite)
+  //   {
+  //     std::cout << "Directory '" << dir << "' is not empty. Use --overwrite to clear directory before dump" << std::endl;
+  //     return false;
+  //   }
+  //   std::cout << "Clearing contents of directory '" << dir << "'..." << std::endl;
+  //   if (!bepaald::clearDirectory(dir))
+  //   {
+  //     std::cout << "Failed to empty directory '" << dir << "'" << std::endl;
+  //     return false;
+  //   }
+  // }
 
 #if __cplusplus > 201703L
   for (int count = 0; auto const &avframe : d_avatars)

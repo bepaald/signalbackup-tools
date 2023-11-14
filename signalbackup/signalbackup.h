@@ -185,7 +185,7 @@ class SignalBackup
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true) const;
-  void exportCsv(std::string const &filename, std::string const &table) const;
+  bool exportCsv(std::string const &filename, std::string const &table, bool overwrite) const;
   void listThreads() const;
   void listRecipients() const;
   void cropToThread(long long int threadid);
@@ -414,6 +414,7 @@ class SignalBackup
   bool tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
                        long long int r, long long int new_msg_id);
   bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
+  bool prepareOutputDirectory(std::string const &dir, bool overwrite, bool allowappend = false, bool append = false) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
@@ -455,23 +456,11 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
                                        bool keepattachmentdatainmemory, bool onlydb)
 {
-  // if output is existing directory
-  if (bepaald::fileOrDirExists(filename) && bepaald::isDir(filename))
+  // if output is existing directory, or doesn't exist but ends in directory delim. -> output to dir
+  if ((bepaald::fileOrDirExists(filename) && bepaald::isDir(filename)) ||
+      (!bepaald::fileOrDirExists(filename) &&
+      (filename.back() == '/' || filename.back() == std::filesystem::path::preferred_separator)))
     return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
-
-  // if output does not exist, but ends in directory delimiter
-  if (!bepaald::fileOrDirExists(filename) &&
-      (filename.back() == '/' || filename.back() == std::filesystem::path::preferred_separator))
-  {
-    // create dir
-    std::error_code ec;
-    if (!std::filesystem::create_directory(filename, ec))
-    {
-      std::cout << "Error: Failed to create directory \"" << filename << "\"" << std::endl;
-      return false;
-    }
-    return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
-  }
 
   // export to file
   return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);

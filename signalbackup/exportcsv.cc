@@ -26,21 +26,29 @@ void SignalBackup::duplicateQuotes(std::string *s) const
     s->insert((++pos)++, 1, '"'); // this is beautiful ;P
 }
 
-void SignalBackup::exportCsv(std::string const &filename, std::string const &table) const
+bool SignalBackup::exportCsv(std::string const &filename, std::string const &table, bool overwrite) const
 {
-  /*
-  if (checkFileExists(filename))
+  if (!overwrite && (bepaald::fileOrDirExists(filename) && !bepaald::isDir(filename)))
   {
-    std::cout << "File " << filename << " exists. Refusing to overwrite" << std::endl;
-    return;
+    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
+    return false;
   }
-  */
 
   // output header
   std::ofstream outputfile(filename, std::ios_base::binary);
+  if (!outputfile.is_open())
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to open output file '" << filename
+              << "' for writing" << std::endl;
+    return false;
+  }
 
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT * FROM " + table, &results);
+  if (!d_database.exec("SELECT * FROM " + table, &results))
+  {
+    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Error gathering data from database" << std::endl;
+    return false;
+  }
 
   // output header
   for (uint i = 0; i < results.columns(); ++i)
@@ -56,4 +64,6 @@ void SignalBackup::exportCsv(std::string const &filename, std::string const &tab
         (!vas.empty() && (std::find_if(vas.begin(), vas.end(), [](char c){ return !std::isspace(c); }) == vas.end())); // is all whitespace (and non empty)
       outputfile << (escape ? "\"" : "") << vas << (escape ? "\"" : "") << ((i == results.columns() - 1) ? '\n' : ',');
     }
+
+  return true;
 }

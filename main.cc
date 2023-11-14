@@ -377,7 +377,7 @@ int main(int argc, char *argv[])
 
   if (!arg.exportcsv().empty())
     for (uint i = 0; i < arg.exportcsv().size(); ++i)
-      sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first);
+      sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first, arg.overwrite());
 
   if (!arg.exportxml().empty())
     if (!sb->exportXml(arg.exportxml(), arg.overwrite(), arg.setselfid(), arg.includemms(), SignalBackup::DROPATTACHMENTDATA))

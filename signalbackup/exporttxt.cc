@@ -67,62 +67,69 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   }
 
   // check if dir exists, create if not
-  if (!bepaald::fileOrDirExists(directory))
+  if (!prepareOutputDirectory(directory, overwrite))
   {
-    // try to create
-    if (!bepaald::createDir(directory))
-    {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to create directory `" << directory << "'"
-                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
-      // temporary !!
-      {
-        std::error_code ec;
-        std::filesystem::space_info const si = std::filesystem::space(directory, ec);
-        if (!ec)
-        {
-          std::cout << "Available  : " << static_cast<std::intmax_t>(si.available) << std::endl;
-          std::cout << "Backup size: " << d_fd->total() << std::endl;
-        }
-      }
-      if (databasemigrated)
-        SqliteDB::copyDb(backup_database, d_database);
-      return false;
-    }
-  }
-
-  // directory exists, but
-  // is it a dir?
-  if (!bepaald::isDir(directory))
-  {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": `" << directory << "' is not a directory." << std::endl;
     if (databasemigrated)
       SqliteDB::copyDb(backup_database, d_database);
     return false;
   }
 
-  // and is it empty?
-  if (!bepaald::isEmpty(directory))
-  {
-    if (!overwrite)
-    {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export." << std::endl;
-      if (databasemigrated)
-        SqliteDB::copyDb(backup_database, d_database);
-      return false;
-    }
-    std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
-    if (!bepaald::clearDirectory(directory))
-    {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to empty directory '" << directory << "'" << std::endl;
-      if (databasemigrated)
-        SqliteDB::copyDb(backup_database, d_database);
-      return false;
-    }
-  }
+  // if (!bepaald::fileOrDirExists(directory))
+  // {
+  //   // try to create
+  //   if (!bepaald::createDir(directory))
+  //   {
+  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+  //               << ": Failed to create directory `" << directory << "'"
+  //               << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
+  //     // temporary !!
+  //     {
+  //       std::error_code ec;
+  //       std::filesystem::space_info const si = std::filesystem::space(directory, ec);
+  //       if (!ec)
+  //       {
+  //         std::cout << "Available  : " << static_cast<std::intmax_t>(si.available) << std::endl;
+  //         std::cout << "Backup size: " << d_fd->total() << std::endl;
+  //       }
+  //     }
+  //     if (databasemigrated)
+  //       SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  // }
+
+  // // directory exists, but
+  // // is it a dir?
+  // if (!bepaald::isDir(directory))
+  // {
+  //   std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+  //             << ": `" << directory << "' is not a directory." << std::endl;
+  //   if (databasemigrated)
+  //     SqliteDB::copyDb(backup_database, d_database);
+  //   return false;
+  // }
+
+  // // and is it empty?
+  // if (!bepaald::isEmpty(directory))
+  // {
+  //   if (!overwrite)
+  //   {
+  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+  //               << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export." << std::endl;
+  //     if (databasemigrated)
+  //       SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  //   std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
+  //   if (!bepaald::clearDirectory(directory))
+  //   {
+  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
+  //               << ": Failed to empty directory '" << directory << "'" << std::endl;
+  //     if (databasemigrated)
+  //       SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  // }
 
   // // get note-to-self-thread
   // long long int note_to_self_thread_id = -1;

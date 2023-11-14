@@ -629,7 +629,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
 
   std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
 
-  if (!overwrite && bepaald::fileOrDirExists(filename))
+  if (!overwrite && (bepaald::fileOrDirExists(filename) && !bepaald::isDir(filename)))
   {
     std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
     return false;

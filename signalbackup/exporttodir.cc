@@ -23,21 +23,8 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 {
   std::cout << std::endl << "Exporting backup into '" << directory << "/'" << std::endl;
 
-  // maybe check directory exists, and is empty or make it empty if overwrite was requested.
-  if (!bepaald::isEmpty(directory))
-  {
-    if (!overwrite)
-    {
-      std::cout << "Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export" << std::endl;
-      return false;
-    }
-    std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
-    if (!bepaald::clearDirectory(directory))
-    {
-      std::cout << "Failed to empty directory '" << directory << "'" << std::endl;
-      return false;
-    }
-  }
+  if (!prepareOutputDirectory(directory, overwrite))
+    return false;
 
   // export headerframe:
   if (!onlydb)
