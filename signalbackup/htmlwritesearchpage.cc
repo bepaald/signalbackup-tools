@@ -548,6 +548,15 @@ body {
     <script src="searchidx.js"></script>
     <script>
 
+      var max_per_page = 200;
+      var global_results;
+      var global_searchstring;
+      var global_page = 0;
+      var prevbutton = document.getElementById("searchprev");
+      var nextbutton = document.getElementById("searchnext");
+      var firstbutton = document.getElementById("searchfirst");
+      var lastbutton = document.getElementById("searchlast");
+
       /* fill recipient selection list */
       recipient_idx.sort((a, b) => (a.display_name > b.display_name));
       for (i = 0; i < recipient_idx.length; ++i)
@@ -571,15 +580,24 @@ body {
           }
       }
 
+      /* get url parameters */
+      const url_params = new URLSearchParams(window.location.search);
+
       /* set initial dates */
       today = new Date();
-      mindates = document.getElementById('mindate');
-      mindate.value = today.toISOString().substring(0, 10);
-      maxdates = document.getElementById('maxdate');
-      maxdate.value = today.toISOString().substring(0, 10);
+      const mindateparam = url_params.get('mindate');
+      if (mindateparam)
+        document.getElementById('mindate').value = mindateparam;
+      else
+        document.getElementById('mindate').value = today.toISOString().substring(0, 10);
 
-      /* set initial recipient */
-      const url_params = new URLSearchParams(window.location.search);
+      const maxdateparam = url_params.get('maxdate');
+      if (maxdateparam)
+        document.getElementById('maxdate').value = maxdateparam;
+      else
+        document.getElementById('maxdate').value = today.toISOString().substring(0, 10);
+
+      /* set initial recipient from url param */
       const recipientparam = url_params.get('recipient');
       var onlythread = false;
       if (recipientparam)
@@ -596,6 +614,23 @@ body {
             break;
           }
         }
+      }
+
+      /* set initial case from url param */
+      const caseparam = url_params.get('case');
+      if (caseparam === "true")
+        document.getElementById('enable_case_sensitive').checked = true;
+
+      /* set regex from url param */
+      const regexparam = url_params.get('regex');
+      if (regexparam === "true")
+        document.getElementById('enable_regex').checked = true;
+
+      const directquery = url_params.get('query');
+      if (directquery)
+      {
+        document.getElementById('search_field').value = directquery;
+        getSearchFieldAndSearch();
       }
 )";
 
@@ -633,24 +668,15 @@ body {
                                }
                            });
 
-    var max_per_page = 200;
-    var global_results;
-    var global_searchstring;
-    var global_page = 0;
-    var prevbutton = document.getElementById("searchprev");
-    var nextbutton = document.getElementById("searchnext");
-    var firstbutton = document.getElementById("searchfirst");
-    var lastbutton = document.getElementById("searchlast");
-
     function getSearchFieldAndSearch()
     {
       searchstr = document.getElementById('search_field').value;
       if (!searchstr || searchstr.length === 0)
         return;
-      //start = performance.now();
+      /*start = performance.now();*/
       global_results = search(message_idx, searchstr, document.getElementById('enable_regex').checked, document.getElementById('enable_case_sensitive').checked);
-      //end = performance.now();
-      //console.log(`Execution time: ${end - start} ms`);
+      /*end = performance.now();*/
+      /*console.log(`Execution time: ${end - start} ms`);*/
       global_searchstring = searchstr;
       global_page = 0;
       showResults(document.getElementById('enable_case_sensitive').checked);
