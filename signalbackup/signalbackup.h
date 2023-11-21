@@ -64,6 +64,8 @@ class SignalBackup
   std::string d_mms_table;
   std::string d_thread_recipient_id;
   std::string d_thread_message_count;
+  std::string d_thread_delivery_receipts;
+  std::string d_thread_read_receipts;
   std::string d_sms_date_received;
   std::string d_sms_recipient_id;
   std::string d_sms_recipient_device_id;
@@ -72,6 +74,9 @@ class SignalBackup
   std::string d_mms_recipient_device_id;
   std::string d_mms_type;
   std::string d_mms_previews;
+  std::string d_mms_delivery_receipts;
+  std::string d_mms_read_receipts;
+  std::string d_mms_viewed_receipts;
   std::string d_recipient_aci;
   std::string d_recipient_e164;
   std::string d_recipient_avatar_color;

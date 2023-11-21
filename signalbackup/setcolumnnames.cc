@@ -75,7 +75,19 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn("thread", "message_count"))
     d_thread_message_count = "message_count";
 
+  // from dbv211
+  d_thread_delivery_receipts = "has_delivery_receipt";
+  // before 211
+  if (!d_database.tableContainsColumn("thread", "has_delivery_receipt") &&
+      d_database.tableContainsColumn("thread", "delivery_receipt_count"))
+    d_thread_delivery_receipts = "delivery_receipt_count";
 
+  // from dbv211
+  d_thread_read_receipts = "has_read_receipt";
+  // before 211
+  if (!d_database.tableContainsColumn("thread", "has_read_receipt") &&
+      d_database.tableContainsColumn("thread", "read_receipt_count"))
+    d_thread_read_receipts = "read_receipt_count";
 
 
 
@@ -103,6 +115,27 @@ bool SignalBackup::setColumnNames()
 
 
 
+
+  // from dbv211
+  d_mms_delivery_receipts = "has_delivery_receipt";
+  // before 211
+  if (!d_database.tableContainsColumn(d_mms_table, "has_delivery_receipt") &&
+      d_database.tableContainsColumn(d_mms_table, "delivery_receipt_count"))
+    d_mms_delivery_receipts = "delivery_receipt_count";
+
+  // from dbv211
+  d_mms_read_receipts = "has_read_receipt";
+  // before 211
+  if (!d_database.tableContainsColumn(d_mms_table, "has_read_receipt") &&
+      d_database.tableContainsColumn(d_mms_table, "read_receipt_count"))
+    d_mms_read_receipts = "read_receipt_count";
+
+  // from dbv211
+  d_mms_viewed_receipts = "has_viewed_receipt";
+  // before 211
+  if (!d_database.tableContainsColumn(d_mms_table, "has_viewed_receipt") &&
+      d_database.tableContainsColumn(d_mms_table, "viewed_receipt_count"))
+    d_mms_viewed_receipts = "viewed_receipt_count";
 
   // started at dbv166
   d_mms_date_sent = "date_sent";

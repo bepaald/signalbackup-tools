@@ -2087,9 +2087,9 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
   {
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"checkmarks checkmarks-";
-    if (msg_info.messages->getValueAs<long long int>(msg_info.idx, "read_receipt_count") > 0)
+    if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_read_receipts) > 0)
       htmloutput << "read";
-    else if (msg_info.messages->getValueAs<long long int>(msg_info.idx, "delivery_receipt_count") > 0)
+    else if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_delivery_receipts) > 0)
       htmloutput << "received";
     else // if something? type != failed? -> check for failed before outputting 'checkmarks-'
       htmloutput << "sent";

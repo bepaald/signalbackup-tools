@@ -29,7 +29,10 @@ bool SqliteDB::copyDb(SqliteDB const &source, SqliteDB const &target) // static
   }
   int rc = 0;
   if ((rc = sqlite3_backup_step(backup, -1)) != SQLITE_DONE)
+  {
     std::cout << "SQL Error: " << sqlite3_errstr(rc) << std::endl;
+    return false;
+  }
   if (sqlite3_backup_finish(backup) != SQLITE_OK)
   {
     std::cout << "SQL Error: Error finishing backup" << std::endl;

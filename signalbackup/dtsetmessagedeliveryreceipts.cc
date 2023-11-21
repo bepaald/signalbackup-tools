@@ -127,11 +127,11 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
     }
     // update the message in its table (mms/sms)
     if (deliveryreceiptcount)
-      if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET delivery_receipt_count = ? WHERE _id = ?", {deliveryreceiptcount, msg_id}))
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Updating " << (is_mms ? d_mms_table : "sms") << " delivery_receipt_count." << std::endl;
+      if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_delivery_receipts + " = ? WHERE _id = ?", {deliveryreceiptcount, msg_id}))
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Updating " << (is_mms ? d_mms_table : "sms") << " " + d_mms_delivery_receipts + "." << std::endl;
     if (readreceiptcount)
-      if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET read_receipt_count = ? WHERE _id = ?", {readreceiptcount, msg_id}))
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Updating " << (is_mms ? d_mms_table : "sms") << " read_receipt_count." << std::endl;
+      if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_read_receipts + " = ? WHERE _id = ?", {readreceiptcount, msg_id}))
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Updating " << (is_mms ? d_mms_table : "sms") << " " + d_mms_read_receipts + "." << std::endl;
 
 
     //insert into group_receipts

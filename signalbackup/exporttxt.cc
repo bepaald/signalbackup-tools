@@ -217,7 +217,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                          "_id, " + d_mms_recipient_id + ", body, "
                          "date_received, " + d_mms_type + ", "
                          //"quote_id, quote_author, quote_body, quote_mentions, "
-                         //"delivery_receipt_count, read_receipt_count, "
+                         // + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
                          "IFNULL(remote_deleted, 0) AS remote_deleted, "
                          "IFNULL(view_once, 0) AS view_once, "
                          "expires_in"

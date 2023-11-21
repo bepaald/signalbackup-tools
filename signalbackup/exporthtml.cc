@@ -251,7 +251,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     d_database.exec("SELECT "s
                     "_id, " + d_mms_recipient_id + ", body, "
                     "date_received, " + d_mms_date_sent + ", quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
-                    "delivery_receipt_count, read_receipt_count, IFNULL(remote_deleted, 0) AS remote_deleted, "
+                    + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, shared_contacts, "
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
