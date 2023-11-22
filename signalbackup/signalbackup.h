@@ -105,7 +105,7 @@ class SignalBackup
   bool d_verbose;
   std::set<std::string> d_warningsgiven;
   long long int d_selfid;
-  std::string  d_selfuuid;
+  std::string d_selfuuid;
 
   enum DBLinkFlag : int
   {
@@ -189,7 +189,7 @@ class SignalBackup
                       std::vector<long long int> editattachments, bool stoponerror);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
-  bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true) const;
+  bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true);
   bool exportCsv(std::string const &filename, std::string const &table, bool overwrite) const;
   void listThreads() const;
   void listRecipients() const;
@@ -231,9 +231,9 @@ class SignalBackup
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
                   bool calllog, bool searchpage, bool migrate, bool overwrite, bool append, bool theme,
-                  bool themeswitching) const;
+                  bool themeswitching);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
-                 std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite) const;
+                 std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
   long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;

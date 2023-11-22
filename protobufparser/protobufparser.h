@@ -1254,7 +1254,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     std::optional<std::pair<unsigned char *, size_t>> tmp = getField<idx + 1>();
     if (tmp.has_value())
-      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::bytes): " << bepaald::bytesToHexString(tmp.value().first, tmp.value().second) << std::endl;
+      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::bytes[" << tmp.value().second << "]): " << bepaald::bytesToHexString(tmp.value().first, tmp.value().second) << std::endl;
     return;
   }
 
@@ -1353,7 +1353,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
 
 template <typename... Spec>
 template<std::size_t... Idx>
-inline void ProtoBufParser<Spec...>::printHelper2(std::index_sequence<Idx...>, int indent) const
+inline void ProtoBufParser<Spec...>::printHelper2(std::index_sequence<Idx...>, int indent [[maybe_unused]]) const
 {
   (printHelperWrapper<Idx>().printHelper3(this, indent), ...);
 }

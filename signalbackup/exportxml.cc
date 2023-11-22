@@ -601,7 +601,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
 }
 
-bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms, bool keepattachmentdatainmemory) const
+bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms, bool keepattachmentdatainmemory)
 {
   if (d_databaseversion < 24)
   {
@@ -609,13 +609,14 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     return false;
   }
 
+  // get own E164
   if (self.empty())
   {
-    long long int selfid = scanSelf();
-    if (selfid != -1)
+    d_selfid = scanSelf();
+    if (d_selfid != -1)
     {
       SqliteDB::QueryResults r;
-      if (d_database.exec("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", selfid, &r) && r.rows() == 1)
+      if (d_database.exec("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", d_selfid, &r) && r.rows() == 1)
         self = r.valueAsString(0, d_recipient_e164);
     }
 
@@ -626,6 +627,9 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
       return false;
     }
   }
+  if (d_selfid != -1)
+    d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+
 
   std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
 

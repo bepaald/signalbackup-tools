@@ -213,7 +213,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     std::cout << std::endl;
     return false;
   }
-  d_selfuuid = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string());
+  d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
 
   if (configdir.empty() || databasedir.empty())
   {

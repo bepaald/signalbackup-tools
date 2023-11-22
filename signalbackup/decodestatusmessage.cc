@@ -151,7 +151,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   }
   if (Types::isProfileChange(type))
     return decodeProfileChangeMessage(body, contactname);
-  if (Types::isGroupUpdate(type) && Types::isGroupV2(type))
+  if (Types::isGroupUpdate(type) && Types::isGroupV2(type)) // see app/src/test/java/org/thoughtcrime/securesms/database/model/GroupsV2UpdateMessageProducerTest.java
   {
 
     //std::cout << body << std::endl;
@@ -164,6 +164,117 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       DecryptedGroupChange groupchange = groupv2ctx.getField<2>().value();
       //std::cout << bepaald::bytesToHexString(groupchange.data(), groupchange.size()) << std::endl;
       //groupchange.print();
+
+      // for accepting invites: check DecryptedGroupChange<1>: (editor)
+      // and                          DecryptedGroupChange<9>[]:DecryptedMember<1>: uuid (promotePendingMembers)
+      //
+      // if editor == self
+        //   if (promotependingmembers contains self)
+        //     "You accepted the invitation to the group."
+        //   else
+        //     "You added invited member Bob."
+        // else
+        //   if (promotependingmembers contains self)
+        //     "Bob added you to the group." (or if editor is unknown: "You joined the group.");
+        //   else if (promotependingmembers contains editor)
+        //     "Bob accepted an invitation to the group."
+      //   else
+      //     "Bob added invited member Alice." (or if editor is unknown: "Alice joined the group.");
+
+      if (groupchange.getField<1>().has_value() &&
+          groupchange.getField<9>().size())
+      {
+        // editor
+        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        std::string uuidstr = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
+        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+        std::vector<std::string> promotedmemberuuids;
+        for (uint i = 0; i < groupchange.getField<9>().size(); ++i)
+        {
+          DecryptedMember dm = groupchange.getField<9>()[i];
+          if (dm.getField<1>().has_value())
+          {
+            auto [tmpuuid, tmpuuid_size] = dm.getField<1>().value();
+            std::string pmus = bepaald::toLower(bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true));
+            pmus.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+            promotedmemberuuids.emplace_back(pmus);
+          }
+        }
+
+        if (bepaald::contains(promotedmemberuuids, uuidstr)) // the editor is promoted -> someone accepted an invite
+        {
+          if (icon && *icon == IconType::NONE)
+            *icon = IconType::MEMBER_APPROVED;
+
+          if (uuidstr == d_selfuuid)
+            return "You accepted the invitation to the group.";
+          else
+          {
+            std::string promotedmember = getNameFromUuid(uuidstr);
+            if (!promotedmember.empty())
+              return promotedmember + " accepted an invitation to the group.";
+            else
+              return "A new member accepted an invitation to the group.";
+          }
+        }
+        else // the editor is not one of the promoted members
+        {
+          if (icon && *icon == IconType::NONE)
+            *icon = IconType::MEMBER_ADD;
+          if (uuidstr == d_selfuuid)
+          {
+            if (promotedmemberuuids.size() == 1)
+            {
+              std::string promotedmember = getNameFromUuid(promotedmemberuuids[0]);
+              if (!promotedmember.empty())
+                return "You added invited member " + promotedmember;
+              else
+                return "You added an invited member";
+            }
+            else
+              return "You added " + bepaald::toString(promotedmemberuuids.size()) + "invited members";
+          }
+          else if (bepaald::contains(promotedmemberuuids, d_selfuuid)) // you were not editor, but were promoted
+          {
+            std::string editorname = getNameFromUuid(uuidstr);
+            if (!editorname.empty())
+              return editorname + "added you to the group.";
+            else
+              return "You joined the group.";
+          }
+          else // you were not editor AND not the promoted member
+          {
+            std::string editorname = getNameFromUuid(uuidstr);
+            if (!editorname.empty())
+            {
+              if (promotedmemberuuids.size() == 1)
+              {
+                std::string promotedmember = getNameFromUuid(promotedmemberuuids[0]);
+                if (!promotedmember.empty())
+                  return editorname + " added invited member " + promotedmember + ".";
+                else
+                  return editorname + " added an invited member.";
+              }
+              else
+                return editorname + " added " + bepaald::toString(promotedmemberuuids.size()) + " invited members.";
+            }
+            else
+            {
+              if (promotedmemberuuids.size() == 1)
+              {
+                std::string promotedmember = getNameFromUuid(promotedmemberuuids[0]);
+                if (!promotedmember.empty())
+                  return promotedmember + " joined the group.";
+                else
+                  return "An invited member joined the group.";
+              }
+              else
+                return bepaald::toString(promotedmemberuuids.size()) + " members joined the group.";
+            }
+          }
+        }
+      }
 
       // if this is revision 0, and no previous state is given, and new title is -> creataed new group
       if (!groupv2ctx.getField<4>().has_value() && // no previous state
@@ -590,6 +701,71 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           *icon = IconType::MEMBER_ADD;
       }
     }
+
+
+    // maybe someone was invited, check for pending memebers...
+    if (groupv2ctx.getField<3>().has_value() &&
+        groupv2ctx.getField<3>().value().getField<8>().size())
+    {
+      std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
+
+      for (uint i = 0; i < groupv2ctx.getField<3>().value().getField<8>().size(); ++i)
+      {
+        DecryptedPendingMember pm(groupv2ctx.getField<3>().value().getField<8>()[i]);
+        if (pm.getField<1>().has_value())
+        {
+          auto [inv_uuid, inv_uuid_size] = pm.getField<1>().value();
+          std::string invited_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true));
+          invited_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+          std::string invited_by_uuidstr;
+          if (pm.getField<3>().has_value())
+          {
+            auto [inv_by_uuid, inv_by_uuid_size] = pm.getField<1>().value();
+            invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
+            invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+          }
+          invitedmembers.emplace_back(std::pair<std::string, std::string>{invited_uuidstr, invited_by_uuidstr});
+        }
+      }
+
+      if (icon && *icon == IconType::NONE)
+        *icon = IconType::MEMBER_ADD;
+
+      if (invitedmembers.size() > 1) // multiple members were invited
+      {
+        // not done yet
+      }
+      else // one member was invited
+      {
+        if (invitedmembers[0].second == d_selfuuid) // invited by you
+        {
+          std::string invitedname = getNameFromUuid(invitedmembers[0].first);
+          if (!invitedname.empty())
+            return "You invited " + invitedname + " to the group.";
+          else
+            return "You invited 1 person to the group.";
+        }
+        else if (invitedmembers[0].first == d_selfuuid) // you were the one invited
+        {
+          std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
+          if (!invitedbyname.empty())
+            return invitedbyname + " invited you to the group.";
+          else
+            return "You were invited to the group.";
+        }
+        else // someone was invited by someone (but neither were you)
+        {
+          std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
+          if (!invitedbyname.empty())
+            return invitedbyname + " invited 1 person to the group.";
+          else
+            return "1 person was invited to the group.";
+        }
+      }
+
+    }
+
+
 
     if (statusmsg.empty())
     {

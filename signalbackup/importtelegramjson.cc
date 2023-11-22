@@ -50,6 +50,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     return false;
   }
 
+  // set selfuuid
+  d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+
   if (contactmap.size())
   {
     std::cout << "CONTACT MAP: " << std::endl;

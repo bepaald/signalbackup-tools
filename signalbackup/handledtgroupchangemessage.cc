@@ -63,7 +63,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       return;
     }
 
-    bool incoming = timer_results("sourceuuid") != d_selfuuid;
+    bool incoming = bepaald::toLower(timer_results("sourceuuid")) != d_selfuuid;
     long long int timer = timer_results.getValueAs<long long int>(0, "expiretimer");
     long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
       Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);

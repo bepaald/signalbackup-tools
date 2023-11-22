@@ -30,7 +30,7 @@
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool calllog, bool searchpage, bool migrate,
-                              bool overwrite, bool append, bool lighttheme, bool themeswitching) const
+                              bool overwrite, bool append, bool lighttheme, bool themeswitching)
 {
   bool databasemigrated = false;
   SqliteDB backup_database(":memory:");
@@ -140,20 +140,23 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   //   }
   // }
 
-  // get note-to-self-thread
+  // check and warn about selfid & note-to-self thread
   long long int note_to_self_thread_id = -1;
-  if (selfphone.empty())
+  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
+  if (d_selfid == -1)
   {
-    long long int selfid = scanSelf();
-    if (selfid != -1)
-      note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", selfid, -1);
-    else
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
+              << ": Failed to determine id of 'self'.";
+    if (selfphone.empty())
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
                 << ": Failed to determine Note-to-self thread. Consider passing `--setselfid \"[phone]\"' to set it manually" << std::endl;
+    std::cout << std::endl;
   }
   else
-    note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS "
-                                                                         "(SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?)", selfphone, -1);
+  {
+    note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", d_selfid, -1);
+    d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+  }
 
   std::vector<long long int> threads = ((limittothreads.empty() || (limittothreads.size() == 1 && limittothreads[0] == -1)) ?
                                         threadIds() : limittothreads);
