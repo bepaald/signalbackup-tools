@@ -712,6 +712,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       for (uint i = 0; i < groupv2ctx.getField<3>().value().getField<8>().size(); ++i)
       {
         DecryptedPendingMember pm(groupv2ctx.getField<3>().value().getField<8>()[i]);
+        //pm.print();
         if (pm.getField<1>().has_value())
         {
           auto [inv_uuid, inv_uuid_size] = pm.getField<1>().value();
@@ -720,7 +721,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           std::string invited_by_uuidstr;
           if (pm.getField<3>().has_value())
           {
-            auto [inv_by_uuid, inv_by_uuid_size] = pm.getField<1>().value();
+            auto [inv_by_uuid, inv_by_uuid_size] = pm.getField<3>().value();
             invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
             invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
           }
