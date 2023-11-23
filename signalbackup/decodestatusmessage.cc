@@ -165,6 +165,95 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       //std::cout << bepaald::bytesToHexString(groupchange.data(), groupchange.size()) << std::endl;
       //groupchange.print();
 
+      // invite link changed:
+      if (groupchange.getField<15>().has_value())
+      {
+        if (icon && *icon == IconType::NONE)
+          *icon = IconType::MEGAPHONE;
+
+        // new value: 0 unknown, 1 any, 2 member, 3 admin, 4 unsatisfiable
+        int accesscontrol = groupchange.getField<15>().value();
+
+        // get editor
+        std::string editoruuid;
+        if (groupchange.getField<1>().has_value())
+        {
+          auto [uuid, uuid_size] = groupchange.getField<1>().value();
+          editoruuid = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
+          editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
+
+        // previous accesscontrol: 0 unknown, 1 any, 2 member, 3 admin, 4 unsatisfiable
+        int old_accesscontrol = 0;
+        if (groupv2ctx.getField<4>().has_value() &&
+            groupv2ctx.getField<4>().value().getField<5>().has_value() &&
+            groupv2ctx.getField<4>().value().getField<5>().value().getField<3>().has_value())
+          old_accesscontrol = groupv2ctx.getField<4>().value().getField<5>().value().getField<3>().value();
+
+        if (editoruuid == d_selfuuid)
+        {
+          if (accesscontrol == 4)
+            return "You turned off the group link.";
+          if (accesscontrol == 3)
+          {
+            if (old_accesscontrol == 1)
+              return "You turned on admin approval for the group link.";
+            else
+              return "You turned on the group link with admin approval on.";
+          }
+          if (accesscontrol == 1)
+          {
+            if (old_accesscontrol == 3)
+              return "You turned off admin approval for the group link.";
+            else
+              return "You turned on the group link with admin approval off.";
+          }
+        }
+
+        std::string editorname = editoruuid.empty() ? editoruuid : getNameFromUuid(editoruuid);
+        if (editorname.empty())
+        {
+          if (accesscontrol == 4)
+            return "The group link has been turned off.";
+          if (accesscontrol == 3)
+          {
+            if (old_accesscontrol == 1)
+              return "The admin approval for the group link has been turned on.";
+            else
+              return "The group link has been turned on with admin approval on.";
+          }
+          if (accesscontrol == 1)
+          {
+            if (old_accesscontrol == 3)
+              return "The admin approval for the group link has been turned off.";
+            else
+              return "The group link has been turned on with admin approval off.";
+          }
+        }
+        else
+        {
+          if (accesscontrol == 4)
+            return editorname + " turned off the group link.";
+          if (accesscontrol == 3)
+          {
+            if (old_accesscontrol == 1)
+              return editorname + " turned on admin approval for the group link.";
+            else
+              return editorname + " turned on the group link with admin approval on.";
+          }
+          if (accesscontrol == 1)
+          {
+            if (old_accesscontrol == 3)
+              return editorname + " turned off admin approval for the group link.";
+            else
+              return editorname + " turned on the group link with admin approval off.";
+          }
+          // if (accesscontrol...
+        }
+
+      }
+
+
       // for accepting invites: check DecryptedGroupChange<1>: (editor)
       // and                          DecryptedGroupChange<9>[]:DecryptedMember<1>: uuid (promotePendingMembers)
       //
@@ -449,43 +538,6 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           int accesscontrol = groupchange.getField<15>().value();
           statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " turned on the group link with admin approval " +
             (accesscontrol == 3 ? "on." : "off."); // never 3/on at creation
-        }
-      }
-
-      // if 15 (linkinviteaccesscontrol) is changed, but 19 (invitepasswrd) is not, it's only change in permissions
-      if (groupchange.getField<15>().has_value() && !groupchange.getField<19>().has_value() && groupchange.getField<1>().has_value())
-      {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
-        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-
-        if (icon && *icon == IconType::NONE)
-          *icon = IconType::MEGAPHONE;
-
-        /*
-          UNKNOWN       = 0;
-          ANY           = 1;
-          MEMBER        = 2;
-          ADMINISTRATOR = 3;
-          UNSATISFIABLE = 4;
-        */
-        int accesscontrol = groupchange.getField<15>().value();
-
-        // if the previous group state <4>, had accesscontrol <5>, addFromInviteLink <3> set to 4 (UNSATISFIABLE)
-        // this is a 'link turned on' message
-        if (groupv2ctx.getField<4>().has_value() &&
-            groupv2ctx.getField<4>().value().getField<5>().has_value() &&
-            groupv2ctx.getField<4>().value().getField<5>().value().getField<3>().has_value() &&
-            groupv2ctx.getField<4>().value().getField<5>().value().getField<3>().value() == 4)
-          statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " turned on the group link with admin approval " +
-            (accesscontrol == 3 ? "on." : "off."); // never 3/on at creation
-        else
-        {
-          if (accesscontrol == 4)
-            statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " turned off the group link.";
-          else
-            statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " turned " +
-              (accesscontrol == 3 ? "on" : "off") + " admin approval for the group link.";
         }
       }
 

@@ -194,10 +194,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding-bottom: 30px;
       }
 
-      #thread-title {
-        font-size: x-large;
-      }
-
       .conversation-box {
         display: flex;
         flex-direction: column;
@@ -916,6 +912,18 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-right: auto;
       }
 
+      .thread-disappearing-messages-info {
+        display: inline-block;
+        height: 18px;
+        aspect-ratio: 1 / 1;
+        top: 2px;
+        margin-left: 9px;
+        margin-right: 2px;
+        position: relative;
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="white" stroke="none"><path d="M6.75 6a.75.75 0 0 1-1.5 0c0-.414.475-3.581.5-3.75S5.862 2 6 2s.226.087.25.25L6.75 6zM12 6a6 6 0 1 0-6 6 6.006 6.006 0 0 0 6-6zm-1 0a5 5 0 1 1-5-5 5.006 5.006 0 0 1 5 5z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-video-call-missed {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 14.117647 14.117647" stroke="none" fill="red"><path d="m 13.288805,3.2188235 c -0.2276,-0.097 -0.4791,-0.1231 -0.7217,-0.0749 -0.2426,0.0482 -0.465,0.1684 -0.6383,0.3449 l -1.87,1.86 v -1.54 c -0.0026,-0.4633 -0.1877997,-0.9069 -0.5154997,-1.2345 -0.3276,-0.3277 -0.7712,-0.5129 -1.2345,-0.5155 h -6.5 c -0.4633,0.0026 -0.90689998,0.1878 -1.23449998,0.5155 -0.3277,0.3276 -0.5129,0.7712 -0.5155,1.2345 v 6.5000005 c 0.0026,0.4633 0.1878,0.9069 0.5155,1.2345 0.3276,0.3277 0.77119998,0.5129 1.23449998,0.5155 h 6.5 c 0.4633,-0.0026 0.9069,-0.1878 1.2345,-0.5155 0.3277,-0.3276 0.5128997,-0.7712 0.5154997,-1.2345 V 8.7688235 l 1.87,1.8600005 c 0.1146,0.1172 0.2515,0.2103 0.4026,0.2739 0.1512,0.0635 0.3135,0.0962 0.4774,0.0961 0.1652,6e-4 0.3288,-0.0334 0.48,-0.1 0.2289,-0.0923 0.4248,-0.2513 0.5621,-0.4564 0.1373,-0.2051 0.2098,-0.4468005 0.2079,-0.6936005 v -5.38 c 0.0019,-0.2468 -0.0706,-0.4885 -0.2079,-0.6936 -0.1373,-0.2051 -0.3332,-0.3641 -0.5621,-0.4564 z M 9.0588053,10.308824 c -0.0026,0.1981 -0.0824,0.3874 -0.2225,0.5275 -0.1401,0.1401 -0.3294,0.2199 -0.5275,0.2225 h -6.5 c -0.1981,-0.0026 -0.3874,-0.0824 -0.5275,-0.2225 -0.1401,-0.1401 -0.2199,-0.3294 -0.2225,-0.5275 V 3.8088235 c 0.0026,-0.1981 0.0824,-0.3874 0.2225,-0.5275 0.1401,-0.1401 0.3294,-0.2199 0.5275,-0.2225 h 6.5 c 0.1981,0.0026 0.3874,0.0824 0.5275,0.2225 0.1401,0.1401 0.2199,0.3294 0.2225,0.5275 z M 13.058805,9.7488235 c 2e-4,0.0488 -0.0139,0.0966 -0.0406,0.1374 -0.0267,0.0409 -0.0647,0.0731 -0.1094,0.0926 -0.0465,0.0198 -0.0977,0.0256 -0.1474,0.0167 -0.0498,-0.0089 -0.0958,-0.0321 -0.1326,-0.0667 l -2.57,-2.58 v -0.58 l 2.57,-2.58 c 0.0418,-0.0267 0.0904,-0.0409 0.14,-0.0409 0.0496,0 0.0982,0.0142 0.14,0.0409 0.0447,0.0195 0.0827,0.0517 0.1094,0.0926 0.0267,0.0408 0.0408,0.0886 0.0406,0.1374 z m -7.2899997,-2.69 2.14,2.15 -0.7,0.7 -2.15,-2.14 -2.15,2.14 -0.7,-0.7 2.14,-2.15 -2.14,-2.15 0.7,-0.7 2.15,2.14 2.15,-2.14 0.7,0.7 z"></path></svg>');
         display: inline-block;
@@ -1091,9 +1099,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .threadtitle {
+        font-size: x-large;
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         padding: 0px;
         margin: 0px;
+      }
+
+      .threadtitle-info {
+        font-size: large;
       }
 
       .menu-item > div {
@@ -1374,6 +1387,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-left: 5px solid grey;
       }
 
+      .thread-disappearing-messages-info,
       .msg-status .msg-video-call-incoming, .msg-status .msg-video-call-outgoing,
       .msg-status .msg-group-call, .msg-status .msg-call-incoming,
       .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
@@ -1494,6 +1508,43 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   </script>)";
   }
 
+  // set expiration timer string
+  std::string exptimer = "Off";
+  std::string exptimer_short;
+  if (groupinfo.expiration_timer)
+  {
+    if (groupinfo.expiration_timer < 60) // less than full minute
+    {
+      exptimer = bepaald::toString(groupinfo.expiration_timer) + " second"
+        + (groupinfo.expiration_timer == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(groupinfo.expiration_timer) + "s";
+    }
+    else if (groupinfo.expiration_timer < 60 * 60) // less than full hour
+    {
+      exptimer = bepaald::toString(groupinfo.expiration_timer / 60) + " minute"
+        + (groupinfo.expiration_timer / 60 == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(groupinfo.expiration_timer / 60) + "m";
+    }
+    else if (groupinfo.expiration_timer < 24 * 60 * 60) // less than full day
+    {
+      exptimer = bepaald::toString(groupinfo.expiration_timer / (60 * 60)) + " hour"
+        + (groupinfo.expiration_timer / (60 * 60) == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(groupinfo.expiration_timer / (60 * 60)) + "h";
+    }
+    else if (groupinfo.expiration_timer < 7 * 24 * 60 * 60) // less than full week
+    {
+      exptimer = bepaald::toString(groupinfo.expiration_timer / (24 * 60 * 60)) + " day"
+        + (groupinfo.expiration_timer / (24 * 60 * 60) == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(groupinfo.expiration_timer / (24 * 60 * 60)) + "d";
+    }
+    else // show groupinfo.expiration_timer in number of weeks
+    {
+      exptimer = bepaald::toString(groupinfo.expiration_timer / (7 * 24 * 60 * 60)) + " week"
+        + (groupinfo.expiration_timer / (7 * 24 * 60 * 60) == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(groupinfo.expiration_timer / (7 * 24 * 60 * 60)) + "w";
+    }
+  }
+
 file << R"(
   <input type="checkbox" id="theme-switch">
   <div id="page">
@@ -1532,7 +1583,10 @@ file << R"(
           </label>)";
   }
   file << R"(
-          <div id="thread-title"><pre class="threadtitle">)" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(</pre></div>
+          <div id="thread-title"><pre class="threadtitle">)"
+       << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name)
+       << (groupinfo.expiration_timer ? "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>" : "")
+       << R"(</pre></div>
           <div id="thread-subtitle">
             )";
   if (isgroup)
@@ -1596,20 +1650,6 @@ file << R"(
 
     // expiration timer
     file << "                  <span class=\"left-column\">Disappearing messages:</span>" << std::endl;
-    std::string exptimer = "Off";
-    if (groupinfo.expiration_timer)
-    {
-      if (groupinfo.expiration_timer < 60) // less than full minute
-        exptimer = bepaald::toString(groupinfo.expiration_timer) + " seconds";
-      else if (groupinfo.expiration_timer < 60 * 60) // less than full hour
-        exptimer = bepaald::toString(groupinfo.expiration_timer / 60) + " minutes";
-      else if (groupinfo.expiration_timer < 24 * 60 * 60) // less than full day
-        exptimer = bepaald::toString(groupinfo.expiration_timer / (60 * 60)) + " hours";
-      else if (groupinfo.expiration_timer < 7 * 24 * 60 * 60) // less than full week
-        exptimer = bepaald::toString(groupinfo.expiration_timer / (24 * 60 * 60)) + " days";
-      else // show groupinfo.expiration_timer in number of weeks
-        exptimer = bepaald::toString(groupinfo.expiration_timer / (7 * 24 * 60 * 60)) + " weeks";
-    }
     file << "                  <span class=\"right-column\">" << exptimer << "</span>" << std::endl;
 
     // link enabled?
