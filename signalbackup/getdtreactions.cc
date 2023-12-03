@@ -59,18 +59,16 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
     //std::cout << "  Reaction " << k + 1 << "/" << numreactions << std::endl;
     //results_emoji_reactions.print(false);
 
-    reactions->emplace_back(std::vector{results_emoji_reactions.valueAsString(0, "emoji"),
-                                        results_emoji_reactions.valueAsString(0, "timestamp"),
-                                        results_emoji_reactions.valueAsString(0, "uuid"),
-                                        results_emoji_reactions.valueAsString(0, "phone")});
-
-
     // DEBUG
-    if (results_emoji_reactions.valueAsString(0, "uuid").empty())
+    if (results_emoji_reactions.valueAsString(0, "uuid").empty()) [[unlikely]]
     {
       std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Got empty author uuid, here is some additional info:" << std::endl;
       ddb.print("SELECT json_extract(json, '$.reactions') FROM messages WHERE rowid = ?", rowid);
     }
-
+    else
+      reactions->emplace_back(std::vector{results_emoji_reactions.valueAsString(0, "emoji"),
+                                          results_emoji_reactions.valueAsString(0, "timestamp"),
+                                          results_emoji_reactions.valueAsString(0, "uuid"),
+                                          results_emoji_reactions.valueAsString(0, "phone")});
   }
 }

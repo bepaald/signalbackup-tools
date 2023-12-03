@@ -24,7 +24,6 @@
   - Message delivery info might not be available in json
   - Message types other than 'message' (eg 'service') are currently skipped
   - underline style is not supported by signal
-  - quote attachments
   - stickers turn into normal attachments?
   - 'forwarded from' is not an existing attribute in signal
   - message reaction are not exported by Telegram

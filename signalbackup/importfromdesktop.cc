@@ -269,14 +269,18 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
   if (dateranges.empty() && autodates)
   {
     SqliteDB::QueryResults res;
-    if ((d_database.containsTable("sms") && !d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", " + d_mms_table + ".date_received) AS mindate FROM sms "
-                                                             "LEFT JOIN " + d_mms_table + " WHERE sms." + d_sms_date_received + " IS NOT NULL AND " + d_mms_table + ".date_received IS NOT NULL)", &res)) ||
-        (!d_database.containsTable("sms") && !d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS mindate FROM " + d_mms_table + " WHERE " + d_mms_table + ".date_received IS NOT NULL", &res)))
+    if ((d_database.containsTable("sms") &&
+         !d_database.exec("SELECT MIN(mindate) FROM (SELECT MIN(sms." + d_sms_date_received + ", " + d_mms_table + ".date_received) AS mindate FROM sms "
+                          "LEFT JOIN " + d_mms_table + " WHERE sms." + d_sms_date_received + " IS NOT NULL AND " + d_mms_table + ".date_received IS NOT NULL)", &res))
+        ||
+        (!d_database.containsTable("sms") &&
+         !d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + " WHERE " + d_mms_table + ".date_received IS NOT NULL", &res)))
     {
       std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << "Failed to automatically determine data-range" << std::endl;
       return false;
     }
-    dateranges.push_back({"0", res.valueAsString(0, 0)});
+    dateranges.push_back({"0", res.valueAsString(0, "mindate")});
+    dateranges.push_back({res.valueAsString(0, "maxdate"), bepaald::toString(std::numeric_limits<long long int>::max())});
   }
 
   std::string datewhereclause;
