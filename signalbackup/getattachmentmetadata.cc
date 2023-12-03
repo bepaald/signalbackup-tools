@@ -51,7 +51,10 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   filestream.seekg(0, std::ios_base::beg);
 
   if (file_size == 0)
+  {
+    std::cout << "Attachment '" << file << "' is zero bytes" << std::endl;
     return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
+  }
 
   // gethash
   std::string hash;
