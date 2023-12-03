@@ -300,7 +300,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...
 
-    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "sent_at BETWEEN "s + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
+    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "JSONLONG(sent_at) BETWEEN "s + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
     if (i == dateranges.size() - 1)
       datewhereclause += ')';
   }
@@ -528,7 +528,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                   "IFNULL(json_extract(json, '$.flags'), 0) AS flags," // see 'if (type.empty())' below for FLAGS enum
                   "body,"
                   "type,"
-                  "COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at')) AS sent_at,"
+                  "JSONLONG(COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at'))) AS sent_at,"
                   "hasAttachments,"      // any attachment
                   "hasFileAttachments,"  // non-media files? (any attachment that does not get a preview?)
                   "hasVisualMediaAttachments," // ???
@@ -1469,7 +1469,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
           // insert quotes attachments
           insertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, ddb,
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
-                            "WHERE sent_at = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
+                            "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
         }
         if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
 

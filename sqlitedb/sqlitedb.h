@@ -133,6 +133,8 @@ class SqliteDB
 
  private:
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
+  inline int execParamFiller(sqlite3_stmt *stmt, int count, char const *param) const;
+  inline int execParamFiller(sqlite3_stmt *stmt, int count, unsigned char const *param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, int param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, unsigned int param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, long long int param) const;
@@ -148,6 +150,7 @@ class SqliteDB
   inline bool registerCustoms() const;
   static inline void tokencount(sqlite3_context *context, int argc, sqlite3_value **argv);
   static inline void token(sqlite3_context *context, int argc, sqlite3_value **argv);
+  static inline void jsonlong(sqlite3_context *context, int argc, sqlite3_value **argv);
 };
 
 inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
@@ -502,6 +505,18 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::string 
   return sqlite3_bind_text(stmt, count, param.c_str(), -1, SQLITE_TRANSIENT);
 }
 
+inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, char const *param) const
+{
+  //std::cout << "Binding CHAR CONST * at " << count << ": " << param.c_str() << std::endl;
+  return sqlite3_bind_text(stmt, count, param, -1, SQLITE_TRANSIENT);
+}
+
+inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, unsigned char const *param) const
+{
+  //std::cout << "Binding UNSIGNED CHAR CONST * at " << count << ": " << param.c_str() << std::endl;
+  return sqlite3_bind_text(stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_TRANSIENT);
+}
+
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::pair<std::shared_ptr<unsigned char []>, size_t> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
@@ -799,7 +814,8 @@ inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(uint idx)
 inline bool SqliteDB::registerCustoms() const
 {
   return sqlite3_create_function(d_db, "TOKENCOUNT", -1, SQLITE_UTF8, nullptr, &tokencount, nullptr, nullptr) == SQLITE_OK &&
-    sqlite3_create_function(d_db, "TOKEN", -1, SQLITE_UTF8, nullptr, &token, nullptr, nullptr) == SQLITE_OK;
+    sqlite3_create_function(d_db, "TOKEN", -1, SQLITE_UTF8, nullptr, &token, nullptr, nullptr) == SQLITE_OK &&
+    sqlite3_create_function(d_db, "JSONLONG", -1, SQLITE_UTF8, nullptr, &jsonlong, nullptr, nullptr) == SQLITE_OK;
 }
 
 inline void SqliteDB::tokencount(sqlite3_context *context, int argc, sqlite3_value **argv) //static
@@ -905,4 +921,48 @@ inline void SqliteDB::token(sqlite3_context *context, int argc, sqlite3_value **
   }
   sqlite3_result_null(context);
 }
+
+inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value **argv) // static
+{
+  if (argc == 1) [[likely]]
+  {
+    // value is already a number probably
+    if (sqlite3_value_type(argv[0]) != SQLITE_TEXT) [[likely]]
+    {
+      sqlite3_result_value(context, argv[0]);
+      return;
+    }
+
+    // we have a string, check if it's '{low: N, high: M, unsigned}'
+    unsigned char const *text = sqlite3_value_text(argv[0]);
+    if (!text)
+      return; // not sure what we're doing here...
+
+    SqliteDB::QueryResults res;
+    SqliteDB tmp(":memory:");
+    if (tmp.exec("SELECT "
+                 "json_extract(?, '$.low') AS low, "
+                 "json_extract(?, '$.high') AS high, "
+                 "json_extract(?, '$.unsigned') AS unsigned",
+                 {text, text, text}, &res) &&
+        res.rows() == 1 &&
+        (!res.isNull(0, "low") && !res.isNull(0, "high")))
+    {
+      //res.prettyPrint();
+      long long int jsonlong = 0;
+      if (!res.isNull(0, "high"))
+        jsonlong |= (res.getValueAs<long long int>(0, "high") << 32);
+      if (!res.isNull(0, "low"))
+        jsonlong |= (res.getValueAs<long long int>(0, "low") && 0xFFFFFFFF);
+      sqlite3_result_int64(context, jsonlong);
+      return;
+    }
+    //return copy of found string, it is not a json long object...
+    sqlite3_result_value(context, argv[0]);
+    return;
+  }
+  std::cout << "No results, returning null (" << argc << ")" << std::endl;
+  sqlite3_result_null(context);
+}
+
 #endif
