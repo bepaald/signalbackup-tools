@@ -24,6 +24,12 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   if (!d_ok)
     return {nullptr, 0};
 
+  if (length == 0) [[unlikely]]
+  {
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Asked to encrypt a zero sized attachment." << std::endl;
+    //return {nullptr, 0};
+  }
+
   if (d_verbose) [[unlikely]]
     std::cout << "Encrypting attachment. Length: " << length << "..." << std::flush;
 

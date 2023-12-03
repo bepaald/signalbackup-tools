@@ -110,7 +110,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (d_verbose) [[unlikely]]
     std::cout << "Framelength: " << encryptedframelength << std::endl;
 
-
   if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11)
   {
     std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
