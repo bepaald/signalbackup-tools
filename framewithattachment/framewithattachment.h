@@ -297,7 +297,10 @@ inline std::string const &FrameWithAttachment::filename() const
   return d_filename;
 }
 
-inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size, unsigned char *mackey, uint64_t mackey_size, unsigned char *cipherkey, uint64_t cipherkey_size, uint32_t attsize, std::string const &filename, uint64_t filepos/*, BaseDecryptor *dec*/)
+inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size,
+                                             unsigned char *mackey, uint64_t mackey_size,
+                                             unsigned char *cipherkey, uint64_t cipherkey_size,
+                                             uint32_t attsize, std::string const &filename, uint64_t filepos)
 {
   bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
   bepaald::destroyPtr(&d_iv, &d_iv_size);
@@ -329,8 +332,6 @@ inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size
 
   d_filename = filename;
   d_filepos = filepos;
-
-  //d_dec = dec;
 }
 
 inline void FrameWithAttachment::setLazyDataRAW(uint32_t attsize, std::string const &filename)

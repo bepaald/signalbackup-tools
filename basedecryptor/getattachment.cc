@@ -30,6 +30,9 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
     return 1;
   }
 
+  if (frame->length() == 0) [[unlikely]]
+    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Aksed to read 0-byte attachment" << std::endl;
+
   //std::cout << "Getting attachment: " << frame->filepos() << " + " << frame->length() << std::endl;
   file.seekg(frame->filepos(), std::ios_base::beg);
 
@@ -39,6 +42,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
       !frame->iv())
   {
     //std::cout << "GETTING RAW UNENCRYPTED DATA" << std::endl;
+
     std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[frame->length()]); // to hold the data
     if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), frame->length()))
     {

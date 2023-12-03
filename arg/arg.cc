@@ -108,7 +108,8 @@ Arg::Arg(int argc, char *argv[])
   d_searchpage(false),
   d_findrecipient(-1),
   d_importtelegram(std::string()),
-  d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>())
+  d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>()),
+  d_fulldecode(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -1169,6 +1170,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--fulldecode")
+    {
+      d_fulldecode = true;
+      continue;
+    }
+    if (option == "--no-fulldecode")
+    {
+      d_fulldecode = false;
       continue;
     }
     if (option[0] != '-')

@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 167> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--editgroupmembers", "--no-editgroupmembers", "--showprogress", "--no-showprogress", "--removedoubles", "--no-removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--includecalllog", "--no-includecalllog", "--exporttxt", "--append", "--no-append", "--split", "--desktopdbversion", "--migratedb", "--no-migratedb", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--findrecipient", "--importtelegram", "--mapjsoncontacts"};
+  std::array<std::string, 169> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--editgroupmembers", "--no-editgroupmembers", "--showprogress", "--no-showprogress", "--removedoubles", "--no-removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--includecalllog", "--no-includecalllog", "--exporttxt", "--append", "--no-append", "--split", "--desktopdbversion", "--migratedb", "--no-migratedb", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--findrecipient", "--importtelegram", "--mapjsoncontacts", "--fulldecode", "--no-fulldecode"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -121,6 +121,7 @@ class Arg
   long long int d_findrecipient;
   std::string d_importtelegram;
   std::vector<std::pair<std::string, long long int>> d_mapjsoncontacts;
+  bool d_fulldecode;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -214,6 +215,7 @@ class Arg
   inline long long int findrecipient() const;
   inline std::string const &importtelegram() const;
   inline std::vector<std::pair<std::string, long long int>> const &mapjsoncontacts() const;
+  inline bool fulldecode() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -663,6 +665,11 @@ inline std::string const &Arg::importtelegram() const
 inline std::vector<std::pair<std::string, long long int>> const &Arg::mapjsoncontacts() const
 {
   return d_mapjsoncontacts;
+}
+
+inline bool Arg::fulldecode() const
+{
+  return d_fulldecode;
 }
 
 inline bool Arg::ok() const

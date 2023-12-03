@@ -103,6 +103,7 @@ class SignalBackup
   bool d_showprogress;
   bool d_stoponerror;
   bool d_verbose;
+  bool d_fulldecode;
   std::set<std::string> d_warningsgiven;
   long long int d_selfid;
   std::string d_selfuuid;
@@ -186,7 +187,7 @@ class SignalBackup
                       bool showprogress, bool replaceattachments);
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
-                      std::vector<long long int> editattachments, bool stoponerror);
+                      std::vector<long long int> editattachments, bool stoponerror, bool fulldecode);
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true);
@@ -425,12 +426,12 @@ class SignalBackup
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
                                   bool verbose, bool showprogress, bool replaceattachments)
   :
-  SignalBackup(filename, passphrase, verbose, showprogress, replaceattachments, false, std::vector<long long int>(), false)
+  SignalBackup(filename, passphrase, verbose, showprogress, replaceattachments, false, std::vector<long long int>(), false, false)
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                                   bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
-                                  std::vector<long long int> editattachments, bool stoponerror)
+                                  std::vector<long long int> editattachments, bool stoponerror, bool fulldecode)
   :
   d_database(":memory:"),
   d_passphrase(passphrase),
@@ -440,6 +441,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   d_showprogress(showprogress),
   d_stoponerror(stoponerror),
   d_verbose(verbose),
+  d_fulldecode(fulldecode),
   d_selfid(-1)
 {
   if (bepaald::isDir(filename))

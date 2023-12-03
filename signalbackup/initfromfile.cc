@@ -104,11 +104,21 @@ void SignalBackup::initFromFile()
     else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     {
       AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(frame.release());
+      if (d_fulldecode) [[unlikely]]
+      {
+        a->attachmentData();
+        a->clearData();
+      }
       d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
     {
       AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
+      if (d_fulldecode) [[unlikely]]
+      {
+        a->attachmentData();
+        a->clearData();
+      }
       d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
@@ -124,6 +134,11 @@ void SignalBackup::initFromFile()
     else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
     {
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
+      if (d_fulldecode) [[unlikely]]
+      {
+        s->attachmentData();
+        s->clearData();
+      }
       d_stickers.emplace(s->rowId(), s);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::END) [[unlikely]]
