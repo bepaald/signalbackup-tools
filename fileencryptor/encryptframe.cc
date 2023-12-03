@@ -26,8 +26,14 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(std::pair<unsig
 
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *data, uint64_t length)
 {
-  if (!d_ok)
+  if (!d_ok) [[unlikely]]
     return {nullptr, 0};
+
+  // if (length == 0) [[unlikely]]
+  // {
+  //   std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Asked to encrypt a zero sized frame." << std::endl;
+  //   return {nullptr, 0};
+  // }
 
   // update iv:
   uintToFourBytes(d_iv, d_counter++);

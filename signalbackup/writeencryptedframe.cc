@@ -68,8 +68,10 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
       return false;
     }
 
-    if (!writeEncryptedFrameWithoutAttachment(outputfile, framedata))
+    if (!writeEncryptedFrameWithoutAttachment(outputfile, framedata)) [[unlikely]]
     {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to write encrypt and write BackupFrame. Info:" << std::endl;
+      frame->printInfo();
       delete[] framedata.first;
       return false;
     }
@@ -88,8 +90,10 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
     }
   }
   else // not an attachmentframe, write it
-    if (!writeEncryptedFrameWithoutAttachment(outputfile, framedata))
+    if (!writeEncryptedFrameWithoutAttachment(outputfile, framedata)) [[unlikely]]
     {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to write encrypt and write BackupFrame. Info:" << std::endl;
+      frame->printInfo();
       delete[] framedata.first;
       return false;
     }

@@ -318,6 +318,26 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
         return false;
       }
     }
+    else if (isType<char const *>(p))
+    {
+      if (execParamFiller(stmt, i + 1, std::any_cast<char const *>(p)) != SQLITE_OK)
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
+        return false;
+      }
+    }
+    else if (isType<unsigned char const *>(p))
+    {
+      if (execParamFiller(stmt, i + 1, std::any_cast<unsigned char const *>(p)) != SQLITE_OK)
+      {
+        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
+          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
+          "  Query: \"" << q << "\"" << std::endl;
+        return false;
+      }
+    }
     else if (isType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(p))
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(p)) != SQLITE_OK)

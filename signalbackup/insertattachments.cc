@@ -213,7 +213,14 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       // std::string convuuid = res.valueAsString(0, "conversationId");
       // ddb.printLineMode("SELECT profileFullName FROM conversations where id = '" + convuuid + "'");
       continue;
-    } // if (path.empty())
+    }
+
+    if (results_attachment_data.isNull(0, "path") || results_attachment_data.valueAsString(0, "path").empty())
+    {
+      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Attachment path not found." << std::endl;
+      //results_attachment_data.printLineMode();
+      continue;
+    }
 
     AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
     // PROBABLY JUST NOT AN IMAGE, WE STILL WANT THE HASH
