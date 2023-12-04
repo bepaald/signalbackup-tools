@@ -19,7 +19,7 @@
 
 #include "basedecryptor.ih"
 
-int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
+int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // static
 {
   //std::cout << " *** REALLY GETTING ATTACHMENT ***" << std::endl;
 
@@ -32,6 +32,9 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame) // static
 
   if (frame->length() == 0) [[unlikely]]
     std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Aksed to read 0-byte attachment" << std::endl;
+
+  if (verbose) [[unlikely]]
+    std::cout << "Decrypting attachment data, length: " << frame->length() << std::endl;
 
   //std::cout << "Getting attachment: " << frame->filepos() << " + " << frame->length() << std::endl;
   file.seekg(frame->filepos(), std::ios_base::beg);

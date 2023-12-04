@@ -26,9 +26,16 @@ class FrameWithAttachment;
 
 class BaseDecryptor : public CryptBase
 {
+ protected:
+  bool d_verbose;
  public:
-  inline BaseDecryptor() = default;
-  static int getAttachment(FrameWithAttachment *frame);
+  inline BaseDecryptor(bool verbose);
+  static int getAttachment(FrameWithAttachment *frame, bool verbose = false);
 };
+
+inline BaseDecryptor::BaseDecryptor(bool verbose)
+  :
+  d_verbose(verbose)
+{}
 
 #endif

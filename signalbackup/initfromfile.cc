@@ -106,7 +106,7 @@ void SignalBackup::initFromFile()
       AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(frame.release());
       if (d_fulldecode) [[unlikely]]
       {
-        a->attachmentData();
+        a->attachmentData(nullptr, d_verbose);
         a->clearData();
       }
       d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
@@ -116,7 +116,7 @@ void SignalBackup::initFromFile()
       AvatarFrame *a = reinterpret_cast<AvatarFrame *>(frame.release());
       if (d_fulldecode) [[unlikely]]
       {
-        a->attachmentData();
+        a->attachmentData(nullptr, d_verbose);
         a->clearData();
       }
       d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
@@ -136,7 +136,7 @@ void SignalBackup::initFromFile()
       StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
       if (d_fulldecode) [[unlikely]]
       {
-        s->attachmentData();
+        s->attachmentData(nullptr, d_verbose);
         s->clearData();
       }
       d_stickers.emplace(s->rowId(), s);

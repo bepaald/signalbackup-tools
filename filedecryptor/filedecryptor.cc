@@ -21,6 +21,7 @@
 
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror, bool assumebadframesize, std::vector<long long int> editattachments)
   :
+  BaseDecryptor(verbose),
   d_headerframe(nullptr),
   d_file(filename, std::ios_base::binary | std::ios_base::in),
   d_filename(filename),
@@ -29,7 +30,6 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   d_badmac(false),
   d_assumebadframesize(assumebadframesize),
   d_editattachments(editattachments),
-  d_verbose(verbose),
   d_stoponerror(stoponerror),
   d_backupfileversion(0)
 {

@@ -40,7 +40,7 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   bool d_badmac;
   bool d_assumebadframesize;
   std::vector<long long int> d_editattachments;
-  bool d_verbose;
+  //bool d_verbose;
   bool d_stoponerror;
   uint32_t d_backupfileversion;
 
