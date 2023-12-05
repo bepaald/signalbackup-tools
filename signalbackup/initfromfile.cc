@@ -23,13 +23,13 @@ void SignalBackup::initFromFile()
 {
   if (!d_fd->ok())
   {
-    std::cout << "Failed to create filedecrypter" << std::endl;
+    Logger::message("Failed to create filedecrypter");
     return;
   }
 
   uint64_t totalsize = d_fd->total();
 
-  std::cout << "Reading backup file..." << std::endl;
+  Logger::message("Reading backup file...");
   std::unique_ptr<BackupFrame> frame(nullptr);
 
   d_database.exec("BEGIN TRANSACTION");
@@ -45,12 +45,16 @@ void SignalBackup::initFromFile()
 
     if (d_showprogress) [[likely]]
     {
-      std::cout << (d_verbose ? "" : "\33[2K\r") << "FRAME " << frame->frameNumber() << " ("
-                << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
-                << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
-                << "... " << std::flush;
-      if (d_verbose) [[unlikely]]
-        std::cout << "\n";
+      Logger::message_overwrite("FRAME ", frame->frameNumber(), " (",
+                                std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+                                (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100,
+                                std::defaultfloat, "%)... ");
+      // std::cout << (d_verbose ? "" : "\33[2K\r") << "FRAME " << frame->frameNumber() << " ("
+      //           << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
+      //           << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
+      //           << "... " << std::flush;
+      // if (d_verbose) [[unlikely]]
+      //   std::cout << "\n";
     }
 
     //if (frame->frameNumber() > 73085)
@@ -69,7 +73,7 @@ void SignalBackup::initFromFile()
       d_databaseversion = d_databaseversionframe->version();
 
       if (d_verbose) [[unlikely]]
-        std::cout << std::endl << "Database version: " << d_databaseversionframe->version() << std::endl;
+        Logger::message("Database version: ", d_databaseversionframe->version());
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT) [[likely]]
     {
@@ -87,14 +91,14 @@ void SignalBackup::initFromFile()
         // these tables as they are excluded on the export-side as well. Additionally, the official import should be able
         // to properly deal with them anyway (that is: ignore them)
         if (!d_database.exec(s->bindStatement(), s->parameters()))
-          std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Failed to execute statement: " << s->statement() << std::endl;
+          Logger::warning("Failed to execute statement: ", s->statement());
       }
       #ifdef BUILT_FOR_TESTING
       else if (s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {
         // force early creation of sqlite_sequence table, this is completely unnecessary and only used
         // to get byte-identical backups during testing
-        std::cout << "BUILT_FOR_TESTING : Forcing early creation of sqlite_sequence" << std::endl;
+        Logger::message("BUILT_FOR_TESTING : Forcing early creation of sqlite_sequence");
         d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");
         d_database.exec("DROP TABLE dummy");
         d_found_sqlite_sequence_in_backup = true;
@@ -144,11 +148,13 @@ void SignalBackup::initFromFile()
     else if (frame->frameType() == BackupFrame::FRAMETYPE::END) [[unlikely]]
     {
       //frame->printInfo();
+      if (d_verbose) [[unlikely]]
+        Logger::message("Read EndFrame");
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID) [[unlikely]]
     {
-      std::cout << std::endl << bepaald::bold_on << "WARNING! SKIPPING INVALID FRAME!" << bepaald::bold_off << std::endl;
+      Logger::warning(Logger::Control::BOLD, "SKIPPING INVALID FRAME!", Logger::Control::NORMAL);
     }
   }
 
@@ -156,10 +162,10 @@ void SignalBackup::initFromFile()
 
   if (!d_badattachments.empty())
   {
-    std::cout << "Attachment data with BAD MAC was encountered:" << std::endl;
+    Logger::message("Attachment data with BAD MAC was encountered:");
     dumpInfoOnBadFrames();
   }
-  std::cout << "" << std::endl;
+  //std::cout << "" << std::endl;
 
   if (d_fd->badMac()) [[unlikely]]
   {
@@ -167,14 +173,14 @@ void SignalBackup::initFromFile()
       return;
   }
 
-  std::cout << "done!" << std::endl;
-
   if (!d_endframe)
   {
-    std::cout << bepaald::bold_on << "WARNING " << bepaald::bold_off
-              << "EndFrame was not read: backup is probably incomplete" << std::endl;
+    Logger::warning("EndFrame was not read: backup is probably incomplete");
     addEndFrame();
   }
+
+  if (d_fd->curFilePos() == totalsize)
+    Logger::message("done!");
 
   d_ok = true;
 }

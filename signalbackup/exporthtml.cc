@@ -82,64 +82,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     return false;
   }
 
-  // // check if dir exists, create if not
-  // if (!bepaald::fileOrDirExists(directory))
-  // {
-  //   // try to create
-  //   if (!bepaald::createDir(directory))
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Failed to create directory `" << directory << "'"
-  //               << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
-  //     // temporary !!
-  //     {
-  //       std::error_code ec;
-  //       std::filesystem::space_info const si = std::filesystem::space(directory, ec);
-  //       if (!ec)
-  //       {
-  //         std::cout << "Available  : " << static_cast<std::intmax_t>(si.available) << std::endl;
-  //         std::cout << "Backup size: " << d_fd->total() << std::endl;
-  //       }
-  //     }
-  //     if (databasemigrated)
-  //       SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  // }
-
-  // // directory exists, but is it a dir?
-  // if (!bepaald::isDir(directory))
-  // {
-  //   std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //             << ": `" << directory << "' is not a directory." << std::endl;
-  //   if (databasemigrated)
-  //     SqliteDB::copyDb(backup_database, d_database);
-  //   return false;
-  // }
-
-  // // and is it empty?
-  // if (!bepaald::isEmpty(directory) && !append)
-  // {
-  //   if (!overwrite)
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export, " << std::endl
-  //               << "       or --append to only write new files." << std::endl;
-  //     if (databasemigrated)
-  //       SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  //   std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
-  //   if (!bepaald::clearDirectory(directory))
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Failed to empty directory '" << directory << "'" << std::endl;
-  //     if (databasemigrated)
-  //       SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  // }
-
   // check and warn about selfid & note-to-self thread
   long long int note_to_self_thread_id = -1;
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
@@ -176,12 +118,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
-      std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
-      std::cout << startrange << " " << endrange << std::endl;
+      Logger::error("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
+      Logger::error_indent(startrange, " ", endrange);
       continue;
     }
-    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second
-              << " (" << startrange << " - " << endrange << ")" << std::endl;
+    Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
 
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...

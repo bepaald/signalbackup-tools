@@ -29,18 +29,18 @@ void FileDecryptor::strugee(uint64_t pos)
 
   d_file.seekg(pos, std::ios_base::beg);
 
-  std::cout << "Getting frame at filepos: " << d_file.tellg() << std::endl;
+  Logger::message("Getting frame at filepos: ", d_file.tellg());
 
   if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return;
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
   if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   {
-    std::cout << "Framesize too big to be real" << std::endl;
+    Logger::error("Framesize too big to be real");
     return;
   }
 
@@ -54,14 +54,13 @@ void FileDecryptor::strugee(uint64_t pos)
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, MACSIZE) != 0)
   {
-    std::cout << "BAD MAC!" << std::endl;
+    Logger::error("BAD MAC!");
     return;
   }
   else
   {
-    std::cout << "" << std::endl;
-    std::cout << "GOT GOOD MAC AT OFFSET " << offset << " BYTES!" << std::endl;
-    std::cout << "Now let's try and find out how many frames we skipped to get here...." << std::endl;
+    Logger::message("\nGOT GOOD MAC AT OFFSET ", offset, " BYTES!\n"
+                    "Now let's try and find out how many frames we skipped to get here....");
     d_badmac = false;
   }
 
@@ -73,12 +72,13 @@ void FileDecryptor::strugee(uint64_t pos)
 
     if (skipped > 1000000) // a frame is at least 10 bytes? -> could probably safely set this higher. MAC alone is 10 bytes, there is also actual data
     {
-      std::cout << "TESTED 1000000 frames" << std::endl;
+      Logger::message("TESTED 1000000 frames");
       return;
     }
 
     if (skipped % 100 == 0)
-      std::cout << "\rChecking if we skipped " << skipped << " frames... " << std::flush;
+      Logger::message_overwrite("Checking if we skipped ", skipped, " frames... ");
+      //std::cout << "\rChecking if we skipped " << skipped << " frames... " << std::flush;
 
     uintToFourBytes(d_iv, d_counter + skipped);
 
@@ -90,7 +90,7 @@ void FileDecryptor::strugee(uint64_t pos)
 
     if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
     {
-      std::cout << "CTX INIT FAILED" << std::endl;
+      Logger::error("CTX INIT FAILED");
       return;
     }
 
@@ -99,7 +99,7 @@ void FileDecryptor::strugee(uint64_t pos)
 
     if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
     {
-      std::cout << "Failed to decrypt data" << std::endl;
+      Logger::error("Failed to decrypt data");
       delete[] decodedframe;
       return;
     }
@@ -113,7 +113,8 @@ void FileDecryptor::strugee(uint64_t pos)
     ++skipped;
     if (!frame)
     {
-      std::cout << "\rChecking if we skipped " << skipped << " frames... nope! :(" << std::flush;
+      Logger::message_overwrite("Checking if we skipped ", skipped, " frames... nope! :(");
+      //std::cout << "\rChecking if we skipped " << skipped << " frames... nope! :(" << std::flush;
       //if (skipped >
     }
     else
@@ -124,15 +125,15 @@ void FileDecryptor::strugee(uint64_t pos)
       {
         d_counter += skipped;
         d_framecount += skipped;
-        std::cout << "\rChecking if we skipped " << skipped << " frames... YEAH! :)" << std::endl;
-        std::cout << "Good frame: " << frame->frameNumber() << " (" << frame->frameTypeString() << ")" << std::endl;
-        std::cout << "COUNTER: " << d_counter << std::endl;
+        Logger::message_overwrite("Checking if we skipped ", skipped, " frames... YEAH! :)");
+        //std::cout << "\rChecking if we skipped " << skipped << " frames... YEAH! :)" << std::endl;
+        Logger::message("Good frame: ", frame->frameNumber(), " (", frame->frameTypeString(), ")\nCOUNTER: ", d_counter);
         frame->printInfo();
         //delete[] encryptedframe.release();
         frame.reset();
         return;
       }
-      std::cout << "\rChecking if we skipped " << skipped << " frames... nope! :(" << std::flush;
+      Logger::message_overwrite("Checking if we skipped ", skipped, " frames... nope! :(");
       frame.reset();
     }
   }

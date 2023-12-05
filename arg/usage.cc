@@ -69,6 +69,9 @@ changes, you must provide one of the output options.
    --limittothreadsbyname <THREADS_LIST> Optional modifier for `--dumpmedia'. Only save the attachments
                                          from the listed threads. List format same as
                                          `--croptothreadsbyname'
+   --limittodates <LIST_OF_DATES>        Optional modifier for `--dumpmedia'. Only export messages within
+                                         the ranges defined by LIST_OF_DATES. List format is the same as
+                                         `--croptodates'.
 --dumpavatars <DIRECTORY>                Save all avatars to DIRECTORY.
    --limitcontacts <CONTACTS>            Optional modifier for `--dumpavatars'. Only the avatars of
                                          listed contacts are saved. CONTACTS is a list "Name 1,Name

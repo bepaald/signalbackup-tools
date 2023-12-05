@@ -26,6 +26,7 @@
 #include "main.h"
 #include "signalbackup/signalbackup.h"
 #include "sqlcipherdecryptor/sqlcipherdecryptor.h"
+#include "logger/logger.h"
 
 #if __has_include("autoversion.h")
 #include "autoversion.h"
@@ -50,23 +51,27 @@ int main(int argc, char *argv[])
 #endif
 
 #ifdef VERSIONDATE
-  std::cout << "signalbackup-tools (" << argv[0] << ") source version " << VERSIONDATE;
   #if defined(_WIN32) || defined(__MINGW64__)
-  std::cout << " (Win)";
+  Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE, " (Win)");
+  #else
+  Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE);
   #endif
-  std::cout << std::endl;
 #endif
 
   Arg arg(argc, argv);
   if (!arg.ok())
   {
-    std::cout << "Error parsing arguments" << std::endl;
-    std::cout << "Try '" << argv[0] << " --help' for available options" << std::endl;
+    //std::cout << "Error parsing arguments" << std::endl;
+    //std::cout << "Try '" << argv[0] << " --help' for available options" << std::endl;
+    Logger::error("Failed to parse arguments");
+    Logger::error_indent("Try '", argv[0], " --help' for available options");
+
     return 1;
   }
 
   if (arg.verbose()) [[unlikely]]
-    std::cout << "Parsed command line arguments." << std::endl;
+    Logger::message("Parsed command line arguments.");
+    //std::cout << "Parsed command line arguments." << std::endl;
 
   if (arg.help())
   {
@@ -77,9 +82,10 @@ int main(int argc, char *argv[])
   // at the very least an input file is needed
   if (arg.input().empty() && !arg.help())
   {
-    std::cout << "Error: No input provided." << std::endl;
-    std::cout << "Run with `" << argv[0] << " <INPUT> [<PASSPHRASE>] [OPTIONS]'" << std::endl;
-    std::cout << "Try '" << argv[0] << " --help' for available options" << std::endl;
+    Logger::error("No input provided.");
+    Logger::error_indent("Run with `", argv[0], " <INPUT> [<PASSPHRASE>] [OPTIONS]'");
+    Logger::error_indent("Try '", argv[0], " --help' for available options");
+
     return 1;
   }
 
@@ -91,7 +97,7 @@ int main(int argc, char *argv[])
     std::cout << "Please provide passphrase for input file '" << arg.input() << "': "  << std::flush;
     if (!getPassword(&pw))
     {
-      std::cout << "Failed to set passphrase" << std::endl;
+      Logger::error("Failed to set passphrase");
       return 1;
     }
     arg.setpassphrase(pw);
@@ -104,7 +110,7 @@ int main(int argc, char *argv[])
     std::cout << "Please provide passphrase for source file '" << arg.source() << "': "  << std::flush;
     if (!getPassword(&spw))
     {
-      std::cout << "Failed to set passphrase" << std::endl;
+      Logger::error("Failed to set passphrase");
       return 1;
     }
     arg.setsourcepassphrase(spw);
@@ -125,7 +131,7 @@ int main(int argc, char *argv[])
     std::cout << "Please provide passphrase for output file '" << arg.output() << "' (leave empty to use input passphrase): "  << std::flush;
     if (!getPassword(&opw))
     {
-      std::cout << "Failed to set passphrase" << std::endl;
+      Logger::error("Failed to set passphrase");
       return 1;
     }
     arg.setopassphrase(opw);
@@ -137,10 +143,9 @@ int main(int argc, char *argv[])
        !arg.overwrite()))
   {
     if (bepaald::isDir(arg.output()))
-      std::cout << "Output directory `" << arg.output()
-                << "' not empty. Use --overwrite to clear contents before export." << std::endl;
+      Logger::error("Output directory `", arg.output(), "' not empty. Use --overwrite to clear contents before export.");
     else
-      std::cout << "Output file `" << arg.output() << "' exists. Use --overwrite to overwrite." << std::endl;
+      Logger::error("Output file `", arg.output(), "' exists. Use --overwrite to overwrite.");
     return 1;
   }
 
@@ -178,18 +183,18 @@ int main(int argc, char *argv[])
 
   // open input
   if (arg.verbose()) [[unlikely]]
-    std::cout << "Opening input" << std::endl;
+    Logger::message("Opening input");
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.passphrase(), arg.verbose(), arg.showprogress(),
                                                     arg.replaceattachments_bool(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponerror(), arg.fulldecode()));
   if (!sb->ok())
   {
-    std::cout << "Failed to open backup" << std::endl;
+    Logger::error("Failed to open backup");
     return 1;
   }
   if (arg.verbose()) [[unlikely]]
-    std::cout << "Input opened successfully" << std::endl;
+    Logger::message("Input opened successfully");
 
   MEMINFO("Input opened");
 
@@ -215,7 +220,7 @@ int main(int argc, char *argv[])
 
   if (!arg.source().empty())
   {
-    std::cout << "Target database info:" << std::endl;
+    Logger::message("Target database info:");
     sb->summarize();
     bool sourcesummarized = false;
 
@@ -226,11 +231,11 @@ int main(int argc, char *argv[])
 
       MEMINFO("Before first time reading source");
 
-      std::cout << "Requested ALL threads, reading source to get thread list" << std::endl;
+      Logger::message("Requested ALL threads, reading source to get thread list");
       source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
       if (!source->ok())
       {
-        std::cout << "Error opening source database" << std::endl;
+        Logger::error("Failed to open source database");
         return 1;
       }
 
@@ -239,11 +244,12 @@ int main(int argc, char *argv[])
       source->summarize();
       sourcesummarized = true;
 
-      std::cout << "Getting list of thread id's..." << std::flush;
-      threads = source->threadIds();
-      std::cout << "Got: " << std::flush;
-      for (uint i = 0; i < threads.size(); ++i)
-        std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
+      Logger::message("Getting list of thread id's...");
+      // threads = source->threadIds();
+      // std::cout << "Got: " << std::flush;
+      // for (uint i = 0; i < threads.size(); ++i)
+      //   std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
+      Logger::message("Got: ", threads);
     }
 
     // add any threads listed by thread name
@@ -253,7 +259,7 @@ int main(int argc, char *argv[])
         source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
       if (!source->ok())
       {
-        std::cout << "Error opening source database" << std::endl;
+        Logger::error("Failed to open source database");
         return 1;
       }
       if (!addThreadIdsFromString(source.get(), arg.importthreadsbyname(), &threads))
@@ -265,11 +271,12 @@ int main(int argc, char *argv[])
 
       MEMINFO("Before reading source: ", i + 1, "/", threads.size());
 
-      std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
+      Logger::message("\nImporting thread ", threads[i], " (", i + 1, "/", threads.size(), ") from source file: ", arg.source());
+      //std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
       source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
       if (!source->ok())
       {
-        std::cout << "Error opening source database" << std::endl;
+        Logger::error("Failed to open source database");
         return 1;
       }
       if (!sourcesummarized)
@@ -280,7 +287,8 @@ int main(int argc, char *argv[])
       MEMINFO("After reading source: ", i + 1, "/", threads.size(), " before import");
       if (!sb->importThread(source.get(), threads[i]))
       {
-        std::cout << "A fatal error occurred while trying to import thread " << threads[i] << ". Aborting" << std::endl;
+        Logger::error("A fatal error occurred while trying to import thread ", threads[i], ". Aborting");
+        //std::cout << "A fatal error occurred while trying to import thread " << threads[i] << ". Aborting" << std::endl;
         return 1;
       }
       MEMINFO("After import");
@@ -308,7 +316,7 @@ int main(int argc, char *argv[])
   {
     if (arg.croptodates().size() % 2 != 0)
     {
-      std::cout << "Wrong number of date-strings to croptodate" << std::endl;
+      Logger::error("Wrong number of date-strings to croptodate");
       return 1;
     }
     std::vector<std::pair<std::string, std::string>> dates;
@@ -328,18 +336,18 @@ int main(int argc, char *argv[])
 
   if (!arg.mergerecipients().empty())
   {
-    std::cout << "Merging recipients..." << std::endl;
+    Logger::message("Merging recipients...");
     sb->mergeRecipients(arg.mergerecipients(), arg.editgroupmembers());
   }
 
   if (!arg.mergegroups().empty())
   {
-    std::cout << "Merging groups..." << std::endl;
+    Logger::message("Merging groups...");
     sb->mergeGroups(arg.mergegroups());
   }
 
   if (!arg.dumpmedia().empty())
-    if (!sb->dumpMedia(arg.dumpmedia(), limittothreads, arg.overwrite()))
+    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.overwrite()))
       return 1;
 
   if (!arg.dumpavatars().empty())
@@ -382,7 +390,7 @@ int main(int argc, char *argv[])
   if (!arg.exportxml().empty())
     if (!sb->exportXml(arg.exportxml(), arg.overwrite(), arg.setselfid(), arg.includemms(), SignalBackup::DROPATTACHMENTDATA))
     {
-      std::cout << "Failed to export backup to '" << arg.exportxml() << "'" << std::endl;
+      Logger::error("Failed to export backup to '", arg.exportxml(), "'");
       return 1;
     }
 
@@ -427,7 +435,7 @@ int main(int argc, char *argv[])
       !arg.source().empty()) // reorder mms after messing with mms._id
     if (!sb->reorderMmsSmsIds())
     {
-      std::cout << "Error while reordering mms" << std::endl;
+      Logger::error("reordering mms");
       return 1;
     }
 
@@ -448,8 +456,7 @@ int main(int argc, char *argv[])
     sb->checkDbIntegrity(true);
     if (!sb->exportBackup(arg.output(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
-                << "Failed to export backup to '" << arg.output() << "'" << std::endl;
+      Logger::error("Failed to export backup to '", arg.output(), "'");
       return 1;
     }
   }
@@ -461,7 +468,7 @@ int main(int argc, char *argv[])
   {
     SqlCipherDecryptor db(arg.dumpdesktopdb_1(), arg.dumpdesktopdb_2(), arg.desktopdbversion());
     if (!db.ok() || !db.writeToFile("desktop.db", arg.overwrite()))
-      std::cout << "Failed to dump desktop database" << std::endl;
+      Logger::error("Failed to dump desktop database");
   }
 
 
@@ -483,16 +490,14 @@ bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::s
     long long int r = backup->getRecipientIdFromName(names[i], true);
     if (r == -1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
-                << "Failed to find threadId for recipient '" << names[i] << "'"<< std::endl;
+      Logger::error("Failed to find threadId for recipient '", names[i], "'");
       return false;
     }
 
     long long int t = backup->getThreadIdFromRecipient(r);
     if (t == -1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
-                << "Failed to find threadId for recipient `" << names[i] << "'"<< std::endl;
+      Logger::error("Failed to find threadId for recipient '", names[i], "'");
       return false;
     }
     if (!bepaald::contains(threads, t))

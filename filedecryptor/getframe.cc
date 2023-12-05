@@ -27,11 +27,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   unsigned long long int filepos = d_file.tellg();
 
   if (d_verbose) [[unlikely]]
-    std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
+    Logger::message("Getting frame at filepos: ", filepos, " (COUNTER: ", d_counter, ")");
 
   if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -44,9 +44,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   uint32_t encrypted_encryptedframelength = 0;
   if (!d_file.read(reinterpret_cast<char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength)))) [[unlikely]]
   {
-    std::cout << "Failed to read " << sizeof(decltype(encrypted_encryptedframelength))
-              << " bytes from file to get next frame size... (" << d_file.tellg()
-              << " / " << d_filesize << ")" << std::endl;
+    Logger::error("Failed to read ", sizeof(decltype(encrypted_encryptedframelength)),
+                  " bytes from file to get next frame size... (", d_file.tellg(),
+                  " / ", d_filesize, ")");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -66,7 +66,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (HMAC_Init_ex(hctx.get(), d_mackey, d_mackey_size, EVP_sha256(), nullptr) != 1) [[unlikely]]
 #endif
   {
-    std::cout << "Failed to initialize HMAC context" << std::endl;
+    Logger::error("Failed to initialize HMAC context");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -77,7 +77,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (HMAC_Update(hctx.get(), reinterpret_cast<unsigned char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength))) != 1) [[unlikely]]
 #endif
   {
-    std::cout << "Failed to update HMAC" << std::endl;
+    Logger::error("Failed to update HMAC");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -90,7 +90,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::error("CTX INIT FAILED");
     return 0;
   }
 
@@ -100,21 +100,22 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
                         reinterpret_cast<unsigned char *>(&encrypted_encryptedframelength),
                         sizeof(decltype(encrypted_encryptedframelength))) != 1) [[unlikely]]
   {
-    std::cout << "Failed to decrypt data" << std::endl;
+    Logger::error("Failed to decrypt data");
     return 0;
   }
 
   encryptedframelength = bepaald::swap_endian<uint32_t>(encryptedframelength);
 
-  DEBUGOUT("Framelength: ", encryptedframelength);
   if (d_verbose) [[unlikely]]
-    std::cout << "Framelength: " << encryptedframelength << std::endl;
+    Logger::message("Framelength: ", encryptedframelength);
 
   if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11)
   {
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
+
     if (d_framecount == 1)
-      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
+      Logger::message(Logger::Control::BOLD, " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***", Logger::Control::NORMAL);
+      //std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -123,7 +124,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -134,7 +135,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (HMAC_Update(hctx.get(), encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
 #endif
   {
-    std::cout << "Failed to update HMAC" << std::endl;
+    Logger::error("Failed to update HMAC");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -149,20 +150,24 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   if (HMAC_Final(hctx.get(), hash, &digest_size) != 1)
 #endif
   {
-    std::cout << "Failed to finalize MAC" << std::endl;
+    Logger::error("Failed to finalize MAC");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
   // check MAC
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0) [[unlikely]]
   {
-    std::cout << "" << std::endl;
-    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Bad MAC in frame: theirMac: "
-              << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
-    std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+    Logger::message("\n");
+    Logger::warning("Bad MAC in frame: theirMac: ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE),
+                    "\n                              ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+    // std::cout << "" << std::endl;
+    // std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Bad MAC in frame: theirMac: "
+    //           << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    // std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
 
     if (d_framecount == 1) [[unlikely]]
-      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
+      Logger::message(Logger::Control::BOLD, " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***", Logger::Control::NORMAL);
+      //std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
 
     d_badmac = true;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -172,8 +177,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     d_badmac = false;
     if (d_verbose) [[unlikely]]
     {
-      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
-      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+      Logger::message("Calculated mac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+      Logger::message("Mac in file   : ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
     }
   }
 
@@ -183,7 +188,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
-    std::cout << "Failed to decrypt data" << std::endl;
+    Logger::error("Failed to decrypt data");
     delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
@@ -196,28 +201,38 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     for (uint i = 0; i < d_editattachments.size(); i += 2)
       if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
       {
-        std::cout << "Editing attachment data size in AttachmentFrame "
-                  << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
+        auto oldlength = reinterpret_cast<AttachmentFrame *>(frame.get())->length();
+
+        // set new length
         reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
-        std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
-        std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
-                  << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
+
+        Logger::message("Editing attachment data size in AttachmentFrame ", oldlength, " -> ",
+                        reinterpret_cast<AttachmentFrame *>(frame.get())->length(),
+                        "\nFrame has _id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->rowId(),
+                        ", unique_id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId());
+
+        // std::cout << "Editing attachment data size in AttachmentFrame "
+        //           << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
+        // reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
+        // std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
+        // std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
+        //           << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
         break;
       }
 
   if (!frame) [[unlikely]]
   {
-    std::cout << "Failed to get valid frame from decoded data..." << std::endl;
+    Logger::error("Failed to get valid frame from decoded data...");
     if (d_badmac)
     {
-      std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
+      Logger::error_indent("Encrypted data had failed verification (Bad MAC)");
       delete[] decodedframe;
       return std::make_unique<InvalidFrame>();
     }
     else
     {
-      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(" << std::endl;
-      std::cout << "Decrypted frame data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+      Logger::error_indent("Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(");
+      Logger::error_indent("Decrypted frame data: ", bepaald::bytesToHexString(decodedframe, decodedframelength));
       delete[] decodedframe;
       return std::make_unique<InvalidFrame>();
     }
@@ -237,7 +252,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
     if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[unlikely]]
       if (!d_assumebadframesize)
       {
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
+        Logger::error("Unexpectedly hit end of file while reading attachment!");
         return std::unique_ptr<BackupFrame>(nullptr);
       }
 
@@ -261,11 +276,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
   unsigned long long int filepos = d_file.tellg();
 
   if (d_verbose) [[unlikely]]
-    std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
+    Logger::message("Getting frame at filepos: ", filepos, " (COUNTER: ", d_counter, ")");
 
   if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -284,17 +299,17 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
 
   if (encryptedframelength == 0 && d_file.eof()) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file!" << std::endl;
+    Logger::error("Unexpectedly hit end of file!");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
   DEBUGOUT("Framelength: ", encryptedframelength);
   if (d_verbose) [[unlikely]]
-    std::cout << "Framelength: " << encryptedframelength << std::endl;
+    Logger::message("Framelength: ", encryptedframelength);
 
   if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11)
   {
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
 
     if (d_stoponerror || d_backupfileversion > 0)
       return std::unique_ptr<BackupFrame>(nullptr);
@@ -304,7 +319,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
   if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
 
     if (d_stoponerror || d_backupfileversion > 0)
       return std::unique_ptr<BackupFrame>(nullptr);
@@ -319,18 +334,22 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
 
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0) [[unlikely]]
   {
-    std::cout << "" << std::endl;
-    std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Bad MAC in frame: theirMac: "
-              << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
-    std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+    Logger::message("\n");
+    Logger::warning("Bad MAC in frame: theirMac: ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE),
+                    "\n                              ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+    // std::cout << "" << std::endl;
+    // std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Bad MAC in frame: theirMac: "
+    //           << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+    // std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
 
     if (d_framecount == 1) [[unlikely]]
-      std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
+      Logger::message(Logger::Control::BOLD, " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***", Logger::Control::NORMAL);
+      //std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
 
     d_badmac = true;
     if (d_stoponerror)
     {
-      std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+      Logger::message("Stop reading backup. Next frame would be read at offset ", filepos + encryptedframelength);
       return std::unique_ptr<BackupFrame>(nullptr);
     }
   }
@@ -339,8 +358,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     d_badmac = false;
     if (d_verbose) [[unlikely]]
     {
-      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
-      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+      Logger::message("Calculated mac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+      Logger::message("Mac in file   : ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
     }
   }
 
@@ -354,7 +373,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
 
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::error("CTX INIT FAILED");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -363,7 +382,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
 
   if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
-    std::cout << "Failed to decrypt data" << std::endl;
+    Logger::error("Failed to decrypt data");
     delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
@@ -376,28 +395,37 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     for (uint i = 0; i < d_editattachments.size(); i += 2)
       if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
       {
-        std::cout << "Editing attachment data size in AttachmentFrame "
-                  << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
+        auto oldlength = reinterpret_cast<AttachmentFrame *>(frame.get())->length();
+
+        // set new length
         reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
-        std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
-        std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
-                  << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
+
+        Logger::message("Editing attachment data size in AttachmentFrame ", oldlength, " -> ",
+                        reinterpret_cast<AttachmentFrame *>(frame.get())->length(),
+                        "\nFrame has _id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->rowId(),
+                        ", unique_id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId());
+        // std::cout << "Editing attachment data size in AttachmentFrame "
+        //           << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
+        // reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
+        // std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
+        // std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
+        //           << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
         break;
       }
 
   if (!frame) [[unlikely]]
   {
-    std::cout << "Failed to get valid frame from decoded data..." << std::endl;
+    Logger::error("Failed to get valid frame from decoded data...");
     if (d_badmac)
     {
-      std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
+      Logger::error_indent("Encrypted data had failed verification (Bad MAC)");
       delete[] decodedframe;
       return bruteForceFrom(filepos, encryptedframelength);
     }
     else
     {
-      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(" << std::endl;
-      std::cout << "Decrypted frame data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+      Logger::error_indent("Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(");
+      Logger::error_indent("Decrypted frame data: ", bepaald::bytesToHexString(decodedframe, decodedframelength));
       delete[] decodedframe;
       return std::make_unique<InvalidFrame>();
     }
@@ -417,7 +445,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[unlikely]]
       if (!d_assumebadframesize)
       {
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
+        Logger::error("Unexpectedly hit end of file while reading attachment!");
         return std::unique_ptr<BackupFrame>(nullptr);
       }
 

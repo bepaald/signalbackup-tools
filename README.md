@@ -349,7 +349,7 @@ To only export all media (like message attachments and avatars) from a backup, r
 signalbackups-tools [input] [passphrase] --dumpmedia [outputdirectory]
 ```
 
-Where `outputdirectory` is an existing directory.
+Where `outputdirectory` is an empty directory, or does not exist (it will then be created). To limit the output to media from specified threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to media from the time periods listed. For the format of the date list, see the [crop to dates](#crop) option.
 
 
 **<span id="export">Export HTML, TXT, CSV & XML</span>**

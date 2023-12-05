@@ -35,7 +35,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
 {
   if (!d_file.is_open())
   {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to open file: '" << filename << "'" << std::endl;
+    Logger::error("Failed to open file '", filename, "'");
     return;
   }
 
@@ -49,6 +49,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   if (headerlength == 0)
   {
     std::cout << "Error: got length of headerframe == 0" << std::endl;
+    Logger::error("got got length of headerframe == 0");
     return;
   }
 
@@ -59,12 +60,14 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   delete[] headerdata;
   if (!headerframe)
   {
-    std::cout << "Error: failed to retrieve HeaderFrame, length was " << headerlength << " bytes" << std::endl;
+    //std::cout << "Error: failed to retrieve HeaderFrame, length was " << headerlength << " bytes" << std::endl;
+    Logger::error("failed to retrieve HeaderFrame, length was ", headerlength, " bytes");
     return;
   }
   if (!(headerframe->frameType() == BackupFrame::FRAMETYPE::HEADER))
   {
-    std::cout << "Error: First frame is not a HeaderFrame" << std::endl;
+    //std::cout << "Error: First frame is not a HeaderFrame" << std::endl;
+    Logger::error("First frame is not a HeaderFrame");
     delete headerframe;
     return;
   }
@@ -88,14 +91,16 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
 
   if (!getBackupKey(passphrase))
   {
-    std::cout << "Error: Failed to get backupkey from passphrase" << std::endl;
+    //std::cout << "Error: Failed to get backupkey from passphrase" << std::endl;
+    Logger::error("Failed to get backupkey from passphrase");
     delete headerframe;
     return;
   }
 
   if (!getCipherAndMac(32, 64))
   {
-    std::cout << "Error: Failed to get Cipher and Mac" << std::endl;
+    //std::cout << "Error: Failed to get Cipher and Mac" << std::endl;
+    Logger::error("Failed to get Cipher and Mac");
     delete headerframe;
     return;
   }
@@ -117,15 +122,24 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
 
   if (d_verbose) [[unlikely]]
   {
-    std::cout << "IV: " << bepaald::bytesToHexString(d_iv, d_iv_size) << " (size: " << d_iv_size << ")" << std::endl;
-    std::cout << "SALT: " << bepaald::bytesToHexString(d_salt, d_salt_size) << " (size: " << d_salt_size << ")" << std::endl;
-    std::cout << "BACKUPKEY: " << bepaald::bytesToHexString(d_backupkey, d_backupkey_size) << " (size: " << d_backupkey_size << ")" << std::endl;
-    std::cout << "CIPHERKEY: " << bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size) << " (size: " << d_cipherkey_size << ")" << std::endl;
-    std::cout << "MACKEY: " << bepaald::bytesToHexString(d_mackey, d_mackey_size) << " (size: " << d_mackey_size << ")" << std::endl;
+    // std::cout << "IV: " << bepaald::bytesToHexString(d_iv, d_iv_size) << " (size: " << d_iv_size << ")" << std::endl;
+    // std::cout << "SALT: " << bepaald::bytesToHexString(d_salt, d_salt_size) << " (size: " << d_salt_size << ")" << std::endl;
+    // std::cout << "BACKUPKEY: " << bepaald::bytesToHexString(d_backupkey, d_backupkey_size) << " (size: " << d_backupkey_size << ")" << std::endl;
+    // std::cout << "CIPHERKEY: " << bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size) << " (size: " << d_cipherkey_size << ")" << std::endl;
+    // std::cout << "MACKEY: " << bepaald::bytesToHexString(d_mackey, d_mackey_size) << " (size: " << d_mackey_size << ")" << std::endl;
+
+    Logger::message("IV: ", bepaald::bytesToHexString(d_iv, d_iv_size), " (size: ", d_iv_size, ")");
+    Logger::message("SALT: ", bepaald::bytesToHexString(d_salt, d_salt_size), " (size: ", d_salt_size, ")");
+    Logger::message("BACKUPKEY: ", bepaald::bytesToHexString(d_backupkey, d_backupkey_size), " (size: ", d_backupkey_size, ")");
+    Logger::message("CIPHERKEY: ", bepaald::bytesToHexString(d_cipherkey, d_cipherkey_size), " (size: ", d_cipherkey_size, ")" );
+    Logger::message("MACKEY: ", bepaald::bytesToHexString(d_mackey, d_mackey_size), " (size: ", d_mackey_size, ")");
   }
-  std::cout << "BACKUPFILE VERSION: " << d_backupfileversion << std::endl;
-  std::cout << "BACKUPFILE SIZE: " << d_filesize << std::endl;
-  std::cout << "COUNTER: " << d_counter << std::endl;
+  // std::cout << "BACKUPFILE VERSION: " << d_backupfileversion << std::endl;
+  // std::cout << "BACKUPFILE SIZE: " << d_filesize << std::endl;
+  // std::cout << "COUNTER: " << d_counter << std::endl;
+  Logger::message("BACKUPFILE VERSION: ", d_backupfileversion);
+  Logger::message("BACKUPFILE SIZE: ", d_filesize);
+  Logger::message("COUNTER: ", d_counter);
 
   d_headerframe.reset(headerframe);
 

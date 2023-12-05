@@ -17,9 +17,6 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "logger.h"
 
-#define VERSIONDATE "20231205.205546"
-
-#endif
+std::unique_ptr<Logger> Logger::s_instance(nullptr);

@@ -19,55 +19,20 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> const &threads, bool overwrite) const
+bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> const &daterangelist,
+                             std::vector<long long int> const &threads, bool overwrite) const
 {
-  std::cout << "Dumping media to dir '" << dir << "'" << std::endl;
+  Logger::message("Dumping media to dir '", dir, "'");
 
   if (!d_database.containsTable("part") || !d_database.tableContainsColumn("part", "display_order"))
   {
-    std::cout << "Database too badly damaged or too old, dumping media is not (yet) supported, consider a full decrypt by just passing a directory as output" << std::endl;
+    Logger::error("Database too badly damaged or too old, dumping media is not (yet) supported, consider a full decrypt by just passing a directory as output");
     return false;
   }
 
   // check if dir exists, create if not
   if (!prepareOutputDirectory(dir, overwrite))
     return false;
-
-  // if (!bepaald::fileOrDirExists(dir))
-  // {
-  //   // try to create
-  //   if (!bepaald::createDir(dir))
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Failed to create directory `" << dir << "'"
-  //               << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
-  //     return false;
-  //   }
-  // }
-
-  // // directory exists, but is it a dir?
-  // if (!bepaald::isDir(dir))
-  // {
-  //   std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //             << ": `" << dir << "' is not a directory." << std::endl;
-  //   return false;
-  // }
-
-  // // and is it empty?
-  // if (!bepaald::isEmpty(dir))
-  // {
-  //   if (!overwrite)
-  //   {
-  //     std::cout << "Directory '" << dir << "' is not empty. Use --overwrite to clear directory before dump" << std::endl;
-  //     return false;
-  //   }
-  //   std::cout << "Clearing contents of directory '" << dir << "'..." << std::endl;
-  //   if (!bepaald::clearDirectory(dir))
-  //   {
-  //     std::cout << "Failed to empty directory '" << dir << "'" << std::endl;
-  //     return false;
-  //   }
-  // }
 
   MimeTypes mimetypes;
   std::pair<std::vector<int>, std::vector<std::string>> conversations; // links thread_id to thread title, if the
@@ -77,13 +42,13 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
 #if __cplusplus > 201703L
   for (int count = 0; auto const &aframe : d_attachments)
 #else
-    int count = 0;
+  int count = 0;
   for (auto const &aframe : d_attachments)
 #endif
   {
 
     ++count;
-    std::cout << "\33[2K\rSaving attachments...  " << count << "/" << d_attachments.size() << std::flush;
+    Logger::message_overwrite("Saving attachments...  ", count, "/", d_attachments.size());
 
     AttachmentFrame *a = aframe.second.get();
 
@@ -121,18 +86,59 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
         query += bepaald::toString(threads[i]) + ((i == threads.size() - 1) ? ")" : ",");
     }
 
+    if (!daterangelist.empty())
+    {
+      // create dateranges
+      std::vector<std::pair<std::string, std::string>> dateranges;
+      if (daterangelist.size() % 2 == 0)
+        for (uint i = 0; i < daterangelist.size(); i += 2)
+          dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
+
+      std::string datewhereclause;
+
+      for (uint i = 0; i < dateranges.size(); ++i)
+      {
+        bool needrounding = false;
+        long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
+        long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
+        if (startrange == -1 || endrange == -1 || endrange < startrange)
+        {
+          Logger::error("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
+          Logger::error_indent(startrange, " ", endrange);
+          continue;
+        }
+
+        if (d_verbose) [[unlikely]]
+          Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
+
+        if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
+          endrange += 999; // to get everything in the second specified...
+
+        dateranges[i].first = bepaald::toString(startrange);
+        dateranges[i].second = bepaald::toString(endrange);
+
+        datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "date_received BETWEEN "s + dateranges[i].first + " AND " + dateranges[i].second;
+        if (i == dateranges.size() - 1)
+          datewhereclause += ')';
+      }
+
+      query += datewhereclause;
+    }
+
+    if (d_verbose) [[unlikely]]
+      Logger::message("Dump media query: ", query);
+
     if (!d_database.exec(query, {static_cast<long long int>(a->rowId()), static_cast<long long int>(a->attachmentId())},  &results))
       return false;
 
     //results.prettyPrint();
 
-    if (results.rows() == 0 && !threads.empty()) // probably an attachment for a de-selected thread
+    if (results.rows() == 0 && (!threads.empty() || !daterangelist.empty())) // probably an attachment for a de-selected thread
       continue;
 
     if (results.rows() != 1)
     {
-      std::cout << " ERROR Unexpected number of results: " << results.rows()
-                << " (rowid: " << a->rowId() << ", uniqueid: " << a->attachmentId() << ")" << std::endl;
+      Logger::error("Unexpected number of results: ", results.rows(), " (rowid: ", a->rowId(), ", uniqueid: ", a->attachmentId(), ")");
       continue;
     }
 
@@ -160,8 +166,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
       if (ext.empty())
       {
         ext = "attach";
-        std::cout << " WARNING: mimetype not found in database (" << mime
-                  << ") -> saving as '" << tmp.str() << "." << ext << "'" << std::endl;
+        Logger::warning("mimetype not found in database (", mime, ") -> saving as '", tmp.str(), ".", ext, "'");
       }
 
       //build filename
@@ -206,7 +211,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
         // std::cout << " Creating subdirectory '" << conversations.second[idx_of_thread] << "' for conversation..." << std::endl;
         if (!bepaald::createDir(dir + "/" + conversations.second[idx_of_thread]))
         {
-          std::cout << " ERROR creating directory '" << dir << "/" << conversations.second[idx_of_thread] << "'" << std::endl;
+          //std::cout << " ERROR creating directory '" << dir << "/" << conversations.second[idx_of_thread] << "'" << std::endl;
+          Logger::error("Failed to create directory '", dir, "/", conversations.second[idx_of_thread], "'");
           continue;
         }
       }
@@ -220,7 +226,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
         //std::cout << " Creating subdirectory '" << targetdir << "' for conversation..." << std::endl;
         if (!bepaald::createDir(targetdir))
         {
-          std::cout << " ERROR creating directory '" << targetdir << "'" << std::endl;
+          Logger::error("Failed to create directory '", targetdir, "'");
           continue;
         }
       }
@@ -229,7 +235,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
     // make filename unique
     if (!makeFilenameUnique(targetdir, &filename))
     {
-      std::cout << " ERROR getting unique filename for '" << targetdir << "/" << filename << "'" << std::endl;
+      Logger::error("getting unique filename for '", targetdir, "/", filename, "'");
       continue;
     }
     /*
@@ -259,13 +265,13 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
 
     if (!attachmentstream.is_open())
     {
-      std::cout << " ERROR Failed to open file for writing: " << targetdir << "/" << filename << std::endl;
+      Logger::error("Failed to open file for writing: '", targetdir, "/", filename, "'");
       continue;
     }
     else
       if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
       {
-        std::cout << " ERROR Failed to write data to file: " << targetdir << "/" << filename << std::endl;
+        Logger::error("Failed to write data to file: '", targetdir, "/", filename, "'");
         a->clearData();
         continue;
       }
@@ -278,6 +284,6 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<long long int> 
     //std::error_code ec;
     //std::filesystem::last_write_time(dir + "/" + chatpartner + "/" + filename, std::chrono::clock_cast<std::filesystem::file_time_type>(datum / 1000), ec);
   }
-  std::cout << std::endl << "done." << std::endl;
+  Logger::message("done.");
   return true;
 }

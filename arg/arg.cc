@@ -172,7 +172,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ++i;
           continue;
         }
-        if (!parseNumberList(arguments[++i], &d_importthreads))
+        if (!parseNumberList(arguments[++i], &d_importthreads, true))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -206,7 +206,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_limittothreads))
+        if (!parseNumberList(arguments[++i], &d_limittothreads, true))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -292,7 +292,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_croptothreads))
+        if (!parseNumberList(arguments[++i], &d_croptothreads, true))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -461,7 +461,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_editattachmentsize))
+        if (!parseNumberList(arguments[++i], &d_editattachmentsize, false))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -762,7 +762,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_onlyinthreads))
+        if (!parseNumberList(arguments[++i], &d_onlyinthreads, true))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;

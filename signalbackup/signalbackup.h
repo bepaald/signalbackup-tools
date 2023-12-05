@@ -216,7 +216,8 @@ class SignalBackup
   //bool importWAChat(std::string const &file, std::string const &fmt, std::string const &self = std::string());
   bool summarize() const;
   bool reorderMmsSmsIds() const;
-  bool dumpMedia(std::string const &dir, std::vector<long long int> const &threads, bool overwrite) const;
+  bool dumpMedia(std::string const &dir, std::vector<std::string> const &dateranges,
+                 std::vector<long long int> const &threads, bool overwrite) const;
   bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
   bool deleteAttachments(std::vector<long long int> const &threadids, std::string const &before,
                          std::string const &after, long long int filesize,
@@ -449,11 +450,16 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   else // not directory
   {
     d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, stoponerror, assumebadframesizeonbadmac, editattachments));
+    if (!d_fd->ok())
+      return;
     initFromFile();
   }
 
   if (d_ok) // set by initfrom()
     d_ok = setColumnNames();
+
+  if (!d_ok)
+    return;
 
   std::cout << "Database version: " << d_databaseversion << std::endl;
 

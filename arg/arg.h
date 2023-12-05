@@ -224,7 +224,7 @@ class Arg
   template <typename T, typename U>
   inline bool parsePairList(std::string const &pairlist, std::string const &delim, std::vector<std::pair<T, U>> *list, std::string *error) const;
   template <typename T>
-  bool parseNumberList(std::string const &strlist, std::vector<T> *list, std::vector<std::string> *faillist = nullptr) const;
+  bool parseNumberList(std::string const &strlist, std::vector<T> *list, bool sort, std::vector<std::string> *faillist = nullptr) const;
   template <typename T, typename U>
   bool parsePair(std::string const &token, std::string const &delim, std::pair<T, U> *pair, std::string *error) const;
   template <typename T>
@@ -722,7 +722,7 @@ inline bool Arg::parsePairList(std::string const &pairlist, std::string const &d
 }
 
 template <typename T>
-bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, std::vector<std::string> *faillist) const
+bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, bool sort, std::vector<std::string> *faillist) const
 {
   std::string tr = strlist;
 
@@ -747,7 +747,8 @@ bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, std:
       return false;
   }
 
-  std::sort(list->begin(), list->end());
+  if (sort)
+    std::sort(list->begin(), list->end());
 
   return true;
 }
