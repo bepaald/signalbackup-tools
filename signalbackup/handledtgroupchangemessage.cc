@@ -58,8 +58,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                   "COALESCE(json_extract(json,'$.expirationTimerUpdate.sourceServiceId'), json_extract(json,'$.expirationTimerUpdate.sourceUuid')) AS sourceuuid "
                   "FROM messages WHERE rowid = ?", rowid, &timer_results))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Querying database" << std::endl;
+      Logger::error("Querying database");
       return;
     }
 
@@ -106,7 +105,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                    {"m_type", incoming ? 132 : 128},
                                    {"read", 1}}))              // hardcoded to 1 in Signal Android
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
+        Logger::error("Inserting verified-change into mms");
         return;
       }
     }
@@ -117,8 +116,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       long long int freedate = getFreeDateForMessage(date, thread_id, Types::isOutgoing(groupv2type) ? d_selfid : address);
       if (freedate == -1)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                  << ": Getting free date for inserting verified-change message into mms" << std::endl;
+        Logger::error("Getting free date for inserting verified-change message into mms");
         return;
       }
       if (date != freedate)
@@ -135,7 +133,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                    {"m_type", incoming ? 132 : 128},
                                    {"read", 1}}, "_id", &newmms_id))              // hardcoded to 1 in Signal Android
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting verified-change into mms" << std::endl;
+        Logger::error("Inserting verified-change into mms");
         return;
       }
     }

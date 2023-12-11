@@ -20,47 +20,48 @@
 #include "logger.h"
 
 void Logger::outputHead(std::string const &file, std::string const &standardout, bool overwrite,
-                                std::pair<std::string, std::string> const &control) // static
+                                std::pair<std::string, std::string> const &prepost,
+                                std::pair<std::string, std::string> const &control)
 {
-  if (s_instance->d_file)
+  if (d_currentoutput)
   {
-    // print any control codes if supported
-    if (s_instance->d_controlcodessupported)
-      *(s_instance->d_file) << control.first;
+    if (!file.empty())
+      *(d_currentoutput) << prepost.first;
 
-    *(s_instance->d_file) << file;
+    *(d_currentoutput) << file;
 
-    if (s_instance->d_usetimestamps)
-      dispTime(*(s_instance->d_file));
-
-    // print any control codes if supported
-    if (s_instance->d_controlcodessupported)
-      *(s_instance->d_file) << control.second;
+    if (d_usetimestamps)
+      dispTime(*(d_currentoutput));
 
     if (!file.empty())
-      *(s_instance->d_file) << ": ";
+      *(d_currentoutput) << prepost.second;
   }
 
   if (overwrite)
-    std::cout << (s_instance->d_controlcodessupported ? "\33[2K\r" : "\r");
+    std::cout << (d_controlcodessupported ? "\33[2K\r" : "\r");
+
+  if (!standardout.empty())
+    std::cout << prepost.first;
 
   // print any control codes if supported
-  if (s_instance->d_controlcodessupported)
+  if (d_controlcodessupported)
     std::cout << control.first;
 
   std::cout << standardout;
 
   // print any control codes if supported
-  if (s_instance->d_controlcodessupported)
+  if (d_controlcodessupported)
     std::cout << control.second;
 
-  if (s_instance->d_usetimestamps)
+  if (d_usetimestamps)
     dispTime(std::cout);
   if (!standardout.empty())
-    std::cout << ": ";
+    std::cout << prepost.second;
 }
 
-void Logger::outputHead(std::string const &head, bool overwrite, std::pair<std::string, std::string> const &control) // static
+void Logger::outputHead(std::string const &head, bool overwrite,
+                        std::pair<std::string, std::string> const &prepost,
+                        std::pair<std::string, std::string> const &control)
 {
-  outputHead(head, head, overwrite, control);
+  outputHead(head, head, overwrite, prepost, control);
 }

@@ -27,17 +27,16 @@ bool SignalBackup::prepareOutputDirectory(std::string const &directory, bool ove
     // try to create
     if (!bepaald::createDir(directory))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to create directory `" << directory << "'"
-                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
+      Logger::error("Failed to create directory `", directory, "'",
+                    " (errno: ", std::strerror(errno), ")"); // note: errno is not required to be set by std
       // temporary !!
       {
         std::error_code ec;
         std::filesystem::space_info const si = std::filesystem::space(directory, ec);
         if (!ec)
         {
-          std::cout << "Available  : " << static_cast<std::intmax_t>(si.available) << std::endl;
-          std::cout << "Backup size: " << d_fd->total() << std::endl;
+          Logger::message("Available  : ", static_cast<std::intmax_t>(si.available));
+          Logger::message("Backup size: ", d_fd->total());
         }
       }
       return false;
@@ -47,8 +46,7 @@ bool SignalBackup::prepareOutputDirectory(std::string const &directory, bool ove
   // directory exists, but is it a dir?
   if (!bepaald::isDir(directory))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": `" << directory << "' is not a directory." << std::endl;
+    Logger::error("`", directory, "' is not a directory.");
     return false;
   }
 
@@ -58,19 +56,19 @@ bool SignalBackup::prepareOutputDirectory(std::string const &directory, bool ove
   {
     if (!overwrite)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory contents before export";
       if (allowappend)
-        std::cout << "," << std::endl << "       or --append to only write new files." << std::endl;
+      {
+        Logger::error("Directory '", directory, "' is not empty. Use --overwrite to clear directory contents before");
+        Logger::error_indent("export, or --append to only write new files.");
+      }
       else
-        std::cout << "." << std::endl;
+        Logger::error("Directory '", directory, "' is not empty. Use --overwrite to clear directory contents before export.");
       return false;
     }
-    std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
+    Logger::message("Clearing contents of directory '", directory, "'...");
     if (!bepaald::clearDirectory(directory))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to empty directory '" << directory << "'" << std::endl;
+      Logger::error("Failed to empty directory '", directory, "'");
       return false;
     }
   }

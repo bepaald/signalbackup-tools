@@ -31,6 +31,7 @@
 
 #include "../common_be.h"
 #include "../memfiledb/memfiledb.h"
+#include "../logger/logger.h"
 
 class SqliteDB
 {
@@ -215,20 +216,19 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   sqlite3_stmt *stmt;
   if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-      "During sqlite3_prepare_v2(): " << sqlite3_errmsg(d_db) << std::endl <<
-      "  Query: \"" << q << "\"" << std::endl;
+    Logger::error("During sqlite3_prepare_v2(): ", sqlite3_errmsg(d_db));
+    Logger::error_indent("-> Query: \"", q, "\"");
     return false;
   }
 
   if (static_cast<int>(params.size()) != sqlite3_bind_parameter_count(stmt)) [[unlikely]]
   {
     if (sqlite3_bind_parameter_count(stmt) < static_cast<int>(params.size()))
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": " << "Too few placeholders in query!";
+      Logger::warning("Too few placeholders in query!");
     else if (sqlite3_bind_parameter_count(stmt) > static_cast<int>(params.size()))
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": " << "Too many placeholders in query!";
-    std::cout << " \"" << q << "\" (parameters: " << params.size()
-              << ", placeholders: " << sqlite3_bind_parameter_count(stmt) << ")" << std::endl;
+      Logger::warning("Too many placeholders in query!");
+    Logger::warning_indent("-> Query: \"", q, "\" (parameters: ", params.size(),
+                           ", placeholders: ", sqlite3_bind_parameter_count(stmt), ")");
   }
 
 #if __cplusplus > 201703L
@@ -242,9 +242,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, nullptr) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -252,9 +251,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<double>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -262,9 +260,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<int>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -272,9 +269,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned int>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -282,9 +278,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<long long int>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -292,9 +287,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned long>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -302,9 +296,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned long long int>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -312,9 +305,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::string>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -322,9 +314,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<char const *>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -332,9 +323,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<unsigned char const *>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -342,9 +332,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
@@ -352,17 +341,15 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (execParamFiller(stmt, i + 1, std::any_cast<std::pair<unsigned char *, size_t>>(p)) != SQLITE_OK)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-          "During sqlite3_bind_*(): " << sqlite3_errmsg(d_db) << std::endl <<
-          "  Query: \"" << q << "\"" << std::endl;
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
         return false;
       }
     }
     else
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-        "Unhandled parameter type " << p.type().name() << std::endl <<
-        "  Query: \"" << q << "\"" << std::endl;
+      Logger::error("Unhandled parameter type ", p.type().name());
+      Logger::error_indent("-> Query: \"", q, "\"");
       return false;
     }
     ++i;
@@ -405,17 +392,15 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   }
   if (rc != SQLITE_DONE)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-      "After sqlite3_step(): " << sqlite3_errmsg(d_db) << std::endl <<
-      "  Query: \"" << q << "\"" << std::endl;
+    Logger::error("After sqlite3_step(): ", sqlite3_errmsg(d_db));
+    Logger::error_indent("-> Query: \"", q, "\"");
     return false;
   }
 
   if (sqlite3_finalize(stmt) != SQLITE_OK)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : " <<
-      "During sqlite3_finalize(): " << sqlite3_errmsg(d_db) << std::endl <<
-      "  Query: \"" << q << "\"" << std::endl;
+    Logger::error("After sqlite3_finalize(): ", sqlite3_errmsg(d_db));
+    Logger::error_indent("-> Query: \"", q, "\"");
     return false;
   }
 
@@ -674,8 +659,7 @@ inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &hea
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Column `" << header << "' not found in query results" << std::endl;
+    Logger::warning("Column `", header, "' not found in query results");
     return std::any{nullptr};
   }
   return d_values[row][i];
@@ -687,15 +671,14 @@ inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &heade
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Column `" << header << "' not found in query results" << std::endl;
+    Logger::warning("Column `", header, "' not found in query results");
     return T{};
   }
 
   if (d_values[row][i].type() != typeid(T)) [[unlikely]]
   {
-    std::cout << "Getting value of field '" << header << "' (idx " << i << "). Value as string: " << valueAsString(row, i) << std::endl;
-    std::cout << "Type: " << d_values[row][i].type().name() << " Requested type: " << typeid(T).name() << std::endl;
+    Logger::message("Getting value of field '", header, "' (idx ", i, "). Value as string: ", valueAsString(row, i));
+    Logger::message("Type: ", d_values[row][i].type().name(), " Requested type: ", typeid(T).name());
     //return T{};
   }
   return std::any_cast<T>(d_values[row][i]);
@@ -707,8 +690,7 @@ inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string const &
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Column `" << header << "' not found in query results" << std::endl;
+    Logger::warning("Column `", header, "' not found in query results");
     return false;
   }
   return (d_values[row][i].type() == typeid(T));
@@ -981,7 +963,7 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
     sqlite3_result_value(context, argv[0]);
     return;
   }
-  std::cout << "No results, returning null (" << argc << ")" << std::endl;
+  //std::cout << "No results, returning null (" << argc << ")" << std::endl;
   sqlite3_result_null(context);
 }
 

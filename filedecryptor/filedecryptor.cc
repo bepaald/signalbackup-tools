@@ -48,7 +48,6 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   DEBUGOUT("headerlength: ", headerlength);
   if (headerlength == 0)
   {
-    std::cout << "Error: got length of headerframe == 0" << std::endl;
     Logger::error("got got length of headerframe == 0");
     return;
   }

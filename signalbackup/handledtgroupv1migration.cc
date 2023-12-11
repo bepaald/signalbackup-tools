@@ -46,7 +46,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
         SqliteDB::QueryResults test_results;
         if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE " + d_dt_c_uuid + " IS ?", dm_id.valueAsString(0, "rid"), &test_results))
           if (test_results.rows())
-            std::cout << " *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (droppedMembers) ***" << std::endl;
+            Logger::message(" *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (droppedMembers) ***");
 
         if (createcontacts)
           recid = dtCreateRecipient(ddb, dm_id.valueAsString(0, "rid"), dm_id.valueAsString(0, "rid"), std::string(),
@@ -97,8 +97,8 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
           SqliteDB::QueryResults test_results;
           if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE " + d_dt_c_uuid + " IS ?", im_id.valueAsString(0, "rid"), &test_results))
             if (test_results.rows())
-              std::cout << " *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (invitedMembers, uuid: "
-                        << im_id.valueAsString(0, "is_uuid") << ") ***" << std::endl;
+              Logger::message(" *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (invitedMembers, uuid: ",
+                              im_id.valueAsString(0, "is_uuid"), ") ***");
 
           if (createcontacts)
             recid = dtCreateRecipient(ddb, im_id.valueAsString(0, "rid"), im_id.valueAsString(0, "rid"), std::string(),
@@ -126,7 +126,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
                            {"body", body},
                            {"read", 1}}))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
+      Logger::error("Inserting group-v1-migration into sms");
       return false;
     }
   }
@@ -143,7 +143,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
                                    {d_mms_recipient_device_id, 1},
                                    {"read", 1}}))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
+        Logger::error("Inserting group-v1-migration into mms");
         return false;
       }
     }
@@ -154,7 +154,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
       long long int freedate = getFreeDateForMessage(timestamp, thread_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address);
       if (freedate == -1)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting group-v1-migration message into mms" << std::endl;
+        Logger::error("Getting free date for inserting group-v1-migration message into mms");
         return false;
       }
 
@@ -168,7 +168,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
                                    {d_mms_recipient_device_id, 1},
                                    {"read", 1}}))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group-v1-migration into mms" << std::endl;
+        Logger::error("Inserting group-v1-migration into mms");
         return false;
       }
     }

@@ -24,7 +24,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
 {
 
   if (d_verbose) [[unlikely]]
-    std::cout << "Updating profile for id: " << dtid << std::endl;
+    Logger::message("Updating profile for id: ", dtid);
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, IFNULL(profileFamilyName, '') AS profileFamilyName, profileFullName, "
@@ -38,9 +38,9 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
   if (res.rows() != 1)
   {
     if (res.rows() > 1)
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Unexpected number of results getting recipient profile data." << std::endl;
+      Logger::error("Unexpected number of results getting recipient profile data.");
     else // = 0
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": No results trying to get recipient profile data." << std::endl;
+      Logger::error("No results trying to get recipient profile data.");
     return false;
   }
 
@@ -50,13 +50,13 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
     if (res.getValueAs<long long int>(0, "groupVersion") < 2)
     {
       // group v1 not yet....
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Updating profile data for groupV1 not yet supported." << std::endl;
+      Logger::warning("Updating profile data for groupV1 not yet supported.");
       return false;
     }
 
     if (res.isNull(0, "name") || res("name").empty())
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Profile data empty. Not updating group recipient." << std::endl;
+      Logger::warning("Profile data empty. Not updating group recipient.");
       return false;
     }
 
@@ -66,7 +66,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
       groupid_data = Base64::base64StringToBytes(res("groupId"));
     if (!groupid_data.first || groupid_data.second == 0)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to deteremine group_id when trying to update profile." << std::endl;
+      Logger::warning("Failed to deteremine group_id when trying to update profile.");
       return false;
     }
     std::string group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
@@ -81,7 +81,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
         (res.isNull(0, "profileFamilyName") || res("profileFamilyName").empty()) &&  // not updating with empty info
         (res.isNull(0, "profileFullName") || res("profileFullName").empty()))
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Profile data empty. Not updating recipient." << std::endl;
+      Logger::warning("Profile data empty. Not updating group recipient.");
       return false;
     }
 
@@ -105,7 +105,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
   if (!res("avatar").empty())
   {
     if (d_verbose) [[unlikely]]
-      std::cout << "Updating avatar" << std::endl;
+      Logger::message_overwrite("Updating avatar...");
 
     // find current
     auto pos = std::find_if(d_avatars.begin(), d_avatars.end(),
@@ -119,21 +119,19 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
 
     if (!dtSetAvatar(res("avatar"), aid, databasedir))
     {
-      if (d_verbose) [[unlikely]]
-        std::cout << "Failed to set new avatar" << std::endl;
+      if (d_verbose && !backup) [[unlikely]]
+        Logger::message_overwrite("Updating avatar... Failed to set new avatar", Logger::Control::ENDOVERWRITE);
       if (backup)
       {
-        std::cout << ", restoring previous..." << std::flush;
+        Logger::message_overwrite("Updating avatar... Failed, restoring previous...", Logger::Control::ENDOVERWRITE);
         d_avatars.emplace_back(std::make_pair(bepaald::toString(aid), std::move(backup)));
       }
-      if (d_verbose) [[unlikely]]
-        std::cout << std::endl;
     }
     else
     {
       if (d_verbose) [[unlikely]]
       {
-        std::cout << "Set new avatar. Info:" << std::endl;
+        Logger::message("Set new avatar. Info:");
         for (auto const &a : d_avatars)
           if (a.first == bepaald::toString(aid))
             a.second->printInfo();

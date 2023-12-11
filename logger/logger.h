@@ -24,6 +24,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <chrono>
 
 #include "../common_be.h"
@@ -35,14 +36,18 @@ class Logger
   {
     BOLD,
     NORMAL,
+    ENDOVERWRITE,
   };
  private:
   static std::unique_ptr<Logger> s_instance;
   std::ofstream *d_file;
+  std::ostringstream *d_strstreambackend;
+  std::basic_ostream<std::ofstream::char_type, std::ofstream::traits_type> *d_currentoutput;
   bool d_usetimestamps;
   bool d_used;
   bool d_controlcodessupported;
   bool d_overwriting;
+  //std::sstream d_previousline;
  public:
   inline static void setFile(std::string const &f);
   inline static void setTimestamp(bool val);
@@ -72,26 +77,29 @@ class Logger
   inline static void ensureLogger();
   inline static void firstUse();
   inline static std::ostream &dispTime(std::ostream &stream);
-  static void outputHead(std::string const &file, std::string const &stdandardout, bool overwrite = false,
-                                std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
-  static void outputHead(std::string const &head, bool overwrite = false,
-                                std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
+  inline static void messagePre();
+  void outputHead(std::string const &file, std::string const &stdandardout, bool overwrite = false,
+                  std::pair<std::string, std::string> const &prepost = std::pair<std::string, std::string>(),
+                  std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
+  void outputHead(std::string const &head, bool overwrite = false,
+                  std::pair<std::string, std::string> const &prepost = std::pair<std::string, std::string>(),
+                  std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
 
   template <typename First, typename... Rest>
-  inline static void outputMsg(bool overwrite, First const &f, Rest... r);
+  inline void outputMsg(bool overwrite, First const &f, Rest... r);
   template <typename T>
-  inline static void outputMsg(bool overwrite, T const &t);
+  inline void outputMsg(bool overwrite, T const &t);
 
   // specializations for vector type
   template <typename T, typename... Rest>
-  inline static void outputMsg(bool overwrite, std::vector<T> const &vec, Rest... r);
+  inline void outputMsg(bool overwrite, std::vector<T> const &vec, Rest... r);
   template <typename T>
-  inline static void outputMsg(bool overwrite, std::vector<T> const &vec);
+  inline void outputMsg(bool overwrite, std::vector<T> const &vec);
 
   // specializations for control
   template <typename... Rest>
-  inline static void outputMsg(bool overwrite, Control c, Rest... r);
-  inline static void outputMsg(bool overwrite, Control c);
+  inline void outputMsg(bool overwrite, Control c, Rest... r);
+  inline void outputMsg(bool overwrite, Control c);
 
   Logger(Logger const &other) = delete;            // NI
   Logger &operator=(Logger const &other) = delete; // NI
@@ -100,6 +108,8 @@ class Logger
 inline Logger::Logger()
   :
   d_file(nullptr),
+  d_strstreambackend(nullptr),
+  d_currentoutput(d_file),
   d_usetimestamps(false),
   d_used(false),
   d_controlcodessupported(bepaald::isTerminal() && bepaald::supportsAnsi()),
@@ -108,6 +118,17 @@ inline Logger::Logger()
 
 inline Logger::~Logger()
 {
+  if (d_strstreambackend)
+  {
+    if (d_strstreambackend->tellp() != 0)
+    {
+      if (d_file)
+        (*d_file) << s_instance->d_strstreambackend->str();
+      d_strstreambackend->str("");
+      d_strstreambackend->clear();
+    }
+    delete d_strstreambackend;
+  }
   if (d_file)
   {
     (*d_file) << std::flush;
@@ -118,21 +139,21 @@ inline Logger::~Logger()
 
 inline void Logger::ensureLogger() // static
 {
-  if (!s_instance.get())
+  if (!s_instance.get()) [[unlikely]]
     s_instance.reset(new Logger);
 }
 
 // prints out a header containing current date and time
 inline void Logger::firstUse() // static
 {
-  if (!s_instance->d_used)
+  if (!s_instance->d_used) [[unlikely]]
   {
     s_instance->d_used = true;
 
     std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-    if (s_instance->d_file)
-      *(s_instance->d_file) << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " *** " << "\n";
+    if (s_instance->d_currentoutput)
+      *(s_instance->d_currentoutput) << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " *** " << "\n";
     std::cout << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " *** " << std::endl;
   }
 }
@@ -140,10 +161,27 @@ inline void Logger::firstUse() // static
 inline std::ostream &Logger::dispTime(std::ostream &stream) // static
 {
   std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  return stream << std::put_time(std::localtime(&cur), "%Y-%m-%d %H:%M:%S"); // %F and %T do not work on mingw
+}
 
-  // replace rest with when put_time is there...
-  //return stream  << std::put_time(std::localtime(&cur), "%T"); // %F and %T do not work on mingw
-  return stream << std::put_time(std::localtime(&cur), "%Y-%m-%d %H:%M:%S");
+inline void Logger::messagePre() //static
+{
+  ensureLogger();
+  firstUse();
+
+  if (s_instance->d_overwriting) [[unlikely]]
+  {
+    std::cout << std::endl;
+    s_instance->d_overwriting = false;
+    s_instance->d_currentoutput = s_instance->d_file;
+
+    if (s_instance->d_strstreambackend && s_instance->d_strstreambackend->tellp() != 0)
+    {
+      (*s_instance->d_currentoutput) << s_instance->d_strstreambackend->str();
+      s_instance->d_strstreambackend->str("");
+      s_instance->d_strstreambackend->clear();
+    }
+  }
 }
 
 inline void Logger::setFile(std::string const &f) // static
@@ -151,7 +189,14 @@ inline void Logger::setFile(std::string const &f) // static
   ensureLogger();
   if (s_instance->d_file)
     return;
+
+  std::cout << "setting file" << std::endl;
   s_instance->d_file = new std::ofstream(f);
+  s_instance->d_currentoutput = s_instance->d_file;
+
+  if (!s_instance->d_strstreambackend)
+    s_instance->d_strstreambackend = new std::ostringstream();
+
   firstUse();
 }
 
@@ -169,125 +214,82 @@ inline void Logger::message_overwrite(First const &f, Rest... r) // static
   firstUse();
 
   s_instance->d_overwriting = true;
-
-  outputHead("", true);
-  outputMsg(true, f, r...);
+  if (s_instance->d_strstreambackend)
+  {
+    s_instance->d_strstreambackend->str("");
+    s_instance->d_strstreambackend->clear();
+    s_instance->d_currentoutput = s_instance->d_strstreambackend;
+  }
+  s_instance->outputHead("", true);
+  s_instance->outputMsg(true, f, r...);
 }
 
 template <typename First, typename... Rest>
 inline void Logger::message(First const &f, Rest... r) // static
 {
-  ensureLogger();
-  firstUse();
-
-  if (s_instance->d_overwriting) [[unlikely]]
-  {
-    std::cout << std::endl;
-    s_instance->d_overwriting = false;
-  }
-
+  messagePre();
   //outputHead("[MESSAGE] ", "[MESSAGE] ");
-  outputHead("", true);
-  outputMsg(false, f, r...);
+  s_instance->outputHead("", true, {"", ": "});
+  s_instance->outputMsg(false, f, r...);
 }
 
 template <typename First, typename... Rest>
 inline void Logger::warning(First const &f, Rest... r) // static
 {
-  ensureLogger();
-  firstUse();
-
-  if (s_instance->d_overwriting) [[unlikely]]
-  {
-    std::cout << std::endl;
-    s_instance->d_overwriting = false;
-  }
-
+  messagePre();
   //outputHead("[WARNING] ", "[\033[38;5;37mWARNING\033[0m] ");
-  outputHead("Warning", false, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
-  outputMsg(false, f, r...);
+  s_instance->outputHead("Warning", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
+  s_instance->outputMsg(false, f, r...);
 }
 
 template <typename First, typename... Rest>
 inline void Logger::warning_indent(First const &f, Rest... r) // static
 {
-  ensureLogger();
-  firstUse();
-
-  if (s_instance->d_overwriting) [[unlikely]]
-  {
-    std::cout << std::endl;
-    s_instance->d_overwriting = false;
-  }
-
-  outputHead("       ", false);
-  outputMsg(false, f, r...);
+  messagePre();
+  s_instance->outputHead("       ", false, {" ", "   "});
+  s_instance->outputMsg(false, f, r...);
 }
 
 template <typename First, typename... Rest>
 inline void Logger::error(First const &f, Rest... r) // static
 {
-  ensureLogger();
-  firstUse();
-
-  if (s_instance->d_overwriting) [[unlikely]]
-  {
-    std::cout << std::endl;
-    s_instance->d_overwriting = false;
-  }
-
+  messagePre();
   //outputHead("[ ERROR ] ", "[ \033[1;31mERROR\033[0m ] ");
-  outputHead("Error", false, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
-  outputMsg(false, f, r...);
+  s_instance->outputHead("Error", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
+  s_instance->outputMsg(false, f, r...);
 }
 
 template <typename First, typename... Rest>
 inline void Logger::error_indent(First const &f, Rest... r) // static
 {
-  ensureLogger();
-  firstUse();
-
-  if (s_instance->d_overwriting) [[unlikely]]
-  {
-    std::cout << std::endl;
-    s_instance->d_overwriting = false;
-  }
-
-  outputHead("     ", false);
-  outputMsg(false, f, r...);
+  messagePre();
+  s_instance->outputHead("     ", false, {" ", "   "});
+  s_instance->outputMsg(false, f, r...);
 }
 
 template <typename First, typename... Rest>
 inline void Logger::output_indent(int indent, First const &f, Rest... r) // static
 {
-  ensureLogger();
-  firstUse();
-
-  if (s_instance->d_overwriting) [[unlikely]]
-  {
-    std::cout << std::endl;
-    s_instance->d_overwriting = false;
-  }
-
-  outputHead(std::string(indent, ' '));
-  outputMsg(false, f, r...);
+  messagePre();
+  s_instance->outputHead(std::string(indent, ' '));
+  s_instance->outputMsg(false, f, r...);
 }
 
 template <typename First, typename... Rest>
-inline void Logger::outputMsg(bool overwrite, First const &f, Rest... r) // static
+inline void Logger::outputMsg(bool overwrite, First const &f, Rest... r)
 {
-  if (s_instance->d_file)
-    *(s_instance->d_file) << f;
+  if (d_currentoutput)
+    *(d_currentoutput) << f;
 
   std::cout << f;
-  outputMsg(overwrite, r...);
+  s_instance->outputMsg(overwrite, r...);
 }
 
 template <typename T>
-inline void Logger::outputMsg(bool overwrite, T const &t) // static
+inline void Logger::outputMsg(bool overwrite, T const &t)
 {
-  if (s_instance->d_file)
-    *(s_instance->d_file) << t << "\n";
+  if (d_currentoutput)
+    *(d_currentoutput) << t << "\n";
 
   if (overwrite) [[unlikely]]
     std::cout << t << std::flush;
@@ -296,13 +298,11 @@ inline void Logger::outputMsg(bool overwrite, T const &t) // static
 }
 
 template <typename T, typename... Rest>
-inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec, Rest... r) // static
+inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec, Rest... r)
 {
-  if (s_instance->d_file)
-  {
+  if (d_currentoutput)
     for (uint i = 0; i < vec.size(); ++i)
-      *(s_instance->d_file) << vec[i] << ((i < vec.size() - 1) ? "," : "");
-  }
+      *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
 
   for (uint i = 0; i < vec.size(); ++i)
     std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
@@ -311,13 +311,13 @@ inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec, Rest...
 }
 
 template <typename T>
-inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec) // static
+inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec)
 {
-  if (s_instance->d_file)
+  if (d_currentoutput)
   {
     for (uint i = 0; i < vec.size(); ++i)
-      *(s_instance->d_file) << vec[i] << ((i < vec.size() - 1) ? "," : "");
-    *(s_instance->d_file) << "\n";
+      *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
+    *(d_currentoutput) << "\n";
   }
 
   for (uint i = 0; i < vec.size(); ++i)
@@ -329,11 +329,11 @@ inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec) // stat
 }
 
 template <typename... Rest>
-inline void Logger::outputMsg(bool overwrite, Control c, Rest... r) // static
+inline void Logger::outputMsg(bool overwrite, Control c, Rest... r)
 {
   // (no control codes to file)
 
-  if (s_instance->d_controlcodessupported)
+  if (d_controlcodessupported)
   {
     switch(c)
     {
@@ -342,6 +342,21 @@ inline void Logger::outputMsg(bool overwrite, Control c, Rest... r) // static
         break;
       case Control::NORMAL:
         std::cout << "\033[0m";
+        break;
+      case Control::ENDOVERWRITE: // not likely here
+        if (overwrite)
+        {
+          d_overwriting = false;
+          d_currentoutput = s_instance->d_file;
+
+          if (d_strstreambackend && d_strstreambackend->tellp() != 0)
+          {
+            (*d_currentoutput) << s_instance->d_strstreambackend->str() << "\n";
+            d_strstreambackend->str("");
+            d_strstreambackend->clear();
+          }
+          std::cout << std::endl;
+        }
         break;
     }
   }
@@ -349,11 +364,11 @@ inline void Logger::outputMsg(bool overwrite, Control c, Rest... r) // static
   outputMsg(overwrite, r...);
 }
 
-inline void Logger::outputMsg(bool overwrite, Control c) // static
+inline void Logger::outputMsg(bool overwrite, Control c)
 {
   // (no control codes to file)
 
-  if (s_instance->d_controlcodessupported)
+  if (d_controlcodessupported)
   {
     switch(c)
     {
@@ -362,6 +377,21 @@ inline void Logger::outputMsg(bool overwrite, Control c) // static
         break;
       case Control::NORMAL:
         std::cout << "\033[0m";
+        break;
+      case Control::ENDOVERWRITE:
+        if (overwrite)
+        {
+          d_overwriting = false;
+          d_currentoutput = s_instance->d_file;
+
+          if (d_strstreambackend && d_strstreambackend->tellp() != 0)
+          {
+            (*d_currentoutput) << s_instance->d_strstreambackend->str() << "\n";
+            d_strstreambackend->str("");
+            d_strstreambackend->clear();
+          }
+          std::cout << std::endl;
+        }
         break;
     }
   }

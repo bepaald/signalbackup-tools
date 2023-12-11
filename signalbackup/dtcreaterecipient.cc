@@ -46,18 +46,17 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   if (res.rows() != 1)
   {
     if (res.rows() > 1)
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Unexpected number of results getting new recipient data." << std::endl;
+      Logger::error("Unexpected number of results getting new recipient data.");
     else // = 0
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": No results trying to get new recipient data." << std::endl;
+      Logger::error("No results trying to get new recipient data.");
     return -1;
   }
 
   if (*warn == false)
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Chat partner was not found in recipient-table. Attempting to create." << std::endl
-              << "         " << bepaald::bold_on << "NOTE THE RESULTING BACKUP CAN MOST LIKELY NOT BE RESTORED"  << std::endl
-              << "         " << "ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML." << bepaald::bold_off << std::endl;
+    Logger::warning("Chat partner was not found in recipient-table. Attempting to create.");
+    Logger::warning_indent(Logger::Control::BOLD, "NOTE THE RESULTING BACKUP CAN MOST LIKELY NOT BE RESTORED");
+    Logger::warning_indent("ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML.", Logger::Control::NORMAL);
     *warn = true;
   }
 
@@ -81,8 +80,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
     if (res("name").empty())
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Group name of new recipient is empty." <<
-        "Here is the data from the Desktop db:" << std::endl;
+      Logger::warning("Group name of new recipient is empty. Here is the data from the Desktop db:");
       ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
     }
 
@@ -93,12 +91,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                    {{"group_id", group_id},
                     {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new (group) recipient into database." << std::endl;
+      Logger::error("Failed to insert new (group) recipient into database.");
       return -1;
     }
     if (new_rid.type() != typeid(long long int))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": New recipient _id has unexpected type." << std::endl;
+      Logger::error("New (group) recipient _id has unexpected type.");
       return -1;
     }
     long long int new_rec_id = std::any_cast<long long int>(new_rid);
@@ -114,7 +112,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                     // {"distribution_id",},
                     {"revision", 0}}))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new group into database." << std::endl;
+      Logger::error("Failed to insert new group into database.");
       d_database.exec("ROLLBACK TRANSACTION");
       bepaald::destroyPtr(&masterkey.first, &masterkey.second);
       return -1;
@@ -134,11 +132,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       long long int member_rid = getRecipientIdFromUuid(mem("member"), recipient_info);
       if (member_rid == -1)
       {
-        std::cout << "Trying to create" << std::endl;
+        Logger::message("Trying to create");
         member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info, warn);
         if (member_rid == -1)
         {
-          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get new groups members uuid." << std::endl;
+          Logger::error("Failed to get new groups members uuid.");
           d_database.exec("ROLLBACK TRANSACTION");
           return -1;
         }
@@ -150,7 +148,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                        {{"group_id", group_id},
                         {"recipient_id", member_rid}}))
         {
-          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to set new groups membership." << std::endl;
+          Logger::error("Failed to set new groups membership.");
           d_database.exec("ROLLBACK TRANSACTION");
           return -1;
         }
@@ -164,7 +162,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     {
       if (!d_database.exec("UPDATE groups SET members = ? WHERE _id = ?", {oldstyle_members, new_rec_id}))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to set new groups membership (old style)." << std::endl;
+        Logger::error("Failed to set new groups membership (old style).");
         d_database.exec("ROLLBACK TRANSACTION");
         return -1;
       }
@@ -265,7 +263,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     // set avatar
     dtSetAvatar(res("avatar"), new_rec_id, databasedir);
 
-    std::cout << "Succesfully created new recipient for group (id: " << new_rec_id << ")." << std::endl;
+    Logger::message("Succesfully created new recipient for group (id: ", new_rec_id, ").");
     return new_rec_id; //-1;
   }
 
@@ -278,8 +276,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       res("profileFullName").empty() && res("e164").empty() &&
       res("uuid").empty())
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": All relevant info on new recipient is empty." <<
-      "Here is the data from the Desktop db:" << std::endl;
+    Logger::warning("All relevant info on new recipient is empty. Here is the data from the Desktop db:");
     ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
   }
 
@@ -292,12 +289,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                   {d_recipient_aci, res.value(0, "uuid")},
                   {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert new recipient into database." << std::endl;
+    Logger::error("Failed to insert new recipient into database.");
     return -1;
   }
   if (new_rid.type() != typeid(long long int))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": New recipient _id has unexpected type." << std::endl;
+    Logger::error("New recipient _id has unexpected type.");
     return -1;
   }
   long long int new_rec_id = std::any_cast<long long int>(new_rid);
@@ -320,7 +317,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   //     }
   //   }
   // }
-  std::cout << "Succesfully created new recipient for group (id: " << new_rec_id << ")." << std::endl;
+  Logger::message("Succesfully created new recipient (id: ", new_rec_id, ").");
   return new_rec_id;
 }
 

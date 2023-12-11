@@ -41,9 +41,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(167, 170))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
-                << " Please upgrade your database" << std::endl;
+      Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+                    " Please upgrade your database");
       SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
@@ -54,19 +53,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   {
     if (!migrate)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Currently unsupported database version (" << d_databaseversion << ")."
-                << " Please upgrade" << std::endl
-                << "       your database or append the `--migratedb' option to attempt to" << std::endl
-                << "       migrate this database to a supported version." << std::endl;
+      Logger::error("Currently unsupported database version (", d_databaseversion, ").");
+      Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
+      Logger::error_indent("migrate this database to a supported version.");
       return false;
     }
     SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
-                << " Please upgrade your database" << std::endl;
+      Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+                    " Please upgrade your database");
       SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
@@ -87,12 +83,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
   if (d_selfid == -1)
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Failed to determine id of 'self'.";
-    if (selfphone.empty())
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Failed to determine Note-to-self thread. Consider passing `--setselfid \"[phone]\"' to set it manually" << std::endl;
-    std::cout << std::endl;
+    if (!selfphone.empty())
+      Logger::warning("Failed to determine id of 'self'.");
+    else // if (selfphone.empty())
+      Logger::warning("Failed to determine Note-to-self thread. Consider passing `--setselfid \"[phone]\"' to set it manually");
   }
   else
   {
@@ -151,9 +145,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     searchidx.open(directory + "/" + "searchidx.js", std::ios_base::binary);
     if (!searchidx.is_open())
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to open 'searchidx.js' for writing" << std::endl;
-     return false;
+      Logger::error("Failed to open 'searchidx.js' for writing");
+      return false;
     }
     searchidx << "message_idx = [" << std::endl;
   }
@@ -168,7 +161,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     //   continue;
     // }
 
-    std::cout << "Dealing with thread " << t << std::endl;
+    Logger::message("Dealing with thread ", t);
 
     bool is_note_to_self = (t == note_to_self_thread_id);
 
@@ -178,8 +171,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (!d_database.exec("SELECT _id," + d_thread_recipient_id + " FROM thread WHERE _id = ?", t, &recid) ||
         recid.rows() != 1 || (thread_recipient_id = recid.valueAsInt(0, d_thread_recipient_id)) == -1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to find recipient_id for thread (" << t << ")... skipping" << std::endl;
+      Logger::error("Failed to find recipient_id for thread (", t, ")... skipping");
       continue;
     }
     long long int thread_id = recid.getValueAs<long long int>(0, "_id");
@@ -221,8 +213,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     // get conversation name, sanitize it and create dir
     if (recipient_info.find(thread_recipient_id) == recipient_info.end())
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed set recipient info for thread (" << t << ")... skipping" << std::endl;
+      Logger::error("Failed set recipient info for thread (", t, ")... skipping");
       continue;
     }
 
@@ -236,16 +227,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       if (!bepaald::isDir(directory + "/" + threaddir))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                  << ": dir is regular file" << std::endl;
+        Logger::error("dir is regular file");
         if (databasemigrated)
           SqliteDB::copyDb(backup_database, d_database);
         return false;
       }
       if (!append && !overwrite) // should be impossible at this point....
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                  << ": Refusing to overwrite existing directory" << std::endl;
+        Logger::error("Refusing to overwrite existing directory");
         if (databasemigrated)
           SqliteDB::copyDb(backup_database, d_database);
         return false;
@@ -253,17 +242,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
     else if (!bepaald::createDir(directory + "/" + threaddir)) // try to create it
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to create directory `" << directory << "/" << threaddir << "'"
-                << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
+      Logger::error("Failed to create directory `", directory, "/", threaddir, "'",
+                    " (errno: ", std::strerror(errno), ")"); // note: errno is not required to be set by std
       // temporary !!
       {
         std::error_code ec;
         std::filesystem::space_info const si = std::filesystem::space(directory, ec);
         if (!ec)
         {
-          std::cout << "Available: " << static_cast<std::intmax_t>(si.available) << std::endl;
-          std::cout << " Filesize: " << d_fd->total() << std::endl;
+          Logger::message("Available: ", static_cast<std::intmax_t>(si.available));
+          Logger::message(" Filesize: ", d_fd->total());
         }
       }
       if (databasemigrated)
@@ -299,8 +287,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::ofstream htmloutput(directory + "/" + threaddir + "/" + filename, std::ios_base::binary);
       if (!htmloutput.is_open())
       {
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                  << ": Failed to open '" << directory << "/" << threaddir << "/" << filename << " for writing." << std::endl;
+        Logger::error("Failed to open '", directory, "/", threaddir, "/", filename, " for writing.");
         if (databasemigrated)
           SqliteDB::copyDb(backup_database, d_database);
         return false;
@@ -317,8 +304,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         long long int msg_recipient_id = messages.valueAsInt(messagecount, d_mms_recipient_id);
         if (msg_recipient_id == -1) [[unlikely]]
         {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                    << ": Failed to get message recipient id. Skipping." << std::endl;
+          Logger::warning("Failed to get message recipient id. Skipping.");
           continue;
         }
         long long int original_message_id = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
@@ -487,8 +473,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                msg_info.msg_id, &search_idx_results) ||
               search_idx_results.rows() != 1)
           {
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                      << ": search_idx query failed " << search_idx_results.rows() << " results" << std::endl;
+            Logger::warning("search_idx query failed ", search_idx_results.rows(), " results");
             continue;
           }
 
@@ -696,10 +681,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   if (searchpage)
     HTMLwriteSearchpage(directory, lighttheme, themeswitching);
 
-  std::cout << "All done!" << std::endl;
+  Logger::message("All done!");
   if (databasemigrated)
   {
-    std::cout << "restoring migrated database..." << std::endl;
+    Logger::message("restoring migrated database...");
     SqliteDB::copyDb(backup_database, d_database);
   }
   return true;

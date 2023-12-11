@@ -181,7 +181,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     for (auto const r : recipientsnotfound)
       std::cout << " - \"" << json_contacts.valueAsString(r, "name") << "\"" << std::endl;
 
-    std::cout << "Use `--mapjsonrecipients [NAME1]=[id1],[NAME2]=[id2],...' to map these to an existing recipient id " << std::endl
+    std::cout << "Use `--mapjsoncontacts [NAME1]=[id1],[NAME2]=[id2],...' to map these to an existing recipient id " << std::endl
               << "from the backup. The list of available recipients and their id's can be obtained by running " << std::endl
               << "with `--listrecipients'." << std::endl;
 

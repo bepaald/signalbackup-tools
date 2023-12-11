@@ -53,7 +53,7 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
                   "conversations.e164 IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId'))"
                   " WHERE rowid = ?", rowid, &results_emoji_reactions))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get reaction data from desktop database. Skipping." << std::endl;
+      Logger::error("Failed to get reaction data from desktop database. Skipping.");
       continue;
     }
     //std::cout << "  Reaction " << k + 1 << "/" << numreactions << std::endl;
@@ -63,7 +63,7 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
     if (results_emoji_reactions.valueAsString(0, "uuid").empty() &&
         results_emoji_reactions.valueAsString(0, "phone").empty()) [[unlikely]]
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << " : Got empty author uuid, here is some additional info:" << std::endl;
+      Logger::warning("Got empty author uuid, here is some additional info:");
       ddb.print("SELECT json_extract(json, '$.reactions') FROM messages WHERE rowid = ?", rowid);
       results_emoji_reactions.printLineMode();
     }

@@ -55,8 +55,7 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const 
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Column `" << header << "' not found in query results" << std::endl;
+    Logger::warning("Column `", header, "' not found in query results");
     return "(column not found)";
   }
   return valueAsString(row, i);

@@ -33,6 +33,7 @@
 #include "../stickerframe/stickerframe.h"
 #include "../endframe/endframe.h"
 #include "../sqlstatementframe/sqlstatementframe.h"
+#include "../logger/logger.h"
 
 #include <map>
 #include <set>

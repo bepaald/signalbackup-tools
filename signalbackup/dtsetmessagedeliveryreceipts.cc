@@ -43,7 +43,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
                 "(SELECT sent_at,key,value FROM messages,json_each(messages.json, '$.sendStateByConversationId') WHERE rowid IS ?) delivery_details"
                 " LEFT JOIN conversations ON conversations.id IS conv_id", rowid, &status_results))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting message delivery status" << std::endl;
+    Logger::error("Getting message delivery status");
   }
   else
   {
@@ -76,13 +76,13 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
             {
               if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
               {
-                std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create delivery_receipt member. Skipping" << std::endl;
+                Logger::error("Failed to create delivery_receipt member. Skipping");
                 continue;
               }
             }
             else
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get id of delivery_receipt member. Skipping" << std::endl;
+              Logger::error("Failed to get id of delivery_receipt member. Skipping");
               continue;
             }
           }
@@ -90,7 +90,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
                                             {"address", member_id},
                                             {"status", STATUS_DELIVERED},
                                             {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group_receipt" << std::endl;
+            Logger::error("Inserting group_receipt");
         }
       }
       else if (status_results.valueAsString(i, "status") == "Read")
@@ -107,13 +107,13 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
             {
               if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
               {
-                std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create delivery_receipt member. Skipping" << std::endl;
+                Logger::error("Failed to create delivery_receipt member. Skipping");
                 continue;
               }
             }
             else
             {
-              std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get id of delivery_receipt member. Skipping" << std::endl;
+              Logger::error("Failed to get id of delivery_receipt member. Skipping");
               continue;
             }
           }
@@ -121,17 +121,17 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
                                             {"address", member_id},
                                             {"status", STATUS_READ},
                                             {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
-            std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting group_receipt" << std::endl;
+            Logger::error("Inserting group_receipt");
         }
       }
     }
     // update the message in its table (mms/sms)
     if (deliveryreceiptcount)
       if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_delivery_receipts + " = ? WHERE _id = ?", {deliveryreceiptcount, msg_id}))
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Updating " << (is_mms ? d_mms_table : "sms") << " " + d_mms_delivery_receipts + "." << std::endl;
+        Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_delivery_receipts, ".");
     if (readreceiptcount)
       if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_read_receipts + " = ? WHERE _id = ?", {readreceiptcount, msg_id}))
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Updating " << (is_mms ? d_mms_table : "sms") << " " + d_mms_read_receipts + "." << std::endl;
+        Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_read_receipts, ".");
 
 
     //insert into group_receipts
