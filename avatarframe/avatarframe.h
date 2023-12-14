@@ -76,25 +76,25 @@ inline BackupFrame *AvatarFrame::create(unsigned char *bytes, size_t length, uin
 
 inline void AvatarFrame::printInfo() const // virtual override
 {
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: AVATAR" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: AVATAR");
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::NAME)
-      std::cout << "         - name      : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - name      : ", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::RECIPIENT)
-      std::cout << "         - recipient : " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - recipient : ", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::LENGTH)
-      std::cout << "         - length    : " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - length    : ", bytesToUint32(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
   }
   if (d_attachmentdata)
   {
     uint32_t size = length();
     if (size < 25)
-      std::cout << "         - attachment: " << bepaald::bytesToHexString(d_attachmentdata, size) << std::endl;
+      Logger::message("         - attachment: ", bepaald::bytesToHexString(d_attachmentdata, size));
     else
-      std::cout << "         - attachment: " << bepaald::bytesToHexString(d_attachmentdata, 25) << " ... (" << size << " bytes total)" << std::endl;
+      Logger::message("         - attachment: ", bepaald::bytesToHexString(d_attachmentdata, 25), " ... (", size, " bytes total)");
   }
 }
 

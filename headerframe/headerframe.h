@@ -121,12 +121,12 @@ inline BackupFrame *HeaderFrame::create(unsigned char *data, size_t length, uint
 inline void HeaderFrame::printInfo() const
 {
   //DEBUGOUT("TYPE: HEADERFRAME");
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: HEADER" << std::endl;
-  std::cout << "         - IV  : " << bepaald::bytesToHexString(iv(), iv_length()) << std::endl;
-  std::cout << "         - SALT: " << bepaald::bytesToHexString(salt(), salt_length()) << std::endl;
-  std::cout << "         - VERSION: " << version() << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: HEADER");
+  Logger::message("         - IV: ", bepaald::bytesToHexString(iv(), iv_length()));
+  Logger::message("         - SALT: ", bepaald::bytesToHexString(salt(), salt_length()));
+  Logger::message("         - VERSION: ", version());
 }
 
 inline uint64_t HeaderFrame::dataSize() const

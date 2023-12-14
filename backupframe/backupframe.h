@@ -29,6 +29,7 @@
 
 #include "../common_be.h"
 #include "../basedecryptor/basedecryptor.h"
+#include "../logger/logger.h"
 
 class BackupFrame
 {

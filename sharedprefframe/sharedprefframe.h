@@ -68,24 +68,23 @@ inline BackupFrame *SharedPrefFrame::create(unsigned char *bytes, size_t length,
 
 inline void SharedPrefFrame::printInfo() const // virtual
 {
-  //DEBUGOUT("TYPE: SHAREDPREFERENCEFRAME");
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: SHAREDPREFERENCEFRAME" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: SHAREDPREFERENCEFRAME");
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::FILE)
-      std::cout << "         - (file  : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (file  : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::KEY)
-      std::cout << "         - (key   : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (key   : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::VALUE)
-      std::cout << "         - (value : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (value : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::BOOLEANVALUE)
-      std::cout << "         - (booleanvalue : \"" << std::boolalpha << (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
+      Logger::message("         - (booleanvalue : \"", std::boolalpha, (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false), "\")");
     else if (std::get<0>(p) == FIELD::STRINGSETVALUE)
-      std::cout << "         - (stringsetvalue : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (stringsetvalue : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
-      std::cout << "         - (isstringsetvalue : \"" << std::boolalpha << (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
+      Logger::message("         - (isstringsetvalue : \"", std::boolalpha, (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false), "\")");
   }
 }
 

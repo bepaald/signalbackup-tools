@@ -30,9 +30,10 @@ void SqlStatementFrame::buildStatement()
     }
 
   // check if number of parameters equals number of '?'
-  if (std::count(d_statement.begin(), d_statement.end(), '?') != static_cast<int>(d_parameterdata.size()))
+  if (std::count(d_statement.begin(), d_statement.end(), '?') != static_cast<int>(d_parameterdata.size())) [[unlikely]]
   {
-    std::cout << "Bad subst count: " << "Statement: " << d_statement << " parameters: " << d_parameterdata.size() << std::endl;
+    Logger::error("Bad substitution count: ");
+    Logger::error_indent("Statement: ", d_statement, " parameters: ", d_parameterdata.size());
     d_statement.clear();
     return;
   }

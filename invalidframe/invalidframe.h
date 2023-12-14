@@ -44,8 +44,8 @@ inline BackupFrame::FRAMETYPE InvalidFrame::frameType() const
 
 inline void InvalidFrame::printInfo() const
 {
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Type: INVALID" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Type: INVALID");
 }
 
 #endif

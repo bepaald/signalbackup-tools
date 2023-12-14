@@ -53,10 +53,10 @@ inline BackupFrame *EndFrame::create(unsigned char *bytes, size_t length, uint64
 
 inline void EndFrame::printInfo() const // virtual override
 {
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Type: END" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Type: END");
   for (auto const &p : d_framedata)
-    std::cout << "         - (value  : \"" << std::boolalpha << (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
+    Logger::message("         - (value  : \"", std::boolalpha, (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false), "\")");
 }
 
 inline BackupFrame::FRAMETYPE EndFrame::frameType() const // virtual override

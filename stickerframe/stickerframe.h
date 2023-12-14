@@ -76,15 +76,15 @@ inline BackupFrame *StickerFrame::create(unsigned char *data, size_t length, uin
 
 inline void StickerFrame::printInfo() const // virtual override
 {
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: STICKER" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: STICKER");
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::ROWID)
-      std::cout << "         - row id          : " << bytesToUint64(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - row id          : ", bytesToUint64(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::LENGTH)
-      std::cout << "         - length          : " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - length          : ", bytesToUint32(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
   }
 }
 

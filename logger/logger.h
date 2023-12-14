@@ -229,7 +229,7 @@ inline void Logger::message(First const &f, Rest... r) // static
 {
   messagePre();
   //outputHead("[MESSAGE] ", "[MESSAGE] ");
-  s_instance->outputHead("", true, {"", ": "});
+  s_instance->outputHead("", false, {"", ": "});
   s_instance->outputMsg(false, f, r...);
 }
 

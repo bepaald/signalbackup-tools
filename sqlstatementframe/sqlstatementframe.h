@@ -203,15 +203,15 @@ inline BackupFrame *SqlStatementFrame::create(unsigned char *data, size_t length
 inline void SqlStatementFrame::printInfo() const
 {
   //DEBUGOUT("TYPE: SQLSTATEMENTFRAME");
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: SQLSTATEMENT" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: SQLSTATEMENT");
   uint param_ctr = 0;
 
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::STATEMENT)
     {
-      std::cout << "         - (statement: \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (statement: \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
       break; // ONLY ONE FIELD::STATEMENT
     }
 
@@ -224,19 +224,21 @@ inline void SqlStatementFrame::printInfo() const
         switch (std::get<0>(d_parameterdata[param_ctr]))
         {
           case PARAMETER_FIELD::STRING:
-            std::cout << "         - (string parameter): \"" << bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            Logger::message("         - (string parameter): \"", bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::INT:
-            std::cout << "         - (uint64 parameter): \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            Logger::message("         - (uint64 parameter): \"", bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::DOUBLE:
-            std::cout << "         - (double parameter): \"" << bepaald::toString(*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))) << "\" " << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << std::endl;
+            Logger::message("         - (double parameter): \"", bepaald::toString(*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))), "\" ",
+                            bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])));
             break;
           case PARAMETER_FIELD::BLOB:
-            std::cout << "         - (binary parameter): \"" << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            Logger::message("         - (binary parameter): \"", bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::NULLPARAMETER:
-            std::cout << "         - (bool parameter)  : \"" << std::boolalpha << (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false) << "\" (value: \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\")" << std::endl;
+            Logger::message("         - (bool parameter)  : \"", std::boolalpha, (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false),
+                            "\" (value: \"", bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\")");
             break;
         }
         ++param_ctr;
@@ -249,20 +251,20 @@ inline void SqlStatementFrame::printInfo(std::vector<std::string> const &paramet
 {
   if (d_parameterdata.size() != parameternames.size())
   {
-    std::cout << d_parameterdata.size() << std::endl;
-    std::cout << parameternames.size() << std::endl;
+    Logger::message(d_parameterdata.size());
+    Logger::message(parameternames.size());
     return printInfo();
   }
 
   //DEBUGOUT("TYPE: SQLSTATEMENTFRAME");
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Type: SQLSTATEMENT" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Type: SQLSTATEMENT");
   uint param_ctr = 0;
 
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::STATEMENT)
     {
-      std::cout << "         - (statement: \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (statement: \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
       break; // only one FIELD::STATEMENT
     }
 
@@ -275,25 +277,26 @@ inline void SqlStatementFrame::printInfo(std::vector<std::string> const &paramet
         switch (std::get<0>(d_parameterdata[param_ctr]))
         {
           case PARAMETER_FIELD::STRING:
-            std::cout << "         - " << parameternames[param_ctr] << " (string parameter): \""
-                      << bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            Logger::message("         - ", parameternames[param_ctr], " (string parameter): \"",
+                            bepaald::bytesToString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::INT:
-            std::cout << "         - " << parameternames[param_ctr] << " (uint64 parameter): \""
-                      << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            Logger::message("         - ", parameternames[param_ctr], " (uint64 parameter): \"",
+                            bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::DOUBLE:
-            std::cout << "         - " << parameternames[param_ctr] << " (double parameter): \""
-                      << *reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))<< "\" " << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << std::endl;
+            Logger::message("         - ", parameternames[param_ctr], " (double parameter): \"",
+                            *reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr])), "\" ",
+                            bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])));
             break;
           case PARAMETER_FIELD::BLOB:
-            std::cout << "         - " << parameternames[param_ctr] << " (binary parameter): \""
-                      << bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\"" << std::endl;
+            Logger::message("         - ", parameternames[param_ctr], " (binary parameter): \"",
+                            bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::NULLPARAMETER:
-            std::cout << "         - " << parameternames[param_ctr] << " (bool parameter): \""
-                      << std::boolalpha << (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false)
-                      << "\" (value: \"" << bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) << "\")" << std::endl;
+            Logger::message("         - ", parameternames[param_ctr], " (bool parameter): \"",
+                            std::boolalpha, (bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])) ? true : false),
+                            "\" (value: \"", bytesToUint64(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\")");
             break;
         }
         ++param_ctr;

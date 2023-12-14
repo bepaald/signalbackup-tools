@@ -96,25 +96,25 @@ inline BackupFrame *AttachmentFrame::create(unsigned char *bytes, size_t length,
 
 inline void AttachmentFrame::printInfo() const // virtual override
 {
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: ATTACHMENT" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: ATTACHMENT");
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::ROWID)
-      std::cout << "         - row id          : " << bytesToUint64(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - row id          : ", bytesToUint64(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::ATTACHMENTID)
-      std::cout << "         - attachment id   : " << bytesToUint64(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - attachment id   : ", bytesToUint64(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::LENGTH)
-      std::cout << "         - length          : " << bytesToUint32(std::get<1>(p), std::get<2>(p)) << " (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - length          : ", bytesToUint32(std::get<1>(p), std::get<2>(p)), " (", std::get<2>(p), " bytes)");
   }
   if (d_attachmentdata)
   {
     uint32_t size = length();
     if (size < 25)
-      std::cout << "         - attachment      : " << bepaald::bytesToHexString(d_attachmentdata, size) << std::endl;
+      Logger::message("         - attachment      : ", bepaald::bytesToHexString(d_attachmentdata, size));
     else
-      std::cout << "         - attachment      : " << bepaald::bytesToHexString(d_attachmentdata, 25) << " ... (" << size << " bytes total)" << std::endl;
+      Logger::message("         - attachment      : ", bepaald::bytesToHexString(d_attachmentdata, 25), " ... (", size, " bytes total)");
   }
 }
 
@@ -225,7 +225,6 @@ inline std::pair<unsigned char *, uint64_t> AttachmentFrame::getData() const
     ATTACHMENTID = 2, // uint64
     LENGTH = 3 // uint32
   */
-
 
   for (auto const &fd : d_framedata)
     datapos += putVarIntType(fd, data + datapos);
