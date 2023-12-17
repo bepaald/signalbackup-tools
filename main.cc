@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
       sourcesummarized = true;
 
       Logger::message("Getting list of thread id's...");
-      // threads = source->threadIds();
+      threads = source->threadIds();
       // std::cout << "Got: " << std::flush;
       // for (uint i = 0; i < threads.size(); ++i)
       //   std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
