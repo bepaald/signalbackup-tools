@@ -434,7 +434,7 @@ signalbackup-tools [first_database] [passphrase] --importthreads ALL --source [s
 
 It is recommended to use the larger (containing the most data (contacts, threads,...)) as the 'first_database' and the smaller one source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`. Threads can additionally be specified by name using `--importthreadsbyname "Bob","Alice"`.
 
-Note this function does not automatically discard duplicate messages. If the backups you are merging contain (partly) the same messages &mdash; for example if they originate from some common backup/installation &mdash; you will probably want to [crop](#crop) the source backup by date before merging so it only contains messages not in the target. In newer databases, omitting this step will cause errors, as Signal does not allow duplicate messages in its database anymore.
+Note this function does not automatically discard duplicate messages. If the backups you are merging contain (partly) the same messages &mdash; for example if they originate from some common backup/installation &mdash; you will probably want to [crop-by-date](#crop the source backup by date) before merging so it only contains messages not in the target. For newer databases, omitting this step will cause errors, as Signal does not allow duplicate messages in its database anymore.
 
 If you use this option and read this line, I would really appreciate it if you let me know the results. Either send me a mail (basjetimmer at yahoo-dot-com) or feel free to just open an issue on the tracker for feedback.
 
