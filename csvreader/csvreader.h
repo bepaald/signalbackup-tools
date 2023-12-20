@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "../common_be.h"
+#include "../logger/logger.h"
 
 class CSVReader
 {
@@ -61,8 +62,7 @@ inline CSVReader::CSVReader(std::string const &filename)
   if (d_csvfile.is_open())
     d_ok = read();
   else
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-              << " opening file '" << filename << "' for reading." << std::endl;
+    Logger::error("Opening file '", filename, "' for reading.");
 }
 
 inline bool CSVReader::ok() const

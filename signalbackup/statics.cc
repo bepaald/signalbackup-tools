@@ -19,6 +19,25 @@
 
 #include "signalbackup.ih"
 
+/*
+  struct DatabaseLink
+  {
+    std::string table;
+    std::string column;
+    std::vector<TableConnection> const connections;
+    {
+      std::string table;
+      std::string column;
+      std::string whereclause = std::string();
+      std::string json_path = std::string();
+      int flags = 0; // SET_UNIQUELY
+      unsigned int mindbvversion = 0;
+      unsigned int maxdbvversion = std::numeric_limits<unsigned int>::max();
+    }
+    int flags; // NO_COMPACT, SKIP, WARN
+  };
+*/
+
 std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // static
 {
   {
@@ -318,12 +337,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
     SKIP // cleared in importthread
   },
   {
-    "distribution_list",   /// WORK IN PROGRESS? All other fields of distr_list are also unique.
+    "distribution_list",   /// WORK IN PROGRESS? other fields of distr_list are also unique: distibution_id, recipient_id
     "_id",
     {
       {"recipient", "distribution_list_id"},
       {"distribution_list_member", "list_id"}
-        //{d_mms_table,"parent_story_id"}???
+      //{d_mms_table,"parent_story_id"}???
       //distribution_id TEXT UNIQUE NOT NULL
     },
     0

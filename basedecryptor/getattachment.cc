@@ -26,15 +26,15 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   std::ifstream file(frame->filename(), std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
   {
-    std::cout << "Failed to open backup file '" << frame->filename() << "' for reading attachment" << std::endl;
+    Logger::error("Failed to open backup file '", frame->filename(), "' for reading attachment");
     return 1;
   }
 
   if (frame->length() == 0) [[unlikely]]
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Aksed to read 0-byte attachment" << std::endl;
+    Logger::warning("Aksed to read 0-byte attachment");
 
   if (verbose) [[unlikely]]
-    std::cout << "Decrypting attachment data, length: " << frame->length() << std::endl;
+    Logger::message("Decrypting attachment data, length: ", frame->length());
 
   //std::cout << "Getting attachment: " << frame->filepos() << " + " << frame->length() << std::endl;
   file.seekg(frame->filepos(), std::ios_base::beg);
@@ -49,7 +49,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
     std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[frame->length()]); // to hold the data
     if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), frame->length()))
     {
-      std::cout << "Failed to read raw attachment \"" << frame->filename() << "\"" << std::endl;
+      Logger::error("Failed to read raw attachment \"", frame->filename(), "\"");
       return 1;
     }
     frame->setAttachmentData(decryptedattachmentdata.release());
@@ -66,7 +66,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   // init
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, frame->cipherkey(), frame->iv()) != 1)
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::error("CTX INIT FAILED");
     return 1;
   }
 
@@ -87,7 +87,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   if (HMAC_Init_ex(hctx.get(), frame->mackey(), frame->mackey_size(), EVP_sha256(), nullptr) != 1)
 #endif
   {
-    std::cout << "Failed to initialize HMAC context" << std::endl;
+    Logger::error("Failed to initialize HMAC context");
     return 1;
   }
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -96,7 +96,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   if (HMAC_Update(hctx.get(), frame->iv(), frame->iv_size()) != 1)
 #endif
   {
-    std::cout << "Failed to update HMAC" << std::endl;
+    Logger::error("Failed to update HMAC");
     return 1;
   }
 
@@ -110,7 +110,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   {
     if (!file.read(reinterpret_cast<char *>(encrypteddatabuffer), std::min(size - processed, BUFFERSIZE)))
     {
-      std::cout << " STOPPING BEFORE END OF ATTACHMENT!!!" << (file.eof() ? " (EOF) " : "") << std::endl;
+      Logger::error("STOPPING BEFORE END OF ATTACHMENT!!!", (file.eof() ? " (EOF) " : ""));
       return 1;
     }
     uint32_t read = file.gcount();
@@ -122,7 +122,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
     if (HMAC_Update(hctx.get(), encrypteddatabuffer, read) != 1)
 #endif
     {
-      std::cout << "Failed to update HMAC" << std::endl;
+      Logger::error("Failed to update HMAC");
       return 1;
     }
 
@@ -130,7 +130,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
     int spaceleft = size - processed;
     if (EVP_DecryptUpdate(ctx.get(), decryptedattachmentdata.get() + processed, &spaceleft, encrypteddatabuffer, read) != 1)
     {
-      std::cout << "Failed to decrypt data" << std::endl;
+      Logger::error("Failed to decrypt data");
       return 1;
     }
 
@@ -149,14 +149,14 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   if (HMAC_Final(hctx.get(), hash, &digest_size) != 1)
 #endif
   {
-    std::cout << "Failed to finalize MAC" << std::endl;
+    Logger::error("Failed to finalize MAC");
     return 1;
   }
 
   unsigned char theirMac[MACSIZE];
   if (!file.read(reinterpret_cast<char *>(theirMac), MACSIZE))
   {
-    std::cout << " STOPPING BEFORE END OF ATTACHMENT!!! 2 " << std::endl;
+    Logger::error("STOPPING BEFORE END OF ATTACHMENT!!! 2 ");
     return 1;
   }
   DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, MACSIZE));
@@ -166,10 +166,8 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
 
   if (std::memcmp(theirMac, hash, MACSIZE) != 0)
   {
-    std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in attachmentdata: theirMac: " << bepaald::bytesToHexString(theirMac, MACSIZE) << std::endl;
-    std::cout << "                                      ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
-
+    Logger::warning("Bad MAC in attachmentdata: theirMac: ", bepaald::bytesToHexString(theirMac, MACSIZE));
+    Logger::warning_indent("                             ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
     badmac = true;
   }
   else

@@ -101,8 +101,8 @@ inline uint32_t FileDecryptor::getNextFrameBlockSize()
   uint32_t headerlength = 0;
   if (!d_file.read(reinterpret_cast<char *>(&headerlength), sizeof(decltype(headerlength))))
   {
-    std::cout << "Failed to read 4 bytes from file to get next frame size... (" << d_file.tellg()
-              << " / " << d_filesize << ")" << std::endl;
+    Logger::error("Failed to read 4 bytes from file to get next frame size... (", d_file.tellg(),
+                  " / ", d_filesize, ")");
     return 0;
   }
   return bepaald::swap_endian<uint32_t>(headerlength);

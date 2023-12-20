@@ -35,4 +35,5 @@
 #endif
 
 #include "../common_be.h"
+#include "../logger/logger.h"
 #include "../framewithattachment/framewithattachment.h"

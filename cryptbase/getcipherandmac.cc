@@ -26,7 +26,7 @@ bool CryptBase::getCipherAndMac(uint hashoutputsize, size_t outputsize)
   if (EVP_PKEY_derive_init(pctx.get()) != 1 ||
       EVP_PKEY_CTX_set_hkdf_md(pctx.get(), EVP_sha256()) != 1)
   {
-    std::cout << "Failed to init HKDF" << std::endl;
+    Logger::error("Failed to init HKDF");
     return false;
   }
 
@@ -37,14 +37,14 @@ bool CryptBase::getCipherAndMac(uint hashoutputsize, size_t outputsize)
       // EVP_PKEY_CTX_set1_hkdf_salt(pctx.get(), localsalt, hashoutputsize) != 1 ||
       EVP_PKEY_CTX_add1_hkdf_info(pctx.get(), info, info_size) != 1)
   {
-    std::cout << "Failed to set data for HKDF" << std::endl;
+    Logger::error("Failed to set data for HKDF");
     return false;
   }
 
   std::unique_ptr<unsigned char[]> derived(new unsigned char[outputsize]);
   if (EVP_PKEY_derive(pctx.get(), derived.get(), &outputsize) != 1)
   {
-    std::cout << "Error deriving HKDF" << std::endl;
+    Logger::error("Error deriving HKDF");
     return false;
   }
 

@@ -39,13 +39,15 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
 
   if (i != passlength)
   {
-    std::cout << "ERROR : Failed to parse passphrase from string '" << passphrase << "' : passphrase too short! Need " << passlength << " digits, " << i << " provided" << std::endl;
+    Logger::error("Failed to parse passphrase from string '", passphrase, "' : passphrase too short! "
+                  "Need ", passlength, " digits, ", i, " provided");
     return false;
   }
 
   if (j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
   {
-    std::cout << "ERROR : Failed to parse passphrase from string '" << passphrase << "' : passphrase too long! Need " << passlength << " digits" << std::endl;
+    Logger::error("Failed to parse passphrase from string '", passphrase, "' : passphrase too long! "
+                  "Need ", passlength, " digits, ", i, " provided");
     return false;
   }
 
@@ -56,7 +58,7 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
   if (mdctx.get() == nullptr ||
       EVP_DigestInit_ex(mdctx.get(), EVP_sha512(), nullptr) != 1)
   {
-    std::cout << "Failed to create message digest context" << std::endl;
+    Logger::error("Failed to create message digest context");
     return false;
   }
 
@@ -77,7 +79,7 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
     if (EVP_MD_CTX_reset(mdctx.get()) != 1 ||
         EVP_DigestInit_ex(mdctx.get(), EVP_sha512(), nullptr) != 1)
     {
-      std::cout << "Failed to reset digest context" << std::endl;
+      Logger::error("Failed to reset digest context");
       return false;
     }
   }

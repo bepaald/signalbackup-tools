@@ -33,9 +33,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(167, 170))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
-                << " Please upgrade your database" << std::endl;
+      Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+                    " Please upgrade your database");
       SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
@@ -46,19 +45,16 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   {
     if (!migrate)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Currently unsupported database version (" << d_databaseversion << ")."
-                << " Please upgrade" << std::endl
-                << "       your database or append the `--migratedb' option to attempt to" << std::endl
-                << "       migrate this database to a supported version." << std::endl;
+      Logger::error("Currently unsupported database version (", d_databaseversion, ").");
+      Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
+      Logger::error_indent("migrate this database to a supported version.");
       return false;
     }
     SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to migrate currently unsupported database version (" << d_databaseversion << ")."
-                << " Please upgrade your database" << std::endl;
+      Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+                    " Please upgrade your database");
       SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
@@ -135,11 +131,10 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
   if (d_selfid == -1)
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Failed to determine id of 'self'.";
-    if (selfphone.empty())
-      std::cout << " Consider passing `--setselfid \"[phone]\"' to set it manually";
-    std::cout << std::endl;
+    if (!selfphone.empty())
+      Logger::warning("Failed to determine id of 'self'.");
+    else
+      Logger::warning("Failed to determine id of 'self'. Consider passing `--setselfid \"[phone]\"' to set it manually");
   }
   else
     d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
@@ -162,12 +157,11 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
-      std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
-      std::cout << startrange << " " << endrange << std::endl;
+      Logger::error("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
+      Logger::error_indent(startrange, " ", endrange);
       continue;
     }
-    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second
-              << " (" << startrange << " - " << endrange << ")" << std::endl;
+    Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
 
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...
@@ -186,7 +180,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   for (int t : threads)
   {
 
-    std::cout << "Dealing with thread " << t << std::endl;
+    Logger::message("Dealing with thread ", t);
 
     //bool is_note_to_self = false;//(t == note_to_self_thread_id);
 
@@ -196,8 +190,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     if (!d_database.exec("SELECT _id," + d_thread_recipient_id + " FROM thread WHERE _id = ?", t, &recid) ||
         recid.rows() != 1 || (thread_recipient_id = recid.valueAsInt(0, d_thread_recipient_id)) == -1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to find recipient_id for thread (" << t << ")... skipping" << std::endl;
+      Logger::error("Failed to find recipient_id for thread (", t, ")... skipping");
       continue;
     }
     long long int thread_id = recid.getValueAs<long long int>(0, "_id");
@@ -229,8 +222,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                          + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
                          " ORDER BY date_received ASC", t, &messages))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to query database for messages" << std::endl;
+      Logger::error("Failed to query database for messages");
       if (databasemigrated)
         SqliteDB::copyDb(backup_database, d_database);
       return false;
@@ -247,8 +239,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     // get conversation name, sanitize it and set outputfilename
     if (recipient_info.find(thread_recipient_id) == recipient_info.end())
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed set recipient info for thread (" << t << ")... skipping" << std::endl;
+      Logger::error("Failed set recipient info for thread (", t, ")... skipping");
       continue;
     }
 
@@ -257,8 +248,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
     if (bepaald::fileOrDirExists(directory + "/" + filename))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Refusing to overwrite existing file" << std::endl;
+      Logger::error("Refusing to overwrite existing file");
       if (databasemigrated)
         SqliteDB::copyDb(backup_database, d_database);
       return false;
@@ -267,8 +257,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     std::ofstream txtoutput(directory + "/" + filename, std::ios_base::binary);
     if (!txtoutput.is_open())
     {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                << ": Failed to open '" << directory << "/" << filename << " for writing." << std::endl;
+      Logger::error("Failed to open '", directory, "/", filename, " for writing.");
       if (databasemigrated)
         SqliteDB::copyDb(backup_database, d_database);
       return false;
@@ -286,8 +275,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       long long int msg_recipient_id = messages.valueAsInt(i, d_mms_recipient_id);
       if (msg_recipient_id == -1) [[unlikely]]
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                  << ": Failed to get message recipient id. Skipping." << std::endl;
+        Logger::warning("Failed to get message recipient id. Skipping.");
         continue;
       }
       std::string body = messages.valueAsString(i, "body");
@@ -359,10 +347,10 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     }
   }
 
-  std::cout << "All done!" << std::endl;
+  Logger::message("All done!");
   if (databasemigrated)
   {
-    std::cout << "restoring migrated database..." << std::endl;
+    Logger::message("restoring migrated database...");
     SqliteDB::copyDb(backup_database, d_database);
   }
   return true;

@@ -32,17 +32,13 @@ bool CSVReader::read()
       return true;
     if (d_csvfile.bad() || d_csvfile.fail())
     {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << "reading CSV file" << std::endl;
+      Logger::error("Reading CSV file");
       return false;
     }
-    std::cout << "Got row: " << row << std::endl;
+    Logger::message("Got row: ", row);
     if ((initialstate = readRow(row, initialstate)) == CSVState::UNQUOTEDFIELD)
     {
-
-      std::cout << "READ    :";
-      for (uint i = 0; i < d_results.back().size(); ++i)
-        std::cout << d_results.back()[i] << ",";
-      std::cout << std::endl;
+      Logger::message("READ    :", d_results.back());
 
       // extra check: all rows must have same number of fields
       if (d_results.size() == 1) [[unlikely]]
@@ -50,8 +46,7 @@ bool CSVReader::read()
       else //
         if (d_results.back().size() != d_fields) [[unlikely]]
         {
-          std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                    << ": invalid csv" << std::endl;
+          Logger::error("invalid csv");
           return false;
         }
     }

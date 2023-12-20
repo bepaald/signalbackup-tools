@@ -26,6 +26,8 @@
 
 #include <string>
 
+#include "../logger/logger.h"
+
 struct Base64
 {
  public:
@@ -42,7 +44,7 @@ inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t
   std::unique_ptr<unsigned char[]> output(new unsigned char[base64length + 1]); // +1 for terminating null
   if (EVP_EncodeBlock(output.get(), data, size) != base64length)
   {
-    std::cout << "Failed to base64enc data" << std::endl;
+    Logger::error("Failed to base64 encode data");
     return std::string();
   }
   return std::string(reinterpret_cast<char *>(output.get()), base64length);
@@ -54,10 +56,8 @@ inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(std::string
   std::unique_ptr<unsigned char[]> output(new unsigned char[binarylength]);
   if (EVP_DecodeBlock(output.get(), reinterpret_cast<unsigned const char *>(str.data()), str.size()) == -1)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << " : Failed to base64 decode data: "
-              << bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(str.data()),
-                                           str.size()) << std::endl;
+    Logger::error("Failed to base64 decode data: ",
+                  bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(str.data()), str.size()));
     return {nullptr, 0};
   }
   if (str.back() != '=')

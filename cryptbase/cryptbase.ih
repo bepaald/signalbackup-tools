@@ -21,6 +21,8 @@
 
 #include <cstring>
 
+#include "../logger/logger.h"
+
 #ifndef USE_CRYPTOPP
 
 #include <openssl/sha.h>
