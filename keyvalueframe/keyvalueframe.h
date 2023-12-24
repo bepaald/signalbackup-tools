@@ -73,25 +73,25 @@ inline BackupFrame *KeyValueFrame::create(unsigned char *bytes, size_t length, u
 inline void KeyValueFrame::printInfo() const // virtual
 {
   //DEBUGOUT("TYPE: KEYVALUEFRAME");
-  std::cout << "Frame number: " << d_count << std::endl;
-  std::cout << "        Size: " << d_constructedsize << std::endl;
-  std::cout << "        Type: KEYVALUEFRAME" << std::endl;
+  Logger::message("Frame number: ", d_count);
+  Logger::message("        Size: ", d_constructedsize);
+  Logger::message("        Type: KEYVALUEFRAME");
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::KEY)
-      std::cout << "         - (key  : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (key  : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::BLOBVALUE)
-      std::cout << "         - (blobvalue   : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (blobvalue   : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::BOOLEANVALUE)
-      std::cout << "         - (booleanvalue : \"" << std::boolalpha << (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? true : false) << "\")" << std::endl;
+      Logger::message("         - (booleanvalue : \"", std::boolalpha, (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? true : false), "\")");
     else if (std::get<0>(p) == FIELD::FLOATVALUE) // note, this is untested, none of my backups contain a KVFrame with this field
-      std::cout << "         - (floatvalue : \"" << bepaald::toString(*reinterpret_cast<float *>(std::get<1>(p))) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (floatvalue : \"", bepaald::toString(*reinterpret_cast<float *>(std::get<1>(p))), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::INTEGERVALUE)
-      std::cout << "         - (integervalue : \"" << bytesToInt32(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (integervalue : \"", bytesToInt32(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::LONGVALUE)
-      std::cout << "         - (longvalue : \"" << bytesToUint64(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (longvalue : \"", bytesToUint64(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::STRINGVALUE)
-      std::cout << "         - (stringvalue : \"" << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << "\" (" << std::get<2>(p) << " bytes)" << std::endl;
+      Logger::message("         - (stringvalue : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
   }
 }
 

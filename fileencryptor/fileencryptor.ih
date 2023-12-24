@@ -37,3 +37,5 @@
 #include <cryptopp/hkdf.h>
 
 #endif
+
+#include "../logger/logger.h"

@@ -27,8 +27,6 @@
 #include <cstring>
 #include <memory>
 
-#include "../common_be.h"
-
 class MemFileDB
 {
   struct MemFile
@@ -100,7 +98,7 @@ inline int MemFileDB::ioRead(sqlite3_file *pFile, void *zBuf, int iAmt, sqlite_i
   if (static_cast<uint64_t>(iOfst) >= reinterpret_cast<MemFile *>(pFile)->datasize ||
       !reinterpret_cast<MemFile *>(pFile)->data)
   {
-    std::cout << " !!! ERROR_READ !!!" << std::endl;
+    //std::cout << " !!! ERROR_READ !!!" << std::endl;
     return SQLITE_IOERR_READ;
   }
 
@@ -108,7 +106,7 @@ inline int MemFileDB::ioRead(sqlite3_file *pFile, void *zBuf, int iAmt, sqlite_i
   bool shortread = false;
   if (static_cast<uint64_t>(iOfst + iAmt) > reinterpret_cast<MemFile *>(pFile)->datasize)
   {
-    std::cout << "SHORTREAD" << std::endl;
+    //std::cout << "SHORTREAD" << std::endl;
     toread -= ((iOfst + iAmt) - reinterpret_cast<MemFile *>(pFile)->datasize);
     shortread = true;
   }
@@ -237,7 +235,7 @@ inline int MemFileDB::access(sqlite3_vfs *pVfs, char const *zPath [[maybe_unused
     *pResOut = 0;
     return SQLITE_OK;
   }
-  std::cout << " !!! ERROR_ACCESS !!! "  << std::endl;
+  //std::cout << " !!! ERROR_ACCESS !!! "  << std::endl;
   return SQLITE_IOERR_ACCESS;
 }
 

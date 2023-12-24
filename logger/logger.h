@@ -31,6 +31,13 @@
 
 class Logger
 {
+  enum Flags
+  {
+    NONE = 0,
+    OVERWRITE = 0b1,
+    NONEWLINE = 0b10,
+  };
+
  public:
   enum class Control
   {
@@ -57,14 +64,20 @@ class Logger
 
   template <typename First, typename... Rest>
   inline static void message(First const &f, Rest... r);
+  template <typename First, typename... Rest>
+  inline static void message_start(First const &f, Rest... r);
 
   template <typename First, typename... Rest>
   inline static void warning(First const &f, Rest... r);
+  template <typename First, typename... Rest>
+  inline static void warning_start(First const &f, Rest... r);
   template <typename First, typename... Rest>
   inline static void warning_indent(First const &f, Rest... r);
 
   template <typename First, typename... Rest>
   inline static void error(First const &f, Rest... r);
+  template <typename First, typename... Rest>
+  inline static void error_start(First const &f, Rest... r);
   template <typename First, typename... Rest>
   inline static void error_indent(First const &f, Rest... r);
 
@@ -86,20 +99,20 @@ class Logger
                   std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
 
   template <typename First, typename... Rest>
-  inline void outputMsg(bool overwrite, First const &f, Rest... r);
+  inline void outputMsg(Flags flags, First const &f, Rest... r);
   template <typename T>
-  inline void outputMsg(bool overwrite, T const &t);
+  inline void outputMsg(Flags flags, T const &t);
 
   // specializations for vector type
   template <typename T, typename... Rest>
-  inline void outputMsg(bool overwrite, std::vector<T> const &vec, Rest... r);
+  inline void outputMsg(Flags flags, std::vector<T> const &vec, Rest... r);
   template <typename T>
-  inline void outputMsg(bool overwrite, std::vector<T> const &vec);
+  inline void outputMsg(Flags flags, std::vector<T> const &vec);
 
   // specializations for control
   template <typename... Rest>
-  inline void outputMsg(bool overwrite, Control c, Rest... r);
-  inline void outputMsg(bool overwrite, Control c);
+  inline void outputMsg(Flags flags, Control c, Rest... r);
+  inline void outputMsg(Flags flags, Control c);
 
   Logger(Logger const &other) = delete;            // NI
   Logger &operator=(Logger const &other) = delete; // NI
@@ -221,7 +234,7 @@ inline void Logger::message_overwrite(First const &f, Rest... r) // static
     s_instance->d_currentoutput = s_instance->d_strstreambackend;
   }
   s_instance->outputHead("", true);
-  s_instance->outputMsg(true, f, r...);
+  s_instance->outputMsg(Flags::OVERWRITE, f, r...);
 }
 
 template <typename First, typename... Rest>
@@ -230,7 +243,16 @@ inline void Logger::message(First const &f, Rest... r) // static
   messagePre();
   //outputHead("[MESSAGE] ", "[MESSAGE] ");
   s_instance->outputHead("", false, {"", ": "});
-  s_instance->outputMsg(false, f, r...);
+  s_instance->outputMsg(Flags::NONE, f, r...);
+}
+
+template <typename First, typename... Rest>
+inline void Logger::message_start(First const &f, Rest... r) // static
+{
+  messagePre();
+  //outputHead("[MESSAGE] ", "[MESSAGE] ");
+  s_instance->outputHead("", false, {"", ": "});
+  s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
 template <typename First, typename... Rest>
@@ -239,7 +261,15 @@ inline void Logger::warning(First const &f, Rest... r) // static
   messagePre();
   //outputHead("[WARNING] ", "[\033[38;5;37mWARNING\033[0m] ");
   s_instance->outputHead("Warning", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
-  s_instance->outputMsg(false, f, r...);
+  s_instance->outputMsg(Flags::NONE, f, r...);
+}
+
+template <typename First, typename... Rest>
+inline void Logger::warning_start(First const &f, Rest... r) // static
+{
+  messagePre();
+  s_instance->outputHead("       ", false, {" ", "   "});
+  s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
 template <typename First, typename... Rest>
@@ -247,7 +277,7 @@ inline void Logger::warning_indent(First const &f, Rest... r) // static
 {
   messagePre();
   s_instance->outputHead("       ", false, {" ", "   "});
-  s_instance->outputMsg(false, f, r...);
+  s_instance->outputMsg(Flags::NONE, f, r...);
 }
 
 template <typename First, typename... Rest>
@@ -256,7 +286,15 @@ inline void Logger::error(First const &f, Rest... r) // static
   messagePre();
   //outputHead("[ ERROR ] ", "[ \033[1;31mERROR\033[0m ] ");
   s_instance->outputHead("Error", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
-  s_instance->outputMsg(false, f, r...);
+  s_instance->outputMsg(Flags::NONE, f, r...);
+}
+
+template <typename First, typename... Rest>
+inline void Logger::error_start(First const &f, Rest... r) // static
+{
+  messagePre();
+  s_instance->outputHead("     ", false, {" ", "   "});
+  s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
 template <typename First, typename... Rest>
@@ -264,7 +302,7 @@ inline void Logger::error_indent(First const &f, Rest... r) // static
 {
   messagePre();
   s_instance->outputHead("     ", false, {" ", "   "});
-  s_instance->outputMsg(false, f, r...);
+  s_instance->outputMsg(Flags::NONE, f, r...);
 }
 
 template <typename First, typename... Rest>
@@ -272,33 +310,37 @@ inline void Logger::output_indent(int indent, First const &f, Rest... r) // stat
 {
   messagePre();
   s_instance->outputHead(std::string(indent, ' '));
-  s_instance->outputMsg(false, f, r...);
+  s_instance->outputMsg(Flags::NONE, f, r...);
 }
 
 template <typename First, typename... Rest>
-inline void Logger::outputMsg(bool overwrite, First const &f, Rest... r)
+inline void Logger::outputMsg(Flags flags, First const &f, Rest... r)
 {
   if (d_currentoutput)
     *(d_currentoutput) << f;
 
   std::cout << f;
-  s_instance->outputMsg(overwrite, r...);
+  s_instance->outputMsg(flags, r...);
 }
 
 template <typename T>
-inline void Logger::outputMsg(bool overwrite, T const &t)
+inline void Logger::outputMsg(Flags flags, T const &t)
 {
   if (d_currentoutput)
-    *(d_currentoutput) << t << "\n";
+  {
+    *(d_currentoutput) << t;
+    if (!(flags & Flags::NONEWLINE)) [[likely]]
+      *(d_currentoutput) << "\n";
+  }
 
-  if (overwrite) [[unlikely]]
+  if (flags & Flags::OVERWRITE || flags & Flags::NONEWLINE) [[unlikely]]
     std::cout << t << std::flush;
   else
     std::cout << t << std::endl;
 }
 
 template <typename T, typename... Rest>
-inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec, Rest... r)
+inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec, Rest... r)
 {
   if (d_currentoutput)
     for (uint i = 0; i < vec.size(); ++i)
@@ -307,29 +349,30 @@ inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec, Rest...
   for (uint i = 0; i < vec.size(); ++i)
     std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
 
-  outputMsg(overwrite, r...);
+  outputMsg(flags, r...);
 }
 
 template <typename T>
-inline void Logger::outputMsg(bool overwrite, std::vector<T> const &vec)
+inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec)
 {
   if (d_currentoutput)
   {
     for (uint i = 0; i < vec.size(); ++i)
       *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
-    *(d_currentoutput) << "\n";
+    if (!(flags & Flags::NONEWLINE)) [[likely]]
+      *(d_currentoutput) << "\n";
   }
 
   for (uint i = 0; i < vec.size(); ++i)
     std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
-  if (overwrite) [[unlikely]]
+  if (flags & Flags::OVERWRITE || flags & Flags::NONEWLINE) [[unlikely]]
     std::cout << std::flush;
   else
     std::cout << std::endl;
 }
 
 template <typename... Rest>
-inline void Logger::outputMsg(bool overwrite, Control c, Rest... r)
+inline void Logger::outputMsg(Flags flags, Control c, Rest... r)
 {
   // (no control codes to file)
 
@@ -344,7 +387,7 @@ inline void Logger::outputMsg(bool overwrite, Control c, Rest... r)
         std::cout << "\033[0m";
         break;
       case Control::ENDOVERWRITE: // not likely here
-        if (overwrite)
+        if (flags & Flags::OVERWRITE)
         {
           d_overwriting = false;
           d_currentoutput = s_instance->d_file;
@@ -361,10 +404,10 @@ inline void Logger::outputMsg(bool overwrite, Control c, Rest... r)
     }
   }
 
-  outputMsg(overwrite, r...);
+  outputMsg(flags, r...);
 }
 
-inline void Logger::outputMsg(bool overwrite, Control c)
+inline void Logger::outputMsg(Flags flags, Control c)
 {
   // (no control codes to file)
 
@@ -379,7 +422,7 @@ inline void Logger::outputMsg(bool overwrite, Control c)
         std::cout << "\033[0m";
         break;
       case Control::ENDOVERWRITE:
-        if (overwrite)
+        if (flags & Flags::OVERWRITE)
         {
           d_overwriting = false;
           d_currentoutput = s_instance->d_file;
@@ -395,7 +438,7 @@ inline void Logger::outputMsg(bool overwrite, Control c)
         break;
     }
   }
-  if (overwrite) [[unlikely]]
+  if (flags & Flags::OVERWRITE || flags & Flags::NONEWLINE) [[unlikely]]
     std::cout << std::flush;
   else
     std::cout << std::endl;

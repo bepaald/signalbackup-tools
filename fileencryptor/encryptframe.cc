@@ -31,7 +31,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
 
   if (length == 0) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Asked to encrypt a zero sized frame." << std::endl;
+    Logger::warning("Asked to encrypt a zero sized frame.");
     //return {nullptr, 0};
   }
 
@@ -46,7 +46,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
 
   if (EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::error("CTX INIT FAILED");
     return {nullptr, 0};
   }
 
@@ -60,23 +60,23 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
     uint32_t length_data = bepaald::swap_endian<uint32_t>(length + MACSIZE);
 
     if (d_verbose) [[unlikely]]
-      std::cout << "Encrypting frame. Length: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << length_data << " -> " << std::flush;
+      Logger::message_start("Encrypting frame. Length: ", length, ", +macsize: ", (length + MACSIZE), ", swap_endian: ", length_data, " -> ");
 
     if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, reinterpret_cast<unsigned char *>(&length_data), sizeof(uint32_t)) != 1)
     {
-      std::cout << "ENCRYPT FAILED" << std::endl;
+      Logger::error("ENCRYPT FAILED");
       return {nullptr, 0};
     }
     encryptedframepos = l;
 
     if (d_verbose) [[unlikely]]
-      std::cout << bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(encryptedframe.get()), 4) << std::endl;
+      Logger::message(bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(encryptedframe.get()), 4));
   }
   else [[unlikely]] // old backup file format, had RAW frame length
   {
     uint32_t rawlength = bepaald::swap_endian<uint32_t>(length + MACSIZE);
     if (d_verbose) [[unlikely]]
-      std::cout << "Writing raw framelength: " << length << ", +macsize: " << (length + MACSIZE) << ", swap_endian: " << rawlength << std::endl;
+      Logger::message("Writing raw framelength: ", length, ", +macsize: ", (length + MACSIZE), ", swap_endian: ", rawlength);
     std::memcpy(encryptedframe.get(), reinterpret_cast<unsigned char *>(&rawlength), sizeof(uint32_t));
     encryptedframepos = 4;
   }
@@ -84,7 +84,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
   int l = static_cast<int>(length);
   if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get() + encryptedframepos, &l, data, length) != 1)
   {
-    std::cout << "ENCRYPT FAILED" << std::endl;
+    Logger::error("ENCRYPT FAILED");
     return {nullptr, 0};
   }
 

@@ -26,12 +26,12 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
 
   if (length == 0) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Asked to encrypt a zero sized attachment." << std::endl;
+    Logger::warning("Asked to encrypt a zero sized attachment.");
     //return {nullptr, 0};
   }
 
   if (d_verbose) [[unlikely]]
-    std::cout << "Encrypting attachment. Length: " << length << "..." << std::flush;
+    Logger::message_start("Encrypting attachment. Length: ", length, "...");
 
   // update iv:
   uintToFourBytes(d_iv, d_counter++);
@@ -42,17 +42,17 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   // disable padding
   EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
 
-  if (EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+  if (EVP_EncryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::error("CTX INIT FAILED");
     return {nullptr, 0};
   }
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[length + MACSIZE]);
   int l = static_cast<int>(length);
-  if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, data, length) != 1)
+  if (EVP_EncryptUpdate(ctx.get(), encryptedframe.get(), &l, data, length) != 1) [[unlikely]]
   {
-    std::cout << "ENCRYPT FAILED" << std::endl;
+    Logger::error("ENCRYPT FAILED");
     return {nullptr, 0};
   }
 
@@ -64,39 +64,39 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
   char digest[] = "SHA256";
   OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", digest, 0), OSSL_PARAM_construct_end()};
-  if (EVP_MAC_init(hctx.get(), d_mackey, d_mackey_size, params) != 1)
+  if (EVP_MAC_init(hctx.get(), d_mackey, d_mackey_size, params) != 1) [[unlikely]]
   {
-    std::cout << "Failed to initialize HMAC" << std::endl;
+    Logger::error("Failed to initialize HMAC");
     return {nullptr, 0};
   }
   if (EVP_MAC_update(hctx.get(), d_iv, d_iv_size) != 1 ||
       EVP_MAC_update(hctx.get(), encryptedframe.get(), length) != 1 ||
-      EVP_MAC_final(hctx.get(), hash, nullptr, digest_size) != 1)
+      EVP_MAC_final(hctx.get(), hash, nullptr, digest_size) != 1) [[unlikely]]
   {
-    std::cout << "Failed to update/finalize hmac" << std::endl;
+    Logger::error("Failed to update/finalize hmac");
     return {nullptr, 0};
   }
 #else
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
   std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
-  if (HMAC_Init_ex(hctx.get(), d_mackey, d_mackey_size, EVP_sha256(), nullptr) != 1)
+  if (HMAC_Init_ex(hctx.get(), d_mackey, d_mackey_size, EVP_sha256(), nullptr) != 1) [[unlikely]]
   {
-    std::cout << "Failed to initialize HMAC context" << std::endl;
+    Logger::error("Failed to initialize HMAC context");
     return {nullptr, 0};
   }
   if (HMAC_Update(hctx.get(), d_iv, d_iv_size) != 1 ||
       HMAC_Update(hctx.get(), encryptedframe.get(), length) != 1 ||
-      HMAC_Final(hctx.get(), hash, &digest_size) != 1)
+      HMAC_Final(hctx.get(), hash, &digest_size) != 1) [[unlikely]]
   {
-    std::cout << "Failed to update/finalize hmac" << std::endl;
+    Logger::error("Failed to update/finalize hmac");
     return {nullptr, 0};
   }
 #endif
   std::memcpy(encryptedframe.get() + length, hash, 10);
 
   if (d_verbose) [[unlikely]]
-     std::cout << "done!" << std::endl;
+    Logger::message("done!");
 
   return {encryptedframe.release(), length + MACSIZE};
 }

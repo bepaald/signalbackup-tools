@@ -78,7 +78,7 @@ void FileDecryptor::strugee(uint64_t pos)
 
     if (skipped % 100 == 0)
       Logger::message_overwrite("Checking if we skipped ", skipped, " frames... ");
-      //std::cout << "\rChecking if we skipped " << skipped << " frames... " << std::flush;
+      //Logger::message("\rChecking if we skipped ", skipped, " frames... ", std::flush;
 
     uintToFourBytes(d_iv, d_counter + skipped);
 
@@ -114,7 +114,7 @@ void FileDecryptor::strugee(uint64_t pos)
     if (!frame)
     {
       Logger::message_overwrite("Checking if we skipped ", skipped, " frames... nope! :(");
-      //std::cout << "\rChecking if we skipped " << skipped << " frames... nope! :(" << std::flush;
+      //Logger::message("\rChecking if we skipped ", skipped, " frames... nope! :(", std::flush;
       //if (skipped >
     }
     else
@@ -126,7 +126,7 @@ void FileDecryptor::strugee(uint64_t pos)
         d_counter += skipped;
         d_framecount += skipped;
         Logger::message_overwrite("Checking if we skipped ", skipped, " frames... YEAH! :)");
-        //std::cout << "\rChecking if we skipped " << skipped << " frames... YEAH! :)" << std::endl;
+        //Logger::message("\rChecking if we skipped ", skipped, " frames... YEAH! :)");
         Logger::message("Good frame: ", frame->frameNumber(), " (", frame->frameTypeString(), ")\nCOUNTER: ", d_counter);
         frame->printInfo();
         //delete[] encryptedframe.release();
@@ -139,7 +139,7 @@ void FileDecryptor::strugee(uint64_t pos)
   }
 
   //frame->printInfo();
-  //std::cout << "HEADERTYPE: " << frame->frameType() << std::endl;
+  //Logger::message("HEADERTYPE: ", frame->frameType());
 
   uint32_t attsize = 0;
   if (!d_badmac && (attsize = frame->attachmentSize()) > 0 &&
@@ -148,7 +148,7 @@ void FileDecryptor::strugee(uint64_t pos)
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
     if (d_verbose) [[unlikely]]
-      std::cout << "Trying to read attachment (bruteforce)" << std::endl;
+      Logger::message("Trying to read attachment (bruteforce)");
 
     uintToFourBytes(d_iv, d_counter++);
 
@@ -160,7 +160,7 @@ void FileDecryptor::strugee(uint64_t pos)
     if (!d_lazyload) // immediately decrypt i guess...
     {
       if (d_verbose) [[unlikely]]
-        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
+        Logger::message("Getting attachment at file pos ", d_file.tellg(), " (size: ", attsize, ")");
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
       if (getatt != 0)
@@ -184,11 +184,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   long long int filepos = d_file.tellg();
 
   if (d_verbose) [[unlikely]]
-    std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
+    Logger::message("Getting frame at filepos: ", filepos, " (COUNTER: ", d_counter, ")");
 
   if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -201,24 +201,24 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   uint32_t encryptedframelength = getNextFrameBlockSize();
   //if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   //{
-  //  std::cout << "Suspicious framelength" << std::endl;
+  //  Logger::message("Suspicious framelength");
   //  bruteForceFrom(filepos)???
   //}
 
   if (encryptedframelength == 0 && d_file.eof()) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file!" << std::endl;
+    Logger::message(bepaald::bold_on, "ERROR", bepaald::bold_off, " Unexpectedly hit end of file!");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
   DEBUGOUT("Framelength: ", encryptedframelength);
   if (d_verbose) [[unlikely]]
-    std::cout << "Framelength: " << encryptedframelength << std::endl;
+    Logger::message("Framelength: ", encryptedframelength);
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
   if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    Logger::message("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -228,13 +228,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0) [[unlikely]]
   {
-    std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
-    std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+    Logger::warning("Bad MAC in frame: theirMac: ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
+    Logger::warning_indent("                    ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
     d_badmac = true;
     if (d_stoponerror)
     {
-      std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+      Logger::message("Stop reading backup. Next frame would be read at offset ", filepos + encryptedframelength);
       return std::unique_ptr<BackupFrame>(nullptr);
     }
   }
@@ -243,8 +242,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
     d_badmac = false;
     if (d_verbose) [[unlikely]]
     {
-      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
-      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+      Logger::message("Calculated mac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+      Logger::message("Mac in file   : ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
     }
   }
 
@@ -259,7 +258,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::message("CTX INIT FAILED");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -268,7 +267,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 
   if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
-    std::cout << "Failed to decrypt data" << std::endl;
+    Logger::message("Failed to decrypt data");
     delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
@@ -279,17 +278,17 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 
   if (!frame) [[unlikely]]
   {
-    std::cout << "Failed to get valid frame from decoded data..." << std::endl;
+    Logger::message("Failed to get valid frame from decoded data...");
     if (d_badmac)
     {
-      std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
+      Logger::message("Encrypted data had failed verification (Bad MAC)");
       delete[] decodedframe;
       return std::unique_ptr<BackupFrame>(nullptr);
     }
     else
     {
-      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(" << std::endl;
-      std::cout << "Decrypted frame data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+      Logger::message("Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(");
+      Logger::message("Decrypted frame data: ", bepaald::bytesToHexString(decodedframe, decodedframelength));
       delete[] decodedframe;
       return std::make_unique<InvalidFrame>();
     }
@@ -309,7 +308,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
     if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[unlikely]]
       if (!d_assumebadframesize)
       {
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
+        Logger::error("Unexpectedly hit end of file while reading attachment!");
         return std::unique_ptr<BackupFrame>(nullptr);
       }
 
@@ -323,12 +322,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
     if (!d_lazyload) // immediately decrypt i guess...
     {
       if (d_verbose) [[unlikely]]
-        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
+        Logger::message("Getting attachment at file pos ", d_file.tellg(), " (size: ", attsize, ")");
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())); // 0 == good, >0 == bad, <0 == bad+badmac
       if (getatt > 0)
       {
-        std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
+        Logger::message("Failed to get attachment data for FrameWithAttachment... info:");
         frame->printInfo();
         return std::unique_ptr<BackupFrame>(nullptr);
       }
@@ -337,15 +336,15 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
         d_badmac = true;
         if (d_stoponerror)
         {
-          std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+          Logger::message("Stop reading backup. Next frame would be read at offset ", filepos + encryptedframelength);
           return std::unique_ptr<BackupFrame>(nullptr);
         }
         if (d_assumebadframesize)
         {
           std::unique_ptr<BackupFrame> f = bruteForceFrom(filepos, encryptedframelength);
           //long long int curfilepos = d_file.tellg();
-          //std::cout << "curpso: " << curfilepos << std::endl;
-          //std::cout << "ATTACHMENT LENGTH SHOULD HAVE BEEN: " << curfilepos - filepos - encryptedframelength - MACSIZE << std::endl;
+          //Logger::message("curpso: ", curfilepos);
+          //Logger::message("ATTACHMENT LENGTH SHOULD HAVE BEEN: ", curfilepos - filepos - encryptedframelength - MACSIZE);
           return f;
         }
       }
@@ -354,7 +353,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameStrugee2()
 
   }
 
-  //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;
+  //Logger::message("FILEPOS: ", d_file.tellg());
 
   //delete frame;
 
@@ -393,11 +392,11 @@ void FileDecryptor::strugee2()
       endfound = true;
   }
 
-  std::cout << "Tables present in backup:" << std::endl;
+  Logger::message("Tables present in backup:");
   for (uint i = 0; i < tables.size(); ++i)
-    std::cout << tables[i] << ((i == tables.size() - 1) && !endfound ? " (probably incomplete)" : "") << std::endl;
+    Logger::message(tables[i], ((i == tables.size() - 1) && !endfound ? " (probably incomplete)" : ""));
 
-  std::cout << "Last message: " << (lastmsg.empty() ? "(none)" : lastmsg) << std::endl;
+  Logger::message("Last message: ", (lastmsg.empty() ? "(none)" : lastmsg));
 
 }
 
@@ -409,46 +408,46 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   //d_file.seekg(0, std::ios_base::beg);
   long long int filepos = d_file.tellg();
 
-  //std::cout << "FILEPOS: " << filepos << std::endl;
+  //Logger::message("FILEPOS: ", filepos);
 
 
   if (d_verbose) [[unlikely]]
-    std::cout << "Getting frame at filepos: " << filepos << " (COUNTER: " << d_counter << ")" << std::endl;
+    Logger::message("Getting frame at filepos: ", filepos, " (COUNTER: ", d_counter, ")");
 
   if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return;
   }
 
   if (d_headerframe)
   {
     std::unique_ptr<BackupFrame> frame(d_headerframe.release());
-    std::cout << "Headerframe" << std::endl;
+    Logger::message("Headerframe");
     continue;
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
   //if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   //{
-  //  std::cout << "Suspicious framelength" << std::endl;
+  //  Logger::message("Suspicious framelength");
   //  bruteForceFrom(filepos)???
   //}
 
   if (encryptedframelength == 0 && d_file.eof()) [[unlikely]]
   {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file!" << std::endl;
+    Logger::error("Unexpectedly hit end of file!");
     return;
   }
 
   DEBUGOUT("Framelength: ", encryptedframelength);
   if (d_verbose) [[unlikely]]
-    std::cout << "Framelength: " << encryptedframelength << std::endl;
+    Logger::message("Framelength: ", encryptedframelength);
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
   if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11 || !getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
-    std::cout << "Failed to read next frame (" << encryptedframelength << " bytes at filepos " << filepos << ")" << std::endl;
+    Logger::message("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
     return;
   }
 
@@ -458,9 +457,8 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, 10) != 0) [[unlikely]]
   {
-    std::cout << "" << std::endl;
-    std::cout << "WARNING: Bad MAC in frame: theirMac: " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
-    std::cout << "                             ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+    Logger::warning("Bad MAC in frame: theirMac: ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
+    Logger::warning_indent("                    ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
     d_badmac = true;
   }
   else
@@ -472,8 +470,8 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
     d_badmac = false;
     if (d_verbose) [[unlikely]]
     {
-      std::cout << "Calculated mac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
-      std::cout << "Mac in file   : " << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
+      Logger::message("Calculated mac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+      Logger::message("Mac in file   : ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
     }
   }
 
@@ -489,7 +487,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
 
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
-    std::cout << "CTX INIT FAILED" << std::endl;
+    Logger::message("CTX INIT FAILED");
     return;
   }
 
@@ -498,7 +496,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
 
   if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
-    std::cout << "Failed to decrypt data" << std::endl;
+    Logger::message("Failed to decrypt data");
     delete[] decodedframe;
     return;
   }
@@ -509,17 +507,17 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
 
   if (!frame) [[unlikely]]
   {
-    std::cout << "Failed to get valid frame from decoded data..." << std::endl;
+    Logger::message("Failed to get valid frame from decoded data...");
     if (d_badmac)
     {
-      std::cout << "Encrypted data had failed verification (Bad MAC)" << std::endl;
+      Logger::message("Encrypted data had failed verification (Bad MAC)");
       delete[] decodedframe;
       return;
     }
     else
     {
-      std::cout << "Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(" << std::endl;
-      std::cout << "Decrypted frame data: " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+      Logger::message("Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(");
+      Logger::message("Decrypted frame data: ", bepaald::bytesToHexString(decodedframe, decodedframelength));
       delete[] decodedframe;
       return;
     }
@@ -539,7 +537,7 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
     if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[ unlikely ]]
       if (!d_assumebadframesize)
       {
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unexpectedly hit end of file while reading attachment!" << std::endl;
+        Logger::error("Unexpectedly hit end of file while reading attachment!");
         return;
       }
 
@@ -553,12 +551,12 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
     if (!d_lazyload) // immediately decrypt i guess...
     {
       if (d_verbose) [[unlikely]]
-        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
+        Logger::message("Getting attachment at file pos ", d_file.tellg(), " (size: ", attsize, ")");
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get())); // 0 == good, >0 == bad, <0 == bad+badmac
       if (getatt > 0)
       {
-        std::cout << "Failed to get attachment data for FrameWithAttachment... info:" << std::endl;
+        Logger::message("Failed to get attachment data for FrameWithAttachment... info:");
         frame->printInfo();
         return;
       }
@@ -567,15 +565,15 @@ void FileDecryptor::strugee3Helper(std::vector<std::pair<std::unique_ptr<unsigne
         d_badmac = true;
         if (d_stoponerror)
         {
-          std::cout << "Stop reading backup. Next frame would be read at offset " << filepos + encryptedframelength << std::endl;
+          Logger::message("Stop reading backup. Next frame would be read at offset ", filepos + encryptedframelength);
           return;
         }
         if (d_assumebadframesize)
         {
           std::unique_ptr<BackupFrame> f = bruteForceFrom(filepos, encryptedframelength);
           //long long int curfilepos = d_file.tellg();
-          //std::cout << "curpso: " << curfilepos << std::endl;
-          //std::cout << "ATTACHMENT LENGTH SHOULD HAVE BEEN: " << curfilepos - filepos - encryptedframelength - MACSIZE << std::endl;
+          //Logger::message("curpso: ", curfilepos);
+          //Logger::message("ATTACHMENT LENGTH SHOULD HAVE BEEN: ", curfilepos - filepos - encryptedframelength - MACSIZE);
           return;
         }
       }
@@ -597,26 +595,26 @@ void FileDecryptor::strugee3(uint64_t pos)
 
   std::vector<std::pair<std::unique_ptr<unsigned char[]>, uint64_t>> macs_and_positions;
   strugee3Helper(&macs_and_positions);
-  std::cout << "Got macs: " << std::endl;
+  Logger::message("Got macs: ");
   //for (uint i = 0; i < macs_and_positions.size(); ++i)
-  //  std::cout << macs_and_positions[i].second << " : " << bepaald::bytesToHexString(macs_and_positions[i].first.get(), SHA256_DIGEST_LENGTH) << std::endl;
+  //  Logger::message(macs_and_positions[i].second, " : ", bepaald::bytesToHexString(macs_and_positions[i].first.get(), SHA256_DIGEST_LENGTH));
 
   uint offset = 0;
 
   d_file.seekg(pos, std::ios_base::beg);
 
-  std::cout << "Getting frame at filepos: " << d_file.tellg() << std::endl;
+  Logger::message("Getting frame at filepos: ", d_file.tellg());
 
   if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return;
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
   if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   {
-    std::cout << "Framesize too big to be real" << std::endl;
+    Logger::message("Framesize too big to be real");
     return;
   }
 
@@ -630,37 +628,37 @@ void FileDecryptor::strugee3(uint64_t pos)
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, MACSIZE) != 0)
   {
-    std::cout << "BAD MAC!" << std::endl;
+    Logger::message("BAD MAC!");
     return;
   }
   else
   {
-    std::cout << "" << std::endl;
-    std::cout << "GOT GOOD MAC AT OFFSET " << offset << " BYTES!" << std::endl;
-    std::cout << "Now let's try and find out how many frames we skipped to get here...." << std::endl;
+    Logger::message("");
+    Logger::message("GOT GOOD MAC AT OFFSET ", offset, " BYTES!");
+    Logger::message("Now let's try and find out how many frames we skipped to get here....");
     d_badmac = false;
   }
 
 
 
 
-  std::cout << "Got GOOD MAC : " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
+  Logger::message("Got GOOD MAC : ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
   for (uint i = 0; i < macs_and_positions.size(); ++i)
   {
     if (std::memcmp(macs_and_positions[i].first.get(), hash, SHA256_DIGEST_LENGTH) == 0)
     {
-      std::cout << "SAME MAC AT POS: " << macs_and_positions[i].second << std::endl;
+      Logger::message("SAME MAC AT POS: ", macs_and_positions[i].second);
 
       int const size = 200;
       unsigned char bytes[size];
 
       d_file.seekg(macs_and_positions[i].second);
       d_file.read(reinterpret_cast<char *>(bytes), size);
-      std::cout << "200 bytes at file position " << macs_and_positions[i].second << ": " << std::endl << bepaald::bytesToHexString(bytes, size) << std::endl;
+      Logger::message("200 bytes at file position ", macs_and_positions[i].second, ": \n", bepaald::bytesToHexString(bytes, size));
 
       d_file.seekg(pos);
       d_file.read(reinterpret_cast<char *>(bytes), size);
-      std::cout << "200 bytes at file position " << pos << ": " << std::endl << bepaald::bytesToHexString(bytes, size) << std::endl;
+      Logger::message("200 bytes at file position ", pos, ": \n", bepaald::bytesToHexString(bytes, size));
     }
   }
 }
@@ -673,25 +671,25 @@ void FileDecryptor::ashmorgan()
   d_file.seekg(d_filesize - 100, std::ios_base::beg);
   std::unique_ptr<unsigned char[]> cbytes(new unsigned char[100]);
   d_file.read(reinterpret_cast<char *>(cbytes.get()), 100);
-  std::cout << std::endl << "Last 100 bytes: " << bepaald::bytesToHexString(cbytes.get(), 100) << std::endl << std::endl;
+  Logger::message("\nLast 100 bytes: ", bepaald::bytesToHexString(cbytes.get(), 100), "\n");
   cbytes.release();
 
 
 
   d_file.seekg(d_filesize - 16, std::ios_base::beg);
 
-  std::cout << "Getting frame at filepos: " << d_file.tellg() << std::endl;
+  Logger::message("Getting frame at filepos: ", d_file.tellg());
 
   if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
   {
-    std::cout << "Read entire backup file..." << std::endl;
+    Logger::message("Read entire backup file...");
     return;
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize();
   if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   {
-    std::cout << "Framesize too big to be real" << std::endl;
+    Logger::message("Framesize too big to be real");
     return;
   }
 
@@ -699,7 +697,7 @@ void FileDecryptor::ashmorgan()
   if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength))
     return;
 
-  std::cout << "FRAME: " << bepaald::bytesToHexString(encryptedframe.get(), encryptedframelength) << std::endl;
+  Logger::message("FRAME: ", bepaald::bytesToHexString(encryptedframe.get(), encryptedframelength));
 
   // check hash
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
@@ -707,14 +705,14 @@ void FileDecryptor::ashmorgan()
   HMAC(EVP_sha256(), d_mackey, d_mackey_size, encryptedframe.get(), encryptedframelength - MACSIZE, hash, &digest_size);
   if (std::memcmp(encryptedframe.get() + (encryptedframelength - MACSIZE), hash, MACSIZE) != 0)
   {
-    std::cout << "BAD MAC!" << std::endl;
+    Logger::message("BAD MAC!");
     return;
   }
   else
   {
-    std::cout << "" << std::endl;
-    std::cout << "GOT GOOD MAC AT OFFSET " << offset << " BYTES! " << bepaald::bytesToHexString(hash, digest_size) << std::endl;
-    std::cout << "Now let's try and find out how many frames we skipped to get here...." << std::endl;
+    Logger::message("");
+    Logger::message("GOT GOOD MAC AT OFFSET ", offset, " BYTES! ", bepaald::bytesToHexString(hash, digest_size));
+    Logger::message("Now let's try and find out how many frames we skipped to get here....");
     d_badmac = false;
   }
 
@@ -728,12 +726,12 @@ void FileDecryptor::ashmorgan()
 
     if (skipped > 1000000) // a frame is at least 10 bytes? -> could probably safely set this higher. MAC alone is 10 bytes, there is also actual data
     {
-      std::cout << "TESTED 1000000 frames" << std::endl;
+      Logger::message("TESTED 1000000 frames");
       return;
     }
 
     if (skipped % 100 == 0)
-      std::cout << "\rChecking if we skipped " << skipped << " frames... " << std::flush;
+      Logger::message_overwrite("\rChecking if we skipped ", skipped, " frames... ");
 
     uintToFourBytes(d_iv, d_counter + skipped);
 
@@ -745,7 +743,7 @@ void FileDecryptor::ashmorgan()
 
     if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
     {
-      std::cout << "CTX INIT FAILED" << std::endl;
+      Logger::message("CTX INIT FAILED");
       return;
     }
 
@@ -754,7 +752,7 @@ void FileDecryptor::ashmorgan()
 
     if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
     {
-      std::cout << "Failed to decrypt data" << std::endl;
+      Logger::message("Failed to decrypt data");
       delete[] decodedframe;
       return;
     }
@@ -766,7 +764,7 @@ void FileDecryptor::ashmorgan()
     ++skipped;
     if (!frame)
     {
-      std::cout << "\rChecking if we skipped " << skipped << " frames... nope! :(" << std::flush;
+      Logger::message_overwrite("\rChecking if we skipped ", skipped, " frames... nope! :(");
       //if (skipped >
     }
     else
@@ -777,10 +775,10 @@ void FileDecryptor::ashmorgan()
       {
         d_counter += skipped;
         d_framecount += skipped;
-        std::cout << "\rChecking if we skipped " << skipped << " frames... YEAH! :)" << std::endl;
-        std::cout << "Good frame: " << frame->frameNumber() << " (" << frame->frameTypeString() << ")" << std::endl;
-        std::cout << "COUNTER: " << d_counter << std::endl;
-        std::cout << "Decoded hex      : " << bepaald::bytesToHexString(decodedframe, decodedframelength) << std::endl;
+        Logger::message_overwrite("\rChecking if we skipped ", skipped, " frames... YEAH! :)", Logger::Control::ENDOVERWRITE);
+        Logger::message("Good frame: ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
+        Logger::message("COUNTER: ", d_counter);
+        Logger::message("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
         frame->printInfo();
         //delete[] encryptedframe.release();
         frame.reset();
@@ -788,14 +786,14 @@ void FileDecryptor::ashmorgan()
         delete[] decodedframe;
         return;
       }
-      std::cout << "\rChecking if we skipped " << skipped << " frames... nope! :(" << std::flush;
+      Logger::message_overwrite("\rChecking if we skipped ", skipped, " frames... nope! :(");
       frame.reset();
     }
     delete[] decodedframe;
   }
 
   //frame->printInfo();
-  //std::cout << "HEADERTYPE: " << frame->frameType() << std::endl;
+  //Logger::message("HEADERTYPE: ", frame->frameType());
 
   uint32_t attsize = 0;
   if (!d_badmac && (attsize = frame->attachmentSize()) > 0 &&
@@ -804,7 +802,7 @@ void FileDecryptor::ashmorgan()
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
     if (d_verbose) [[unlikely]]
-      std::cout << "Trying to read attachment (bruteforce)" << std::endl;
+      Logger::message("Trying to read attachment (bruteforce)");
 
     uintToFourBytes(d_iv, d_counter++);
 
@@ -816,7 +814,7 @@ void FileDecryptor::ashmorgan()
     if (!d_lazyload) // immediately decrypt i guess...
     {
       if (d_verbose) [[unlikely]]
-        std::cout << "Getting attachment at file pos " << d_file.tellg() << " (size: " << attsize << ")" << std::endl;
+        Logger::message("Getting attachment at file pos ", d_file.tellg(), " (size: ", attsize, ")");
 
       int getatt = getAttachment(reinterpret_cast<FrameWithAttachment *>(frame.get()));
       if (getatt != 0)

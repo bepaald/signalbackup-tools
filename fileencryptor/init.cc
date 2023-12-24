@@ -39,14 +39,14 @@ bool FileEncryptor::init(unsigned char *salt, uint64_t salt_size, unsigned char 
   // generate backup key from salt and passphrase
   if (!getBackupKey(d_passphrase))
   {
-    std::cout << "Failed to generate backup key from passphrase" << std::endl;
+    Logger::error("Failed to generate backup key from passphrase");
     return false;
   }
 
   // generate mackey and cipher from backupkey
   if (!getCipherAndMac(32, 64))
   {
-    std::cout << "Failed to generate mackey and cipher from backupkey" << std::endl;
+    Logger::error("Failed to generate mackey and cipher from backupkey");
     return false;
   }
 
