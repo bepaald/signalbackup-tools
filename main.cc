@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
       !bepaald::isDir(arg.input()))
   {
     std::string pw;
-    std::cout << "Please provide passphrase for input file '" << arg.input() << "': "  << std::flush;
+    Logger::message_start("Please provide passphrase for input file '", arg.input(), "': ");
     if (!getPassword(&pw))
     {
       Logger::error("Failed to set passphrase");
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
   if (!arg.source().empty() && (arg.interactive() || arg.sourcepassphrase().empty()))
   {
     std::string spw;
-    std::cout << "Please provide passphrase for source file '" << arg.source() << "': "  << std::flush;
+    Logger::message_start("Please provide passphrase for source file '", arg.source(), "': ");
     if (!getPassword(&spw))
     {
       Logger::error("Failed to set passphrase");
@@ -128,7 +128,8 @@ int main(int argc, char *argv[])
       (arg.interactive() || arg.opassphrase().empty()))
   {
     std::string opw;
-    std::cout << "Please provide passphrase for output file '" << arg.output() << "' (leave empty to use input passphrase): "  << std::flush;
+    Logger::message_start("Please provide passphrase for output file '", arg.output(),
+                          "' (leave empty to use input passphrase): ");
     if (!getPassword(&opw))
     {
       Logger::error("Failed to set passphrase");
@@ -152,28 +153,28 @@ int main(int argc, char *argv[])
   // temporary. REMOVE THIS
   if (arg.strugee() != -1)
   {
-    std::cout << "TEMP FUNCTION (#37)" << std::endl;
+    Logger::message("TEMP FUNCTION (#37)");
     FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.strugee(arg.strugee());
     return 0;
   }
   if (arg.strugee3() != -1)
   {
-    std::cout << "TEMP FUNCTION (#37)" << std::endl;
+    Logger::message("TEMP FUNCTION (#37)");
     FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.strugee3(arg.strugee3());
     return 0;
   }
   if (arg.ashmorgan())
   {
-    std::cout << "TEMP FUNCTION (#40)" << std::endl;
+    Logger::message("TEMP FUNCTION (#40)");
     FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.ashmorgan();
     return 0;
   }
   else if (arg.strugee2())
   {
-    std::cout << "TEMP FUNCTION 2 (#37)" << std::endl;
+    Logger::message("TEMP FUNCTION 2 (#37)");
     FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
     fd.strugee2();
     return 0;

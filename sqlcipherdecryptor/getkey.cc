@@ -26,7 +26,7 @@ bool SqlCipherDecryptor::getKey()
   std::fstream config(d_configpath + "/config.json", std::ios_base::in | std::ios_base::binary);
   if (!config.is_open())
   {
-    std::cout << "Failed to open input: " << d_configpath << "/config.json" << std::endl;
+    Logger::error("Failed to open input: ", d_configpath, "/config.json");
     return false;
   }
   std::string line;
@@ -52,7 +52,7 @@ bool SqlCipherDecryptor::getKey()
 
   if (!found)
   {
-    std::cout << "Failed to read key from config.json" << std::endl;
+    Logger::error("Failed to read key from config.json");
     return false;
   }
 
@@ -67,7 +67,7 @@ bool SqlCipherDecryptor::getKey()
                                    *reinterpret_cast<uint8_t *>(d_key + i / 2), 16);
     if (ec != std::errc())
     {
-      std::cout << "Failed to parse key from hex data" << std::endl;
+      Logger::error("Failed to parse key from hex data");
       return false;
     }
   }

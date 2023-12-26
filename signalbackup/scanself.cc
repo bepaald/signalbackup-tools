@@ -240,7 +240,7 @@ long long int SignalBackup::scanSelf() const
                               Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
           for (uint j = 0; j < res3.rows(); ++j)
           {
-            std::cout << "  From group membership (NEW):" << res3(j, "recipeint_id") << std::endl;
+            Logger::message("  From group membership (NEW):", res3(j, "recipeint_id"));
             options.insert(bepaald::toNumber<long long int>(res3(j, "recipient_id")));
           }
 

@@ -21,7 +21,7 @@
 
 void SignalBackup::updateRecipientId(long long int targetid, long long int sourceid)
 {
-  std::cout << "  Mapping " << sourceid << " -> " << targetid;
+  Logger::message_start("  Mapping ", sourceid, " -> ", targetid);
   if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id", "notification_channel", "distribution_list_id"))
   {
     SqliteDB::QueryResults r;
@@ -31,10 +31,9 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
                         "CASE WHEN distribution_list_id IS NULL THEN '' ELSE 'd' END || "
                         "CASE WHEN notification_channel IS NULL THEN '' ELSE 'n' END "
                         "AS recipient_type FROM recipient", &r))
-      std::cout << " (" << r.valueAsString(0, "recipient_type") << ")";
+      Logger::message_start(" (", r.valueAsString(0, "recipient_type"), ")");
   }
-
-  std::cout << std::endl;
+  Logger::message_end();
 
   for (auto const &dbl : d_databaselinks)
   {
@@ -49,7 +48,8 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
           d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
       {
         d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?", {targetid, sourceid});
-        if (d_verbose) std::cout << "    update table '" + c.table + "', changed: " << d_database.changed() << std::endl;
+        if (d_verbose)
+          Logger::message("    update table '" + c.table + "', changed: ", d_database.changed());
       }
   }
   updateGV1MigrationMessage(sourceid, targetid);
@@ -294,7 +294,7 @@ void SignalBackup::updateRecipientId(long long int targetid, RecipientIdentifica
 
   if (results.rows() > 1)
   {
-    std::cout << "ERROR! Unexpectedly got multiple results" << std::endl;
+    Logger::error("Unexpectedly got multiple results");
     return;
   }
 

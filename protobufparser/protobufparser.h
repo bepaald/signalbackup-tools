@@ -27,6 +27,7 @@
 
 #include "../base64/base64.h"
 #include "../common_be.h"
+#include "../logger/logger.h"
 
 template<typename T>
 struct is_vector : public std::false_type {};
@@ -432,7 +433,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL (1)" << std::endl;
+            Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (1)");
           }
 
         }
@@ -446,8 +447,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL (2): "
-                      << fielddata.second << " " << sizeof(T) << std::endl;
+            Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (2): ", fielddata.second, " ", sizeof(T));
           }
         }
       }
@@ -503,7 +503,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
           }
           else
           {
-            std::cout << "ERROR REQUESTED TYPE TOO SMALL (3)" << std::endl;
+            Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (3)");
           }
         }
       }
@@ -1004,18 +1004,18 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       case WIRETYPE::STARTGROUP:
       {
         if (field == num)
-          std::cout << "Skipping startgroup for now" << std::endl;
+          Logger::warning("Skipping startgroup for now");
         break;
       }
       case WIRETYPE::ENDGROUP:
       {
         if (field == num)
-          std::cout << "Skipping endgroup for now" << std::endl;
+          Logger::warning("Skipping endgroup for now");
         break;
       }
       default:
       {
-        std::cout << "Unknown wiretype: " << wiretype << std::endl;
+        Logger::error("Unknown wiretype: ", wiretype);
         return;
         break;
       }
@@ -1087,13 +1087,13 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
       case WIRETYPE::STARTGROUP:
       {
         if (field == num)
-          std::cout << "Skipping startgroup for now" << std::endl;
+          Logger::warning("Skipping startgroup for now");
         break;
       }
       case WIRETYPE::ENDGROUP:
       {
         if (field == num)
-          std::cout << "Skipping endgroup for now" << std::endl;
+          Logger::warning("Skipping endgroup for now");
         break;
       }
     }
@@ -1165,7 +1165,7 @@ inline void ProtoBufParser<Spec...>::printSingle(int indent, std::string const &
 {
   auto tmp = getField<idx + 1>();
   if (tmp.has_value())
-    std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " " << typestring << ": " << tmp.value() << std::endl;
+    Logger::message(std::string(indent, ' '), "Field ", idx + 1, " ", typestring, ": ", tmp.value());
 }
 
 template <typename... Spec>
@@ -1174,7 +1174,7 @@ inline void ProtoBufParser<Spec...>::printRepeated(int indent, std::string const
 {
   std::vector<T> tmp = getField<idx + 1>();
   for (uint i = 0; i < tmp.size(); ++i)
-    std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " " << typestring << " (" << i + 1  << "/" << tmp.size() << "): " << tmp[i] << std::endl;
+    Logger::message(std::string(indent, ' '), "Field ", idx + 1, " ", typestring, " (", i + 1 , "/", tmp.size(), "): ", tmp[i]);
   return;
 }
 
@@ -1245,7 +1245,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     auto tmp = getField<idx + 1>();
     if (tmp.has_value())
-      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::bool): " << std::boolalpha << tmp.value() << std::endl;
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::bool): ", std::boolalpha, tmp.value());
     return;
   }
 
@@ -1254,7 +1254,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     std::optional<std::pair<unsigned char *, size_t>> tmp = getField<idx + 1>();
     if (tmp.has_value())
-      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::bytes[" << tmp.value().second << "]): " << bepaald::bytesToHexString(tmp.value().first, tmp.value().second) << std::endl;
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::bytes[", tmp.value().second, "]): ", bepaald::bytesToHexString(tmp.value().first, tmp.value().second));
     return;
   }
 
@@ -1263,7 +1263,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     if (getField<idx + 1>().has_value())
     {
-      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::protobuf): " << std::endl;
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::protobuf): ");
       return getField<idx + 1>().value().print(indent + 2);
     }
   }
@@ -1317,7 +1317,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     std::vector<bool> tmp = getField<idx + 1>();
     for (uint i = 0; i < tmp.size(); ++i)
-      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (repeated::bool) (" << i + 1  << "/" << tmp.size() << "): " << std::boolalpha << tmp[i] << std::endl;
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bool) (", i + 1 , "/", tmp.size(), "): ", std::boolalpha, tmp[i]);
     return;
   }
 
@@ -1328,8 +1328,8 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
     for (uint i = 0; i < tmp.size(); ++i)
     {
       std::pair<unsigned char *, size_t> tmp2 = tmp[i];
-      std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (repeated::bytes) (" << i + 1  << "/" << tmp.size() << "): "
-                << bepaald::bytesToHexString(tmp2.first, tmp2.second) << std::endl;
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bytes) (", i + 1 , "/", tmp.size(), "): ",
+                      bepaald::bytesToHexString(tmp2.first, tmp2.second));
       return;
     }
     return;
@@ -1342,13 +1342,13 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
       auto tmp = getField<idx + 1>();
       for (uint i = 0; i < tmp.size(); ++i)
       {
-        std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (repeated::protobuf) (" << i + 1  << "/" << tmp.size() << "): " << std::endl;
+        Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::protobuf) (", i + 1 , "/", tmp.size(), "): ");
         tmp.at(i).print(indent + 2);
       }
       return;
     }
 
-  std::cout << std::string(indent, ' ') << "Field " << idx + 1 << ": (unhandled protobuf type)" << std::endl;
+  Logger::message(std::string(indent, ' '), "Field ", idx + 1, ": (unhandled protobuf type)");
 }
 
 template <typename... Spec>

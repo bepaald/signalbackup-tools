@@ -24,8 +24,7 @@ std::string SignalBackup::tgBuildBody(std::string const &bodyjson) const
   long long int fragments = d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", bodyjson, -1);
   if (fragments == -1)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to get number of text fragments from message body. Body data: '" + bodyjson + "'";
+    Logger::error("Failed to get number of text fragments from message body. Body data: '" + bodyjson + "'");
     return std::string();
   }
 

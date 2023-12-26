@@ -62,7 +62,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     {
       if (dbfile->gcount() == 0 && dbfile->eof())
         break;
-      std::cout << "Unexpectedly failed to read next block" << (dbfile->eof() ? " (EOF)" : "") << std::endl;
+      Logger::error("Unexpectedly failed to read next block", (dbfile->eof() ? " (EOF)" : ""));
       return false;
     }
 
@@ -80,7 +80,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", d_digestname, 0), OSSL_PARAM_construct_end()};
     if (EVP_MAC_init(hctx.get(), d_hmackey, d_hmackeysize, params) != 1)
     {
-      std::cout << "Failed to initialize HMAC context" << std::endl;
+      Logger::error("Failed to initialize HMAC context");
       return false;
     }
     std::unique_ptr<unsigned char[]> calculatedmac(new unsigned char[d_digestsize]);
@@ -88,14 +88,14 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
         EVP_MAC_update(hctx.get(), reinterpret_cast<unsigned char *>(&pagenumber), sizeof(pagenumber)) != 1 ||
         EVP_MAC_final(hctx.get(), calculatedmac.get(), nullptr, d_digestsize) != 1)
     {
-      std::cout << "Failed to update/finalize hmac" << std::endl;
+      Logger::error("Failed to update/finalize hmac");
       return false;
     }
 #else
     std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
     if (HMAC_Init_ex(hctx.get(), d_hmackey, d_hmackeysize, d_digest, nullptr) != 1)
     {
-      std::cout << "Failed to initialize HMAC context" << std::endl;
+      Logger::error("Failed to initialize HMAC context");
       return false;
     }
     std::unique_ptr<unsigned char[]> calculatedmac(new unsigned char[d_digestsize]);
@@ -103,19 +103,19 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
         HMAC_Update(hctx.get(), reinterpret_cast<unsigned char *>(&pagenumber), sizeof(pagenumber)) != 1 ||
         HMAC_Final(hctx.get(), calculatedmac.get(), &d_digestsize) != 1)
     {
-      std::cout << "Failed to update/finalize hmac" << std::endl;
+      Logger::error("Failed to update/finalize hmac");
       return false;
     }
 #endif
     if (std::memcmp(page.get() + (real_page_size - (d_digestsize + page_padding)), calculatedmac.get(), d_digestsize) != 0)
     {
-      std::cout << "MAC in file: " << bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize) << std::endl;
-      std::cout << "Calculated : " << bepaald::bytesToHexString(calculatedmac.get(), d_digestsize) << std::endl;
-      std::cout << "BAD MAC! (pagenumber: " << pagenumber << ")" << std::endl;
+      Logger::error("BAD MAC! (pagenumber: ", pagenumber, ")");
+      Logger::error_indent("MAC in file: ", bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize));
+      Logger::error_indent("Calculated : ", bepaald::bytesToHexString(calculatedmac.get(), d_digestsize));
       return false;
     }
 
-    //std::cout << "MAC OK!" << std::endl;
+    //std::cout << ("MAC OK!" << std::endl;
 
     int decodedframelength = d_pagesize;
     if (pagenumber == 1)
@@ -124,26 +124,26 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     // init decryptor
     if (EVP_DecryptInit_ex(dctx.get(), EVP_aes_256_cbc(), nullptr, d_key, iv) != 1)
     {
-      std::cout << "CTX INIT FAILED" << std::endl;
+      Logger::error("CTX INIT FAILED");
       return false;
     }
 
     // disable padding
     EVP_CIPHER_CTX_set_padding(dctx.get(), 0);
 
-    //std::cout << "INIT OK!" << std::endl;
+    //std::cout << ("INIT OK!" << std::endl;
     int actualdecodedframelength = 0;
     if (EVP_DecryptUpdate(dctx.get(), d_decrypteddata + pos, &actualdecodedframelength, page_encrypted_data, page_encrypted_data_size) != 1)
     {
-      std::cout << "Failed to update decryption context" << std::endl;
+      Logger::error("Failed to update decryption context");
       ERR_print_errors_fp(stderr);
       return false;
     }
-    //std::cout << "DECRYPT OK!" << std::endl;
+    //std::cout << ("DECRYPT OK!" << std::endl;
     // reset decryptor
     if (EVP_CIPHER_CTX_reset(dctx.get()) != 1)
     {
-      std::cout << "CTX RESET FAILED" << std::endl;
+      Logger::error("CTX RESET FAILED");
       return false;
     }
     //std::cout << "RESET OK!" << std::endl;

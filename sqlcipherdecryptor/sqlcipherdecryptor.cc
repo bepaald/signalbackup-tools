@@ -55,7 +55,7 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   std::ifstream dbfile(d_apppath + "/sql/db.sqlite", std::ios_base::in | std::ios_base::binary);
   if (!dbfile.is_open())
   {
-    std::cout << "Failed to open database file '" << d_apppath + "/sql/db.sqlite" << "'" << std::endl;
+    Logger::error("Failed to open database file '", d_apppath + "/sql/db.sqlite", "'");
     return;
   }
 
@@ -70,7 +70,7 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
 
   if (!dbfile.read(reinterpret_cast<char *>(d_salt), d_saltsize))
   {
-    std::cout << "Failed to read salt from database file" << std::endl;
+    Logger::error("Failed to read salt from database file");
     return;
   }
 

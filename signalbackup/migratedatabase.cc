@@ -19,14 +19,14 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::migrateDatabase(int from [[maybe_unused]], int to [[maybe_unused]]) const
+bool SignalBackup::migrateDatabase(int from, int to) const
 {
   // interpreted from
   // https://github.com/signalapp/Signal-Android/blob/main/app/src/main/java/org/thoughtcrime/securesms/database/helpers/migration/V168_SingleMessageTableMigration.kt
   //
   // NOTE this function does not perform a full migrate to a (necessarily) working backup file. Its just enough for this programs exportHTML() function.
 
-  std::cout << "Attempting to migrate database from version " << from << " to version " << to << "..." << std::endl;
+  Logger::message("Attempting to migrate database from version ", from, " to version ", to, "...");
 
   if (!d_database.exec("BEGIN TRANSACTION"))
     return false;
@@ -242,7 +242,7 @@ bool SignalBackup::migrateDatabase(int from [[maybe_unused]], int to [[maybe_unu
                          "WHERE "
                          "_id IS ? RETURNING _id", i, &newmmsid))
     {
-      std::cout << "Error copying sms._id: " << i << std::endl;
+      Logger::error("copying sms._id: ", i);
       d_database.exec("ROLLBACK TRANSACTION");
       return false;
     }

@@ -21,7 +21,7 @@
 
 void SignalBackup::updateThreadsEntries(long long int thread)
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
   SqliteDB::QueryResults results;
   std::string query = "SELECT DISTINCT _id, " + d_thread_recipient_id + " FROM thread"; // gets all threads
@@ -36,9 +36,9 @@ void SignalBackup::updateThreadsEntries(long long int thread)
       std::string threadid = bepaald::toString(results.getValueAs<long long int>(i, "_id"));
 
       if (i == 0)
-        std::cout << "  Dealing with thread id: " << threadid << std::flush;
+        Logger::message_start("  Dealing with thread id: ", threadid);
       else
-        std::cout << ", " << threadid << std::flush;
+        Logger::message_start(", ", threadid);
 
       long long int thread_recipient = -1;
       if (results.valueHasType<long long int>(i, d_thread_recipient_id))
@@ -288,9 +288,9 @@ ThreadTable::
 
     }
     else
-      std::cout << "Unexpected type in database" << std::endl;
+      Logger::warning("Unexpected type in database");
   }
-  std::cout << std::endl;
+  Logger::message_end();
 }
 
 /*

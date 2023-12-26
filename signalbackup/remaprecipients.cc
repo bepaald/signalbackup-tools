@@ -24,8 +24,7 @@ void SignalBackup::remapRecipients()
 {
 
   // CALLED ON SOURCE
-
-  std::cout << " REMAP RECIPIENTS! " << std::endl;
+  Logger::message(" REMAP RECIPIENTS! ");
 
   SqliteDB::QueryResults results;
   d_database.exec("SELECT * FROM remapped_recipients", &results);

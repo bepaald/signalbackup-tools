@@ -66,6 +66,7 @@ class Logger
   inline static void message(First const &f, Rest... r);
   template <typename First, typename... Rest>
   inline static void message_start(First const &f, Rest... r);
+  inline static void message_end();
 
   template <typename First, typename... Rest>
   inline static void warning(First const &f, Rest... r);
@@ -253,6 +254,11 @@ inline void Logger::message_start(First const &f, Rest... r) // static
   //outputHead("[MESSAGE] ", "[MESSAGE] ");
   s_instance->outputHead("", false, {"", ": "});
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
+}
+
+inline void Logger::message_end() // static
+{
+  message("");
 }
 
 template <typename First, typename... Rest>

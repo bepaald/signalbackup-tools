@@ -21,9 +21,9 @@
 
 bool SignalBackup::summarize() const
 {
-  std::cout << "Database version: " << d_databaseversion << std::endl;
+  Logger::message("Database version: ", d_databaseversion);
   if (d_fd)
-    std::cout << "Filesize: " << d_fd->total() << " bytes" << std::endl;
+    Logger::message("Filesize: ", d_fd->total(), " bytes");
 
   if (d_databaseversion < 25)
     return false;
@@ -34,33 +34,33 @@ bool SignalBackup::summarize() const
   if (d_database.containsTable("sms"))
   {
     if (d_database.exec("SELECT DATETIME(ROUND((MIN(mindate)) / 1000), 'unixepoch', 'localtime') AS 'Min Date', DATETIME(ROUND(MAX((maxdate) / 1000)), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms UNION ALL SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results))
-      std::cout << "Period: " << results.valueAsString(0, "Min Date") << " - " << results.valueAsString(0, "Max Date") << std::endl;
+      Logger::message("Period: ", results.valueAsString(0, "Min Date"), " - ", results.valueAsString(0, "Max Date"));
   }
   else
   {
     if (d_database.exec("SELECT DATETIME(ROUND(mindate / 1000), 'unixepoch', 'localtime') AS 'Min Date', DATETIME(ROUND(maxdate / 1000), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results))
-      std::cout << "Period: " << results.valueAsString(0, "Min Date") << " - " << results.valueAsString(0, "Max Date") << std::endl;
+      Logger::message("Period: ", results.valueAsString(0, "Min Date"), " - ", results.valueAsString(0, "Max Date"));
   }
 
   // tables + counts
   if (d_database.exec("SELECT name FROM sqlite_master WHERE type = 'table'", &results))
   {
-    std::cout << "Tables:" << std::endl;
+    Logger::message("Tables:");
     for (uint i = 0; i < results.rows(); ++i)
     {
       SqliteDB::QueryResults results2;
       if (d_database.exec("SELECT COUNT(*) FROM " + results.valueAsString(i, "name"), &results2))
       {
-        std::cout << results.valueAsString(i, "name") << " : " << results2.getValueAs<long long int>(0, 0);
+        Logger::message_start(results.valueAsString(i, "name"), " : ", results2.getValueAs<long long int>(0, 0));
         if (results.valueAsString(i, "name") == "sms" || results.valueAsString(i, "name") == d_mms_table)
         {
           SqliteDB::QueryResults results3;
           if (d_database.exec("SELECT GROUP_CONCAT(counts, ',') FROM (SELECT COUNT(*) AS counts from " +
                               results.valueAsString(i, "name") +
                               " WHERE thread_id IN (SELECT _id FROM thread) GROUP BY thread_id ORDER BY thread_id ASC)", &results3))
-            std::cout << " (per thread: " << results3.valueAsString(0, 0) << ")";
+            Logger::message_start(" (per thread: ", results3.valueAsString(0, 0), ")");
         }
-        std::cout << std::endl;
+        Logger::message_end();
       }
     }
   }

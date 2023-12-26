@@ -78,5 +78,5 @@ void SignalBackup::updateGV1MigrationMessage(long long int id1, long long int id
     }
   }
   if (d_verbose && changed > 0)
-    std::cout << "    update " << table << ".body (GV1_MIGRATION), changed: " << changed << std::endl;
+    Logger::message("    update ", table, ".body (GV1_MIGRATION), changed: ", changed);
 }

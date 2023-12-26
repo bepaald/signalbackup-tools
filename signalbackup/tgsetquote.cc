@@ -26,7 +26,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
                        "WHERE _id = ?", quoted_message_id, &quote_res) ||
       quote_res.rows() != 1)
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get quote data." << std::endl;
+    Logger::warning("Failed to get quote data.");
     return false;
   }
 
@@ -35,7 +35,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
   std::string quote_body = quote_res.valueAsString(0, "body");
   if (quote_id == -1 || quote_author == -1)
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get quote data." << std::endl;
+    Logger::warning("Failed to get quote data.");
     return false;
   }
 
@@ -51,7 +51,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
                         (quote_res.isNull(0, "body") ? std::any(nullptr) : std::any(quote_body)),
                         new_msg_id}))
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set quote data." << std::endl;
+    Logger::warning("Failed to set quote data.");
     return false;
   }
 
@@ -68,7 +68,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
                                                                           " WHERE _id = ?", new_msg_id, -1);
     if (unique_id == -1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get unique_id for attachment in quote. Skipping." << std::endl;
+      Logger::warning("Failed to get unique_id for attachment in quote. Skipping.");
       return false;
     }
 
@@ -76,7 +76,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
     long long int quoted_unique_id = quote_att_res.valueAsInt(0, "unique_id", -1);
     if (unique_id == -1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get unique_id for quoted attachment. Skipping." << std::endl;
+      Logger::warning("Failed to get unique_id for quoted attachment. Skipping.");
       return false;
     }
 
@@ -97,7 +97,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
                     {"data_hash", quote_att_res.value(i, "data_hash")}},
                      "_id", &retval))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting part-data" << std::endl;
+        Logger::error("Inserting part-data");
         continue;
       }
       long long int new_part_id = std::any_cast<long long int>(retval);
@@ -105,7 +105,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
       // add attachment
       if (!bepaald::contains(d_attachments, std::pair{quote_att_res.valueAsInt(i, "_id", -1), quoted_unique_id}))
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find original of quoted attachment. Skipping." << std::endl;
+        Logger::warning("Failed to find original of quoted attachment. Skipping.");
         d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);
         continue;
       }

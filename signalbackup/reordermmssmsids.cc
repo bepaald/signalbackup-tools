@@ -21,7 +21,7 @@
 
 bool SignalBackup::reorderMmsSmsIds() const
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
   // get all mms in the correct order
   SqliteDB::QueryResults res;

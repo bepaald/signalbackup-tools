@@ -21,7 +21,7 @@
 
 bool SignalBackup::scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const
 {
-  std::cout << "Scrambling " << table << std::endl;
+  Logger::message("Scrambling ", table);
 
   std::string selectquery = "SELECT _id";
   for (uint i = 0; i < columns.size(); ++i)

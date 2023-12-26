@@ -26,8 +26,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
   long long int fragments = d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", bodyjson, -1);
   if (fragments == -1)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to get number of text fragments from message body. Body data: '" + bodyjson + "'" << std::endl;
+    Logger::error("Failed to get number of text fragments from message body. Body data: '" + bodyjson + "'");
     return false;
   }
 
@@ -42,8 +41,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
                          "json_extract(?, '$[" + bepaald::toString(i) + "].type') AS type",
                          {bodyjson, bodyjson}, &br) || br.rows() != 1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to get text fragment (" << i << ") from message body. Body data: '" + bodyjson + "'" << std::endl;
+      Logger::error("Failed to get text fragment (", i, ") from message body. Body data: '" + bodyjson + "'");
       return false;
     }
 
@@ -98,8 +96,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
     if (!d_database.exec("UPDATE " + d_mms_table + " SET message_ranges = ? WHERE rowid = ?", {bodyrangesdata, message_id}) ||
         d_database.changed() != 1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to set body ranges for message. Body data: '" + bodyjson + "'" << std::endl;
+      Logger::error("Failed to set body ranges for message. Body data: '" + bodyjson + "'");
       return false;
     }
   }

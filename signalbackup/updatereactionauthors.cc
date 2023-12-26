@@ -57,7 +57,7 @@ void SignalBackup::updateReactionAuthors(long long int id1, long long int id2) c
                            results.getValueAs<long long int>(i, "_id")});
       }
       if (d_verbose)
-        std::cout << "     Updated " << changedcount << " " << msgtable << ".reaction authors" << std::endl;
+        Logger::message("     Updated ", changedcount, " ", msgtable, ".reaction authors");
     }
   }
 }

@@ -24,7 +24,7 @@
 #include <fstream>
 
 #include "../common_be.h"
-
+#include "../logger/logger.h"
 
 struct evp_md_st;
 
@@ -85,20 +85,20 @@ inline bool SqlCipherDecryptor::writeToFile(std::string const &filename, bool ov
 {
   if (!overwrite && bepaald::fileOrDirExists(filename))
   {
-    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
+    Logger::error("File ", filename, " exists, use --overwrite to overwrite");
     return false;
   }
 
   std::ofstream out(filename);
   if (!out.is_open())
   {
-    std::cout << "Failed to open " << filename << " for writing" << std::endl;
+    Logger::error("Failed to open ", filename, " for writing");
     return false;
   }
 
   if (!out.write(reinterpret_cast<char *>(d_decrypteddata), d_decrypteddatasize))
   {
-    std::cout << "Error writing data to file" << std::endl;
+    Logger::error("Error writing data to file");
     return false;
   }
 

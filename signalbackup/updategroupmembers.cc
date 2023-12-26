@@ -56,10 +56,11 @@ void SignalBackup::updateGroupMembers(long long int id1, long long int id2) cons
       {
         changed = true;
         d_database.exec("UPDATE groups SET "s + members + " = ? WHERE _id == ?", {newmembers, gid});
-        if (d_verbose) std::cout << "    Updated groups." << members << ", changed: " << membersstr << " -> " << newmembers << std::endl;
+        if (d_verbose)
+          Logger::message("    Updated groups.", members, ", changed: ", membersstr, " -> ", newmembers);
       }
       if (d_verbose && changed)
-        std::cout << "    Updated groups." << members << ", changed: 0" << std::endl;
+        Logger::message("    Updated groups.", members, ", changed: 0");
     }
   }
 }
