@@ -462,7 +462,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   if (!d_ok)
     return;
 
-  std::cout << "Database version: " << d_databaseversion << std::endl;
+  Logger::message("Database version: ", d_databaseversion);
 
   checkDbIntegrity(true);
 }
@@ -499,14 +499,14 @@ inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
 {
   if (!frame)
   {
-    std::cout << "Error: asked to write nullptr frame to disk" << std::endl;
+    Logger::error("Asked to write nullptr frame to disk");
     return false;
   }
 
   std::ofstream rawframefile(outputfile, std::ios_base::binary);
   if (!rawframefile.is_open())
   {
-    std::cout << "Error opening file for writing: " << outputfile << std::endl;
+    Logger::error("Opening file for writing: ", outputfile);
     return false;
   }
 
@@ -547,13 +547,13 @@ inline bool SignalBackup::setFrameFromLine(std::unique_ptr<T> *newframe, std::st
   std::string::size_type pos = line.find(":", 0);
   if (pos == std::string::npos)
   {
-    std::cout << "Failed to read frame data line '" << line << "'" << std::endl;
+    Logger::error("Failed to read frame data line '", line, "'");
     return false;
   }
   unsigned int field = (*newframe)->getField(line.substr(0, pos));
   if (!field)
   {
-    std::cout << "Failed to get field number" << std::endl;
+    Logger::error("Failed to get field number");
     return false;
   }
 
@@ -561,7 +561,7 @@ inline bool SignalBackup::setFrameFromLine(std::unique_ptr<T> *newframe, std::st
   std::string::size_type pos2 = line.find(":", pos);
   if (pos2 == std::string::npos)
   {
-    std::cout << "Failed to read frame data from line '" << line << "'" << std::endl;
+    Logger::error("Failed to read frame data from line '", line, "'");
     return false;
   }
   std::string type = line.substr(pos, pos2 - pos);
@@ -621,7 +621,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std
   if (!datastream.is_open())
   {
     if (!quiet)
-      std::cout << "Failed to open '" << file << "' for reading" << std::endl;
+      Logger::error("Failed to open '", file, "' for reading");
     return false;
   }
   frame->reset(new EndFrame(nullptr, 1ull));
@@ -635,7 +635,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
   if (!datastream.is_open())
   {
     if (!quiet)
-      std::cout << "Failed to open '" << file << "' for reading" << std::endl;
+      Logger::error("Failed to open '", file, "' for reading");
     return false;
   }
 
@@ -668,7 +668,7 @@ inline void SignalBackup::addEndFrame()
 
 inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
 {
-  std::cout << " * Executing query: " << q << std::endl;
+  Logger::message(" * Executing query: ", q);
   SqliteDB::QueryResults res;
   if (!d_database.exec(q, &res))
     return;
@@ -678,7 +678,7 @@ inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
 
   if (q_comm == "DELETE" || q_comm == "INSERT" || q_comm == "UPDATE")
   {
-    std::cout << "Modified " << d_database.changed() << " rows" << std::endl;
+    Logger::message("Modified ", d_database.changed(), " rows");
     if (res.rows() == 0 && res.columns() == 0)
       return;
   }
@@ -708,7 +708,7 @@ inline std::vector<long long int> SignalBackup::threadIds() const
 
 inline void SignalBackup::showDBInfo() const
 {
-  std::cout << "Database version: " << d_databaseversion << std::endl;
+  Logger::message("Database version: ", d_databaseversion);
   d_database.print("SELECT m.name as TABLE_NAME, p.name as COLUMN_NAME FROM sqlite_master m LEFT OUTER JOIN pragma_table_info((m.name)) p ON m.name <> p.name ORDER BY TABLE_NAME, COLUMN_NAME");
 }
 
@@ -869,8 +869,10 @@ inline void SignalBackup::warnOnce(std::string const &warning, bool error)
 {
   if (!bepaald::contains(d_warningsgiven, warning))
   {
-    std::cout << bepaald::bold_on << (error ? "Error" : "Warning") << bepaald::bold_off << ": "
-              << warning << std::endl;
+    if (error)
+      Logger::error(warning);
+    else
+      Logger::warning(warning);
     d_warningsgiven.insert(warning);
   }
 }

@@ -21,36 +21,16 @@
 
 bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const
 {
-  std::cout << "Dumping avatars to dir '" << dir << "'" << std::endl;
+  Logger::message_overwrite("Dumping avatars to dir '", dir, "'...");
 
   if (!d_database.containsTable("recipient"))
   {
-    std::cout << "Database too old, dumping avatars is not (yet) supported, consider a full decrypt by just passing a directory as output" << std::endl;
+    Logger::error("Database too old, dumping avatars is not (yet) supported, consider a full decrypt by just passing a directory as output");
     return false;
   }
 
   if (!prepareOutputDirectory(dir, overwrite))
     return false;
-  // if (!bepaald::isDir(dir))
-  // {
-  //   std::cout << "Output directory '" << dir << "' does not exist or is not a directory" << std::endl;
-  //   return false;
-  // }
-
-  // if (!bepaald::isEmpty(dir))
-  // {
-  //   if (!overwrite)
-  //   {
-  //     std::cout << "Directory '" << dir << "' is not empty. Use --overwrite to clear directory before dump" << std::endl;
-  //     return false;
-  //   }
-  //   std::cout << "Clearing contents of directory '" << dir << "'..." << std::endl;
-  //   if (!bepaald::clearDirectory(dir))
-  //   {
-  //     std::cout << "Failed to empty directory '" << dir << "'" << std::endl;
-  //     return false;
-  //   }
-  // }
 
 #if __cplusplus > 201703L
   for (int count = 0; auto const &avframe : d_avatars)
@@ -60,6 +40,8 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 #endif
   {
     ++count;
+
+    Logger::message_overwrite("Dumping avatars to dir '", dir, "'... ", count, "/", d_avatars.size());
 
     AvatarFrame *af = avframe.second.get();
 
@@ -80,8 +62,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     if (results.rows() != 1)
     {
-      std::cout << " ERROR Unexpected number of results: " << results.rows()
-                << " (recipient: " << af->recipient() << ")" << std::endl;
+      Logger::error("Unexpected number of results: ", results.rows(), " (recipient: ", af->recipient(), ")");
       continue;
     }
 
@@ -104,13 +85,13 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     if (!attachmentstream.is_open())
     {
-      std::cout << " ERROR Failed to open file for writing: " << dir << "/" << filename << std::endl;
+      Logger::error("Failed to open file for writing: ", dir, "/", filename);
       continue;
     }
     else
       if (!attachmentstream.write(reinterpret_cast<char *>(af->attachmentData()), af->attachmentSize()))
       {
-        std::cout << " ERROR Failed to write data to file: " << dir << "/" << filename << std::endl;
+        Logger::error("Failed to write data to file: ", dir, "/", filename);
         af->clearData();
         continue;
       }
@@ -118,6 +99,6 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
     af->clearData();
   }
 
-  std::cout << std::endl << "done." << std::endl;
+  Logger::message("done.");
   return true;
 }

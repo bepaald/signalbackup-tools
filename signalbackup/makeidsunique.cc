@@ -324,9 +324,9 @@ void SignalBackup::makeIdsUnique(long long int minthread, long long int minsms, 
 
 void SignalBackup::makeIdsUnique(SignalBackup *source)
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
-  std::cout << "  Adjusting indexes in tables..." << std::endl;
+  Logger::message("  Adjusting indexes in tables...");
 
   for (auto const &dbl : d_databaselinks)
   {
@@ -342,7 +342,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       SqliteDB::QueryResults results;
       if (source->d_database.exec("SELECT * FROM " + dbl.table, &results) &&
           results.rows() > 0)
-        std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Found entries in a usually empty table. Trying to deal with it, but problems may occur." << std::endl;
+        Logger::warning("Found entries in a usually empty table. Trying to deal with it, but problems may occur.");
     }
 
     long long int offsetvalue = getMaxUsedId(dbl.table, dbl.column) + 1 - source->getMinUsedId(dbl.table, dbl.column);
@@ -355,7 +355,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
         if (!source->d_database.containsTable(c.table) || !source->d_database.tableContainsColumn(c.table, c.column))
           continue;
 
-        std::cout << "  Adjusting '" << c.table << "." << c.column << "' to match changes in '" << dbl.table << "'" << std::endl;
+        Logger::message("  Adjusting '", c.table, ".", c.column, "' to match changes in '", dbl.table, "'");
 
         if (!c.json_path.empty())
         {
@@ -448,19 +448,19 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
   {
     if (!results.isNull(i, 0))
     {
-      //std::cout << "Dealing with: " << results.getValueAs<std::string>(i, 1) << std::endl;
+      //Logger::message("Dealing with: ", results.getValueAs<std::string>(i, 1));
       if (results.valueHasType<std::string>(i, 1) &&
           (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
            STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
+        ;//Logger::message("Skipping ", results[i][1].second, " because it is sms_ftssecrettable");
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != d_mms_table + "_fts" &&
                 STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), d_mms_table + "_fts")))
-        ;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
+        ;//Logger::message("Skipping ", results[i][1].second, " because it is mms_ftssecrettable");
       else if (results.valueHasType<std::string>(i, 1) &&
                (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
                 STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "emoji_search")))
-        ;//std::cout << "Skipping " << results.getValueAs<std::string>(i, 1) << " because it is emoji_search_ftssecrettable" << std::endl;
+        ;//Logger::message("Skipping ", results.getValueAs<std::string>(i, 1), " because it is emoji_search_ftssecrettable");
       else if (results.valueHasType<std::string>(i, 1) &&
                STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sqlite_"))
         ;
@@ -485,6 +485,6 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       continue;
 
     if (std::find_if(d_databaselinks.begin(), d_databaselinks.end(), [table](DatabaseLink const &d){ return d.table == table; }) == d_databaselinks.end())
-      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Found table unhandled by " << __FUNCTION__  << " : " << table << std::endl;
+      Logger::warning("Found table unhandled by ", __FUNCTION__ , " : ", table);
   }
 }

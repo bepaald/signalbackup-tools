@@ -216,8 +216,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
         if (!ranges->at(i - 1).replacement.empty() &&
             !ranges->at(i).replacement.empty())
         {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                    << ": Illegal range-set (overlapping ranges both have replacement)." << std::endl;
+          Logger::warning("Illegal range-set (overlapping ranges both have replacement).");
           continue;
         }
         //std::cout << "CASE 1" << std::endl;
@@ -232,8 +231,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       // else -> i.length > (i - 1).length
       if (!ranges->at(i).replacement.empty())
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                  << ": Illegal range-set (overlapping ranges both have replacement)." << std::endl;
+        Logger::warning("Illegal range-set (overlapping ranges both have replacement).");
         continue;
       }
       //std::cout << "CASE 2" << std::endl;
@@ -250,7 +248,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       // (3) LATER START, SAME FINISH
       if (!ranges->at(i - 1).replacement.empty())
       {
-        std::cout << "Warning. Illegal range-set (overlapping ranges both have replacement)." << std::endl;
+        Logger::warning("Warning. Illegal range-set (overlapping ranges both have replacement).");
         continue;
       }
       //std::cout << "CASE 3" << std::endl;
@@ -268,7 +266,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
         if (!ranges->at(i - 1).replacement.empty() ||
             !ranges->at(i).replacement.empty())
         {
-          std::cout << "Warning. Illegal range-set (overlapping ranges both have replacement)." << std::endl;
+          Logger::warning("Warning. Illegal range-set (overlapping ranges both have replacement).");
           continue;
         }
 
@@ -313,7 +311,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       // (5) LATER START, EARLIER FINISH
       if (!ranges->at(i - 1).replacement.empty())
       {
-        std::cout << "Warning. Illegal range-set (overlapping ranges both have replacement)." << std::endl;
+        Logger::warning("Warning. Illegal range-set (overlapping ranges both have replacement).");
         continue;
       }
       //std::cout << "CASE 5" << std::endl;

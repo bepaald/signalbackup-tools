@@ -57,7 +57,7 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
     else if (result[j].type() == typeid(double))
       newframe.addDoubleParameter(std::any_cast<double>(result[j]));
     else
-      std::cout << "WARNING : UNHANDLED PARAMETER TYPE = " << result[j].type().name() << std::endl;
+      Logger::warning("UNHANDLED PARAMETER TYPE = ", result[j].type().name());
   }
 
   newframe.setStatementField(newstatement);
@@ -90,7 +90,7 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
     else if (result[j].type() == typeid(double))
       newframe.addDoubleParameter(std::any_cast<double>(result[j]));
     else
-      std::cout << "WARNING : UNHANDLED PARAMETER TYPE = " << result[j].type().name() << std::endl;
+      Logger::warning("UNHANDLED PARAMETER TYPE = ", result[j].type().name());
   }
   newframe.setStatementField(newstatement);
 

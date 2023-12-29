@@ -943,19 +943,19 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
     SqliteDB::QueryResults res;
     SqliteDB tmp(":memory:");
     if (tmp.exec("SELECT "
-                 "json_extract(?, '$.low') AS low, "
-                 "json_extract(?, '$.high') AS high, "
-                 "json_extract(?, '$.unsigned') AS unsigned",
-                 {text, text, text}, &res) &&
+                 "IIF(json_valid(?), json_extract(?, '$.low'), NULL) AS low, "
+                 "IIF(json_valid(?), json_extract(?, '$.high'), NULL) AS high, "
+                 "IIF(json_valid(?), json_extract(?, '$.unsigned'), NULL) AS unsigned",
+                 {text, text, text, text, text, text}, &res) &&
         res.rows() == 1 &&
-        (!res.isNull(0, "low") && !res.isNull(0, "high")))
+        (!res.isNull(0, "low") || !res.isNull(0, "high")))
     {
       //res.prettyPrint();
       long long int jsonlong = 0;
       if (!res.isNull(0, "high"))
         jsonlong |= (res.getValueAs<long long int>(0, "high") << 32);
       if (!res.isNull(0, "low"))
-        jsonlong |= (res.getValueAs<long long int>(0, "low") && 0xFFFFFFFF);
+        jsonlong |= (res.getValueAs<long long int>(0, "low") & 0xFFFFFFFF);
       sqlite3_result_int64(context, jsonlong);
       return;
     }

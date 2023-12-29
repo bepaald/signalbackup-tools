@@ -23,7 +23,7 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
                                    bool mms, std::map<std::string, long long int> *savedmap) const
 {
   if (d_verbose && reactions.size()) [[unlikely]]
-    std::cout << "Inserting " << reactions.size() << " message reactions." << std::endl;
+    Logger::message("Inserting ", reactions.size(), " message reactions.");
 
   // insert into reactions
   for (auto const &r : reactions)
@@ -41,7 +41,7 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
 
     if (author == -1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Reaction author not found. Skipping" << std::endl;
+      Logger::warning("Reaction author not found. Skipping");
       continue;
     }
     if (d_database.tableContainsColumn("reaction", "is_mms")) // not actually removed yet? just unused...
@@ -53,9 +53,7 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
                       {"emoji", r[0]},
                       {"date_sent", bepaald::toNumber<long long int>(r[1])},
                       {"date_received", bepaald::toNumber<long long int>(r[1])}}))
-      {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert into reaction table" << std::endl;
-      }
+        Logger::error("Failed to insert into reaction table");
     }
     else
     {
@@ -65,7 +63,7 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
                       {"emoji", r[0]},
                       {"date_sent", bepaald::toNumber<long long int>(r[1])},
                       {"date_received", bepaald::toNumber<long long int>(r[1])}}))
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to insert into reaction table" << std::endl;
+        Logger::error("Failed to insert into reaction table");
     }
   }
 }

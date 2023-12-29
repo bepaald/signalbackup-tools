@@ -39,7 +39,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     AttachmentMetadata amd = getAttachmentMetaData(datapath + a);
     if (amd.filename.empty() || amd.filesize == 0)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get attachment data. Skipping." << std::endl;
+      Logger::warning("Failed to get attachment data. Skipping.");
       continue;
     }
 
@@ -48,7 +48,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
       ct = amd.filetype;
     if (ct.empty())
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Attachment has no mime_type. Skipping." << std::endl;
+      Logger::warning("Attachment has no mime_type. Skipping.");
       continue;
     }
 
@@ -63,7 +63,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     long long int unique_id = d_database.getSingleResultAs<long long int>("SELECT " + d_mms_date_sent + " FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, -1);
     if (unique_id == -1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get unique_id for attachment. Skipping." << std::endl;
+      Logger::warning("Failed to get unique_id for attachment. Skipping.");
       continue;
     }
 
@@ -86,7 +86,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
                    },
                    "_id", &retval))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting part-data" << std::endl;
+      Logger::error("Inserting part-data");
       continue;
     }
     long long int new_part_id = std::any_cast<long long int>(retval);
@@ -102,11 +102,11 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     }
     else
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create AttachmentFrame for data" << std::endl;
-      std::cout << "       rowid       : " << new_part_id << std::endl;
-      std::cout << "       attachmentid: " << unique_id << std::endl;
-      std::cout << "       length      : " << amd.filesize << std::endl;
-      std::cout << "       path        : " << datapath << a << std::endl;
+      Logger::error("Failed to create AttachmentFrame for data");
+      Logger::error_indent("rowid       : ", new_part_id);
+      Logger::error_indent("attachmentid: ", unique_id);
+      Logger::error_indent("length      : ", amd.filesize);
+      Logger::error_indent("path        : ", datapath, a);
 
       // try to remove the inserted part entry:
       d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);

@@ -33,9 +33,7 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
       it = data.erase(it);
     else if (!d_database.tableContainsColumn(table, it->first))
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Table '" << table << "' does not contain any column '" << it->first
-                << "'. Removing"  << std::endl;
+      Logger::warning("Table '", table, "' does not contain any column '", it->first, "'. Removing");
       it = data.erase(it);
     }
     else
@@ -62,10 +60,8 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
   if (ret && !returnfield.empty() && returnvalue && res.rows() && res.columns())
   {
     if (res.rows() > 1 || res.columns() > 1)
-    {
-      std::cout << "WARNING: Requested return of '" << returnfield
-                << "', but query returned multiple results. Returning first." << std::endl;
-    }
+      Logger::warning("Requested return of '", returnfield,
+                      "', but query returned multiple results. Returning first.");
     *returnvalue = res.value(0, 0);
   }
   return ret;
