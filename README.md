@@ -41,7 +41,7 @@ To compile the program, just running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqli
 
 If you have `cmake` available on your system, running `cmake -B build && cmake --build build -j` inside the project directory should also produce a working binary (found in the directory 'build') and make use of multiple processors if available. 
 
-For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTI.bash44` for a faster build, and let me know if it works).
+For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTIPROC.bash44` for a faster build, and let me know if it works).
 
 For Arch users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
 
