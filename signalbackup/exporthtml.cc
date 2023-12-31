@@ -535,30 +535,30 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       htmloutput << "      </div>" << std::endl; // closes conversation-wrapper
       htmloutput << std::endl;
 
-      HTMLescapeUrl(&raw_base_filename);
-
       if (totalpages > 1)
       {
+        std::string sanitized_filename = sanitizeFilename(raw_base_filename);
+        HTMLescapeUrl(&sanitized_filename);
         htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << std::endl;
         htmloutput << "        <div title=\"First page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + ".html") << "\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitized_filename << ".html" << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "        <div title=\"Previous page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") + ".html") << "\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitized_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html" << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "      </div>" << std::endl;
         htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << std::endl;
         htmloutput << "        <div title=\"Next page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + "_" + (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) + ".html") << "\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitized_filename << "_" << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
         htmloutput << "        <div title=\"Last page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitizeFilename(raw_base_filename + "_" + bepaald::toString(totalpages - 1) + ".html") << "\">" << std::endl;
+        htmloutput << "          <a href=\"" << sanitized_filename << "_" << bepaald::toString(totalpages - 1) << ".html" << "\">" << std::endl;
         htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
         htmloutput << "          </a>" << std::endl;
         htmloutput << "        </div>" << std::endl;
