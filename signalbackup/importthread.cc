@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -179,6 +179,22 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
     if (count)
       std::cout << "  Deleted " << count << " existing storage_keys" << std::endl;
+  }
+
+  // remove any kyber_keys that are already in target...
+  if (d_database.containsTable("kyber_prekey") && source->d_database.containsTable("kyber_prekey"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT key_id FROM kyber_prekey", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      std::cout << "  Deleted " << count << " existing kyber_prekeys" << std::endl;
   }
 
   // delete double megaphones
