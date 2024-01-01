@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,42 +21,42 @@
 
 bool SignalBackup::exportBackupToFile(std::string const &filename, std::string const &passphrase, bool overwrite, bool keepattachmentdatainmemory)
 {
-  std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
+  Logger::message("\nExporting backup to '", filename, "'");
 
   std::string newpw = passphrase;
   if (newpw == std::string())
     newpw = d_passphrase;
   if (newpw == std::string())
   {
-    std::cout << "Need password to create encrypted backup file." << std::endl;
+    Logger::error("Need password to create encrypted backup file.");
     return false;
   }
 
   if (!overwrite && bepaald::fileOrDirExists(filename))
   {
-    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
+    Logger::error("File '", filename, "' exists, use --overwrite to overwrite");
     return false;
   }
 
   if (!d_headerframe || !d_fe.init(newpw, d_headerframe->salt(), d_headerframe->salt_length(), d_headerframe->iv(), d_headerframe->iv_length(), d_headerframe->version(), d_verbose))
   {
-    std::cout << "Error initializing FileEncryptor" << std::endl;
+    Logger::error("Failed to initialize FileEncryptor");
     return false;
   }
 
   std::ofstream outputfile(filename, std::ios_base::binary);
 
   // HEADER // Note: HeaderFrame is not encrypted.
-  std::cout << "Writing HeaderFrame..." << std::endl;
+  Logger::message("Writing HeaderFrame...");
   if (!d_headerframe)
   {
-    std::cout << "Error: HeaderFrame not found" << std::endl;
+    Logger::error("HeaderFrame not found");
     return false;
   }
   std::pair<unsigned char *, uint64_t> framedata = d_headerframe->getData();
   if (!framedata.first)
   {
-    std::cout << "Error getting HeaderFrame data" << std::endl;
+    Logger::error("Failed to get HeaderFrame data");
     return false;
   }
   bool writeok = writeFrameDataToFile(outputfile, framedata);
@@ -65,17 +65,17 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     return false;
 
   // VERSION
-  std::cout << "Writing DatabaseVersionFrame..." << std::endl;
+  Logger::message("Writing DatabaseVersionFrame...");
   if (!d_databaseversionframe)
   {
-    std::cout << "Error: DataBaseVersionFrame not found" << std::endl;
+    Logger::error("DataBaseVersionFrame not found");
     return false;
   }
   if (!writeEncryptedFrame(outputfile, d_databaseversionframe.get()))
     return false;
 
   // SQL DATABASE + ATTACHMENTS
-  std::cout << "Writing SqlStatementFrame(s)..." << std::endl;
+  Logger::message("Writing SqlStatementFrame(s)...");
 
   // get and write schema
   std::string q("SELECT sql, name, type FROM sqlite_master");
@@ -149,12 +149,12 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     d_database.exec("SELECT * FROM " + table, &results);
 
     if (!d_showprogress)
-      std::cout << "  Dealing with table '" << table << "'... " << std::flush;
+      Logger::message_start("  Dealing with table '", table, "'... ");
 
     for (uint i = 0; i < results.rows(); ++i)
     {
       if (d_showprogress)
-        std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+        Logger::message_overwrite("  Dealing with table '", table, "'... ", i + 1, "/", results.rows(), " entries...");
 
       SqlStatementFrame newframe = buildSqlStatementFrame(table, results.row(i));
 
@@ -197,9 +197,9 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         {
           if (!missingAttachmentExpected(rowid, uniqueid))
           {
-            std::cout << "Warning: attachment data not found (rowid: " << rowid << ", uniqueid: " << uniqueid << ")" << std::endl;
+            Logger::warning("Attachment data not found (rowid: ", rowid, ", uniqueid: ", uniqueid, ")");
             if (d_showprogress)
-              std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+              Logger::message_overwrite("  Dealing with table '", table, "'... ", i + 1, "/", results.rows(), " entries...");
           }
         }
       }
@@ -222,40 +222,40 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         }
         else
         {
-          std::cout << "Warning: sticker data not found (rowid: " << rowid << ")" << std::endl;
+          Logger::warning("Sticker data not found (rowid: ", rowid, ")");
           if (d_showprogress)
-            std::cout << "\33[2K\r  Dealing with table '" << table << "'... " << i + 1 << "/" << results.rows() << " entries..." << std::flush;
+            Logger::message_overwrite("  Dealing with table '", table, "'... ", i + 1, "/", results.rows(), " entries...");
         }
       }
     }
-    if (results.rows())
-        std::cout << "done" << std::endl;
+    if (d_showprogress)
+      Logger::message_overwrite("  Dealing with table '", table, "'... ", results.rows(), "/", results.rows(), " entries...done", Logger::Control::ENDOVERWRITE);
     else
-      std::cout << "  Dealing with table '" << table << "'... 0/0 entries..." << std::endl;
+      Logger::message_overwrite("  Dealing with table '", table, "'... done", Logger::Control::ENDOVERWRITE);
   }
 
-  std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
+  Logger::message("Writing SharedPrefFrame(s)...");
   // SHAREDPREFS
   for (uint i = 0; i < d_sharedpreferenceframes.size(); ++i)
     if (!writeEncryptedFrame(outputfile, d_sharedpreferenceframes[i].get()))
       return false;
 
-  std::cout << "Writing KeyValueFrame(s)..." << std::endl;
+  Logger::message("Writing KeyValueFrame(s)...");
   // KEYVALUES
   for (uint i = 0; i < d_keyvalueframes.size(); ++i)
     if (!writeEncryptedFrame(outputfile, d_keyvalueframes[i].get()))
       return false;
 
   // AVATAR
-  std::cout << "Writing Avatars..." << std::endl;
+  Logger::message("Writing Avatars...");
   for (auto const &a : d_avatars)
   {
 
     if (d_verbose && !a.second.get()) [[unlikely]]
     {
-      std::cout << "ASKED TO WRITE NULLPTR-AVATAR. THIS SHOULD BE AN ERROR" << std::endl;
-      std::cout << "BUT I'M PRETENDING IT DIDN'T HAPPEN TO FIND THE CAUSE OF IT" << std::endl;
-      std::cout << "THE PROGRAM WILL LIKELY CRASH NOW..." << std::endl;
+      Logger::error("ASKED TO WRITE NULLPTR-AVATAR. THIS SHOULD BE AN ERROR");
+      Logger::error_indent("BUT I'M PRETENDING IT DIDN'T HAPPEN TO FIND THE CAUSE OF IT");
+      Logger::error_indent("THE PROGRAM WILL LIKELY CRASH NOW...");
     }
 
     if (!writeEncryptedFrame(outputfile, a.second.get()))
@@ -263,10 +263,10 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
   }
 
   // END
-  std::cout << "Writing EndFrame..." << std::endl;
+  Logger::message("Writing EndFrame...");
   if (!d_endframe)
   {
-    std::cout << "Error: EndFrame not found" << std::endl;
+    Logger::error("EndFrame not found.");
     return false;
   }
   if (!writeEncryptedFrame(outputfile, d_endframe.get()))
@@ -274,6 +274,6 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
 
   outputfile.flush();
 
-  std::cout << "Done! Wrote " << outputfile.tellp() << " bytes." << std::endl;
+  Logger::message("Done! Wrote ", outputfile.tellp(), " bytes.");
   return true;
 }
