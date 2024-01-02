@@ -190,7 +190,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.getValueAs<std::string>(i, 0));
+      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.getValueAs<long long int>(i, 0));
       count += source->d_database.changed();
     }
     if (count)
