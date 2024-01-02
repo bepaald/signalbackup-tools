@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,25 +21,25 @@
 
 void SignalBackup::cleanDatabaseByMessages()
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
-  std::cout << "  Deleting attachment entries from 'part' not belonging to remaining " + d_mms_table + " entries" << std::endl;
+  Logger::message("  Deleting attachment entries from 'part' not belonging to remaining ", d_mms_table, " entries");
   d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
 
-  std::cout << "  Deleting other threads from 'thread'..." << std::endl;
+  Logger::message("  Deleting other threads from 'thread'...");
   d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM " + d_mms_table + ")" + (d_database.containsTable("sms") ? " AND _id NOT IN (SELECT DISTINCT thread_id FROM sms)" : ""));
   updateThreadsEntries();
 
   if (d_database.containsTable("mention"))
   {
-    std::cout << "  Deleting entries from 'mention' not belonging to remaining mms entries" << std::endl;
+    Logger::message("  Deleting entries from 'mention' not belonging to remaining mms entries");
     d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ") OR thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
   }
 
-  //std::cout << "Groups left:" << std::endl;
+  //Logger::message("Groups left:");
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
 
-  std::cout << "  Deleting removed groups..." << std::endl;
+  Logger::message("  Deleting removed groups...");
   if (d_databaseversion < 27)
     d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
   else
@@ -49,7 +49,7 @@ void SignalBackup::cleanDatabaseByMessages()
       d_database.exec("DELETE FROM group_membership WHERE group_id NOT IN (SELECT DISTINCT group_id FROM groups)");
   }
 
-  //std::cout << "Groups left:" << std::endl;
+  //Logger::message("Groups left:");
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
@@ -58,42 +58,71 @@ void SignalBackup::cleanDatabaseByMessages()
       d_database.containsTable("msl_recipient") &&
       d_database.containsTable("msl_payload"))
   {
-    std::cout << "  Deleting unneeded MessageSendLog entries..." << std::endl;
+    Logger::message_start("  Deleting unneeded MessageSendLog entries...");
+
+    long long int count_msg = 0, count_payl = 0, count_rec = 0;
+
+    // note this function is generally called because messages (and/or attachments) have been deleted
+    // the msl_payload table has triggers that delete its entries:
+    // (delete from msl_payload where _id in (select payload_id from message where message_id = (message.deleted_id/part.deletedmid)))
+    // apparently these triggers even when editing within this program, even though the 'ON DELETE CASCADE' stuff does not and
+    // foreign key constraints are not enforced... This causes a sort of circular thing here but I think we can just clean up the
+    // msl_message table according to still-existing msl_payloads first
+    d_database.exec("DELETE FROM msl_message WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
+    count_msg += d_database.changed();
 
     // delete from msl_message table if message does not exist anymore
     if (d_database.containsTable("sms"))
     {
       d_database.exec("DELETE FROM msl_message WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
+      count_msg += d_database.changed();
       d_database.exec("DELETE FROM msl_message WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+      count_msg += d_database.changed();
     }
     else
+    {
       d_database.exec("DELETE FROM msl_message WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+      count_msg += d_database.changed();
+    }
 
-    // now delete all payloads for non existing messages
+    // now delete all msl_payloads for non existing msl_messages
     d_database.exec("DELETE FROM msl_payload WHERE _id NOT IN (SELECT DISTINCT payload_id FROM msl_message)");
+    count_payl = d_database.changed();
 
     // lastly delete recipient for non existing payloads
     d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
+    count_rec = d_database.changed();
+
+    Logger::message(" (", count_msg, ", ", count_payl, ", ", count_rec, ")");
   }
 
   if (d_database.containsTable("reaction")) // dbv >= 121
   {
     // delete reactions for messages that do not exist
-    std::cout << "  Deleting reactions to non-existing messages" << std::endl;
+    Logger::message_start("  Deleting reactions to non-existing messages...");
+
+    long long int count = 0;
 
     if (d_database.containsTable("sms"))
     {
       d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT _id FROM sms)");
+      count += d_database.changed();
       d_database.exec("DELETE FROM reaction WHERE is_mms IS 1 AND message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+      count += d_database.changed();
     }
     else
+    {
       d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+      count += d_database.changed();
+    }
+    Logger::message(" (", count, ")");
   }
 
   if (d_database.containsTable("call")) // dbv >= ~170?
   {
-    std::cout << "  Deleting call details from non-existing messages" << std::endl;
+    Logger::message_start("  Deleting call details from non-existing messages...");
     d_database.exec("DELETE FROM call WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+    Logger::message(" (", d_database.changed(), ")");
   }
 
   // delete story_sends entries that no longer refer to an existing message?
@@ -104,7 +133,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
   if (d_databaseversion < 24)
   {
-    std::cout << "  Deleting unreferenced recipient_preferences entries..." << std::endl;
+    Logger::message("  Deleting unreferenced recipient_preferences entries...");
     //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
@@ -112,7 +141,7 @@ void SignalBackup::cleanDatabaseByMessages()
   }
   else
   {
-    std::cout << "  Deleting unreferenced recipient entries..." << std::endl;
+    Logger::message("  Deleting unreferenced recipient entries...");
 
     //runSimpleQuery("SELECT group_concat(_id,',') FROM recipient");
     //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id FROM mms UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread");
@@ -163,7 +192,7 @@ void SignalBackup::cleanDatabaseByMessages()
         {
           std::string substr;
           std::getline(ss, substr, ',');
-          //std::cout << "ADDING " << members << " MEMBER: " << substr << std::endl;
+          //Logger::message("ADDING ", members, " MEMBER: ", substr);
           referenced_recipients.insert(bepaald::toNumber<int>(substr));
         }
       }
@@ -190,13 +219,13 @@ void SignalBackup::cleanDatabaseByMessages()
       referenced_recipients_query = " UNION SELECT * FROM (VALUES";
       for (auto const &r : referenced_recipients)
       {
-        //std::cout << "AUTHOR : " << r << std::endl;
+        //Logger::message("AUTHOR : ", r);
         referenced_recipients_query += "(" + bepaald::toString(r) + "),";
       }
       referenced_recipients_query.pop_back();
       referenced_recipients_query += ")";
     }
-    //std::cout << "QUERY: " << reaction_authors_query << std::endl;
+    //Logger::message("QUERY: ", reaction_authors_query);
 
     SqliteDB::QueryResults deleted_recipients;
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
@@ -216,7 +245,7 @@ void SignalBackup::cleanDatabaseByMessages()
     if (deleted_recipients.rows())
     {
       //deleted_recipients.prettyPrint();
-      std::cout << "  Deleted " << deleted_recipients.rows() << " unreferenced recipients" << std::endl;
+      Logger::message("  Deleted ", deleted_recipients.rows(), " unreferenced recipients");
       if (d_database.containsTable("distribution_list"))
       {
         int count = 0;
@@ -229,7 +258,7 @@ void SignalBackup::cleanDatabaseByMessages()
           }
         }
         if (count)
-          std::cout << "  Deleted " << count << " unneeded distribution_lists" << std::endl;
+          Logger::message("  Deleted ", count, " unneeded distribution_lists");
 
         // clean up the member table
         d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
@@ -240,7 +269,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
   if (d_database.containsTable("notification_profile_allowed_members"))
   {
-    std::cout << "  Deleting unneeded notification profiles entries..." << std::endl;
+    Logger::message("  Deleting unneeded notification profiles entries...");
 
     // delete from notification profile where recipient no longer in database
     d_database.exec("DELETE FROM notification_profile_allowed_members WHERE recipient_id NOT IN (SELECT DISTINCT _id FROM recipient)");
@@ -249,7 +278,7 @@ void SignalBackup::cleanDatabaseByMessages()
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");
 
   // remove avatars not belonging to existing recipients
-  std::cout << "  Deleting unused avatars..." << std::endl;
+  Logger::message("  Deleting unused avatars...");
   SqliteDB::QueryResults results;
   if (d_databaseversion < 24)
     d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
@@ -274,7 +303,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
   /*
   // remove unused attachments
-  std::cout << "  Deleting unused attachments..." << std::endl;
+  Logger::message("  Deleting unused attachments...");
   d_database.exec("SELECT _id,unique_id FROM part", &results);
   for (auto it = d_attachments.begin(); it != d_attachments.end();)
   {
@@ -303,34 +332,34 @@ void SignalBackup::cleanDatabaseByMessages()
   */
   cleanAttachments();
 
-  std::cout << "  Delete others from 'identities'" << std::endl;
+  Logger::message("  Delete others from 'identities'");
   if (d_databaseversion < 24)
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT recipient_ids FROM recipient_preferences)");
   else
     d_database.exec("DELETE FROM identities WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
-  std::cout << "  Deleting group_receipts entries from deleted messages..." << std::endl;
+  Logger::message("  Deleting group_receipts entries from deleted messages...");
   d_database.exec("DELETE FROM group_receipts WHERE mms_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
 
-  std::cout << "  Deleting group_receipts from non-existing recipients" << std::endl;
+  Logger::message("  Deleting group_receipts from non-existing recipients");
   if (d_databaseversion < 24)
     d_database.exec("DELETE FROM group_receipts WHERE address NOT IN (SELECT DISTINCT recipient_ids FROM recipient_preferences)");
   else
     d_database.exec("DELETE FROM group_receipts WHERE address NOT IN (SELECT DISTINCT _id FROM recipient)");
 
-  std::cout << "  Deleting drafts from deleted threads..." << std::endl;
+  Logger::message("  Deleting drafts from deleted threads...");
   d_database.exec("DELETE FROM drafts WHERE "s +
                   (d_database.containsTable("sms") ? "thread_id NOT IN (SELECT DISTINCT thread_id FROM sms) AND " : "")
                   + "thread_id NOT IN (SELECT DISTINCT thread_id FROM " + d_mms_table + ")");
 
   if (d_database.containsTable("remapped_recipients"))
   {
-    std::cout << "  Deleting remapped recipients for non existing recipients" << std::endl;
+    Logger::message("  Deleting remapped recipients for non existing recipients");
     //d_database.exec("DELETE FROM remapped_recipients WHERE old_id NOT IN (SELECT DISTINCT _id FROM recipient) AND new_id NOT IN (SELECT DISTINCT _id FROM recipient)");
     d_database.exec("DELETE FROM remapped_recipients WHERE new_id NOT IN (SELECT DISTINCT _id FROM recipient)");
   }
 
-  std::cout << "  Vacuuming database" << std::endl;
+  Logger::message("  Vacuuming database");
   d_database.exec("VACUUM");
   d_database.freeMemory();
   // maybe remap recipients?

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,7 @@ bool SignalBackup::cleanAttachments()
 {
   //std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
   // remove unused attachments
-  std::cout << "  Deleting unused attachments..." << std::endl;
+  Logger::message("  Deleting unused attachments...");
   SqliteDB::QueryResults results;
   d_database.exec("SELECT _id,unique_id FROM part", &results);
   for (auto it = d_attachments.begin(); it != d_attachments.end();)

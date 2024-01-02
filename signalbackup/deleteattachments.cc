@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -45,7 +45,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   {
     long long int date = dateToMSecsSinceEpoch(before);
     if (date == -1)
-      std::cout << "Error: Ignoring before-date: '" << before << "'. Failed to parse or invalid." << std::endl;
+      Logger::warning("Ignoring before-date: '", before, "'. Failed to parse or invalid.");
     else
     {
       if (specification.empty())
@@ -60,7 +60,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   {
     long long int date = dateToMSecsSinceEpoch(after);
     if (date == -1)
-      std::cout << "Error: Ignoring after-date: '" << after << "'. Failed to parse or invalid." << std::endl;
+      Logger::warning("Ignoring after-date: '", after, "'. Failed to parse or invalid.");
     else
     {
       if (specification.empty())
@@ -100,7 +100,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   SqliteDB::QueryResults res;
   if (!d_database.exec(query_list, &res))
   {
-    std::cout << "Failed to execute query." << std::endl;
+    Logger::error("Failed to execute query.");
     return false;
   }
 
@@ -112,14 +112,15 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
 
     if (!d_database.exec(query_delete))
     {
-      std::cout << "Failed to execute query" << std::endl;
+      Logger::error("Failed to execute query.");
       return false;
     }
-    std::cout << "Deleted: " << d_database.changed() << " 'part'-entries." << std::endl;
+    Logger::message("Deleted: ", d_database.changed(), " 'part'-entries.");
 
     // find all mms entries to which the deleted attachments belonged
     // if no attachments remain and body is empty -> delete mms -> cleanDatabaseByMessages()
     SqliteDB::QueryResults res2;
+    long long int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
       if (!append.empty() || !prepend.empty())
@@ -140,44 +141,42 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
             return false;
         }
       }
-      else // delete message if body empty
+      else // no append/prepend -> delete message if body empty
       {
+
+        // check if message has other attachments
         if (!d_database.exec("SELECT _id FROM part WHERE mid = ?", res.getValueAs<long long int>(i, "mid"), &res2))
           return false;
 
-        if (res2.empty()) // no other attachments for this message
+        if (res2.empty()) // no other attachments for this message, we can delete if body is empty
         {
+          //std::cout << "no other attachments (" << i << ")" << std::endl;
+
           // delete message if body empty
           if (!d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
             return false;
-          // else, if body is not empty, make sure the 'mms.previews' column does not refeerence non-existing attachment
-          else
+          if (d_database.changed() == 1)
           {
-            SqliteDB::QueryResults res3;
-            // rewrite this with sqlites json_extract
-            if (!d_database.exec("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE _id = ? AND (" + d_mms_previews + " LIKE '%attachmentId\":{%')", res.getValueAs<long long int>(i, "mid"), &res3))
-              return false;
-            if (!res3.empty())
-            {
-              std::string previews = res3.valueAsString(0, d_mms_previews);
-              //std::cout << " OLD: " << previews<< std::endl;
-              std::regex attid_in_json(".*\"attachmentId\":(\\{.*?\\}).*");
-              std::smatch sm;
-              if (std::regex_match(previews, sm, attid_in_json))
-              {
-                if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
-                {
-                  //std::cout << sm.size() << std::endl;
-                  previews.replace(sm.position(1), sm.length(1), "null");
-                  //std::cout << " NEW: " << previews << std::endl;
-                  d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = ? WHERE _id = ?", {previews, res.getValueAs<long long int>(i, "mid")});
-                }
-              }
-            }
+            ++count;
+            continue;
           }
         }
       }
     }
+    if (count || (append.empty() && prepend.empty()))
+      Logger::message("Deleted ", count, " empty messages");
+
+    // make sure the 'mms.previews' column does not reference non-existing attachments
+    long long int maxlinkpreviews = d_database.getSingleResultAs<long long int>("SELECT MAX(json_array_length(" + d_mms_previews + ")) FROM " + d_mms_table, 0);
+    for (uint lp = 0; lp < maxlinkpreviews; ++lp)
+    {
+      //d_database.print("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE " + d_mms_previews + " IS NOT NULL");
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = json_set(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId', json(null)) WHERE "
+                      "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.rowId') NOT IN (SELECT _id FROM part) AND "
+                      "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.uniqueId') NOT IN (SELECT unique_id FROM part)");
+      //d_database.print("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE " + d_mms_previews + " IS NOT NULL");
+    }
+
     cleanAttachments();
     cleanDatabaseByMessages();
     return true;
