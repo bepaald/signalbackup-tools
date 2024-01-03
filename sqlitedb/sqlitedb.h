@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -76,6 +76,7 @@ class SqliteDB
     template <typename T>
     inline bool contains(T const &value) const;
     bool removeColumn(uint idx);
+    bool renameColumn(uint idx, std::string const &name);
     inline bool removeRow(uint idx);
     inline QueryResults getRow(uint idx);
 

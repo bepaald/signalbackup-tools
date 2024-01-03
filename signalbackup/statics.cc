@@ -423,3 +423,48 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // s
   //   0
   // }
 };
+
+std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup::s_columnaliases //static
+{
+  std::make_pair("thread",
+                 std::vector<std::vector<std::string>>{{"recipient_id", "thread_recipient_id", "recipient_ids"},
+                                                       {"meaningful_messages", "message_count"},
+                                                       {"has_delivery_receipt", "delivery_receipt_count"},
+                                                       {"has_read_receipt", "read_receipt_count"}}),
+
+  std::make_pair("recipient",
+                 std::vector<std::vector<std::string>>{{"aci", "uuid"},
+                                                       {"e164", "phone"},
+                                                       {"avatar_color", "color"},
+                                                       {"system_joined_name", "system_display_name"},
+                                                       {"profile_given_name", "signal_profile_name"},
+                                                       {"storage_service_id", "storage_service_key"}}),
+
+  std::make_pair("sms",
+                 std::vector<std::vector<std::string>>{{"date_received", "date"},
+                                                       {"recipient_id", "address"},
+                                                       {"recipient_device_id", "address_device_id"}}),
+
+  std::make_pair("message",
+                 std::vector<std::vector<std::string>>{{"has_delivery_receipt", "delivery_receipt_count"},
+                                                       {"has_read_receipt", "read_receipt_count"},
+                                                       {"viewed", "viewed_receipt_count"},
+                                                       {"date_sent", "date"},
+                                                       {"from_recipient_id", "recipient_id", "address"},
+                                                       {"from_device_id", "recipient_device_id", "address_device_id"},
+                                                       {"type", "msg_box"},
+                                                       {"link_previews", "previews"}}),
+
+  std::make_pair("mms",
+                 std::vector<std::vector<std::string>>{{"has_delivery_receipt", "delivery_receipt_count"},
+                                                       {"has_read_receipt", "read_receipt_count"},
+                                                       {"viewed", "viewed_receipt_count"},
+                                                       {"date_sent", "date"},
+                                                       {"from_recipient_id", "recipient_id", "address"},
+                                                       {"from_device_id", "recipient_device_id", "address_device_id"},
+                                                       {"type", "msg_box"},
+                                                       {"link_previews", "previews"}}),
+
+  std::make_pair("groups",
+                 std::vector<std::vector<std::string>>{{"unmigrated_v1_members", "former_v1_members"}})
+};

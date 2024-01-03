@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -131,9 +131,9 @@ bool SignalBackup::setColumnNames()
     d_mms_read_receipts = "read_receipt_count";
 
   // from dbv211
-  d_mms_viewed_receipts = "has_viewed_receipt";
+  d_mms_viewed_receipts = "viewed";
   // before 211
-  if (!d_database.tableContainsColumn(d_mms_table, "has_viewed_receipt") &&
+  if (!d_database.tableContainsColumn(d_mms_table, "viewed") &&
       d_database.tableContainsColumn(d_mms_table, "viewed_receipt_count"))
     d_mms_viewed_receipts = "viewed_receipt_count";
 

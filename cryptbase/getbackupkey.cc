@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -47,7 +47,7 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
   if (j != passphrase.size()) // passlength == 30 && all chars in passphrase were processed
   {
     Logger::error("Failed to parse passphrase from string '", passphrase, "' : passphrase too long! "
-                  "Need ", passlength, " digits, ", i, " provided");
+                  "Need ", passlength, " digits, ", passphrase.size(), " provided");
     return false;
   }
 

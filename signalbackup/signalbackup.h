@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -152,6 +152,7 @@ class SignalBackup
   };
 
   static std::vector<DatabaseLink> const d_databaselinks;
+  static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
 
   struct AttachmentMetadata
   {
@@ -423,6 +424,8 @@ class SignalBackup
                        long long int r, long long int new_msg_id);
   bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
   bool prepareOutputDirectory(std::string const &dir, bool overwrite, bool allowappend = false, bool append = false) const;
+
+  std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

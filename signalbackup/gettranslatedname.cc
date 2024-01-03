@@ -17,9 +17,18 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
 
-#define VERSIONDATE "20240103.164819"
-
-#endif
+std::string SignalBackup::getTranslatedName(std::string const &table, std::string const &old_column_name) const
+{
+  if (bepaald::contains(s_columnaliases, table))
+    for (auto const &v : s_columnaliases.at(table))
+      if (bepaald::contains(v, old_column_name))
+        for (auto const &col_name : v)
+          if (d_database.tableContainsColumn(table, col_name))
+          {
+            //Logger::message("TRANSLATING COLUMN NAME: ", old_column_name, " -> ", col_name);
+            return col_name;
+          }
+  return std::string();
+}

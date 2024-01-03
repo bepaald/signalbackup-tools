@@ -17,9 +17,14 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "sqlitedb.ih"
 
-#define VERSIONDATE "20240103.164819"
+bool SqliteDB::QueryResults::renameColumn(uint idx, std::string const &name)
+{
+  if (idx >= d_headers.size())
+    return false;
 
-#endif
+  d_headers[idx] = name;
+
+  return true;
+}

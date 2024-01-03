@@ -21,7 +21,7 @@
 
 bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
-  std::cout << __FUNCTION__ << " (" << thread << ")" << std::endl;
+  Logger::message(__FUNCTION__, " (", thread, ")");
 
   if ((d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
       (d_databaseversion >= 172 && source->d_databaseversion < 172) || // group.members dropped
@@ -31,7 +31,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       (d_databaseversion >= 27 && source->d_databaseversion < 27) ||
       (d_databaseversion < 27 && source->d_databaseversion >= 27))
   {
-    std::cout << "Source and target database at incompatible versions" << std::endl;
+    Logger::error("Source and target database at incompatible versions");
     return false;
   }
 
@@ -48,16 +48,15 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
         long long int id = r.getValueAs<long long int>(i, "_id");
         long long int oldid = r.getValueAs<long long int>(i, "old_id");
         long long int newid = r.getValueAs<long long int>(i, "new_id");
-        std::cout << id << " : " << oldid << " -> " << newid << std::endl;
-        std::cout << std::endl;
+        Logger::message(id, " : ", oldid, " -> ", newid, "\n");
 
-        std::cout << "Old id:" << std::endl;
+        Logger::message("Old id:");
         source->d_database.print("SELECT * FROM recipient WHERE _id = ?", oldid);
-        std::cout << std::endl;
+        Logger::message_end();
 
-        std::cout << "New id: " << std::endl;
+        Logger::message("New id:");
         source->d_database.print("SELECT * FROM recipient WHERE _id = ?", newid);
-        std::cout << std::endl;
+        Logger::message_end();
       }
 
       // apply the remapping (probably only some reactions _may_ need to be transferred?)
@@ -94,7 +93,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     {
       source_releasechannel = bepaald::toNumber<int>(skv->value());
       source->d_database.exec("DELETE FROM recipient WHERE _id = ?", source_releasechannel);
-      std::cout << "Deleted releasechannel recipient from source database (_id: " << source_releasechannel << ")" << std::endl;
+      Logger::message("Deleted releasechannel recipient from source database (_id: ", source_releasechannel, ")");
       break;
     }
 
@@ -107,7 +106,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {
-      std::cout << "Failed to get recipient id from source database" << std::endl;
+      Logger::error("Failed to get recipient id from source database");
       return false;
     }
     std::string recipient_id = results.getValueAs<std::string>(0, 0);
@@ -117,9 +116,10 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
     source->d_database.exec("SELECT "
-                            "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
-                            "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
-                            "IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)", thread, &results);
+                            "IFNULL(" + source->d_recipient_aci + ", '') AS uuid, "
+                            "IFNULL(" + source->d_recipient_e164 + ", '') AS phone, "
+                            "IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)",
+                            thread, &results);
     if (results.rows() != 1)
     {
       // skip current thread if it is the releasechannel-thread
@@ -130,12 +130,12 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
           ((res2.valueHasType<long long int>(0, 0) && res2.getValueAs<long long int>(0, 0) == source_releasechannel) ||
            (res2.valueHasType<std::string>(0, 0) && bepaald::toNumber<int>(res2.getValueAs<std::string>(0, 0)) == source_releasechannel)))
       {
-        std::cout << "Skipping releasechannel..." << std::endl;
+        Logger::message("Skipping releasechannel...");
         return true; // when this channel is actually active, maybe remove this return statement and
                      // manually set targetthread with the help of target_releasechannel (if != -1)
       }
 
-      std::cout << "Failed to get uuid/phone/group_id from source database" << std::endl;
+      Logger::error("Failed to get uuid/phone/group_id from source database");
       return false;
     }
 
@@ -148,7 +148,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
                     "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<long long int>(0, 0))
-      std::cout << "Failed to find recipient._id matching uuid/phone/group_id in target database" << std::endl;
+      Logger::message("Failed to find recipient._id matching uuid/phone/group_id in target database");
     else
     {
       long long int recipient_id = results.getValueAs<long long int>(0, 0);
@@ -178,23 +178,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing storage_keys" << std::endl;
-  }
-
-  // remove any kyber_keys that are already in target...
-  if (d_database.containsTable("kyber_prekey") && source->d_database.containsTable("kyber_prekey"))
-  {
-    SqliteDB::QueryResults res;
-    d_database.exec("SELECT key_id FROM kyber_prekey", &res);
-
-    int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
-    {
-      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.getValueAs<long long int>(i, 0));
-      count += source->d_database.changed();
-    }
-    if (count)
-      std::cout << "  Deleted " << count << " existing kyber_prekeys" << std::endl;
+      Logger::message("  Deleted ", count, " existing storage_keys");
   }
 
   // delete double megaphones
@@ -210,7 +194,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing megaphones" << std::endl;
+      Logger::message("  Deleted ", count, " existing megaphones");
   }
 
   // delete double remote_megaphones
@@ -226,7 +210,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing remote_megaphone's" << std::endl;
+      Logger::message("  Deleted ", count, " existing remote_megaphone's");
   }
 
   // delete double cds (contact discovery service entries)
@@ -242,9 +226,26 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing cds's" << std::endl;
+      Logger::message("  Deleted ", count, " existing cds's");
   }
 
+  // remove any kyber_keys that are already in target...
+  if (d_database.containsTable("kyber_prekey") && source->d_database.containsTable("kyber_prekey"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT key_id FROM kyber_prekey", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.getValueAs<long long int>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing kyber_prekeys");
+  }
+
+  // NOTE THIS IS SUPERFLUOUS NOW? (SINCE key_id by itself is unique and removed above?)
   // delete double kyber prekey entries
   if (d_database.containsTable("kyber_prekey") && source->d_database.containsTable("kyber_prekey"))
   {
@@ -258,7 +259,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing kyber_prekey's" << std::endl;
+      Logger::message("  Deleted ", count, " existing kyber_prekey's");
 
   }
 
@@ -275,7 +276,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing key values" << std::endl;
+      Logger::message("  Deleted ", count, " existing key values");
   }
 
   // delete double distribution lists?
@@ -291,7 +292,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       count += source->d_database.changed();
     }
     if (count)
-      std::cout << "  Deleted " << count << " existing distribution lists" << std::endl;
+      Logger::message("  Deleted ", count, " existing distribution lists");
 
     // clean up the member table
     source->d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
@@ -407,7 +408,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.exec("SELECT * FROM remapped_recipients WHERE old_id = ? AND new_id = ?", {oldid, newid}, &r2);
       if (r2.rows()) // this mapping is in target already
       {
-        std::cout << "Skipping import of remapped_recipient (" << oldid << " -> " << newid << "), mapping already in target database" << std::endl;
+        Logger::message("Skipping import of remapped_recipient (", oldid, " -> ", newid, "), mapping already in target database");
         source->d_database.exec("DELETE FROM remapped_recipients WHERE _id = ?", id);
       }
     }
@@ -417,11 +418,11 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   // drop the recipient_preferences, identities and thread tables, they are already in the target db
   if (targetthread > -1)
   {
-    std::cout << "  Found existing thread for this recipient in target database, merging into thread " << targetthread << std::endl;
+    Logger::message("  Found existing thread for this recipient in target database, merging into thread ", targetthread);
 
     if (source->d_database.containsTable("sms"))
       source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
-    source->d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ?", targetthread);
+    source->d_database.exec("UPDATE " + source->d_mms_table + " SET thread_id = ?", targetthread);
     source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
     if (source->d_database.containsTable("mention"))
       source->d_database.exec("UPDATE mention SET thread_id = ?", targetthread);
@@ -445,7 +446,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         "-1 AS 'group_type', "
                         "NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
 
-      std::cout << "  updateRecipientIds" << std::endl;
+      Logger::message("  updateRecipientIds");
       for (uint i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
@@ -495,36 +496,37 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                                  "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                  "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?)) OR "
                                   // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
-                                  "(" + d_recipient_aci + " IS NULL AND "
-                                  + d_recipient_e164 + " IS NULL AND "
+                                  "(" + source->d_recipient_aci + " IS NULL AND "
+                                  + source->d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
                                   "group_type IS 4  AND group_type IS ? AND "
-                                  + d_recipient_storage_service + " IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
+                                  + source->d_recipient_storage_service + " IS ?)",
+                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
           count += source->d_database.changed();
         }
         else
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                                  "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                  "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
           count += source->d_database.changed();
         }
       }
       if (count)
-        std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
+        Logger::message("Dropped ", count, " existing recipients from source database");
     }
     source->d_database.exec("DROP TABLE groups");
     source->d_avatars.clear();
   }
   else // no matching thread in target (but recipient may still exist)
   {
-    std::cout << "  No existing thread found in target database for this recipient, importing." << std::endl;
+    Logger::message("  No existing thread found in target database for this recipient, importing.");
 
     // check identities and recipient prefs for presence of values, they may be there (even though no
     // thread was found (for example via a group chat or deleted thread))
@@ -545,8 +547,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), -1, std::string()};
         // source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
         source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE "
-                                "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                                "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                                "(" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
                                 "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
       }
     }
@@ -575,7 +577,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
                         "-1 AS 'group_type', NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
-      std::cout << "  updateRecipientIds (2)" << std::endl;
+      Logger::message("  updateRecipientIds (2)");
       for (uint i = 0; i < results.rows(); ++i)
       {
         // if the recipient is already in target, we are going to delete it from
@@ -583,7 +585,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         // which was made unique above. If we just delete the doubles (by phone/group_id,
         // and in the future probably uuid), the fields in other tables will point
         // to random or non-existing recipients, so we need to remap them:
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"),
+                                          results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
@@ -597,29 +600,30 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                                  "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                  "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?)) OR "
                                   // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
-                                  "(" + d_recipient_aci + " IS NULL AND "
-                                  + d_recipient_e164 + " IS NULL AND "
+                                  "(" + source->d_recipient_aci + " IS NULL AND "
+                                  + source->d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
                                   "group_type IS 4  AND group_type IS ? AND "
-                                  + d_recipient_storage_service + " IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
+                                  + source->d_recipient_storage_service + " IS ?)",
+                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
           count = source->d_database.changed();
         }
         else
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
-                                  "((" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                                  "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                  "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
           count = source->d_database.changed();
         }
 
         if (count)
-          std::cout << "Dropped " << count << " existing recipients from source database" << std::endl;
+          Logger::message("Dropped ", count, " existing recipients from source database");
       }
     }
 
@@ -649,7 +653,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   if (d_database.containsTable("group_membership"))
   {
     SqliteDB::QueryResults gm_results;
-    d_database.exec("SELECT DISTINCT group_id,recipient_id FROM group_membership", &gm_results);
+    d_database.exec("SELECT DISTINCT group_id, recipient_id FROM group_membership", &gm_results);
     for (uint i = 0; i < gm_results.rows(); ++i)
       source->d_database.exec("DELETE FROM group_membership WHERE group_id = ? AND recipient_id = ?",
                               {gm_results.value(i, "group_id"), gm_results.value(i, "recipient_id")});
@@ -722,16 +726,16 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         STRING_STARTS_WITH(table, d_mms_table + "_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))
       continue;
-    std::cout << "Importing statements from source table '" << table << "'...";
+    Logger::message_start("Importing statements from source table '", table, "'...");
     source->d_database.exec("SELECT * FROM " + table, &results);
-    std::cout << results.rows() << " entries..." << std::endl;
+    Logger::message(results.rows(), " entries...");
 
     if (results.rows() == 0)
       continue;
 
     if (!d_database.containsTable(table))
     {
-      std::cout << "  NOTE: Skipping table '" << table << "', as it is not present in target database. Data may be missing." << std::endl;
+      Logger::warning("Skipping table '", table, "', as it is not present in target database. Data may be missing.");
       continue;
     }
 
@@ -744,9 +748,17 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     {
       if (!d_database.tableContainsColumn(table, results.headers()[idx]))
       {
-        std::cout << "  NOTE: Dropping column '" << table << "." << results.headers()[idx] << "' from source : Column not present in target database" << std::endl;
-        if (results.removeColumn(idx))
-          continue;
+        // attempt translate
+        std::string oldname = results.headers()[idx];
+        std::string newname = getTranslatedName(table, oldname);
+        if (!newname.empty() && results.renameColumn(idx, newname))
+          Logger::message("  NOTE: Translating column name from '", table, ".", oldname, "' (source) to '",  table, ".", newname, "' (target)");
+        else //: drop
+        {
+          Logger::message("  NOTE: Dropping column '", table, ".", results.headers()[idx], "' from source : Column not present in target database");
+          if (results.removeColumn(idx))
+            continue;
+        }
       }
       // else
       ++idx;
@@ -756,7 +768,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     // for instance, a (newly/currently?) created database will not have the megaphone table
     if (results.columns() == 0)
     {
-      std::cout << "  NOTE: Skipping table '" << table << "', it has no columns left" << std::endl;
+      Logger::warning("Skipping table '", table, "', it has no columns left.");
       continue;
     }
 
