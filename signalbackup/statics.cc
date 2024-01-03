@@ -467,5 +467,5 @@ std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup:
 
   std::make_pair("groups",
                  std::vector<std::vector<std::string>>{{"unmigrated_v1_members", "former_v1_members"},
-                 std::vector<std::vector<std::string>>{"display_as_story", "show_as_story_state"}})
+                                                       {"display_as_story", "show_as_story_state"}})
 };
