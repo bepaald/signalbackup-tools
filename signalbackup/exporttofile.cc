@@ -193,7 +193,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
             MEMINFO("AFTER DROPPING ATTACHMENT DATA");
           }
         }
-        else
+        else [[unlikely]]
         {
           if (!missingAttachmentExpected(rowid, uniqueid))
           {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -1165,7 +1165,7 @@ void SignalBackup::scanMissingAttachments() const
   d_database.exec("SELECT _id,unique_id FROM part", &res);
   std::vector<std::pair<long long int, long long int>> missing;
   for (uint i = 0; i < res.rows(); ++i)
-    if (d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")}) == d_attachments.end())
+    if (/*true || */d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")}) == d_attachments.end())
       missing.emplace_back(std::make_pair(res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")));
 
   std::cout << "Got " << missing.size() << " attachments with data not found" << std::endl;
@@ -1174,34 +1174,75 @@ void SignalBackup::scanMissingAttachments() const
   {
     std::cout << "Checking " << (i + 1) << " of " << missing.size() << ": " << std::flush << missing[i].first << "," << missing[i].second << "... ";
 
-    d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE quote_missing = 1 AND _id IN (SELECT mid FROM part WHERE quote IS 1 AND mid = ?)", missing[i].first, &res);
-    if (res.rows())
+    SqliteDB::QueryResults isquote;
+    d_database.exec("SELECT mid FROM part WHERE _id = ? AND unique_id = ? AND quote = 1", {missing[i].first, missing[i].second}, &isquote);
+    if (isquote.rows())
     {
-      std::cout << "OK, EXPECTED (quote missing)" << std::endl;
-      continue;
+      long long int mid = isquote.getValueAs<long long int>(0, "mid");
+
+      d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE quote_missing = 1 AND _id = ?", mid, &res);
+      if (res.rows() == 1)
+      {
+        if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+          std::cout << "OK, EXPECTED (quote missing)" << std::endl;
+        else
+          std::cout << "FALSE HIT! (quote missing)" << std::endl;
+        continue;
+      }
+
+      // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check
+      d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE remote_deleted IS 1 AND " + d_mms_date_sent + " IS (SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?)",
+                      mid, &res);
+      if (res.rows() == 1)
+      {
+        if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+          std::cout << "OK, EXPECTED (original message missing (remote deleted))" << std::endl;
+        else
+          std::cout << "FALSE HIT! (remote delete)" << std::endl;
+        continue;
+      }
+
+      if (d_database.getSingleResultAs<long long int>("SELECT IFNULL(quote_id, 0)_id FROM " + d_mms_table + " WHERE _id = ?", mid, 0) != 0)
+      {
+        d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE " +
+                        d_mms_date_sent + " IS (SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?)"
+                        " AND "
+                        "thread_id IS (SELECT thread_id FROM " + d_mms_table + " WHERE _id = ?)",
+                        {mid, mid}, &res);
+        if (res.rows() == 0)
+        {
+          if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+            std::cout << "OK, EXPECTED (original message missing (deleted))" << std::endl;
+          else
+            std::cout << "FALSE HIT! (delete)" << std::endl;
+          continue;
+        }
+      }
     }
 
-    // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check
-    d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE remote_deleted IS 1 AND " + d_mms_date_sent + " IN (SELECT quote_id FROM " + d_mms_table + " WHERE _id IN "
-                    "(SELECT mid FROM part WHERE _id = ? AND unique_id = ? AND quote = 1))",
-                    {missing[i].first, missing[i].second}, &res);
-    if (res.rows())
+    d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%' AND ct NOT LIKE 'audio%'", {missing[i].first, missing[i].second}, &res);
+    if (res.rows() == 1)
     {
-      std::cout << "OK, EXPECTED (original message missing)" << std::endl;
-      continue;
-    }
-
-    d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%'", {missing[i].first, missing[i].second}, &res);
-    if (res.rows())
-    {
-      std::cout << "OK, EXPECTED (type = " << res.valueAsString(0, 0) << ")" << std::endl;
+      if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+        std::cout << "OK, EXPECTED (type = " << res.valueAsString(0, 0) << ")" << std::endl;
+      else
+        std::cout << "FALSE HIT! (type)" << std::endl;
       continue;
     }
 
     d_database.exec("SELECT pending_push FROM part WHERE pending_push IS NOT 0 AND _id = ? AND unique_id = ?", {missing[i].first, missing[i].second}, &res);
-    if (res.rows())
+    if (res.rows() == 1)
     {
-      std::cout << "OK, EXPECTED (pending_push = " << res.valueAsString(0, 0) << ")" << std::endl;
+      if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+        std::cout << "OK, EXPECTED (pending_push = " << res.valueAsString(0, 0) << ")" << std::endl;
+      else
+        std::cout << "FALSE HIT! (pending_push)" << std::endl;
+      continue;
+    }
+
+    if (d_attachments.find({missing[i].first, missing[i].second}) != d_attachments.end())
+    {
+      std::cout << "OK, EXPECTED (no special circumstances, but not missing)" << std::endl;
       continue;
     }
 
