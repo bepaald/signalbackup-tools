@@ -492,7 +492,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         RecipientIdentification rec_id = {existing_rec(i, "uuid"), existing_rec(i, "phone"), existing_rec(i, "group_id"),
                                           existing_rec.getValueAs<long long int>(i, "group_type"), existing_rec(i, d_recipient_storage_service)};
 
-        if (d_database.tableContainsColumn("recipient", "group_type"))
+        if (source->d_database.tableContainsColumn("recipient", "group_type"))
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
@@ -503,7 +503,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                                   "(" + source->d_recipient_aci + " IS NULL AND "
                                   + source->d_recipient_e164 + " IS NULL AND "
                                   "group_id IS NULL AND "
-                                  "group_type IS 4  AND group_type IS ? AND "
+                                  "group_type IS 4 AND group_type IS ? AND "
                                   + source->d_recipient_storage_service + " IS ?)",
                                   {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
           count += source->d_database.changed();
