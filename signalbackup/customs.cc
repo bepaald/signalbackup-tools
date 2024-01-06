@@ -1220,7 +1220,7 @@ void SignalBackup::scanMissingAttachments() const
       }
     }
 
-    d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%' AND ct NOT LIKE 'audio%'", {missing[i].first, missing[i].second}, &res);
+    d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND ct NOT LIKE 'image%' AND ct NOT LIKE 'video%'", {missing[i].first, missing[i].second}, &res);
     if (res.rows() == 1)
     {
       if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
