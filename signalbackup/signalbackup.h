@@ -151,9 +151,6 @@ class SignalBackup
     int flags;
   };
 
-  static std::vector<DatabaseLink> const d_databaselinks;
-  static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
-
   struct AttachmentMetadata
   {
     int width;
@@ -179,6 +176,8 @@ class SignalBackup
     bool hasavatar;
   };
 
+  static std::vector<DatabaseLink> const s_databaselinks;
+  static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
   static char const *const s_emoji_unicode_list[3655];
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
@@ -212,7 +211,7 @@ class SignalBackup
   void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
   void mergeGroups(std::vector<std::string> const &groups);
   inline void runQuery(std::string const &q, bool pretty = true) const;
-  void removeDoubles();
+  void removeDoubles(long long int milliseconds = 0);
   inline std::vector<long long int> threadIds() const;
   bool importCSV(std::string const &file, std::map<std::string, std::string> const &fieldmap);
   //bool importWAChat(std::string const &file, std::string const &fmt, std::string const &self = std::string());

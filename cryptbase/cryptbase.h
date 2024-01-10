@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -43,8 +43,8 @@ class CryptBase
   uint64_t d_counter;
  public:
   inline CryptBase();
-  CryptBase(CryptBase const &other) = delete;
-  CryptBase operator=(CryptBase const &other) = delete;
+  inline CryptBase(CryptBase const &other);
+  inline CryptBase &operator=(CryptBase const &other);
   inline ~CryptBase();
   inline bool ok() const;
  protected:
@@ -69,6 +69,101 @@ inline CryptBase::CryptBase()
   d_salt_size(0),
   d_counter(0)
 {}
+
+inline CryptBase::CryptBase(CryptBase const &other)
+  :
+  d_ok(false),
+  d_backupkey(nullptr),
+  d_backupkey_size(other.d_backupkey_size),
+  d_cipherkey(nullptr),
+  d_cipherkey_size(other.d_cipherkey_size),
+  d_mackey(nullptr),
+  d_mackey_size(other.d_mackey_size),
+  d_iv(nullptr),
+  d_iv_size(other.d_iv_size),
+  d_salt(nullptr),
+  d_salt_size(other.d_salt_size),
+  d_counter(other.d_counter)
+{
+  if (other.d_backupkey)
+  {
+    d_backupkey = new unsigned char[d_backupkey_size];
+    std::memcpy(d_backupkey, other.d_backupkey, d_backupkey_size);
+  }
+
+  if (other.d_cipherkey)
+  {
+    d_cipherkey = new unsigned char[d_cipherkey_size];
+    std::memcpy(d_cipherkey, other.d_cipherkey, d_cipherkey_size);
+  }
+
+  if (other.d_mackey)
+  {
+    d_mackey = new unsigned char[d_mackey_size];
+    std::memcpy(d_mackey, other.d_mackey, d_mackey_size);
+  }
+
+  if (other.d_iv)
+  {
+    d_iv = new unsigned char[d_iv_size];
+    std::memcpy(d_iv, other.d_iv, d_iv_size);
+  }
+  if (other.d_salt)
+  {
+    d_salt = new unsigned char[d_salt_size];
+    std::memcpy(d_salt, other.d_salt, d_salt_size);
+  }
+
+  d_ok = true;
+}
+
+inline CryptBase &CryptBase::operator=(CryptBase const &other)
+{
+  if (this != &other)
+  {
+    bepaald::destroyPtr(&d_iv, &d_iv_size);
+    bepaald::destroyPtr(&d_salt, &d_salt_size);
+    bepaald::destroyPtr(&d_backupkey, &d_backupkey_size);
+    bepaald::destroyPtr(&d_mackey, &d_mackey_size);
+    bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
+
+    d_backupkey_size = other.d_backupkey_size;
+    d_cipherkey_size = other.d_cipherkey_size;
+    d_mackey_size = other.d_mackey_size;
+    d_iv_size = other.d_iv_size;
+    d_salt_size = other.d_salt_size;
+
+    if (other.d_backupkey)
+    {
+      d_backupkey = new unsigned char[d_backupkey_size];
+      std::memcpy(d_backupkey, other.d_backupkey, d_backupkey_size);
+    }
+
+    if (other.d_cipherkey)
+    {
+      d_cipherkey = new unsigned char[d_cipherkey_size];
+      std::memcpy(d_cipherkey, other.d_cipherkey, d_cipherkey_size);
+    }
+
+    if (other.d_mackey)
+    {
+      d_mackey = new unsigned char[d_mackey_size];
+      std::memcpy(d_mackey, other.d_mackey, d_mackey_size);
+    }
+
+    if (other.d_iv)
+    {
+      d_iv = new unsigned char[d_iv_size];
+      std::memcpy(d_iv, other.d_iv, d_iv_size);
+    }
+    if (other.d_salt)
+    {
+      d_salt = new unsigned char[d_salt_size];
+      std::memcpy(d_salt, other.d_salt, d_salt_size);
+    }
+  }
+  return *this;
+}
 
 inline CryptBase::~CryptBase()
 {

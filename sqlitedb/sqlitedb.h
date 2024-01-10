@@ -93,9 +93,11 @@ class SqliteDB
  private:
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
+  std::string d_name;
   bool d_ok;
 
  public:
+  inline explicit SqliteDB();
   inline explicit SqliteDB(std::string const &name, bool readonly = true);
   inline explicit SqliteDB(std::pair<unsigned char *, uint64_t> *data);
   inline SqliteDB(SqliteDB const &other) = delete;
@@ -155,16 +157,22 @@ class SqliteDB
   static inline void jsonlong(sqlite3_context *context, int argc, sqlite3_value **argv);
 };
 
+inline SqliteDB::SqliteDB()
+  :
+  SqliteDB(":memory:")
+{}
+
 inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   :
   d_db(nullptr),
   d_vfs(nullptr),
+  d_name(name),
   d_ok(false)
 {
-  if (name != ":memory:" && readonly)
-    d_ok = (sqlite3_open_v2(name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
+  if (d_name != ":memory:" && readonly)
+    d_ok = (sqlite3_open_v2(d_name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
   else
-    d_ok = (sqlite3_open(name.c_str(), &d_db) == SQLITE_OK);
+    d_ok = (sqlite3_open(d_name.c_str(), &d_db) == SQLITE_OK);
 
   if (d_ok)
     d_ok = registerCustoms();
@@ -513,13 +521,13 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::string 
 
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, char const *param) const
 {
-  //std::cout << "Binding CHAR CONST * at " << count << ": " << param.c_str() << std::endl;
+  //std::cout << "Binding CHAR CONST * at " << count << ": " << param << std::endl;
   return sqlite3_bind_text(stmt, count, param, -1, SQLITE_TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, unsigned char const *param) const
 {
-  //std::cout << "Binding UNSIGNED CHAR CONST * at " << count << ": " << param.c_str() << std::endl;
+  //std::cout << "Binding UNSIGNED CHAR CONST *" << std::endl;
   return sqlite3_bind_text(stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_TRANSIENT);
 }
 
@@ -942,7 +950,7 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
       return; // not sure what we're doing here...
 
     SqliteDB::QueryResults res;
-    SqliteDB tmp(":memory:");
+    SqliteDB tmp;
     if (tmp.exec("SELECT "
                  "IIF(json_valid(?), json_extract(?, '$.low'), NULL) AS low, "
                  "IIF(json_valid(?), json_extract(?, '$.high'), NULL) AS high, "

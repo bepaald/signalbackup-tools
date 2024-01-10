@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -38,10 +38,6 @@ class AvatarFrame : public FrameWithAttachment
  public:
   inline explicit AvatarFrame(uint64_t count = 0);
   inline AvatarFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
-  // inline AvatarFrame(AvatarFrame &&other);
-  // inline AvatarFrame &operator=(AvatarFrame &&other);
-  // inline AvatarFrame(AvatarFrame const &other) = delete;
-  // inline AvatarFrame &operator=(AvatarFrame const &other) = delete;
   inline virtual ~AvatarFrame() = default;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
   inline virtual void printInfo() const override;

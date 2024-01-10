@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2020-2023  Selwin van Dijk
+  Copyright (C) 2020-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,7 +35,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   }
   Logger::message_end();
 
-  for (auto const &dbl : d_databaselinks)
+  for (auto const &dbl : s_databaselinks)
   {
     if (dbl.table != "recipient")
       continue;

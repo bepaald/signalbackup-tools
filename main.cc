@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -310,8 +310,8 @@ int main(int argc, char *argv[])
     if (!sb->importTelegramJson(arg.importtelegram(), arg.mapjsoncontacts(), arg.setselfid()))
       return 1;
 
-  if (arg.removedoubles())
-    sb->removeDoubles();
+  if (arg.removedoubles_bool())
+    sb->removeDoubles(arg.removedoubles());
 
   if (!arg.croptodates().empty())
   {

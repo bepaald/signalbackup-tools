@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,7 +21,7 @@
 
 bool SignalBackup::findRecipient(long long int id) const
 {
-  for (auto const &dbl : d_databaselinks)
+  for (auto const &dbl : s_databaselinks)
   {
     if (dbl.table != "recipient")
       continue;

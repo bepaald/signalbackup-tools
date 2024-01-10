@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,7 +35,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
 {
   if (!d_file.is_open())
   {
-    Logger::error("Failed to open file '", filename, "'");
+    Logger::error("Failed to open file '", d_filename, "'");
     return;
   }
 

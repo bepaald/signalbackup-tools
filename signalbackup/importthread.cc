@@ -159,6 +159,33 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   // std::cout << "RECIPIENTS BEFORE CROP:" << std::endl;
   // source->d_database.prettyPrint("SELECT _id, COALESCE(signal_profile_name, group_id) FROM recipient");
 
+  // delete doubles
+  /* work in progress */
+  /* I dont think the recipentId == recipientId part is right */
+  if (false /*skipexisting*/ && targetthread != -1)
+  {
+    SqliteDB::QueryResults existing;
+    d_database.exec("SELECT body, thread_id, " + d_mms_date_sent + ", " + d_mms_recipient_id + " FROM " + d_mms_table +
+                    " WHERE thread_id = ?", targetthread, &existing);
+    int count = 0;
+    for (uint i = 0; i < existing.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM " + d_mms_table +
+                              " WHERE body = ? AND thread_id = ? AND " + d_mms_date_sent + " = ? AND " + d_mms_recipient_id + " = ?",
+                              {existing.value(i, "body"), thread, existing.value(i, d_mms_date_sent), existing.value(i, d_mms_recipient_id)});
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing messages in source thread");
+
+    // check if any messages are left:
+    if (source->d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM " + d_mms_table + " WHERE thread_id = ?", thread, -1) == 0)
+    {
+      Logger::message("After removing existing messages, thread is empty -> skipping...");
+      return true;
+    }
+  }
+
   // crop the source db to the specified thread
   source->cropToThread(thread);
 

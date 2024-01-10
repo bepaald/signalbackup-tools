@@ -38,7 +38,7 @@
   };
 */
 
-std::vector<SignalBackup::DatabaseLink> const SignalBackup::d_databaselinks // static
+std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // static
 {
   {
     "thread",

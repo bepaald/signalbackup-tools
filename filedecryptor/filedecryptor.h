@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -41,15 +41,13 @@ class  FileDecryptor : public BaseDecryptor//, public CryptBase
   bool d_badmac;
   bool d_assumebadframesize;
   std::vector<long long int> d_editattachments;
-  //bool d_verbose;
   bool d_stoponerror;
   uint32_t d_backupfileversion;
 
  public:
   FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
   FileDecryptor(FileDecryptor const &other) = delete;
-  FileDecryptor operator=(FileDecryptor const &other) = delete;
-  //inline ~FileDecryptor();
+  FileDecryptor &operator=(FileDecryptor const &other) = delete;
   inline bool ok() const;
   std::unique_ptr<BackupFrame> getFrameOld();
   std::unique_ptr<BackupFrame> getFrame();

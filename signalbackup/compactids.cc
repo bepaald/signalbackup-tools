@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -46,7 +46,7 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
 
     if (col == "_id") [[likely]]
     {
-      for (auto const &dbl : d_databaselinks)
+      for (auto const &dbl : s_databaselinks)
       {
         if (dbl.flags & SKIP)
           continue;

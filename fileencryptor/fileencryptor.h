@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,8 +35,8 @@ class FileEncryptor : public CryptBase
   FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   explicit FileEncryptor(std::string const &passphrase, uint32_t backupfileversion, bool verbose);
   FileEncryptor();
-  FileEncryptor(FileEncryptor const &other) = delete;
-  FileEncryptor operator=(FileEncryptor const &other) = delete;
+  FileEncryptor(FileEncryptor const &other) = default;
+  FileEncryptor &operator=(FileEncryptor const &other) = default;
   bool init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   bool init(unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size);
   std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<unsigned char *, uint64_t> const &data);

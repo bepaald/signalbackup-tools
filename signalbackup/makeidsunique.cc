@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -328,7 +328,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
   Logger::message("  Adjusting indexes in tables...");
 
-  for (auto const &dbl : d_databaselinks)
+  for (auto const &dbl : s_databaselinks)
   {
     // skip if table/column does not exist, or if skip is set
     if ((dbl.flags & SKIP) ||
@@ -484,7 +484,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
         STRING_STARTS_WITH(table, "sqlite_"))
       continue;
 
-    if (std::find_if(d_databaselinks.begin(), d_databaselinks.end(), [table](DatabaseLink const &d){ return d.table == table; }) == d_databaselinks.end())
+    if (std::find_if(s_databaselinks.begin(), s_databaselinks.end(), [table](DatabaseLink const &d){ return d.table == table; }) == s_databaselinks.end())
       Logger::warning("Found table unhandled by ", __FUNCTION__ , " : ", table);
   }
 }

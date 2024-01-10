@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -63,7 +63,8 @@ Arg::Arg(int argc, char *argv[])
   d_listrecipients(false),
   d_editgroupmembers(false),
   d_showprogress(true),
-  d_removedoubles(false),
+  d_removedoubles(0),
+  d_removedoubles_bool(false),
   d_reordermmssmsids(false),
   d_stoponerror(false),
   d_verbose(false),
@@ -656,12 +657,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--removedoubles")
     {
-      d_removedoubles = true;
-      continue;
-    }
-    if (option == "--no-removedoubles")
-    {
-      d_removedoubles = false;
+      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      {
+        if (!ston(&d_removedoubles, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+        d_removedoubles_bool = true;
+      }
+      else
+        d_removedoubles_bool = true;
       continue;
     }
     if (option == "--reordermmssmsids")
