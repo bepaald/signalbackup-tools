@@ -17,9 +17,23 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef FILESQLITEDB_H_
+#define FILESQLITEDB_H_
 
-#define VERSIONDATE "20240113.234340"
+#include "../sqlitedb/sqlitedb.h"
+
+class FileSqliteDB : public SqliteDB
+{
+ public:
+  inline FileSqliteDB(std::string const &filename);
+  FileSqliteDB(FileSqliteDB const &other) = delete;
+  FileSqliteDB &operator=(FileSqliteDB const &other) = delete;
+  ~FileSqliteDB() = default;
+};
+
+inline FileSqliteDB::FileSqliteDB(std::string const &filename)
+  :
+  SqliteDB(filename, true)
+{}
 
 #endif

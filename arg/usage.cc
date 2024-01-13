@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -203,8 +203,10 @@ be removed.
 --assumebadframesizeonbadmac                  Used to fix a specific (long fixed) bug in Signal. See
                                               https://github.com/signalapp/Signal-Android/issues/9154
 --editattachmentsize                          Modifier for `--assumebadframesizeonbadmac'
---removedoubles                               Attempt to remove doubled messages in the database. May be
+--removedoubles [N]                           Attempt to remove doubled messages in the database. May be
                                               useful when importing partially overlapping backup files.
+                                              Optional N: time in milliseconds for messages to be
+                                              considered duplicates (default 0).
 --reordersmsmmsids                            Makes sure sms and mms entries are sorted chronologically
                                               in the database. This option exists for backups edited by
                                               this program before this was done automatically (as it is
@@ -225,15 +227,6 @@ be removed.
                                               complete one. See
                                               https://github.com/bepaald/signalbackup-tools/issues/32
 --hhenkel <STRING>                            See https://github.com/bepaald/signalbackup-tools/issues/17
---strugee <N>                                 Tries to verify a specific type of corruption of the backup
-                                              file. N is a file offset in bytes. See
-                                              https://github.com/bepaald/signalbackup-tools/issues/37
---strugee2                                    Shows the tables present in a truncated backup. See
-                                              https://github.com/bepaald/signalbackup-tools/issues/37
---strugee3 <N>                                Tries to verify a specific type of corruption of the backup
-                                              file. N is a file offset in bytes. See
-                                              https://github.com/bepaald/signalbackup-tools/issues/37
---ashmorgan                                   See https://github.com/bepaald/signalbackup-tools/issues/40
 )*";
 }
 

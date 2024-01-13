@@ -82,7 +82,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   datapath = p.parent_path().string() + static_cast<char>(std::filesystem::path::preferred_separator);
 
   // create table
-  SqliteDB telegram_db(":memory:");
+  MemSqliteDB telegram_db;
   if (!telegram_db.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
       !telegram_db.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, from_name TEXT, body TEXT, "
                         "reply_to_id INT, "

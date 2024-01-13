@@ -82,7 +82,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
       d_database.exec("DELETE FROM " + d_mms_table + " WHERE body IS ? AND thread_id IS ? AND CAST(" + d_mms_recipient_id + " AS STRING) IS ? AND " +
                       d_mms_type + " IS ? AND " + d_mms_date_sent + " != ? AND " + d_mms_date_sent + " BETWEEN ? AND ? RETURNING _id",
                       {res.value(i, "body"), res.value(i, "thread_id"), res.value(i, d_mms_recipient_id), res.value(i, d_mms_type),
-                       timestamp, timestamp - milliseconds, timestamp + milliseconds}, &res2);
+                       timestamp, timestamp, timestamp + milliseconds}, &res2);
       count += d_database.changed();
 
       // remove deleted entries from res as well...

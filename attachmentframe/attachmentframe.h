@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -43,6 +43,8 @@ class AttachmentFrame : public FrameWithAttachment
   inline AttachmentFrame(AttachmentFrame const &other) = default;
   inline AttachmentFrame &operator=(AttachmentFrame const &other) = default;
   inline virtual ~AttachmentFrame() = default;
+  inline virtual AttachmentFrame *clone() const override;
+  inline virtual AttachmentFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
@@ -59,7 +61,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline unsigned int getField(std::string const &str) const;
   inline void setLengthField(uint32_t newlength);
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline AttachmentFrame::AttachmentFrame(uint64_t count)
@@ -72,22 +74,15 @@ inline AttachmentFrame::AttachmentFrame(unsigned char *bytes, size_t length, uin
   FrameWithAttachment(bytes, length, count)
 {}
 
-// inline AttachmentFrame::AttachmentFrame(AttachmentFrame &&other)
-//   :
-//   FrameWithAttachment(std::move(other))
-// {}
+inline AttachmentFrame *AttachmentFrame::clone() const
+{
+  return new AttachmentFrame(*this);
+}
 
-// inline AttachmentFrame &AttachmentFrame::operator=(AttachmentFrame &&other)
-// {
-//   if (this != &other)
-//   {
-//     FrameWithAttachment::operator=(std::move(other));
-//   }
-//   return *this;
-// }
-
-// inline AttachmentFrame::~AttachmentFrame()
-// {}
+inline AttachmentFrame *AttachmentFrame::move_clone()
+{
+  return new AttachmentFrame(std::move(*this));
+}
 
 inline BackupFrame *AttachmentFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
 {

@@ -23,7 +23,6 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   :
   BaseDecryptor(verbose),
   d_headerframe(nullptr),
-  d_file(filename, std::ios_base::binary | std::ios_base::in),
   d_filename(filename),
   d_framecount(0),
   d_filesize(0),
@@ -33,18 +32,19 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   d_stoponerror(stoponerror),
   d_backupfileversion(0)
 {
-  if (!d_file.is_open())
+  std::ifstream file(d_filename, std::ios_base::binary | std::ios_base::in);
+  if (!file.is_open())
   {
     Logger::error("Failed to open file '", d_filename, "'");
     return;
   }
 
-  d_file.seekg(0, std::ios_base::end);
-  d_filesize = d_file.tellg();
-  d_file.seekg(0);
+  file.seekg(0, std::ios_base::end);
+  d_filesize = file.tellg();
+  file.seekg(0);
 
   // read first four bytes, they are the header size of the file:
-  int32_t headerlength = getNextFrameBlockSize();
+  int32_t headerlength = getNextFrameBlockSize(file);
   DEBUGOUT("headerlength: ", headerlength);
   if (headerlength == 0)
   {
@@ -53,7 +53,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   }
 
   unsigned char *headerdata = new unsigned char[headerlength];
-  getNextFrameBlock(headerdata, headerlength);
+  getNextFrameBlock(file, headerdata, headerlength);
 
   BackupFrame *headerframe = initBackupFrame(headerdata, headerlength, d_framecount++);
   delete[] headerdata;

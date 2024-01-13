@@ -94,16 +94,21 @@ class SqliteDB
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
   std::string d_name;
+  // non-owning pointer!
+  std::pair<unsigned char *, uint64_t> *d_data;
+  bool d_readonly;
   bool d_ok;
 
- public:
+ protected:
   inline explicit SqliteDB();
   inline explicit SqliteDB(std::string const &name, bool readonly = true);
   inline explicit SqliteDB(std::pair<unsigned char *, uint64_t> *data);
-  inline SqliteDB(SqliteDB const &other) = delete;
-  inline SqliteDB &operator=(SqliteDB const &other) = delete;
+  inline SqliteDB(SqliteDB const &other);
+  inline SqliteDB &operator=(SqliteDB const &other);
   inline ~SqliteDB();
+ public:
   inline bool ok() const;
+  inline bool saveToFile(std::string const &filename) const;
   inline bool exec(std::string const &q, QueryResults *results = nullptr) const;
   inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
 #if __cpp_lib_ranges >= 201911L && !defined(__clang__)
@@ -136,6 +141,9 @@ class SqliteDB
   inline void freeMemory();
 
  private:
+  inline bool initFromFile();
+  inline bool initFromMemory();
+  inline void destroy();
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::string const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, char const *param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, unsigned char const *param) const;
@@ -168,31 +176,84 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_db(nullptr),
   d_vfs(nullptr),
   d_name(name),
+  d_data(nullptr),
+  d_readonly(readonly),
   d_ok(false)
 {
-  if (d_name != ":memory:" && readonly)
-    d_ok = (sqlite3_open_v2(d_name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
-  else
-    d_ok = (sqlite3_open(d_name.c_str(), &d_db) == SQLITE_OK);
-
-  if (d_ok)
-    d_ok = registerCustoms();
+  d_ok = initFromFile();
 }
 
 inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   :
   d_db(nullptr),
   d_vfs(MemFileDB::sqlite3_memfilevfs(data)),
+  d_data(data),
+  d_readonly(true),
   d_ok(false)
 {
-  if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
-    d_ok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+  d_ok = initFromMemory();
+}
 
+inline SqliteDB::SqliteDB(SqliteDB const &other)
+  :
+  SqliteDB(":memory:")
+{
   if (d_ok)
-    d_ok = registerCustoms();
+    d_ok = copyDb(other, *this);
+}
+
+inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
+{
+  if (this != &other)
+  {
+    // destroy this if its already an existing thing
+    destroy();
+
+    // create
+    d_db = nullptr;
+    d_vfs = nullptr;
+    d_name = ":memory:";
+    d_data = nullptr;
+    d_readonly = other.d_readonly;
+    d_ok = initFromFile();
+    if (d_ok)
+      d_ok = copyDb(other, *this);
+  }
+  return *this;
 }
 
 inline SqliteDB::~SqliteDB()
+{
+  destroy();
+}
+
+inline bool SqliteDB::initFromFile()
+{
+  bool ok = false;
+  if (d_name != ":memory:" && d_readonly)
+    ok = (sqlite3_open_v2(d_name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
+  else
+    ok = (sqlite3_open(d_name.c_str(), &d_db) == SQLITE_OK);
+
+  if (ok)
+    return registerCustoms();
+
+  return ok;
+}
+
+inline bool SqliteDB::initFromMemory()
+{
+  bool ok = false;
+  if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
+    ok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+
+  if (ok)
+    return registerCustoms();
+
+  return ok;
+}
+
+inline void SqliteDB::destroy()
 {
   if (d_db)
     sqlite3_close(d_db);
@@ -204,6 +265,17 @@ inline SqliteDB::~SqliteDB()
 inline bool SqliteDB::ok() const
 {
   return d_ok;
+}
+
+inline bool SqliteDB::saveToFile(std::string const &filename) const
+{
+  SqliteDB database(filename, false /*readonly*/);
+  if (!SqliteDB::copyDb(*this, database))
+  {
+    Logger::error("Failed to export sqlite database");
+    return false;
+  }
+  return true;
 }
 
 inline bool SqliteDB::exec(std::string const &q, QueryResults *results) const
@@ -537,7 +609,7 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, char const *
 
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, unsigned char const *param) const
 {
-  //std::cout << "Binding UNSIGNED CHAR CONST *" << std::endl;
+  //std::cout << "Binding UNSIGNED CHAR CONST * at " << count << std::endl;
   return sqlite3_bind_text(stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_TRANSIENT);
 }
 
@@ -842,7 +914,7 @@ inline bool SqliteDB::registerCustoms() const
 {
   return sqlite3_create_function(d_db, "TOKENCOUNT", -1, SQLITE_UTF8, nullptr, &tokencount, nullptr, nullptr) == SQLITE_OK &&
     sqlite3_create_function(d_db, "TOKEN", -1, SQLITE_UTF8, nullptr, &token, nullptr, nullptr) == SQLITE_OK &&
-    sqlite3_create_function(d_db, "JSONLONG", -1, SQLITE_UTF8, nullptr, &jsonlong, nullptr, nullptr) == SQLITE_OK;
+    sqlite3_create_function(d_db, "JSONLONG", -1, SQLITE_UTF8, const_cast<SqliteDB *>(this), &jsonlong, nullptr, nullptr) == SQLITE_OK;
 }
 
 inline void SqliteDB::tokencount(sqlite3_context *context, int argc, sqlite3_value **argv) //static
@@ -966,12 +1038,12 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
       return; // not sure what we're doing here...
 
     SqliteDB::QueryResults res;
-    SqliteDB tmp;
-    if (tmp.exec("SELECT "
-                 "IIF(json_valid(?), json_extract(?, '$.low'), NULL) AS low, "
-                 "IIF(json_valid(?), json_extract(?, '$.high'), NULL) AS high, "
-                 "IIF(json_valid(?), json_extract(?, '$.unsigned'), NULL) AS unsigned",
-                 {text, text, text, text, text, text}, &res) &&
+    SqliteDB const *sqldb = reinterpret_cast<SqliteDB const *>(sqlite3_user_data(context));
+    if (sqldb->exec("SELECT "
+                    "IIF(json_valid(?), json_extract(?, '$.low'), NULL) AS low, "
+                    "IIF(json_valid(?), json_extract(?, '$.high'), NULL) AS high, "
+                    "IIF(json_valid(?), json_extract(?, '$.unsigned'), NULL) AS unsigned",
+                    {text, text, text, text, text, text}, &res) &&
         res.rows() == 1 &&
         (!res.isNull(0, "low") || !res.isNull(0, "high")))
     {

@@ -17,9 +17,28 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef MEMSQLITEDB_H_
+#define MEMSQLITEDB_H_
 
-#define VERSIONDATE "20240113.234340"
+#include "../sqlitedb/sqlitedb.h"
+
+class MemSqliteDB : public SqliteDB
+{
+ public:
+  inline MemSqliteDB();
+  inline MemSqliteDB(std::pair<unsigned char *, uint64_t> *data);
+  ~MemSqliteDB() = default;
+};
+
+inline MemSqliteDB::MemSqliteDB()
+  :
+  SqliteDB(":memory:")
+{}
+
+inline MemSqliteDB::MemSqliteDB(std::pair<unsigned char *, uint64_t> *data)
+  :
+  SqliteDB(data)
+{}
+
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -110,7 +110,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
     // find current
     auto pos = std::find_if(d_avatars.begin(), d_avatars.end(),
                             [aid](auto const &p) { return p.first == bepaald::toString(aid); });
-    std::unique_ptr<AvatarFrame> backup; // save the current in case something goes wrong...
+    DeepCopyingUniquePtr<AvatarFrame> backup; // save the current in case something goes wrong...
     if (pos != d_avatars.end())
     {
       backup = std::move(pos->second);

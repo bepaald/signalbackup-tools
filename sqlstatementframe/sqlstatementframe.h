@@ -65,6 +65,8 @@ class SqlStatementFrame : public BackupFrame
   inline SqlStatementFrame(SqlStatementFrame const &other);
   inline SqlStatementFrame &operator=(SqlStatementFrame const &other);
   inline virtual ~SqlStatementFrame();
+  inline virtual SqlStatementFrame *clone() const override;
+  inline virtual SqlStatementFrame *move_clone() override;
 
   inline virtual FRAMETYPE frameType() const override;
   inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
@@ -94,7 +96,7 @@ class SqlStatementFrame : public BackupFrame
 
  private:
   void buildStatement();
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline SqlStatementFrame::SqlStatementFrame()
@@ -188,6 +190,16 @@ inline SqlStatementFrame::~SqlStatementFrame()
     if (std::get<1>(d_parameterdata[i]))
       delete[] std::get<1>(d_parameterdata[i]);
   d_parameterdata.clear();
+}
+
+inline SqlStatementFrame *SqlStatementFrame::clone() const
+{
+  return new SqlStatementFrame(*this);
+}
+
+inline SqlStatementFrame *SqlStatementFrame::move_clone()
+{
+  return new SqlStatementFrame(std::move(*this));
 }
 
 inline BackupFrame::FRAMETYPE SqlStatementFrame::frameType() const // virtual override

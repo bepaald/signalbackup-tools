@@ -78,7 +78,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
     if (dbl.table == d_part_table)
     {
       // update rowid's in attachments
-      std::map<std::pair<uint64_t, int64_t>, std::unique_ptr<AttachmentFrame>> newattdb;
+      std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> newattdb;
       for (auto &att : source->d_attachments)
       {
         AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att.second.release());

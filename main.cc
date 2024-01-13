@@ -150,35 +150,35 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  // temporary. REMOVE THIS
-  if (arg.strugee() != -1)
-  {
-    Logger::message("TEMP FUNCTION (#37)");
-    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-    fd.strugee(arg.strugee());
-    return 0;
-  }
-  if (arg.strugee3() != -1)
-  {
-    Logger::message("TEMP FUNCTION (#37)");
-    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-    fd.strugee3(arg.strugee3());
-    return 0;
-  }
-  if (arg.ashmorgan())
-  {
-    Logger::message("TEMP FUNCTION (#40)");
-    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-    fd.ashmorgan();
-    return 0;
-  }
-  else if (arg.strugee2())
-  {
-    Logger::message("TEMP FUNCTION 2 (#37)");
-    FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-    fd.strugee2();
-    return 0;
-  }
+  // // temporary. REMOVE THIS
+  // if (arg.strugee() != -1)
+  // {
+  //   Logger::message("TEMP FUNCTION (#37)");
+  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
+  //   fd.strugee(arg.strugee());
+  //   return 0;
+  // }
+  // if (arg.strugee3() != -1)
+  // {
+  //   Logger::message("TEMP FUNCTION (#37)");
+  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
+  //   fd.strugee3(arg.strugee3());
+  //   return 0;
+  // }
+  // if (arg.ashmorgan())
+  // {
+  //   Logger::message("TEMP FUNCTION (#40)");
+  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
+  //   fd.ashmorgan();
+  //   return 0;
+  // }
+  // else if (arg.strugee2())
+  // {
+  //   Logger::message("TEMP FUNCTION 2 (#37)");
+  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
+  //   fd.strugee2();
+  //   return 0;
+  // }
 
   MEMINFO("Start of program, before opening input");
 

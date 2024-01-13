@@ -25,7 +25,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                              bool migrate, bool overwrite)
 {
   bool databasemigrated = false;
-  SqliteDB backup_database(":memory:");
+  MemSqliteDB backup_database;
 
   // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
   if (d_databaseversion == 167)

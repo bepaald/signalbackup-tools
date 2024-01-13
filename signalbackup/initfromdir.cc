@@ -25,7 +25,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
   std::cout << "Opening from dir!" << std::endl;
 
   std::cout << "Reading database..." << std::endl;
-  SqliteDB database(inputdir + "/database.sqlite");
+  FileSqliteDB database(inputdir + "/database.sqlite");
   if (!SqliteDB::copyDb(database, d_database))
     return;
 
@@ -115,7 +115,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     std::filesystem::path avatarbin(file);
     avatarbin.replace_extension(".bin");
 
-    std::unique_ptr<AvatarFrame> temp;
+    DeepCopyingUniquePtr<AvatarFrame> temp;
     if (!setFrameFromFile(&temp, avatarframe.string()))
       return;
     if (!temp->setAttachmentData(avatarbin.string()))
@@ -156,7 +156,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
         attbin.replace_extension(".bin");
     }
 
-    std::unique_ptr<AttachmentFrame> temp;
+    DeepCopyingUniquePtr<AttachmentFrame> temp;
     if (!setFrameFromFile(&temp, attframe.string()))
       return;
 
@@ -220,7 +220,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     std::filesystem::path stickerbin = sticker.path();
     stickerbin.replace_extension(".bin");
 
-    std::unique_ptr<StickerFrame> temp;
+    DeepCopyingUniquePtr<StickerFrame> temp;
     if (!setFrameFromFile(&temp, stickerframe.string()))
       return;
     if (!temp->setAttachmentData(stickerbin.string()))

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,12 +19,12 @@
 
 #include "filedecryptor.ih"
 
-std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
+std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 {
   if (d_backupfileversion == 0) [[unlikely]]
-    return getFrameOld();
+    return getFrameOld(file);
 
-  unsigned long long int filepos = d_file.tellg();
+  unsigned long long int filepos = file.tellg();
 
   if (d_verbose) [[unlikely]]
     Logger::message("Getting frame at filepos: ", filepos, " (COUNTER: ", d_counter, ")");
@@ -37,15 +37,16 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
   if (d_headerframe)
   {
+    file.seekg(4 + d_headerframe->dataSize());
     std::unique_ptr<BackupFrame> frame(d_headerframe.release());
     return frame;
   }
 
   uint32_t encrypted_encryptedframelength = 0;
-  if (!d_file.read(reinterpret_cast<char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength)))) [[unlikely]]
+  if (!file.read(reinterpret_cast<char *>(&encrypted_encryptedframelength), sizeof(decltype(encrypted_encryptedframelength)))) [[unlikely]]
   {
     Logger::error("Failed to read ", sizeof(decltype(encrypted_encryptedframelength)),
-                  " bytes from file to get next frame size... (", d_file.tellg(),
+                  " bytes from file to get next frame size... (", file.tellg(),
                   " / ", d_filesize, ")");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
@@ -122,7 +123,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
   // read in the encrypted frame data
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
 
-  if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
+  if (!getNextFrameBlock(file, encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
     Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -249,7 +250,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
 
-    if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[unlikely]]
+    if ((file.tellg() < 0 && file.eof()) || (attsize + static_cast<uint64_t>(file.tellg()) > d_filesize)) [[unlikely]]
       if (!d_assumebadframesize)
       {
         Logger::error("Unexpectedly hit end of file while reading attachment!");
@@ -258,12 +259,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 
     uintToFourBytes(d_iv, d_counter++);
 
-    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
 
-    d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
+    file.seekg(attsize + MACSIZE, std::ios_base::cur);
   }
 
-  //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;
+  //std::cout << "FILEPOS: " << file.tellg() << std::endl;
 
   //delete frame;
 
@@ -271,9 +272,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame()
 }
 
 // old style, where frame length was not encrypted
-std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
+std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
 {
-  unsigned long long int filepos = d_file.tellg();
+  unsigned long long int filepos = file.tellg();
 
   if (d_verbose) [[unlikely]]
     Logger::message("Getting frame at filepos: ", filepos, " (COUNTER: ", d_counter, ")");
@@ -286,18 +287,19 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
 
   if (d_headerframe)
   {
+    file.seekg(4 + d_headerframe->dataSize());
     std::unique_ptr<BackupFrame> frame(d_headerframe.release());
     return frame;
   }
 
-  uint32_t encryptedframelength = getNextFrameBlockSize();
+  uint32_t encryptedframelength = getNextFrameBlockSize(file);
   //if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   //{
   //  std::cout << "Suspicious framelength" << std::endl;
   //  bruteForceFrom(filepos)???
   //}
 
-  if (encryptedframelength == 0 && d_file.eof()) [[unlikely]]
+  if (encryptedframelength == 0 && file.eof()) [[unlikely]]
   {
     Logger::error("Unexpectedly hit end of file!");
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -314,17 +316,17 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     if (d_stoponerror || d_backupfileversion > 0)
       return std::unique_ptr<BackupFrame>(nullptr);
 
-    return bruteForceFrom(filepos, encryptedframelength);
+    return bruteForceFrom(file, filepos, encryptedframelength);
   }
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
-  if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength)) [[unlikely]]
+  if (!getNextFrameBlock(file, encryptedframe.get(), encryptedframelength)) [[unlikely]]
   {
     Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
 
     if (d_stoponerror || d_backupfileversion > 0)
       return std::unique_ptr<BackupFrame>(nullptr);
 
-    return bruteForceFrom(filepos, encryptedframelength);
+    return bruteForceFrom(file, filepos, encryptedframelength);
   }
 
   // check hash
@@ -420,7 +422,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
     {
       Logger::error_indent("Encrypted data had failed verification (Bad MAC)");
       delete[] decodedframe;
-      return bruteForceFrom(filepos, encryptedframelength);
+      return bruteForceFrom(file, filepos, encryptedframelength);
     }
     else
     {
@@ -442,7 +444,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
        frame->frameType() == BackupFrame::FRAMETYPE::STICKER))
   {
 
-    if ((d_file.tellg() < 0 && d_file.eof()) || (attsize + static_cast<uint64_t>(d_file.tellg()) > d_filesize)) [[unlikely]]
+    if ((file.tellg() < 0 && file.eof()) || (attsize + static_cast<uint64_t>(file.tellg()) > d_filesize)) [[unlikely]]
       if (!d_assumebadframesize)
       {
         Logger::error("Unexpectedly hit end of file while reading attachment!");
@@ -451,12 +453,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld()
 
     uintToFourBytes(d_iv, d_counter++);
 
-    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
 
-    d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
+    file.seekg(attsize + MACSIZE, std::ios_base::cur);
   }
 
-  //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;
+  //std::cout << "FILEPOS: " << file.tellg() << std::endl;
 
   //delete frame;
 

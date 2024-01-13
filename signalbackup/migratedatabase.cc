@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -210,7 +210,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                          "receipt_timestamp, "
                          + d_mms_delivery_receipts + ", "
                          + d_mms_read_receipts + ", "
-                         + d_mms_viewed_receipts + ", "
+                         "0, " // view_receipt (not present in sms table)
                          "mismatched_identities, "
                          "null, "
                          "expires_in, "

@@ -394,7 +394,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     // link_previews = [{"url":"https:\/\/www.reddit.com\/r\/esp32\/comments\/12b5258\/10_steps_to_building_a_light_up_iot_button_from\/","title":"r\/esp32 on Reddit: 10 Steps To Building a Light Up IoT Button from Scratch","description":"Posted by u\/calilaser - 65 votes and 7 comments","date":0,"attachmentId":null}]
     */
 
-    std::unique_ptr<AttachmentFrame> new_attachment_frame;
+    DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
                                                                             (d_database.tableContainsColumn(d_part_table, "unique_id") ? "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
                                                                             "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))/* &&

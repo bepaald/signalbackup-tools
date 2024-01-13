@@ -27,14 +27,22 @@ void SignalBackup::initFromFile()
     return;
   }
 
-  uint64_t totalsize = d_fd->total();
+  // open file
+  std::ifstream backupfile(d_filename, std::ios_base::binary | std::ios_base::in);
+  if (!backupfile.is_open()) [[unlikely]]
+  {
+    Logger::error("Failed to open file '", d_filename, "'");
+    return;
+  }
+
+  int64_t totalsize = d_fd->total();
 
   Logger::message("Reading backup file...");
   std::unique_ptr<BackupFrame> frame(nullptr);
 
   d_database.exec("BEGIN TRANSACTION");
 
-  while ((frame = d_fd->getFrame())) // deal with bad mac??
+  while ((frame = d_fd->getFrame(backupfile))) // deal with bad mac??
   {
     if (d_fd->badMac()) [[unlikely]]
     {
@@ -47,7 +55,7 @@ void SignalBackup::initFromFile()
     {
       Logger::message_overwrite("FRAME ", frame->frameNumber(), " (",
                                 std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-                                (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100,
+                                (static_cast<float>(backupfile.tellg()) / totalsize) * 100,
                                 std::defaultfloat, "%)... ");
       // std::cout << (d_verbose ? "" : "\33[2K\r") << "FRAME " << frame->frameNumber() << " ("
       //           << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
@@ -65,7 +73,8 @@ void SignalBackup::initFromFile()
     if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
     {
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
-      //d_headerframe->printInfo();
+      if (d_verbose) [[unlikely]]
+        d_headerframe->printInfo();
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION) [[unlikely]]
     {
@@ -180,7 +189,7 @@ void SignalBackup::initFromFile()
     addEndFrame();
   }
 
-  if (d_fd->curFilePos() == totalsize)
+  if (backupfile.tellg() == totalsize)
     Logger::message("done!");
 
   d_ok = true;

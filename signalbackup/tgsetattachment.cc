@@ -92,7 +92,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     long long int new_part_id = std::any_cast<long long int>(retval);
 
     // now the actual attachment
-    std::unique_ptr<AttachmentFrame> new_attachment_frame;
+    DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>
                             {"ROWID:uint64:" + bepaald::toString(new_part_id),
                              (d_database.tableContainsColumn(d_part_table, "unique_id") ?

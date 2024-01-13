@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -28,13 +28,15 @@ class EndFrame: public BackupFrame
  public:
   inline EndFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~EndFrame() = default;
+  inline virtual EndFrame *clone() const override;
+  inline virtual EndFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline EndFrame::EndFrame(unsigned char *, size_t length, uint64_t count)
@@ -44,6 +46,16 @@ inline EndFrame::EndFrame(unsigned char *, size_t length, uint64_t count)
   unsigned char *valbytes = new unsigned char[sizeof(length)];
   intTypeToBytes(length, valbytes);
   d_framedata.push_back(std::make_tuple(0, valbytes, sizeof(length)));
+}
+
+inline EndFrame *EndFrame::clone() const
+{
+  return new EndFrame(*this);
+}
+
+inline EndFrame *EndFrame::move_clone()
+{
+  return new EndFrame(std::move(*this));
 }
 
 inline BackupFrame *EndFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static

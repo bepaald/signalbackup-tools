@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -40,6 +40,8 @@ class StickerFrame : public FrameWithAttachment
   inline StickerFrame(StickerFrame const &other) = default;
   inline StickerFrame &operator=(StickerFrame const &other) = default;
   inline virtual ~StickerFrame() = default;
+  inline virtual StickerFrame *clone() const override;
+  inline virtual StickerFrame *move_clone() override;
   inline virtual FRAMETYPE frameType() const override;
   inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
@@ -51,7 +53,7 @@ class StickerFrame : public FrameWithAttachment
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline StickerFrame::StickerFrame(uint64_t count)
@@ -63,6 +65,16 @@ inline StickerFrame::StickerFrame(unsigned char *data, size_t length, uint64_t c
   :
   FrameWithAttachment(data, length, count)
 {}
+
+inline StickerFrame *StickerFrame::clone() const
+{
+  return new StickerFrame(*this);
+}
+
+inline StickerFrame *StickerFrame::move_clone()
+{
+  return new StickerFrame(std::move(*this));
+}
 
 inline BackupFrame::FRAMETYPE StickerFrame::frameType() const // virtual override
 {

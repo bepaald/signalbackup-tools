@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,6 +35,8 @@ class DatabaseVersionFrame : public BackupFrame
   inline explicit DatabaseVersionFrame(uint64_t count = 0);
   inline DatabaseVersionFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~DatabaseVersionFrame() = default;
+  inline virtual DatabaseVersionFrame *clone() const override;
+  inline virtual DatabaseVersionFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t version() const;
@@ -45,7 +47,7 @@ class DatabaseVersionFrame : public BackupFrame
   //inline virtual bool setNewData(std::string const &field, std::string const &data) override;
   inline unsigned int getField(std::string const &str) const;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline DatabaseVersionFrame::DatabaseVersionFrame(uint64_t count)
@@ -58,6 +60,16 @@ inline DatabaseVersionFrame::DatabaseVersionFrame(unsigned char *bytes, size_t l
   BackupFrame(bytes, length, count)
 {
   //std::cout << "CREATING DATABASEVERSIONFRAME" << std::endl;
+}
+
+inline DatabaseVersionFrame *DatabaseVersionFrame::clone() const
+{
+  return new DatabaseVersionFrame(*this);
+}
+
+inline DatabaseVersionFrame *DatabaseVersionFrame::move_clone()
+{
+  return new DatabaseVersionFrame(std::move(*this));
 }
 
 inline BackupFrame *DatabaseVersionFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -42,6 +42,8 @@ class KeyValueFrame : public BackupFrame
   inline explicit KeyValueFrame(uint64_t count = 0);
   inline KeyValueFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~KeyValueFrame() = default;
+  inline virtual KeyValueFrame *clone() const override;
+  inline virtual KeyValueFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
@@ -52,7 +54,7 @@ class KeyValueFrame : public BackupFrame
   inline std::string key() const;
   inline std::string value() const;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline KeyValueFrame::KeyValueFrame(uint64_t count)
@@ -64,6 +66,16 @@ inline KeyValueFrame::KeyValueFrame(unsigned char *bytes, size_t length, uint64_
   :
   BackupFrame(bytes, length, count)
 {}
+
+inline KeyValueFrame *KeyValueFrame::clone() const
+{
+  return new KeyValueFrame(*this);
+}
+
+inline KeyValueFrame *KeyValueFrame::move_clone()
+{
+  return new KeyValueFrame(std::move(*this));
+}
 
 inline BackupFrame *KeyValueFrame::create(unsigned char *bytes, size_t length, uint64_t count)
 {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -251,7 +251,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     data[0x13] = 1;
 
   std::pair<unsigned char *, uint64_t> desktopdata = {data, size};
-  SqliteDB ddb(&desktopdata);
+  MemSqliteDB ddb(&desktopdata);
   if (!ddb.ok())
   {
     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << " : Failed to open database" << std::endl;
@@ -448,8 +448,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
                                                    &warned_createcontacts);
         if (recipientid_for_thread == -1)
         {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                    << ": Failed to create missing recipient. Skipping." << std::endl;
+          Logger::warning("Failed to create missing recipient. Skipping.");
           continue;
         }
       }
@@ -457,19 +456,15 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
 
     if (recipientid_for_thread == -1)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Chat partner was not found in recipient-table. Skipping. (id: "
-                << (person_or_group_id.empty() ? results_all_conversations.valueAsString(i, "e164") : person_or_group_id) << ")" << std::endl;
+      Logger::warning("Chat partner was not found in recipient-table. Skipping. (id: ",
+                      (person_or_group_id.empty() ? results_all_conversations.valueAsString(i, "e164") : person_or_group_id), ")");
       continue;
     }
 
     SqliteDB::QueryResults results2;
     long long int ttid = -1;
     if (!d_database.exec("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", recipientid_for_thread, &results2))
-    {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Executing query." << std::endl;
       continue;
-    }
     if (results2.rows() == 1) // we have found our matching thread
       ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
     else if (results2.rows() == 0) // the query was succesful, but yielded no results -> create thread
@@ -495,7 +490,7 @@ bool SignalBackup::importFromDesktop(std::string configdir, std::string database
     }
     if (ttid < 0)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": No thread for this conversation was found or created. Skipping." << std::endl;
+      Logger::error("No thread for this conversation was found or created. Skipping.");
       continue;
     }
 

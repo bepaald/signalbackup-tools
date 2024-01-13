@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,18 +19,18 @@
 
 #include "filedecryptor.ih"
 
-std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint64_t filepos, uint32_t previousframelength)
+std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(std::ifstream &file, uint64_t filepos, uint32_t previousframelength)
 {
   Logger::message("Starting bruteforcing offset to next valid frame... starting after: ", filepos);
   uint64_t skip = 1;
   std::unique_ptr<BackupFrame> ret(nullptr);
   while (filepos + skip < d_filesize)
   {
-    d_file.clear();
+    file.clear();
     if (skip % 10 == 0)
       Logger::message_overwrite("Checking offset ", skip, " bytes");
-    d_file.seekg(filepos + skip, std::ios_base::beg);
-    ret.reset(getFrameBrute(skip++, previousframelength).release());
+    file.seekg(filepos + skip, std::ios_base::beg);
+    ret.reset(getFrameBrute(file, skip++, previousframelength).release());
     if (ret)
     {
       Logger::message("Got frame, breaking");
@@ -40,9 +40,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::bruteForceFrom(uint64_t filepos, uin
   return ret;
 }
 
-std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint64_t offset, uint32_t previousframelength)
+std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, uint64_t offset, uint32_t previousframelength)
 {
-  if (static_cast<uint64_t>(d_file.tellg()) == d_filesize)
+  if (static_cast<uint64_t>(file.tellg()) == d_filesize)
   {
     Logger::message("Read entire backup file...");
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -50,11 +50,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint64_t offset, uint3
 
   if (d_headerframe)
   {
+    file.seekg(4 + d_headerframe->dataSize());
     std::unique_ptr<BackupFrame> frame(d_headerframe.release());
     return frame;
   }
 
-  uint32_t encryptedframelength = getNextFrameBlockSize();
+  uint32_t encryptedframelength = getNextFrameBlockSize(file);
   if (encryptedframelength > 3145728/*= 3MB*/ /*115343360 / * =110MB*/ || encryptedframelength < 11)
   {
     //std::cout << "Framesize too big to be real" << std::endl;
@@ -62,7 +63,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint64_t offset, uint3
   }
 
   std::unique_ptr<unsigned char[]> encryptedframe(new unsigned char[encryptedframelength]);
-  if (!getNextFrameBlock(encryptedframe.get(), encryptedframelength))
+  if (!getNextFrameBlock(file, encryptedframe.get(), encryptedframelength))
     return std::unique_ptr<BackupFrame>(nullptr);
 
   // check hash
@@ -133,7 +134,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint64_t offset, uint3
     {
       if (frame->validate() &&
           frame->frameType() != BackupFrame::FRAMETYPE::HEADER && // it is impossible to get in this function without the headerframe, and there is only one
-          (frame->frameType() != BackupFrame::FRAMETYPE::END || static_cast<uint64_t>(d_file.tellg()) == d_filesize))
+          (frame->frameType() != BackupFrame::FRAMETYPE::END || static_cast<uint64_t>(file.tellg()) == d_filesize))
       {
         d_counter += skipped;
         d_framecount += skipped;
@@ -167,9 +168,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(uint64_t offset, uint3
 
     uintToFourBytes(d_iv, d_counter++);
 
-    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, d_file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
 
-    d_file.seekg(attsize + MACSIZE, std::ios_base::cur);
+    file.seekg(attsize + MACSIZE, std::ios_base::cur);
   }
 
   //std::cout << "FILEPOS: " << d_file.tellg() << std::endl;

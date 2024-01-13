@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2020-2023  Selwin van Dijk
+  Copyright (C) 2020-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -28,6 +28,8 @@ class InvalidFrame : public BackupFrame
  public:
   inline InvalidFrame(uint64_t count = 0);
   inline virtual ~InvalidFrame() = default;
+  inline virtual InvalidFrame *clone() const override;
+  inline virtual InvalidFrame *move_clone() override;
   inline virtual FRAMETYPE frameType() const override;
   inline virtual void printInfo() const override;
 };
@@ -36,6 +38,16 @@ inline InvalidFrame::InvalidFrame(uint64_t count)
   :
   BackupFrame(count)
 {}
+
+inline InvalidFrame *InvalidFrame::clone() const
+{
+  return new InvalidFrame(*this);
+}
+
+inline InvalidFrame *InvalidFrame::move_clone()
+{
+  return new InvalidFrame(std::move(*this));
+}
 
 inline BackupFrame::FRAMETYPE InvalidFrame::frameType() const
 {

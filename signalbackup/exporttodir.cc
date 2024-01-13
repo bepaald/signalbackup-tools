@@ -161,12 +161,8 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 
   // export database
   std::cout << "Writing database..." << std::endl;
-  SqliteDB database(directory + "/database.sqlite", false /*readonly*/);
-  if (!SqliteDB::copyDb(d_database, database))
-  {
-    std::cout << "Error exporting sqlite database" << std::endl;
+  if (!d_database.saveToFile(directory + "/database.sqlite")) [[unlikely]]
     return false;
-  }
 
 #ifdef BUILT_FOR_TESTING
   // if d_found_sqlite_sequence_in_database

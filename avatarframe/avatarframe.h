@@ -39,6 +39,8 @@ class AvatarFrame : public FrameWithAttachment
   inline explicit AvatarFrame(uint64_t count = 0);
   inline AvatarFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~AvatarFrame() = default;
+  inline virtual AvatarFrame *clone() const override;
+  inline virtual AvatarFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
@@ -51,7 +53,7 @@ class AvatarFrame : public FrameWithAttachment
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline AvatarFrame::AvatarFrame(uint64_t count)
@@ -64,6 +66,15 @@ inline AvatarFrame::AvatarFrame(unsigned char *bytes, size_t length, uint64_t co
   FrameWithAttachment(bytes, length, count)
 {}
 
+inline AvatarFrame *AvatarFrame::clone() const
+{
+  return new AvatarFrame(*this);
+}
+
+inline AvatarFrame *AvatarFrame::move_clone()
+{
+  return new AvatarFrame(std::move(*this));
+}
 
 inline BackupFrame *AvatarFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
 {

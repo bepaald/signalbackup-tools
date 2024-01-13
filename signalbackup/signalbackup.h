@@ -20,7 +20,7 @@
 #ifndef SIGNALBACKUP_H_
 #define SIGNALBACKUP_H_
 
-#include "../sqlitedb/sqlitedb.h"
+#include "../memsqlitedb/memsqlitedb.h"
 #include "../filedecryptor/filedecryptor.h"
 #include "../fileencryptor/fileencryptor.h"
 #include "../backupframe/backupframe.h"
@@ -34,6 +34,7 @@
 #include "../endframe/endframe.h"
 #include "../sqlstatementframe/sqlstatementframe.h"
 #include "../logger/logger.h"
+#include "../deepcopyinguniqueptr/deepcopyinguniqueptr.h"
 
 #include <map>
 #include <set>
@@ -53,9 +54,10 @@ class SignalBackup
   static bool constexpr DROPATTACHMENTDATA = false;
 
  private:
-  SqliteDB d_database;
-  std::unique_ptr<FileDecryptor> d_fd;
+  MemSqliteDB d_database;
+  DeepCopyingUniquePtr<FileDecryptor> d_fd;
   FileEncryptor d_fe;
+  std::string d_filename;
   std::string d_passphrase;
 
   // only used in testing
@@ -96,14 +98,14 @@ class SignalBackup
   std::string d_dt_c_uuid;
   std::string d_dt_m_sourceuuid;
 
-  std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
-  std::map<std::pair<uint64_t, int64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
-  std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
-  std::unique_ptr<HeaderFrame> d_headerframe;
-  std::unique_ptr<DatabaseVersionFrame> d_databaseversionframe;
-  std::vector<std::unique_ptr<SharedPrefFrame>> d_sharedpreferenceframes;
-  std::vector<std::unique_ptr<KeyValueFrame>> d_keyvalueframes;
-  std::unique_ptr<EndFrame> d_endframe;
+  std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>> d_avatars;
+  std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
+  std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> d_stickers; //maps <rowid> to sticker
+  DeepCopyingUniquePtr<HeaderFrame> d_headerframe;
+  DeepCopyingUniquePtr<DatabaseVersionFrame> d_databaseversionframe;
+  std::vector<DeepCopyingUniquePtr<SharedPrefFrame>> d_sharedpreferenceframes;
+  std::vector<DeepCopyingUniquePtr<KeyValueFrame>> d_keyvalueframes;
+  DeepCopyingUniquePtr<EndFrame> d_endframe;
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
   unsigned int d_databaseversion;
@@ -195,6 +197,10 @@ class SignalBackup
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
                       std::vector<long long int> editattachments, bool stoponerror, bool fulldecode);
+  inline SignalBackup(SignalBackup const &other) = default;
+  inline SignalBackup &operator=(SignalBackup const &other) = default;
+  inline SignalBackup(SignalBackup &&other) = default;
+  inline SignalBackup &operator=(SignalBackup &&other) = default;
   [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
                                          bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true);
@@ -279,9 +285,9 @@ class SignalBackup
                                            std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
   template <typename T>
-  inline bool setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet = false) const;
+  inline bool setFrameFromFile(DeepCopyingUniquePtr<T> *frame, std::string const &file, bool quiet = false) const;
   template <typename T>
-  inline bool setFrameFromStrings(std::unique_ptr<T> *frame, std::vector<std::string> const &lines) const;
+  inline bool setFrameFromStrings(DeepCopyingUniquePtr<T> *frame, std::vector<std::string> const &lines) const;
   template <typename T> inline std::pair<unsigned char*, size_t> numToData(T num) const;
   void setMinimumId(std::string const &table, long long int offset, std::string const &col = "_id") const;
   void cleanDatabaseByMessages();
@@ -335,7 +341,7 @@ class SignalBackup
                           std::string const &column = "members") const;
   bool missingAttachmentExpected(uint64_t rowid, int64_t unique_id) const;
   template <typename T>
-  inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
+  inline bool setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, std::string const &line) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
@@ -443,7 +449,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
                                   bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
                                   std::vector<long long int> editattachments, bool stoponerror, bool fulldecode)
   :
-  d_database(":memory:"),
+  d_filename(filename),
   d_passphrase(passphrase),
   d_found_sqlite_sequence_in_backup(false),
   d_ok(false),
@@ -458,7 +464,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
     initFromDir(filename, replaceattachments);
   else // not directory
   {
-    d_fd.reset(new FileDecryptor(filename, passphrase, d_verbose, stoponerror, assumebadframesizeonbadmac, editattachments));
+    d_fd.reset(new FileDecryptor(d_filename, d_passphrase, d_verbose, d_stoponerror, assumebadframesizeonbadmac, editattachments));
     if (!d_fd->ok())
       return;
     initFromFile();
@@ -550,7 +556,7 @@ inline std::pair<unsigned char*, size_t> SignalBackup::numToData(T num) const
 }
 
 template <typename T>
-inline bool SignalBackup::setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const
+inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, std::string const &line) const
 {
   if (line.empty())
     return true;
@@ -626,7 +632,7 @@ inline bool SignalBackup::setFrameFromLine(std::unique_ptr<T> *newframe, std::st
 }
 
 template <>
-inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std::string const &file, bool quiet) const
+inline bool SignalBackup::setFrameFromFile(DeepCopyingUniquePtr<EndFrame> *frame, std::string const &file, bool quiet) const
 {
   std::ifstream datastream(file, std::ios_base::binary | std::ios::in);
   if (!datastream.is_open())
@@ -640,7 +646,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<EndFrame> *frame, std
 }
 
 template <typename T>
-inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::string const &file, bool quiet) const
+inline bool SignalBackup::setFrameFromFile(DeepCopyingUniquePtr<T> *frame, std::string const &file, bool quiet) const
 {
   std::ifstream datastream(file, std::ios_base::binary | std::ios::in);
   if (!datastream.is_open())
@@ -650,7 +656,7 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
     return false;
   }
 
-  std::unique_ptr<T> newframe(new T);
+  DeepCopyingUniquePtr<T> newframe(new T);
   std::string line;
   while (std::getline(datastream, line))
     if (!setFrameFromLine(&newframe, line))
@@ -661,9 +667,9 @@ inline bool SignalBackup::setFrameFromFile(std::unique_ptr<T> *frame, std::strin
 }
 
 template <typename T>
-inline bool SignalBackup::setFrameFromStrings(std::unique_ptr<T> *frame, std::vector<std::string> const &lines) const
+inline bool SignalBackup::setFrameFromStrings(DeepCopyingUniquePtr<T> *frame, std::vector<std::string> const &lines) const
 {
-  std::unique_ptr<T> newframe(new T);
+  DeepCopyingUniquePtr<T> newframe(new T);
   for (auto const &l : lines)
     if (!setFrameFromLine(&newframe, l))
       return false;

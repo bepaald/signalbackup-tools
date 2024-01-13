@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,8 +36,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                 "COALESCE(json_extract(json,'$.expirationTimerUpdate.sourceServiceId'), json_extract(json,'$.expirationTimerUpdate.sourceUuid')) AS sourceuuid "
                 "FROM messages WHERE rowid = ?", rowid, &timer_results))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Querying database" << std::endl;
+    Logger::error("Querying database");
     return false;
   }
   // 'from sync' timer updates do not have any info on who set the timer.
@@ -46,8 +45,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
   // let's just skip.
   if (timer_results.valueAsString(0, "fromsync") != "0")
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-              << ": Unsupported message type 'timer-notification (fromSync=true)'. Skipping..." << std::endl;
+    Logger::warning("Unsupported message type 'timer-notification (fromSync=true)'. Skipping...");
     return true; // non-fatal error
   }
 
@@ -97,7 +95,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                            {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                            {d_sms_recipient_id, address}}))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting expiration-timer-update into sms" << std::endl;
+      Logger::error("Inserting expiration-timer-update into sms");
       return false;
     }
   }
@@ -115,7 +113,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                                    {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                                    {d_mms_recipient_id, address}}))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting expiration-timer-update into mms" << std::endl;
+        Logger::error("Inserting expiration-timer-update into mms");
         return false;
       }
     }
@@ -126,7 +124,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
       long long int freedate = getFreeDateForMessage(sent_at, ttid, incoming ? address : d_selfid);
       if (freedate == -1)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting expiration-timer-update message into mms" << std::endl;
+        Logger::error("Getting free date for inserting expiration-timer-update message into mms");
         return false;
       }
       if (!insertRow(d_mms_table, {{"thread_id", ttid},
@@ -140,7 +138,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                                    {d_mms_recipient_id, incoming ? address : d_selfid},
                                    {"to_recipient_id", incoming ? d_selfid : address}}))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting expiration-timer-update into mms" << std::endl;
+        Logger::message("Inserting expiration-timer-update into mms");
         return false;
       }
     }

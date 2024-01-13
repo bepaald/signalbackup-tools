@@ -666,9 +666,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     while (erased)
     {
       erased = false;
-      for (std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>>::iterator sourceav = source->d_avatars.begin(); sourceav != source->d_avatars.end(); ++sourceav)
+      for (std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>>::iterator sourceav = source->d_avatars.begin(); sourceav != source->d_avatars.end(); ++sourceav)
       {
-        for (std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>>::iterator targetav = d_avatars.begin(); targetav != d_avatars.end(); ++targetav)
+        for (std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>>::iterator targetav = d_avatars.begin(); targetav != d_avatars.end(); ++targetav)
           if (sourceav->first == targetav->first)
           {
             source->d_avatars.erase(sourceav);

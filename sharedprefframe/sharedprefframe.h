@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -40,6 +40,8 @@ class SharedPrefFrame : public BackupFrame
   inline explicit SharedPrefFrame(uint64_t count = 0);
   inline SharedPrefFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual ~SharedPrefFrame() = default;
+  inline virtual SharedPrefFrame *clone() const override;
+  inline virtual SharedPrefFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
@@ -48,7 +50,7 @@ class SharedPrefFrame : public BackupFrame
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline SharedPrefFrame::SharedPrefFrame(uint64_t count)
@@ -60,6 +62,16 @@ inline SharedPrefFrame::SharedPrefFrame(unsigned char *bytes, size_t length, uin
   :
   BackupFrame(bytes, length, count)
 {}
+
+inline SharedPrefFrame *SharedPrefFrame::clone() const
+{
+  return new SharedPrefFrame(*this);
+}
+
+inline SharedPrefFrame *SharedPrefFrame::move_clone()
+{
+  return new SharedPrefFrame(std::move(*this));
+}
 
 inline BackupFrame *SharedPrefFrame::create(unsigned char *bytes, size_t length, uint64_t count)
 {

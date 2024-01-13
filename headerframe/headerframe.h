@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -39,6 +39,8 @@ class HeaderFrame : public BackupFrame
   inline explicit HeaderFrame(uint64_t count = 0);
   inline HeaderFrame(unsigned char *data, size_t length, uint64_t count = 0);
   inline virtual ~HeaderFrame() = default;
+  inline virtual HeaderFrame *clone() const override;
+  inline virtual HeaderFrame *move_clone() override;
   inline virtual FRAMETYPE frameType() const override;
   inline unsigned char *iv() const;
   inline uint64_t iv_length() const;
@@ -53,13 +55,23 @@ class HeaderFrame : public BackupFrame
   inline virtual bool validate() const override;
   inline unsigned int getField(std::string const &str) const;
  private:
-  inline uint64_t dataSize() const;
+  inline uint64_t dataSize() const override;
 };
 
 inline HeaderFrame::HeaderFrame(uint64_t count)
   :
   BackupFrame(count)
 {}
+
+inline HeaderFrame *HeaderFrame::clone() const
+{
+  return new HeaderFrame(*this);
+}
+
+inline HeaderFrame *HeaderFrame::move_clone()
+{
+  return new HeaderFrame(std::move(*this));
+}
 
 inline HeaderFrame::HeaderFrame(unsigned char *data, size_t length, uint64_t count)
   :

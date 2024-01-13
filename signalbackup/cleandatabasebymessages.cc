@@ -290,7 +290,7 @@ void SignalBackup::cleanDatabaseByMessages()
   while (erased)
   {
     erased = false;
-    for (std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>>::iterator avit = d_avatars.begin(); avit != d_avatars.end(); ++avit)
+    for (std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>>::iterator avit = d_avatars.begin(); avit != d_avatars.end(); ++avit)
       if ((d_databaseversion < 33) ? !results.contains(avit->first) : !results.contains(bepaald::toNumber<long long int>(avit->first))) // avit first == "+316xxxxxxxx" on d_database < 33, recipient._id if > 33;
       {
         avit = d_avatars.erase(avit);

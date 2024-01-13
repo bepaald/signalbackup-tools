@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -82,6 +82,8 @@ class BackupFrame
   inline BackupFrame(BackupFrame const &other);
   inline BackupFrame &operator=(BackupFrame const &other);
   inline virtual ~BackupFrame();
+  inline virtual BackupFrame *clone() const = 0;
+  inline virtual BackupFrame *move_clone() = 0;
   inline bool ok();
   inline static int getFieldnumber(unsigned char head);
   inline static unsigned int wiretype(unsigned char head);
@@ -98,6 +100,7 @@ class BackupFrame
   inline virtual std::string getHumanData() const;
   inline bool setNewData(unsigned int field, unsigned char *data, uint64_t size);
   inline virtual bool validate() const;
+  inline virtual uint64_t dataSize() const;
  protected:
   inline uint32_t bytesToUint32(unsigned char *data, size_t len) const;
   inline uint64_t bytesToUint64(unsigned char *data, size_t len) const;
@@ -550,6 +553,11 @@ inline bool BackupFrame::setNewData(unsigned int field, unsigned char *data, uin
 inline bool BackupFrame::validate() const
 {
   return true;
+}
+
+inline uint64_t BackupFrame::dataSize() const
+{
+  return 0;
 }
 
 #endif
