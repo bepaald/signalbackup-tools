@@ -113,28 +113,31 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   // here we duplicate the relevant parts of cleanDatabaseByMessages()
 
   // remove doubled parts
-  Logger::message("  Deleting attachment entries from 'part' not belonging to remaining mms entries");
-  d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
-  Logger::message("  Removed ", d_database.changed(), " part-entries.");
+  Logger::message("  Deleting attachment entries from '", d_part_table, "' not belonging to remaining mms entries");
+  d_database.exec("DELETE FROM " + d_part_table + " WHERE " + d_part_mid + " NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
+  Logger::message("  Removed ", d_database.changed(), " ", d_part_table, "-entries.");
 
   // remove unused attachments
   Logger::message("  Deleting unused attachments...");
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT _id,unique_id FROM part", &results);
+  d_database.exec("SELECT _id," +
+                  (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
+                  " FROM " + d_part_table, &results);
+  int constexpr INVALID_ID = -10;
   for (auto it = d_attachments.begin(); it != d_attachments.end();)
   {
     bool found = false;
     for (uint i = 0; i < results.rows(); ++i)
     {
-      long long int rowid = -1;
+      long long int rowid = INVALID_ID;
       if (results.valueHasType<long long int>(i, "_id"))
         rowid = results.getValueAs<long long int>(i, "_id");
-      long long int uniqueid = -1;
+      long long int uniqueid = INVALID_ID;
       if (results.valueHasType<long long int>(i, "unique_id"))
         uniqueid = results.getValueAs<long long int>(i, "unique_id");
 
-      if (rowid != -1 && uniqueid != -1 &&
-          it->first.first == static_cast<uint64_t>(rowid) && it->first.second == static_cast<uint64_t>(uniqueid))
+      if (rowid != INVALID_ID && uniqueid != INVALID_ID &&
+          it->first.first == static_cast<uint64_t>(rowid) && it->first.second == static_cast<int64_t>(uniqueid))
       {
         found = true;
         break;
@@ -178,17 +181,17 @@ void SignalBackup::removeDoubles(long long int milliseconds)
                     (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : ""));
   }
 
-  // note this function is generally called because messages (and/or attachments) have been deleted
-  // the msl_payload table has triggers that delete its entries:
-  // (delete from msl_payload where _id in (select payload_id from message where message_id = (message.deleted_id/part.deletedmid)))
-  // apparently these triggers even when editing within this program, even though the 'ON DELETE CASCADE' stuff does not and
-  // foreign key constraints are not enforced... This causes a sort of circular thing here but I think we can just clean up the
-  // msl_message table according to still-existing msl_payloads first
-  d_database.exec("DELETE FROM msl_message WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
-
   // remove msl_message
   if (d_database.containsTable("msl_message"))
   {
+    // note this function is generally called because messages (and/or attachments) have been deleted
+    // the msl_payload table has triggers that delete its entries:
+    // (delete from msl_payload where _id in (select payload_id from message where message_id = (message.deleted_id/part.deletedmid)))
+    // apparently these triggers even when editing within this program, even though the 'ON DELETE CASCADE' stuff does not and
+    // foreign key constraints are not enforced... This causes a sort of circular thing here but I think we can just clean up the
+    // msl_message table according to still-existing msl_payloads first
+    d_database.exec("DELETE FROM msl_message WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
+
     Logger::message("  Deleting entries from 'msl_message' not belonging to remaining messages");
     if (d_database.containsTable("sms"))
     {

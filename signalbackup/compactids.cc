@@ -73,29 +73,8 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
           }
         }
       }
-      /*
-      if (table == "sms")
-      {
-        if (d_database.containsTable("msl_message"))
-          d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {nid, valuetochange});
 
-        if (d_database.containsTable("reaction")) // dbv >= 121
-          d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS NOT 1", {nid, valuetochange});
-      }
-      else if (table == d_mms_table)
-      {
-        d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {nid, valuetochange}); // update part.mid to new mms._id's
-        d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {nid, valuetochange}); //
-        if (d_database.containsTable("mention"))
-          d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {nid, valuetochange});
-        if (d_database.containsTable("msl_message"))
-          d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {nid, valuetochange});
-        if (d_database.containsTable("reaction")) // dbv >= 121
-          d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ? AND is_mms IS 1", {nid, valuetochange});
-        if (d_database.containsTable("story_sends"))
-          d_database.exec("UPDATE story_sends SET message_id = ? WHERE message_id = ?", {nid, valuetochange});
-      }
-      else */if (table == "part")
+      if (table == d_part_table)
       {
         for (auto att = d_attachments.begin(); att != d_attachments.end(); )
         {
@@ -104,7 +83,10 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
             AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att->second.release());
             att = d_attachments.erase(att);
             a->setRowId(nid);
-            d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
+            int64_t uniqueid = a->attachmentId();
+            if (uniqueid == 0)
+              uniqueid = -1;
+            d_attachments.emplace(std::make_pair(a->rowId(), uniqueid), a);
           }
           else
             ++att;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -29,14 +29,18 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
     std::unique_ptr<AttachmentFrame> a = std::make_unique<AttachmentFrame>(*reinterpret_cast<AttachmentFrame *>(frame->get()));
 
     uint32_t rowid = a->rowId();
-    uint64_t uniqueid = a->attachmentId();
+    int64_t uniqueid = a->attachmentId();
 
     d_badattachments.emplace_back(std::make_pair(rowid, uniqueid));
 
     std::cout << "Frame is attachment, it belongs to entry in the 'part' table of the database:" << std::endl;
     //std::vector<std::vector<std::pair<std::string, std::any>>> results;
     SqliteDB::QueryResults results;
-    std::string query = "SELECT * FROM part WHERE _id = " + bepaald::toString(rowid) + " AND unique_id = " + bepaald::toString(uniqueid);
+    std::string query = "SELECT * FROM " + d_part_table
+      + " WHERE _id = " + bepaald::toString(rowid);
+    if (d_database.tableContainsColumn(d_part_table, "unique_id"))
+      query += " AND unique_id = " + bepaald::toString(uniqueid);
+
     long long int mid = -1;
     d_database.exec(query, &results);
     for (uint i = 0; i < results.rows(); ++i)
@@ -52,7 +56,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
           std::cout << results.getValueAs<double>(i, j) << std::endl;
         else if (results.valueHasType<long long int>(i, j))
         {
-          if (results.header(j) == "mid")
+          if (results.header(j) == d_part_mid)
             mid = results.getValueAs<long long int>(i, j);
           std::cout << results.getValueAs<long long int>(i, j) << std::endl;
         }
@@ -116,15 +120,19 @@ void SignalBackup::dumpInfoOnBadFrames() const
   for (uint a = 0; a < d_badattachments.size(); ++a)
   {
     uint32_t rowid = d_badattachments[a].first;
-    uint64_t uniqueid = d_badattachments[a].second;
+    int64_t uniqueid = d_badattachments[a].second;
 
     std::cout << "Short info on message to which attachment with bad mac belongs (" << a + 1 << "/" << d_badattachments.size() << "):" << std::endl;
 
     SqliteDB::QueryResults results;
-    std::string query = "SELECT mid FROM part WHERE _id = " + bepaald::toString(rowid) + " AND unique_id = " + bepaald::toString(uniqueid);
+    std::string query = "SELECT " + d_part_mid + " FROM " + d_part_table
+      + " WHERE _id = " + bepaald::toString(rowid);
+    if (d_database.tableContainsColumn(d_part_table, "unique_id"))
+      query += " AND unique_id = " + bepaald::toString(uniqueid);
+
     long long int mid = -1;
     d_database.exec(query, &results);
-    if (results.header(0) == "mid" && results.valueHasType<long long int>(0, 0))
+    if (results.header(0) == d_part_mid && results.valueHasType<long long int>(0, 0))
       mid = results.getValueAs<long long int>(0, 0);
     else
     {

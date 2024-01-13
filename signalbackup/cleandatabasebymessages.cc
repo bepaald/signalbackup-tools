@@ -23,8 +23,8 @@ void SignalBackup::cleanDatabaseByMessages()
 {
   Logger::message(__FUNCTION__);
 
-  Logger::message("  Deleting attachment entries from 'part' not belonging to remaining ", d_mms_table, " entries");
-  d_database.exec("DELETE FROM part WHERE mid NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
+  Logger::message("  Deleting attachment entries from '", d_part_table, "' not belonging to remaining ", d_mms_table, " entries");
+  d_database.exec("DELETE FROM " + d_part_table + " WHERE " + d_part_mid + " NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
 
   Logger::message("  Deleting other threads from 'thread'...");
   d_database.exec("DELETE FROM thread WHERE _id NOT IN (SELECT DISTINCT thread_id FROM " + d_mms_table + ")" + (d_database.containsTable("sms") ? " AND _id NOT IN (SELECT DISTINCT thread_id FROM sms)" : ""));
@@ -301,35 +301,6 @@ void SignalBackup::cleanDatabaseByMessages()
     //  ++avit;
   }
 
-  /*
-  // remove unused attachments
-  Logger::message("  Deleting unused attachments...");
-  d_database.exec("SELECT _id,unique_id FROM part", &results);
-  for (auto it = d_attachments.begin(); it != d_attachments.end();)
-  {
-    bool found = false;
-    for (uint i = 0; i < results.rows(); ++i)
-    {
-      long long int rowid = -1;
-      if (results.valueHasType<long long int>(i, "_id"))
-        rowid = results.getValueAs<long long int>(i, "_id");
-      long long int uniqueid = -1;
-      if (results.valueHasType<long long int>(i, "unique_id"))
-        uniqueid = results.getValueAs<long long int>(i, "unique_id");
-
-      if (rowid != -1 && uniqueid != -1 &&
-          it->first.first == static_cast<uint64_t>(rowid) && it->first.second == static_cast<uint64_t>(uniqueid))
-      {
-        found = true;
-        break;
-      }
-    }
-    if (!found)
-      it = d_attachments.erase(it);
-    else
-      ++it;
-  }
-  */
   cleanAttachments();
 
   Logger::message("  Delete others from 'identities'");

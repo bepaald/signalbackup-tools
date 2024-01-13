@@ -63,6 +63,7 @@ class SignalBackup
 
   // table/column names
   std::string d_mms_table;
+  std::string d_part_table;
   std::string d_thread_recipient_id;
   std::string d_thread_message_count;
   std::string d_thread_delivery_receipts;
@@ -85,13 +86,18 @@ class SignalBackup
   std::string d_recipient_profile_given_name;
   std::string d_recipient_storage_service;
   std::string d_groups_v1_members;
+  std::string d_part_mid;
+  std::string d_part_ct;
+  std::string d_part_pending;
+  std::string d_part_cd;
+  std::string d_part_cl;
 
   // table/column names for desktop db
   std::string d_dt_c_uuid;
   std::string d_dt_m_sourceuuid;
 
   std::vector<std::pair<std::string, std::unique_ptr<AvatarFrame>>> d_avatars;
-  std::map<std::pair<uint64_t, uint64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
+  std::map<std::pair<uint64_t, int64_t>, std::unique_ptr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
   std::map<uint64_t, std::unique_ptr<StickerFrame>> d_stickers; //maps <rowid> to sticker
   std::unique_ptr<HeaderFrame> d_headerframe;
   std::unique_ptr<DatabaseVersionFrame> d_databaseversionframe;
@@ -327,7 +333,7 @@ class SignalBackup
   bool getGroupMembersModern(std::vector<long long int> *members, std::string const &group_id) const;
   bool getGroupMembersOld(std::vector<long long int> *members, std::string const &group_id,
                           std::string const &column = "members") const;
-  bool missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const;
+  bool missingAttachmentExpected(uint64_t rowid, int64_t unique_id) const;
   template <typename T>
   inline bool setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
@@ -546,6 +552,9 @@ inline std::pair<unsigned char*, size_t> SignalBackup::numToData(T num) const
 template <typename T>
 inline bool SignalBackup::setFrameFromLine(std::unique_ptr<T> *newframe, std::string const &line) const
 {
+  if (line.empty())
+    return true;
+
   std::string::size_type pos = line.find(":", 0);
   if (pos == std::string::npos)
   {
@@ -743,7 +752,8 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
 
 inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &data, long long int id)
 {
-  if (!d_database.exec("UPDATE part SET ct = ?, data_size = ?, width = ?, height = ?, data_hash = ?, "
+  if (!d_database.exec("UPDATE " + d_part_table + " SET " + d_part_ct + " = ?, data_size = ?, width = ?, "
+                       "height = ?, data_hash = ?, "
                        "video_gif = 0, transform_properties = NULL, voice_note = 0, blur_hash = NULL WHERE _id = ?",
                        {data.filetype, data.filesize, data.width, data.height, data.hash, id}) ||
       d_database.changed() != 1)
@@ -922,7 +932,7 @@ inline void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryR
 {
   for (uint ai = 0; ai < attachment_results->rows(); ++ai)
   {
-    if (attachment_results->valueAsString(ai, "ct") == "text/x-signal-plain") [[unlikely]]
+    if (attachment_results->valueAsString(ai, d_part_ct) == "text/x-signal-plain") [[unlikely]]
     {
       //std::cout << "Got long message!" << std::endl;
       SqliteDB::QueryResults longmessage = attachment_results->getRow(ai);

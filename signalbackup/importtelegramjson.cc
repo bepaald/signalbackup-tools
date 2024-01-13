@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,17 +35,14 @@
 
 bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap, std::string const &selfphone)
 {
-  std::cout << "Import from Telegram json export" << std::endl;
+  Logger::message("Import from Telegram json export");
 
   // check and warn about selfid
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
   if (d_selfid == -1)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to determine id of 'self'.";
-    if (selfphone.empty())
-      std::cout << "Please pass `--setselfid \"[phone]\"' to set it manually";
-    std::cout << std::endl;
+    Logger::error("Failed to determine id of 'self'.",
+                  (selfphone.empty() ? "Please pass `--setselfid \"[phone]\"' to set it manually" : ""));
     return false;
   }
 
@@ -54,16 +51,15 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 
   if (contactmap.size())
   {
-    std::cout << "CONTACT MAP: " << std::endl;
+    Logger::message("CONTACT MAP: ");
     for (uint i = 0; i < contactmap.size(); ++i)
-      std::cout << contactmap[i].first << " -> " << contactmap[i].second << std::endl;
+      Logger::message(contactmap[i].first, " -> ", contactmap[i].second);
   }
 
   std::ifstream sourcefile(file, std::ios_base::binary | std::ios_base::in);
   if (!sourcefile.is_open())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to open file for reading: " << file << std::endl;
+    Logger::error("Failed to open file for reading: ", file);
     return false;
   }
 
@@ -75,8 +71,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 
   if (!sourcefile.read(reinterpret_cast<char *>(data), datasize))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to read json data" << std::endl;
+    Logger::error("Failed to read json data");
     return false;
   }
 
@@ -95,8 +90,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
                         "file TEXT, media_type TEXT, mime_type TEXT, "
                         "poll)"))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to set up sql table" << std::endl;
+    Logger::error("Failed to set up sql table");
     return false;
   }
 
@@ -135,8 +129,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
                         "WHERE tree.key = 'messages'",
                         {std::string(reinterpret_cast<char *>(data), datasize), std::string(reinterpret_cast<char *>(data), datasize)}))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to fill sql table" << std::endl;
+    Logger::error("Failed to fill sql table");
     return false;
   }
 
@@ -152,7 +145,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   if (!telegram_db.exec("SELECT DISTINCT name FROM chats WHERE name IS NOT NULL UNION SELECT DISTINCT from_name AS name FROM messages WHERE from_name IS NOT NULL", &json_contacts))
     return false;
 
-  std::cout << std::endl << "ALL CONTACTS: " << std::endl;
+  Logger::message("ALL CONTACTS: ");
   json_contacts.prettyPrint();
 
   std::vector<long long int> recipientsnotfound;
@@ -176,21 +169,20 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 
   if (!recipientsnotfound.empty())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": The following contacts in the JSON input were not found in the Android backup:" << std::endl;
+    Logger::error("The following contacts in the JSON input were not found in the Android backup:");
     for (auto const r : recipientsnotfound)
-      std::cout << " - \"" << json_contacts.valueAsString(r, "name") << "\"" << std::endl;
+      Logger::error_indent(" - \"", json_contacts.valueAsString(r, "name"), "\"");
 
-    std::cout << "Use `--mapjsoncontacts [NAME1]=[id1],[NAME2]=[id2],...' to map these to an existing recipient id " << std::endl
-              << "from the backup. The list of available recipients and their id's can be obtained by running " << std::endl
-              << "with `--listrecipients'." << std::endl;
+    Logger::message("Use `--mapjsoncontacts [NAME1]=[id1],[NAME2]=[id2],...' to map these to an existing recipient id \n"
+                    "from the backup. The list of available recipients and their id's can be obtained by running \n"
+                    "with `--listrecipients'.");
 
     return false;
   }
 
-  std::cout << "CONTACT MAP: " << std::endl;
+  Logger::message("CONTACT MAP: ");
   for (uint i = 0; i < contactmap.size(); ++i)
-    std::cout << contactmap[i].first << " -> " << contactmap[i].second << std::endl;
+    Logger::message(contactmap[i].first, " -> ", contactmap[i].second);
 
   SqliteDB::QueryResults chats;
   if (!telegram_db.exec("SELECT idx, name, type FROM chats", &chats))
@@ -199,7 +191,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   // for each chat, get the messages and insert
   for (uint i = 0; i < chats.rows(); ++i)
   {
-    std::cout << "dealing with conversation " << i + 1 << "/" << chats.rows() << std::endl;
+    Logger::message("Dealing with conversation ", i + 1, "/", chats.rows());
 
     if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
       tgImportMessages(telegram_db, contactmap, datapath, chats.valueAsString(i, "name"), i, true); // deal with group chat
@@ -207,8 +199,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
       tgImportMessages(telegram_db, contactmap, datapath, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
     else
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Unsupported chat type `" << chats.valueAsString(i, "type") << "'. Skipping..." << std::endl;
+      Logger::warning("Unsupported chat type `", chats.valueAsString(i, "type"), "'. Skipping...");
       continue;
     }
   }
@@ -228,7 +219,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                          [threadname](auto const &iter){ return iter.first == threadname; });
   if (it == contactmap.end())
   {
-    std::cout << "error" << std::endl; // shouldnt be possible
+    Logger::error("Recipient id not found in contactmap");
     return false;
   }
 
@@ -249,8 +240,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                     {"pinned", 0}},
                    "_id", &new_thread_id))
     {
-      std::cout << std::endl;
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create thread for conversation." << std::endl;
+      Logger::error("Failed to create thread for conversation.");
       return false;
     }
     //std::cout << "Raw any_cast 1" << std::endl;
@@ -275,7 +265,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
   for (uint i = 0; i < message_data.rows(); ++i)
   {
-    std::cout << "Dealing with message " << i + 1 << "/" << message_data.rows() << std::endl;
+    Logger::message("Dealing with message ", i + 1, "/", message_data.rows());
 
     if (!message_data.isNull(i, "poll"))
     {
@@ -293,7 +283,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                         [from](auto const &iter){ return iter.first == from; });
       if (it == contactmap.end())
       {
-        std::cout << "error" << std::endl; // shouldnt be possible
+        Logger::error("Recipient id not found in contactmap");
         return false;
       }
       long long int from_recid = it->second;
@@ -307,9 +297,9 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
           message_data.isNull(i, "reply_to_id") &&
           (!message_data(i, "file").empty() || !message_data(i, "photo").empty()) &&
           from_recid == d_database.getSingleResultAs<long long int>("SELECT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE _id = ?", prevtimestamp_to_id.second, -1) &&
-          d_database.getSingleResultAs<long long int>("SELECT _id FROM part WHERE mid = ? LIMIT 1", prevtimestamp_to_id.second, -1) != -1)
+          d_database.getSingleResultAs<long long int>("SELECT _id FROM " + d_part_table + " WHERE " + d_part_mid + " = ? LIMIT 1", prevtimestamp_to_id.second, -1) != -1)
       {
-        std::cout << "Assuming attachment belongs to previous message" << std::endl;
+        Logger::message("Assuming attachment belongs to previous message");
 
         // add attachments
         tgSetAttachment(message_data, datapath, i, prevtimestamp_to_id.second);
@@ -321,7 +311,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       long long int freedate = getFreeDateForMessage(date, thread_id, incoming ? address : d_selfid);
       if (freedate == -1)
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for inserting message into mms" << std::endl;
+        Logger::error("Getting free date for inserting message into mms");
         continue;
       }
 
@@ -349,7 +339,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                                    {"view_once", 0}}, // if !createrecipient -> this message was already skipped
                      "_id", &retval))
       {
-        std::cout << "error inserting message" << std::endl;
+        Logger::error("Failed to insert message");
         continue;
       }
       long long int new_msg_id = std::any_cast<long long int>(retval);
@@ -359,11 +349,11 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       {
         if (body.empty())
         {
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set attachment on otherwise empty message. Deleting message..." << std::endl;
+          Logger::warning("Failed to set attachment on otherwise empty message. Deleting message...");
           d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id);
         }
         else
-          std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to set attachment" << std::endl;
+          Logger::warning("Failed to set attachment");
       }
 
       // save to map for quotes, we do this AFTER adding attachment, because that
@@ -379,7 +369,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         long long int quotemsg = message_data.valueAsInt(i, "reply_to_id");
         if (bepaald::contains(telegram_msg_id_to_adb_msg_id, quotemsg))
         {
-          std::cout << "Found quote: " << telegram_msg_id_to_adb_msg_id[quotemsg] << std::endl;
+          Logger::message("Found quote: ", telegram_msg_id_to_adb_msg_id[quotemsg]);
           tgSetQuote(telegram_msg_id_to_adb_msg_id[quotemsg], new_msg_id);
         }
         else
@@ -400,11 +390,11 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
 
       if (d_database.getSingleResultAs<std::string>("SELECT body FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, std::string()).empty() && // no message body
-          d_database.getSingleResultAs<long long int>("SELECT _id FROM part WHERE mid = ?", new_msg_id, -1) == -1 &&                            // no attachment
+          d_database.getSingleResultAs<long long int>("SELECT _id FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", new_msg_id, -1) == -1 && // no attachment
           d_database.getSingleResultAs<long long int>("SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, 0) == 0)            // no quote
       {
-        std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Maybe inserted empty message." << std::endl;
-        std::cout << "Data:" << std::endl;
+        Logger::message("Maybe inserted empty message.");
+        Logger::message("Data:");
         message_data.getRow(i).prettyPrint();
       }
 

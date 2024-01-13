@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -43,7 +43,11 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     for (auto const &aframe : d_attachments)
     {
       AttachmentFrame *a = aframe.second.get();
-      std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(a->rowId()) + "_" + bepaald::toString(a->attachmentId());
+      uint64_t rowid = a->rowId();
+      int64_t uniqueid = a->attachmentId();
+      if (uniqueid == 0)
+        uniqueid = -1;
+      std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid);
 
       // write frame
       if (!writeRawFrameDataToFile(attachment_basefilename + ".sbf", a))

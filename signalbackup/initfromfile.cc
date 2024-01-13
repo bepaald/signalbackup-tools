@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -113,7 +113,8 @@ void SignalBackup::initFromFile()
         a->attachmentData(nullptr, d_verbose);
         a->clearData();
       }
-      d_attachments.emplace(std::make_pair(a->rowId(), a->attachmentId()), a);
+      int64_t attachmentid = a->attachmentId();
+      d_attachments.emplace(std::make_pair(a->rowId(), attachmentid ? attachmentid : -1), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::AVATAR)
     {

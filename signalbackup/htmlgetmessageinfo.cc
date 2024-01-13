@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -50,12 +50,27 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   bool hasquote = !revision.isNull(0, "quote_id") && revision.getValueAs<long long int>(0, "quote_id");
 
   SqliteDB::QueryResults attachment_results;
-  d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+  d_database.exec("SELECT "
+                  "_id, " +
+                  (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                  d_part_ct + ", "
+                  "file_name, "
+                  + d_part_pending + ", " +
+                  (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
+                  "sticker_pack_id "
+                  "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
   // check attachments for long message body -> replace cropped body & remove from attachment results
   setLongMessageBody(&body, &attachment_results);
 
   SqliteDB::QueryResults quote_attachment_results;
-  d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+        d_database.exec("SELECT "
+                        "_id," +
+                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                        d_part_ct + ", "
+                        "file_name,"
+                        + d_part_pending + ", "
+                        "sticker_pack_id "
+                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 1", msg_id, &quote_attachment_results);
 
   SqliteDB::QueryResults mention_results;
   d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);

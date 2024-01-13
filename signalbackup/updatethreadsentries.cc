@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -144,17 +144,23 @@ ThreadTable::
         //std::cout << "Checking mms" << std::endl;
 
         SqliteDB::QueryResults results3;
-        if (d_database.tableContainsColumn("part", "sticker_pack_id") &&
-            d_database.tableContainsColumn("part", "sticker_emoji"))
-          d_database.exec("SELECT unique_id, _id, ct, sticker_pack_id, IFNULL(sticker_emoji, '') AS sticker_emoji FROM part WHERE mid = ?", {mid}, &results3);
+        if (d_database.tableContainsColumn(d_part_table, "sticker_pack_id") &&
+            d_database.tableContainsColumn(d_part_table, "sticker_emoji"))
+          d_database.exec("SELECT " +
+                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
+                          ", _id, " + d_part_ct + ", sticker_pack_id, IFNULL(sticker_emoji, '') AS sticker_emoji "
+                          "FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", {mid}, &results3);
         else
-          d_database.exec("SELECT unique_id, _id, ct, NULL AS sticker_pack_id, NULL AS sticker_emoji FROM part WHERE mid = ?", {mid}, &results3);
+          d_database.exec("SELECT " +
+                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
+                          ", _id, " + d_part_ct + ", NULL AS sticker_pack_id, NULL AS sticker_emoji "
+                          "FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", {mid}, &results3);
 
         if (results3.rows())
         {
           std::any uniqueid = results3.value(0, "unique_id");
           std::any id = results3.value(0, "_id");
-          std::any filetype = results3.value(0, "ct");
+          std::any filetype = results3.value(0, d_part_ct);
 
           // snippet_uri = content://org.thoughtcrime.securesms/part/ + part.unique_id + '/' + part._id
           if (id.type() == typeid(long long int) && uniqueid.type() == typeid(long long int))

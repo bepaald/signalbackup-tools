@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -283,9 +283,17 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(i, "date_received") / 1000,
                                                           "%b %d, %Y %H:%M:%S");
       SqliteDB::QueryResults attachment_results;
-      d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
-        // check attachments for long message body -> replace cropped body & remove from attachment results
-        setLongMessageBody(&body, &attachment_results);
+      d_database.exec("SELECT "
+                      "_id, " +
+                      (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                      d_part_ct + ", "
+                      "file_name, "
+                      + d_part_pending + ", " +
+                      (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
+                      "sticker_pack_id "
+                      "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
+      // check attachments for long message body -> replace cropped body & remove from attachment results
+      setLongMessageBody(&body, &attachment_results);
 
       SqliteDB::QueryResults mention_results;
       if (d_database.containsTable("mention"))
@@ -308,7 +316,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
         for (uint a = 0; a < attachment_results.rows(); ++a)
         {
-          std::string content_type = attachment_results.valueAsString(a, "ct");
+          std::string content_type = attachment_results.valueAsString(a, d_part_ct);
           std::string attachment_filename;
           if (!attachment_results.isNull(a, "file_name") && !attachment_results(a, "file_name").empty())
             attachment_filename = '"' + attachment_results(a, "file_name") + '"';

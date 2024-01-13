@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -194,8 +194,8 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     }
 
     uint64_t rowid = temp->rowId();
-    uint64_t attachmentid = temp->attachmentId();
-    d_attachments.emplace(std::make_pair(rowid, attachmentid), temp.release());
+    int64_t attachmentid = temp->attachmentId();
+    d_attachments.emplace(std::make_pair(rowid, attachmentid ? attachmentid : -1), temp.release());
 
     MEMINFO("ADDED ATTACHMENT");
   }

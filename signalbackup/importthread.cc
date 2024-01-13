@@ -23,9 +23,14 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   Logger::message(__FUNCTION__, " (", thread, ")");
 
-  if ((d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
+  if ((d_databaseversion >= 215 && source->d_databaseversion < 215) || // part.unique_id dropped from db
+      (d_databaseversion < 215 && source->d_databaseversion >= 215) ||
+      (d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
+      (d_databaseversion < 185 && source->d_databaseversion >= 185) || //
       (d_databaseversion >= 172 && source->d_databaseversion < 172) || // group.members dropped
+      (d_databaseversion < 172 && source->d_databaseversion >= 172) || //
       (d_databaseversion >= 168 && source->d_databaseversion < 168) || // sms table dropped
+      (d_databaseversion < 168 && source->d_databaseversion >= 168) || // sms table dropped
       (d_databaseversion >= 33 && source->d_databaseversion < 33) ||
       (d_databaseversion < 33 && source->d_databaseversion >= 33) ||
       (d_databaseversion >= 27 && source->d_databaseversion < 27) ||

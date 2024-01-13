@@ -21,6 +21,13 @@
 
 bool SignalBackup::setColumnNames()
 {
+  // started at dbv 215
+  d_part_table = "attachment";
+  if (d_database.containsTable("part") &&
+      !d_database.containsTable("attachment"))
+    d_part_table = "part";
+
+
   // started at dbv 174
   d_mms_table = "message";
   if (d_database.containsTable("mms") &&
@@ -187,6 +194,32 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn("groups", "former_v1_members"))
     d_groups_v1_members = "former_v1_members";
 
+
+
+  d_part_mid = "message_id";  // dbv 215
+  if (!d_database.tableContainsColumn(d_part_table, "message_id") &&
+      d_database.tableContainsColumn(d_part_table, "mid"))
+    d_part_mid = "mid";
+
+  d_part_ct = "content_type"; // dbv 215
+  if (!d_database.tableContainsColumn(d_part_table, "content_type") &&
+      d_database.tableContainsColumn(d_part_table, "ct"))
+    d_part_ct = "ct";
+
+  d_part_pending = "transfer_state"; // dbv 215
+  if (!d_database.tableContainsColumn(d_part_table, "transfer_state") &&
+      d_database.tableContainsColumn(d_part_table, "pending_push"))
+    d_part_pending = "pending_push";
+
+  d_part_cd = "remote_key"; // dbv 215
+  if (!d_database.tableContainsColumn(d_part_table, "remote_key") &&
+      d_database.tableContainsColumn(d_part_table, "cd"))
+    d_part_cd = "cd";
+
+  d_part_cl = "remote_location"; // dbv 215
+  if (!d_database.tableContainsColumn(d_part_table, "remote_location") &&
+      d_database.tableContainsColumn(d_part_table, "cl"))
+    d_part_cl = "cl";
 
   return true;
 }

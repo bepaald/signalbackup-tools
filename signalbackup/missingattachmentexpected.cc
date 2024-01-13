@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id) const
+bool SignalBackup::missingAttachmentExpected(uint64_t rowid, int64_t unique_id) const
 {
   // if the attachment was never successfully completely downloaded, the data is expected to be missing.
   // this is shown by the 'pending_push' field in the part table which can have the following values:
@@ -28,17 +28,21 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id)
   // public static final int TRANSFER_PROGRESS_PENDING = 2;
   // public static final int TRANSFER_PROGRESS_FAILED  = 3;
   SqliteDB::QueryResults results;
-  if (d_database.exec("SELECT pending_push FROM part WHERE _id = ? AND unique_id = ? AND pending_push != 0",
-                      {rowid, unique_id}, &results))
+  if (d_database.exec("SELECT " + d_part_pending + " FROM " + d_part_table + " WHERE _id = ?" +
+                      (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(unique_id) : "") +
+                      " AND pending_push != 0",
+                      rowid, &results))
     if (results.rows() == 1)
       return true;
 
 
   SqliteDB::QueryResults isquote;
-  d_database.exec("SELECT mid FROM part WHERE _id = ? AND unique_id = ? AND quote = 1", {rowid, unique_id}, &isquote);
+  d_database.exec("SELECT " + d_part_mid + " FROM " + d_part_table + " WHERE _id = ?" +
+                   (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(unique_id) : "") +
+                  " AND quote = 1", rowid, &isquote);
   if (isquote.rows())
   {
-    long long int mid = isquote.getValueAs<long long int>(0, "mid");
+    long long int mid = isquote.getValueAs<long long int>(0, d_part_mid);
 
     // if the attachment is in a quote and the original quote is missing, attachment is expected to be missing (NOT ALWAYS)
     if (d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE quote_missing = 1 AND _id = ?", mid, &results))
@@ -51,7 +55,7 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id)
     if (d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE remote_deleted IS 1 AND " +
                         d_mms_date_sent + " IS (SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?)",
                         mid, &results))
-      if (results.rows() == 1)
+      if (results.rows()) // can be > 1 if message are doubled (and before date_sent had UNIQUE)
         return true;
 
     // check when self-deleted
@@ -70,9 +74,9 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, uint64_t unique_id)
   // is expected to be missing (though not always)
   // NOTE
   // I have seen this fail for a 'image/webp' type, maybe because that particular image type was not supported? (for that phone??)
-  if (d_database.exec("SELECT ct FROM part WHERE quote = 1 AND _id = ? AND unique_id = ? AND "
-                      "ct NOT LIKE 'image%' AND ct NOT LIKE 'video%'",
-                      {rowid, unique_id}, &results))
+  if (d_database.exec("SELECT " + d_part_ct + " FROM " + d_part_table + " WHERE quote = 1 AND _id = ?" +
+                      (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(unique_id) : "") +
+                      " AND " + d_part_ct + " NOT LIKE 'image%' AND " + d_part_ct + " NOT LIKE 'video%'", rowid, &results))
     if (results.rows() == 1)
       return true;
 

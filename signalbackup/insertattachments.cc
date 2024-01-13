@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -30,7 +30,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     if (!ddb.exec("SELECT IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments FROM messages " + where, &res) ||
         (res.rows() != 1 && res.columns() != 1))
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to get number of attachments in quoted message. Skipping" << std::endl;
+      Logger::warning("Failed to get number of attachments in quoted message. Skipping");
       return false;
     }
     numattachments = res.getValueAs<long long int>(0, "numattachments");
@@ -107,7 +107,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
                   " FROM messages " + where, &results_attachment_data))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get attachment data from desktop database" << std::endl;
+      Logger::error("Failed to get attachment data from desktop database");
       continue;
     }
 
@@ -116,13 +116,13 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     {
       if (results_attachment_data.getValueAs<long long int>(0, "pending") != 0)
       {
-        if (!insertRow("part",
-                       {{"mid", mms_id},
-                        {"ct", results_attachment_data.value(0, "content_type")},
-                        {"pending_push", 2},
+        if (!insertRow(d_part_table,
+                       {{d_part_mid, mms_id},
+                        {d_part_ct, results_attachment_data.value(0, "content_type")},
+                        {d_part_pending, 2},
                         {"data_size", results_attachment_data.value(0, "size")},
                         {"file_name", results_attachment_data.value(0, "file_name")},
-                        {"unique_id", unique_id},
+                        {(d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : ""), unique_id},
                         {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.valueAsInt(0, "flags", 0) == 1 ? 1 : 0)},
                         {"width", 0},
                         {"height", 0},
@@ -131,7 +131,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                         {"cdn_number", results_attachment_data.value(0, "cdn_number")}},
                        "_id"))
         {
-          std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting part-data (pending)" << std::endl;
+          Logger::error("Inserting part-data (pending)");
           continue;
         }
       }
@@ -217,7 +217,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (results_attachment_data.isNull(0, "path") || results_attachment_data.valueAsString(0, "path").empty())
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Attachment path not found." << std::endl;
+      Logger::error("Attachment path not found.");
       //results_attachment_data.printLineMode();
       continue;
     }
@@ -236,8 +236,8 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.valueAsInt(0, "size", 0) != 0))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Trying to set attachment data. Skipping." << std::endl;
-      std::cout << "Pending: " << results_attachment_data.valueAsInt(0, "pending") << std::endl;
+      Logger::error("Trying to set attachment data. Skipping.");
+      Logger::error_indent("Pending: ", results_attachment_data.valueAsInt(0, "pending"));
       //results_attachment_data.prettyPrint();
       //std::cout << amd.filesize << std::endl;
 
@@ -248,18 +248,18 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     if (amd.filesize == 0)
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Skipping 0 byte attachment. Not supported in Signal Android." << std::endl;
+      Logger::warning("Skipping 0 byte attachment. Not supported in Signal Android.");
       continue;
     }
 
     //insert into part
     std::any retval;
-    if (!insertRow("part",
-                   {{"mid", mms_id},
-                    {"ct", results_attachment_data.value(0, "content_type")},
-                    {"pending_push", 0},
+    if (!insertRow(d_part_table,
+                   {{d_part_mid, mms_id},
+                    {d_part_ct, results_attachment_data.value(0, "content_type")},
+                    {d_part_pending, 0},
                     {"data_size", amd.filesize},
-                    {"unique_id", unique_id},
+                    {(d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : ""), unique_id},
                     {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.valueAsInt(0, "flags", 0) == 1 ? 1 : 0)},
                     {"width", amd.width == -1 ? 0 : amd.width},
                     {"height", amd.height == -1 ? 0 : amd.height},
@@ -270,7 +270,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                     {"file_name", results_attachment_data.value(0, "file_name")}},
                    "_id", &retval))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Inserting part-data" << std::endl;
+      Logger::error("Inserting part-data");
       continue;
     }
     long long int new_part_id = std::any_cast<long long int>(retval);
@@ -310,7 +310,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
           stickerdata.printLineMode();
         else
         {
-          if (d_database.exec("UPDATE part SET "
+          if (d_database.exec("UPDATE " + d_part_table + " SET "
                               "sticker_pack_id = ?, "
                               "sticker_pack_key = ?, "
                               "sticker_id = ?"
@@ -321,7 +321,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                                new_part_id}))
             // set emoji if not empty
             if (!sticker_emoji.empty())
-              d_database.exec("UPDATE part SET sticker_emoji = ? WHERE _id = ?", {sticker_emoji, new_part_id});
+              d_database.exec("UPDATE " + d_part_table + " SET sticker_emoji = ? WHERE _id = ?", {sticker_emoji, new_part_id});
         }
       }
     }
@@ -396,12 +396,12 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
 
     std::unique_ptr<AttachmentFrame> new_attachment_frame;
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
-                                                                            "ATTACHMENTID:uint64:" + bepaald::toString(unique_id),
+                                                                            (d_database.tableContainsColumn(d_part_table, "unique_id") ? "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
                                                                             "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))/* &&
       new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path")))*/
     {
       new_attachment_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
-      d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
+      d_attachments.emplace(std::make_pair(new_part_id, d_database.tableContainsColumn(d_part_table, "unique_id") ? unique_id : -1), new_attachment_frame.release());
     }
     else
     {
@@ -412,7 +412,7 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       std::cout << "       path        : " << databasedir << "/attachments.noindex/" << results_attachment_data.valueAsString(0, "path") << std::endl;
 
       // try to remove the inserted part entry:
-      d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);
+      d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
       continue;
     }
 

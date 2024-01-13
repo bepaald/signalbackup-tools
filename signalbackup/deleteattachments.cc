@@ -25,15 +25,17 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
                                      std::string const &append, std::string const &prepend,
                                      std::vector<std::pair<std::string, std::string>> replace)
 {
-  std::string query_delete("DELETE FROM part");
-  std::string query_list("SELECT _id,mid,unique_id,ct,quote FROM part");
+  std::string query_delete("DELETE FROM " + d_part_table);
+  std::string query_list("SELECT _id," + d_part_mid + "," +
+                         (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : "-1 AS unique_id") +
+                         "," + d_part_ct + ",quote FROM " + d_part_table);
 
   std::string specification;
 
   if (!threadids.empty() && threadids[0] != -1) // -1 indicates 'ALL', easier not to specify
   {
     if (specification.empty())
-      specification += " WHERE mid IN (SELECT _id FROM " + d_mms_table + " WHERE ";
+      specification += " WHERE " + d_part_mid + " IN (SELECT _id FROM " + d_mms_table + " WHERE ";
     else
       specification += " AND ";
 
@@ -49,7 +51,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     else
     {
       if (specification.empty())
-        specification += " WHERE mid IN (SELECT _id FROM " + d_mms_table + " WHERE ";
+        specification += " WHERE " + d_part_mid + " IN (SELECT _id FROM " + d_mms_table + " WHERE ";
       else
         specification += " AND ";
       specification += "date_received < " + bepaald::toString(date);
@@ -64,7 +66,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     else
     {
       if (specification.empty())
-        specification += " WHERE mid IN (SELECT _id FROM " + d_mms_table + " WHERE ";
+        specification += " WHERE " + d_part_mid + " IN (SELECT _id FROM " + d_mms_table + " WHERE ";
       else
         specification += " AND ";
       specification += "date_received > " + bepaald::toString(date);
@@ -90,7 +92,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     else
       specification += " AND ";
     for (uint i = 0; i < mimetypes.size(); ++i)
-      specification += ((i == 0) ? "("s : ""s) + "ct LIKE \"" + mimetypes[i] + "%\"" + ((i == mimetypes.size() - 1) ? ")" : " OR ");
+      specification += ((i == 0) ? "("s : ""s) + d_part_ct + " LIKE \"" + mimetypes[i] + "%\"" + ((i == mimetypes.size() - 1) ? ")" : " OR ");
   }
 
   query_delete += specification;
@@ -128,16 +130,16 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
         // update existing message bodies
         if (!append.empty())
         {
-          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = body || ? WHERE _id = ? AND (body IS NOT NULL AND body != '')", {"\n\n" + append, res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = body || ? WHERE _id = ? AND (body IS NOT NULL AND body != '')", {"\n\n" + append, res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
-          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {append, res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {append, res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
         }
         if (!prepend.empty())
         {
-          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
-          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, "mid")}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
         }
       }
@@ -145,7 +147,8 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
       {
 
         // check if message has other attachments
-        if (!d_database.exec("SELECT _id FROM part WHERE mid = ?", res.getValueAs<long long int>(i, "mid"), &res2))
+        if (!d_database.exec("SELECT _id FROM " + d_part_table
+                             + " WHERE " + d_part_mid + " = ?", res.getValueAs<long long int>(i, d_part_mid), &res2))
           return false;
 
         if (res2.empty()) // no other attachments for this message, we can delete if body is empty
@@ -153,7 +156,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
           //std::cout << "no other attachments (" << i << ")" << std::endl;
 
           // delete message if body empty
-          if (!d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, "mid")))
+          if (!d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ? AND (body IS NULL OR body == '')", res.getValueAs<long long int>(i, d_part_mid)))
             return false;
           if (d_database.changed() == 1)
           {
@@ -171,9 +174,13 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     for (uint lp = 0; lp < maxlinkpreviews; ++lp)
     {
       //d_database.print("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE " + d_mms_previews + " IS NOT NULL");
-      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = json_set(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId', json(null)) WHERE "
-                      "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.rowId') NOT IN (SELECT _id FROM part) AND "
-                      "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.uniqueId') NOT IN (SELECT unique_id FROM part)");
+      if (d_database.tableContainsColumn(d_part_table, "unique_id"))
+        d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = json_set(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId', json(null)) WHERE "
+                        "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.rowId') NOT IN (SELECT _id FROM " + d_part_table + ") AND "
+                        "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.uniqueId') NOT IN (SELECT unique_id FROM " + d_part_table +")");
+      else
+        d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = json_set(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId', json(null)) WHERE "
+                        "json_extract(" + d_mms_previews + ", '$[" + bepaald::toString(lp) + "].attachmentId.rowId') NOT IN (SELECT _id FROM " + d_part_table + ")");
       //d_database.print("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE " + d_mms_previews + " IS NOT NULL");
     }
 
@@ -192,27 +199,27 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   for (uint i = 0; i < res.rows(); ++i)
   {
     // get ct (mimetype), if it matches replace[i].first -> replace with replace[i].second
-    std::string mimetype = res.valueAsString(i, "ct");
+    std::string mimetype = res.valueAsString(i, d_part_ct);
 
-    std::cout << "Checking to replace attachment: "  << mimetype << std::endl;
+    Logger::message("Checking to replace attachment: ", mimetype);
 
     for (uint j = 0; j < replace.size(); ++j)
     {
-      if (res.valueAsString(i, "ct").find(replace[j].first) == 0 || replace[j].first == "default")
+      if (res.valueAsString(i, d_part_ct).find(replace[j].first) == 0 || replace[j].first == "default")
       {
         // replace with replace[j].second
 
         auto attachment = d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")});
         if (attachment == d_attachments.end())
         {
-          std::cout << "WARNING: Failed to find attachment with this part entry" << std::endl;
+          Logger::warning("Failed to find attachment with this part entry");
           continue;
         }
 
         AttachmentMetadata amd = getAttachmentMetaData(replace[j].second);
         if (!amd)
         {
-          std::cout << "Failed to get metadata on new attachment: \"" << replace[j].second << "\", skipping..." << std::endl;
+          Logger::message("Failed to get metadata on new attachment: \"", replace[j].second, "\", skipping...");
           continue;
         }
 
@@ -225,7 +232,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
         attachment->second->setLength(amd.filesize);
         attachment->second->setLazyDataRAW(amd.filesize, replace[j].second);
 
-        std::cout << "Replaced attachment at " << i + 1 << "/" << res.rows() << " with file \"" << replace[j].second << "\"" << std::endl;
+        Logger::message("Replaced attachment at ", i + 1, "/", res.rows(), " with file \"", replace[j].second, "\"");
         break;
       }
     }

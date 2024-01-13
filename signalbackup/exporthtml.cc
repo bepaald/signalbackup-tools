@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -327,19 +327,26 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults attachment_results;
         d_database.exec("SELECT "
-                        "_id, "
-                        "unique_id, "
-                        "ct, "
+                        "_id, " +
+                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                        d_part_ct + ", "
                         "file_name, "
-                        "pending_push, " +
-                        (d_database.tableContainsColumn("part", "caption") ? "caption, "s : std::string()) +
+                        + d_part_pending + ", " +
+                        (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
                         "sticker_pack_id "
-                        "FROM part WHERE mid IS ? AND quote IS 0", msg_id, &attachment_results);
+                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
         // check attachments for long message body -> replace cropped body & remove from attachment results
         setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
-        d_database.exec("SELECT _id,unique_id,ct,file_name,pending_push,sticker_pack_id FROM part WHERE mid IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+        d_database.exec("SELECT "
+                        "_id," +
+                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                        d_part_ct + ", "
+                        "file_name,"
+                        + d_part_pending + ", "
+                        "sticker_pack_id "
+                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 1", msg_id, &quote_attachment_results);
 
         SqliteDB::QueryResults mention_results;
         d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
@@ -464,11 +471,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "'o', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
                                "'d', " + d_mms_table + ".date_received, "
                                "'p', " + "\"" + msg_info.threaddir + "/" + msg_info.filename + "\"" + ") AS line, "
-                               "part._id AS rowid, "
-                               "part.unique_id AS uniqueid "
-                               "FROM " + d_mms_table + " "
+                               + d_part_table + "._id AS rowid, " +
+                               (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") +
+                               " FROM " + d_mms_table + " "
                                "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
-                               "LEFT JOIN part ON part.mid IS " + d_mms_table + "._id AND part.ct = 'text/x-signal-plain' "
+                               "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' "
                                "WHERE " + d_mms_table + "._id = ?",
                                msg_info.msg_id, &search_idx_results) ||
               search_idx_results.rows() != 1)
@@ -481,8 +489,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           if (line.empty()) [[unlikely]]
             continue;
 
-          if (search_idx_results.valueAsInt(0, "rowid") != -1 &&
-              search_idx_results.valueAsInt(0, "uniqueid") != -1) [[unlikely]]
+          if (search_idx_results.valueAsInt(0, "rowid") != -1
+              /* && search_idx_results.valueAsInt(0, "uniqueid") != -1*/)
           {
             long long int rowid = search_idx_results.valueAsInt(0, "rowid");
             long long int uniqueid = search_idx_results.valueAsInt(0, "uniqueid");

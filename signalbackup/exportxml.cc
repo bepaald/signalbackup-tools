@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -506,18 +506,22 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
   SqliteDB::QueryResults part_results;
   if (mid >= 0)
-    d_database.exec("SELECT _id,unique_id,seq,ct,name,chset,cd,fn,cid,cl,ctt_s,ctt_t FROM part WHERE part.mid = ?", mid, &part_results);
+    d_database.exec("SELECT _id," +
+                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
+                    ",seq," + d_part_ct + ",name,chset," + d_part_cd + ",fn,cid,"
+                    + d_part_cl + ",ctt_s,ctt_t "
+                    "FROM " + d_part_table + " WHERE " + d_part_table + "." + d_part_mid + " = ?", mid, &part_results);
 
   for (uint j = 0; j < part_results.rows(); ++j)
   {
     long long int seq = getIntOr(part_results, j, "seq", 0);
-    std::string ct = getStringOr(part_results, j, "ct", "null");
+    std::string ct = getStringOr(part_results, j, d_part_ct, "null");
     std::string name = getStringOr(part_results, j, "name", "null");
     std::string chset = getStringOr(part_results, j, "chset", "null");
-    std::string cd = getStringOr(part_results, j, "cd", "null");
+    std::string cd = getStringOr(part_results, j, d_part_cd, "null");
     std::string fn = getStringOr(part_results, j, "fn", "null");
     std::string cid = getStringOr(part_results, j, "cid", "null");
-    std::string cl = getStringOr(part_results, j, "cl", "null");
+    std::string cl = getStringOr(part_results, j, d_part_cl, "null");
     std::string ctt_s = getStringOr(part_results, j, "ctt_s", "null");
     std::string ctt_t = getStringOr(part_results, j, "ctt_t", "null");
 

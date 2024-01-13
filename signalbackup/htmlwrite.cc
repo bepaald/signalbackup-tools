@@ -1693,7 +1693,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
 
     long long int rowid = attachment_results.getValueAs<long long int>(a, "_id");
     long long int uniqueid = attachment_results.getValueAs<long long int>(a, "unique_id");
-    long long int pending_push = attachment_results.getValueAs<long long int>(a, "pending_push");
+    long long int pending_push = attachment_results.getValueAs<long long int>(a, d_part_pending);
 
     if (pending_push != 0)
     {
@@ -1709,7 +1709,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, overwrite, append))
       continue;
 
-    std::string content_type = attachment_results.valueAsString(a, "ct");
+    std::string content_type = attachment_results.valueAsString(a, d_part_ct);
     std::string original_filename;
     if (!attachment_results.isNull(a, "file_name") && !attachment_results(a, "file_name").empty())
     {

@@ -67,7 +67,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "message",
     "_id",
     {
-      {"part", "mid"},
+      {"part", "mid"},                // \ The same
+      {"attachment", "message_id"},   // /
       {"group_receipts", "mms_id"},
       {"mention", "message_id"},
       {"msl_message", "message_id", "is_mms IS 1", "", 0, 0, 167}, // is_mms is 'removed' from table (dbv 168?)
@@ -85,7 +86,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "mms",
     "_id",
     {
-      {"part", "mid"},
+      {"part", "mid"},                // \ The same
+      {"attachment", "message_id"},   // /
       {"group_receipts", "mms_id"},
       {"mention", "message_id"},
       {"msl_message", "message_id", "is_mms IS 1", "", 0, 0, 167}, // is_mms is 'removed' from table (dbv 168?)

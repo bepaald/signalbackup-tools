@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,20 +24,24 @@ bool SignalBackup::dropBadFrames()
   if (d_badattachments.empty())
     return true;
 
-  std::cout << "Removing " << d_badattachments.size() << " bad frames from database..." << std::endl;
+  Logger::message("Removing ", d_badattachments.size(), " bad frames from database...");
   for (auto it = d_badattachments.begin(); it != d_badattachments.end(); )
   {
     uint32_t rowid = it->first;
-    uint64_t uniqueid = it->second;
+    int64_t uniqueid = it->second;
 
     SqliteDB::QueryResults results;
-    std::string query = "SELECT mid FROM part WHERE _id = " + bepaald::toString(rowid) + " AND unique_id = " + bepaald::toString(uniqueid);
+    std::string query = "SELECT " + d_part_mid + " FROM " + d_part_table
+      + " WHERE _id = " + bepaald::toString(rowid);
+    if (d_database.tableContainsColumn(d_part_table, "unique_id"))
+      query += " AND unique_id = " + bepaald::toString(uniqueid);
+
     long long int mid = -1;
     d_database.exec(query, &results);
     for (uint i = 0; i < results.rows(); ++i)
       for (uint j = 0; j < results.columns(); ++j)
         if (results.valueHasType<long long int>(i, j))
-          if (results.header(j) == "mid")
+          if (results.header(j) == d_part_mid)
           {
             mid = results.getValueAs<long long int>(i, j);
             break;
@@ -45,11 +49,11 @@ bool SignalBackup::dropBadFrames()
 
     if (mid == -1)
     {
-      std::cout << "Failed to remove frame :( Could not find matching 'part' entry" << std::endl;
+      Logger::error("Failed to remove frame :( Could not find matching 'part' entry");
       return false;
     }
 
-    d_database.exec("DELETE FROM part WHERE mid = " + bepaald::toString(mid));
+    d_database.exec("DELETE FROM " + d_part_table + " WHERE " + d_part_mid + " = " + bepaald::toString(mid));
     d_badattachments.erase(it);
   }
 

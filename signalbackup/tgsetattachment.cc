@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -59,9 +59,9 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     if (message_data.valueAsString(r, "media_type") == "voice_message")
       voice_note = 1;
 
-    // get unqiue id
+    // get unqiue id / or -1
     long long int unique_id = d_database.getSingleResultAs<long long int>("SELECT " + d_mms_date_sent + " FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, -1);
-    if (unique_id == -1)
+    if (d_database.tableContainsColumn(d_part_table, "unique_id") && unique_id == -1)
     {
       Logger::warning("Failed to get unique_id for attachment. Skipping.");
       continue;
@@ -69,12 +69,12 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
 
     //insert into part
     std::any retval;
-    if (!insertRow("part",
-                   {{"mid", new_msg_id},
-                    {"ct", ct},
-                    {"pending_push", 0},
+    if (!insertRow(d_part_table,
+                   {{d_part_mid, new_msg_id},
+                    {d_part_ct, ct},
+                    {d_part_pending, 0},
                     {"data_size", amd.filesize},
-                    {"unique_id", unique_id},
+                    {(d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : ""), unique_id},
                     {"voice_note", voice_note},
                     {"width", amd.width == -1 ? w : amd.width},
                     {"height", amd.height == -1 ? h : amd.height},
@@ -93,12 +93,14 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
 
     // now the actual attachment
     std::unique_ptr<AttachmentFrame> new_attachment_frame;
-    if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
-                                                                            "ATTACHMENTID:uint64:" + bepaald::toString(unique_id),
-                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+    if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>
+                            {"ROWID:uint64:" + bepaald::toString(new_part_id),
+                             (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                              "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
+                             "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
     {
       new_attachment_frame->setLazyDataRAW(amd.filesize, datapath + a);
-      d_attachments.emplace(std::make_pair(new_part_id, unique_id), new_attachment_frame.release());
+      d_attachments.emplace(std::make_pair(new_part_id, (d_database.tableContainsColumn(d_part_table, "unique_id") ? unique_id : -1)), new_attachment_frame.release());
     }
     else
     {
@@ -109,7 +111,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
       Logger::error_indent("path        : ", datapath, a);
 
       // try to remove the inserted part entry:
-      d_database.exec("DELETE FROM part WHERE _id = ?", new_part_id);
+      d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
       continue;
     }
 

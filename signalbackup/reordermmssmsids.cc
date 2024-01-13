@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,7 +35,7 @@ bool SignalBackup::reorderMmsSmsIds() const
     long long int oldid = res.getValueAs<long long int>(i, 0);
     ++negative_id_tmp;
     if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid}) ||
-        !d_database.exec("UPDATE part SET mid = ? WHERE mid = ?", {-1 * negative_id_tmp, oldid}) ||
+        !d_database.exec("UPDATE  " + d_part_table + " SET  " + d_part_mid + " = ? WHERE " + d_part_mid + " = ?", {-1 * negative_id_tmp, oldid}) ||
         !d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {-1 * negative_id_tmp, oldid}))
       return false;
     if (d_database.containsTable("mention"))
@@ -63,7 +63,7 @@ bool SignalBackup::reorderMmsSmsIds() const
 
   // now make all id's positive again
   if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = _id * -1 WHERE _id < 0") ||
-      !d_database.exec("UPDATE part SET mid = mid * -1 WHERE mid < 0") ||
+      !d_database.exec("UPDATE " + d_part_table + " SET " + d_part_mid + " = " + d_part_mid + " * -1 WHERE " + d_part_mid + " < 0") ||
       !d_database.exec("UPDATE group_receipts SET mms_id = mms_id * -1 WHERE mms_id < 0"))
     return false;
   if (d_database.containsTable("mention"))

@@ -25,21 +25,24 @@ bool SignalBackup::cleanAttachments()
   // remove unused attachments
   Logger::message("  Deleting unused attachments...");
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT _id,unique_id FROM part", &results);
+  int constexpr INVALID_ID = -10;
+  d_database.exec("SELECT _id,"
+                  + (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
+                  " FROM " + d_part_table, &results);
   for (auto it = d_attachments.begin(); it != d_attachments.end();)
   {
     bool found = false;
     for (uint i = 0; i < results.rows(); ++i)
     {
-      long long int rowid = -1;
+      long long int rowid = INVALID_ID;
       if (results.valueHasType<long long int>(i, "_id"))
         rowid = results.getValueAs<long long int>(i, "_id");
-      long long int uniqueid = -1;
+      long long int uniqueid = INVALID_ID;
       if (results.valueHasType<long long int>(i, "unique_id"))
         uniqueid = results.getValueAs<long long int>(i, "unique_id");
 
-      if (rowid != -1 && uniqueid != -1 &&
-          it->first.first == static_cast<uint64_t>(rowid) && it->first.second == static_cast<uint64_t>(uniqueid))
+      if (rowid != INVALID_ID && uniqueid != INVALID_ID &&
+          it->first.first == static_cast<uint64_t>(rowid) && it->first.second == static_cast<int64_t>(uniqueid))
       {
         found = true;
         break;
