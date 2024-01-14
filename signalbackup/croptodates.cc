@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,7 +21,7 @@
 
 void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges)
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
   std::string smsq;
   std::string mmsq;
@@ -35,11 +35,11 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
     long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
-      std::cout << "Error: Skipping range: '" << dateranges[i].first << " - " << dateranges[i].second << "'. Failed to parse or invalid range." << std::endl;
+      Logger::warning("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
       continue;
     }
-    std::cout << "  Using range: " << dateranges[i].first << " - " << dateranges[i].second << std::endl;
-    std::cout << "               " << startrange << " - " << endrange << std::endl;
+    Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, "\n",
+                    "               ", startrange, " - ", endrange);
 
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...
@@ -71,7 +71,7 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
   }
   if (smsq.empty() || mmsq.empty())
   {
-    std::cout << "Error: Failed to get any date ranges.";
+    Logger::error("Failed to get any date ranges.");
     return;
   }
 

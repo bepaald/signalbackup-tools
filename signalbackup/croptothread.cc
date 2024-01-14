@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -26,7 +26,7 @@ void SignalBackup::cropToThread(long long int threadid)
 
 void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
   std::string smsq;
   std::string mmsq;
@@ -55,16 +55,16 @@ void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
 
   if (smsq.empty() || mmsq.empty() || tids.empty())
   {
-    std::cout << "Error: building crop-to-thread statement resulted in invalid statement" << std::endl;
+    Logger::error("building crop-to-thread statement resulted in invalid statement");
     return;
   }
 
   if (d_database.containsTable("sms"))
   {
-    std::cout << "  Deleting messages not belonging to requested thread(s) from 'sms'" << std::endl;
+    Logger::message("  Deleting messages not belonging to requested thread(s) from 'sms'");
     d_database.exec(smsq, tids);
   }
-  std::cout << "  Deleting messages not belonging to requested thread(s) from 'mms'" << std::endl;
+  Logger::message("  Deleting messages not belonging to requested thread(s) from 'mms'");
   d_database.exec(mmsq, tids);
 
   cleanDatabaseByMessages();

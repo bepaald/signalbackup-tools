@@ -21,7 +21,7 @@
 
 bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory, bool onlydb)
 {
-  std::cout << std::endl << "Exporting backup into '" << directory << "/'" << std::endl;
+  Logger::message("\nExporting backup into '", directory, "/'");
 
   if (!prepareOutputDirectory(directory, overwrite))
     return false;
@@ -29,17 +29,17 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
   // export headerframe:
   if (!onlydb)
   {
-    std::cout << "Writing HeaderFrame..." << std::endl;
+    Logger::message("Writing HeaderFrame...");
     if (!writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe))
       return false;
 
     // export databaseversionframe
-    std::cout << "Writing DatabaseVersionFrame..." << std::endl;
+    Logger::message("Writing DatabaseVersionFrame...");
     if (!writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe))
       return false;
 
     // export attachments
-    std::cout << "Writing Attachments..." << std::endl;
+    Logger::message("Writing Attachments...");
     for (auto const &aframe : d_attachments)
     {
       AttachmentFrame *a = aframe.second.get();
@@ -57,7 +57,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       std::ofstream attachmentstream(attachment_basefilename + ".bin", std::ios_base::binary);
       if (!attachmentstream.is_open())
       {
-        std::cout << "Failed to open file for writing: " << directory << attachment_basefilename << ".bin" << std::endl;
+        Logger::error("Failed to open file for writing: ", directory, attachment_basefilename, ".bin");
         return false;
       }
       else
@@ -73,7 +73,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     }
 
     // export avatars
-    std::cout << "Writing Avatars..." << std::endl;
+    Logger::message("Writing Avatars...");
 #if __cplusplus > 201703L
     for (int count = 1; auto const &aframe : d_avatars)
 #else
@@ -95,7 +95,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       std::ofstream avatarstream(avatar_basefilename + ".bin", std::ios_base::binary);
       if (!avatarstream.is_open())
       {
-        std::cout << "Failed to open file for writing: " << directory << avatar_basefilename << ".bin" << std::endl;
+        Logger::error("Failed to open file for writing: ", directory, avatar_basefilename, ".bin");
         return false;
       }
       else
@@ -104,7 +104,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     }
 
     // export sharedpreferences
-    std::cout << "Writing SharedPrefFrame(s)..." << std::endl;
+    Logger::message("Writing SharedPrefFrame(s)...");
 #if __cplusplus > 201703L
     for (int count = 1; auto const &spframe : d_sharedpreferenceframes)
 #else
@@ -115,7 +115,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
         return false;
 
     // export keyvalues
-    std::cout << "Writing KeyValueFrame(s)..." << std::endl;
+    Logger::message("Writing KeyValueFrame(s)...");
 #if __cplusplus > 201703L
     for (int count = 1; auto const &kvframe : d_keyvalueframes)
 #else
@@ -126,7 +126,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
         return false;
 
     // export stickers
-    std::cout << "Writing StickerFrames..." << std::endl;
+    Logger::message("Writing StickerFrames...");
 #if __cplusplus > 201703L
     for (int count = 1; auto const &sframe : d_stickers)
 #else
@@ -145,7 +145,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       std::ofstream stickerstream(sticker_basefilename + ".bin", std::ios_base::binary);
       if (!stickerstream.is_open())
       {
-        std::cout << "Failed to open file for writing: " << directory << sticker_basefilename << ".bin" << std::endl;
+        Logger::error("Failed to open file for writing: ", directory, sticker_basefilename, ".bin");
         return false;
       }
       else
@@ -154,13 +154,13 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
     }
 
     // export endframe
-    std::cout << "Writing EndFrame..." << std::endl;
+    Logger::message("Writing EndFrame...");
     if (!writeRawFrameDataToFile(directory + "/End.sbf", d_endframe))
       return false;
   }
 
   // export database
-  std::cout << "Writing database..." << std::endl;
+  Logger::message("Writing database...");
   if (!d_database.saveToFile(directory + "/database.sqlite")) [[unlikely]]
     return false;
 
@@ -174,6 +174,6 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
   }
 #endif
 
-  std::cout << "Done!" << std::endl;
+  Logger::message("Done!");
   return true;
 }

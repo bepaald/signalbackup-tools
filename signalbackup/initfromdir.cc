@@ -22,27 +22,27 @@
 void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments)
 {
 
-  std::cout << "Opening from dir!" << std::endl;
+  Logger::message("Opening from dir!");
 
-  std::cout << "Reading database..." << std::endl;
+  Logger::message("Reading database...");
   FileSqliteDB database(inputdir + "/database.sqlite");
   if (!SqliteDB::copyDb(database, d_database))
     return;
 
-  std::cout << "Reading HeaderFrame" << std::endl;
+  Logger::message("Reading HeaderFrame");
   if (!setFrameFromFile(&d_headerframe, inputdir + "/Header.sbf"))
     return;
 
   //d_headerframe->printInfo();
 
-  std::cout << "Reading DatabaseVersionFrame" << std::endl;
+  Logger::message("Reading DatabaseVersionFrame");
   if (!setFrameFromFile(&d_databaseversionframe, inputdir + "/DatabaseVersion.sbf"))
     return;
 
   d_databaseversion = d_databaseversionframe->version();
   //d_databaseversionframe->printInfo();
 
-  std::cout << "Reading SharedPreferenceFrame(s)" << std::endl;
+  Logger::message("Reading SharedPreferenceFrame(s)");
   int idx = 1;
   while (true)
   {
@@ -56,7 +56,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     ++idx;
   }
 
-  std::cout << "Reading KeyValueFrame(s)" << std::endl;
+  Logger::message("Reading KeyValueFrame(s)");
   idx = 1;
   while (true)
   {
@@ -70,11 +70,10 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     ++idx;
   }
 
-  std::cout << "Reading EndFrame" << std::endl;
+  Logger::message("Reading EndFrame");
   if (!setFrameFromFile(&d_endframe, inputdir + "/End.sbf"))
   {
-    std::cout << bepaald::bold_on << "WARNING " << bepaald::bold_off
-              << "EndFrame was not read: backup is probably incomplete" << std::endl;
+    Logger::warning("EndFrame was not read: backup is probably incomplete");
     addEndFrame();
   }
 
@@ -88,7 +87,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
   std::vector<std::string> avatarfiles;
   if (ec)
   {
-    std::cout << "Error iterating directory `" << inputdir << "' : " << ec.message() << std::endl;
+    Logger::error("Error iterating directory `", inputdir, "' : ", ec.message());
     return;
   }
   for (auto const &avatar : dirit) // put all Avatar_[...].sbf files in vector:
@@ -128,12 +127,12 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     d_avatars.emplace_back(name, temp.release());
   }
 
-  std::cout << "Reading AttachmentFrames" << std::endl;
+  Logger::message("Reading AttachmentFrames");
   //attachments
   dirit = std::filesystem::directory_iterator(inputdir, ec);
   if (ec)
   {
-    std::cout << "Error iterating directory `" << inputdir << "' : " << ec.message() << std::endl;
+    Logger::error("Error iterating directory `", inputdir, "' : ", ec.message());
     return;
   }
   int replaced_count = 0;
@@ -170,7 +169,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
       if (!amd) // undo the replacement
       {
-        std::cout << "Failed to get metadata on new attachment: " << attbin << std::endl;
+        Logger::error("Failed to get metadata on new attachment: ", attbin);
         attbin.replace_extension(".bin");
         //if (!temp->setAttachmentData(attbin.string()))
         //  return;
@@ -181,8 +180,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
         // update database
         if (!updatePartTableForReplace(amd, temp->rowId()))
         {
-          std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                    << ": Failed to insert new attachment into database" << std::endl;
+          Logger::error("Failed to insert new attachment into database");
           return;
         }
 
@@ -201,14 +199,14 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
   }
 
   if (replaced_count)
-    std::cout << " - Replaced " << replaced_count << " attachments" << std::endl;
+    Logger::message(" - Replaced ", replaced_count, " attachments");
 
-  std::cout << "Reading StickerFrames" << std::endl;
+  Logger::message("Reading StickerFrames");
   //stickers
   dirit = std::filesystem::directory_iterator(inputdir, ec);
   if (ec)
   {
-    std::cout << "Error iterating directory `" << inputdir << "' : " << ec.message() << std::endl;
+    Logger::error("Error iterating directory `", inputdir, "' : ", ec.message());
     return;
   }
   for (auto const &sticker : dirit)
@@ -238,6 +236,6 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 #endif
 
 
-  std::cout << "Done!" << std::endl;
+  Logger::message("Done!");
   d_ok = true;
 }

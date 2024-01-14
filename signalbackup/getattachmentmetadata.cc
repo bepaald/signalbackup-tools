@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -42,7 +42,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   std::ifstream filestream(file, std::ios_base::binary | std::ios_base::in);
   if (!filestream.is_open())
   {
-    std::cout << "Failed to open image for reading: " << file << std::endl;
+    Logger::warning("Failed to open image for reading: ", file);
     return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
   }
 
@@ -52,7 +52,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
   if (file_size == 0)
   {
-    std::cout << "Attachment '" << file << "' is zero bytes" << std::endl;
+    Logger::warning("Attachment '", file, "' is zero bytes");
     return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
   }
 
@@ -96,7 +96,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   std::unique_ptr<unsigned char[]> buf(new unsigned char[bufsize]);
   if (!filestream.read(reinterpret_cast<char *>(buf.get()), bufsize))
   {
-    std::cout << "Failed to read " << bufsize << " bytes from file" << std::endl;
+    Logger::warning("Failed to read ", bufsize, " bytes from file");
     return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
   }
 
@@ -237,7 +237,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       // check frame marker
       if (buf[pos] != 0xFF)
       {
-        std::cout << "Failed to find start of JPEG header frame" << std::endl;
+        Logger::warning("Failed to find start of JPEG header frame");
         return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
       }
       // skip any extra frame markers
@@ -247,7 +247,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         ++pos;
         if (pos >= jpeg_bufsize)
         {
-          std::cout << "This could be fixed..." << std::endl;
+          Logger::message("This could be fixed...");
           return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
         }
       }
@@ -276,7 +276,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
         if (!filestream.read(reinterpret_cast<char *>(buf.get()), jpeg_bufsize))
         {
-          std::cout << "Failed to read next 24 bytes from file" << std::endl;
+          Logger::warning("Failed to read next 24 bytes from file");
           return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
         }
 

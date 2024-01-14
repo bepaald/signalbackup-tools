@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -110,8 +110,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
           }
           default:
           {
-            std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                      << ": Unsupported range-style: " << style << std::endl;
+            Logger::warning("Unsupported range-style: ", style);
           }
         }
       }

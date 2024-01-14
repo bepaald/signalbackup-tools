@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -30,7 +30,7 @@ bool SignalBackup::exportCsv(std::string const &filename, std::string const &tab
 {
   if (!overwrite && (bepaald::fileOrDirExists(filename) && !bepaald::isDir(filename)))
   {
-    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
+    Logger::message("File ", filename, " exists, use --overwrite to overwrite");
     return false;
   }
 
@@ -38,15 +38,14 @@ bool SignalBackup::exportCsv(std::string const &filename, std::string const &tab
   std::ofstream outputfile(filename, std::ios_base::binary);
   if (!outputfile.is_open())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to open output file '" << filename
-              << "' for writing" << std::endl;
+    Logger::error("Failed to open output file '", filename, "' for writing");
     return false;
   }
 
   SqliteDB::QueryResults results;
   if (!d_database.exec("SELECT * FROM " + table, &results))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Error gathering data from database" << std::endl;
+    Logger::error("Gathering data from database");
     return false;
   }
 

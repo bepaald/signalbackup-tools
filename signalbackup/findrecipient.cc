@@ -37,16 +37,10 @@ bool SignalBackup::findRecipient(long long int id) const
         if (!d_database.exec("SELECT COUNT(*) AS 'count' FROM " + c.table + " WHERE " + c.column + " IS ?",
                              id, &res) ||
             res.rows() != 1)
-        {
-          std::cout << "Error querying database." << std::endl;
           return false;
-        }
         long long int count = res.getValueAs<long long int>(0, "count");
         if (count)
-        {
-          std::cout << "Found recipient " << id << " referenced in '"
-                    << c.table << "." << c.column << "' (" << count << " times)" << std::endl;
-        }
+          Logger::message("Found recipient ", id, " referenced in '", c.table, ".", c.column, "' (", count, " times)");
       }
     }
   }
@@ -65,10 +59,8 @@ bool SignalBackup::findRecipient(long long int id) const
   if (d_database.containsTable("identities") &&
       d_database.exec("SELECT COUNT(*) AS 'count' FROM identities WHERE address = ? OR address = ?", {uuid, phone}, &res) &&
       res.rows() == 1)
-  {
-    std::cout << "Found recipient " << id << " referenced in 'identities.address' (by uuid/phone, "
-              << res.getValueAs<long long int>(0, "count") << " times)" << std::endl;
-  }
+    Logger::message("Found recipient ", id, " referenced in 'identities.address' (by uuid/phone, ",
+                    res.getValueAs<long long int>(0, "count"), " times)");
 
   // check in quote mentions
   if (!uuid.empty())
@@ -90,8 +82,8 @@ bool SignalBackup::findRecipient(long long int id) const
       }
     }
     if (count)
-      std::cout << "Found recipient " << id << " referenced in '" << d_mms_table << ".quote_mentions' (by uuid, "
-                << count << " times)" << std::endl;
+      Logger::message("Found recipient ", id, " referenced in '", d_mms_table,
+                      ".quote_mentions' (by uuid, ", count, " times)");
   }
 
   // check in group updates

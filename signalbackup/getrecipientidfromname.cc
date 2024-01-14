@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -38,8 +38,7 @@ long long int SignalBackup::getRecipientIdFromName(std::string const &name, bool
     // multiple hits for 'name'
     if (results.rows() > 1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": "
-                << "Got multiple results for recipient `" << name << "'"<< std::endl;
+      Logger::error("Got multiple results for recipient `", name, "'");
       return -1;
     }
 

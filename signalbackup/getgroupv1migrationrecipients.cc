@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -48,7 +48,7 @@ void SignalBackup::getGroupV1MigrationRecipients(std::set<long long int> *refere
             {
               referenced_recipients->insert(bepaald::toNumber<long long int>(tmp));
               if (d_verbose) [[unlikely]]
-                std::cout << "    Got recipient from GV1_MIGRATION: " << tmp << std::endl;
+                Logger::message("    Got recipient from GV1_MIGRATION: ", tmp);
               tmp.clear();
             }
           }

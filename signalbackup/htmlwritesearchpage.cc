@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,13 +22,12 @@
 void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const
 {
 
-  std::cout << "Writing searchpage.html..." << std::endl;
+  Logger::message("Writing searchpage.html...");
 
   std::ofstream outputfile(dir + "/" + "searchpage.html", std::ios_base::binary);
   if (!outputfile.is_open())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to open '" << dir << "/searchpage.html' for writing" << std::endl;
+    Logger::error("Failed to open '", dir, "/searchpage.html' for writing");
     return;
   }
 

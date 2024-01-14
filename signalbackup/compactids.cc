@@ -21,9 +21,9 @@
 
 void SignalBackup::compactIds(std::string const &table, std::string const &col)
 {
-  std::cout << __FUNCTION__ << std::endl;
+  Logger::message(__FUNCTION__);
 
-  std::cout << "  Compacting table: " << table << " (" << col << ")" << std::endl;
+  Logger::message("  Compacting table: ", table, " (", col, ")");
 
   SqliteDB::QueryResults results;
   // d_database.exec("SELECT " + col + " FROM " + table, &results);
@@ -65,10 +65,10 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
               {
                 if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = json_replace(" + c.column + ", " + c.json_path + ", ?) "
                                        "WHERE json_extract(" + c.column + ", " + c.json_path + ") = ?", {nid, valuetochange}))
-                  std::cout << "ERROR: compacting table '" << table << "'" << std::endl;
+                  Logger::error("Compacting table '", table, "'");
               }
               else if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?" + (c.whereclause.empty() ? "" : " AND " + c.whereclause), {nid, valuetochange}))
-                std::cout << "ERROR: compacting table '" << table << "'" << std::endl;
+                Logger::error("Compacting table '", table, "'");
             }
           }
         }

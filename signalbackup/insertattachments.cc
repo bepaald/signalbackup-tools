@@ -405,11 +405,12 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     }
     else
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to create AttachmentFrame for data" << std::endl;
-      std::cout << "       rowid       : " << new_part_id << std::endl;
-      std::cout << "       attachmentid: " << unique_id << std::endl;
-      std::cout << "       length      : " << amd.filesize << std::endl;
-      std::cout << "       path        : " << databasedir << "/attachments.noindex/" << results_attachment_data.valueAsString(0, "path") << std::endl;
+      Logger::error("Failed to create AttachmentFrame for data");
+      Logger::error_indent("       rowid       : ", new_part_id);
+      Logger::error_indent("       attachmentid: ", unique_id);
+      Logger::error_indent("       length      : ", amd.filesize);
+      Logger::error_indent("       path        : ", databasedir, "/attachments.noindex/",
+                           results_attachment_data.valueAsString(0, "path"));
 
       // try to remove the inserted part entry:
       d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);

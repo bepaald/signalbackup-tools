@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -25,23 +25,27 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
 
   // CHECKING FOREIGN KEY CONSTRAINTS
   if (!warn)
-    std::cout << "Checking foreign key constraints..." << std::flush;
+    Logger::message_start("Checking foreign key constraints...");
   d_database.exec("SELECT DISTINCT [table],[parent],[fkid] FROM pragma_foreign_key_check", &results);
   if (results.rows())
   {
     if (!warn)
-      std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                << " Foreign key constraint violated. This will not end well, aborting." << std::endl
-                <<                                  "     "
-                << " Please report this error to the program author." << std::endl;
+    {
+      Logger::message_end();
+      Logger::error("Foreign key constraint violated. This will not end well, aborting."
+                    "\n\n"
+                    "Please report this error to the program author.");
+    }
     else
-      std::cout << std::endl << bepaald::bold_on << "WARNING" << bepaald::bold_off
-                << " Foreign key constraint violated." << std::endl;
+    {
+      Logger::message_end();
+      Logger::warning("Foreign key constraint violated.");
+    }
     results.prettyPrint();
     return false;
   }
   if (!warn)
-    std::cout << " ok" << std::endl;
+    Logger::message(" ok");
 
   // std::cout << "Checking database integrity (quick)..." << std::flush;
   // d_database.exec("SELECT * FROM pragma_quick_check", &results);
@@ -56,23 +60,27 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
 
   // CHECKING DATABASE
   if (!warn)
-    std::cout << "Checking database integrity (full)..." << std::flush;
+    Logger::message_start("Checking database integrity (full)...");
   d_database.exec("SELECT * FROM pragma_integrity_check", &results);
   if (results.rows() && results.valueAsString(0, "integrity_check") != "ok")
   {
     if (!warn)
-      std::cout << std::endl << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                << " Database integrity check failed. This will not end well, aborting." << std::endl
-                <<                                  "     "
-                << " Please report this error to the program author." << std::endl;
+    {
+      Logger::message_end();
+      Logger::error("Database integrity check failed. This will not end well, aborting."
+                    "\n\n"
+                    "Please report this error to the program author.");
+    }
     else
-      std::cout << std::endl << bepaald::bold_on << "WARNING" << bepaald::bold_off
-                << " Database integrity check failed." << std::endl;
+    {
+      Logger::message_end();
+      Logger::warning("Foreign key constraint violated.");
+    }
     results.prettyPrint();
     return false;
   }
   if (!warn)
-    std::cout << " ok" << std::endl;
+    Logger::message(" ok");
 
   return true;
 }

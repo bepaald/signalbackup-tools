@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -40,7 +40,7 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
                        "SELECT DISTINCT recipient_id FROM mention WHERE thread_id = ? ",
                        (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? std::vector<std::any>{t, t, t, t, t, t} : std::vector<std::any>{t, t, t, t, t}),
                        &results))
-    std::cout << "error" << std::endl;
+    return recipientlist;
 
   // put results in vector...
   for (uint i = 0; i < results.rows(); ++i)

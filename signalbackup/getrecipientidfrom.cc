@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,7 +24,7 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid, std:
 {
   if (uuid.empty())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Asked to find recipient._id for empty uuid. Refusing" << std::endl;
+    Logger::error("Asked to find recipient._id for empty uuid. Refusing");
     return -1;
   }
 
@@ -44,7 +44,7 @@ long long int SignalBackup::getRecipientIdFromUuid(std::string const &uuid, std:
         !res.valueHasType<long long int>(0, 0))
     {
       if (!suppresswarning)
-        std::cout << "Failed to find recipient for uuid: " << printable_uuid << std::endl;
+        Logger::warning("Failed to find recipient for uuid: ", printable_uuid);
       return -1;
     }
     //res.prettyPrint();
@@ -61,7 +61,7 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone, st
 {
   if (phone.empty())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Asked to find recipient._id for empty e164. Refusing" << std::endl;
+    Logger::error("Asked to find recipient._id for empty e164. Refusing");
     return -1;
   }
 
@@ -80,7 +80,7 @@ long long int SignalBackup::getRecipientIdFromPhone(std::string const &phone, st
         !res.valueHasType<long long int>(0, 0))
     {
       if (!suppresswarning)
-        std::cout << "Failed to find recipient for phone: " << printable_phone << std::endl;
+        Logger::warning("Failed to find recipient for phone: ", printable_phone);
       return -1;
     }
     //res.prettyPrint();

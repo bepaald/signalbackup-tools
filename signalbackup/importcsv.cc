@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -80,8 +80,7 @@ bool SignalBackup::importCSV(std::string const &file, std::map<std::string, std:
     long long int tid = getThreadIdFromRecipient(csvfile.get(idx_of_address, msg));
     if (tid == -1)
     {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                << " Unable to determine thread_id for message." << std::endl;
+      Logger::error("Unable to determine thread_id for message.");
       return false;
     }
     statement += bepaald::toString(tid);

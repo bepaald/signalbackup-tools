@@ -159,9 +159,9 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                          "tr_id, "
                          "subscription_id, "
                          "receipt_timestamp, "
-                         + d_mms_delivery_receipts + ", "
-                         + d_mms_read_receipts + ", "
-                         + d_mms_viewed_receipts + ", "
+                         "delivery_receipt_count, " // renamed (has_delivery_receipt), but after v170
+                         "read_receipt_count, "     //   "
+                         "viewed_receipt_count, "   //   "
                          "mismatched_identities, "
                          "network_failures, "
                          "expires_in, "
@@ -208,8 +208,8 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                          "null, "
                          "subscription_id, "
                          "receipt_timestamp, "
-                         + d_mms_delivery_receipts + ", "
-                         + d_mms_read_receipts + ", "
+                         "delivery_receipt_count, "
+                         "read_receipt_count, "
                          "0, " // view_receipt (not present in sms table)
                          "mismatched_identities, "
                          "null, "

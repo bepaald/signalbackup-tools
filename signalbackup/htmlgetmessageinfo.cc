@@ -33,10 +33,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                        "shared_contacts, quote_id, expires_in, message_ranges, quote_mentions"
                        " FROM message WHERE _id = ?", msg_id, &revision) ||
       revision.rows() != 1)
-  {
-    std::cout << "Failed to execute query, or unexpected number of results" << std::endl;
     return;
-  }
 
   long long int msg_recipient_id = revision.valueAsInt(0, d_mms_recipient_id);
   std::string readable_date =

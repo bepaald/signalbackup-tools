@@ -126,8 +126,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, d_recipient_e164))
         address = r2.getValueAs<std::string>(0, d_recipient_e164);
       else
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (sms database, type = "
-                  << realtype << ")" << std::endl;
+        Logger::error("Failed to retrieve required field 'address' (sms database, type = ", realtype, ")");
     }
     else
       address = rid;
@@ -135,7 +134,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
     escapeXmlString(&address);
   }
   else
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Type mismatch while retrieving required field 'address'" << std::endl;
+    Logger::error("Type mismatch while retrieving required field 'address'");
 
   /* contact_name - Optional field that has the name of the contact. */
   /* OPTIONAL */
@@ -274,7 +273,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
         std::vector<long long int> members;
         if (!getGroupMembersOld(&members, r3.getValueAs<std::string>(0, "group_id")))
         {
-          std::cout << "Failed to get group members" << std::endl;
+          Logger::error("Failed to get group members");
           return;
         }
         for (auto const &id : members)
@@ -282,7 +281,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
           if (!d_database.exec("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", id, &r3) ||
               r3.rows() != 1)
           {
-            std::cout << "Failed to get phone number for recipient: " << id << std::endl;
+            Logger::error("Failed to get phone number for recipient: ", id);
             r3.prettyPrint();
             return;
           }
@@ -306,14 +305,13 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       }
       else
       {
-        std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to retrieve required field 'address' (mms database, type = "
-                  << realtype << ")" << std::endl;
+        Logger::error("Failed to retrieve required field 'address' (mms database, type = ", realtype, ")");
         return;
       }
     }
     else
     {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Failed to set field 'address'" << std::endl;
+      Logger::error("Failed to set field 'address'");
       return;
     }
   }
@@ -609,7 +607,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
 {
   if (d_databaseversion < 24)
   {
-    std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off << " Unsupported database version (" << d_databaseversion << "). Please upgrade first." << std::endl;
+    Logger::error("Unsupported database version (", d_databaseversion, "). Please upgrade first.");
     return false;
   }
 
@@ -626,8 +624,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
 
     if (self.empty())
     {
-      std::cout << bepaald::bold_on << "ERROR" << bepaald::bold_off
-                << " Failed to determine own phone number. Please add it on the command line with `--setselfid`." << std::endl;
+      Logger::error("Failed to determine own phone number. Please add it on the command line with `--setselfid`.");
       return false;
     }
   }
@@ -635,11 +632,11 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
 
 
-  std::cout << std::endl << "Exporting backup to '" << filename << "'" << std::endl;
+  Logger::message("\nExporting backup to '", filename, "'");
 
   if (!overwrite && (bepaald::fileOrDirExists(filename) && !bepaald::isDir(filename)))
   {
-    std::cout << "File " << filename << " exists, use --overwrite to overwrite" << std::endl;
+    Logger::error("File ", filename, " exists, use --overwrite to overwrite");
     return false;
   }
 

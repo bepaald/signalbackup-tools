@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -28,7 +28,7 @@ void SignalBackup::addSMSMessage(std::string const &body, std::string const &add
 
   if (d_databaseversion >= 168)
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Unsupported database version" << std::endl;
+    Logger::error("Unsupported database version");
     return;
   }
 
