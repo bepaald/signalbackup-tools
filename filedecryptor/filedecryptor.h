@@ -46,8 +46,8 @@ class  FileDecryptor : public BaseDecryptor
   FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
   inline FileDecryptor(FileDecryptor const &other);
   inline FileDecryptor &operator=(FileDecryptor const &other);
-  inline FileDecryptor(FileDecryptor &&other);
-  inline FileDecryptor &operator=(FileDecryptor &&other);
+  inline FileDecryptor(FileDecryptor &&other) = default;
+  inline FileDecryptor &operator=(FileDecryptor &&other) = default;
   inline bool ok() const;
   std::unique_ptr<BackupFrame> getFrameOld(std::ifstream &file);
   std::unique_ptr<BackupFrame> getFrame(std::ifstream &file);
@@ -75,7 +75,7 @@ class  FileDecryptor : public BaseDecryptor
 
 inline FileDecryptor::FileDecryptor(FileDecryptor const &other)
   :
-  BaseDecryptor(other),
+  BaseDecryptor(other.d_verbose),
   d_headerframe(nullptr),
   d_filename(other.d_filename),
   d_framecount(other.d_framecount),
@@ -90,7 +90,13 @@ inline FileDecryptor::FileDecryptor(FileDecryptor const &other)
 
   // headerfame...
   if (other.d_headerframe)
-    d_headerframe.reset(other.d_headerframe->clone());
+  {
+    auto [headerdata, headersize] = other.d_headerframe->getData();
+    unsigned char *headerdatacopy = new unsigned char[headersize];
+    std::memcpy(headerdatacopy, headerdata, headersize);
+    BackupFrame *headerframe = initBackupFrame(headerdata, headersize, d_framecount);
+    d_headerframe.reset(headerframe);
+  }
 
   d_ok = other.d_ok;
 }
@@ -100,8 +106,15 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
   if (this != &other)
   {
     BaseDecryptor::operator=(other);
+    d_headerframe = nullptr;
     if (other.d_headerframe)
-      d_headerframe.reset(other.d_headerframe->clone());
+    {
+      auto [headerdata, headersize] = other.d_headerframe->getData();
+      unsigned char *headerdatacopy = new unsigned char[headersize];
+      std::memcpy(headerdatacopy, headerdata, headersize);
+      BackupFrame *headerframe = initBackupFrame(headerdata, headersize, d_framecount);
+      d_headerframe.reset(headerframe);
+    }
     d_filename = other.d_filename;
     d_framecount = other.d_framecount;
     d_filesize = other.d_filesize;
@@ -110,39 +123,6 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
     d_editattachments = other.d_editattachments;
     d_stoponerror = other.d_stoponerror;
     d_backupfileversion = other.d_backupfileversion;
-    d_ok = other.d_ok;
-  }
-  return *this;
-}
-
-inline FileDecryptor::FileDecryptor(FileDecryptor &&other)
-  :
-  BaseDecryptor(std::move(other)),
-  d_headerframe(std::move(other.d_headerframe)),
-  d_filename(std::move(other.d_filename)),
-  d_framecount(std::move(other.d_framecount)),
-  d_filesize(std::move(other.d_filesize)),
-  d_badmac(std::move(other.d_badmac)),
-  d_assumebadframesize(std::move(other.d_assumebadframesize)),
-  d_editattachments(std::move(other.d_editattachments)),
-  d_stoponerror(std::move(other.d_stoponerror)),
-  d_backupfileversion(std::move(other.d_backupfileversion))
-{}
-
-inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
-{
-  if (this != &other)
-  {
-    BaseDecryptor::operator=(std::move(other));
-    d_headerframe = std::move(other.d_headerframe);
-    d_filename = std::move(other.d_filename);
-    d_framecount = std::move(other.d_framecount);
-    d_filesize = std::move(other.d_filesize);
-    d_badmac = std::move(other.d_badmac);
-    d_assumebadframesize = std::move(other.d_assumebadframesize);
-    d_editattachments = std::move(other.d_editattachments);
-    d_stoponerror = std::move(other.d_stoponerror);
-    d_backupfileversion = std::move(other.d_backupfileversion);
   }
   return *this;
 }

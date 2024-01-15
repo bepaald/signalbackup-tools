@@ -17,25 +17,9 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef BASEDECRYPTOR_H_
-#define BASEDECRYPTOR_H_
+// #include "cryptbase.ih"
 
-#include "../cryptbase/cryptbase.h"
+// CryptBase::CryptBase()
+// {
 
-class FrameWithAttachment;
-
-class BaseDecryptor : public CryptBase
-{
- protected:
-  bool d_verbose;
- public:
-  inline BaseDecryptor(bool verbose);
-  static int getAttachment(FrameWithAttachment *frame, bool verbose = false);
-};
-
-inline BaseDecryptor::BaseDecryptor(bool verbose)
-  :
-  d_verbose(verbose)
-{}
-
-#endif
+// }
