@@ -111,6 +111,17 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     0
   },
   {
+    "attachment",
+    "_id",
+    {
+      {"message", "previews", "", "'$[0].attachmentId.rowId'"},      //       \ These are the same
+      {"message", "link_previews", "", "'$[0].attachmentId.rowId'"}, //       /
+      {"mms", "previews", "", "'$[0].attachmentId.rowId'"},     //       \ These are the same
+      {"mms", "link_previews", "", "'$[0].attachmentId.rowId'"} //       /
+    },
+    0
+  },
+  {
     "recipient_preferences", // for (very) old databases
     "_id",
     {},
