@@ -205,7 +205,6 @@ SRC=("keyvalueframe/statics.cc"
      "filedecryptor/initbackupframe.cc"
      "arg/usage.cc"
      "arg/arg.cc"
-     "cryptbase/cryptbase.cc"
      "cryptbase/getbackupkey.cc"
      "cryptbase/getcipherandmac.cc")
 
@@ -363,7 +362,6 @@ OBJ=("keyvalueframe/o/statics.o"
      "filedecryptor/o/initbackupframe.o"
      "arg/o/usage.o"
      "arg/o/arg.o"
-     "cryptbase/o/cryptbase.o"
      "cryptbase/o/getbackupkey.o"
      "cryptbase/o/getcipherandmac.o")
 
