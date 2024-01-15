@@ -30,7 +30,7 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, int64_t unique_id) 
   SqliteDB::QueryResults results;
   if (d_database.exec("SELECT " + d_part_pending + " FROM " + d_part_table + " WHERE _id = ?" +
                       (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(unique_id) : "") +
-                      " AND pending_push != 0",
+                      " AND " + d_part_pending + " != 0",
                       rowid, &results))
     if (results.rows() == 1)
       return true;
