@@ -63,8 +63,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       d_mms_table + "." + d_mms_type + ", " +
       d_mms_table + ".thread_id, "
       "thread." + d_thread_recipient_id + ", "
-      "COALESCE(groups.title,recipient." + d_recipient_system_joined_name + ", recipient.profile_joined_name, "
-      "recipient." + d_recipient_profile_given_name + ") AS 'chatpartner'"
+      "COALESCE(NULLIF(groups.title, ''), NULLIF(recipient." + d_recipient_system_joined_name + ", ''), "
+      "NULLIF(recipient.profile_joined_name, ''), NULLIF(recipient." + d_recipient_profile_given_name + ", '')) AS 'chatpartner'"
       " FROM " + d_part_table + " "
       "LEFT JOIN " + d_mms_table + " ON " + d_part_table + "." + d_part_mid + " == " + d_mms_table + "._id "
       "LEFT JOIN thread ON " + d_mms_table + ".thread_id == thread._id "
