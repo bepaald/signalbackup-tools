@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -30,6 +30,10 @@ class BaseDecryptor : public CryptBase
   bool d_verbose;
  public:
   inline BaseDecryptor(bool verbose);
+  inline BaseDecryptor(BaseDecryptor const &other);
+  inline BaseDecryptor &operator=(BaseDecryptor const &other);
+  inline BaseDecryptor(BaseDecryptor &&other);
+  inline BaseDecryptor &operator=(BaseDecryptor &&other);
   static int getAttachment(FrameWithAttachment *frame, bool verbose = false);
 };
 
@@ -37,5 +41,37 @@ inline BaseDecryptor::BaseDecryptor(bool verbose)
   :
   d_verbose(verbose)
 {}
+
+inline BaseDecryptor::BaseDecryptor(BaseDecryptor const &other)
+  :
+  CryptBase(other),
+  d_verbose(other.d_verbose)
+{}
+
+inline BaseDecryptor &BaseDecryptor::operator=(BaseDecryptor const &other)
+{
+  if (this != &other)
+  {
+    CryptBase::operator=(other);
+    d_verbose = other.d_verbose;
+  }
+  return *this;
+}
+
+inline BaseDecryptor::BaseDecryptor(BaseDecryptor &&other)
+  :
+  CryptBase(std::move(other)),
+  d_verbose(std::move(other.d_verbose))
+{}
+
+inline BaseDecryptor &BaseDecryptor::operator=(BaseDecryptor &&other)
+{
+  if (this != &other)
+  {
+    CryptBase::operator=(std::move(other));
+    d_verbose = std::move(other.d_verbose);
+  }
+  return *this;
+}
 
 #endif

@@ -45,6 +45,8 @@ class CryptBase
   inline CryptBase();
   inline CryptBase(CryptBase const &other);
   inline CryptBase &operator=(CryptBase const &other);
+  inline CryptBase(CryptBase &&other);
+  inline CryptBase &operator=(CryptBase &&other);
   inline ~CryptBase();
   inline bool ok() const;
  protected:
@@ -161,6 +163,77 @@ inline CryptBase &CryptBase::operator=(CryptBase const &other)
       d_salt = new unsigned char[d_salt_size];
       std::memcpy(d_salt, other.d_salt, d_salt_size);
     }
+    d_counter = other.d_counter;
+    d_ok = other.d_ok;
+  }
+  return *this;
+}
+
+inline CryptBase::CryptBase(CryptBase &&other)
+  :
+  d_ok(std::move(other.d_ok)),
+  d_backupkey(std::move(other.d_backupkey)),
+  d_backupkey_size(std::move(other.d_backupkey_size)),
+  d_cipherkey(std::move(other.d_cipherkey)),
+  d_cipherkey_size(std::move(other.d_cipherkey_size)),
+  d_mackey(std::move(other.d_mackey)),
+  d_mackey_size(std::move(other.d_mackey_size)),
+  d_iv(std::move(other.d_iv)),
+  d_iv_size(std::move(other.d_iv_size)),
+  d_salt(std::move(other.d_salt)),
+  d_salt_size(std::move(other.d_salt_size)),
+  d_counter(std::move(other.d_counter))
+{
+  other.d_ok = false;
+  other.d_backupkey = nullptr;
+  other.d_backupkey_size = 0;
+  other.d_cipherkey = nullptr;
+  other.d_cipherkey_size = 0;
+  other.d_mackey = nullptr;
+  other.d_mackey_size = 0;
+  other.d_iv = nullptr;
+  other.d_iv_size = 0;
+  other.d_salt = nullptr;
+  other.d_salt_size = 0;
+}
+
+inline CryptBase &CryptBase::operator=(CryptBase &&other)
+{
+  if (this != &other)
+  {
+    // destroy any data this already owns
+    bepaald::destroyPtr(&d_iv, &d_iv_size);
+    bepaald::destroyPtr(&d_salt, &d_salt_size);
+    bepaald::destroyPtr(&d_backupkey, &d_backupkey_size);
+    bepaald::destroyPtr(&d_mackey, &d_mackey_size);
+    bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
+
+    // take over other's data
+    d_ok = std::move(other.d_ok);
+    d_backupkey = std::move(other.d_backupkey);
+    d_backupkey_size = std::move(other.d_backupkey_size);
+    d_cipherkey = std::move(other.d_cipherkey);
+    d_cipherkey_size = std::move(other.d_cipherkey_size);
+    d_mackey = std::move(other.d_mackey);
+    d_mackey_size = std::move(other.d_mackey_size);
+    d_iv = std::move(other.d_iv);
+    d_iv_size = std::move(other.d_iv_size);
+    d_salt = std::move(other.d_salt);
+    d_salt_size = std::move(other.d_salt_size);
+    d_counter = std::move(other.d_counter);
+
+    // invalidate other
+    other.d_ok = false;
+    other.d_backupkey = nullptr;
+    other.d_backupkey_size = 0;
+    other.d_cipherkey = nullptr;
+    other.d_cipherkey_size = 0;
+    other.d_mackey = nullptr;
+    other.d_mackey_size = 0;
+    other.d_iv = nullptr;
+    other.d_iv_size = 0;
+    other.d_salt = nullptr;
+    other.d_salt_size = 0;
   }
   return *this;
 }
