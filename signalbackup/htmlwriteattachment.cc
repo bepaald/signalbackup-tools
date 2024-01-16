@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -33,15 +33,13 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   {
     if (!bepaald::createDir(directory + "/" + threaddir + "/media"))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": failed to create directory `" << directory << "/" << threaddir << "/media" << std::endl;
+      Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
       return false;
     }
   }
   else if (!bepaald::isDir(directory + "/" + threaddir + "/media"))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": failed to create directory `" << directory << "/" << threaddir << "/media" << std::endl;
+    Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
     return false;
   }
 
@@ -55,8 +53,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
 
     if (!overwrite) // file already exists, but we were no asked to overwrite -> error!
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Attachment file exists. Not overwriting" << std::endl;
+      Logger::error("Attachment file exists. Not overwriting");
       return false;
     }
   }
@@ -66,17 +63,16 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   std::ofstream attachmentstream(attachment_filename, std::ios_base::binary);
   if (!attachmentstream.is_open())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to open file for writing: '" << attachment_filename << "'"
-              << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
+    Logger::error("Failed to open file for writing: '", attachment_filename, "'",
+                  " (errno: ", std::strerror(errno), ")"); // note: errno is not required to be set by std
     // temporary !!
     {
       std::error_code ec;
       std::filesystem::space_info const si = std::filesystem::space(directory, ec);
       if (!ec)
       {
-        std::cout << "Space available: " << static_cast<std::intmax_t>(si.available) << std::endl;
-        std::cout << "Attachment size: " << a->attachmentSize() << std::endl;
+        Logger::message("Space available: ", static_cast<std::intmax_t>(si.available),
+                        "\nAttachment size: ", a->attachmentSize());
       }
     }
     return false;

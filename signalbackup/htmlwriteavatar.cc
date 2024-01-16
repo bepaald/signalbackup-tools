@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,15 +35,13 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     {
       if (!bepaald::createDir(directory + "/" + threaddir + "/media"))
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                  << ": failed to create directory `" << directory << "/" << threaddir << "/media" << std::endl;
+        Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
         return std::string();
       }
     }
     else if (!bepaald::isDir(directory + "/" + threaddir + "/media"))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": failed to create directory `" << directory << "/" << threaddir << "/media" << std::endl;
+      Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
       return std::string();
     }
 
@@ -54,8 +52,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
         return avatar;
       if (!overwrite) // file already exists, but we were no asked to overwrite -> error!
       {
-        std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                  << ": Avatar file exists. Not overwriting" << std::endl;
+        Logger::error("Avatar file exists. Not overwriting");
         return std::string();
       }
     }
@@ -65,9 +62,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     std::ofstream avatarstream(directory + "/" + threaddir + "/" + avatar, std::ios_base::binary);
     if (!avatarstream.is_open())
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": Failed to open file for writing: '"
-                << directory << "/" << threaddir << "/" << avatar << "'" << std::endl;
+      Logger::error("Failed to open file for writing: '", directory, "/", threaddir, "/", avatar, "'");
       return std::string();
     }
     else

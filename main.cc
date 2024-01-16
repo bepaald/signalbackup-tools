@@ -221,11 +221,11 @@ int main(int argc, char *argv[])
 
   if (!arg.source().empty())
   {
-    Logger::message("Target database info:");
-    sb->summarize();
-    bool sourcesummarized = false;
+    //Logger::message("Target database info:");
+    //sb->summarize();
+    //bool sourcesummarized = false;
 
-    std::unique_ptr<SignalBackup> source;
+    SignalBackup source(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty());
     std::vector<long long int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
@@ -233,8 +233,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before first time reading source");
 
       Logger::message("Requested ALL threads, reading source to get thread list");
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
-      if (!source->ok())
+      if (!source.ok())
       {
         Logger::error("Failed to open source database");
         return 1;
@@ -242,11 +241,11 @@ int main(int argc, char *argv[])
 
       MEMINFO("After first time reading source");
 
-      source->summarize();
-      sourcesummarized = true;
+      //source->summarize();
+      //sourcesummarized = true;
 
       Logger::message("Getting list of thread id's...");
-      threads = source->threadIds();
+      threads = source.threadIds();
       // std::cout << "Got: " << std::flush;
       // for (uint i = 0; i < threads.size(); ++i)
       //   std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
@@ -255,17 +254,8 @@ int main(int argc, char *argv[])
 
     // add any threads listed by thread name
     if (arg.importthreadsbyname().size())
-    {
-      if (!source)
-        source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
-      if (!source->ok())
-      {
-        Logger::error("Failed to open source database");
+      if (!addThreadIdsFromString(&source, arg.importthreadsbyname(), &threads))
         return 1;
-      }
-      if (!addThreadIdsFromString(source.get(), arg.importthreadsbyname(), &threads))
-        return 1;
-    }
 
     for (uint i = 0; i < threads.size(); ++i)
     {
@@ -274,19 +264,20 @@ int main(int argc, char *argv[])
 
       Logger::message("\nImporting thread ", threads[i], " (", i + 1, "/", threads.size(), ") from source file: ", arg.source());
       //std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
-      source.reset(new SignalBackup(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty()));
-      if (!source->ok())
+
+      SignalBackup sourcecopy(source);
+      if (!sourcecopy.ok())
       {
         Logger::error("Failed to open source database");
         return 1;
       }
-      if (!sourcesummarized)
-      {
-        source->summarize();
-        sourcesummarized = true;
-      }
+      // if (!sourcesummarized)
+      // {
+      //   source->summarize();
+      //   sourcesummarized = true;
+      // }
       MEMINFO("After reading source: ", i + 1, "/", threads.size(), " before import");
-      if (!sb->importThread(source.get(), threads[i]))
+      if (!sb->importThread(&sourcecopy, threads[i]))
       {
         Logger::error("A fatal error occurred while trying to import thread ", threads[i], ". Aborting");
         //std::cout << "A fatal error occurred while trying to import thread " << threads[i] << ". Aborting" << std::endl;

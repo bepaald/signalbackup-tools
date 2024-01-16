@@ -97,8 +97,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   if (!telegram_db.exec("INSERT INTO chats SELECT key,json_extract(value, '$.name') AS name, json_extract(value, '$.type') AS type FROM json_each(?, '$.chats.list')",
                         std::string(reinterpret_cast<char *>(data), datasize)))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to fill sql table" << std::endl;
+    Logger::error("Failed to fill sql table");
     return false;
   }
 
@@ -230,8 +229,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   long long int thread_id = getThreadIdFromRecipient(thread_recipient_id);
   if (thread_id == -1)
   {
-    std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Failed to find matching thread for conversation, creating. ("
-              << threadname << " (id: " << it->second << ")" << std::flush;
+    Logger::warning_start("Failed to find matching thread for conversation, creating. (",
+                          threadname, " (id: ", it->second, ")");
     std::any new_thread_id;
     if (!insertRow("thread",
                    {{d_thread_recipient_id, it->second},
@@ -240,12 +239,13 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                     {"pinned", 0}},
                    "_id", &new_thread_id))
     {
+      Logger::message_end();
       Logger::error("Failed to create thread for conversation.");
       return false;
     }
     //std::cout << "Raw any_cast 1" << std::endl;
     thread_id = std::any_cast<long long int>(new_thread_id);
-    std::cout << ", thread_id: " << thread_id << ")" << std::endl;
+    Logger::message(", thread_id: ", thread_id, ")");
   }
 
   // loop over messages and insert

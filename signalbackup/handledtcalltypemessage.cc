@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -41,7 +41,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
                   "status"
                   " FROM callsHistory WHERE callId = ?", callid, &calldetails))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get call details from desktop database. Skipping." << std::endl;
+      Logger::error("Failed to get call details from desktop database. Skipping.");
       return false;
     }
 
@@ -121,7 +121,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
                   "IFNULL(json_extract(json, '$.callHistoryDetails.acceptedTime'), -1) AS accepted"
                   " FROM messages WHERE rowid = ?", rowid, &calldetails))
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Failed to get call details from desktop database. Skipping." << std::endl;
+      Logger::error("Failed to get call details from desktop database. Skipping.");
       return false;
     }
 
@@ -226,7 +226,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
                     {"type", calltype},
                     {"body", body}}))
     {
-      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << (d_database.containsTable("sms") ? "sms" : d_mms_table) << ": call type message." << std::endl;
+      Logger::warning("Failed inserting into ", (d_database.containsTable("sms") ? "sms" : d_mms_table), ": call type message.");
       return false;
     }
   }
@@ -237,7 +237,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
     long long int freedate = getFreeDateForMessage(calldetails.getValueAs<long long int>(0, "sent_at"), ttid, Types::isOutgoing(calltype) ? d_selfid : address);
     if (freedate == -1)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Getting free date for call type message" << std::endl;
+      Logger::error("Getting free date for call type message");
       return false;
     }
 
@@ -250,7 +250,7 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
                     {"type", calltype},
                     {"body", body}}))
     {
-      std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " Failed inserting into " << d_mms_table << ": call type message." << std::endl;
+      Logger::warning("Failed inserting into ", d_mms_table, ": call type message.");
       return false;
     }
   }

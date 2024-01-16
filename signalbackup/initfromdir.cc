@@ -81,12 +81,13 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
   // avatars // NOTE, avatars are read in two passes to force correct order
   if (!d_showprogress)
-    std::cout << "Reading AvatarFrames" << std::flush;
+    Logger::message_start("Reading AvatarFrames");
   std::error_code ec;
   std::filesystem::directory_iterator dirit(inputdir, ec);
   std::vector<std::string> avatarfiles;
   if (ec)
   {
+    Logger::message_end();
     Logger::error("Error iterating directory `", inputdir, "' : ", ec.message());
     return;
   }
@@ -105,9 +106,9 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
   {
     if (d_showprogress)
     {
-      std::cout << "\33[2K\rReading AvatarFrames: " << ++i << "/" << avatarfiles.size() << std::flush;
+      Logger::message_overwrite("Reading AvatarFrames: ", ++i, "/", avatarfiles.size());
       if (i == avatarfiles.size())
-        std::cout << std::endl;
+        Logger::message_overwrite("Reading AvatarFrames: ", avatarfiles.size(), "/", avatarfiles.size(), Logger::Control::ENDOVERWRITE);
     }
 
     std::filesystem::path avatarframe(file);
@@ -126,6 +127,8 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
     d_avatars.emplace_back(name, temp.release());
   }
+  if (!d_showprogress)
+    Logger::message_end();
 
   Logger::message("Reading AttachmentFrames");
   //attachments

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -25,22 +25,20 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                                   bool themeswitching) const
 {
 
-  std::cout << "Writing index.html..." << std::endl;
+  Logger::message("Writing index.html...");
 
   if (bepaald::fileOrDirExists(directory + "/index.html"))
   {
     if (!overwrite && ! append)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": '" << directory << "/index.html' exists. Use --overwrite to overwrite." << std::endl;
+      Logger::error("'", directory, "/index.html' exists. Use --overwrite to overwrite.");
       return;
     }
   }
   std::ofstream outputfile(directory + "/index.html", std::ios_base::binary);
   if (!outputfile.is_open())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to open '" << directory << "/index.html' for writing." << std::endl;
+    Logger::error("Failed to open '", directory, "/index.html' for writing.");
     return;
   }
 
@@ -72,8 +70,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
                        "date DESC", &results)) // order by pinned DESC archived ASC date DESC??
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to query database for thread snippets." << std::endl;
+    Logger::error("Failed to query database for thread snippets.");
     return;
   }
   //results.prettyPrint();
@@ -217,8 +214,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     long long int rec_id = results.valueAsInt(i, d_thread_recipient_id);
     if (rec_id == -1) [[unlikely]]
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Failed to get thread recipient id. Skipping." << std::endl;
+      Logger::warning("Failed to get thread recipient id. Skipping.");
       continue;
     }
 
@@ -507,8 +503,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     long long int rec_id = results.valueAsInt(i, d_thread_recipient_id);
     if (rec_id == -1) [[unlikely]]
     {
-      std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off
-                << ": Failed to get thread recipient id. Skipping." << std::endl;
+      Logger::warning("Failed to get thread recipient id. Skipping.");
       continue;
     }
 
@@ -545,8 +540,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     std::string convo_url_location = (isnotetoself ? "Note to self.html" : sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + ".html"));
     HTMLescapeUrl(&convo_url_location);
 
-    if (convo_url_location == ".html")
-      std::cout << "Sanitized, url encoded was empty. This should never happen. Original display_name: '" << getRecipientInfoFromMap(recipient_info, rec_id).display_name << "'" << std::endl;
+    if (convo_url_location == ".html") [[unlikely]]
+    {
+      Logger::error("Sanitized+url encoded name was empty. This should never happen. Original display_name: '",
+                    getRecipientInfoFromMap(recipient_info, rec_id).display_name, "'");
+      return;
+    }
+
 
     // if (t_id == 11)
     // {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,22 +23,20 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
                                     std::map<long long int, RecipientInfo> *recipientinfo [[maybe_unused]], long long int notetoself_tid [[maybe_unused]],
                                     bool overwrite, bool append, bool light, bool themeswitching) const
 {
-  std::cout << "Writing calllog.html..." << std::endl;
+  Logger::message("Writing calllog.html...");
 
   if (bepaald::fileOrDirExists(directory + "/calllog.html"))
   {
     if (!overwrite && ! append)
     {
-      std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-                << ": '" << directory << "/calllog.html' exists. Use --overwrite to overwrite." << std::endl;
+      Logger::error("'", directory, "/calllog.html' exists. Use --overwrite to overwrite.");
       return;
     }
   }
   std::ofstream outputfile(directory + "/calllog.html", std::ios_base::binary);
   if (!outputfile.is_open())
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to open '" << directory << "/calllog.html' for writing." << std::endl;
+    Logger::error("Failed to open '", directory, "/calllog.html' for writing.");
     return;
   }
 
@@ -61,8 +59,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
                        "ORDER BY timestamp DESC",
                        &results))
   {
-    std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-              << ": Failed to query database for call data." << std::endl;
+    Logger::error("Failed to query database for call data.");
     return;
   }
   //results.prettyPrint();
