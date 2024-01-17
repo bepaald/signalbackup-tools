@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,7 @@ void SqliteDB::QueryResults::prettyPrint() const
 {
   if (rows() == 0 && columns() == 0)
   {
-    std::cout << "(no results)" << std::endl;
+    Logger::message("(no results)");
     return;
   }
 
@@ -160,27 +160,26 @@ void SqliteDB::QueryResults::prettyPrint() const
 
   //std::cout << std::string(availableWidth(), '*') << std::endl;
   bool ansi = useEscapeCodes();
-  std::cout << std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-') << std::endl;
+  Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
   for (uint row = 0; row < contents.size(); ++row)
   {
-    std::cout.setf(std::ios_base::left);
     unsigned int pos = 1; // for seeking horizontal position with ANSI escape codes, this starts counting at 1
     for (uint col = 0; col < contents[row].size(); ++col)
     {
-      std::cout << "| " << std::setw(widths[col]) << std::setfill(' ') << contents[row][col] << std::setw(0) << " ";
+      Logger::message_start(std::left, "| ", std::setw(widths[col]), std::setfill(' '), contents[row][col], std::setw(0), " ");
       if (ansi)
       {
         pos += 2 + widths[col] + 1; // "| " + content + " "
-        std::cout << "\033[" << pos - 1 << "G "; // prints a space right before where the next '|' will come
+        Logger::message_start("\033[", pos - 1, "G "); // prints a space right before where the next '|' will come
       }
     }
-    std::cout << "|" << std::endl;
+    Logger::message("|");
 
     // another bar under top row
     if (row == 0)
-      std::cout << std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-') << std::endl;
+      Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
   }
-  std::cout << std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-') << std::endl;
+  Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
 
   return;
 }

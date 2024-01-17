@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,15 +24,15 @@ void SqliteDB::QueryResults::print(bool printheader) const
 
   if (rows() == 0 && columns() == 0)
   {
-    std::cout << "(no results)" << std::endl;
+    Logger::message("(no results)");
     return;
   }
 
   if (printheader)
   {
     for (unsigned int i = 0; i < d_headers.size(); ++i)
-      std::cout << d_headers[i] << ((i < d_headers.size() - 1) ? "|" : "");
-    std::cout << std::endl;
+      Logger::message_start(d_headers[i], ((i < d_headers.size() - 1) ? "|" : ""));
+    Logger::message_end();
   }
 
   for (unsigned int i = 0; i < rows(); ++i)
@@ -40,30 +40,30 @@ void SqliteDB::QueryResults::print(bool printheader) const
     for (uint j = 0; j < columns(); ++j)
     {
       if (valueHasType<std::string>(i, j))
-        std::cout << getValueAs<std::string>(i, j);
+        Logger::message_start(getValueAs<std::string>(i, j));
       else if (valueHasType<int>(i, j))
-        std::cout << bepaald::toString(getValueAs<int>(i, j));
+        Logger::message_start(bepaald::toString(getValueAs<int>(i, j)));
       else if (valueHasType<unsigned int>(i, j))
-        std::cout << bepaald::toString(getValueAs<unsigned int>(i, j));
+        Logger::message_start(bepaald::toString(getValueAs<unsigned int>(i, j)));
       else if (valueHasType<long long int>(i, j))
-        std::cout << bepaald::toString(getValueAs<long long int>(i, j));
+        Logger::message_start(bepaald::toString(getValueAs<long long int>(i, j)));
       else if (valueHasType<unsigned long long int>(i, j))
-        std::cout << bepaald::toString(getValueAs<unsigned long long int>(i, j));
+        Logger::message_start(bepaald::toString(getValueAs<unsigned long long int>(i, j)));
       else if (valueHasType<unsigned long>(i, j))
-        std::cout << bepaald::toString(getValueAs<unsigned long>(i, j));
+        Logger::message_start(bepaald::toString(getValueAs<unsigned long>(i, j)));
       else if (valueHasType<double>(i, j))
-        std::cout << bepaald::toString(getValueAs<double>(i, j));
+        Logger::message_start(bepaald::toString(getValueAs<double>(i, j)));
       else if (valueHasType<std::nullptr_t>(i, j))
-        std::cout << "(NULL)";
+        Logger::message_start("(NULL)");
       else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
-        std::cout << bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
-                                               getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second);
+        Logger::message_start(bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
+                                                        getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
       else
-        std::cout << "(unhandled type)";
+        Logger::message_start("(unhandled type)");
 
       if (j < columns() - 1)
-        std::cout << "|";
+        Logger::message_start("|");
     }
-    std::cout << std::endl;
+    Logger::message_end();
   }
 }

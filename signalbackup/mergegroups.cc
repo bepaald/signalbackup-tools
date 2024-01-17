@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,14 +23,12 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
 {
   if (groupids.size() < 2)
   {
-    std::cout << "Too few addresses" << std::endl;
+    Logger::error("Too few addresses");
     return;
   }
 
-  std::cout << "" << std::endl;
-  std::cout << "THIS FUNCTION MAY NEED UPDATING. PLEASE OPEN AN ISSUE" << std::endl;
-  std::cout << "IF YOU NEED IT." << std::endl;
-  std::cout << "" << std::endl;
+  Logger::message("\nTHIS FUNCTION MAY NEED UPDATING. PLEASE OPEN AN ISSUE\n"
+                  "IF YOU NEED IT.\n");
 
   std::string targetgroup = groupids.back();
 
@@ -68,40 +66,40 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       long long int oldtid = getThreadIdFromRecipient(groupids[i]);
       if (oldtid == -1)
       {
-        std::cout << "Failed to find thread for old group: " << groupids[i] << std::endl;
+        Logger::error("Failed to find thread for old group: ", groupids[i]);
         continue;
       }
 
-      std::cout << "Dealing with group: " << groupids[i] << std::endl;
+      Logger::message("Dealing with group: ", groupids[i]);
       if (d_database.containsTable("sms"))
       {
         d_database.exec("UPDATE sms SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
-        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+        Logger::message("Updated ", d_database.changed(), " entries in 'sms' table");
         d_database.exec("UPDATE sms SET " + d_sms_recipient_id + " = ? WHERE " + d_sms_recipient_id + " = ?",
                         {targetgroup, groupids[i]});
-        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+        Logger::message("Updated ", d_database.changed(), " entries in 'sms' table");
       }
       d_database.exec("UPDATE " + d_mms_table + " SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
-      std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+      Logger::message("Updated ", d_database.changed(), " entries in 'mms' table");
 
       if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id")) // < dbv185
       {
         d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_recipient_id + " = ? WHERE " + d_mms_recipient_id + " = ?",
                         {targetgroup, groupids[i]});
-        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+        Logger::message("Updated ", d_database.changed(), " entries in 'mms' table");
       }
       else
       {
         // adjust to_recipient (= group id on outgoing messages)
         d_database.exec("UPDATE " + d_mms_table + " SET to_recipient_id = ? WHERE to_recipient_id = ?",
                         {targetgroup, groupids[i]});
-        std::cout << "Updated " << d_database.changed() << " entries in 'mms' table" << std::endl;
+        Logger::message("Updated ", d_database.changed(), " entries in 'mms' table");
       }
 
       if (d_database.containsTable("mention"))
       {
         d_database.exec("UPDATE mention SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
-        std::cout << "Updated " << d_database.changed() << " entries in 'sms' table" << std::endl;
+        Logger::message("Updated ", d_database.changed(), " entries in 'sms' table");
       }
 
       if (d_database.containsTable("msl_recipient"))
@@ -112,7 +110,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
 
       // delete old (now empty) thread
       d_database.exec("DELETE FROM thread WHERE " + d_thread_recipient_id + " = ?", groupids[i]);
-      std::cout << "Removed " << d_database.changed() << " threads from table" << std::endl;
+      Logger::message("Removed ", d_database.changed(), " threads from table");
 
       // get members of groupids[i] and merge them into targetgroup
       if (d_database.tableContainsColumn("groups", "members"))
@@ -126,9 +124,9 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
           std::getline(ss2, substr, ',');
           auto [it, inserted] = targetmembersvec.insert(substr);
           if (inserted)
-            std::cout << "Added " << substr << " to memberlist of group" << std::endl;
+            Logger::message("Added ", substr, " to memberlist of group");
           else
-            std::cout << "Skipped adding " << substr << " to group: already a member" << std::endl;
+            Logger::message("Skipped adding ", substr, " to group: already a member");
         }
       }
       else
@@ -140,7 +138,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
 
       // delete the merged group
       d_database.exec("DELETE FROM groups WHERE group_id = ?", groupids[i]);
-      std::cout << "Removed " << d_database.changed() << " groups from table" << std::endl;
+      Logger::message("Removed ", d_database.changed(), " groups from table");
 
       if (d_database.containsTable("group_membership"))
         d_database.exec("DELETE FROM group_membership WHERE group_id = ?", groupids[i]);
@@ -149,7 +147,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
     // set new member list
     if (d_database.tableContainsColumn("groups", "members"))
     {
-      std::cout << "Setting new memberlist" << std::endl;
+      Logger::message("Setting new memberlist");
       std::string newmemberlist;
       for (auto const &it : targetmembersvec)
         newmemberlist += it + ',';
@@ -159,7 +157,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
   }
   else
   {
-    std::cout << "Warning: no group thread with id " << tid << " found" << std::endl;
+    Logger::warning("No group thread with id ", tid, " found");
   }
   updateThreadsEntries();
 }

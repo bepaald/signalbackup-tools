@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,7 @@ void SqliteDB::QueryResults::printLineMode() const
 {
   if (rows() == 0 && columns() == 0)
   {
-    std::cout << "(no results)" << std::endl;
+    Logger::message("(no results)");
     return;
   }
 
@@ -36,35 +36,32 @@ void SqliteDB::QueryResults::printLineMode() const
   // print
   for (unsigned int i = 0; i < rows(); ++i)
   {
-    std::cout << " === Row " << i + 1 << "/" << rows() << " ===" << std::endl;
+    Logger::message(" === Row ", i + 1, "/", rows(), " ===");
     for (uint j = 0; j < columns(); ++j)
     {
-
-      std::cout << std::setfill(' ') << std::setw(maxheader) << std::right << d_headers[j] << " : ";
-
       if (valueHasType<std::string>(i, j))
-        std::cout << getValueAs<std::string>(i, j) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", getValueAs<std::string>(i, j));
       else if (valueHasType<int>(i, j))
-        std::cout << bepaald::toString(getValueAs<int>(i, j)) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", bepaald::toString(getValueAs<int>(i, j)));
       else if (valueHasType<unsigned int>(i, j))
-        std::cout << bepaald::toString(getValueAs<unsigned int>(i, j)) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", bepaald::toString(getValueAs<unsigned int>(i, j)));
       else if (valueHasType<long long int>(i, j))
-        std::cout << bepaald::toString(getValueAs<long long int>(i, j)) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", bepaald::toString(getValueAs<long long int>(i, j)));
       else if (valueHasType<unsigned long long int>(i, j))
-        std::cout << bepaald::toString(getValueAs<unsigned long long int>(i, j)) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", bepaald::toString(getValueAs<unsigned long long int>(i, j)));
       else if (valueHasType<unsigned long>(i, j))
-        std::cout << bepaald::toString(getValueAs<unsigned long>(i, j)) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", bepaald::toString(getValueAs<unsigned long>(i, j)));
       else if (valueHasType<double>(i, j))
-        std::cout << bepaald::toString(getValueAs<double>(i, j)) << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", bepaald::toString(getValueAs<double>(i, j)));
       else if (valueHasType<std::nullptr_t>(i, j))
-        std::cout << "(NULL)" << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ", "(NULL)");
       else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
-        std::cout << bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
-                                               getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second)
-                  << std::endl;
+        Logger::message(std::setfill(' '), std::setw(maxheader), std::right, d_headers[j], " : ",
+                        bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
+                                                  getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second)
+                 );
       else
-        std::cout << "(unhandled type)" << std::endl;
-
+        Logger::message("(unhandled type)");
     }
   }
 }

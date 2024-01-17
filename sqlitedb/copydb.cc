@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,18 +24,18 @@ bool SqliteDB::copyDb(SqliteDB const &source, SqliteDB const &target) // static
   sqlite3_backup *backup = sqlite3_backup_init(target.d_db, "main", source.d_db, "main");
   if (!backup)
   {
-    std::cout << "SQL Error: " << sqlite3_errmsg(target.d_db) << std::endl;
+    Logger::error("SQL: ", sqlite3_errmsg(target.d_db));
     return false;
   }
   int rc = 0;
   if ((rc = sqlite3_backup_step(backup, -1)) != SQLITE_DONE)
   {
-    std::cout << "SQL Error: " << sqlite3_errstr(rc) << std::endl;
+    Logger::error("SQL: ", sqlite3_errstr(rc));
     return false;
   }
   if (sqlite3_backup_finish(backup) != SQLITE_OK)
   {
-    std::cout << "SQL Error: Error finishing backup" << std::endl;
+    Logger::error("SQL: Error finishing backup");
     return false;
   }
   return true;
