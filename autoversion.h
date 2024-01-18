@@ -20,6 +20,6 @@
 #ifndef VERSION_H_
 #define VERSION_H_
 
-#define VERSIONDATE "20240117.131612"
+#define VERSIONDATE "20240118.134755"
 
 #endif

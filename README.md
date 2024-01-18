@@ -39,7 +39,7 @@ To compile this project, current stable released versions of the following are n
 
 To compile the program, just running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqlite3` should generally do the trick. Add any compiler flags you feel useful, I personally use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the `-lstdc++fs` flag and replace `-std=c++20` with `-std=c++17`.
 
-If you have `cmake` available on your system, running `cmake -B build && cmake --build build -j ${nproc}` inside the project directory should also produce a working binary (found in the directory 'build') and make use of multiple processors if available. 
+If you have `cmake` available on your system, running `cmake -B build && cmake --build build -j $(nproc)` inside the project directory should also produce a working binary (found in the directory 'build') and make use of multiple processors if available.
 
 For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTIPROC.bash44` for a faster build, and let me know if it works).
 
