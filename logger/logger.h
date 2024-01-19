@@ -26,8 +26,18 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
+#include <cstring>
 
-#include "../common_be.h"
+
+#if defined(_WIN32) || defined(__MINGW64__)
+#include <windows.h>
+#else // !windows
+#include <sys/ioctl.h>
+#if __has_include("unistd.h")
+#define HAS_UNISTD_H_
+#include <unistd.h>
+#endif
+#endif
 
 class Logger
 {
@@ -125,6 +135,9 @@ class Logger
   inline void outputMsg(Flags flags, Control c, Rest... r);
   inline void outputMsg(Flags flags, Control c);
 
+  static bool supportsAnsi();
+  static bool isTerminal();
+
   Logger(Logger const &other) = delete;            // NI
   Logger &operator=(Logger const &other) = delete; // NI
 };
@@ -136,7 +149,7 @@ inline Logger::Logger()
   d_currentoutput(d_file),
   d_usetimestamps(false),
   d_used(false),
-  d_controlcodessupported(bepaald::isTerminal() && bepaald::supportsAnsi()),
+  d_controlcodessupported(isTerminal() && supportsAnsi()),
   d_overwriting(false)
 {}
 
@@ -358,10 +371,10 @@ template <typename T, typename... Rest>
 inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec, Rest... r)
 {
   if (d_currentoutput)
-    for (uint i = 0; i < vec.size(); ++i)
+    for (unsigned int i = 0; i < vec.size(); ++i)
       *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
 
-  for (uint i = 0; i < vec.size(); ++i)
+  for (unsigned int i = 0; i < vec.size(); ++i)
     std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
 
   outputMsg(flags, r...);
@@ -372,13 +385,13 @@ inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec)
 {
   if (d_currentoutput)
   {
-    for (uint i = 0; i < vec.size(); ++i)
+    for (unsigned int i = 0; i < vec.size(); ++i)
       *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
     if (!(flags & Flags::NONEWLINE)) [[likely]]
       *(d_currentoutput) << "\n";
   }
 
-  for (uint i = 0; i < vec.size(); ++i)
+  for (unsigned int i = 0; i < vec.size(); ++i)
     std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
   if (flags & Flags::OVERWRITE || flags & Flags::NONEWLINE) [[unlikely]]
     std::cout << std::flush;

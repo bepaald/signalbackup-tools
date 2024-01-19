@@ -85,7 +85,7 @@ class SqliteDB
     inline int idxOfHeader(std::string const &header) const;
     //bool supportsAnsi() const;
     //bool isTerminal() const;
-    inline bool useEscapeCodes() const;
+    //inline bool useEscapeCodes() const;
     int availableWidth() const;
     inline uint64_t charCount(std::string const &utf8) const;
   };
@@ -862,10 +862,10 @@ inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) cons
   return d_values[row];
 }
 
-bool SqliteDB::QueryResults::useEscapeCodes() const
-{
-  return bepaald::supportsAnsi() && bepaald::isTerminal();
-}
+// bool SqliteDB::QueryResults::useEscapeCodes() const
+// {
+//   return bepaald::supportsAnsi() && bepaald::isTerminal();
+// }
 
 /*
   If you know that the data is UTF-8, then you just have to check the high bit:

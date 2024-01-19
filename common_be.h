@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -33,15 +33,17 @@
 #include <algorithm>
 #include <ctime>
 
-#if defined(_WIN32) || defined(__MINGW64__)
-#include <windows.h>
-#else // !windows
-#include <sys/ioctl.h>
-#if __has_include("unistd.h")
-#define HAS_UNISTD_H_
-#include <unistd.h>
-#endif
-#endif
+// #if defined(_WIN32) || defined(__MINGW64__)
+// #include <windows.h>
+// #else // !windows
+// #include <sys/ioctl.h>
+// #if __has_include("unistd.h")
+// #define HAS_UNISTD_H_
+// #include <unistd.h>
+// #endif
+// #endif
+
+#include "logger/logger.h"
 
 #ifdef DEBUGMSG
 #define DEBUGOUT(...) bepaald::log("[DEBUG] : ", __PRETTY_FUNCTION__," : ", __VA_ARGS__);
@@ -90,10 +92,10 @@ namespace bepaald
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
   inline int numDigits(long long int num);
-  inline bool supportsAnsi();
-  inline bool isTerminal();
-  inline std::ostream &bold_on(std::ostream &os);
-  inline std::ostream &bold_off(std::ostream &os);
+  // inline bool supportsAnsi();
+  // inline bool isTerminal();
+  //inline std::ostream &bold_on(std::ostream &os);
+  //inline std::ostream &bold_off(std::ostream &os);
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
@@ -329,61 +331,61 @@ inline int bepaald::numDigits(long long int num)
   return count;
 }
 
-// This function was taken from https://github.com/agauniyal/rang/
-// Used here to (poorly!) detect support for ansi escape codes
-inline bool bepaald::supportsAnsi()
-{
-#if defined(_WIN32) || defined(__MINGW64__)
-  HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-  DWORD mode = 0;
-  GetConsoleMode(hConsole, &mode);
-  return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-#endif
-  static const bool result = []
-  {
-    const char *Terms[] =
-      { "ansi",    "color",  "console", "cygwin", "gnome",
-        "konsole", "kterm",  "linux",   "msys",   "putty",
-        "rxvt",    "screen", "vt100",   "xterm" };
-    const char *env_p = std::getenv("TERM");
-    if (env_p == nullptr)
-      return false;
-    return std::any_of(std::begin(Terms), std::end(Terms),
-                       [&](const char *term) { return std::strstr(env_p, term) != nullptr; });
-  }();
-  return result;
-}
+// // This function was taken from https://github.com/agauniyal/rang/
+// // Used here to (poorly!) detect support for ansi escape codes
+// inline bool bepaald::supportsAnsi()
+// {
+// #if defined(_WIN32) || defined(__MINGW64__)
+//   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+//   DWORD mode = 0;
+//   GetConsoleMode(hConsole, &mode);
+//   return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+// #endif
+//   static const bool result = []
+//   {
+//     const char *Terms[] =
+//       { "ansi",    "color",  "console", "cygwin", "gnome",
+//         "konsole", "kterm",  "linux",   "msys",   "putty",
+//         "rxvt",    "screen", "vt100",   "xterm" };
+//     const char *env_p = std::getenv("TERM");
+//     if (env_p == nullptr)
+//       return false;
+//     return std::any_of(std::begin(Terms), std::end(Terms),
+//                        [&](const char *term) { return std::strstr(env_p, term) != nullptr; });
+//   }();
+//   return result;
+// }
 
-inline bool bepaald::isTerminal()
-{
-#ifdef HAS_UNISTD_H_ // defined if unistd.h is available
-  static const bool result = []
-  {
-    return isatty(STDOUT_FILENO);
-  }();
-  return result;
-#else
-#if defined(_WIN32) || defined(__MINGW64__)
-  DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
-  return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg output is printer)...
-#endif
-  return false;
-#endif
-}
+// inline bool bepaald::isTerminal()
+// {
+// #ifdef HAS_UNISTD_H_ // defined if unistd.h is available
+//   static const bool result = []
+//   {
+//     return isatty(STDOUT_FILENO);
+//   }();
+//   return result;
+// #else
+// #if defined(_WIN32) || defined(__MINGW64__)
+//   DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
+//   return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg output is printer)...
+// #endif
+//   return false;
+// #endif
+// }
 
-inline std::ostream &bepaald::bold_on(std::ostream &os)
-{
-  if (!supportsAnsi() || !isTerminal()) [[unlikely]]
-    return os;
-  return os << "\033[1m";
-}
+// inline std::ostream &bepaald::bold_on(std::ostream &os)
+// {
+//   if (!supportsAnsi() || !isTerminal()) [[unlikely]]
+//     return os;
+//   return os << "\033[1m";
+// }
 
-inline std::ostream &bepaald::bold_off(std::ostream &os)
-{
-  if (!supportsAnsi() || !isTerminal()) [[unlikely]]
-    return os;
-  return os << "\033[0m";
-}
+// inline std::ostream &bepaald::bold_off(std::ostream &os)
+// {
+//   if (!supportsAnsi() || !isTerminal()) [[unlikely]]
+//     return os;
+//   return os << "\033[0m";
+// }
 
 inline std::string bepaald::toDateString(std::time_t epoch, std::string const &format)
 {
@@ -439,8 +441,7 @@ inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out,
   if (input.size() % 2 ||
       outsize != input.size() / 2)
   {
-    std::cout << bold_on << "Error" << bold_off << ": "
-              << "Invalid size for hex string or output array too small" << std::endl;
+    Logger::error("Invalid size for hex string or output array too small");
     return false;
   }
 
