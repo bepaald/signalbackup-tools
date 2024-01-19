@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -45,6 +45,11 @@ class Logger
     NORMAL,
     ENDOVERWRITE,
   };
+  struct ControlChar
+  {
+    std::string code;
+  };
+
  private:
   static std::unique_ptr<Logger> s_instance;
   std::ofstream *d_file;
@@ -103,6 +108,11 @@ class Logger
   inline void outputMsg(Flags flags, First const &f, Rest... r);
   template <typename T>
   inline void outputMsg(Flags flags, T const &t);
+
+  // specializations for controlchar
+  template <typename... Rest>
+  inline void outputMsg(Flags flags, Logger::ControlChar const &c, Rest... r);
+  inline void outputMsg(Flags flags, Logger::ControlChar const &c);
 
   // specializations for vector type
   template <typename T, typename... Rest>
@@ -204,7 +214,6 @@ inline void Logger::setFile(std::string const &f) // static
   if (s_instance->d_file)
     return;
 
-  std::cout << "setting file" << std::endl;
   s_instance->d_file = new std::ofstream(f);
   s_instance->d_currentoutput = s_instance->d_file;
 
@@ -375,6 +384,26 @@ inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec)
     std::cout << std::flush;
   else
     std::cout << std::endl;
+}
+
+template <typename... Rest>
+inline void Logger::outputMsg(Flags flags, Logger::ControlChar const &c, Rest... r)
+{
+  if (d_controlcodessupported)
+    std::cout << c.code;
+  s_instance->outputMsg(flags, r...);
+}
+
+inline void Logger::outputMsg(Flags flags, Logger::ControlChar const &c)
+{
+  if (d_currentoutput)
+    if (!(flags & Flags::NONEWLINE)) [[likely]]
+      *(d_currentoutput) << "\n";
+
+  if (flags & Flags::OVERWRITE || flags & Flags::NONEWLINE) [[unlikely]]
+    std::cout << (d_controlcodessupported ? c.code : "") << std::flush;
+  else
+    std::cout << (d_controlcodessupported ? c.code : "") << std::endl;
 }
 
 template <typename... Rest>

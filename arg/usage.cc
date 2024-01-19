@@ -42,13 +42,15 @@ changes, you must provide one of the output options.
                                presented to enter the passphrase at runtime (also see `--interactive').
 --no-showprogress              Do not output the progress percentage. Especially useful when redirecting
                                output to file.
---listthreads                  List the threads in the database with their `_id' numbers. These id's are
-                               required input for various other options.
 -h, --help                     Show this help message
+-l, --logfile <LOG>            Write programs output to file <LOG>. If the output file exists, it will
+                               be overwritten without warning.
 --interactive                  Prompt for all passphrases
 --runsqlquery <QUERY>          Run <QUERY> against the backup's internal SQL database.
 --runprettysqlquery <QUERY>    As above, but try show output in a pretty table. If the output is not too
                                large for your terminal, this is often much more readable.
+--listthreads                  List the threads in the database with their `_id' numbers. These id's are
+                               required input for various other options.
 
  = OUTPUT OPTIONS =
 -o, --output <OUTPUT>                    Either a file or a directory. When output is a file, this will

@@ -50,6 +50,11 @@ int main(int argc, char *argv[])
   SetConsoleMode(hConsole, mode);
 #endif
 
+  Arg arg(argc, argv);
+
+  if (!arg.logfile().empty())
+    Logger::setFile(arg.logfile());
+
 #ifdef VERSIONDATE
   #if defined(_WIN32) || defined(__MINGW64__)
   Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE, " (Win)");
@@ -58,7 +63,6 @@ int main(int argc, char *argv[])
   #endif
 #endif
 
-  Arg arg(argc, argv);
   if (!arg.ok())
   {
     //std::cout << "Error parsing arguments" << std::endl;

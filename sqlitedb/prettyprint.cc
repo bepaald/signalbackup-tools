@@ -159,7 +159,7 @@ void SqliteDB::QueryResults::prettyPrint() const
   }
 
   //std::cout << std::string(availableWidth(), '*') << std::endl;
-  bool ansi = useEscapeCodes();
+  //bool ansi = useEscapeCodes();
   Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
   for (uint row = 0; row < contents.size(); ++row)
   {
@@ -167,11 +167,11 @@ void SqliteDB::QueryResults::prettyPrint() const
     for (uint col = 0; col < contents[row].size(); ++col)
     {
       Logger::message_start(std::left, "| ", std::setw(widths[col]), std::setfill(' '), contents[row][col], std::setw(0), " ");
-      if (ansi)
-      {
+      //if (ansi) // if we support control codes, make 'sure' the cursor is at the right position
+      //{
         pos += 2 + widths[col] + 1; // "| " + content + " "
-        Logger::message_start("\033[", pos - 1, "G "); // prints a space right before where the next '|' will come
-      }
+        Logger::message_start(Logger::ControlChar("\033[" + bepaald::toString(pos - 1) + "G ")); // prints a space right before where the next '|' will come
+      //}
     }
     Logger::message("|");
 
