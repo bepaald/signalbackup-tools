@@ -17,9 +17,21 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "logger.h"
 
-#define VERSIONDATE "20240119.180746"
-
+bool Logger::isTerminal()
+{
+#ifdef HAS_UNISTD_H_ // defined if unistd.h is available
+  static const bool result = []
+  {
+    return isatty(STDOUT_FILENO);
+  }();
+  return result;
+#else
+#if defined(_WIN32) || defined(__MINGW64__)
+  DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
+  return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg output is printer)...
 #endif
+  return false;
+#endif
+}

@@ -8,9 +8,11 @@
 !*.cc
 !*.h
 !*.ih
+!*/
 !*/*.cc
 !*/*.h
 !*/*.ih
+tests
 !.github/*
 !.github/workflows/*.yml
 !.gitignore

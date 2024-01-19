@@ -27,7 +27,9 @@
 #include <sstream>
 #include <chrono>
 #include <cstring>
-
+#include <vector>
+#include <iomanip>
+#include <ctime>
 
 #if defined(_WIN32) || defined(__MINGW64__)
 #include <windows.h>
@@ -58,6 +60,8 @@ class Logger
   struct ControlChar
   {
     std::string code;
+    ControlChar(std::string const &c) : code(c)
+    {}
   };
 
  private:
