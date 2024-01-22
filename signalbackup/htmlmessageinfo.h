@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -32,6 +32,7 @@ struct HTMLMessageInfo
   bool overwrite;
   bool append;
   long long int type;
+  long long int expires_in;
   long long int msg_id;
   long long int msg_recipient_id;
   long long int original_message_id;

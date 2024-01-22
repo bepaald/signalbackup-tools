@@ -44,6 +44,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   std::string shared_contacts = revision.valueAsString(0, "shared_contacts");
   std::string quote_body = revision.valueAsString(0, "quote_body");
   long long int type = revision.getValueAs<long long int>(0, d_mms_type);
+  long long int expires_in = revision.getValueAs<long long int>(0, "expires_in");
   bool hasquote = !revision.isNull(0, "quote_id") && revision.getValueAs<long long int>(0, "quote_id");
 
   SqliteDB::QueryResults attachment_results;
@@ -119,6 +120,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             parent_info.overwrite, // ?
                             parent_info.append,    // ?
                             type,
+                            expires_in,
                             msg_id,
                             msg_recipient_id,
                             -1, //original_message_id,

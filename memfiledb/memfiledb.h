@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,6 @@
 #include <sqlite3.h>
 #include <utility>
 #include <cstdint>
-#include <iostream>
 #include <cstring>
 #include <memory>
 

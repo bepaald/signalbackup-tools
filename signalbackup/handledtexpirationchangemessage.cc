@@ -91,7 +91,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                            {d_sms_date_received, sent_at},
                            {"type", Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
                             (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                           {"expires_in", timer},
+                           {"expires_in", timer * 1000},
                            {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                            {d_sms_recipient_id, address}}))
     {
@@ -109,7 +109,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                                    {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
                                     (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                    {"m_type", (incoming ? 132 : 128)},
-                                   {"expires_in", timer},
+                                   {"expires_in", timer * 1000},
                                    {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                                    {d_mms_recipient_id, address}}))
       {
@@ -133,7 +133,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
                                    {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
                                     (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                    {"m_type", (incoming ? 132 : 128)},
-                                   {"expires_in", timer},
+                                   {"expires_in", timer * 1000},
                                    {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                                    {d_mms_recipient_id, incoming ? address : d_selfid},
                                    {"to_recipient_id", incoming ? d_selfid : address}}))

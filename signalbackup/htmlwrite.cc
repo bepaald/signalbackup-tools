@@ -403,6 +403,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         align-items: center;
       }
 
+      .footer-status {
+        margin-bottom: 10px;
+      }
+
       .msg-data,
       .edited {
         font-size: x-small;
@@ -445,7 +449,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-left: .25em;
       }
 
-      .checkmarks {
+      .footer-icons {
         margin-left: 5px;
       }
 
@@ -465,6 +469,16 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         height: 12px;
         width: 19px;
         background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="19" height="12" viewBox="0 0 34.833627 22.000184" fill="white" stroke="none"><path d="M 11.000092 0 A 11 11 0 1 0 16.181451 20.693208 A 12.375104 12.375104 0 0 1 11.74131 13.492301 L 9.2311973 15.998832 L 5.1670356 11.934671 L 6.2269403 10.874766 L 9.2276165 13.875442 L 11.512141 11.590918 A 12.375104 12.375104 0 0 1 11.45843 11.000092 A 12.375104 12.375104 0 0 1 16.188612 1.3033964 A 11 11 0 0 0 11.000092 0 z"></path><path d="m 23.833441,0 a 11,11 0 1 0 11,11 11,11 0 0 0 -11,-11 z m -1.768001,16 -4.066003,-4.066 1.061001,-1.06 3.000002,3 6.541001,-6.541 1.066,1.067 z"></path></svg>');
+      }
+
+      .is-expiring {
+        height: 12px;
+        width: 12px;
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="white" stroke="none"><path d="M6.75,6a0.75,0.75 0,0 1,-1.5 0c0,-0.414 0.475,-3.581 0.5,-3.75S5.862,2 6,2s0.226,0.087 0.25,0.25S6.75,5.589 6.75,6ZM12,6a6,6 0,1 0,-6 6A6.006,6.006 0,0 0,12 6ZM11,6A5,5 0,1 1,6 1,5.006 5.006,0 0,1 11,6Z"></path></svg>');
+      }
+
+      .msg-incoming .is-expiring {
+        filter: var(--icon-f);
       }
 
       .msg-viewonce .viewonce {
@@ -1387,6 +1401,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-left: 5px solid grey;
       }
 
+      .msg-incoming .is-expiring,
       .thread-disappearing-messages-info,
       .msg-status .msg-video-call-incoming, .msg-status .msg-video-call-outgoing,
       .msg-status .msg-group-call, .msg-status .msg-call-incoming,
@@ -1407,7 +1422,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: brightness(0.5);
       }
 
-      .status-text > div, .checkmarks {
+      .status-text > div, .footer-icons {
         -webkit-print-color-adjust: exact;
         color-adjust: exact;
         print-color-adjust: exact;
@@ -2124,16 +2139,21 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "</div>" << std::endl;
   }
   htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << std::endl;
-  if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
+  if (!Types::isStatusMessage(msg_info.type))
   {
-    htmloutput << std::string(extraindent, ' ') << "              <div class=\"checkmarks checkmarks-";
-    if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_read_receipts) > 0)
-      htmloutput << "read";
-    else if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_delivery_receipts) > 0)
-      htmloutput << "received";
-    else // if something? type != failed? -> check for failed before outputting 'checkmarks-'
-      htmloutput << "sent";
-    htmloutput << "\"></div>" << std::endl;
+    if (msg_info.expires_in > 0)
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons is-expiring\"></div>" << std::endl;
+    if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
+    {
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons checkmarks-";
+      if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_read_receipts) > 0)
+        htmloutput << "read";
+      else if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_delivery_receipts) > 0)
+        htmloutput << "received";
+      else // if something? type != failed? -> check for failed before outputting 'checkmarks-'
+        htmloutput << "sent";
+      htmloutput << "\"></div>" << std::endl;
+    }
   }
   htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
 

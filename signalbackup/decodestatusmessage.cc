@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -96,6 +96,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     return contactname + " is on Signal!";
   if (Types::isExpirationTimerUpdate(type))
   {
+    expiration /= 1000; // from milli to seconds (the group update expiration timer is in seconds)
     if (expiration <= 0)
     {
       if (Types::isOutgoing(type))
@@ -105,15 +106,15 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
     std::string time;
     if (expiration < 60) // less than full minute
-      time = bepaald::toString(expiration) + " seconds";
+      time = bepaald::toString(expiration) + " second" + (expiration > 1 ? "s" : "");
     else if (expiration < 60 * 60) // less than full hour
-      time = bepaald::toString(expiration / 60) + " minutes";
+      time = bepaald::toString(expiration / 60) + " minute" + ((expiration / 60) > 1 ? "s" : "");
     else if (expiration < 24 * 60 * 60) // less than full day
-      time = bepaald::toString(expiration / (60 * 60)) + " hours";
+      time = bepaald::toString(expiration / (60 * 60)) + " hour" + ((expiration / (60 * 60)) > 1 ? "s" : "");
     else if (expiration < 7 * 24 * 60 * 60) // less than full week
-      time = bepaald::toString(expiration / (24 * 60 * 60)) + " days";
+      time = bepaald::toString(expiration / (24 * 60 * 60)) + " day" + ((expiration / (24 * 60 * 60)) > 1 ? "s" : "");
     else // show expiration in number of weeks
-      time = bepaald::toString(expiration / (7 * 24 * 60 * 60)) + " weeks";
+      time = bepaald::toString(expiration / (7 * 24 * 60 * 60)) + " week" + ((expiration / (7 * 24 * 60 * 60)) > 1 ? "s" : "");
 
     if (Types::isOutgoing(type))
       return "You set the disappearing message timer to " + time;
@@ -411,7 +412,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           *icon = IconType::AVATAR_UPDATE;
       }
 
-      // check group timer changed
+      // check group timer changed : THIS TIMER IS IN SECONDS (message.expires_in, for non-group messages is in milliseconds)
       if (groupchange.getField<12>().has_value()/* && groupchange.getField<12>().value().getField<1>().has_value()*/)
       {
         uint32_t newexp = groupchange.getField<12>().value().getField<1>().value_or(0);

@@ -322,6 +322,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string body = messages.valueAsString(messagecount, "body");
         std::string shared_contacts = messages.valueAsString(messagecount, "shared_contacts");
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
+        long long int expires_in = messages.getValueAs<long long int>(messagecount, "expires_in");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
 
@@ -435,6 +436,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   overwrite,
                                   append,
                                   type,
+                                  expires_in,
                                   msg_id,
                                   msg_recipient_id,
                                   original_message_id,
