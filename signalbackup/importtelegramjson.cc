@@ -37,6 +37,12 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
 {
   Logger::message("Import from Telegram json export");
 
+  if (bepaald::isDir(file))
+  {
+    Logger::error("Did nto get regular file as input");
+    return false;
+  }
+
   // check and warn about selfid
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
   if (d_selfid == -1)
@@ -66,12 +72,19 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   // read data from file
   sourcefile.seekg(0, std::ios_base::end);
   long long int datasize = sourcefile.tellg();
-  sourcefile.seekg(0, std::ios_base::beg);
-  unsigned char *data = new unsigned char[datasize];
+  if (datasize <= 0)
+  {
+    Logger::error("Bad filesize (", datasize, ")");
+    return false;
+  }
 
-  if (!sourcefile.read(reinterpret_cast<char *>(data), datasize))
+  sourcefile.seekg(0, std::ios_base::beg);
+  char *data = new char[datasize];
+
+  if (!sourcefile.read(data, datasize))
   {
     Logger::error("Failed to read json data");
+    bepaald::destroyPtr(&data, &datasize);
     return false;
   }
 
@@ -84,60 +97,142 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   // create table
   MemSqliteDB telegram_db;
   if (!telegram_db.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
+      //!telegram_db.exec("CREATE TABLE tmp_messages_per_chat(chatidx INT, json TEXT)") ||
+      !telegram_db.exec("CREATE TABLE tmp_json_tree (value TEXT, path TEXT)") ||
       !telegram_db.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, from_name TEXT, body TEXT, "
                         "reply_to_id INT, "
                         "photo TEXT, width INT, height INT, "
                         "file TEXT, media_type TEXT, mime_type TEXT, "
                         "poll)"))
   {
-    Logger::error("Failed to set up sql table");
+    Logger::error("Failed to set up sql tables");
+    bepaald::destroyPtr(&data, &datasize);
     return false;
   }
 
+  if (d_verbose) [[unlikely]]
+    Logger::message_start("Inserting chats from json...");
   if (!telegram_db.exec("INSERT INTO chats SELECT key,json_extract(value, '$.name') AS name, json_extract(value, '$.type') AS type FROM json_each(?, '$.chats.list')",
-                        std::string(reinterpret_cast<char *>(data), datasize)))
+                        SqliteDB::StaticTextParam(data, datasize)))
   {
     Logger::error("Failed to fill sql table");
+    bepaald::destroyPtr(&data, &datasize);
+    return false;
+  }
+  if (d_verbose) [[unlikely]]
+    Logger::message("done! (", telegram_db.changed(), ")");
+
+  // // while this works as a one-liner, its incredibly inefficient and sqlite rightly chokes on large (100M) json files
+  // if (!telegram_db.exec("INSERT INTO messages "
+  //                       "SELECT "
+  //                       "tree2.key, "
+
+  //                       "json_extract(each.value, '$.id'), "
+  //                       "json_extract(each.value, '$.type'), "
+  //                       "json_extract(each.value, '$.date_unixtime'), "
+  //                       "json_extract(each.value, '$.from'), "
+  //                       "json_extract(each.value, '$.text_entities'), "
+  //                       "json_extract(each.value, '$.reply_to_message_id'), "
+
+  //                       "json_extract(each.value, '$.photo'), "
+  //                       "json_extract(each.value, '$.width'), "
+  //                       "json_extract(each.value, '$.height'), "
+
+  //                       "json_extract(each.value, '$.file'), "
+  //                       "json_extract(each.value, '$.media_type'), " // could be 'voice_message
+  //                       "json_extract(each.value, '$.mime_type'), "
+
+  //                       "json_extract(each.value, '$.poll') " // not yet supported, just selected to skip cleanly
+
+  //                       "FROM json_tree(?, '$.chats.list') AS tree, json_each(tree.value) AS each "
+  //                       "LEFT JOIN json_tree(?, '$.chats.list') AS tree2 ON tree2.fullkey || '.messages' IS tree.fullkey "
+  //                       //"LEFT JOIN json_tree(?, '$.chats.list') AS tree2 ON /*tree2.path IS '$.chats.list' AND */tree2.fullkey || '.messages' IS tree.fullkey "
+  //                       "WHERE tree.key = 'messages'",
+  //                       {SqliteDB::StaticTextParam(data, datasize), SqliteDB::StaticTextParam(data, datasize)}))
+  // {
+  //   Logger::error("Failed to fill sql table");
+  //   bepaald::destroyPtr(&data, &datasize);
+  //   return false;
+  // }
+
+
+  /********* NEW METHOD **************/
+  /*
+
+  // get number of chats
+  long long int numchats = telegram_db.getSingleResultAs<long long int>("SELECT json_array_length(?, '$.chats.list')", SqliteDB::StaticTextParam(data, datasize), -1);
+  if (numchats == -1)
+  {
+    Logger::error("Failed to get number of chats");
+    bepaald::destroyPtr(&data, &datasize);
     return false;
   }
 
-  if (!telegram_db.exec("INSERT INTO messages "
-                        "SELECT "
-                        "tree2.key, "
-
-                        "json_extract(each.value, '$.id'), "
-                        "json_extract(each.value, '$.type'), "
-                        "json_extract(each.value, '$.date_unixtime'), "
-                        "json_extract(each.value, '$.from'), "
-                        "json_extract(each.value, '$.text_entities'), "
-                        "json_extract(each.value, '$.reply_to_message_id'), "
-
-                        "json_extract(each.value, '$.photo'), "
-                        "json_extract(each.value, '$.width'), "
-                        "json_extract(each.value, '$.height'), "
-
-                        "json_extract(each.value, '$.file'), "
-                        "json_extract(each.value, '$.media_type'), " // could be 'voice_message
-                        "json_extract(each.value, '$.mime_type'), "
-
-                        "json_extract(each.value, '$.poll') " // not yet supported, just selected to skip cleanly
-
-                        "FROM json_tree(?, '$.chats.list') AS tree, json_each(tree.value) AS each "
-                        "LEFT JOIN json_tree(?, '$.chats.list') AS tree2 ON tree2.fullkey || '.messages' IS tree.fullkey "
-                        //"LEFT JOIN json_tree(?, '$.chats.list') AS tree2 ON /*tree2.path IS '$.chats.list' AND */tree2.fullkey || '.messages' IS tree.fullkey "
-                        "WHERE tree.key = 'messages'",
-                        {std::string(reinterpret_cast<char *>(data), datasize), std::string(reinterpret_cast<char *>(data), datasize)}))
+  // for each chat, gather  messages
+  for (uint i = 0; i < numchats; ++i)
   {
-    Logger::error("Failed to fill sql table");
-    return false;
+    Logger::message_overwrite("Gathering data for chat: ", i + 1, "/", numchats, i < numchats - 1 ? "..." : "");
+    telegram_db.exec("INSERT INTO tmp_messages_per_chat SELECT ?, value FROM json_each(?, '$.chats.list[" + bepaald::toString(i) + "].messages')", {i, SqliteDB::StaticTextParam(data, datasize)});
   }
 
+  if (d_verbose) [[unlikely]]
+    Logger::message_start("Inserting messages from json...");
+  telegram_db.exec("INSERT INTO messages SELECT "
+                   "chatidx, "
+                   "json_extract(json, '$.id') AS id, "
+                   "json_extract(json, '$.type') AS type, "
+                   "json_extract(json, '$.date_unixtime') AS date, "
+                   "json_extract(json, '$.from') AS from_name, "
+                   "json_extract(json, '$.text_entities') AS body, "
+                   "json_extract(json, '$.reply_to_message_id') AS reply_to_id, "
+                   "json_extract(json, '$.photo') AS photo, "
+                   "json_extract(json, '$.width') AS width, "
+                   "json_extract(json, '$.height') AS height, "
+                   "json_extract(json, '$.file') AS file, "
+                   "json_extract(json, '$.media_type') AS media_type, "
+                   "json_extract(json, '$.mime_type') AS mime_type, "
+                   "json_extract(json, '$.poll') AS poll FROM tmp_messages_per_chat");
+
+  if (d_verbose) [[unlikely]]
+    Logger::message("done! (", telegram_db.changed(), ")");
+
+  telegram_db.exec("DROP TABLE tmp_messages_per_chat");
   bepaald::destroyPtr(&data, &datasize);
+  */
+
+  /************ NEW METHOD 2 ****************/
+  // note: to glob-match '$.chats.list[0].messages' for any number, we create a character class for the first '[' -> [[], since GLOB has no escape characters
+  if (!telegram_db.exec("INSERT INTO tmp_json_tree SELECT value, path FROM json_tree(?) WHERE path GLOB '$.chats.list[[][0-9]*].messages'", SqliteDB::StaticTextParam(data, datasize)))
+  {
+    bepaald::destroyPtr(&data, &datasize);
+    return false;
+  }
+  bepaald::destroyPtr(&data, &datasize);
+  if (!telegram_db.exec("INSERT INTO messages SELECT "
+                        "REPLACE(REPLACE(path, '$.chats.list[', ''), '].messages', '') AS chatidx, "
+                        "json_extract(value, '$.id') AS id, "
+                        "json_extract(value, '$.type') AS type, "
+                        "json_extract(value, '$.date_unixtime') AS date, "
+                        "json_extract(value, '$.from') AS from_name, "
+                        "json_extract(value, '$.text_entities') AS body, "
+                        "json_extract(value, '$.reply_to_message_id') AS reply_to_id, "
+                        "json_extract(value, '$.photo') AS photo, "
+                        "json_extract(value, '$.width') AS width, "
+                        "json_extract(value, '$.height') AS height, "
+                        "json_extract(value, '$.file') AS file, "
+                        "json_extract(value, '$.media_type') AS media_type, "
+                        "json_extract(value, '$.mime_type') AS mime_type, "
+                        "json_extract(value, '$.poll') AS poll FROM tmp_json_tree"))
+    return false;
+  telegram_db.exec("DROP TABLE tmp_json_tree");
 
   // std::cout << std::endl << "CHATS: " << std::endl;
-  // telegram_db.prettyPrint("SELECT * FROM chats");
+  // telegram_db.prettyPrint("SELECT COUNT(*) FROM chats");
+  // telegram_db.prettyPrint("SELECT * FROM chats LIMIT 10");
   // std::cout << std::endl << "MESSAGES: " << std::endl;
-  // telegram_db.prettyPrint("SELECT * FROM messages");
+  // telegram_db.prettyPrint("SELECT COUNT(*) FROM messages");
+  // telegram_db.prettyPrint("SELECT * FROM messages WHERE chatidx = 42 LIMIT 10");
+  // telegram_db.saveToFile("NEW_METHOD");
 
   // get all contacts in json data
   SqliteDB::QueryResults json_contacts;

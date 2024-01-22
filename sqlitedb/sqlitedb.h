@@ -90,16 +90,16 @@ class SqliteDB
   };
 
  public:
-  // struct StaticText
-  // {
-  //   char *ptr;
-  //   uint64_t size;
-  //   StaticText(char *p, uint64_t s)
-  //     :
-  //     ptr(ptr),
-  //     size(s)
-  //   {}
-  // };
+  struct StaticTextParam
+  {
+    char *ptr;
+    uint64_t size;
+    StaticTextParam(char *p, uint64_t s)
+      :
+      ptr(p),
+      size(s)
+    {}
+  };
 
  private:
   sqlite3 *d_db;
@@ -167,7 +167,7 @@ class SqliteDB
   inline int execParamFiller(sqlite3_stmt *stmt, int count, double param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::pair<std::shared_ptr<unsigned char []>, size_t> const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::pair<unsigned char *, size_t> const &param) const;
-  //inline int execParamFiller(sqlite3_stmt *stmt, int count, StaticText const &param) const;
+  inline int execParamFiller(sqlite3_stmt *stmt, int count, StaticTextParam const &param) const;
   inline int execParamFiller(sqlite3_stmt *stmt, int count, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
@@ -449,15 +449,15 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
         return false;
       }
     }
-    // else if (isType<StaticText>(p))
-    // {
-    //   if (execParamFiller(stmt, i + 1, std::any_cast<StaticText>(p)) != SQLITE_OK)
-    //   {
-    //     Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
-    //     Logger::error_indent("-> Query: \"", q, "\"");
-    //     return false;
-    //   }
-    // }
+    else if (isType<StaticTextParam>(p))
+    {
+      if (execParamFiller(stmt, i + 1, std::any_cast<StaticTextParam>(p)) != SQLITE_OK)
+      {
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
+        return false;
+      }
+    }
     else
     {
       Logger::error("Unhandled parameter type ", p.type().name());
@@ -646,11 +646,11 @@ inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, std::pair<un
   return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first), param.second, SQLITE_TRANSIENT);
 }
 
-// inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, StaticText const &param) const
-// {
-//   //std::cout << "Binding BLOB at " << count << std::endl;
-//   return sqlite3_bind_text(stmt, count, param.ptr, param.size, SQLITE_STATIC);
-// }
+inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, StaticTextParam const &param) const
+{
+  //std::cout << "Binding BLOB at " << count << std::endl;
+  return sqlite3_bind_text(stmt, count, param.ptr, param.size, SQLITE_STATIC);
+}
 
 inline int SqliteDB::execParamFiller(sqlite3_stmt *stmt, int count, int param) const
 {
