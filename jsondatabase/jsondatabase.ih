@@ -17,9 +17,11 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "jsondatabase.h"
 
-#define VERSIONDATE "20240123.151839"
+#include <fstream>
+#include <filesystem>
+#include <memory>
 
-#endif
+//#include "../common_be.h"
+#include "../logger/logger.h"

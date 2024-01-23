@@ -17,9 +17,36 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef JSONDATABASE_H_
+#define JSONDATABASE_H_
 
-#define VERSIONDATE "20240123.151839"
+#include "../memsqlitedb/memsqlitedb.h"
+
+class JsonDatabase
+{
+  MemSqliteDB d_database;
+  bool d_ok;
+  bool d_verbose;
+ public:
+  JsonDatabase(std::string const &jsonfile, bool verbose);
+  JsonDatabase(JsonDatabase const &other) = default;
+  JsonDatabase(JsonDatabase &&other) = default;
+  JsonDatabase &operator=(JsonDatabase const &other) = default;
+  JsonDatabase &operator=(JsonDatabase &&other) = default;
+  inline bool ok() const;
+  inline void listChats() const;
+
+  friend class SignalBackup;
+};
+
+inline bool JsonDatabase::ok() const
+{
+  return d_ok;
+}
+
+inline void JsonDatabase::listChats() const
+{
+  d_database.prettyPrint("SELECT * FROM chats");
+}
 
 #endif
