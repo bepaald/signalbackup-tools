@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -60,7 +60,8 @@ inline bool getPassword(std::string *pw)
 #endif
 
   char replacement = '*';
-  for (char c = 0; (c = GETCHAR()) != enter && c != EOF;)
+  //for (char c = 0; (c = GETCHAR()) != enter && c != EOF;)
+  for (char c = 0; (c = GETCHAR()) != enter && c != std::char_traits<char>::eof();)
   {
 
 #if defined(_WIN32) || defined(__MINGW64__)

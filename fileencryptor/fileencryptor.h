@@ -53,6 +53,7 @@ inline FileEncryptor::FileEncryptor(FileEncryptor const &other)
   :
   CryptBase(other),
   d_passphrase(other.d_passphrase),
+  d_backupfileversion(other.d_backupfileversion),
   d_verbose(other.d_verbose)
 {}
 
@@ -62,6 +63,7 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor const &other)
   {
     CryptBase::operator=(other);
     d_passphrase = other.d_passphrase;
+    d_backupfileversion = other.d_backupfileversion;
     d_verbose = other.d_verbose;
   }
   return *this;
@@ -71,6 +73,7 @@ inline FileEncryptor::FileEncryptor(FileEncryptor &&other)
   :
   CryptBase(std::move(other)),
   d_passphrase(std::move(other.d_passphrase)),
+  d_backupfileversion(std::move(other.d_backupfileversion)),
   d_verbose(std::move(other.d_verbose))
 {}
 
@@ -80,6 +83,7 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other)
   {
     CryptBase::operator=(other);
     d_passphrase = std::move(other.d_passphrase);
+    d_backupfileversion = std::move(other.d_backupfileversion);
     d_verbose = std::move(other.d_verbose);
   }
   return *this;

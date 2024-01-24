@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 172> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--editgroupmembers", "--no-editgroupmembers", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--includecalllog", "--no-includecalllog", "--exporttxt", "--append", "--no-append", "--split", "--desktopdbversion", "--migratedb", "--no-migratedb", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--findrecipient", "--importtelegram", "--mapjsoncontacts", "--fulldecode", "--no-fulldecode", "-l", "--logfile"};
+  std::array<std::string, 178> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--dumpmedia", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--editgroupmembers", "--no-editgroupmembers", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--includecalllog", "--no-includecalllog", "--exporttxt", "--append", "--no-append", "--split", "--desktopdbversion", "--migratedb", "--no-migratedb", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--fulldecode", "--no-fulldecode", "-l", "--logfile"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -59,8 +59,9 @@ class Arg
   std::vector<std::string> d_limitcontacts;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
-  std::string d_dumpdesktopdb_1;
-  std::string d_dumpdesktopdb_2;
+  std::string d_dumpdesktopdb;
+  std::string d_desktopdirs_1;
+  std::string d_desktopdirs_2;
   std::string d_dumpmedia;
   std::string d_dumpavatars;
   std::string d_hhenkel;
@@ -98,9 +99,7 @@ class Arg
   bool d_scanmissingattachments;
   bool d_showdbinfo;
   bool d_scramble;
-  std::string d_importfromdesktop_1;
-  std::string d_importfromdesktop_2;
-  bool d_importfromdesktop_bool;
+  bool d_importfromdesktop;
   std::vector<std::string> d_limittodates;
   bool d_autolimitdates;
   bool d_ignorewal;
@@ -121,9 +120,12 @@ class Arg
   bool d_searchpage;
   long long int d_findrecipient;
   std::string d_importtelegram;
+  std::string d_listjsonchats;
+  std::vector<long long int> d_selectjsonchats;
   std::vector<std::pair<std::string, long long int>> d_mapjsoncontacts;
   bool d_fulldecode;
   std::string d_logfile;
+  bool d_input_required;
  public:
   Arg(int argc, char *argv[]);
   inline Arg(Arg const &other) = delete;
@@ -155,8 +157,9 @@ class Arg
   inline std::vector<std::string> const &limitcontacts() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
-  inline std::string const &dumpdesktopdb_1() const;
-  inline std::string const &dumpdesktopdb_2() const;
+  inline std::string const &dumpdesktopdb() const;
+  inline std::string const &desktopdirs_1() const;
+  inline std::string const &desktopdirs_2() const;
   inline std::string const &dumpmedia() const;
   inline std::string const &dumpavatars() const;
   inline std::string const &hhenkel() const;
@@ -194,9 +197,7 @@ class Arg
   inline bool scanmissingattachments() const;
   inline bool showdbinfo() const;
   inline bool scramble() const;
-  inline std::string const &importfromdesktop_1() const;
-  inline std::string const &importfromdesktop_2() const;
-  inline bool importfromdesktop_bool() const;
+  inline bool importfromdesktop() const;
   inline std::vector<std::string> const &limittodates() const;
   inline bool autolimitdates() const;
   inline bool ignorewal() const;
@@ -217,9 +218,12 @@ class Arg
   inline bool searchpage() const;
   inline long long int findrecipient() const;
   inline std::string const &importtelegram() const;
+  inline std::string const &listjsonchats() const;
+  inline std::vector<long long int> const &selectjsonchats() const;
   inline std::vector<std::pair<std::string, long long int>> const &mapjsoncontacts() const;
   inline bool fulldecode() const;
   inline std::string const &logfile() const;
+  inline bool input_required() const;
  private:
   template <typename T>
   bool ston(T *t, std::string const &str) const;
@@ -361,14 +365,19 @@ inline std::vector<long long int> const &Arg::editattachmentsize() const
   return d_editattachmentsize;
 }
 
-inline std::string const &Arg::dumpdesktopdb_1() const
+inline std::string const &Arg::dumpdesktopdb() const
 {
-  return d_dumpdesktopdb_1;
+  return d_dumpdesktopdb;
 }
 
-inline std::string const &Arg::dumpdesktopdb_2() const
+inline std::string const &Arg::desktopdirs_1() const
 {
-  return d_dumpdesktopdb_2;
+  return d_desktopdirs_1;
+}
+
+inline std::string const &Arg::desktopdirs_2() const
+{
+  return d_desktopdirs_2;
 }
 
 inline std::string const &Arg::dumpmedia() const
@@ -556,19 +565,9 @@ inline bool Arg::scramble() const
   return d_scramble;
 }
 
-inline std::string const &Arg::importfromdesktop_1() const
+inline bool Arg::importfromdesktop() const
 {
-  return d_importfromdesktop_1;
-}
-
-inline std::string const &Arg::importfromdesktop_2() const
-{
-  return d_importfromdesktop_2;
-}
-
-inline bool Arg::importfromdesktop_bool() const
-{
-  return d_importfromdesktop_bool;
+  return d_importfromdesktop;
 }
 
 inline std::vector<std::string> const &Arg::limittodates() const
@@ -671,6 +670,16 @@ inline std::string const &Arg::importtelegram() const
   return d_importtelegram;
 }
 
+inline std::string const &Arg::listjsonchats() const
+{
+  return d_listjsonchats;
+}
+
+inline std::vector<long long int> const &Arg::selectjsonchats() const
+{
+  return d_selectjsonchats;
+}
+
 inline std::vector<std::pair<std::string, long long int>> const &Arg::mapjsoncontacts() const
 {
   return d_mapjsoncontacts;
@@ -684,6 +693,11 @@ inline bool Arg::fulldecode() const
 inline std::string const &Arg::logfile() const
 {
   return d_logfile;
+}
+
+inline bool Arg::input_required() const
+{
+  return d_input_required;
 }
 
 inline bool Arg::ok() const

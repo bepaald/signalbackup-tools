@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -61,7 +61,9 @@ class FrameWithAttachment : public BackupFrame
   inline unsigned char *cipherkey() const;
   inline uint64_t cipherkey_size() const;
   inline std::string const &filename() const;
-  inline void setLazyData(unsigned char *iv, uint32_t iv_size, unsigned char *mackey, uint64_t mackey_size, unsigned char *cipherkey, uint64_t cipherkey_size, uint32_t attsize, std::string const &filename, uint64_t filepos);
+  inline void setLazyData(unsigned char const *iv, uint32_t iv_size, unsigned char const *mackey, uint64_t mackey_size,
+                          unsigned char const *cipherkey, uint64_t cipherkey_size, uint32_t attsize,
+                          std::string const &filename, uint64_t filepos);
   inline void setLazyDataRAW(uint32_t attsize, std::string const &filename);
   //inline virtual void setLazyData(unsigned char *iv, uint32_t iv_size, uint32_t attsize, uint64_t filepos, BaseDecryptor *dec);
   inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
@@ -297,9 +299,9 @@ inline std::string const &FrameWithAttachment::filename() const
   return d_filename;
 }
 
-inline void FrameWithAttachment::setLazyData(unsigned char *iv, uint32_t iv_size,
-                                             unsigned char *mackey, uint64_t mackey_size,
-                                             unsigned char *cipherkey, uint64_t cipherkey_size,
+inline void FrameWithAttachment::setLazyData(unsigned char const *iv, uint32_t iv_size,
+                                             unsigned char const *mackey, uint64_t mackey_size,
+                                             unsigned char const *cipherkey, uint64_t cipherkey_size,
                                              uint32_t attsize, std::string const &filename, uint64_t filepos)
 {
   bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);

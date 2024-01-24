@@ -24,8 +24,9 @@
 #include "common_be.h"
 #include "main.h"
 #include "signalbackup/signalbackup.h"
-#include "sqlcipherdecryptor/sqlcipherdecryptor.h"
 #include "logger/logger.h"
+#include "desktopdatabase/desktopdatabase.h"
+#include "jsondatabase/jsondatabase.h"
 
 #if __has_include("autoversion.h")
 #include "autoversion.h"
@@ -82,13 +83,35 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  // at the very least an input file is needed
-  if (arg.input().empty() && !arg.help())
+  //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
+  if (!arg.dumpdesktopdb().empty())
+  {
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion());
+    if (!ddb.ok())
+      return 1;
+    if (!ddb.dumpDb(arg.dumpdesktopdb(), arg.overwrite()))
+      return 1;
+  }
+
+  if (!arg.listjsonchats().empty())
+  {
+    JsonDatabase jdb(arg.listjsonchats(), arg.verbose());
+    if (!jdb.ok())
+      return 1;
+    jdb.listChats();
+  }
+
+  // run desktop sqlquery
+
+  //***** *****//
+  if (!arg.input_required()) // no input is required -> all following operations require it -> none of the following was requested
+    return 0;
+
+  if (arg.input().empty())  // at the very least an input file is needed
   {
     Logger::error("No input provided.");
     Logger::error_indent("Run with `", argv[0], " <INPUT> [<PASSPHRASE>] [OPTIONS]'");
     Logger::error_indent("Try '", argv[0], " --help' for available options");
-
     return 1;
   }
 
@@ -143,7 +166,7 @@ int main(int argc, char *argv[])
 
   // check output exists (file exists OR dir is not empty)
   if (!arg.output().empty() && bepaald::fileOrDirExists(arg.output()) &&
-      ((!bepaald::isDir(arg.output()) || (bepaald::isDir(arg.output()) && !bepaald::isEmpty(arg.output()))) &&
+      ((!bepaald::isDir(arg.output()) || (/*bepaald::isDir(arg.output()) && */!bepaald::isEmpty(arg.output()))) &&
        !arg.overwrite()))
   {
     if (bepaald::isDir(arg.output()))
@@ -152,36 +175,6 @@ int main(int argc, char *argv[])
       Logger::error("Output file `", arg.output(), "' exists. Use --overwrite to overwrite.");
     return 1;
   }
-
-  // // temporary. REMOVE THIS
-  // if (arg.strugee() != -1)
-  // {
-  //   Logger::message("TEMP FUNCTION (#37)");
-  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-  //   fd.strugee(arg.strugee());
-  //   return 0;
-  // }
-  // if (arg.strugee3() != -1)
-  // {
-  //   Logger::message("TEMP FUNCTION (#37)");
-  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-  //   fd.strugee3(arg.strugee3());
-  //   return 0;
-  // }
-  // if (arg.ashmorgan())
-  // {
-  //   Logger::message("TEMP FUNCTION (#40)");
-  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-  //   fd.ashmorgan();
-  //   return 0;
-  // }
-  // else if (arg.strugee2())
-  // {
-  //   Logger::message("TEMP FUNCTION 2 (#37)");
-  //   FileDecryptor fd(arg.input(), arg.passphrase(), arg.verbose(), false, false);
-  //   fd.strugee2();
-  //   return 0;
-  // }
 
   MEMINFO("Start of program, before opening input");
 
@@ -215,20 +208,9 @@ int main(int argc, char *argv[])
   if (arg.showdbinfo())
     sb->showDBInfo();
 
-  // if (arg.generatefromtruncated())
-  // {
-  //   //std::cout << "fillthread" << std::endl;
-  //   sb->fillThreadTableFromMessages();
-  //   //sb->addEndFrame(); // this should not be necessary, if endframe is missing, it's added in init
-  // }
-
   if (!arg.source().empty())
   {
-    //Logger::message("Target database info:");
-    //sb->summarize();
-    //bool sourcesummarized = false;
-
-    SignalBackup source(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty());
+    SignalBackup src(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty());
     std::vector<long long int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
@@ -236,7 +218,7 @@ int main(int argc, char *argv[])
       MEMINFO("Before first time reading source");
 
       Logger::message("Requested ALL threads, reading source to get thread list");
-      if (!source.ok())
+      if (!src.ok())
       {
         Logger::error("Failed to open source database");
         return 1;
@@ -244,11 +226,11 @@ int main(int argc, char *argv[])
 
       MEMINFO("After first time reading source");
 
-      //source->summarize();
+      //src->summarize();
       //sourcesummarized = true;
 
       Logger::message("Getting list of thread id's...");
-      threads = source.threadIds();
+      threads = src.threadIds();
       // std::cout << "Got: " << std::flush;
       // for (uint i = 0; i < threads.size(); ++i)
       //   std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
@@ -257,7 +239,7 @@ int main(int argc, char *argv[])
 
     // add any threads listed by thread name
     if (arg.importthreadsbyname().size())
-      if (!addThreadIdsFromString(&source, arg.importthreadsbyname(), &threads))
+      if (!addThreadIdsFromString(&src, arg.importthreadsbyname(), &threads))
         return 1;
 
     for (uint i = 0; i < threads.size(); ++i)
@@ -268,7 +250,7 @@ int main(int argc, char *argv[])
       Logger::message("\nImporting thread ", threads[i], " (", i + 1, "/", threads.size(), ") from source file: ", arg.source());
       //std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
 
-      SignalBackup sourcecopy(source);
+      SignalBackup sourcecopy(src);
       if (!sourcecopy.ok())
       {
         Logger::error("Failed to open source database");
@@ -290,10 +272,10 @@ int main(int argc, char *argv[])
     }
   }
 
-  if (arg.importfromdesktop_bool())
+  if (arg.importfromdesktop())
   {
     MEMINFO("Before importfromdesktop");
-    if (!sb->importFromDesktop(arg.importfromdesktop_1(), arg.importfromdesktop_2(), arg.desktopdbversion(),
+    if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
                                arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
                                arg.ignorewal(), arg.setselfid()))
       return 1;
@@ -301,7 +283,7 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.importtelegram().empty())
-    if (!sb->importTelegramJson(arg.importtelegram(), arg.mapjsoncontacts(), arg.setselfid()))
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.setselfid()))
       return 1;
 
   if (arg.removedoubles_bool())
@@ -457,16 +439,6 @@ int main(int argc, char *argv[])
   }
 
   MEMINFO("After output");
-
-  // decode and dump Signal-Desktop database to 'desktop.db'.
-  if (!arg.dumpdesktopdb_1().empty())
-  {
-    SqlCipherDecryptor db(arg.dumpdesktopdb_1(), arg.dumpdesktopdb_2(), arg.desktopdbversion());
-    if (!db.ok() || !db.writeToFile("desktop.db", arg.overwrite()))
-      Logger::error("Failed to dump desktop database");
-  }
-
-
 
 #if defined(_WIN32) || defined(__MINGW64__)
   SetConsoleOutputCP(oldcodepage);

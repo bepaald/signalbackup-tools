@@ -241,28 +241,28 @@ inline SqliteDB::~SqliteDB()
 
 inline bool SqliteDB::initFromFile()
 {
-  bool ok = false;
+  bool initok = false;
   if (d_name != ":memory:" && d_readonly)
-    ok = (sqlite3_open_v2(d_name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
+    initok = (sqlite3_open_v2(d_name.c_str(), &d_db, SQLITE_OPEN_READONLY, nullptr) == SQLITE_OK);
   else
-    ok = (sqlite3_open(d_name.c_str(), &d_db) == SQLITE_OK);
+    initok = (sqlite3_open(d_name.c_str(), &d_db) == SQLITE_OK);
 
-  if (ok)
-    return registerCustoms();
+  if (!initok)
+    return false;
 
-  return ok;
+  return registerCustoms();
 }
 
 inline bool SqliteDB::initFromMemory()
 {
-  bool ok = false;
+  bool initok = false;
   if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
-    ok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
+    initok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
 
-  if (ok)
-    return registerCustoms();
+  if (!initok)
+    return false;
 
-  return ok;
+  return registerCustoms();
 }
 
 inline void SqliteDB::destroy()
@@ -287,6 +287,7 @@ inline bool SqliteDB::saveToFile(std::string const &filename) const
     Logger::error("Failed to export sqlite database");
     return false;
   }
+  Logger::message("Saved database to file '", filename, "'");
   return true;
 }
 
@@ -1075,12 +1076,12 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
         (!res.isNull(0, "low") || !res.isNull(0, "high")))
     {
       //res.prettyPrint();
-      long long int jsonlong = 0;
+      long long int jl = 0;
       if (!res.isNull(0, "high"))
-        jsonlong |= (res.getValueAs<long long int>(0, "high") << 32);
+        jl |= (res.getValueAs<long long int>(0, "high") << 32);
       if (!res.isNull(0, "low"))
-        jsonlong |= (res.getValueAs<long long int>(0, "low") & 0xFFFFFFFF);
-      sqlite3_result_int64(context, jsonlong);
+        jl |= (res.getValueAs<long long int>(0, "low") & 0xFFFFFFFF);
+      sqlite3_result_int64(context, jl);
       return;
     }
     //return copy of found string, it is not a json long object...

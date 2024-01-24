@@ -26,7 +26,7 @@ class MemSqliteDB : public SqliteDB
 {
  public:
   inline MemSqliteDB();
-  inline MemSqliteDB(std::pair<unsigned char *, uint64_t> *data);
+  inline explicit MemSqliteDB(std::pair<unsigned char *, uint64_t> *data);
   ~MemSqliteDB() = default;
 };
 

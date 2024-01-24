@@ -19,7 +19,7 @@
 
 #include "filedecryptor.ih"
 
-FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror, bool assumebadframesize, std::vector<long long int> editattachments)
+FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror, bool assumebadframesize, std::vector<long long int> const &editattachments)
   :
   BaseDecryptor(verbose),
   d_headerframe(nullptr),

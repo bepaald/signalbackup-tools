@@ -53,7 +53,7 @@ class CryptBase
   bool getCipherAndMac(uint hashoutputsize, size_t outputsize);
   bool getBackupKey(std::string const &passphrase);
   inline void uintToFourBytes(unsigned char *bytes, uint32_t val) const;
-  inline uint32_t fourBytesToUint(unsigned char *b) const;
+  inline uint32_t fourBytesToUint(unsigned char const *b) const;
 };
 
 inline CryptBase::CryptBase()
@@ -258,7 +258,7 @@ inline void CryptBase::uintToFourBytes(unsigned char *bytes, uint32_t val) const
   std::memcpy(bytes, reinterpret_cast<unsigned char *>(&val), 4);
 }
 
-inline uint32_t CryptBase::fourBytesToUint(unsigned char *b) const
+inline uint32_t CryptBase::fourBytesToUint(unsigned char const *b) const
 {
   uint32_t res = 0;
   res |= static_cast<uint32_t>(b[3] & 0xFF);

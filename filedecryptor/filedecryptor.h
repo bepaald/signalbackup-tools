@@ -43,12 +43,12 @@ class  FileDecryptor : public BaseDecryptor
   uint32_t d_backupfileversion;
 
  public:
-  FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> editattachments = std::vector<long long int>());
+  FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> const &editattachments = std::vector<long long int>());
   inline FileDecryptor(FileDecryptor const &other);
   inline FileDecryptor &operator=(FileDecryptor const &other);
   inline FileDecryptor(FileDecryptor &&other);
   inline FileDecryptor &operator=(FileDecryptor &&other);
-  inline bool ok() const;
+  // inline bool ok() const;
   std::unique_ptr<BackupFrame> getFrameOld(std::ifstream &file);
   std::unique_ptr<BackupFrame> getFrame(std::ifstream &file);
   inline uint64_t total() const;
@@ -147,10 +147,10 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
   return *this;
 }
 
-inline bool FileDecryptor::ok() const
-{
-  return d_ok;
-}
+// inline bool FileDecryptor::ok() const
+// {
+//   return d_ok;
+// }
 
 inline uint64_t FileDecryptor::total() const
 {

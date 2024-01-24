@@ -102,10 +102,10 @@ class BackupFrame
   inline virtual bool validate() const;
   inline virtual uint64_t dataSize() const;
  protected:
-  inline uint32_t bytesToUint32(unsigned char *data, size_t len) const;
-  inline uint64_t bytesToUint64(unsigned char *data, size_t len) const;
-  inline int32_t bytesToInt32(unsigned char *data, size_t len) const;
-  inline int64_t bytesToInt64(unsigned char *data, size_t len) const;
+  inline uint32_t bytesToUint32(unsigned char const *data, size_t len) const;
+  inline uint64_t bytesToUint64(unsigned char const *data, size_t len) const;
+  inline int32_t bytesToInt32(unsigned char const *data, size_t len) const;
+  inline int64_t bytesToInt64(unsigned char const *data, size_t len) const;
   bool init(unsigned char *data, size_t length, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata);
   template <typename T>
   inline void intTypeToBytes(T val, unsigned char *b);
@@ -346,7 +346,7 @@ inline BackupFrame *BackupFrame::instantiate(FRAMETYPE ft, unsigned char *data, 
 }
 
 // maybe check endianness?
-inline uint32_t BackupFrame::bytesToUint32(unsigned char *data, size_t len) const
+inline uint32_t BackupFrame::bytesToUint32(unsigned char const *data, size_t len) const
 {
   return static_cast<uint32_t>(data[len - 1] & 0xFF) |
     static_cast<uint32_t>(data[len - 2] & 0xFF) << 8 |
@@ -354,7 +354,7 @@ inline uint32_t BackupFrame::bytesToUint32(unsigned char *data, size_t len) cons
     static_cast<uint32_t>(data[len - 4] & 0xFF) << 24;
 }
 
-inline uint64_t BackupFrame::bytesToUint64(unsigned char *data, size_t len) const
+inline uint64_t BackupFrame::bytesToUint64(unsigned char const *data, size_t len) const
 {
   return static_cast<uint64_t>(data[len - 1] & 0xFF) |
     static_cast<uint64_t>(data[len - 2] & 0xFF) << 8 |
@@ -366,7 +366,7 @@ inline uint64_t BackupFrame::bytesToUint64(unsigned char *data, size_t len) cons
     static_cast<uint64_t>(data[len - 8] & 0xFF) << 56;
 }
 
-inline int32_t BackupFrame::bytesToInt32(unsigned char *data, size_t len) const
+inline int32_t BackupFrame::bytesToInt32(unsigned char const *data, size_t len) const
 {
   return static_cast<int32_t>(data[len - 1] & 0xFF) |
     static_cast<int32_t>(data[len - 2] & 0xFF) << 8 |
@@ -374,7 +374,7 @@ inline int32_t BackupFrame::bytesToInt32(unsigned char *data, size_t len) const
     static_cast<int32_t>(data[len - 4] & 0xFF) << 24;
 }
 
-inline int64_t BackupFrame::bytesToInt64(unsigned char *data, size_t len) const
+inline int64_t BackupFrame::bytesToInt64(unsigned char const *data, size_t len) const
 {
   return static_cast<int64_t>(data[len - 1] & 0xFF) |
     static_cast<int64_t>(data[len - 2] & 0xFF) << 8 |

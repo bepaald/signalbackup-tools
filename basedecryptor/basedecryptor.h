@@ -29,7 +29,7 @@ class BaseDecryptor : public CryptBase
  protected:
   bool d_verbose;
  public:
-  inline BaseDecryptor(bool verbose);
+  inline explicit BaseDecryptor(bool verbose);
   inline BaseDecryptor(BaseDecryptor const &other);
   inline BaseDecryptor &operator=(BaseDecryptor const &other);
   inline BaseDecryptor(BaseDecryptor &&other);

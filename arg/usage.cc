@@ -140,12 +140,17 @@ R"*(
                                          which to import threads (see `--importthreads'). The input can be
                                          a file or directory. When it is a file, a passphrase is required
    -sp, --sourcepassphrase <PASSPHRASE>  The 30 digit passphrase for the backup file specified by `--source'.
---importfromdesktop [DIR1][DIR2]         Import messages from Signal Desktop. If the program fails to find
+--importfromdesktop                      Import messages from Signal Desktop. If the program fails to find
                                          your Signal-Desktop installation or it is in a non-standard location,
                                          the optional [DIR1] and [DIR2] can be provided. See the README for
                                          more information.
-   --ignorewal                           Optional modifier for `--importfromdesktop'. Ignores an existing WAL
-                                         file when opening the Signal Desktop database.
+--dumpdesktopdb <OUTPUT>                 Decrypt the Signal Desktop database and saves it to <OUTPUT>.
+   --desktopdir <DIR1> <DIR2>            Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
+                                         If the program fails to find your Signal-Desktop installation or it
+                                         is in a non-standard location, the optional [DIR1] and [DIR2] can be
+                                         provided. See the README for more information.
+   --ignorewal                           Optional modifier for `--importfromdesktop' and `--dumpdesktopdb`.
+                                         Ignores an existing WAL file when opening Signal Desktop database.
    --limittodates <LIST_OF_DATES>        Optional modifier for `--importfromdesktop'. Limit the messages
                                          imported to the specified date ranges. The format of the list of
                                          list of dates is the same as `--croptodates'.

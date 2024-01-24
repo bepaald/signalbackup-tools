@@ -60,7 +60,7 @@ class Logger
   struct ControlChar
   {
     std::string code;
-    ControlChar(std::string const &c) : code(c)
+    explicit ControlChar(std::string const &c) : code(c)
     {}
   };
 

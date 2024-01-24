@@ -132,8 +132,8 @@ inline uint64_t KeyValueFrame::dataSize() const
       case FIELD::LONGVALUE:
       case FIELD::BOOLEANVALUE:
       {
-        uint64_t value = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
-        size += varIntSize(value);
+        uint64_t val = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
+        size += varIntSize(val);
         size += 1; // for fieldtype + wiretype
         break;
       }

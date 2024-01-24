@@ -35,7 +35,8 @@
 
 #include "../jsondatabase/jsondatabase.h"
 
-bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap, std::string const &selfphone)
+bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
+                                      std::vector<std::pair<std::string, long long int>> contactmap, std::string const &selfphone)
 {
   Logger::message("Import from Telegram json export");
 
@@ -74,10 +75,18 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
   std::filesystem::path p(file);
   datapath = p.parent_path().string() + static_cast<char>(std::filesystem::path::preferred_separator);
 
+  // build chatlist:
+  std::string chatlist;
+  for (auto idx : chatselection)
+    chatlist += (chatlist.empty() ? "(" : ", ") + bepaald::toString(idx);
+  chatlist += (chatlist.empty() ? "" : ")");
+
   // get all contacts in json data
   SqliteDB::QueryResults json_contacts;
-  if (!jsondb.d_database.exec("SELECT DISTINCT name FROM chats "
-                              "WHERE name IS NOT NULL UNION SELECT DISTINCT from_name AS name FROM messages WHERE from_name IS NOT NULL", &json_contacts))
+  if (!jsondb.d_database.exec("SELECT DISTINCT name FROM chats WHERE name IS NOT NULL " + (chatlist.empty() ? "" : ("AND idx IN " + chatlist + " ")) +
+                              "UNION "
+                              "SELECT DISTINCT from_name AS name FROM messages WHERE from_name IS NOT NULL" + (chatlist.empty() ? "" : (" AND chatidx IN " + chatlist)),
+                              &json_contacts))
     return false;
 
   Logger::message("ALL CONTACTS: ");
@@ -120,7 +129,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     Logger::message(contactmap[i].first, " -> ", contactmap[i].second);
 
   SqliteDB::QueryResults chats;
-  if (!jsondb.d_database.exec("SELECT idx, name, type FROM chats", &chats))
+  if (!jsondb.d_database.exec("SELECT idx, name, type FROM chats" + (chatlist.empty() ? "" : (" WHERE idx IN " + chatlist)), &chats))
     return false;
 
   // for each chat, get the messages and insert
@@ -129,9 +138,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<std::
     Logger::message("Dealing with conversation ", i + 1, "/", chats.rows());
 
     if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
-      tgImportMessages(jsondb.d_database, contactmap, datapath, chats.valueAsString(i, "name"), i, true); // deal with group chat
+      tgImportMessages(jsondb.d_database, contactmap, datapath, chats.valueAsString(i, "name"), chats.valueAsInt(i, "idx"), true); // deal with group chat
     else if (chats.valueAsString(i, "type") == "personal_chat") // ????
-      tgImportMessages(jsondb.d_database, contactmap, datapath, chats.valueAsString(i, "name"), i, false); // deal with 1-on-1 convo
+      tgImportMessages(jsondb.d_database, contactmap, datapath, chats.valueAsString(i, "name"), chats.valueAsInt(i, "idx"), false); // deal with 1-on-1 convo
     else
     {
       Logger::warning("Unsupported chat type `", chats.valueAsString(i, "type"), "'. Skipping...");
@@ -184,7 +193,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
     Logger::message(", thread_id: ", thread_id, ")");
   }
 
-  // loop over messages and insert
+  // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
   if (!db.exec("SELECT type, date, from_name, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, poll FROM messages "
                "WHERE chatidx = ? "

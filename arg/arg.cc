@@ -47,8 +47,9 @@ Arg::Arg(int argc, char *argv[])
   d_limitcontacts(std::vector<std::string>()),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
-  d_dumpdesktopdb_1(std::string()),
-  d_dumpdesktopdb_2(std::string()),
+  d_dumpdesktopdb(std::string()),
+  d_desktopdirs_1(std::string()),
+  d_desktopdirs_2(std::string()),
   d_dumpmedia(std::string()),
   d_dumpavatars(std::string()),
   d_hhenkel(std::string()),
@@ -86,9 +87,7 @@ Arg::Arg(int argc, char *argv[])
   d_scanmissingattachments(false),
   d_showdbinfo(false),
   d_scramble(false),
-  d_importfromdesktop_1(std::string()),
-  d_importfromdesktop_2(std::string()),
-  d_importfromdesktop_bool(false),
+  d_importfromdesktop(false),
   d_limittodates(std::vector<std::string>()),
   d_autolimitdates(false),
   d_ignorewal(false),
@@ -109,9 +108,12 @@ Arg::Arg(int argc, char *argv[])
   d_searchpage(false),
   d_findrecipient(-1),
   d_importtelegram(std::string()),
+  d_listjsonchats(std::string()),
+  d_selectjsonchats(std::vector<long long int>()),
   d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>()),
   d_fulldecode(false),
-  d_logfile(std::string())
+  d_logfile(std::string()),
+  d_input_required(false)
 {
   // vector to hold arguments
   std::vector<std::string> config;
@@ -172,6 +174,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           d_importthreads.clear();
           d_importthreads.push_back(tmp);
           ++i;
+          d_input_required = true;
           continue;
         }
         if (!parseNumberList(arguments[++i], &d_importthreads, true))
@@ -185,6 +188,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--importthreadsbyname")
@@ -202,6 +206,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--limittothreads")
@@ -249,6 +254,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "-op" || option == "--opassphrase" || option == "--opassword")
@@ -305,6 +311,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--croptothreadsbyname")
@@ -322,6 +329,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--croptodates")
@@ -339,6 +347,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--mergerecipients")
@@ -356,6 +365,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--mergegroups")
@@ -373,6 +383,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--exportcsv")
@@ -391,6 +402,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--exportxml")
@@ -404,6 +416,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--runsqlquery")
@@ -417,6 +430,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--runprettysqlquery")
@@ -430,6 +444,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--limitcontacts")
@@ -478,10 +493,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--dumpdesktopdb")
     {
+      if (i < arguments.size() - 1)
+      {
+        d_dumpdesktopdb = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--desktopdirs")
+    {
       if (i < arguments.size() - 2)
       {
-        d_dumpdesktopdb_1 = arguments[++i];
-        d_dumpdesktopdb_2 = arguments[++i];
+        d_desktopdirs_1 = arguments[++i];
+        d_desktopdirs_2 = arguments[++i];
       }
       else
       {
@@ -501,6 +529,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--dumpavatars")
@@ -514,6 +543,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--hhenkel")
@@ -550,6 +580,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--mapcsvfields")
@@ -619,6 +650,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--listthreads")
     {
       d_listthreads = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-listthreads")
@@ -629,6 +661,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--listrecipients")
     {
       d_listrecipients = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-listrecipients")
@@ -639,6 +672,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--editgroupmembers")
     {
       d_editgroupmembers = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-editgroupmembers")
@@ -669,11 +703,13 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         d_removedoubles_bool = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--reordermmssmsids")
     {
       d_reordermmssmsids = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-reordermmssmsids")
@@ -758,6 +794,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--deleteattachments")
     {
       d_deleteattachments = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-deleteattachments")
@@ -882,6 +919,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       else
         d_replaceattachments_bool = true;
+      d_input_required = true;
       continue;
     }
     if (option == "-h" || option == "--help")
@@ -897,6 +935,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--scanmissingattachments")
     {
       d_scanmissingattachments = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-scanmissingattachments")
@@ -907,6 +946,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--showdbinfo")
     {
       d_showdbinfo = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-showdbinfo")
@@ -917,6 +957,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--scramble")
     {
       d_scramble = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-scramble")
@@ -926,14 +967,13 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importfromdesktop")
     {
-      if (i < arguments.size() - 2 && !isOption(arguments[i + 1]))
-      {
-        d_importfromdesktop_1 = arguments[++i];
-        d_importfromdesktop_2 = arguments[++i];
-        d_importfromdesktop_bool = true;
-      }
-      else
-        d_importfromdesktop_bool = true;
+      d_importfromdesktop = true;
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--no-importfromdesktop")
+    {
+      d_importfromdesktop = false;
       continue;
     }
     if (option == "--limittodates")
@@ -986,6 +1026,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--checkdbintegrity")
     {
       d_checkdbintegrity = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-checkdbintegrity")
@@ -1014,6 +1055,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--includecalllog")
@@ -1037,6 +1079,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      d_input_required = true;
       continue;
     }
     if (option == "--append")
@@ -1153,6 +1196,37 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         d_importtelegram = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--listjsonchats")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_listjsonchats = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--selectjsonchats")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseNumberList(arguments[++i], &d_selectjsonchats, true))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
       {

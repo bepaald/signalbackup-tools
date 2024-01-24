@@ -195,7 +195,7 @@ class SignalBackup
                       bool showprogress, bool replaceattachments);
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
-                      std::vector<long long int> editattachments, bool stoponerror, bool fulldecode);
+                      std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode);
   inline SignalBackup(SignalBackup const &other) = default;
   inline SignalBackup &operator=(SignalBackup const &other) = default;
   inline SignalBackup(SignalBackup &&other) = default;
@@ -252,8 +252,8 @@ class SignalBackup
   long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   inline long long int getThreadIdFromRecipient(long long int recipientid) const;
-  bool importTelegramJson(std::string const &file, std::vector<std::pair<std::string, long long int>> contactmap,
-                          std::string const &selfphone);
+  bool importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
+                          std::vector<std::pair<std::string, long long int>> contactmap, std::string const &selfphone);
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -446,7 +446,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                                   bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
-                                  std::vector<long long int> editattachments, bool stoponerror, bool fulldecode)
+                                  std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode)
   :
   d_filename(filename),
   d_passphrase(passphrase),
@@ -501,15 +501,6 @@ inline bool SignalBackup::ok() const
 template <typename T>
 inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, T *frame) const
 {
-  std::unique_ptr<T> temp(frame);
-  bool res = writeRawFrameDataToFile(outputfile, temp);
-  temp.release();
-  return res;
-}
-
-template <class T>
-inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const
-{
   if (!frame)
   {
     Logger::error("Asked to write nullptr frame to disk");
@@ -527,11 +518,16 @@ inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
     rawframefile << "END" << std::endl;
   else
   {
-    T *t = reinterpret_cast<T *>(frame.get());
-    std::string d = t->getHumanData();
+    std::string d = frame->getHumanData();
     rawframefile << d;
   }
   return rawframefile.good();
+}
+
+template <typename T>
+inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const
+{
+  return writeRawFrameDataToFile(outputfile, frame.get());
 }
 
 inline bool SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const

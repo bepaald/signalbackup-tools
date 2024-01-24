@@ -26,7 +26,7 @@ class InvalidFrame : public BackupFrame
 {
   static Registrar s_registrar;
  public:
-  inline InvalidFrame(uint64_t count = 0);
+  inline explicit InvalidFrame(uint64_t count = 0);
   inline virtual ~InvalidFrame() = default;
   inline virtual InvalidFrame *clone() const override;
   inline virtual InvalidFrame *move_clone() override;
