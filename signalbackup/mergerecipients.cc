@@ -43,7 +43,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
       if (res.rows() != 1 || res.columns() != 1 ||
           !res.valueHasType<long long int>(0, 0))
       {
-        Logger::error("Failed to find recipient._id matching phone/group_id in target database");
+        Logger::error("Failed to find recipient._id matching phone in target database: '", r_ids[i], "'");
         return false;
       }
       r_ids[i] = bepaald::toString(res.getValueAs<long long int>(0, 0));
