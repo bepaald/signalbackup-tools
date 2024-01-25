@@ -21,7 +21,7 @@ jobs:
   do-build-tests-raw:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           set -x
@@ -35,7 +35,7 @@ jobs:
   do-build-tests-script:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           set -x
@@ -49,7 +49,7 @@ jobs:
   do-build-tests-parallel-script:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           set -x
@@ -63,7 +63,7 @@ jobs:
   do-build-tests-legacy:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           set -x
