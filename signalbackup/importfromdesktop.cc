@@ -495,6 +495,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                               "serverGuid,"
                               "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
                               "json_extract(json, '$.source') AS sourcephone,"
+                              "JSONLONG(expireTimer) AS expireTimer,"
                               "seenStatus,"
                               "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                               "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
@@ -1361,6 +1362,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                        {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
                                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
+                                          results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                                        {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
                                        {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
           {
@@ -1403,6 +1406,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                        {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
                                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
+                                          results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                                        {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
                                        {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
           {
@@ -1551,6 +1556,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                         //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                         //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                         {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                        {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
+                           results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                         {"server_guid", results_all_messages_from_conversation.value(j, "serverGuid")}},
                        "_id", &retval))
         {
