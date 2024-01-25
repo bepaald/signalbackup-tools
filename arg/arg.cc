@@ -62,7 +62,6 @@ Arg::Arg(int argc, char *argv[])
   d_overwrite(false),
   d_listthreads(false),
   d_listrecipients(false),
-  d_editgroupmembers(false),
   d_showprogress(true),
   d_removedoubles(0),
   d_removedoubles_bool(false),
@@ -667,17 +666,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-listrecipients")
     {
       d_listrecipients = false;
-      continue;
-    }
-    if (option == "--editgroupmembers")
-    {
-      d_editgroupmembers = true;
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--no-editgroupmembers")
-    {
-      d_editgroupmembers = false;
       continue;
     }
     if (option == "--showprogress")

@@ -224,11 +224,12 @@ be removed.
 --mergerecipients <OLDNUMBER,NEWNUMBER>       Can be used to change a contacts number (for example when
                                               they get a new phone). Messages from OLDNUMBER are changed
                                               so they appear as coming from NEWNUMBER, and the threads
-                                              are merged.
-   --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
-                                              groups members from OLDNUMBER to NEWNUMBER. Might not
-                                              always be wanted if the NEWNUMBER was already added to the
-                                              group.
+                                              are merged.)*";
+   // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
+   //                                            groups members from OLDNUMBER to NEWNUMBER. Might not
+   //                                            always be wanted if the NEWNUMBER was already added to the
+   //                                            group.
+std::cout << R"*(
 --mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
 --sleepyh34d <FILE[,PASSWD]>                  Try to import messages from a truncated backup file into a
                                               complete one. See

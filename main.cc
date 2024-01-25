@@ -314,7 +314,7 @@ int main(int argc, char *argv[])
   if (!arg.mergerecipients().empty())
   {
     Logger::message("Merging recipients...");
-    sb->mergeRecipients(arg.mergerecipients(), arg.editgroupmembers());
+    sb->mergeRecipients(arg.mergerecipients());
   }
 
   if (!arg.mergegroups().empty())

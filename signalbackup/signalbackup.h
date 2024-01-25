@@ -219,7 +219,7 @@ class SignalBackup
   bool dropBadFrames();
   //void fillThreadTableFromMessages();
   inline void addEndFrame();
-  void mergeRecipients(std::vector<std::string> const &addresses, bool editmembers);
+  bool mergeRecipients(std::vector<std::string> const &addresses);
   void mergeGroups(std::vector<std::string> const &groups);
   inline void runQuery(std::string const &q, bool pretty = true) const;
   void removeDoubles(long long int milliseconds = 0);
