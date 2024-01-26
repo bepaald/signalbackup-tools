@@ -53,7 +53,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   if (!d_database.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
       !d_database.exec("CREATE TABLE tmp_json_tree (value TEXT, path TEXT)") ||
       !d_database.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, from_name TEXT, body TEXT, "
-                        "reply_to_id INT, "
+                        "reply_to_id INT, forwarded_from TEXT, "
                         "photo TEXT, width INT, height INT, "
                         "file TEXT, media_type TEXT, mime_type TEXT, "
                         "poll)"))
@@ -80,7 +80,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
     if (!d_database.exec("INSERT INTO chats SELECT "
                          "0, "
                          "json_extract(?, '$.name') AS name, "
-                         "json_extract(?, '$.name') AS type",
+                         "json_extract(?, '$.type') AS type",
                          {SqliteDB::StaticTextParam(data.get(), datasize), SqliteDB::StaticTextParam(data.get(), datasize)}))
     {
       Logger::error("Failed to fill sql table");
@@ -89,10 +89,9 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   }
   if (d_verbose) [[unlikely]]
     Logger::message("done! (", d_database.changed(), ")");
-  //std::cout << std::endl << "CHATS: " << std::endl;
-  //d_database.prettyPrint("SELECT COUNT(*) FROM chats");
-  //d_database.prettyPrint("SELECT * FROM chats LIMIT 10");
-
+  // std::cout << std::endl << "CHATS: " << std::endl;
+  // d_database.prettyPrint("SELECT COUNT(*) FROM chats");
+  // d_database.prettyPrint("SELECT * FROM chats LIMIT 10");
 
   // INSERT DATA INTO MESSAGES TABLE
 
@@ -120,6 +119,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
                        "json_extract(value, '$.from') AS from_name, "
                        "json_extract(value, '$.text_entities') AS body, "
                        "json_extract(value, '$.reply_to_message_id') AS reply_to_id, "
+                       "json_extract(value, '$.forwarded_from') AS forwarded_from, "
                        "json_extract(value, '$.photo') AS photo, "
                        "json_extract(value, '$.width') AS width, "
                        "json_extract(value, '$.height') AS height, "

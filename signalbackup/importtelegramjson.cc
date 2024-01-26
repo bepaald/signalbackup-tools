@@ -195,7 +195,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
   // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
-  if (!db.exec("SELECT type, date, from_name, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, poll FROM messages "
+  if (!db.exec("SELECT type, date, from_name, forwarded_from, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, poll FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
                chat_idx, &message_data))
@@ -220,8 +220,23 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
     if (message_data.valueAsString(i, "type") == "message")
     {
+
+      // prepend notice to forwarded message
+      std::string bodyjson = message_data.valueAsString(i, "body");
+      if (false /*option to be implemented*/ && !message_data.isNull(i, "forwarded_from"))
+      {
+        // Logger::message("Body json before: ", bodyjson);
+        std::string fname = message_data(i, "forwarded_from");
+        std::string tmp = db.getSingleResultAs<std::string>("SELECT json_array(json_object('type', 'italic', 'text', 'Forwarded from " + fname + ":'), "
+                                                            "json_object('type', 'plain', 'text', '\n'), "
+                                                            "json_extract('" + bodyjson +"', '$[0]'))", std::string());
+        if (!tmp.empty())
+          bodyjson = std::move(tmp);
+        // Logger::message("Body json after: ", bodyjson);
+      }
+
       // gather data
-      std::string body = tgBuildBody(message_data.valueAsString(i, "body"));
+      std::string body = tgBuildBody(bodyjson);
 
       std::string from = message_data.valueAsString(i, "from_name");
       it = std::find_if(contactmap.begin(), contactmap.end(),
@@ -325,7 +340,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       }
 
       // set body ranges
-      if (!tgSetBodyRanges(message_data.valueAsString(i, "body"), new_msg_id))
+      if (!tgSetBodyRanges(bodyjson, new_msg_id))
       {
         // warn?
         // error?
