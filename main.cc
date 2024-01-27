@@ -104,8 +104,9 @@ int main(int argc, char *argv[])
   // run desktop sqlquery
 
   //***** *****//
-  if (!arg.input_required()) // no input is required -> all following operations require it -> none of the following was requested
-    return 0;
+  if (!arg.input_required() && arg.input().empty()) // no input is required -> all following operations require it
+    return 0;                                       // -> none of the following was requested (but still decode if
+                                                    // input was provided)
 
   if (arg.input().empty())  // at the very least an input file is needed
   {
