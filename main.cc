@@ -248,7 +248,6 @@ int main(int argc, char *argv[])
       MEMINFO("Before reading source: ", i + 1, "/", threads.size());
 
       Logger::message("\nImporting thread ", threads[i], " (", i + 1, "/", threads.size(), ") from source file: ", arg.source());
-      //std::cout << std::endl << "Importing thread " << threads[i] << " (" << i + 1 << "/" << threads.size() << ") from source file: " << arg.source() << std::endl;
 
       SignalBackup sourcecopy(src);
       if (!sourcecopy.ok())

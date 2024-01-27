@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -31,7 +31,7 @@ int BaseDecryptor::getAttachment(FrameWithAttachment *frame, bool verbose) // st
   }
 
   if (frame->length() == 0) [[unlikely]]
-    Logger::warning("Aksed to read 0-byte attachment");
+    Logger::warning("Asked to read 0-byte attachment");
 
   if (verbose) [[unlikely]]
     Logger::message("Decrypting attachment data, length: ", frame->length());

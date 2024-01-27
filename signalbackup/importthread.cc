@@ -23,6 +23,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   Logger::message(__FUNCTION__, " (", thread, ")");
 
+  // known incompatibilities. There are almost certainly also unknown ones!
   if ((d_databaseversion >= 215 && source->d_databaseversion < 215) || // part.unique_id dropped from db
       (d_databaseversion < 215 && source->d_databaseversion >= 215) ||
       (d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
@@ -147,17 +148,32 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     //std::string phone_or_group = results.getValueAs<std::string>(0, 0);
     RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id"), -1, std::string()};
 
+    if (d_verbose) [[unlikely]]
+      Logger::message("Trying to match source recipient: {\"", rec_id.uuid, "\", \"", rec_id.phone, "\", \"", rec_id.group_id, "\"}");
+
     d_database.exec("SELECT _id FROM recipient WHERE "
                     "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                    "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
-                    "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
+                    "CASE WHEN (SELECT COUNT(_id) FROM recipient WHERE (" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?)) = 0 THEN "
+                    "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) END OR "
+                    "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<long long int>(0, 0))
+    {
+
       Logger::message("Failed to find recipient._id matching uuid/phone/group_id in target database");
+      // d_database.prettyPrint("SELECT _id, " + d_recipient_aci + "," + d_recipient_e164 + ",group_id FROM recipient "
+      //                        "WHERE " + d_recipient_aci + " = ? OR " +
+      //                        d_recipient_e164 + " = ? OR group_id = ?", {rec_id.uuid, rec_id.phone, rec_id.group_id});
+      return false;
+    }
     else
     {
       long long int recipient_id = results.getValueAs<long long int>(0, 0);
       targetthread = getThreadIdFromRecipient(bepaald::toString(recipient_id));
+
+      if (d_verbose) [[unlikely]]
+        Logger::message("Matched source recipient with target ", recipient_id, ", targetthread: ", targetthread);
+
     }
   }
 
