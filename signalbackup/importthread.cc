@@ -164,7 +164,6 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       // d_database.prettyPrint("SELECT _id, " + d_recipient_aci + "," + d_recipient_e164 + ",group_id FROM recipient "
       //                        "WHERE " + d_recipient_aci + " = ? OR " +
       //                        d_recipient_e164 + " = ? OR group_id = ?", {rec_id.uuid, rec_id.phone, rec_id.group_id});
-      return false;
     }
     else
     {

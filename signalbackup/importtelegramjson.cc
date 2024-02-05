@@ -89,6 +89,12 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
                               &json_contacts))
     return false;
 
+  // name from chats where type = group && from_id from messages?
+  //   -> private chats with only outgoing messages?
+
+  // for cur : from_ids
+  // present distinct from_name where from_id = cur
+
   Logger::message("ALL CONTACTS: ");
   json_contacts.prettyPrint();
 

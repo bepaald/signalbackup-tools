@@ -52,11 +52,12 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   // create tables
   if (!d_database.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
       !d_database.exec("CREATE TABLE tmp_json_tree (value TEXT, path TEXT)") ||
-      !d_database.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, from_name TEXT, body TEXT, "
-                        "reply_to_id INT, forwarded_from TEXT, "
-                        "photo TEXT, width INT, height INT, "
-                        "file TEXT, media_type TEXT, mime_type TEXT, "
-                        "poll)"))
+      !d_database.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, "
+                       "from_name TEXT, from_id TEXT, body TEXT, "
+                       "reply_to_id INT, forwarded_from TEXT, "
+                       "photo TEXT, width INT, height INT, "
+                       "file TEXT, media_type TEXT, mime_type TEXT, "
+                       "poll)"))
   {
     Logger::error("Failed to set up sql tables");
     return;
@@ -104,7 +105,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   if (d_database.changed() == 0)
   {
     if (d_verbose) [[unlikely]]
-      Logger::message("Json tree appears empty, trying empty list");
+      Logger::message("Json tree appears empty, trying to interpret json as single-chat-export");
 
     if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, '$.chats.list[0].messages' AS path "
                          "FROM json_tree(?) WHERE path = '$.messages'", SqliteDB::StaticTextParam(data.get(), datasize)))
@@ -117,6 +118,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
                        "json_extract(value, '$.type') AS type, "
                        "json_extract(value, '$.date_unixtime') AS date, "
                        "json_extract(value, '$.from') AS from_name, "
+                       "json_extract(value, '$.from_id') AS from_id, "
                        "json_extract(value, '$.text_entities') AS body, "
                        "json_extract(value, '$.reply_to_message_id') AS reply_to_id, "
                        "json_extract(value, '$.forwarded_from') AS forwarded_from, "
