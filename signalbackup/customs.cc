@@ -26,6 +26,101 @@
 // #include <sstream>
 // #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
 
+/* alter a version 214 database so it is compatiible enough with 215 to be imported into a 215 db as source */
+bool SignalBackup::custom_hugogithubs()
+{
+  if (d_databaseversion != 214)
+  {
+    Logger::error("Database version: ", d_databaseversion, " (needs to be 214)");
+    return false;
+  }
+
+  // alter part table
+  if (!d_database.exec("ALTER TABLE part RENAME COLUMN mid TO message_id") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN ct TO content_type") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN cd TO remote_key") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN cl TO remote_location") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN digest TO remote_digest") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN incremental_mac_digest TO remote_incremental_digest") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN incremental_mac_chunk_size TO remote_incremental_digest_chunk_size") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN pending_push TO transfer_state") ||
+      !d_database.exec("ALTER TABLE part RENAME COLUMN _data TO data_file") ||
+      !d_database.exec("ALTER TABLE part DROP COLUMN unique_id") ||
+      !d_database.exec("ALTER TABLE part RENAME TO attachment"))
+  {
+    Logger::error("Altering part table");
+    return false;
+  }
+  d_part_table = "attachment";
+  d_part_mid = "message_id";  // dbv 215
+  d_part_ct = "content_type"; // dbv 215
+  d_part_pending = "transfer_state"; // dbv 215
+  d_part_cd = "remote_key"; // dbv 215
+  d_part_cl = "remote_location"; // dbv 215
+
+  // remove unqiue ids from AttachmentFrames
+  std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_new_attachments;
+  for (auto const &a : d_attachments)
+  {
+    AttachmentFrame *af = a.second.get();
+
+    // std::cout << "OLD FRAME:" << std::endl;
+    // std::cout << a.first.first << " " << a.first.second << std::endl;
+    // af->printInfo();
+
+    std::istringstream old_attachment_frame(af->getHumanData());
+    std::vector<std::string> new_attachment_frame_strings;
+    std::string line;
+    while (std::getline(old_attachment_frame, line))
+    {
+      if (line.starts_with("ATTACHMENTID"))
+        continue;
+      new_attachment_frame_strings.emplace_back(line);
+    }
+
+    uint64_t rowid = a.first.first;
+    // uint64_t asize = af->length();
+    // uint64_t aframenum = af->frameNumber();
+
+    DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;//(new AttachmentFrame(aframenum));
+    // new_attachment_frame->setLength(asize);
+
+    // new_attachment_frame->printInfo();
+
+    if (!setFrameFromStrings(&new_attachment_frame, new_attachment_frame_strings))
+    {
+      Logger::error("Failed to create new attachmentframe");
+      return false;
+    }
+    new_attachment_frame->setLazyData(af->iv(), af->iv_size(),
+                                      af->mackey(), af->mackey_size(),
+                                      af->cipherkey(), af->cipherkey_size(),
+                                      af->length(), af->filename(), af->filepos());
+    d_new_attachments.emplace(std::make_pair(rowid, -1), new_attachment_frame.release());
+
+    // auto const &rit = d_new_attachments.rbegin();
+    // std::cout << rit->first.first << " " << rit->first.second << std::endl;
+    // rit->second->printInfo();
+  }
+  d_attachments = d_new_attachments;
+
+
+  // adjust DatabaseVersionFrame
+  DeepCopyingUniquePtr<DatabaseVersionFrame> d_new_dbvframe;
+  if (!setFrameFromStrings(&d_new_dbvframe, std::vector<std::string>{"VERSION:uint32:215"}))
+  {
+    Logger::error("Failed to create new databaseversionframe");
+    return false;
+  }
+  d_databaseversionframe.reset(d_new_dbvframe.release());
+  //d_databaseversionframe->printInfo();
+
+
+  Logger::message(Logger::Control::BOLD, "BACKUP UPDATED TO SEMI-215. IT SHOULD ONLY BE USED AS A SOURCE FOR IMPORTING INTO A v215 BACKUP!", Logger::Control::NORMAL);
+
+  return true;
+}
+
 
 // bool SignalBackup::carowit(std::string const &sourcefile, std::string const &sourcepw) const
 // {

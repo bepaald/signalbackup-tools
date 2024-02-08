@@ -64,6 +64,13 @@ class Logger
     {}
   };
 
+  template <typename T>
+  struct VECTOR
+  {
+    std::vector<T> data;
+    std::string delim;
+  };
+
  private:
   static std::unique_ptr<Logger> s_instance;
   std::ofstream *d_file;
@@ -129,6 +136,10 @@ class Logger
   inline void outputMsg(Flags flags, Logger::ControlChar const &c);
 
   // specializations for vector type
+  template <typename T, typename... Rest>
+  inline void outputMsg(Flags flags, VECTOR<T> const &vec, Rest... r);
+  template <typename T>
+  inline void outputMsg(Flags flags, VECTOR<T> const &vec);
   template <typename T, typename... Rest>
   inline void outputMsg(Flags flags, std::vector<T> const &vec, Rest... r);
   template <typename T>
@@ -372,35 +383,47 @@ inline void Logger::outputMsg(Flags flags, T const &t)
 }
 
 template <typename T, typename... Rest>
-inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec, Rest... r)
+inline void Logger::outputMsg(Flags flags, VECTOR<T> const &vec, Rest... r)
 {
   if (d_currentoutput)
-    for (unsigned int i = 0; i < vec.size(); ++i)
-      *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
+    for (unsigned int i = 0; i < vec.data.size(); ++i)
+      *(d_currentoutput) << vec.data[i] << ((i < vec.data.size() - 1) ? vec.delim : "");
 
-  for (unsigned int i = 0; i < vec.size(); ++i)
-    std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
+  for (unsigned int i = 0; i < vec.data.size(); ++i)
+    std::cout << vec.data[i] << ((i < vec.data.size() - 1) ? vec.delim : "");
 
   outputMsg(flags, r...);
 }
 
 template <typename T>
-inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec)
+inline void Logger::outputMsg(Flags flags, VECTOR<T> const &vec)
 {
   if (d_currentoutput)
   {
-    for (unsigned int i = 0; i < vec.size(); ++i)
-      *(d_currentoutput) << vec[i] << ((i < vec.size() - 1) ? "," : "");
+    for (unsigned int i = 0; i < vec.data.size(); ++i)
+      *(d_currentoutput) << vec.data[i] << ((i < vec.data.size() - 1) ? vec.delim : "");
     if (!(flags & Flags::NONEWLINE)) [[likely]]
       *(d_currentoutput) << "\n";
   }
 
-  for (unsigned int i = 0; i < vec.size(); ++i)
-    std::cout << vec[i] << ((i < vec.size() - 1) ? "," : "");
+  for (unsigned int i = 0; i < vec.data.size(); ++i)
+    std::cout << vec.data[i] << ((i < vec.data.size() - 1) ? vec.delim : "");
   if (flags & Flags::OVERWRITE || flags & Flags::NONEWLINE) [[unlikely]]
     std::cout << std::flush;
   else
     std::cout << std::endl;
+}
+
+template <typename T, typename... Rest>
+inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec, Rest... r)
+{
+  outputMsg(flags, VECTOR(vec, ","), r...);
+}
+
+template <typename T>
+inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec)
+{
+  outputMsg(flags, VECTOR(vec, ","));
 }
 
 template <typename... Rest>

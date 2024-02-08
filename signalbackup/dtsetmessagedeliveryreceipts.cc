@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -44,103 +44,101 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
                 " LEFT JOIN conversations ON conversations.id IS conv_id", rowid, &status_results))
   {
     Logger::error("Getting message delivery status");
+    return;
   }
-  else
+  // results:
+  //              key = 37fb0475-13e7-43e6-965a-4b11d9370488
+  //           status = Sent
+  //updated_timestamp = 1668710610793
+  //
+  //              key = d1c1693d-91e1-486f-8634-29c22afb881b
+  //           status = Delivered
+  //updated_timestamp = 1668710612716
+
+  //status_results.prettyPrint();
+
+  long long int deliveryreceiptcount = 0;
+  long long int readreceiptcount = 0;
+  for (uint i = 0; i < status_results.rows(); ++i)
   {
-    // results:
-    //              key = 37fb0475-13e7-43e6-965a-4b11d9370488
-    //           status = Sent
-    //updated_timestamp = 1668710610793
-    //
-    //              key = d1c1693d-91e1-486f-8634-29c22afb881b
-    //           status = Delivered
-    //updated_timestamp = 1668710612716
-
-    //status_results.prettyPrint();
-
-    long long int deliveryreceiptcount = 0;
-    long long int readreceiptcount = 0;
-    for (uint i = 0; i < status_results.rows(); ++i)
+    if (status_results.valueAsString(i, "status") == "Delivered")
     {
-      if (status_results.valueAsString(i, "status") == "Delivered")
+      ++deliveryreceiptcount;
+      if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
       {
-        ++deliveryreceiptcount;
-        if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
+        long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
+        if (member_id == -1) // try phone
+          member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap, createcontacts);
+        if (member_id == -1)
         {
-          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
-          if (member_id == -1) // try phone
-            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap, createcontacts);
-          if (member_id == -1)
+          if (createcontacts)
           {
-            if (createcontacts)
+            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
             {
-              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
-              {
-                Logger::error("Failed to create delivery_receipt member. Skipping");
-                continue;
-              }
-            }
-            else
-            {
-              Logger::error("Failed to get id of delivery_receipt member. Skipping");
+              Logger::error("Failed to create delivery_receipt member. Skipping");
               continue;
             }
           }
-          if (!insertRow("group_receipts", {{"mms_id", msg_id},
-                                            {"address", member_id},
-                                            {"status", STATUS_DELIVERED},
-                                            {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
-            Logger::error("Inserting group_receipt");
-        }
-      }
-      else if (status_results.valueAsString(i, "status") == "Read")
-      {
-        ++readreceiptcount;
-        if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
-        {
-          long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
-          if (member_id == -1) // try phone
-            member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap, createcontacts);
-          if (member_id == -1)
+          else
           {
-            if (createcontacts)
-            {
-              if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
-              {
-                Logger::error("Failed to create delivery_receipt member. Skipping");
-                continue;
-              }
-            }
-            else
-            {
-              Logger::error("Failed to get id of delivery_receipt member. Skipping");
-              continue;
-            }
+            Logger::error("Failed to get id of delivery_receipt member. Skipping");
+            continue;
           }
-          if (!insertRow("group_receipts", {{"mms_id", msg_id},
-                                            {"address", member_id},
-                                            {"status", STATUS_READ},
-                                            {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
-            Logger::error("Inserting group_receipt");
         }
+        if (!insertRow("group_receipts", {{"mms_id", msg_id},
+                                          {"address", member_id},
+                                          {"status", STATUS_DELIVERED},
+                                          {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
+          Logger::error("Inserting group_receipt");
       }
     }
-    // update the message in its table (mms/sms)
-    if (deliveryreceiptcount)
-      if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_delivery_receipts + " = ? WHERE _id = ?", {deliveryreceiptcount, msg_id}))
-        Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_delivery_receipts, ".");
-    if (readreceiptcount)
-      if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_read_receipts + " = ? WHERE _id = ?", {readreceiptcount, msg_id}))
-        Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_read_receipts, ".");
-
-
-    //insert into group_receipts
-    //          sqlite> SELECT * from group_receipts  where _id = 8;
-    //         _id = 8
-    //      mms_id = 27
-    //     address = 4
-    //      status = 1
-    //   timestamp = 1669579600157
-    //unidentified = 1
+    else if (status_results.valueAsString(i, "status") == "Read")
+    {
+      ++readreceiptcount;
+      if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
+      {
+        long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
+        if (member_id == -1) // try phone
+          member_id = getRecipientIdFromPhone(status_results.valueAsString(i, "e164"), savedmap, createcontacts);
+        if (member_id == -1)
+        {
+          if (createcontacts)
+          {
+            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, warn)) == -1)
+            {
+              Logger::error("Failed to create delivery_receipt member. Skipping");
+              continue;
+            }
+          }
+          else
+          {
+            Logger::error("Failed to get id of delivery_receipt member. Skipping");
+            continue;
+          }
+        }
+        if (!insertRow("group_receipts", {{"mms_id", msg_id},
+                                          {"address", member_id},
+                                          {"status", STATUS_READ},
+                                          {"timestamp", status_results.getValueAs<long long int>(i, "updated_timestamp")}}))
+          Logger::error("Inserting group_receipt");
+      }
+    }
   }
+  // update the message in its table (mms/sms)
+  if (deliveryreceiptcount)
+    if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_delivery_receipts + " = ? WHERE _id = ?", {deliveryreceiptcount, msg_id}))
+      Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_delivery_receipts, ".");
+  if (readreceiptcount)
+    if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_read_receipts + " = ? WHERE _id = ?", {readreceiptcount, msg_id}))
+      Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_read_receipts, ".");
+
+
+  //insert into group_receipts
+  //          sqlite> SELECT * from group_receipts  where _id = 8;
+  //         _id = 8
+  //      mms_id = 27
+  //     address = 4
+  //      status = 1
+  //   timestamp = 1669579600157
+  //unidentified = 1
 }

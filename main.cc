@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.importtelegram().empty())
-    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.setselfid()))
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(), arg.jsonprependforward(), arg.setselfid()))
       return 1;
 
   if (arg.removedoubles_bool())
@@ -425,6 +425,14 @@ int main(int argc, char *argv[])
   //   sb->devCustom();
   //   return 0;
   // }
+
+  /* CUSTOM */
+  if (arg.custom_hugogithubs())
+    if (!sb->custom_hugogithubs())
+    {
+      Logger::error("An error occurred running custom function");
+      return 1;
+    }
 
   MEMINFO("Before output");
 

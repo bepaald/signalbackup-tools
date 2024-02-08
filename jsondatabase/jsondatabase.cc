@@ -50,7 +50,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   }
 
   // create tables
-  if (!d_database.exec("CREATE TABLE chats(idx INT, name TEXT, type TEXT)") ||
+  if (!d_database.exec("CREATE TABLE chats(idx INT, id TEXT, name TEXT, type TEXT)") ||
       !d_database.exec("CREATE TABLE tmp_json_tree (value TEXT, path TEXT)") ||
       !d_database.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, "
                        "from_name TEXT, from_id TEXT, body TEXT, "
@@ -66,7 +66,12 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   // INSERT DATA INTO CHATS TABLE
   if (d_verbose) [[unlikely]]
     Logger::message_start("Inserting chats from json...");
-  if (!d_database.exec("INSERT INTO chats SELECT key,json_extract(value, '$.name') AS name, json_extract(value, '$.type') AS type FROM json_each(?, '$.chats.list')",
+  if (!d_database.exec("INSERT INTO chats SELECT "
+                       "key, "
+                       "json_extract(value, '$.id') AS id, "
+                       "json_extract(value, '$.name') AS name, "
+                       "json_extract(value, '$.type') AS type "
+                       "FROM json_each(?, '$.chats.list')",
                        SqliteDB::StaticTextParam(data.get(), datasize)))
   {
     Logger::error("Failed to fill sql table");
@@ -80,9 +85,12 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
 
     if (!d_database.exec("INSERT INTO chats SELECT "
                          "0, "
+                         "json_extract(?, '$.id') AS id, "
                          "json_extract(?, '$.name') AS name, "
                          "json_extract(?, '$.type') AS type",
-                         {SqliteDB::StaticTextParam(data.get(), datasize), SqliteDB::StaticTextParam(data.get(), datasize)}))
+                         {SqliteDB::StaticTextParam(data.get(), datasize),
+                          SqliteDB::StaticTextParam(data.get(), datasize),
+                          SqliteDB::StaticTextParam(data.get(), datasize)}))
     {
       Logger::error("Failed to fill sql table");
       return;

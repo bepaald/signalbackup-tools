@@ -38,7 +38,7 @@ long long int SignalBackup::getRecipientIdFromName(std::string const &name, bool
     // multiple hits for 'name'
     if (results.rows() > 1)
     {
-      Logger::error("Got multiple results for recipient `", name, "'");
+      Logger::warning("Got multiple results for recipient `", name, "'");
       return -1;
     }
 

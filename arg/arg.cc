@@ -110,8 +110,11 @@ Arg::Arg(int argc, char *argv[])
   d_listjsonchats(std::string()),
   d_selectjsonchats(std::vector<long long int>()),
   d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>()),
+  d_preventjsonmapping(std::vector<std::string>()),
+  d_jsonprependforward(false),
   d_fulldecode(false),
   d_logfile(std::string()),
+  d_custom_hugogithubs(false),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1241,6 +1244,33 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "--preventjsonmapping")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_preventjsonmapping))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--jsonprependforward")
+    {
+      d_jsonprependforward = true;
+      continue;
+    }
+    if (option == "--no-jsonprependforward")
+    {
+      d_jsonprependforward = false;
+      continue;
+    }
     if (option == "--fulldecode")
     {
       d_fulldecode = true;
@@ -1262,6 +1292,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--custom_hugogithubs")
+    {
+      d_custom_hugogithubs = true;
+      continue;
+    }
+    if (option == "--no-custom_hugogithubs")
+    {
+      d_custom_hugogithubs = false;
       continue;
     }
     if (option[0] != '-')
