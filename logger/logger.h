@@ -67,8 +67,8 @@ class Logger
   template <typename T>
   struct VECTOR
   {
-    std::vector<T> data;
-    std::string delim;
+    std::vector<T> const &data;
+    std::string const &delim;
     VECTOR(std::vector<T> const &v, std::string const &d) :
       data(v),
       delim(d)
