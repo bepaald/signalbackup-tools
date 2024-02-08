@@ -69,6 +69,10 @@ class Logger
   {
     std::vector<T> data;
     std::string delim;
+    VECTOR(std::vector<T> const &v, std::string const &d) :
+      data(v),
+      delim(d)
+    {}
   };
 
  private:
