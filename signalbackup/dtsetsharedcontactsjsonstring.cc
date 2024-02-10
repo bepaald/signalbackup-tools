@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -234,8 +234,9 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
 
   // add phonenumbers
   for (uint p = 0; p < scd.phoneNumbers.size(); ++p)
-    jsonstring = ddb.getSingleResultAs<std::string>("SELECT json_insert('" + jsonstring + "', '$[0].phoneNumbers[#]', json_object('number', ?, 'type', ?, 'label', ?))",
-                                                    {scd.phoneNumbers[p].number,
+    jsonstring = ddb.getSingleResultAs<std::string>("SELECT json_insert(?, '$[0].phoneNumbers[#]', json_object('number', ?, 'type', ?, 'label', ?))",
+                                                    {jsonstring,
+                                                     scd.phoneNumbers[p].number,
                                                      scd.phoneNumbers[p].type,
                                                      scd.phoneNumbers[p].label},
                                                     std::string());
@@ -244,10 +245,12 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
 
   // add emails
   for (uint p = 0; p < scd.emails.size(); ++p)
-    jsonstring = ddb.getSingleResultAs<std::string>("SELECT json_insert('" + jsonstring + "', '$[0].emails[#]', json_object('email', ?, 'type', ?, 'label', ?))",
-                                                    {scd.emails[p].email,
+    jsonstring = ddb.getSingleResultAs<std::string>("SELECT json_insert(?, '$[0].emails[#]', json_object('email', ?, 'type', ?, 'label', ?))",
+                                                    {jsonstring,
+                                                     scd.emails[p].email,
                                                      scd.emails[p].type,
                                                      scd.emails[p].label},
                                                     std::string());
+
   return jsonstring;
 }

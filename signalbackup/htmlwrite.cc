@@ -1794,7 +1794,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
 void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
                                              std::string const &directory, std::string const &threaddir, bool overwrite, bool append) const
 {
-  if (d_database.getSingleResultAs<long long int>("SELECT json_array_length('" + shared_contact + "', '$')", 0) > 0)
+  if (d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", shared_contact, 0) > 0)
   {
     std::string contact_name = "Unknown contact";
     std::string contact_info;
