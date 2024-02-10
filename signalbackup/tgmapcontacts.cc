@@ -27,9 +27,12 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 {
   if (d_verbose && contactmap->size()) [[unlikely]]
   {
-    Logger::message("INITIAL CONTACT MAP: ");
+    Logger::message("[INITIAL CONTACT MAP ]");
     for (uint i = 0; i < contactmap->size(); ++i)
-      Logger::message(contactmap->at(i).first, " -> ", contactmap->at(i).second);
+    {
+      std::string name = getNameFromRecipientId(contactmap->at(i).second);
+      Logger::message(" * ", contactmap->at(i).first, " -> ", contactmap->at(i).second, "(", name, ")");
+    }
   }
 
   std::vector<std::pair<std::vector<std::string>, long long int>> realcontactmap = *contactmap;
@@ -229,9 +232,12 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
   if (d_verbose) [[unlikely]]
   {
-    Logger::message("FINAL CONTACT MAP: ");
+    Logger::message("[FINAL CONTACT MAP] ");
     for (uint i = 0; i < realcontactmap.size(); ++i)
-      Logger::message(Logger::VECTOR(realcontactmap[i].first, ", "), " -> ", realcontactmap[i].second);
+    {
+      std::string name = getNameFromRecipientId(realcontactmap[i].second);
+      Logger::message(" * ", Logger::VECTOR(realcontactmap[i].first, ", "), " -> ", realcontactmap[i].second, " (", name, ")");
+    }
   }
 
   if (!recipientsnotfound.empty())

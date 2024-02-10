@@ -90,19 +90,26 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
     if (message_data.valueAsString(i, "type") == "message")
     {
-
       // prepend notice to forwarded message
       std::string bodyjson = message_data.valueAsString(i, "body");
       if (prependforwarded && !message_data.isNull(i, "forwarded_from"))
       {
-        // Logger::message("Body json before: ", bodyjson);
+        //Logger::message("Body json before: ", bodyjson);
+        long long int n_text_entities = db.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", bodyjson, -1);
+        if (n_text_entities == -1)
+        {
+          Logger::warning("Failed to get number of text entities in forwarded message");
+          break;
+        }
         std::string fname = message_data(i, "forwarded_from");
         std::string tmp = db.getSingleResultAs<std::string>("SELECT json_array(json_object('type', 'italic', 'text', 'Forwarded from " + fname + ":'), "
-                                                            "json_object('type', 'plain', 'text', '\n'), "
-                                                            "json_extract('" + bodyjson +"', '$[0]'))", std::string());
+                                                            "json_object('type', 'plain', 'text', '\n'))", std::string());
+        for (uint nt = 0; nt < n_text_entities; ++nt)
+          tmp = db.getSingleResultAs<std::string>("SELECT json_insert(?, '$[#]', json_extract(?, '$[" + bepaald::toString(nt) + "]'))", {tmp, bodyjson}, std::string());
+
         if (!tmp.empty())
           bodyjson = std::move(tmp);
-        // Logger::message("Body json after: ", bodyjson);
+        //Logger::message("Body json after: ", bodyjson);
       }
 
       // gather data

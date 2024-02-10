@@ -115,6 +115,7 @@ Arg::Arg(int argc, char *argv[])
   d_fulldecode(false),
   d_logfile(std::string()),
   d_custom_hugogithubs(false),
+  d_exportstickerpackshtml(std::string()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1302,6 +1303,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-custom_hugogithubs")
     {
       d_custom_hugogithubs = false;
+      continue;
+    }
+    if (option == "--exportstickerpackshtml")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_exportstickerpackshtml = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option[0] != '-')

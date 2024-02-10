@@ -257,6 +257,7 @@ class SignalBackup
                           std::vector<std::pair<std::string, long long int>> contactmap,
                           std::vector<std::string> const &inhibitmapping, bool prependforwarded,
                           std::string const &selfphone);
+  bool exportStickerPacksHTML(std::string const &dir, bool overwrite, bool append) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);

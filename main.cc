@@ -372,6 +372,10 @@ int main(int argc, char *argv[])
       return 1;
     }
 
+  if (!arg.exportstickerpackshtml().empty())
+    if (!sb->exportStickerPacksHTML(arg.exportstickerpackshtml(), arg.overwrite(), arg.append()))
+      return 1;
+
   // // temporary, to generate truncated backup's missing data from Signal Desktop database INCOMPLETE
   // if (!arg.hhenkel().empty())
   // {
