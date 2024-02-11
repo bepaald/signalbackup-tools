@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.importtelegram().empty())
-    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(), arg.jsonprependforward(), arg.setselfid()))
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(), arg.jsonprependforward(), arg.jsonmarkdelivered(), arg.jsonmarkread(), arg.setselfid()))
       return 1;
 
   if (arg.removedoubles_bool())
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
     }
 
   if (!arg.exportstickerpackshtml().empty())
-    if (!sb->exportStickerPacksHTML(arg.exportstickerpackshtml(), arg.overwrite(), arg.append()))
+    if (!sb->exportStickerPacksHTML(arg.exportstickerpackshtml(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching()))
       return 1;
 
   // // temporary, to generate truncated backup's missing data from Signal Desktop database INCOMPLETE

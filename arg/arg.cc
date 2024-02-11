@@ -112,6 +112,8 @@ Arg::Arg(int argc, char *argv[])
   d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>()),
   d_preventjsonmapping(std::vector<std::string>()),
   d_jsonprependforward(false),
+  d_jsonmarkdelivered(true),
+  d_jsonmarkread(false),
   d_fulldecode(false),
   d_logfile(std::string()),
   d_custom_hugogithubs(false),
@@ -1270,6 +1272,26 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-jsonprependforward")
     {
       d_jsonprependforward = false;
+      continue;
+    }
+    if (option == "--jsonmarkdelivered")
+    {
+      d_jsonmarkdelivered = true;
+      continue;
+    }
+    if (option == "--no-jsonmarkdelivered")
+    {
+      d_jsonmarkdelivered = false;
+      continue;
+    }
+    if (option == "--jsonmarkread")
+    {
+      d_jsonmarkread = true;
+      continue;
+    }
+    if (option == "--no-jsonmarkread")
+    {
+      d_jsonmarkread = false;
       continue;
     }
     if (option == "--fulldecode")

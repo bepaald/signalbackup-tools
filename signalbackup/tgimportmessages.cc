@@ -21,7 +21,7 @@
 
 bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
                                     std::string const &datapath, std::string const &threadid, long long int chat_idx, bool prependforwarded,
-                                    bool isgroup)
+                                    bool markdelivered, bool markread, bool isgroup)
 {
   // get recipient id for conversation
   auto find_in_contactmap = [&contactmap](std::string const &identifier) -> long long int
@@ -159,9 +159,9 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                                    {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
                                    {"body", body.empty() ? std::any(nullptr) : std::any(body)},
                                    {"read", 1}, // defaults to 0, but causes tons of unread message notifications
-                                   //{d_mms_delivery_receipts, (incoming ? 0 : 1)}, //
-                                   //{d_mms_read_receipts, (incoming ? 0 : 1)}, //
-                                   //{d_mms_viewed_receipts, (incoming ? 0 : 1)}, //
+                                   {d_mms_delivery_receipts, (incoming ? 0 : (markdelivered ? 1 : 0))},
+                                   {d_mms_read_receipts, (incoming ? 0 : (markread ? 1 : 0))},
+                                   //{d_mms_viewed_receipts, (incoming ? 0 : 1)},
                                    {d_mms_recipient_id, incoming ? address : d_selfid},
                                    {"to_recipient_id", incoming ? d_selfid : address},
                                    {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...

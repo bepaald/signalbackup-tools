@@ -38,7 +38,7 @@
 bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
                                       std::vector<std::pair<std::string, long long int>> contactmap,
                                       std::vector<std::string> const &inhibitmapping, bool prependforwarded,
-                                      std::string const &selfphone)
+                                      bool markdelivered, bool markread, std::string const &selfphone)
 {
   Logger::message("Import from Telegram json export");
 
@@ -93,9 +93,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
     Logger::message("Dealing with conversation ", i + 1, "/", chats.rows());
 
     if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
-      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, true); // deal with group chat
+      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, true); // deal with group chat
     else if (chats.valueAsString(i, "type") == "personal_chat") // ????
-      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, false); // deal with 1-on-1 convo
+      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false); // deal with 1-on-1 convo
     else
     {
       Logger::warning("Unsupported chat type `", chats.valueAsString(i, "type"), "'. Skipping...");

@@ -256,8 +256,8 @@ class SignalBackup
   bool importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
                           std::vector<std::pair<std::string, long long int>> contactmap,
                           std::vector<std::string> const &inhibitmapping, bool prependforwarded,
-                          std::string const &selfphone);
-  bool exportStickerPacksHTML(std::string const &dir, bool overwrite, bool append) const;
+                          bool markdelivered, bool markread, std::string const &selfphone);
+  bool exportStickerPacksHTML(std::string const &dir, bool overwrite, bool append, bool light, bool themeswitching) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -432,7 +432,8 @@ class SignalBackup
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
   inline void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
   bool tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
-                        std::string const &datapath, std::string const &threadname, long long int chat_idx, bool prependforwarded, bool isgroup);
+                        std::string const &datapath, std::string const &threadname, long long int chat_idx,
+                        bool prependforwarded, bool markdelivered, bool markread, bool isgroup);
   bool tgMapContacts(JsonDatabase const &jdb, std::string const &chatselection,
                      std::vector<std::pair<std::vector<std::string>, long long int>> *contactmap,
                      std::vector<std::string> const &inhibitmappping) const;
