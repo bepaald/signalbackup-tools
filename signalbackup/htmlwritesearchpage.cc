@@ -460,7 +460,7 @@ body {
       }
 
       // Important to be 1st in the DOM
-      const theme = getCookie('theme') || 'light';
+      const theme = getCookie('theme') || ')" << (light ? "light" : "dark") << R"(';
       //alert(theme);
 
       document.documentElement.dataset.theme = theme;

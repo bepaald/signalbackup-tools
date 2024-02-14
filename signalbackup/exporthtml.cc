@@ -29,8 +29,8 @@
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
-                              std::string const &selfphone, bool calllog, bool searchpage, bool migrate,
-                              bool overwrite, bool append, bool lighttheme, bool themeswitching)
+                              std::string const &selfphone, bool calllog, bool searchpage, bool stickerpacks,
+                              bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching)
 {
   bool databasemigrated = false;
   MemSqliteDB backup_database;
@@ -682,7 +682,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     calllog = false;
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
-                 calllog, searchpage, overwrite, append, lighttheme, themeswitching);
+                 calllog, searchpage, stickerpacks, overwrite, append, lighttheme,
+                 themeswitching);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
@@ -690,6 +691,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
   if (searchpage)
     HTMLwriteSearchpage(directory, lighttheme, themeswitching);
+
+  if (stickerpacks)
+    HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching);
 
   Logger::message("All done!");
   if (databasemigrated)

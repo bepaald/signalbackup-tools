@@ -241,12 +241,12 @@ class SignalBackup
   //std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
-                         bool autodates, bool ignorewal, std::string const &selfphone);
+                         bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
-                  bool calllog, bool searchpage, bool migrate, bool overwrite, bool append, bool theme,
-                  bool themeswitching);
+                  bool calllog, bool searchpage, bool stickerpacks, bool migrate, bool overwrite, bool append,
+                  bool theme, bool themeswitching);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
@@ -257,7 +257,6 @@ class SignalBackup
                           std::vector<std::pair<std::string, long long int>> contactmap,
                           std::vector<std::string> const &inhibitmapping, bool prependforwarded,
                           bool markdelivered, bool markread, std::string const &selfphone);
-  bool exportStickerPacksHTML(std::string const &dir, bool overwrite, bool append, bool light, bool themeswitching) const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -383,17 +382,9 @@ class SignalBackup
                                  bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
                            long long int uniqueid, bool overwrite, bool append) const;
-  std::set<long long int> getAllThreadRecipients(long long int t) const;
-  void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
-  //void prepRanges(std::vector<Range> *ranges) const;
-  void prepRanges2(std::vector<Range> *ranges) const;
-  void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
-  std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
-  bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
-  std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo,
@@ -402,13 +393,22 @@ class SignalBackup
                          std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                       std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
-                      bool searchpage, bool overwrite, bool append, bool light, bool themeswitching) const;
+                      bool searchpage, bool overwrite, bool stickerpacks, bool append, bool light, bool themeswitching) const;
   void HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const;
   void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                         std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid,
                         bool overwrite, bool append, bool light, bool themeswitching) const;
+  bool HTMLwriteStickerpacks(std::string const &dir, bool overwrite, bool append, bool light, bool themeswitching) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   void HTMLescapeUrl(std::string *in) const;
+  std::set<long long int> getAllThreadRecipients(long long int t) const;
+  void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
+  //void prepRanges(std::vector<Range> *ranges) const;
+  void prepRanges2(std::vector<Range> *ranges) const;
+  void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
+  std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
+  bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
+  std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, int idx) const;
   inline int bytesToUtf8CharSize(std::string const &body, int idx/*, int length = 1*/) const;
@@ -442,6 +442,7 @@ class SignalBackup
   bool tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
                        long long int r, long long int new_msg_id);
   bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
+  bool dtImportStickerPacks(SqliteDB const &ddb, std::string const &databasedir);
   bool prepareOutputDirectory(std::string const &dir, bool overwrite, bool allowappend = false, bool append = false) const;
 
   std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;

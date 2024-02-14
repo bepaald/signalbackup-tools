@@ -19,8 +19,8 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool overwrite, bool append,
-                                          bool light, bool themeswitching) const
+bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool overwrite, bool append,
+                                         bool light, bool themeswitching) const
 {
   Logger::message("Writing stickerpacks.html...");
 
@@ -40,11 +40,16 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     return false;
   }
 
-  // set up dir
-  if (!prepareOutputDirectory(directory, overwrite, true, append))
-    return false;
+  if (bepaald::fileOrDirExists(directory + "/stickerpacks.html"))
+  {
+    if (!overwrite && !append)
+    {
+      Logger::error("'", directory, "/stickerpacks.html' exists. Use --overwrite to overwrite.");
+      return false;
+    }
+  }
 
-  // write start of html
+  // open file
   std::ofstream stickerhtml(directory + "/stickerpacks.html", std::ios_base::binary);
   if (!stickerhtml.is_open())
   {
@@ -52,6 +57,7 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     return false;
   }
 
+  // start html output
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   stickerhtml << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
               << " by signalbackup-tools (" << VERSIONDATE << "). "
@@ -64,7 +70,14 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
 
   // STYLE
   stickerhtml << "    <style>" << std::endl
-              << "    :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
+              << "      :root {" << std::endl
+              << "        --imgsize: 150px;" << std::endl
+              << "        --cellpadding: 10px;" << std::endl
+              << "        --cellmargin: 5px;" << std::endl
+              << "        --cellsize: calc(var(--imgsize) + 2 * var(--cellpadding) + 2 * var(--cellmargin));" << std::endl
+              << "      }" << std::endl
+              << std::endl
+              << "      :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
               << "        /* " << (light ? "light" : "dark") << "*/" << std::endl
               << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl
               << "        --stickerlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
@@ -78,7 +91,7 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
 
   if (themeswitching)
   {
-    stickerhtml << "    :root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
+    stickerhtml << "      :root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
                 << "        /* " << (!light ? "light" : "dark") << "*/" << std::endl
                 << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl
                 << "        --stickerlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
@@ -180,7 +193,7 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     << "        flex-direction: row;" << std::endl
     << "        flex-wrap: wrap;" << std::endl
     << "        width: fit-content;" << std::endl
-    << "        max-width: 1000px;" << std::endl
+    << "        max-width: calc(5 * var(--cellsize));" << std::endl
     << "        margin-top: 10px;" << std::endl
     << "        margin-bottom: 100px;" << std::endl
     << "        margin-right: auto;" << std::endl
@@ -203,20 +216,19 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     << "      .sticker-list-item {" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
-    << "        padding: 10px;" << std::endl
+    << "        padding: var(--cellpadding);" << std::endl
     << "        justify-content: center;" << std::endl
     << "        align-items: center;" << std::endl
     << "        align-content: center;" << std::endl
-    << std::endl
     << "        background-color: var(--stickeritem-bc);" << std::endl
-    << "        margin: 5px;" << std::endl
+    << "        margin: var(--cellmargin);" << std::endl
     << "        border-radius: 0.6em;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .sticker {" << std::endl
     << "        display: flex;" << std::endl
-    << "        width: 150px;" << std::endl
-    << "        height: 150px;" << std::endl
+    << "        width: var(--imgsize);" << std::endl
+    << "        height: var(--imgsize);" << std::endl
     << "        justify-content: center;" << std::endl
     << "        align-items: center;" << std::endl
     << "      }" << std::endl
@@ -231,15 +243,15 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     << "      .sticker img {" << std::endl
     << "        max-width: 100%;" << std::endl
     << "        max-height: 100%;" << std::endl
-    << "        object-fit:contain;" << std::endl
+    << "        object-fit: contain;" << std::endl
     << "      }" << std::endl
     << "      .sticker img {" << std::endl
     << "        cursor: zoom-in;" << std::endl
     << "        z-index: 1;" << std::endl
     << "        position: relative;" << std::endl
-    << "        background-color: #FF000000;" << std::endl
+    << "        background-color: #00000000;" << std::endl
     << "        border-radius: 0px;" << std::endl
-    << "        border: none;" << std::endl
+    << "        border: 0px solid var(--body-bgc);" << std::endl
     << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-end, transform .25s ease;" << std::endl
     << "      }" << std::endl
     << std::endl
@@ -248,15 +260,36 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     << "        cursor: zoom-out;" << std::endl
     << "        z-index: 2;" << std::endl
     << "        position: relative;" << std::endl
-    << "        transform: scale(2.5);" << std::endl
+    << "        transform: scale(3);" << std::endl
     << "        background-color: var(--stickeritem-bc);" << std::endl
     << "        border-radius: 0.6em;" << std::endl
-    << "        border: 1px solid black;" << std::endl
+    << "        border: 1px solid var(--body-bgc);" << std::endl
     << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-start, transform .25s ease;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .footer .emoji {" << std::endl
     << "        font-family: \"Apple Color Emoji\", \"Noto Color Emoji\", sans-serif;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      @media screen and (max-width: 975px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(4 * var(--cellsize));" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media screen and (max-width: 795px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(3 * var(--cellsize)); " << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media screen and (max-width: 615px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(2 * var(--cellsize));" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media screen and (max-width: 435px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(1 * var(--cellsize));" << std::endl
+    << "        }" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      @media print {" << std::endl
@@ -396,19 +429,21 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
       Logger::warning("Failed to find sticker (id: ", id, ")");
       continue;
     }
-    for (auto p : {"/stickers"s, "/stickers/"s + packid})
+
+    // make sure a 'stickers/' subdirectory exists, and 'stickers/stickerpack_id/' exists
+    for (auto subdir : {"/stickers"s, "/stickers/"s + packid})
     {
-      if (!bepaald::fileOrDirExists(directory + p))
+      if (!bepaald::fileOrDirExists(directory + subdir))
       {
-        if (!bepaald::createDir(directory + p))
+        if (!bepaald::createDir(directory + subdir))
         {
-          Logger::error("Failed to create directory `", directory, p, "'");
+          Logger::error("Failed to create directory `", directory, "/", subdir, "'");
           continue;
         }
       }
-      else if (!bepaald::isDir(directory + p))
+      else if (!bepaald::isDir(directory + subdir))
       {
-        Logger::error("Failed to create directory `", directory, p, "'");
+        Logger::error("Failed to create directory `", directory, "/", subdir, "'");
         continue;
       }
     }
@@ -417,7 +452,10 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     if (bepaald::fileOrDirExists(stickerdatapath) && !overwrite)
     {
       if (!append)
+      {
         Logger::error("Avatar file exists. Not overwriting");
+        return false;
+      }
       continue;
     }
     std::ofstream stickerstream(stickerdatapath);
@@ -429,7 +467,6 @@ bool SignalBackup::exportStickerPacksHTML(std::string const &directory, bool ove
     StickerFrame *s = it->second.get();
     stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize());
     s->clearData();
-
   }
 
   // write end of html

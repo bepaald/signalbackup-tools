@@ -21,7 +21,7 @@
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool calllog, bool searchpage, bool overwrite, bool append, bool light,
+                                  bool calllog, bool searchpage, bool stickerpacks, bool overwrite, bool append, bool light,
                                   bool themeswitching) const
 {
 
@@ -339,7 +339,77 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "        padding: 5px;" << std::endl
     << "      }" << std::endl
-    << std::endl
+    << std::endl;
+
+  if (calllog && searchpage) // we need an expandable menu
+  {
+    outputfile
+      << "       #searchmenu {" << std::endl
+      << "         display: none;" << std::endl
+      << "       }" << std::endl
+      << std::endl
+      << "       .expandedsearchmenu .menu-item {" << std::endl
+      << "         padding-left: 0px;" << std::endl
+      << "         padding-bottom: 0px;" << std::endl
+      << "       }" << std::endl
+      << std::endl
+      << "       .expandable-menu-item {" << std::endl
+      << "         display: flex;" << std::endl
+      << "         flex-direction: column;" << std::endl
+      << "         margin-right: 0px;" << std::endl
+      << "         cursor: pointer;" << std::endl
+      << "       }  " << std::endl
+      << std::endl
+      << "      .expandedsearchmenu {" << std::endl
+      << "        display: flex;" << std::endl
+      << "        flex-direction: column;" << std::endl
+      << "        align-items: flex-start;" << std::endl
+      << "        max-height: 0px;" << std::endl
+      << "        overflow: hidden;" << std::endl
+      << "        padding: 0px;" << std::endl
+      << "        opacity: 0%;" << std::endl
+      << "        border: none; " << std::endl
+      << "        background: var(--conversationbox-bc);" << std::endl
+      << "        transition: max-height .3s ease-out, padding .3s ease-out, opacity .3s ease-out;" << std::endl
+      << "      }" << std::endl
+      << std::endl
+      << "     .searchmenu:checked + .searchmenulabel + .expandedsearchmenu {" << std::endl
+      << "       max-height: 100px;" << std::endl
+      << "       padding-top: 10px;" << std::endl
+      << "       opacity: 100%;" << std::endl
+      << "       transition: max-height .3s ease-out, padding .3s ease-out, opacity .15s ease-out;" << std::endl
+      << "     }" << std::endl
+      << std::endl
+      << "     .searchmenulabel {" << std::endl
+      << "       cursor: pointer;" << std::endl
+      << "     }" << std::endl
+      << std::endl
+      << "     .searchmenulabel .hamburger-icon {" << std::endl
+      << "       display: inline-block;" << std::endl
+      << "       width:30px;" << std::endl
+      << "       height: 30px;" << std::endl
+      << "       margin-right: 5px;" << std::endl
+      << "       vertical-align: middle;" << std::endl
+      << "       background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M13.5 5.5A1.5 1.5 0 1 1 12 4a1.5 1.5 0 0 1 1.5 1.5zm-1.5 5a1.5 1.5 0 1 0 1.5 1.5 1.5 1.5 0 0 0-1.5-1.5zm0 6.5a1.5 1.5 0 1 0 1.5 1.5A1.5 1.5 0 0 0 12 17z\"></path></svg>');" << std::endl
+      << "       filter: var(--icon-f);" << std::endl
+      << "       transition: background 0.3s ease-out, transform 0.3s ease-out;" << std::endl
+      << "      }" << std::endl
+      << std::endl
+      << "       .searchmenu:checked + .searchmenulabel .hamburger-icon {" << std::endl
+      << "         background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"30\" height=\"30\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g><path d=\"M21 11.25h-8.25V3h-1.5v8.25H3v1.5h8.25V21h1.5v-8.25H21v-1.5z\"></path></g></svg>');" << std::endl
+      << "         transform: rotate(45deg);" << std::endl
+      << "         transition: background 0.3s ease-out, transform 0.3s ease-out;" << std::endl
+      << "       }" << std::endl
+      << std::endl
+      << "       .searchmenulabel .label-text {" << std::endl
+      << "         display: inline-block;" << std::endl
+      << "         height: 100%;" << std::endl
+      << "         vertical-align: middle;" << std::endl
+      << "       }" << std::endl
+      << std::endl;
+  }
+
+  outputfile
     << "      #theme {" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: row;" << std::endl
@@ -375,6 +445,16 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     outputfile
       << "      .calllog-icon {" << std::endl
       << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M17.21 22a8.08 8.08 0 0 1-2.66-.51 20.79 20.79 0 0 1-7.3-4.73 21 21 0 0 1-4.74-7.3c-.78-2.22-.67-4 .35-5.45h0a5 5 0 0 1 2-1.67 2.72 2.72 0 0 1 3.51.81l2.11 3a2.69 2.69 0 0 1-.35 3.49l-.93.85c-.09.08-.15.22-.08.31A20 20 0 0 0 11 13a20 20 0 0 0 2.21 1.91.24.24 0 0 0 .3-.08l.85-.93a2.68 2.68 0 0 1 3.49-.35l3 2.11a2.68 2.68 0 0 1 .85 3.43 5.22 5.22 0 0 1-1.71 2 4.69 4.69 0 0 1-2.78.91zM4.09 4.87c-.46.64-1 1.77-.16 4.08a19.28 19.28 0 0 0 4.38 6.74A19.49 19.49 0 0 0 15 20.07c2.31.81 3.44.3 4.09-.16a3.55 3.55 0 0 0 1.2-1.42A1.21 1.21 0 0 0 20 16.9l-3-2.12a1.18 1.18 0 0 0-1.53.15l-.82.9a1.72 1.72 0 0 1-2.33.29 21.9 21.9 0 0 1-2.37-2.05 22.2 22.2 0 0 1-2-2.37 1.71 1.71 0 0 1 .3-2.32l.89-.82A1.19 1.19 0 0 0 9.21 7L7.1 4a1.19 1.19 0 0 0-1.51-.38 3.72 3.72 0 0 0-1.5 1.25z\"></path></svg>');" << std::endl
+      << "        filter: var(--icon-f);" << std::endl
+      << "    }" << std::endl
+      << std::endl;
+  }
+
+  if (stickerpacks)
+  {
+    outputfile
+      << "      .stickerpacks-icon {" << std::endl
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M21.2 5.072A5.55 5.55 0 0 0 18.928 2.8c-.977-.522-1.947-.8-4.62-.8H9.692c-2.673 0-3.643.278-4.62.8A5.55 5.55 0 0 0 2.8 5.072c-.522.977-.8 1.947-.8 4.62v4.616c0 2.673.278 3.643.8 4.62A5.55 5.55 0 0 0 5.072 21.2c1.118.567 2.363.837 3.616.785h.1a3 3 0 0 0 1.7-.53L20.734 14.4A3 3 0 0 0 22 11.949V9.692c0-2.673-.278-3.643-.8-4.62zM8.739 20.485a5.82 5.82 0 0 1-2.96-.608 4.02 4.02 0 0 1-1.656-1.656c-.365-.683-.623-1.363-.623-3.913V9.692c0-2.55.258-3.231.623-3.913a4.02 4.02 0 0 1 1.656-1.656c.683-.365 1.363-.623 3.913-.623h4.616c2.55 0 3.231.258 3.913.623a4.02 4.02 0 0 1 1.656 1.656c.365.683.623 1.363.623 3.913v2.257c-.002.101-.014.201-.036.3h-3.273c-2.8 0-3.872.3-4.975.89a6.17 6.17 0 0 0-2.575 2.575c-.575 1.074-.872 2.132-.888 4.769h-.014zm1.525-.7a6.63 6.63 0 0 1 .7-3.362 4.7 4.7 0 0 1 1.96-1.961c.755-.4 1.549-.712 4.268-.712h1.837z\"></path></svg>');" << std::endl
       << "        filter: var(--icon-f);" << std::endl
       << "    }" << std::endl
       << std::endl;
@@ -584,10 +664,24 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << std::endl;
   }
 
+  if (calllog || stickerpacks)
+    outputfile
+      << "    <div id=\"menu\">" << std::endl;
+
+  if (calllog && stickerpacks)
+    outputfile
+      << "         <div class=\"menu-item\">" << std::endl
+      << "           <div class=\"expandable-menu-item\">" << std::endl
+      << "             <input id=\"searchmenu\" class=\"searchmenu\" type=\"checkbox\">" << std::endl
+      << "             <label for=\"searchmenu\" class=\"searchmenulabel\">" << std::endl
+      << "               <span class=\"hamburger-icon\"></span><span class=\"label-text\">menu</span>" << std::endl
+      << "             </label>" << std::endl
+      << "             <div class=\"expandedsearchmenu\">" << std::endl
+      << std::endl;
+
   if (calllog)
   {
     outputfile
-      << "    <div id=\"menu\">" << std::endl
       << "      <a href=\"calllog.html\">" << std::endl
       << "        <div class=\"menu-item\">" << std::endl
       << "          <div class=\"menu-icon calllog-icon\">" << std::endl
@@ -597,9 +691,32 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "          </div>" << std::endl
       << "        </div>" << std::endl
       << "      </a>" << std::endl
-      << "    </div>" << std::endl
       << std::endl;
   }
+  if (stickerpacks)
+  {
+    outputfile
+      << "      <a href=\"stickerpacks.html\">" << std::endl
+      << "        <div class=\"menu-item\">" << std::endl
+      << "          <div class=\"menu-icon stickerpacks-icon\">" << std::endl
+      << "          </div>" << std::endl
+      << "          <div>" << std::endl
+      << "            stickerpacks" << std::endl
+      << "          </div>" << std::endl
+      << "        </div>" << std::endl
+      << "      </a>" << std::endl
+      << std::endl;
+  }
+
+  if (calllog && stickerpacks)
+    outputfile
+      << "             </div>" << std::endl
+      << "           </div>" << std::endl
+      << "         </div>" << std::endl;
+
+  if (calllog || stickerpacks)
+    outputfile
+      << "    </div>" << std::endl;
 
   if (themeswitching || searchpage)
   {

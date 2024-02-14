@@ -20,14 +20,15 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
-                                    std::map<long long int, RecipientInfo> *recipientinfo [[maybe_unused]], long long int notetoself_tid [[maybe_unused]],
+                                    std::map<long long int, RecipientInfo> *recipientinfo,
+                                    long long int notetoself_tid [[maybe_unused]],
                                     bool overwrite, bool append, bool light, bool themeswitching) const
 {
   Logger::message("Writing calllog.html...");
 
   if (bepaald::fileOrDirExists(directory + "/calllog.html"))
   {
-    if (!overwrite && ! append)
+    if (!overwrite && !append)
     {
       Logger::error("'", directory, "/calllog.html' exists. Use --overwrite to overwrite.");
       return;

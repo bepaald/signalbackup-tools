@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
     MEMINFO("Before importfromdesktop");
     if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
                                arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
-                               arg.ignorewal(), arg.setselfid()))
+                               arg.importstickers(), arg.ignorewal(), arg.setselfid()))
       return 1;
     MEMINFO("After importfromdesktop");
   }
@@ -352,8 +352,8 @@ int main(int argc, char *argv[])
 
   if (!arg.exporthtml().empty())
     if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
-                        arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.migratedb(), arg.overwrite(),
-                        arg.append(), arg.light(), arg.themeswitching()))
+                        arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
+                        arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching()))
       return 1;
 
   if (!arg.exporttxt().empty())
@@ -371,10 +371,6 @@ int main(int argc, char *argv[])
       Logger::error("Failed to export backup to '", arg.exportxml(), "'");
       return 1;
     }
-
-  if (!arg.exportstickerpackshtml().empty())
-    if (!sb->exportStickerPacksHTML(arg.exportstickerpackshtml(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching()))
-      return 1;
 
   // // temporary, to generate truncated backup's missing data from Signal Desktop database INCOMPLETE
   // if (!arg.hhenkel().empty())

@@ -199,8 +199,8 @@
 bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string databasedir_hint,
                                      long long int sqlcipherversion,
                                      std::vector<std::string> const &daterangelist,
-                                     bool createmissingcontacts,
-                                     bool autodates, bool ignorewal, std::string const &selfphone)
+                                     bool createmissingcontacts, bool autodates, bool importstickers,
+                                     bool ignorewal, std::string const &selfphone)
 {
 
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
@@ -1595,6 +1595,16 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
       if (!dtUpdateProfile(dtdb.d_database, r.first, r.second, databasedir))
         Logger::warning("Failed to update profile data.");
+    }
+  }
+
+  if (importstickers)
+  {
+    Logger::message("Importing installed stickerpacks");
+    if (!dtImportStickerPacks(dtdb.d_database, databasedir))
+    {
+      Logger::error("Failed to import stickers");
+      return false;
     }
   }
 

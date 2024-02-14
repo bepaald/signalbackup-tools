@@ -101,10 +101,12 @@ Arg::Arg(int argc, char *argv[])
   d_split_bool(false),
   d_desktopdbversion(4),
   d_migratedb(false),
+  d_importstickers(false),
   d_addincompletedataforhtmlexport(false),
   d_light(false),
   d_themeswitching(false),
   d_searchpage(false),
+  d_stickerpacks(false),
   d_findrecipient(-1),
   d_importtelegram(std::string()),
   d_listjsonchats(std::string()),
@@ -117,7 +119,6 @@ Arg::Arg(int argc, char *argv[])
   d_fulldecode(false),
   d_logfile(std::string()),
   d_custom_hugogithubs(false),
-  d_exportstickerpackshtml(std::string()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1128,6 +1129,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_migratedb = false;
       continue;
     }
+    if (option == "--importstickers")
+    {
+      d_importstickers = true;
+      continue;
+    }
+    if (option == "--no-importstickers")
+    {
+      d_importstickers = false;
+      continue;
+    }
     if (option == "--addincompletedataforhtmlexport")
     {
       d_addincompletedataforhtmlexport = true;
@@ -1166,6 +1177,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-searchpage")
     {
       d_searchpage = false;
+      continue;
+    }
+    if (option == "--stickerpacks")
+    {
+      d_stickerpacks = true;
+      continue;
+    }
+    if (option == "--no-stickerpacks")
+    {
+      d_stickerpacks = false;
       continue;
     }
     if (option == "--findrecipient")
@@ -1325,19 +1346,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-custom_hugogithubs")
     {
       d_custom_hugogithubs = false;
-      continue;
-    }
-    if (option == "--exportstickerpackshtml")
-    {
-      if (i < arguments.size() - 1)
-      {
-        d_exportstickerpackshtml = arguments[++i];
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
       continue;
     }
     if (option[0] != '-')
