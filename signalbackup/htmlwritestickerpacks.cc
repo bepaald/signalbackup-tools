@@ -236,7 +236,6 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
     << "        padding: var(--cellpadding);" << std::endl
-    << "        justify-content: center;" << std::endl
     << "        align-items: center;" << std::endl
     << "        align-content: center;" << std::endl
     << "        background-color: var(--stickeritem-bc);" << std::endl
@@ -251,6 +250,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        height: var(--imgsize);" << std::endl
     << "        justify-content: center;" << std::endl
     << "        align-items: center;" << std::endl
+    << "        margin-bottom: 5px;" << std::endl
     << "      }" << std::endl
     << "      .sticker label {" << std::endl
     << "        display: flex;" << std::endl
