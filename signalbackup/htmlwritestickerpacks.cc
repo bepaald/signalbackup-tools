@@ -323,8 +323,6 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        }" << std::endl
     << std::endl
     << "        .sticker-list {" << std::endl
-    << "          margin: 0 auto;" << std::endl
-    << "          display: block;" << std::endl
     << "          border-radius: 0;" << std::endl
     << "        }" << std::endl
     << std::endl
