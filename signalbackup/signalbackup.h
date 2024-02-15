@@ -446,6 +446,7 @@ class SignalBackup
   bool prepareOutputDirectory(std::string const &dir, bool overwrite, bool allowappend = false, bool append = false) const;
 
   std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;
+  bool writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const;
 };
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,

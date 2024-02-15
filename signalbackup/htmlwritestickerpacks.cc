@@ -207,10 +207,29 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << std::endl
     << "      .sticker-pack-header {" << std::endl
     << "        flex-basis: 100%;" << std::endl
-    << "        margin-left: 30px;" << std::endl
     << "        margin-bottom: 20px;" << std::endl
     << "        margin-top: 20px;" << std::endl
+    << "      }" << std::endl
+    << "      .sticker-pack-header-container {" << std::endl
+    << "        display: flex;" << std::endl
+    << "        flex-direction: row;" << std::endl
+    << "      }" << std::endl
+    << "      .sticker-pack-header-cover {" << std::endl
+    << "        height: 60px;" << std::endl
+    << "        margin-left: 5px;" << std::endl
+    << "        margin-right: 5px;" << std::endl
+    << "      }" << std::endl
+    << "      .sticker-pack-header-cover img {" << std::endl
+    << "        height: 100%;" << std::endl
+    << "        width: 100%;" << std::endl
+    << "        object-fit: contain;" << std::endl
+    << "      }" << std::endl
+    << "      .sticker-header-title {" << std::endl
     << "        font-size: x-large;" << std::endl
+    << "      }" << std::endl
+    << "      .sticker-header-author {" << std::endl
+    << "        font-size: large;" << std::endl
+    << "        margin-left: 2px;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .sticker-list-item {" << std::endl
@@ -252,19 +271,20 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        background-color: #00000000;" << std::endl
     << "        border-radius: 0px;" << std::endl
     << "        border: 0px solid var(--body-bgc);" << std::endl
-    << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-end, transform .25s ease;" << std::endl
+    << "        padding: 0px;" << std::endl
+    << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-end, transform .25s ease, padding 0.25s ease;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .sticker input[type=checkbox]:checked ~ label > img {" << std::endl
-    << "        border-radius: 0;" << std::endl
     << "        cursor: zoom-out;" << std::endl
     << "        z-index: 2;" << std::endl
     << "        position: relative;" << std::endl
     << "        transform: scale(3);" << std::endl
     << "        background-color: var(--stickeritem-bc);" << std::endl
-    << "        border-radius: 0.6em;" << std::endl
+    << "        border-radius: 9px;" << std::endl
     << "        border: 1px solid var(--body-bgc);" << std::endl
-    << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-start, transform .25s ease;" << std::endl
+    << "        padding: 3px;" << std::endl
+    << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-start, transform .25s ease, padding 0.25s ease;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .footer .emoji {" << std::endl
@@ -389,12 +409,39 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
       std::string packtitle = res(i, "pack_title");
       std::string packauthor = res(i, "pack_author");
 
-      //Logger::message("\"", packtitle, "\" by ", packauthor);
-      stickerhtml
-        << "        <div class=\"sticker-pack-header\">" << std::endl
-        << "          " << packtitle << " by " << packauthor << std::endl
-        << "        </div>" << std::endl
-        << std::endl;
+      // get cover:
+      long long int cover_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM sticker WHERE pack_id = ? AND cover = 1", packid, -1);
+      if (cover_id == -1 || !writeStickerToDisk(cover_id, packid, directory, overwrite, append)) [[unlikely]]
+      {
+        Logger::message("No cover found for stickerpack ", packid);
+        stickerhtml
+          << "        <div class=\"sticker-pack-header\">" << std::endl
+          << "          <div class=\"sticker-pack-header-container\">" << std::endl
+          << "            <div>" << std::endl
+          << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << std::endl
+          << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << std::endl
+          << "            </div>" << std::endl
+          << "          </div>" << std::endl
+          << "        </div>" << std::endl
+          << std::endl;
+      }
+      else
+      {
+        //Logger::message("\"", packtitle, "\" by '", packauthor, "'");
+        stickerhtml
+          << "        <div class=\"sticker-pack-header\">" << std::endl
+          << "          <div class=\"sticker-pack-header-container\">" << std::endl
+          << "            <div class=\"sticker-pack-header-cover\">" << std::endl
+          << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\">" << std::endl
+          << "            </div>" << std::endl
+          << "            <div>" << std::endl
+          << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << std::endl
+          << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << std::endl
+          << "            </div>" << std::endl
+          << "          </div>" << std::endl
+          << "        </div>" << std::endl
+          << std::endl;
+      }
 
       prevpackid = packid;
     }
@@ -413,9 +460,9 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     stickerhtml
       << "        <div class=\"sticker-list-item\">" << std::endl
       << "          <div class=\"sticker\">" << std::endl
-      << "            <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << stickerid << "\">" << std::endl
-      << "            <label for=\"zoomCheck-" << packid << "-" << stickerid << "\">" << std::endl
-      << "              <img src=\"stickers/" << packid << "/Sticker_" << stickerid << ".bin\" alt=\"Sticker_" << stickerid << ".bin\">" << std::endl
+      << "            <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
+      << "            <label for=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
+      << "              <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\">" << std::endl
       << "            </label>" << std::endl
       << "          </div>" << std::endl
       << "          <div class=\"footer\">" << stickerid << ". <span class=\"emoji\">" << emoji << "</span></div>" << std::endl
@@ -423,50 +470,11 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
       << std::endl;
 
     // write actual file to disk
-    auto it = std::find_if(d_stickers.begin(), d_stickers.end(), [id](auto const &s) { return s.first == static_cast<uint64_t>(id); });
-    if (it == d_stickers.end())
+    if (!writeStickerToDisk(id, packid, directory, overwrite, append)) [[unlikely]]
     {
-      Logger::warning("Failed to find sticker (id: ", id, ")");
+      Logger::warning("There was a problem writing the sitcker data to file");
       continue;
     }
-
-    // make sure a 'stickers/' subdirectory exists, and 'stickers/stickerpack_id/' exists
-    for (auto subdir : {"/stickers"s, "/stickers/"s + packid})
-    {
-      if (!bepaald::fileOrDirExists(directory + subdir))
-      {
-        if (!bepaald::createDir(directory + subdir))
-        {
-          Logger::error("Failed to create directory `", directory, "/", subdir, "'");
-          continue;
-        }
-      }
-      else if (!bepaald::isDir(directory + subdir))
-      {
-        Logger::error("Failed to create directory `", directory, "/", subdir, "'");
-        continue;
-      }
-    }
-    std::string stickerdatapath = directory + "/stickers/" + packid + "/Sticker_" + bepaald::toString(stickerid) + ".bin";
-    // check actual sticker file
-    if (bepaald::fileOrDirExists(stickerdatapath) && !overwrite)
-    {
-      if (!append)
-      {
-        Logger::error("Avatar file exists. Not overwriting");
-        return false;
-      }
-      continue;
-    }
-    std::ofstream stickerstream(stickerdatapath);
-    if (!stickerstream.is_open())
-    {
-      Logger::error("Failed to open '", stickerdatapath, "' for writing");
-      continue;
-    }
-    StickerFrame *s = it->second.get();
-    stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize());
-    s->clearData();
   }
 
   // write end of html
@@ -530,5 +538,64 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "  </body>" << std::endl
     << "</html>" << std::endl;
 
+  return true;
+}
+
+
+bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const
+{
+  // write actual file to disk
+
+  // find the sticker with id
+  auto it = std::find_if(d_stickers.begin(), d_stickers.end(), [id](auto const &s) { return s.first == static_cast<uint64_t>(id); });
+  if (it == d_stickers.end()) [[unlikely]]
+  {
+    Logger::warning("Failed to find sticker (id: ", id, ")");
+    return false;
+  }
+
+  // make sure a 'stickers/' subdirectory exists, and 'stickers/stickerpack_id/' exists
+  for (auto subdir : {"/stickers"s, "/stickers/"s + packid})
+  {
+    if (!bepaald::fileOrDirExists(directory + subdir))
+    {
+      if (!bepaald::createDir(directory + subdir))
+      {
+        Logger::error("Failed to create directory `", directory, "/", subdir, "'");
+        return false;
+      }
+    }
+    else if (!bepaald::isDir(directory + subdir))
+    {
+      Logger::error("Failed to create directory `", directory, "/", subdir, "'");
+      return false;
+    }
+  }
+  std::string stickerdatapath = directory + "/stickers/" + packid + "/Sticker_" + bepaald::toString(id) + ".bin";
+  // check actual sticker file
+  if (bepaald::fileOrDirExists(stickerdatapath) && !overwrite)
+  {
+    if (!append)
+    {
+      Logger::error("Avatar file exists. Not overwriting");
+      return false;
+    }
+    // file exists, we are appending, we assume we're done
+    return true;
+  }
+  std::ofstream stickerstream(stickerdatapath);
+  if (!stickerstream.is_open()) [[unlikely]]
+  {
+    Logger::error("Failed to open '", stickerdatapath, "' for writing");
+    return false;
+  }
+  StickerFrame *s = it->second.get();
+  if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize())) [[unlikely]]
+  {
+    Logger::error("Failed to write sticker data to file");
+    return false;
+  }
+
+  s->clearData();
   return true;
 }
