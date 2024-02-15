@@ -242,6 +242,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        background-color: var(--stickeritem-bc);" << std::endl
     << "        margin: var(--cellmargin);" << std::endl
     << "        border-radius: 0.6em;" << std::endl
+    << "        width: min-content;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .sticker {" << std::endl
@@ -583,7 +584,7 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
     // file exists, we are appending, we assume we're done
     return true;
   }
-  std::ofstream stickerstream(stickerdatapath);
+  std::ofstream stickerstream(stickerdatapath, std::ios_base::binary);
   if (!stickerstream.is_open()) [[unlikely]]
   {
     Logger::error("Failed to open '", stickerdatapath, "' for writing");
