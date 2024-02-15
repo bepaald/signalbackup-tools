@@ -301,7 +301,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        margin-right: 5px;" << std::endl
     << "      }" << std::endl
     << std::endl;
-  if (calllog || searchpage)
+  if (calllog || stickerpacks)
   {
     outputfile
       << "      #menu {" << std::endl
@@ -341,7 +341,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "      }" << std::endl
     << std::endl;
 
-  if (calllog && searchpage) // we need an expandable menu
+  if (calllog && stickerpacks) // we need an expandable menu
   {
     outputfile
       << "       #searchmenu {" << std::endl
