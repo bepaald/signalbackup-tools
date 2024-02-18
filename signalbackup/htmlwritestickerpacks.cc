@@ -279,7 +279,6 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "      .sticker input[type=checkbox]:checked ~ label > img {" << std::endl
     << "        cursor: zoom-out;" << std::endl
     << "        z-index: 2;" << std::endl
-    << "        position: relative;" << std::endl
     << "        transform: scale(3);" << std::endl
     << "        background-color: var(--stickeritem-bc);" << std::endl
     << "        border-radius: 9px;" << std::endl
@@ -324,6 +323,18 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << std::endl
     << "        .sticker-list {" << std::endl
     << "          border-radius: 0;" << std::endl
+    << "        }" << std::endl
+    << std::endl
+    << "        .sticker img," << std::endl
+    << "        .sticker input[type=checkbox]:checked ~ label > img { " << std::endl
+    << "          z-index: 1;" << std::endl
+    << "          cursor: default;" << std::endl
+    << "          background-color: #00000000;" << std::endl
+    << "          border-radius: 0px;" << std::endl
+    << "          border: none;" << std::endl
+    << "          padding: 0px;" << std::endl
+    << "          transition: none;" << std::endl
+    << "          transform: none;" << std::endl
     << "        }" << std::endl
     << std::endl
     << "        #menu {" << std::endl
@@ -459,10 +470,12 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     stickerhtml
       << "        <div class=\"sticker-list-item\">" << std::endl
       << "          <div class=\"sticker\">" << std::endl
-      << "            <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
-      << "            <label for=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
-      << "              <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\">" << std::endl
-      << "            </label>" << std::endl
+      << "            <form autocomplete=\"off\">" << std::endl
+      << "              <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
+      << "              <label for=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
+      << "                <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\">" << std::endl
+      << "              </label>" << std::endl
+      << "            </form>" << std::endl
       << "          </div>" << std::endl
       << "          <div class=\"footer\">" << stickerid << ". <span class=\"emoji\">" << emoji << "</span></div>" << std::endl
       << "        </div>" << std::endl

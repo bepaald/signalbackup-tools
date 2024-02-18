@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -89,7 +89,7 @@ inline bool SqlCipherDecryptor::writeToFile(std::string const &filename, bool ov
     return false;
   }
 
-  std::ofstream out(filename);
+  std::ofstream out(filename, std::ios_base::binary);
   if (!out.is_open())
   {
     Logger::error("Failed to open ", filename, " for writing");
