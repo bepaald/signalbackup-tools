@@ -233,11 +233,8 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "      }" << std::endl
     << std::endl
     << "      .sticker-list-item {" << std::endl
-    << "        display: flex;" << std::endl
-    << "        flex-direction: column;" << std::endl
+    << "        display: block;" << std::endl
     << "        padding: var(--cellpadding);" << std::endl
-    << "        align-items: center;" << std::endl
-    << "        align-content: center;" << std::endl
     << "        background-color: var(--stickeritem-bc);" << std::endl
     << "        margin: var(--cellmargin);" << std::endl
     << "        border-radius: 0.6em;" << std::endl
@@ -245,30 +242,31 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "      }" << std::endl
     << std::endl
     << "      .sticker {" << std::endl
-    << "        display: flex;" << std::endl
+    << "        display: block;" << std::endl
     << "        width: var(--imgsize);" << std::endl
     << "        height: var(--imgsize);" << std::endl
-    << "        justify-content: center;" << std::endl
-    << "        align-items: center;" << std::endl
     << "        margin-bottom: 5px;" << std::endl
+    << "        margin-left: auto;" << std::endl
+    << "        margin-right: auto;" << std::endl
     << "      }" << std::endl
+    << "      .sticker form," << std::endl
     << "      .sticker label {" << std::endl
-    << "        display: flex;" << std::endl
-    << "        max-width: 100%;" << std::endl
-    << "        max-height: 100%;" << std::endl
+    << "        display: block;" << std::endl
+    << "        width: 100%;" << std::endl
+    << "        height: 100%;" << std::endl
     << "      }" << std::endl
     << "      .sticker input[type=checkbox] {" << std::endl
     << "        display: none;" << std::endl
     << "      }" << std::endl
     << "      .sticker img {" << std::endl
-    << "        max-width: 100%;" << std::endl
-    << "        max-height: 100%;" << std::endl
+    << "        width: 100%;" << std::endl
+    << "        height: 100%;" << std::endl
     << "        object-fit: contain;" << std::endl
+    << "        position: relative;" << std::endl
     << "      }" << std::endl
     << "      .sticker img {" << std::endl
     << "        cursor: zoom-in;" << std::endl
     << "        z-index: 1;" << std::endl
-    << "        position: relative;" << std::endl
     << "        background-color: #00000000;" << std::endl
     << "        border-radius: 0px;" << std::endl
     << "        border: 0px solid var(--body-bgc);" << std::endl
@@ -285,6 +283,12 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        border: 1px solid var(--body-bgc);" << std::endl
     << "        padding: 3px;" << std::endl
     << "        transition: background-color .25s ease, border-radius .25s ease, border .25s ease, z-index .25s step-start, transform .25s ease, padding 0.25s ease;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .footer {" << std::endl
+    << "        width: fit-content;" << std::endl
+    << "        margin-left: auto;" << std::endl
+    << "        margin-right: auto;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .footer .emoji {" << std::endl
@@ -313,16 +317,45 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "      }" << std::endl
     << std::endl
     << "      @media print {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: 880px" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media print and (max-width: 895px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(880px - (var(--imgsize) + 2 * var(--cellpadding) + 2 * 3px));" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media print and (max-width: 719px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(880px - 2 * (var(--imgsize) + 2 * var(--cellpadding) + 2 * 3px));" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media print and (max-width: 543px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(880px - 3 * (var(--imgsize) + 2 * var(--cellpadding) + 2 * 3px));" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << "      @media print and (max-width: 367px) {" << std::endl
+    << "        .sticker-list {" << std::endl
+    << "          max-width: calc(880px - 4 * (var(--imgsize) + 2 * var(--cellpadding) + 2 * 3px))" << std::endl
+    << "        }" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      @media print {" << std::endl
     << "        .sticker-list-header {" << std::endl
     << "          padding: 0;" << std::endl
     << "        }" << std::endl
     << std::endl
     << "       .sticker-list-item {" << std::endl
     << "          break-inside: avoid;" << std::endl
+    << "          margin: 3px;" << std::endl
     << "        }" << std::endl
     << std::endl
     << "        .sticker-list {" << std::endl
     << "          border-radius: 0;" << std::endl
+    << "          padding-left: 0;" << std::endl
+    << "          padding-right: 0;" << std::endl
     << "        }" << std::endl
     << std::endl
     << "        .sticker img," << std::endl
