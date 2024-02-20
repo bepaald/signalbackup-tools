@@ -630,7 +630,9 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "  </div>" << std::endl;
 
   if (false /*adddetails*/)
+  {
     ;//addExportDetails(stickerhtml);
+  }
 
   stickerhtml
     << "  <a id=\"pagebottom\"></a>" << std::endl;
