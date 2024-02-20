@@ -30,15 +30,23 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     return false;
   }
 
-  SqliteDB::QueryResults res;
+  SqliteDB::QueryResults res_installed;
   if (!d_database.exec("SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
-                       "FROM sticker WHERE installed IS 1 AND cover IS 0 ORDER BY pack_id, sticker_id", &res))
+                       "FROM sticker WHERE installed IS 1 AND cover IS 0 ORDER BY pack_id, sticker_id", &res_installed))
     return false;
-  if (res.rows() == 0)
+  SqliteDB::QueryResults res_known;
+  if (!d_database.exec("SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
+                       "FROM sticker WHERE installed IS 0 AND cover IS 1 ORDER BY pack_id, sticker_id", &res_known))
+    return false;
+
+  if (res_installed.rows() == 0 && res_known.rows() == 0)
   {
-    Logger::error("No installed stickerpacks found in database");
+    Logger::warning("No stickerpacks found in database");
     return false;
   }
+
+  if (d_verbose) [[unlikely]]
+    Logger::message("Exporting ", res_installed.rows(), " installed and ", res_known.rows(), " known stickerpacks");
 
   if (bepaald::fileOrDirExists(directory + "/stickerpacks.html"))
   {
@@ -86,6 +94,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
               << "        --stickerlist-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
               << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
               << "        --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl
+              << "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;" : "#505050;") << std::endl
               << "      }" << std::endl
               << std::endl;
 
@@ -100,6 +109,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
                 << "        --stickerlist-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
                 << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
                 << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl
+                << "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;" : "#505050;") << std::endl
                 << "      }" << std::endl
                 << std::endl;
   }
@@ -157,24 +167,59 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        padding: 5px;" << std::endl
     << "      }" << std::endl
     << std::endl
-    << "      .menu-item > div {" << std::endl
-    << "        margin-right: 5px;" << std::endl
-    << "      }" << std::endl
-    << std::endl
-    << "      #theme {" << std::endl
+    << "      #bottom {" << std::endl
     << "        display: flex;" << std::endl
-    << "        flex-direction: column;" << std::endl
     << "        position: fixed;" << std::endl
-    << "        top: 20px;" << std::endl
+    << "        bottom: 20px;" << std::endl
     << "        right: 20px;" << std::endl
     << "      }" << std::endl
     << std::endl
-    << "      .themebutton {" << std::endl
-    << "        display: block;" << std::endl
-    << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g><path d=\"M11.5 7.75c0-0.4 0.34-0.77 0.78-0.74C14.9 7.15 17 9.33 17 12c0 2.67-2.09 4.85-4.72 5-0.44 0.02-0.78-0.34-0.78-0.75v-8.5Z\"/><path d=\"M12.97 0.73c-0.53-0.53-1.4-0.53-1.94 0L8.39 3.38H4.75c-0.76 0-1.37 0.61-1.37 1.37v3.64l-2.65 2.64c-0.53 0.53-0.53 1.4 0 1.94l2.65 2.64v3.64c0 0.76 0.61 1.38 1.37 1.38h3.64l2.64 2.64c0.53 0.53 1.4 0.53 1.94 0l2.64-2.63 3.64-0.01c0.76 0 1.38-0.62 1.38-1.38v-3.64l2.63-2.64c0.54-0.53 0.54-1.4 0-1.94l-2.62-2.61-0.01-3.67c0-0.76-0.62-1.38-1.38-1.38h-3.64l-2.64-2.64Zm-3.45 4L12 2.22l2.48 2.5c0.26 0.25 0.61 0.4 0.98 0.4h3.42v3.45c0.01 0.36 0.16 0.71 0.41 0.97L21.76 12l-2.48 2.48c-0.26 0.26-0.4 0.61-0.4 0.98v3.42h-3.43c-0.36 0.01-0.7 0.15-0.96 0.4L12 21.77l-2.48-2.48c-0.26-0.26-0.61-0.4-0.98-0.4H5.13v-3.42c0-0.37-0.15-0.72-0.4-0.98L2.22 12l2.5-2.48c0.25-0.26 0.4-0.61 0.4-0.98V5.13h3.41c0.37 0 0.72-0.15 0.98-0.4Z\"></path></g></svg>');" << std::endl
+    << "      .menu-item-bottom {" << std::endl
+    << "        display: flex;" << std::endl
+    << "        color: var(--menuitem-c);" << std::endl
+    << "        border-radius: 50%;" << std::endl
+    << "        background-color: var(--msgreactioninfo-bc);" << std::endl
+    << "        width: 40px;" << std::endl
+    << "        height: 40px;" << std::endl
+    << "        align-items: center;" << std::endl
+    << "        justify-content: center;" << std::endl
+    << "        padding: 0px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .nav-bottom {" << std::endl
+    << "        transform: rotate(270deg);" << std::endl
+    << "        width: 25px;" << std::endl
+    << "        height: 25px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .nav-one {" << std::endl
+    << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"white\"><path style=\"stroke-width: 3;\" d=\"M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131\"></path></svg>');" << std::endl
     << "        filter: var(--icon-f);" << std::endl
     << "      }" << std::endl
     << std::endl
+    << "      .menu-item > div {" << std::endl
+    << "        margin-right: 5px;" << std::endl
+    << "      }" << std::endl
+    << std::endl;
+  if (themeswitching)
+  {
+    stickerhtml
+      << "      #theme {" << std::endl
+      << "        display: flex;" << std::endl
+      << "        flex-direction: column;" << std::endl
+      << "        position: fixed;" << std::endl
+      << "        top: 20px;" << std::endl
+      << "        right: 20px;" << std::endl
+      << "      }" << std::endl
+      << std::endl
+      << "      .themebutton {" << std::endl
+      << "        display: block;" << std::endl
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g><path d=\"M11.5 7.75c0-0.4 0.34-0.77 0.78-0.74C14.9 7.15 17 9.33 17 12c0 2.67-2.09 4.85-4.72 5-0.44 0.02-0.78-0.34-0.78-0.75v-8.5Z\"/><path d=\"M12.97 0.73c-0.53-0.53-1.4-0.53-1.94 0L8.39 3.38H4.75c-0.76 0-1.37 0.61-1.37 1.37v3.64l-2.65 2.64c-0.53 0.53-0.53 1.4 0 1.94l2.65 2.64v3.64c0 0.76 0.61 1.38 1.37 1.38h3.64l2.64 2.64c0.53 0.53 1.4 0.53 1.94 0l2.64-2.63 3.64-0.01c0.76 0 1.38-0.62 1.38-1.38v-3.64l2.63-2.64c0.54-0.53 0.54-1.4 0-1.94l-2.62-2.61-0.01-3.67c0-0.76-0.62-1.38-1.38-1.38h-3.64l-2.64-2.64Zm-3.45 4L12 2.22l2.48 2.5c0.26 0.25 0.61 0.4 0.98 0.4h3.42v3.45c0.01 0.36 0.16 0.71 0.41 0.97L21.76 12l-2.48 2.48c-0.26 0.26-0.4 0.61-0.4 0.98v3.42h-3.43c-0.36 0.01-0.7 0.15-0.96 0.4L12 21.77l-2.48-2.48c-0.26-0.26-0.61-0.4-0.98-0.4H5.13v-3.42c0-0.37-0.15-0.72-0.4-0.98L2.22 12l2.5-2.48c0.25-0.26 0.4-0.61 0.4-0.98V5.13h3.41c0.37 0 0.72-0.15 0.98-0.4Z\"></path></g></svg>');" << std::endl
+      << "        filter: var(--icon-f);" << std::endl
+      << "      }" << std::endl
+      << std::endl;
+  }
+  stickerhtml
     << "      .nav-up {" << std::endl
     << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"white\" stroke=\"white\"><path d=\"M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z\"></path></svg>');" << std::endl
     << "        filter: var(--icon-f);" << std::endl
@@ -203,6 +248,12 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        color: var(--stickerlist-c);" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "        border-radius: 10px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .pack-status {" << std::endl
+    << "        font-weight: bold;" << std::endl
+    << "        margin-top: 20px;" << std::endl
+    << "        margin-left: 10px;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .sticker-pack-header {" << std::endl
@@ -370,11 +421,9 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "          transform: none;" << std::endl
     << "        }" << std::endl
     << std::endl
+    << "        #bottom," << std::endl
+    << "        #theme," << std::endl
     << "        #menu {" << std::endl
-    << "          display: none;" << std::endl
-    << "        }" << std::endl
-    << std::endl
-    << "        #theme {" << std::endl
     << "          display: none;" << std::endl
     << "        }" << std::endl
     << "      }" << std::endl
@@ -435,7 +484,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "    <div id=\"page\">" << std::endl
     << std::endl
     << "      <div class=\"sticker-list-header\">" << std::endl
-    << "        Installed stickerpacks" << std::endl
+    << "        Stickerpacks" << std::endl
     << "      </div>" << std::endl
     << std::endl
     << "      <div class=\"sticker-list\">" << std::endl
@@ -443,87 +492,112 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
 
   // iterate stickers
   std::string prevpackid;
-  for (uint i = 0; i < res.rows(); ++i)
+  for (auto const *res : {&res_installed, &res_known})
   {
-    std::string packid = res(i, "pack_id");
-    if (packid != prevpackid)
-    {
-      // output header!
-      std::string packtitle = res(i, "pack_title");
-      std::string packauthor = res(i, "pack_author");
+    if (res == &res_installed && res->rows())
+      stickerhtml << "        <div class=\"pack-status\">Installed</div>" << std::endl;
+    if (res == &res_known && res->rows())
+      stickerhtml << "        <div class=\"pack-status\">Available</div>" << std::endl;
 
-      // get cover:
-      long long int cover_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM sticker WHERE pack_id = ? AND cover = 1", packid, -1);
-      if (cover_id == -1 || !writeStickerToDisk(cover_id, packid, directory, overwrite, append)) [[unlikely]]
+
+    for (uint i = 0; i < res->rows(); ++i)
+    {
+      std::string packid = res->valueAsString(i, "pack_id");
+      if (packid != prevpackid)
       {
-        Logger::message("No cover found for stickerpack ", packid);
-        stickerhtml
-          << "        <div class=\"sticker-pack-header\">" << std::endl
-          << "          <div class=\"sticker-pack-header-container\">" << std::endl
-          << "            <div>" << std::endl
-          << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << std::endl
-          << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << std::endl
-          << "            </div>" << std::endl
-          << "          </div>" << std::endl
-          << "        </div>" << std::endl
-          << std::endl;
+        // output header!
+        std::string packtitle = res->valueAsString(i, "pack_title");
+        HTMLescapeString(&packtitle);
+
+        std::string packauthor = res->valueAsString(i, "pack_author");
+        HTMLescapeString(&packauthor);
+
+        if (d_verbose) [[unlikely]]
+          Logger::message("Exporting '", packtitle, "' by ", packauthor);
+
+        // get cover:
+        long long int cover_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM sticker WHERE pack_id = ? AND cover = 1", packid, -1);
+        if (cover_id == -1 || !writeStickerToDisk(cover_id, packid, directory, overwrite, append)) [[unlikely]]
+        {
+          Logger::message("No cover found for stickerpack ", packid);
+          stickerhtml
+            << "        <div class=\"sticker-pack-header\">" << std::endl
+            << "          <div class=\"sticker-pack-header-container\">" << std::endl
+            << "            <div>" << std::endl
+            << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << std::endl
+            << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << std::endl
+            << "            </div>" << std::endl
+            << "          </div>" << std::endl
+            << "        </div>" << std::endl
+            << std::endl;
+        }
+        else
+        {
+          //Logger::message("\"", packtitle, "\" by '", packauthor, "'");
+          stickerhtml
+            << "        <div class=\"sticker-pack-header\">" << std::endl
+            << "          <div class=\"sticker-pack-header-container\">" << std::endl
+            << "            <div class=\"sticker-pack-header-cover\">" << std::endl
+            << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\">" << std::endl
+            << "            </div>" << std::endl
+            << "            <div>" << std::endl
+            << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << std::endl
+            << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << std::endl
+            << "            </div>" << std::endl
+            << "          </div>" << std::endl
+            << "        </div>" << std::endl
+            << std::endl;
+        }
+
+        prevpackid = packid;
+
+        if (res == &res_known)
+          continue;
       }
-      else
+
+      long long int id = res->valueAsInt(i, "_id");
+      if (id < 0)
       {
-        //Logger::message("\"", packtitle, "\" by '", packauthor, "'");
-        stickerhtml
-          << "        <div class=\"sticker-pack-header\">" << std::endl
-          << "          <div class=\"sticker-pack-header-container\">" << std::endl
-          << "            <div class=\"sticker-pack-header-cover\">" << std::endl
-          << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\">" << std::endl
-          << "            </div>" << std::endl
-          << "            <div>" << std::endl
-          << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << std::endl
-          << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << std::endl
-          << "            </div>" << std::endl
-          << "          </div>" << std::endl
-          << "        </div>" << std::endl
-          << std::endl;
+        Logger::warning("Unexpected id value");
+        continue;
       }
+      long long int stickerid = res->valueAsInt(i, "sticker_id");
+      std::string emoji = res->valueAsString(i, "emoji");
 
-      prevpackid = packid;
-    }
+      // output some data for this?
+      //Logger::message("Sticker ", stickerid, ": ", emoji);
+      stickerhtml
+        << "        <div class=\"sticker-list-item\">" << std::endl
+        << "          <div class=\"sticker\">" << std::endl
+        << "            <form autocomplete=\"off\">" << std::endl
+        << "              <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
+        << "              <label for=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
+        << "                <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\">" << std::endl
+        << "              </label>" << std::endl
+        << "            </form>" << std::endl
+        << "          </div>" << std::endl
+        << "          <div class=\"footer\">" << stickerid << ". <span class=\"emoji\">" << emoji << "</span></div>" << std::endl
+        << "        </div>" << std::endl
+        << std::endl;
 
-    long long int id = res.valueAsInt(i, "_id");
-    if (id < 0)
-    {
-      Logger::warning("Unexpected id value");
-      continue;
-    }
-    long long int stickerid = res.valueAsInt(i, "sticker_id");
-    std::string emoji = res(i, "emoji");
-
-    // output some data for this?
-    //Logger::message("Sticker ", stickerid, ": ", emoji);
-    stickerhtml
-      << "        <div class=\"sticker-list-item\">" << std::endl
-      << "          <div class=\"sticker\">" << std::endl
-      << "            <form autocomplete=\"off\">" << std::endl
-      << "              <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
-      << "              <label for=\"zoomCheck-" << packid << "-" << id << "\">" << std::endl
-      << "                <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\">" << std::endl
-      << "              </label>" << std::endl
-      << "            </form>" << std::endl
-      << "          </div>" << std::endl
-      << "          <div class=\"footer\">" << stickerid << ". <span class=\"emoji\">" << emoji << "</span></div>" << std::endl
-      << "        </div>" << std::endl
-      << std::endl;
-
-    // write actual file to disk
-    if (!writeStickerToDisk(id, packid, directory, overwrite, append)) [[unlikely]]
-    {
-      Logger::warning("There was a problem writing the sitcker data to file");
-      continue;
+      // write actual file to disk
+      if (!writeStickerToDisk(id, packid, directory, overwrite, append)) [[unlikely]]
+      {
+        Logger::warning("There was a problem writing the sitcker data to file");
+        continue;
+      }
     }
   }
 
   // write end of html
   stickerhtml
+    << "         <div id=\"bottom\">" << std::endl
+    << "           <a href=\"#pagebottom\" title=\"Jump to bottom\">" << std::endl
+    << "             <div class=\"menu-item-bottom\">" << std::endl
+    << "               <span class=\"menu-icon nav-one nav-bottom\"></span>" << std::endl
+    << "             </div>" << std::endl
+    << "           </a>" << std::endl
+    << "        </div>" << std::endl
     << "        <div id=\"menu\">" << std::endl
     << "          <a href=\"index.html\">" << std::endl
     << "            <div class=\"menu-item\">" << std::endl
@@ -555,6 +629,12 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "    </div>" << std::endl
     << "  </div>" << std::endl;
 
+  if (false /*adddetails*/)
+    ;//addExportDetails(stickerhtml);
+
+  stickerhtml
+    << "  <a id=\"pagebottom\"></a>" << std::endl;
+
 
   if (themeswitching)
   {
@@ -585,7 +665,6 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
 
   return true;
 }
-
 
 bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const
 {

@@ -29,7 +29,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
   if (bepaald::fileOrDirExists(directory + "/index.html"))
   {
-    if (!overwrite && ! append)
+    if (!overwrite && !append)
     {
       Logger::error("'", directory, "/index.html' exists. Use --overwrite to overwrite.");
       return;
