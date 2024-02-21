@@ -31,7 +31,7 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
 
   // get all stickerpacks
   SqliteDB::QueryResults dtstickerpacks;
-  ddb.exec("SELECT id, key, author, coverStickerId, title FROM sticker_packs WHERE status IS 'installed'", &dtstickerpacks);
+  ddb.exec("SELECT id, key, author, coverStickerId, title, status FROM sticker_packs", &dtstickerpacks);
 
   for (uint i = 0; i < dtstickerpacks.rows(); ++i)
   {
@@ -42,6 +42,22 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     {
       if (d_verbose) [[unlikely]]
         Logger::message("Skipping stickerpack '", dtpackid, "': Already installed");
+      continue;
+    }
+
+    // if it is not installed (but 'known'), check if it is known to Android (and skip if so)
+    long long int dt_installed = dtstickerpacks(i, "status") == "installed";
+    if (dt_installed == 0 &&
+        d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM sticker WHERE pack_id IS ?", dtpackid, -1) > 0)
+    {
+      if (d_verbose) [[unlikely]]
+        Logger::message("Skipping stickerpack '", dtpackid, "': Already installed");
+      continue;
+    }
+
+    if (dt_installed == 0)
+    {
+      // not known to Android backup, but known to Desktop -> install cover
       continue;
     }
 

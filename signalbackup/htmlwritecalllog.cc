@@ -534,7 +534,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       << ((!hasavatar && !isgroup) ? "            <span>" + getRecipientInfoFromMap(recipientinfo, peer).initial + "</span>\n" : "")
       << "          </div>" << std::endl
       << "          <div class=\"name-and-snippet\">" << std::endl
-      << "            <pre class=\"name\">" << getRecipientInfoFromMap(recipientinfo, peer).display_name << "</pre>" << std::endl
+      << "            <pre class=\"name\">" << HTMLescapeString(getRecipientInfoFromMap(recipientinfo, peer).display_name) << "</pre>" << std::endl
       << "            <div class=\"snippet2" << (event == 3 /*missed*/? " snippet-missed" : "") << "\">" << std::endl;
 
     /*

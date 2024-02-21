@@ -62,6 +62,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        "recipient.group_id, "
+                       "recipient.blocked, "
                        "(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
@@ -197,7 +198,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" fill=\"white\"><path d=\"M58,7.5A6.51,6.51 0,0 1,64.5 14L64.5,66A6.51,6.51 0,0 1,58 72.5L22,72.5A6.51,6.51 0,0 1,15.5 66L15.5,14A6.51,6.51 0,0 1,22 7.5L58,7.5M58,6L22,6a8,8 0,0 0,-8 8L14,66a8,8 0,0 0,8 8L58,74a8,8 0,0 0,8 -8L66,14a8,8 0,0 0,-8 -8ZM60,24L20,24v1.5L60,25.5ZM60,34L20,34v1.5L60,35.5ZM60,44L20,44v1.5L60,45.5ZM50,54L20,54v1.5L50,55.5Z\"></path></svg>');" << std::endl
     << "        background-position: center;" << std::endl
     << "        background-repeat: no-repeat;" << std::endl
-    << "        background-size: 80%;" << std::endl
+    << "        background-size: 75%;" << std::endl
     << "      }" << std::endl
     << "" << std::endl
     << "      .group-avatar-icon {" << std::endl
@@ -253,6 +254,21 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        justify-content: center;" << std::endl
     << "        align-content: center;" << std::endl
     << "        width: 350px;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .name-and-status {" << std::endl
+    << "        display: flex;" << std::endl
+    << "        flex-direction: row;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .blocked {" << std::endl
+    << "         background-image: url('data:image/svg+xml;utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\" stroke-width=\"1\" ><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"></path></svg>');" << std::endl
+    << "        filter: var(--icon-f);" << std::endl
+    << "        display: inline-block;" << std::endl
+    << "        height: 18px;" << std::endl
+    << "        aspect-ratio: 1 / 1;" << std::endl
+    << "        margin-right: 8px;" << std::endl
+    << "        margin-top: 3px;" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      .name {" << std::endl
@@ -595,6 +611,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       continue;
     long long int snippet_type = results.getValueAs<long long int>(i, "snippet_type");
 
+    bool isblocked = (results.getValueAs<long long int>(i, "blocked") == 1);
     bool isgroup = !results.isNull(i, "group_id");
     bool isnotetoself = (t_id == note_to_self_tid);
     bool emoji_initial = getRecipientInfoFromMap(recipient_info, rec_id).initial_is_emoji;
@@ -649,10 +666,15 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << ((!hasavatar && !isgroup && !isnotetoself) ? "          <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
       << "        </div>" << std::endl
       << "        <div class=\"name-and-snippet\">" << std::endl
-      << "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
-      << "          <pre class=\"name\">" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</pre>" << std::endl
+      << "          <div class=\"name-and-status\">" << std::endl;
+    if (isblocked)
+      outputfile << "            <div class=\"blocked\"></div>" << std::endl;
+    outputfile
+      << "            <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>" << std::endl
+      << "            <pre class=\"name\">" << (isnotetoself ? "Note to self" : HTMLescapeString(getRecipientInfoFromMap(recipient_info, rec_id).display_name)) << "</pre>" << std::endl
+      << "          </div>" << std::endl
       << "          <span class=\"snippet\">"
-      << ((isgroup && groupsender > 0) ? "<span class=\"groupsender\">" + getRecipientInfoFromMap(recipient_info, groupsender).display_name + "</span>: " : "")
+      << ((isgroup && groupsender > 0) ? "<span class=\"groupsender\">" + HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupsender).display_name) + "</span>: " : "")
       << snippet << "</span>" << std::endl
       << "        </div>" << std::endl
       << "        <div class=\"index-date\">" << std::endl

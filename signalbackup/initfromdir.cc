@@ -32,13 +32,13 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
   Logger::message("Reading HeaderFrame");
   if (!setFrameFromFile(&d_headerframe, inputdir + "/Header.sbf"))
     return;
+  d_backupfileversion = d_headerframe->version();
 
   //d_headerframe->printInfo();
 
   Logger::message("Reading DatabaseVersionFrame");
   if (!setFrameFromFile(&d_databaseversionframe, inputdir + "/DatabaseVersion.sbf"))
     return;
-
   d_databaseversion = d_databaseversionframe->version();
   //d_databaseversionframe->printInfo();
 

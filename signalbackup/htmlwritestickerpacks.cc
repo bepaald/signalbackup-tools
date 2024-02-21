@@ -32,11 +32,11 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
 
   SqliteDB::QueryResults res_installed;
   if (!d_database.exec("SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
-                       "FROM sticker WHERE installed IS 1 AND cover IS 0 ORDER BY pack_id, sticker_id", &res_installed))
+                       "FROM sticker WHERE installed IS 1 AND cover IS 0 ORDER BY pack_title, pack_id, sticker_id", &res_installed))
     return false;
   SqliteDB::QueryResults res_known;
   if (!d_database.exec("SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
-                       "FROM sticker WHERE installed IS 0 AND cover IS 1 ORDER BY pack_id, sticker_id", &res_known))
+                       "FROM sticker WHERE installed IS 0 AND cover IS 1 ORDER BY pack_title, pack_id, sticker_id", &res_known))
     return false;
 
   if (res_installed.rows() == 0 && res_known.rows() == 0)

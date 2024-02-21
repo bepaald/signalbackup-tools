@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,13 @@
 */
 
 #include "signalbackup.ih"
+
+std::string SignalBackup::HTMLescapeString(std::string const &body) const
+{
+  std::string result(body);
+  HTMLescapeString(&result);
+  return result;
+}
 
 void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *const positions_excluded_from_escape) const
 {

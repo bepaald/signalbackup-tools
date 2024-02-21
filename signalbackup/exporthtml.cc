@@ -151,6 +151,68 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     searchidx << "message_idx = [" << std::endl;
   }
 
+  std::string exportdetails_html;
+  if (false /* exportdetails */)
+  {
+    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::string filename = d_filename;
+    HTMLescapeString(&filename);
+
+    std::string options = "--exporthtml " + directory;
+    HTMLescapeString(&options);
+    if (!limittothreads.empty())
+    {
+      options += "<br>--limittothreads ";
+      for (uint i = 0; i < limittothreads.size(); ++i)
+        options += bepaald::toString(limittothreads[i]) + (i < limittothreads.size() - 1  ? "," : "");
+    }
+    if (!daterangelist.empty())
+    {
+      options += "<br>--limittodates ";
+      for (uint i = 0; i < daterangelist.size(); i += 2)
+        options += daterangelist[i] + "&ndash;" + daterangelist[i + 1] + (i < daterangelist.size() - 1  ? "," : "");
+    }
+    if (split > -1)
+      options += "<br>--split " + bepaald::toString(split);
+    if (calllog)
+      options += "<br>--includecalllog";
+    if (searchpage)
+      options += "<br>--searchpage";
+    if (stickerpacks)
+      options += "<br>--stickerpacks";
+    if (overwrite)
+      options += "<br>--overwrite";
+    if (append)
+      options += "<br>--append";
+    if (d_verbose)
+      options += "<br>--verbose";
+    if (lighttheme)
+      options += "<br>--light";
+    if (themeswitching)
+      options += "<br>--themeswitching";
+    if (false /*exportdetails*/)
+      options += "<br>--exportdetails";
+
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS 'mindate', MAX(" + d_mms_table + ".date_received) AS 'maxdate' FROM " + d_mms_table, &res);
+    std::string date_range = bepaald::toDateString(res.valueAsInt(0, "mindate") / 1000, "%Y-%m-%d %H:%M:%S") + "&ndash;" +
+      bepaald::toDateString(res.valueAsInt(0, "maxdate") / 1000, "%Y-%m-%d %H:%M:%S");
+
+    exportdetails_html =
+      "    <div class=\"export-details\">\n"
+      "      <div class=\"export-details-fullwidth\">Export details</div>\n"
+      "      <div class=\"export-details-fullwidth\"><hr></div>\n"
+      "      <div>Exported by signalbackup-tools version:</div><div>"s + VERSIONDATE + "</div>\n"
+      "      <div>Exported date:</div><div>" + bepaald::toDateString(now, "%Y-%m-%d %H:%M:%S") + "</div>\n"
+      "      <div>Export options:</div><div>" + options + "</div>\n"
+      "      <div>Backup file:</div> <div>" + filename + "</div>\n" +
+      (d_fd ? ("      <div>Backup file size:</div><div>" + bepaald::toString(d_fd->total()) + " bytes</div>\n") : "") +
+      "      <div>Backup range:</div><div>" + date_range + "</div>\n"
+      "      <div>Backup file version:</div><div>" + bepaald::toString(d_backupfileversion) + "</div>\n"
+      "      <div>Database version:</div><div>" + bepaald::toString(d_databaseversion) + "</div>\n"
+      "    </div>\n";
+  }
+
   for (uint t_idx = 0; t_idx < threads.size(); ++t_idx)
   {
     int t = threads[t_idx];

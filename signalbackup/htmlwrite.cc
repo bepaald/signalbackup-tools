@@ -78,11 +78,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
        << " by signalbackup-tools (" << VERSIONDATE << "). "
        << "Input database version: " << d_databaseversion << ". -->" << std::endl;
 
+  std::string title = (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name);
+  HTMLescapeString(&title);
+
   file << R"(<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
-    <title>)" << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name) << R"(</title>
+    <title>)" << title << R"(</title>
     <style>)" << std::endl;
 
   file << "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
@@ -1599,8 +1602,7 @@ file << R"(
   }
   file << R"(
           <div id="thread-title"><pre class="threadtitle">)"
-       << (isnotetoself ? "Note to self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name)
-       << (groupinfo.expiration_timer ? "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>" : "")
+       << title << (groupinfo.expiration_timer ? "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>" : "")
        << R"(</pre></div>
           <div id="thread-subtitle">
             )";
@@ -1617,14 +1619,14 @@ file << R"(
     if (!groupinfo.description.empty())
     {
       file << "                  <span class=\"left-column\">Description:</span>" << std::endl;
-      file << "                  <span class=\"right-column\">" << groupinfo.description << "</span>" << std::endl;
+      file << "                  <span class=\"right-column\">" << HTMLescapeString(groupinfo.description) << "</span>" << std::endl;
     }
 
     // group members
     file << "                  <span class=\"left-column\">Members:</span>" << std::endl;
     file << "                  <span class=\"right-column\">";
     for (uint gm = 0; gm < groupmembers.size(); ++gm)
-      file << getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name
+      file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name)
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
     file << "</span>" << std::endl;
 
@@ -1635,7 +1637,7 @@ file << R"(
       file << "(none)";
     else
       for (uint pm = 0; pm < groupinfo.pending_members.size(); ++pm)
-        file << getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name
+        file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name)
              << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
     file << "</span>" << std::endl;
 
@@ -1646,7 +1648,7 @@ file << R"(
       file << "(none)";
     else
       for (uint rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
-        file << getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name
+        file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name)
              << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
     file << "</span>" << std::endl;
 
@@ -1657,7 +1659,7 @@ file << R"(
       file << "(none)";
     else
       for (uint bm = 0; bm < groupinfo.banned_members.size(); ++bm)
-        file << getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name
+        file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name)
              << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
     file << "</span>" << std::endl;
 
@@ -1883,8 +1885,8 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
       htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar shared-contact-avatar-default\"></div>" << std::endl;
 
     htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-info\">" << std::endl;
-    htmloutput << std::string(indent, ' ') << "    <span class=\"shared-contact-name\">" << contact_name << "</span>" << std::endl;
-    htmloutput << std::string(indent, ' ') << "    <pre>" << contact_info << "</pre>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "    <span class=\"shared-contact-name\">" << HTMLescapeString(contact_name) << "</span>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "    <pre>" << HTMLescapeString(contact_info) << "</pre>" << std::endl;
     htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
     htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
   }
@@ -1935,7 +1937,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   // for incoming group (normal) message: Senders name before message content
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
     htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name msg-name-"
-               << msg_info.msg_recipient_id << "\">" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name << "</span>" << std::endl;
+               << msg_info.msg_recipient_id << "\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</span>" << std::endl;
 
   // insert quote
   if (msg_info.hasquote)
@@ -1945,7 +1947,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     // quote message
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "                <span class=\"msg-name\">"
-               << getRecipientInfoFromMap(recipient_info, quote_author_id).display_name
+               << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id).display_name)
                << "</span>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>" << std::endl;
     htmloutput << std::string(extraindent, ' ') << "              </div>" << std::endl;
@@ -1980,7 +1982,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     if (!msg_info.link_preview_title.empty())
     {
       htmloutput << "              <div class=\"linkpreview_title\">" << std::endl;
-      htmloutput << "                " << msg_info.link_preview_title << std::endl;
+      htmloutput << "                " << HTMLescapeString(msg_info.link_preview_title) << std::endl;
       htmloutput << "              </div>" << std::endl;
     }
     std::string cleaned_link_preview_description = HTMLprepLinkPreviewDescription(msg_info.link_preview_description);

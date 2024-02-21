@@ -109,6 +109,7 @@ class SignalBackup
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
   bool d_ok;
   unsigned int d_databaseversion;
+  unsigned int d_backupfileversion;
   bool d_showprogress;
   bool d_stoponerror;
   bool d_verbose;
@@ -400,6 +401,7 @@ class SignalBackup
                         bool overwrite, bool append, bool light, bool themeswitching) const;
   bool HTMLwriteStickerpacks(std::string const &dir, bool overwrite, bool append, bool light, bool themeswitching) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
+  std::string HTMLescapeString(std::string const &in) const;
   void HTMLescapeUrl(std::string *in) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
   void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
@@ -464,6 +466,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   d_found_sqlite_sequence_in_backup(false),
   d_ok(false),
   d_databaseversion(-1),
+  d_backupfileversion(-1),
   d_showprogress(showprogress),
   d_stoponerror(stoponerror),
   d_verbose(verbose),

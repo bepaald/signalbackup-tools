@@ -73,6 +73,8 @@ void SignalBackup::initFromFile()
     if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
     {
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
+      d_backupfileversion = d_headerframe->version();
+
       if (d_verbose) [[unlikely]]
         d_headerframe->printInfo();
     }
