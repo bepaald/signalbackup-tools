@@ -55,12 +55,6 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       continue;
     }
 
-    if (dt_installed == 0)
-    {
-      // not known to Android backup, but known to Desktop -> install cover
-      continue;
-    }
-
     // the pack may not be installed, but may be known, in which case, the cover already exists...
     // when this is the case, the cover can be skipped on import (it's already there) and the 'installed'
     // status must be updated instead.
@@ -75,7 +69,10 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     long long int dtcoversticker = dtstickerpacks.valueAsInt(i, "coverStickerId");
 
     SqliteDB::QueryResults dtstickers;
-    ddb.exec("SELECT id, emoji, isCoverOnly, path FROM stickers WHERE packId IS ?", dtpackid, &dtstickers);
+    ddb.exec("SELECT id, emoji, isCoverOnly, path FROM stickers WHERE packId IS ?" +
+             (dt_installed == 0 ? " AND id = " + bepaald::toString(dtcoversticker) : "") , dtpackid, &dtstickers);
+    if (dtstickers.rows() == 0)
+      continue;
 
     if (d_verbose) [[unlikely]]
       Logger::message("Importing ", dtstickers.rows(), " stickers from stickerpack ", dtpackid, " (key: ", dtkey, ")");
@@ -117,7 +114,7 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
                                    {"sticker_id", dtstickerid},
                                    {"cover", dtstickerid == dtcoversticker ? 1 : 0},
                                    {"emoji", dtstickerid == dtcoversticker ? "" : dtemoji},
-                                   {"installed", 1},
+                                   {"installed", dt_installed},
                                    {"file_path", "[has_non_null_constraint_but_is_recreated_on_backup_restore]"},
                                    {"file_length", filelength}}, "_id", &retval))
         {
@@ -146,7 +143,8 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
 
 
       if (dtstickerid == dtcoversticker && // this was the cover sticker
-          dtcoveronly == 0)                // but also a valid sticker itself
+          dtcoveronly == 0 &&              // but also a valid sticker itself
+          dt_installed == 1)               // we're fully installing, not just making known
       {
         std::any retval;
         if (!insertRow("sticker", {{"pack_id", dtpackid},
