@@ -30,7 +30,8 @@
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool calllog, bool searchpage, bool stickerpacks,
-                              bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching)
+                              bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching,
+                              bool addexportdetails)
 {
   bool databasemigrated = false;
   MemSqliteDB backup_database;
@@ -152,7 +153,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   std::string exportdetails_html;
-  if (false /* exportdetails */)
+  if (addexportdetails)
   {
     std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     std::string filename = d_filename;
@@ -190,8 +191,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--light";
     if (themeswitching)
       options += "<br>--themeswitching";
-    if (false /*exportdetails*/)
-      options += "<br>--exportdetails";
+    if (addexportdetails)
+      options += "<br>--addexportdetails";
 
     SqliteDB::QueryResults res;
     d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS 'mindate', MAX(" + d_mms_table + ".date_received) AS 'maxdate' FROM " + d_mms_table, &res);
@@ -358,7 +359,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
                      all_recipients_ids, &recipient_info, &written_avatars, overwrite, append,
-                     lighttheme, themeswitching, searchpage);
+                     lighttheme, themeswitching, searchpage, addexportdetails);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)))
       {
 
@@ -684,6 +685,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         htmloutput << std::endl;
       }
       htmloutput << "  </div>" << std::endl; // closes div id=page (I think)
+
+      if (addexportdetails)
+        htmloutput << std::endl << exportdetails_html << std::endl;
+
       if (themeswitching)
       {
         htmloutput << R"(  <script>
@@ -745,17 +750,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, overwrite, append, lighttheme,
-                 themeswitching);
+                 themeswitching, exportdetails_html);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
-                     overwrite, append, lighttheme, themeswitching);
+                     overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   if (searchpage)
-    HTMLwriteSearchpage(directory, lighttheme, themeswitching);
+    HTMLwriteSearchpage(directory, lighttheme, themeswitching, exportdetails_html);
 
   if (stickerpacks)
-    HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching);
+    HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   Logger::message("All done!");
   if (databasemigrated)

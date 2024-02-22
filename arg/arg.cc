@@ -94,6 +94,7 @@ Arg::Arg(int argc, char *argv[])
   d_checkdbintegrity(false),
   d_interactive(false),
   d_exporthtml(std::string()),
+  d_addexportdetails(bool()),
   d_includecalllog(false),
   d_exporttxt(std::string()),
   d_append(false),
@@ -1051,6 +1052,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
+      continue;
+    }
+    if (option == "--addexportdetails")
+    {
+      d_addexportdetails = true;
+      continue;
+    }
+    if (option == "--no-addexportdetails")
+    {
+      d_addexportdetails = false;
       continue;
     }
     if (option == "--includecalllog")

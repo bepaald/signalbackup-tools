@@ -22,7 +22,7 @@
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                                   bool calllog, bool searchpage, bool stickerpacks, bool overwrite, bool append, bool light,
-                                  bool themeswitching) const
+                                  bool themeswitching, std::string const &exportdetails) const
 {
 
   Logger::message("Writing index.html...");
@@ -90,6 +90,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
              << "    :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
              << "        /* " << (light ? "light" : "dark") << " */" << std::endl
              << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl
+             << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --conversationlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --conversationlist-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
              << "        --conversationlist-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
@@ -105,6 +106,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "    :root[data-theme=\"" + (!light ? "light"s : "dark") + "\"] {" << std::endl
       << "        /* " << (!light ? "light" : "dark") << " */" << std::endl
       << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl
+      << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --conversationlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --conversationlist-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
       << "        --conversationlist-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
@@ -119,6 +121,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        margin: 0px;" << std::endl
     << "        padding: 0px;" << std::endl
     << "        width: 100%;" << std::endl
+    << "        background-color: var(--body-bgc);" << std::endl
     << "      }" << std::endl
     << "" << std::endl;
 
@@ -126,7 +129,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "      #theme-switch {" << std::endl
     << "        display: none;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      #page {" << std::endl
     << "        background-color: var(--body-bgc);" << std::endl
     << "        padding: 8px;" << std::endl
@@ -135,7 +138,33 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        transition: color .2s, background-color .2s;" << std::endl
     << "        min-height: 100vh;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl;
+
+  if (!exportdetails.empty())
+    outputfile
+      << "      .export-details {" << std::endl
+      << "        display: none;" << std::endl
+      << "        grid-template-columns: repeat(2 , 1fr);" << std::endl
+      << "        color: var(--body-c);" << std::endl
+      << "        margin-left: auto;" << std::endl
+      << "        margin-right: auto;" << std::endl
+      << "        margin-bottom: 10px;" << std::endl
+      << "        grid-gap: 0px 15px;" << std::endl
+      << "        width: fit-content;" << std::endl
+      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details-fullwidth {" << std::endl
+      << "        text-align: center;" << std::endl
+      << "        font-weight: bold;" << std::endl
+      << "        grid-column: 1 / 3;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << std::endl
+      << "        text-align: right;" << std::endl
+      << "        font-style: italic;" << std::endl
+      << "      }" << std::endl
+    << std::endl;
+
+  outputfile
     << "      .conversation-list-header {" << std::endl
     << "        text-align: center;" << std::endl
     << "        font-size: xx-large;" << std::endl
@@ -143,14 +172,14 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        padding: 10px;" << std::endl
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .header {" << std::endl
     << "        margin-top: 5px;" << std::endl
     << "        margin-bottom: 5px;" << std::endl
     << "        margin-left: 10px;" << std::endl
     << "        font-weight: bold;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .conversation-list {" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
@@ -165,7 +194,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
     << "        border-radius: 10px;" << std::endl
     << "      }" << std::endl
-    << "" << std::endl
+    << std::endl
     << "      .conversation-list-item {" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: row;" << std::endl
@@ -498,7 +527,16 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "          print-color-adjust: exact;" << std::endl
     << "          flex-shrink: 0;" << std::endl
     << "        }" << std::endl
-    << std::endl
+    << std::endl;
+
+  if (!exportdetails.empty())
+    outputfile
+      << "        .export-details {"
+      << "          display: grid;"
+      << "        }" << std::endl
+      << std::endl;
+
+  outputfile
     << "        #menu {" << std::endl
     << "          display: none;" << std::endl
     << "        }" << std::endl
@@ -768,6 +806,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   outputfile
     << "    </div>" << std::endl
     << "  </div>" << std::endl;
+
+  if (!exportdetails.empty())
+    outputfile << std::endl << exportdetails << std::endl;
 
   if (themeswitching)
   {

@@ -20,7 +20,7 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool overwrite, bool append,
-                                         bool light, bool themeswitching) const
+                                         bool light, bool themeswitching, std::string const &exportdetails) const
 {
   Logger::message("Writing stickerpacks.html...");
 
@@ -88,6 +88,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
               << "      :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
               << "        /* " << (light ? "light" : "dark") << "*/" << std::endl
               << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl
+              << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
               << "        --stickerlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
               << "        --stickerlist-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
               << "        --stickeritem-bc: " << (light ? "#E7EBF3;" : "#303133;") << std::endl
@@ -103,6 +104,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     stickerhtml << "      :root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
                 << "        /* " << (!light ? "light" : "dark") << "*/" << std::endl
                 << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl
+                << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
                 << "        --stickerlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
                 << "        --stickerlist-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
                 << "        --stickeritem-bc: " << (!light ? "#E7EBF3;" : "#303133;") << std::endl
@@ -118,6 +120,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        margin: 0px;" << std::endl
     << "        padding: 0px;" << std::endl
     << "        width: 100%;" << std::endl
+    << "        background-color: var(--body-bgc);" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      #theme-switch {" << std::endl
@@ -132,7 +135,33 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        transition: color .2s, background-color .2s;" << std::endl
     << "        min-height: 100vh;" << std::endl
     << "      }" << std::endl
-    << std::endl
+    << std::endl;
+
+  if (!exportdetails.empty())
+    stickerhtml
+      << "      .export-details {" << std::endl
+      << "        display: none;" << std::endl
+      << "        grid-template-columns: repeat(2 , 1fr);" << std::endl
+      << "        color: var(--body-c);" << std::endl
+      << "        margin-left: auto;" << std::endl
+      << "        margin-right: auto;" << std::endl
+      << "        margin-bottom: 10px;" << std::endl
+      << "        grid-gap: 0px 15px;" << std::endl
+      << "        width: fit-content;" << std::endl
+      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details-fullwidth {" << std::endl
+      << "        text-align: center;" << std::endl
+      << "        font-weight: bold;" << std::endl
+      << "        grid-column: 1 / 3;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << std::endl
+      << "        text-align: right;" << std::endl
+      << "        font-style: italic;" << std::endl
+      << "      }" << std::endl
+    << std::endl;
+
+  stickerhtml
     << "      #menu {" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
@@ -420,7 +449,16 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "          transition: none;" << std::endl
     << "          transform: none;" << std::endl
     << "        }" << std::endl
-    << std::endl
+    << std::endl;
+
+  if (!exportdetails.empty())
+    stickerhtml
+      << "        .export-details {"
+      << "          display: grid;"
+      << "        }" << std::endl
+      << std::endl;
+
+  stickerhtml
     << "        #bottom," << std::endl
     << "        #theme," << std::endl
     << "        #menu {" << std::endl
@@ -629,10 +667,8 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "    </div>" << std::endl
     << "  </div>" << std::endl;
 
-  if (false /*adddetails*/)
-  {
-    ;//addExportDetails(stickerhtml);
-  }
+  if (!exportdetails.empty())
+    stickerhtml << std::endl << exportdetails << std::endl;
 
   stickerhtml
     << "  <a id=\"pagebottom\"></a>" << std::endl;

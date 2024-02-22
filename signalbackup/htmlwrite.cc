@@ -45,7 +45,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
                                   std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
                                   bool overwrite, bool append, bool light, bool themeswitch,
-                                  bool searchpage) const
+                                  bool searchpage, bool exportdetails) const
 {
 
   std::vector<long long int> groupmembers;
@@ -91,6 +91,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
   file << "        /* " << (light ? "light" : "dark") << " */" << std::endl;
   file << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl;
+  file << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
   file << "        --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
   file << "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
@@ -124,6 +125,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "      :root[data-theme=\"" << (!light ? "light" : "dark") << "\"] {" << std::endl;
     file << "        /* " << (!light ? "light" : "dark") << " */" << std::endl;
     file << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl;
+    file << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
     file << "        --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
     //file << "        --conversationbox-bc: " << (!light ? (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light.empty() ? "#FBFCFF;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light + ";") : (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark.empty() ? "#1B1C1F;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark + ";")) << std::endl;
@@ -158,6 +160,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin: 0px;
         padding: 0px;
         width: 100%;
+        background-color: var(--body-bgc);
       }
 
       #theme-switch {
@@ -171,8 +174,35 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         flex-direction: row;
         transition: color .2s, background-color .2s;
         min-height: 100vh;
-      }
+      })";
 
+  if (exportdetails)
+  {
+    file
+      << "      .export-details {" << std::endl
+      << "        display: none;" << std::endl
+      << "        grid-template-columns: repeat(2 , 1fr);" << std::endl
+      << "        color: var(--body-c);" << std::endl
+      << "        margin-left: auto;" << std::endl
+      << "        margin-right: auto;" << std::endl
+      << "        margin-bottom: 10px;" << std::endl
+      << "        grid-gap: 0px 15px;" << std::endl
+      << "        width: fit-content;" << std::endl
+      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details-fullwidth {" << std::endl
+      << "        text-align: center;" << std::endl
+      << "        font-weight: bold;" << std::endl
+      << "        grid-column: 1 / 3;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << std::endl
+      << "        text-align: right;" << std::endl
+      << "        font-style: italic;" << std::endl
+      << "      }" << std::endl
+    << std::endl;
+  }
+
+  file << R"(
       .controls-wrapper {
         display: flex;
         justify-content: center;
@@ -1306,8 +1336,17 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     @media print {
       #menu {
         display: none;
-      }
+      })";
 
+    if (exportdetails)
+    {
+      file
+        << "      .export-details {"
+        << "        display: grid;"
+        << "      }" << std::endl;
+    }
+
+    file << R"(
       #theme {
         display: none;
       }

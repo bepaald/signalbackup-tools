@@ -22,7 +22,8 @@
 void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                                     std::map<long long int, RecipientInfo> *recipientinfo,
                                     long long int notetoself_tid [[maybe_unused]],
-                                    bool overwrite, bool append, bool light, bool themeswitching) const
+                                    bool overwrite, bool append, bool light, bool themeswitching,
+                                    std::string const &exportdetails) const
 {
   Logger::message("Writing calllog.html...");
 
@@ -107,6 +108,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
              << "    :root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl
              << "        /* " << (light ? "light" : "dark") << "*/" << std::endl
              << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl
+             << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --conversationlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --conversationlist-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
              << "        --conversationlist-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
@@ -122,6 +124,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       << "    :root[data-theme=\"" + (!light ? "light"s : "dark") + "\"] {" << std::endl
       << "        /* " << (!light ? "light" : "dark") << "*/" << std::endl
       << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl
+      << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --conversationlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --conversationlist-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
       << "        --conversationlist-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
@@ -135,6 +138,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        margin: 0px;" << std::endl
     << "        padding: 0px;" << std::endl
     << "        width: 100%;" << std::endl
+    << "        background-color: var(--body-bgc);" << std::endl
     << "      }" << std::endl
     << std::endl
     << "      #theme-switch {" << std::endl
@@ -149,7 +153,33 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        transition: color .2s, background-color .2s;" << std::endl
     << "        min-height: 100vh;" << std::endl
     << "      }" << std::endl
-    << std::endl
+    << std::endl;
+
+  if (!exportdetails.empty())
+    outputfile
+      << "      .export-details {" << std::endl
+      << "        display: none;" << std::endl
+      << "        grid-template-columns: repeat(2 , 1fr);" << std::endl
+      << "        color: var(--body-c);" << std::endl
+      << "        margin-left: auto;" << std::endl
+      << "        margin-right: auto;" << std::endl
+      << "        margin-bottom: 10px;" << std::endl
+      << "        grid-gap: 0px 15px;" << std::endl
+      << "        width: fit-content;" << std::endl
+      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details-fullwidth {" << std::endl
+      << "        text-align: center;" << std::endl
+      << "        font-weight: bold;" << std::endl
+      << "        grid-column: 1 / 3;" << std::endl
+      << "      }" << std::endl
+      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << std::endl
+      << "        text-align: right;" << std::endl
+      << "        font-style: italic;" << std::endl
+      << "      }" << std::endl
+    << std::endl;
+
+  outputfile
     << "      #menu {" << std::endl
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
@@ -430,7 +460,16 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "          print-color-adjust: exact;" << std::endl
     << "          flex-shrink: 0;" << std::endl
     << "        }" << std::endl
-    << std::endl
+    << std::endl;
+
+  if (!exportdetails.empty())
+    outputfile
+      << "        .export-details {"
+      << "          display: grid;"
+      << "        }" << std::endl
+      << std::endl;
+
+  outputfile
     << "        #menu {" << std::endl
     << "          display: none;" << std::endl
     << "        }" << std::endl
@@ -635,6 +674,9 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
   outputfile
     << "    </div>" << std::endl
     << "  </div>" << std::endl;
+
+  if (!exportdetails.empty())
+    outputfile << std::endl << exportdetails << std::endl;
 
   if (themeswitching)
   {
