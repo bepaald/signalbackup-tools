@@ -757,7 +757,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                      overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   if (searchpage)
-    HTMLwriteSearchpage(directory, lighttheme, themeswitching, exportdetails_html);
+    HTMLwriteSearchpage(directory, lighttheme, themeswitching);
 
   if (stickerpacks)
     HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);
