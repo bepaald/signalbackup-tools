@@ -156,7 +156,11 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   {
     // for each chat id that is personal_chat
     SqliteDB::QueryResults personal_chat_contacts;
-    if (!jsondb.d_database.exec("SELECT DISTINCT from_id,chatidx FROM messages WHERE type = 'message' AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')", &personal_chat_contacts))
+    if (!jsondb.d_database.exec("SELECT DISTINCT from_id, chatidx FROM messages "
+                                "WHERE type = 'message' "
+                                //"AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')",
+                                "AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat'" + (chatlist.empty() ? "" : "AND idx IN " + chatlist) + ")",
+                                &personal_chat_contacts))
       return false;
 
     //personal_chat_contacts.prettyPrint();
