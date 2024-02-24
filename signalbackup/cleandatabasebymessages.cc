@@ -174,7 +174,13 @@ void SignalBackup::cleanDatabaseByMessages()
       }
     }
 
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from reactions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+
     getGroupV1MigrationRecipients(&referenced_recipients);
+
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from gv1migration. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     // get (former)group members
     SqliteDB::QueryResults results;
@@ -202,16 +208,24 @@ void SignalBackup::cleanDatabaseByMessages()
         for (uint i = 0; i < results.rows(); ++i)
           referenced_recipients.insert(results.getValueAs<long long int>(i, "recipient_id"));
 
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from groupmemberships. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     // get recipients mentioned in group updates (by uuid)
     std::vector<long long int> mentioned_in_group_updates = getGroupUpdateRecipients();
     for (long long int id : mentioned_in_group_updates)
       referenced_recipients.insert(id);
 
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from mentions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+
     // get recipient_id of releasechannel
     for (auto const &kv : d_keyvalueframes)
       if (kv->key() == "releasechannel.recipient_id")
         referenced_recipients.insert(bepaald::toNumber<int>(kv->value()));
+
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from releasechannel. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     std::string referenced_recipients_query;
     if (!referenced_recipients.empty())
@@ -241,7 +255,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
                     //",COALESCE(NULLIF(system_display_name, ''), NULLIF(profile_joined_name, ''), NULLIF(signal_profile_name, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), recipient._id) AS 'display_name',phone" +
-                    (d_database.containsTable("distribution_list") ? ",distribution_list_id"s : ""s), &deleted_recipients);
+                    (d_database.containsTable("distribution_list") ? ",distribution_list_id"s : ""s), &deleted_recipients, d_verbose);
     if (deleted_recipients.rows())
     {
       //deleted_recipients.prettyPrint();
@@ -264,7 +278,6 @@ void SignalBackup::cleanDatabaseByMessages()
         d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
       }
     }
-
   }
 
   if (d_database.containsTable("notification_profile_allowed_members"))

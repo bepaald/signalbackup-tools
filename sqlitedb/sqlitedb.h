@@ -120,13 +120,13 @@ class SqliteDB
  public:
   inline bool ok() const;
   inline bool saveToFile(std::string const &filename) const;
-  inline bool exec(std::string const &q, QueryResults *results = nullptr) const;
-  inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr) const;
+  inline bool exec(std::string const &q, QueryResults *results = nullptr, bool verbose = false) const;
+  inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr, bool verbose = false) const;
 #if __cpp_lib_ranges >= 201911L && !defined(__clang__)
   template <typename R> requires std::ranges::input_range<R> && std::is_same<std::any, std::ranges::range_value_t<R>>::value
-  inline bool exec(std::string const &q, R &&params, QueryResults *results = nullptr) const;
+  inline bool exec(std::string const &q, R &&params, QueryResults *results = nullptr, bool verbose = false) const;
 #endif
-  inline bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr) const;
+  inline bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr, bool verbose = false) const;
   template <typename T>
   inline T getSingleResultAs(std::string const &q, T defaultval) const;
   template <typename T>
@@ -291,23 +291,26 @@ inline bool SqliteDB::saveToFile(std::string const &filename) const
   return true;
 }
 
-inline bool SqliteDB::exec(std::string const &q, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, QueryResults *results, bool verbose) const
 {
-  return exec(q, std::vector<std::any>(), results);
+  return exec(q, std::vector<std::any>(), results, verbose);
 }
 
-inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results, bool verbose) const
 {
-  return exec(q, std::vector<std::any>{param}, results);
+  return exec(q, std::vector<std::any>{param}, results, verbose);
 }
 
 #if __cpp_lib_ranges >= 201911L && !defined(__clang__)
 template <typename R> requires std::ranges::input_range<R> && std::is_same<std::any, std::ranges::range_value_t<R>>::value
-inline bool SqliteDB::exec(std::string const &q, R &&params, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, R &&params, QueryResults *results, bool verbose) const
 #else
-inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results, bool verbose) const
 #endif
 {
+  if (verbose) [[unlikely]]
+    Logger::message("Running query: \"", q, "\"");
+
   sqlite3_stmt *stmt;
   if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
   {
@@ -521,9 +524,9 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
 }
 
 #if __cpp_lib_ranges >= 201911L && !defined(__clang__)
-inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results) const
+inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results, bool verbose) const
 {
-  return exec(q, std::views::all(params), results);
+  return exec(q, std::views::all(params), results, verbose);
 }
 #endif
 
