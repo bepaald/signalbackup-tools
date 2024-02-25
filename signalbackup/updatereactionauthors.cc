@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -56,7 +56,7 @@ void SignalBackup::updateReactionAuthors(long long int id1, long long int id2) c
                           {std::make_pair(reactions.data(), static_cast<size_t>(reactions.size())),
                            results.getValueAs<long long int>(i, "_id")});
       }
-      if (d_verbose)
+      if (d_verbose) [[unlikely]]
         Logger::message("     Updated ", changedcount, " ", msgtable, ".reaction authors");
     }
   }

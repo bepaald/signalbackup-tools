@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -101,9 +101,9 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
     }
   }
 
-  // std::cout << "LIST OF FOUND UUIDS:" << std::endl;
-  // for (auto &uuid : uuids)
-  //   std::cout << uuid << std::endl;
+  //std::cout << "LIST OF FOUND UUIDS:" << std::endl;
+  //for (auto &uuid : uuids)
+  //  std::cout << uuid << std::endl;
 
   std::vector<long long int> ids;
 

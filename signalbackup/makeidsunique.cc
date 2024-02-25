@@ -122,6 +122,8 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
       //update (old-style)reaction authors
       source->updateReactionAuthors(offsetvalue);
+
+      source->updateAvatars(offsetvalue);
     }
 
     // compact table if requested

@@ -1341,8 +1341,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     if (exportdetails)
     {
       file
-        << "      .export-details {"
-        << "        display: grid;"
+        << "      .export-details {" << std::endl
+        << "        display: grid;" << std::endl
         << "      }" << std::endl;
     }
 

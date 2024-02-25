@@ -48,6 +48,7 @@ class AvatarFrame : public FrameWithAttachment
   inline virtual uint32_t attachmentSize() const override;
   inline std::string name() const;
   inline std::string recipient() const;
+  inline void setRecipient(std::string  const &r);
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
@@ -138,6 +139,26 @@ inline std::string AvatarFrame::recipient() const
     if (std::get<0>(p) == FIELD::RECIPIENT)
       return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
   return std::string();
+}
+
+inline void AvatarFrame::setRecipient(std::string const &r)
+{
+  unsigned char *temp = new unsigned char[r.length()];
+  std::memcpy(temp, r.c_str(), r.length());
+
+  for (auto &fd : d_framedata)
+    if (std::get<0>(fd) == FIELD::RECIPIENT)
+    {
+      // destroy old...
+      if (std::get<1>(fd))
+        delete[] std::get<1>(fd);
+
+      // set new
+      std::get<1>(fd) = temp;
+      std::get<2>(fd) = r.length();
+
+      break;
+    }
 }
 
 inline uint64_t AvatarFrame::dataSize() const

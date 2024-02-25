@@ -55,6 +55,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   updateGV1MigrationMessage(sourceid, targetid);
   updateGroupMembers(sourceid, targetid);
   updateReactionAuthors(sourceid, targetid);
+  updateAvatars(sourceid, targetid);
 }
 
 // // OLD VERSION

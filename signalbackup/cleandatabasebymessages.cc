@@ -173,12 +173,11 @@ void SignalBackup::cleanDatabaseByMessages()
           referenced_recipients.insert(reactions.getAuthor(j));
       }
     }
-
     if (d_verbose) [[unlikely]]
-      Logger::message("Got recipients from reactions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+      if (d_database.tableContainsColumn("sms", "reactions") || d_database.tableContainsColumn(d_mms_table, "reactions"))
+        Logger::message("Got recipients from reactions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     getGroupV1MigrationRecipients(&referenced_recipients);
-
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from gv1migration. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
@@ -207,7 +206,6 @@ void SignalBackup::cleanDatabaseByMessages()
       if (d_database.exec("SELECT DISTINCT recipient_id FROM group_membership", &results))
         for (uint i = 0; i < results.rows(); ++i)
           referenced_recipients.insert(results.getValueAs<long long int>(i, "recipient_id"));
-
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from groupmemberships. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
@@ -215,7 +213,6 @@ void SignalBackup::cleanDatabaseByMessages()
     std::vector<long long int> mentioned_in_group_updates = getGroupUpdateRecipients();
     for (long long int id : mentioned_in_group_updates)
       referenced_recipients.insert(id);
-
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from mentions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
@@ -254,7 +251,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
-                    //",COALESCE(NULLIF(system_display_name, ''), NULLIF(profile_joined_name, ''), NULLIF(signal_profile_name, ''), NULLIF(recipient.phone, ''), NULLIF(recipient.uuid, ''), recipient._id) AS 'display_name',phone" +
+                    //",COALESCE(NULLIF(" + d_recipient_system_joined_name + ", ''), NULLIF(profile_joined_name, ''), NULLIF(" + d_recipient_profile_given_name + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), recipient._id) AS 'display_name'," + d_recipient_e164 +
                     (d_database.containsTable("distribution_list") ? ",distribution_list_id"s : ""s), &deleted_recipients, d_verbose);
     if (deleted_recipients.rows())
     {

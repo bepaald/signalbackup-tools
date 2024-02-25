@@ -676,7 +676,6 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
     // even though the source was cropped to single thread, and this thread was not in target, avatar might still already be in target
     // because contact (and avatar) might be present in group in source, and only as one-on-one in target
-
     bool erased = true;
     while (erased)
     {

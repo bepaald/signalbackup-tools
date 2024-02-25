@@ -314,6 +314,7 @@ class SignalBackup
   void updateGroupMembers(long long int id1, long long int id2 = -1) const; // id2 == -1 -> id1 = offset, else transform 1 into 2
   void updateReactionAuthors(long long int id1, long long int id2 = -1) const; // idem.
   void updateGV1MigrationMessage(long long int id1, long long int id2 = -1) const; // idem.
+  void updateAvatars(long long int id1, long long int id2 = -1); // idem.
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;
