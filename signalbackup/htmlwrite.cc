@@ -186,9 +186,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       << "        margin-left: auto;" << std::endl
       << "        margin-right: auto;" << std::endl
       << "        margin-bottom: 10px;" << std::endl
+      << "        margin-top: 10px;" << std::endl
       << "        grid-gap: 0px 15px;" << std::endl
       << "        width: fit-content;" << std::endl
       << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
+      << "        break-inside: avoid;" << std::endl
       << "      }" << std::endl
       << "      .export-details-fullwidth {" << std::endl
       << "        text-align: center;" << std::endl
@@ -216,7 +218,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         flex-direction: column;
         align-items: center;
         width: calc(50% + 60px);
-        height: 100%;
       }
 
       #message-header {

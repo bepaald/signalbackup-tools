@@ -157,8 +157,11 @@ inline void AvatarFrame::setRecipient(std::string const &r)
       std::get<1>(fd) = temp;
       std::get<2>(fd) = r.length();
 
-      break;
+      return;
     }
+
+  // if we reach this, no field 'recipient' was found (should not happen)
+  [[unlikely]] delete[] temp;
 }
 
 inline uint64_t AvatarFrame::dataSize() const
