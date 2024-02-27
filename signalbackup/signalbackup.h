@@ -247,7 +247,7 @@ class SignalBackup
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
                   bool calllog, bool searchpage, bool stickerpacks, bool migrate, bool overwrite, bool append,
-                  bool theme, bool themeswitching, bool addexportdetails);
+                  bool theme, bool themeswitching, bool addexportdetails, bool blocked);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
@@ -395,14 +395,16 @@ class SignalBackup
                          std::map<long long int, RecipientInfo> *recipientinfo) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                       std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
-                      bool searchpage, bool overwrite, bool stickerpacks, bool append, bool light, bool themeswitching,
-                      std::string const &exportdetails) const;
+                      bool searchpage, bool overwrite, bool stickerpacks, bool blocked, bool append, bool light,
+                      bool themeswitching, std::string const &exportdetails) const;
   void HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const;
   void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                         std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid,
                         bool overwrite, bool append, bool light, bool themeswitching, std::string const &exportdetails) const;
   bool HTMLwriteStickerpacks(std::string const &dir, bool overwrite, bool append, bool light, bool themeswitching,
                              std::string const &exportdetails) const;
+  bool HTMLwriteBlockedlist(std::string const &dir, std::map<long long int, RecipientInfo> *recipientinfo,
+                            bool overwrite, bool append, bool light, bool themeswitching, std::string const &exportdetails) const;
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   std::string HTMLescapeString(std::string const &in) const;
   void HTMLescapeUrl(std::string *in) const;

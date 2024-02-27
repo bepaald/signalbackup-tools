@@ -151,7 +151,6 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
     << "        transition: color .2s, background-color .2s;" << std::endl
-    << "        min-height: 100vh;" << std::endl
     << "      }" << std::endl
     << std::endl;
 
@@ -315,9 +314,10 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
         long long int threadid = d_database.getSingleResultAs<long long int>("SELECT thread_id FROM " + d_mms_table + " WHERE _id = ?", results(i, "message_id"), -1);
         if (threadid == -1)
           continue;
-
         std::string avatar_path = (sanitizeFilename(getRecipientInfoFromMap(recipientinfo, peer).display_name + " (_id" + bepaald::toString(threadid) + ")"));
         bepaald::replaceAll(&avatar_path, '\"', R"(\")");
+
+        // actually write avatar! (it may not exist....)
 
         outputfile
           << "      .avatar-" << peer << " {" << std::endl

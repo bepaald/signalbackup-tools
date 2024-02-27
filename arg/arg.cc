@@ -96,6 +96,7 @@ Arg::Arg(int argc, char *argv[])
   d_exporthtml(std::string()),
   d_addexportdetails(bool()),
   d_includecalllog(false),
+  d_includeblockedlist(false),
   d_exporttxt(std::string()),
   d_append(false),
   d_split(1000),
@@ -1072,6 +1073,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-includecalllog")
     {
       d_includecalllog = false;
+      continue;
+    }
+    if (option == "--includeblockedlist")
+    {
+      d_includeblockedlist = true;
+      continue;
+    }
+    if (option == "--no-includeblockedlist")
+    {
+      d_includeblockedlist = false;
       continue;
     }
     if (option == "--exporttxt")

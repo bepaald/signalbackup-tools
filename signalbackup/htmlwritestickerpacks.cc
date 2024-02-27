@@ -133,7 +133,6 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        display: flex;" << std::endl
     << "        flex-direction: column;" << std::endl
     << "        transition: color .2s, background-color .2s;" << std::endl
-    << "        min-height: 100vh;" << std::endl
     << "      }" << std::endl
     << std::endl;
 

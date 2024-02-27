@@ -31,7 +31,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool calllog, bool searchpage, bool stickerpacks,
                               bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching,
-                              bool addexportdetails)
+                              bool addexportdetails, bool blocked)
 {
   bool databasemigrated = false;
   MemSqliteDB backup_database;
@@ -177,6 +177,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--split " + bepaald::toString(split);
     if (calllog)
       options += "<br>--includecalllog";
+    if (blocked)
+      options += "<br>--includeblockedlist";
+    if (addexportdetails)
+      options += "<br>--addexportdetails";
     if (searchpage)
       options += "<br>--searchpage";
     if (stickerpacks)
@@ -191,8 +195,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--light";
     if (themeswitching)
       options += "<br>--themeswitching";
-    if (addexportdetails)
-      options += "<br>--addexportdetails";
 
     SqliteDB::QueryResults res;
     d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS 'mindate', MAX(" + d_mms_table + ".date_received) AS 'maxdate' FROM " + d_mms_table, &res);
@@ -201,8 +203,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     exportdetails_html =
       "    <div class=\"export-details\">\n"
-      "      <div class=\"export-details-fullwidth\">Export details</div>\n"
-      "      <div class=\"export-details-fullwidth\"><hr></div>\n"
+      "      <div class=\"export-details-fullwidth\"><u>Export details</u></div>\n"
       "      <div>Exported by signalbackup-tools version:</div><div>"s + VERSIONDATE + "</div>\n"
       "      <div>Exported date:</div><div>" + bepaald::toDateString(now, "%Y-%m-%d %H:%M:%S") + "</div>\n"
       "      <div>Export options:</div><div>" + options + "</div>\n"
@@ -749,7 +750,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     calllog = false;
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
-                 calllog, searchpage, stickerpacks, overwrite, append, lighttheme,
+                 calllog, searchpage, stickerpacks, blocked, overwrite, append, lighttheme,
                  themeswitching, exportdetails_html);
 
   if (calllog)
@@ -761,6 +762,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
   if (stickerpacks)
     HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);
+
+  if (blocked)
+    HTMLwriteBlockedlist(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   Logger::message("All done!");
   if (databasemigrated)

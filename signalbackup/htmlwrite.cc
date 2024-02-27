@@ -173,12 +173,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: flex;
         flex-direction: row;
         transition: color .2s, background-color .2s;
-        min-height: 100vh;
       })";
 
   if (exportdetails)
   {
     file
+      << std::endl << std::endl
       << "      .export-details {" << std::endl
       << "        display: none;" << std::endl
       << "        grid-template-columns: repeat(2 , 1fr);" << std::endl
@@ -200,8 +200,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << std::endl
       << "        text-align: right;" << std::endl
       << "        font-style: italic;" << std::endl
-      << "      }" << std::endl
-    << std::endl;
+      << "      }" << std::endl;
   }
 
   file << R"(

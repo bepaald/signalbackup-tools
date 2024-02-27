@@ -21,23 +21,14 @@
 
 void SignalBackup::updateAvatars(long long int id1, long long int id2) // if id2 == -1, id1 is an offset
 {                                                                      // else, change id1 into id2
-
-  int changedcount = 0;
-  std::string id1str = bepaald::toString(id1);
-
   for (uint i = 0; i < d_avatars.size(); ++i)
   {
     int oldrid = bepaald::toNumber<int>(d_avatars[i].first);
 
     if (oldrid == id1 || id2 == -1)
     {
-      d_avatars[i].first = (id2 == -1 ? bepaald::toString(oldrid + id1) : bepaald::toString(id2));
+      d_avatars[i].first = bepaald::toString(id2 == -1 ? oldrid + id1 : id2);
       d_avatars[i].second->setRecipient(bepaald::toString(id2 == -1 ? oldrid + id1 : id2));
-      ++changedcount;
     }
   }
-
-  if (d_verbose) [[unlikely]]
-    Logger::message("     Updated ", changedcount, " avatar recipients.");
-
 }
