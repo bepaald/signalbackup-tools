@@ -21,7 +21,7 @@
 
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool overwrite,
+                                  bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool settings,  bool overwrite,
                                   bool append, bool light, bool themeswitching, std::string const &exportdetails) const
 {
 
@@ -52,7 +52,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   }
 
   int collapsiblemenu = 0;
-  for (auto const &o : {blocked, stickerpacks, calllog/*, settings*/})
+  for (auto const &o : {blocked, stickerpacks, calllog, settings})
     if (o)
       ++collapsiblemenu;
 
@@ -350,7 +350,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        margin-right: 5px;" << std::endl
     << "      }" << std::endl
     << std::endl;
-  if (calllog || stickerpacks || blocked)
+  if (calllog || stickerpacks || blocked || settings)
   {
     outputfile
       << "      #menu {" << std::endl
@@ -423,7 +423,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "      }" << std::endl
       << std::endl
       << "     .searchmenu:checked + .searchmenulabel + .expandedsearchmenu {" << std::endl
-      << "       max-height: 100px;" << std::endl
+      << "       max-height: 170px;" << std::endl
       << "       padding-top: 10px;" << std::endl
       << "       opacity: 100%;" << std::endl
       << "       transition: max-height .3s ease-out, padding .3s ease-out, opacity .15s ease-out;" << std::endl
@@ -503,7 +503,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   {
     outputfile
       << "      .blocked-icon {" << std::endl
-      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"-2 -1 29 29\" fill=\"white\" stroke=\"none\"><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"></path></svg>');" << std::endl
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"-2 -1 29 29\" fill=\"white\" stroke=\"white\"><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"></path></svg>');" << std::endl
       << "        filter: var(--icon-f);" << std::endl
       << "    }" << std::endl
       << std::endl;
@@ -514,6 +514,16 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     outputfile
       << "      .stickerpacks-icon {" << std::endl
       << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M21.2 5.072A5.55 5.55 0 0 0 18.928 2.8c-.977-.522-1.947-.8-4.62-.8H9.692c-2.673 0-3.643.278-4.62.8A5.55 5.55 0 0 0 2.8 5.072c-.522.977-.8 1.947-.8 4.62v4.616c0 2.673.278 3.643.8 4.62A5.55 5.55 0 0 0 5.072 21.2c1.118.567 2.363.837 3.616.785h.1a3 3 0 0 0 1.7-.53L20.734 14.4A3 3 0 0 0 22 11.949V9.692c0-2.673-.278-3.643-.8-4.62zM8.739 20.485a5.82 5.82 0 0 1-2.96-.608 4.02 4.02 0 0 1-1.656-1.656c-.365-.683-.623-1.363-.623-3.913V9.692c0-2.55.258-3.231.623-3.913a4.02 4.02 0 0 1 1.656-1.656c.683-.365 1.363-.623 3.913-.623h4.616c2.55 0 3.231.258 3.913.623a4.02 4.02 0 0 1 1.656 1.656c.365.683.623 1.363.623 3.913v2.257c-.002.101-.014.201-.036.3h-3.273c-2.8 0-3.872.3-4.975.89a6.17 6.17 0 0 0-2.575 2.575c-.575 1.074-.872 2.132-.888 4.769h-.014zm1.525-.7a6.63 6.63 0 0 1 .7-3.362 4.7 4.7 0 0 1 1.96-1.961c.755-.4 1.549-.712 4.268-.712h1.837z\"></path></svg>');" << std::endl
+      << "        filter: var(--icon-f);" << std::endl
+      << "    }" << std::endl
+      << std::endl;
+  }
+
+  if (settings)
+  {
+    outputfile
+      << "      .settings-icon {" << std::endl
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M12 8.5A3.5 3.5 0 1 1 8.5 12 3.5 3.5 0 0 1 12 8.5M12 7a5 5 0 1 0 5 5 5 5 0 0 0-5-5zm0-4.49a9.83 9.83 0 0 1 1.21.08l.21 2.49.91.33a5.72 5.72 0 0 1 .68.28l.88.42 1.91-1.62a9.23 9.23 0 0 1 1.71 1.71l-1.62 1.91.42.88a5.72 5.72 0 0 1 .28.68l.33.91 2.49.21a8.91 8.91 0 0 1 0 2.42l-2.49.21-.33.91a5.72 5.72 0 0 1-.28.68l-.42.88 1.62 1.91a9.23 9.23 0 0 1-1.71 1.71l-1.91-1.62-.88.42a5.72 5.72 0 0 1-.68.28l-.91.33-.21 2.49a9.19 9.19 0 0 1-2.42 0l-.21-2.49-.91-.33a5.72 5.72 0 0 1-.67-.28l-.88-.42-1.92 1.62a9.23 9.23 0 0 1-1.71-1.71l1.62-1.91-.42-.89a5.72 5.72 0 0 1-.28-.68l-.33-.91-2.49-.21a8.91 8.91 0 0 1 0-2.42l2.49-.21.33-.91A5.72 5.72 0 0 1 5.69 9l.42-.88L4.49 6.2A9.23 9.23 0 0 1 6.2 4.49l1.91 1.62.89-.42a5.72 5.72 0 0 1 .68-.28l.91-.33.21-2.49a9.83 9.83 0 0 1 1.2-.08h0M12 1a10.93 10.93 0 0 0-1.88.16 1 1 0 0 0-.79.9L9.17 4a7.64 7.64 0 0 0-.83.35L6.87 3.09a1 1 0 0 0-.66-.24 1 1 0 0 0-.54.15 11 11 0 0 0-2.62 2.62 1 1 0 0 0 0 1.25l1.29 1.47a7.64 7.64 0 0 0-.34.83l-1.92.16a1 1 0 0 0-.9.79 11 11 0 0 0 0 3.76 1 1 0 0 0 .9.79l1.92.16a7.64 7.64 0 0 0 .35.83l-1.26 1.47a1 1 0 0 0-.09 1.2A11 11 0 0 0 5.62 21a1 1 0 0 0 .61.19 1 1 0 0 0 .64-.23l1.47-1.25a7.64 7.64 0 0 0 .83.35l.16 1.92a1 1 0 0 0 .79.9A11.83 11.83 0 0 0 12 23a10.93 10.93 0 0 0 1.88-.16 1 1 0 0 0 .79-.9l.16-1.94a7.64 7.64 0 0 0 .83-.35l1.47 1.25a1 1 0 0 0 .66.24 1 1 0 0 0 .54-.16 11 11 0 0 0 2.67-2.6 1 1 0 0 0 0-1.25l-1.25-1.47a7.64 7.64 0 0 0 .35-.83l1.92-.16a1 1 0 0 0 .9-.79 11 11 0 0 0 0-3.76 1 1 0 0 0-.9-.79L20 9.17a7.64 7.64 0 0 0-.35-.83l1.25-1.47a1 1 0 0 0 .1-1.2 11 11 0 0 0-2.61-2.62 1 1 0 0 0-.61-.19 1 1 0 0 0-.64.23l-1.48 1.25a7.64 7.64 0 0 0-.83-.34l-.16-1.92a1 1 0 0 0-.79-.9A11.83 11.83 0 0 0 12 1z\"></path></svg>');" << std::endl
       << "        filter: var(--icon-f);" << std::endl
       << "    }" << std::endl
       << std::endl;
@@ -545,8 +555,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
 
   if (!exportdetails.empty())
     outputfile
-      << "        .export-details {"
-      << "          display: grid;"
+      << "        .export-details {" << std::endl
+      << "          display: grid;" << std::endl
       << "        }" << std::endl
       << std::endl;
 
@@ -738,7 +748,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << std::endl;
   }
 
-  if (calllog || stickerpacks || blocked)
+  if (calllog || stickerpacks || blocked || settings)
     outputfile
       << "    <div id=\"menu\">" << std::endl;
 
@@ -797,13 +807,28 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << std::endl;
   }
 
-  if (calllog && stickerpacks)
+  if (settings)
+  {
+    outputfile
+      << "      <a href=\"settings.html\">" << std::endl
+      << "        <div class=\"menu-item\">" << std::endl
+      << "          <div class=\"menu-icon settings-icon\">" << std::endl
+      << "          </div>" << std::endl
+      << "          <div>" << std::endl
+      << "            settings" << std::endl
+      << "          </div>" << std::endl
+      << "        </div>" << std::endl
+      << "      </a>" << std::endl
+      << std::endl;
+  }
+
+  if (collapsiblemenu > 1)
     outputfile
       << "             </div>" << std::endl
       << "           </div>" << std::endl
       << "         </div>" << std::endl;
 
-  if (calllog || stickerpacks)
+  if (calllog || stickerpacks || blocked || settings)
     outputfile
       << "    </div>" << std::endl;
 

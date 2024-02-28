@@ -356,8 +356,8 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
 
   if (!exportdetails.empty())
     outputfile
-      << "        .export-details {"
-      << "          display: grid;"
+      << "        .export-details {" << std::endl
+      << "          display: grid;" << std::endl
       << "        }" << std::endl
       << std::endl;
 

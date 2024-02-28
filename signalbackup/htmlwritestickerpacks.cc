@@ -452,8 +452,8 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
 
   if (!exportdetails.empty())
     stickerhtml
-      << "        .export-details {"
-      << "          display: grid;"
+      << "        .export-details {" << std::endl
+      << "          display: grid;" << std::endl
       << "        }" << std::endl
       << std::endl;
 

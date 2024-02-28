@@ -464,8 +464,8 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
 
   if (!exportdetails.empty())
     outputfile
-      << "        .export-details {"
-      << "          display: grid;"
+      << "        .export-details {" << std::endl
+      << "          display: grid;" << std::endl
       << "        }" << std::endl
       << std::endl;
 
