@@ -47,7 +47,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
                                   bool overwrite, bool append, bool light, bool themeswitch,
                                   bool searchpage, bool exportdetails) const
 {
-
   std::vector<long long int> groupmembers;
   if (isgroup)
   {

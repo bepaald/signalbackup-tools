@@ -265,7 +265,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
                     " ORDER BY date_received ASC", t, &messages);
     if (messages.rows() == 0)
+    {
+      if (d_verbose) [[unlikely]]
+        Logger::message("Thread appears empty. Skipping...");
       continue;
+    }
 
     // get all recipients in thread (group member (past and present), quote/reaction authors, mentions)
     std::set<long long int> all_recipients_ids = getAllThreadRecipients(t);
@@ -341,7 +345,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     // std::cout << "N MSG: " << messages.rows() << std::endl;
     // std::cout << "MAX PER PAGE: " << max_msg_per_page << std::endl;
     // std::cout << "N PAGES: " << totalpages << std::endl;
-
     unsigned int daterangeidx = 0;
 
     while (true)

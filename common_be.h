@@ -51,6 +51,12 @@
 #define DEBUGOUT(...)
 #endif
 
+#ifdef DEBUGISSUE
+#define DEBUGOUT2(...) bepaald::log("[DEBUG] : ", __VA_ARGS__);
+#else
+#define DEBUGOUT2(...)
+#endif
+
 #define STRLEN( STR ) (bepaald::strlitLength(STR))
 
 #if __cpp_lib_starts_ends_with >= 201711L
@@ -67,7 +73,7 @@ namespace bepaald
 {
   template <typename T>
   inline T swap_endian(T u);
-#ifdef DEBUG
+#if defined DEBUGMSG || DEBUGISSUE
   template<typename ...Args>
   inline void log(Args && ...args);
 #endif
@@ -170,7 +176,7 @@ inline T bepaald::swap_endian(T u)
 #endif
 }
 
-#ifdef DEBUG
+#if defined  DEBUGMSG || DEBUGISSUE
 template<typename ...Args>
 inline void bepaald::log(Args && ...args)
 {

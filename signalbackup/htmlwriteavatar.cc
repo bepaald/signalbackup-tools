@@ -59,6 +59,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
 
     // directory exists, now write avatar
     AvatarFrame *a = pos->second.get();
+
     std::ofstream avatarstream(directory + "/" + threaddir + "/" + avatar, std::ios_base::binary);
     if (!avatarstream.is_open())
     {

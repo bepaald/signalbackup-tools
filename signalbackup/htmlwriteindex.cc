@@ -51,10 +51,10 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       threadlist += ",";
   }
 
-  int collapsiblemenu = 0;
+  int menuitems = 0;
   for (auto const &o : {blocked, stickerpacks, calllog, settings})
     if (o)
-      ++collapsiblemenu;
+      ++menuitems;
 
   SqliteDB::QueryResults results;
   if (!d_database.exec("SELECT "
@@ -62,8 +62,10 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "thread." + d_thread_recipient_id + ", "
                        "thread.snippet, "
                        "thread.snippet_type, "
+                       "expires_in, "
                        "IFNULL(thread.date, 0) AS date, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
+                       "json_extract(thread.snippet_extras, '$.bodyRanges') AS 'snippet_ranges', "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        "recipient.group_id, "
@@ -82,7 +84,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
   //results.prettyPrint();
 
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  //outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F an d%T do not work on minGW
+  //outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F and %T do not work on minGW
   outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
              << " by signalbackup-tools (" << VERSIONDATE << "). "
              << "Input database version: " << d_databaseversion << ". -->" << std::endl
@@ -99,6 +101,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
              << "        --conversationlistheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --conversationlist-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
              << "        --conversationlist-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
+             << "        --spoiler-b: " << (light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl
              << "        --avatar-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl
              << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl
              << "        --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl
@@ -115,6 +118,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << "        --conversationlistheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --conversationlist-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl
       << "        --conversationlist-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
+      << "        --spoiler-b: " << (!light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl
       << "        --avatar-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << std::endl
       << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl
       << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl
@@ -326,6 +330,28 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "        text-overflow: ellipsis;" << std::endl
     << "      }" << std::endl
     << std::endl
+    << "      .monospace" << std::endl
+    << "      {" << std::endl
+    << "        font-family: 'Roboto Mono', 'Noto Mono', \"Liberation Mono\", OpenMono,  monospace;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .spoiler {" << std::endl
+    << "        transition: background .2s, filter .2s;" << std::endl
+    << "        filter: blur(5px) saturate(0%) contrast(0);" << std::endl
+    << "        background: var(--spoiler-b);" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .spoiler:hover," << std::endl
+    << "      .spoiler:active {" << std::endl
+    << "        background: transparent;" << std::endl
+    << "        filter: none;" << std::endl
+    << "        transition: background .2s, filter .2s;" << std::endl
+    << "      }" << std::endl
+    << std::endl
+    << "      .msg-emoji {" << std::endl
+    << "        font-family: \"Apple Color Emoji\", \"Noto Color Emoji\", sans-serif;" << std::endl
+    << "      }" << std::endl
+    << std::endl
     << "      .index-date {" << std::endl
     << "        position: relative;" << std::endl
     << "        display: flex;" << std::endl
@@ -390,7 +416,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "      }" << std::endl
     << std::endl;
 
-  if (collapsiblemenu > 1) // we need an expandable menu
+  if (menuitems > 1) // we need an expandable menu
   {
     outputfile
       << "       #searchmenu {" << std::endl
@@ -684,10 +710,17 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       groupsender = bepaald::toNumber<long long int>(results.valueAsString(i, "group_sender_id"));
 
     std::string snippet = results.valueAsString(i, "snippet");
-    HTMLescapeString(&snippet);
+    //HTMLescapeString(&snippet);
+    std::string snippet_ranges = results.valueAsString(i, "snippet_ranges");
+    if (!snippet_ranges.empty())
+    {
+      auto [data, length] = Base64::base64StringToBytes(snippet_ranges);
+      std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(data, length);
+      HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info, !Types::isOutgoing(snippet_type), brdata, false);
+    }
 
     if (Types::isStatusMessage(snippet_type))
-      snippet = "(status message)";
+      snippet = "(status message)"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
@@ -748,11 +781,11 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << std::endl;
   }
 
-  if (calllog || stickerpacks || blocked || settings)
+  if (menuitems > 0)
     outputfile
       << "    <div id=\"menu\">" << std::endl;
 
-  if (collapsiblemenu > 1)
+  if (menuitems > 1) // collapsible menu
     outputfile
       << "         <div class=\"menu-item\">" << std::endl
       << "           <div class=\"expandable-menu-item\">" << std::endl
@@ -822,13 +855,13 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
       << std::endl;
   }
 
-  if (collapsiblemenu > 1)
+  if (menuitems > 1) // collapsible menu closing tags
     outputfile
       << "             </div>" << std::endl
       << "           </div>" << std::endl
       << "         </div>" << std::endl;
 
-  if (calllog || stickerpacks || blocked || settings)
+  if (menuitems > 0)
     outputfile
       << "    </div>" << std::endl;
 

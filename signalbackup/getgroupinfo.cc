@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -44,6 +44,7 @@ message DecryptedGroup {
 }
 */
   DecryptedGroup group_info(groupdata);
+
   //group_info.print();
 
   // get announcementgroup
@@ -147,126 +148,143 @@ message AccessControl {
   //std::cout << "===" << std::endl << std::endl;
 
   // get members:
-  //std::cout << "=== MEMBERS:" << std::endl;
-  auto newmembers = group_info.getField<7>();
-  for (uint i = 0; i < newmembers.size(); ++i)
   {
-/*
-message DecryptedMember {
-  bytes       uuid             = 1;
-  Member.Role role             = 2;
-  bytes       profileKey       = 3;
-  uint32      joinedAtRevision = 5;
-  bytes       pni              = 6;
-}
-  enum Role {
-    UNKNOWN       = 0;
-    DEFAULT       = 1;
-    ADMINISTRATOR = 2;
-  }
-*/
-    // uuid
-    auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-    std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-    uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-
-    // role
-    long long int role [[maybe_unused]] = -1;
-    if (newmembers[i].getField<2>().has_value())
-      role = newmembers[i].getField<2>().value();
-
-    //std::cout << uuidstr << " (" << role << ")" << std::endl;
-
-    if (role == 2) // ADMIN
+    //std::cout << "=== MEMBERS:" << std::endl;
+    auto newmembers = group_info.getField<7>();
+    for (uint i = 0; i < newmembers.size(); ++i)
     {
-      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
-      if (id != -1)
-        groupinfo->admin_ids.push_back(id);
+      /*
+        message DecryptedMember {
+        bytes       uuid             = 1;
+        Member.Role role             = 2;
+        bytes       profileKey       = 3;
+        uint32      joinedAtRevision = 5;
+        bytes       pni              = 6;
+        }
+        enum Role {
+        UNKNOWN       = 0;
+        DEFAULT       = 1;
+        ADMINISTRATOR = 2;
+        }
+      */
+      // uuid
+      auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+      uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+      // role
+      long long int role [[maybe_unused]] = -1;
+      if (newmembers[i].getField<2>().has_value())
+        role = newmembers[i].getField<2>().value();
+
+      //std::cout << uuidstr << " (" << role << ")" << std::endl;
+
+      if (role == 2) // ADMIN
+      {
+        long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+        if (id != -1)
+          groupinfo->admin_ids.push_back(id);
+      }
     }
+    //std::cout << "===" << std::endl << std::endl;
   }
-  //std::cout << "===" << std::endl << std::endl;
+
+
 
   // get pending members:
-  //std::cout << "=== PENDING MEMBERS:" << std::endl;
-  auto pendingmembers = group_info.getField<8>();
-  for (uint i = 0; i < pendingmembers.size(); ++i)
   {
-/*
-message DecryptedPendingMember {
-  bytes       uuid           = 1;
-  Member.Role role           = 2;
-  bytes       addedByUuid    = 3;
-  uint64      timestamp      = 4;
-  bytes       uuidCipherText = 5;
-}
-*/
-    // uuid
-    auto [uuid, uuid_size] = pendingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-    std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-    uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+    //std::cout << "=== PENDING MEMBERS:" << std::endl;
+    auto pendingmembers = group_info.getField<8>();
+    for (uint i = 0; i < pendingmembers.size(); ++i)
+    {
+      /*
+        message DecryptedPendingMember {
+        bytes       uuid           = 1;
+        Member.Role role           = 2;
+        bytes       addedByUuid    = 3;
+        uint64      timestamp      = 4;
+        bytes       uuidCipherText = 5;
+        }
+      */
+      // uuid
+      auto [uuid, uuid_size] = pendingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+      uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-    // role
-    long long int role [[maybe_unused]] = -1;
-    if (newmembers[i].getField<2>().has_value())
-      role = newmembers[i].getField<2>().value();
+      // role
+      long long int role [[maybe_unused]] = -1;
+      if (pendingmembers[i].getField<2>().has_value())
+        role = pendingmembers[i].getField<2>().value();
 
-    long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
-    if (id != -1)
-      groupinfo->pending_members.push_back(id);
+      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+      if (id != -1)
+        groupinfo->pending_members.push_back(id);
 
-    //std::cout << uuidstr << " (" << role << ")" << std::endl;
+      //std::cout << uuidstr << " (" << role << ")" << std::endl;
+    }
+    //std::cout << "===" << std::endl << std::endl;
   }
-  //std::cout << "===" << std::endl << std::endl;
+
+
 
   // get requesting members:
-  //std::cout << "=== REQUESTING MEMBERS:" << std::endl;
-  auto requestingmembers = group_info.getField<9>();
-  for (uint i = 0; i < requestingmembers.size(); ++i)
   {
-/*
-message DecryptedRequestingMember {
-  bytes  uuid       = 1;
-  bytes  profileKey = 2;
-  uint64 timestamp  = 4;
-}
-*/
-    // uuid
-    auto [uuid, uuid_size] = requestingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-    std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-    uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+    //std::cout << "=== REQUESTING MEMBERS:" << std::endl;
+    auto requestingmembers = group_info.getField<9>();
+    for (uint i = 0; i < requestingmembers.size(); ++i)
+    {
+      /*
+        message DecryptedRequestingMember {
+        bytes  uuid       = 1;
+        bytes  profileKey = 2;
+        uint64 timestamp  = 4;
+        }
+      */
+      // uuid
+      auto [uuid, uuid_size] = requestingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+      uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-    long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
-    if (id != -1)
-      groupinfo->pending_members.push_back(id);
+      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+      if (id != -1)
+        groupinfo->requesting_members.push_back(id);
 
-    //std::cout << uuidstr << std::endl;
+      //std::cout << uuidstr << std::endl;
+    }
+    //std::cout << "===" << std::endl << std::endl;
   }
-  //std::cout << "===" << std::endl << std::endl;
+
+
 
 
   // get banned members:
-  //std::cout << "=== BANNED MEMBERS:" << std::endl;
-  auto bannedmembers = group_info.getField<13>();
-  for (uint i = 0; i < bannedmembers.size(); ++i)
   {
-/*
-message DecryptedBannedMember {
-  bytes  uuid      = 1;
-  uint64 timestamp = 2;
-}
-*/
-    // uuid
-    auto [uuid, uuid_size] = bannedmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-    std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-    uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+    //std::cout << "=== BANNED MEMBERS:" << std::endl;
+    auto bannedmembers = group_info.getField<13>();
+    for (uint i = 0; i < bannedmembers.size(); ++i)
+    {
+      /*
+        message DecryptedBannedMember {
+        bytes  uuid      = 1;
+        uint64 timestamp = 2;
+        }
+      */
+      // uuid
+      auto [uuid, uuid_size] = bannedmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+      uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-    long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
-    if (id != -1)
-      groupinfo->banned_members.push_back(id);
+      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+      if (id != -1)
+        groupinfo->banned_members.push_back(id);
 
-    //std::cout << uuidstr << std::endl;
+      //std::cout << uuidstr << std::endl;
+    }
+    //std::cout << "===" << std::endl << std::endl;
   }
-  //std::cout << "===" << std::endl << std::endl;
+
+
+
 
   // get description
   //std::cout << "=== DESCRIPTION:" << std::endl;
@@ -289,5 +307,4 @@ message DecryptedBannedMember {
       groupinfo->link_invite_enabled = true;
   }
   //std::cout << "===" << std::endl << std::endl;
-
 }
