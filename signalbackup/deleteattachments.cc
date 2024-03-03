@@ -137,6 +137,40 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
         }
         if (!prepend.empty())
         {
+          // update message ranges if present:
+          std::pair<std::shared_ptr<unsigned char []>, size_t> brdata =
+            d_database.getSingleResultAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>("SELECT message_ranges FROM " + d_mms_table + " WHERE LENGTH(message_ranges) != 0 AND _id = ?",
+                                                                                               res.getValueAs<long long int>(i, d_part_mid), {nullptr, 0});
+          if (brdata.second)
+          {
+            BodyRanges brsproto(brdata);
+            //brsproto.print();
+
+            BodyRanges new_bodyrange_vec;
+
+            auto bodyrange_vec = brsproto.getField<1>();
+            for (auto const &bodyrange : bodyrange_vec)
+            {
+              BodyRange new_bodyrange = bodyrange;
+              int start = new_bodyrange.getField<1>().value_or(-1);
+              if (start != -1) [[likely]]
+              {
+                new_bodyrange.deleteFields(1);
+                new_bodyrange.addField<1>(start + prepend.size() + 2); // plus two for the extra new lines
+                //new_bodyrange.print();
+              }
+              new_bodyrange_vec.addField<1>(new_bodyrange);
+            }
+
+            if (!d_database.exec("UPDATE " + d_mms_table + " SET message_ranges = ? WHERE _id = ?", {std::make_pair(new_bodyrange_vec.data(), static_cast<size_t>(new_bodyrange_vec.size())), res.getValueAs<long long int>(i, d_part_mid)}))
+              return false;
+          }
+
+          // update mentions if present
+          d_database.exec("UPDATE mention SET range_start = range_start + ? WHERE message_id = ?", {prepend.size() + 2, res.getValueAs<long long int>(i, d_part_mid)});
+          if (d_verbose) [[unlikely]]
+            Logger::message("Updated ", d_database.changed(), " mention to adjust for prependbody");
+
           if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
           if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, d_part_mid)}))

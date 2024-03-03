@@ -169,7 +169,7 @@ message AccessControl {
       */
       // uuid
       auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-      if (!uuid)
+      if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
@@ -210,7 +210,7 @@ message AccessControl {
       */
       // uuid
       auto [uuid, uuid_size] = pendingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-      if (!uuid)
+      if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
@@ -246,7 +246,7 @@ message AccessControl {
       */
       // uuid
       auto [uuid, uuid_size] = requestingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-      if (!uuid)
+      if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
@@ -277,7 +277,7 @@ message AccessControl {
       */
       // uuid
       auto [uuid, uuid_size] = bannedmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-      if (!uuid)
+      if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
