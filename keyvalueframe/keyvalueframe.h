@@ -53,6 +53,7 @@ class KeyValueFrame : public BackupFrame
   inline unsigned int getField(std::string const &str) const;
   inline std::string key() const;
   inline std::string value() const;
+  inline std::string valueType() const;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -278,6 +279,28 @@ inline std::string KeyValueFrame::value() const
 
     if (std::get<0>(p) == FIELD::BOOLEANVALUE)
       return (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s);
+  }
+  return std::string();
+}
+
+inline std::string KeyValueFrame::valueType() const
+{
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::STRINGVALUE)
+      return "STRING";
+
+    if (std::get<0>(p) == FIELD::INTEGERVALUE || std::get<0>(p) == FIELD::LONGVALUE)
+      return "INTEGER";
+
+    if (std::get<0>(p) == FIELD::BLOBVALUE)
+      return "BLOB";
+
+    if (std::get<0>(p) == FIELD::FLOATVALUE)
+      return "FLOAT";
+
+    if (std::get<0>(p) == FIELD::BOOLEANVALUE)
+      return "BOOL";
   }
   return std::string();
 }

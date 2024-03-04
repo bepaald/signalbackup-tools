@@ -111,7 +111,19 @@ R"*(
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
                                          to switch the theme between light and dark. This adds a bit of
                                          javascript to the page, and sets a cookie when switching.
+   --searchpage                          Optional modifier for `--exporthtml'. Generates a page from where
+                                         conversations can be searched. This adds javascript to the page.
+                                         Also, a search index is generated to facilitate searching.
    --includecalllog                      Optional modifier for `--exporthtml'. Generate a call log-page.
+   --stickerpacks                        Optional modifier for `--exporthtml'. Generate an overview of
+                                         installed and known stickerpacks.
+   --includeblockedlist                  Optional modifier for `--exporthtml'. Generate an overview of
+                                         blocked contacts in the database.)*"
+//   --includesettings                     Optional modifier for `--exporthtml'. Generate a page showing
+//                                         settings found in the backup file.
+R"*(
+   --addexportdetails                    Optional modifier for `--exporthtml'. Adds some metadata about this
+                                         tools and the backup to the pages when printing.
 --exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
                                          "tablename1=filename1,tablename2=filename2(,...)"
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.

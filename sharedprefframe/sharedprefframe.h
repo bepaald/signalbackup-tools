@@ -49,6 +49,9 @@ class SharedPrefFrame : public BackupFrame
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
+  inline std::string key() const;
+  inline std::string value() const;
+  inline std::string valueType() const;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -242,6 +245,46 @@ inline unsigned int SharedPrefFrame::getField(std::string const &str) const
   if (str == "ISSTRINGSETVALUE")
     return FIELD::ISSTRINGSETVALUE;
   return FIELD::INVALID;
+}
+
+
+inline std::string SharedPrefFrame::key() const
+{
+  for (auto const &p : d_framedata)
+    if (std::get<0>(p) == FIELD::KEY)
+      return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
+  return std::string();
+}
+
+inline std::string SharedPrefFrame::value() const
+{
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::VALUE) // string
+      return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
+
+    if (std::get<0>(p) == FIELD::BOOLEANVALUE)
+      return (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s);
+  }
+  Logger::warning("Currently unsupported value type requested from SharedPrefrenceFrame");
+  return std::string();
+}
+
+inline std::string SharedPrefFrame::valueType() const
+{
+  for (auto const &p : d_framedata)
+  {
+    if (std::get<0>(p) == FIELD::VALUE)
+      return "STRING";
+
+    if (std::get<0>(p) == FIELD::BOOLEANVALUE)
+      return "BOOL";
+
+    if (std::get<0>(p) == FIELD::STRINGSETVALUE)
+      return "STRINGSET";
+  }
+  Logger::warning("Currently unsupported value type requested from SharedPrefrenceFrame");
+  return std::string();
 }
 
 #endif
