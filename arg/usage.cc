@@ -236,7 +236,12 @@ be removed.
 --mergerecipients <OLDNUMBER,NEWNUMBER>       Can be used to change a contacts number (for example when
                                               they get a new phone). Messages from OLDNUMBER are changed
                                               so they appear as coming from NEWNUMBER, and the threads
-                                              are merged.)*";
+                                              are merged.
+--migrate214to215                             Migrate a v214 database to v215. Changes in the database
+                                              prevent v214 and v215 from being compatible for merging. This
+                                              function attempts to migrate the older database and so it can
+                                              can be used as a source for `--importthreads'. See also
+                                              https://github.com/bepaald/signalbackup-tools/issues/184)*";
    // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
    //                                            groups members from OLDNUMBER to NEWNUMBER. Might not
    //                                            always be wanted if the NEWNUMBER was already added to the

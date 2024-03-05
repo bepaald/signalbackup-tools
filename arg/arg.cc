@@ -1371,9 +1371,10 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--custom_hugogithubs")
+    if (option == "--custom_hugogithubs" || option == "--migrate214to215")
     {
       d_custom_hugogithubs = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-custom_hugogithubs")
