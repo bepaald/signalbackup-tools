@@ -176,7 +176,7 @@ inline T bepaald::swap_endian(T u)
 #endif
 }
 
-#if defined  DEBUGMSG || DEBUGISSUE
+#if defined DEBUGMSG || DEBUGISSUE
 template<typename ...Args>
 inline void bepaald::log(Args && ...args)
 {

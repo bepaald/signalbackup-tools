@@ -578,13 +578,13 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
     return true;
 
   std::string::size_type pos = line.find(":", 0);
-  if (pos == std::string::npos)
+  if (pos == std::string::npos) [[unlikely]]
   {
     Logger::error("Failed to read frame data line '", line, "'");
     return false;
   }
   unsigned int field = (*newframe)->getField(line.substr(0, pos));
-  if (!field)
+  if (!field) [[unlikely]]
   {
     Logger::error("Failed to get field number");
     return false;
@@ -592,7 +592,7 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
 
   ++pos;
   std::string::size_type pos2 = line.find(":", pos);
-  if (pos2 == std::string::npos)
+  if (pos2 == std::string::npos) [[unlikely]]
   {
     Logger::error("Failed to read frame data from line '", line, "'");
     return false;
@@ -603,36 +603,41 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   if (type == "bytes")
   {
     std::pair<unsigned char *, size_t> decdata = Base64::base64StringToBytes(datastr);
-    if (!decdata.first)
+    if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
   }
   else if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
   {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
     std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
-    if (!decdata.first)
+    if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
   }
   else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
   {                                            // (on windows stol would be four bytes and the above if-clause would cause bad data
     std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoll(datastr)));
-    if (!decdata.first)
+    if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
   }
   else if (type == "float") // due to possible precision problems, the 4 bytes of float are saved in binary format (base64 encoded)
   {                         // WARNING untested
     std::pair<unsigned char *, size_t> decfloat = Base64::base64StringToBytes(datastr);
-    if (!decfloat.first || decfloat.second != 4)
+    if (!decfloat.first) [[unlikely]]
       return false;
+    if (decfloat.second != 4) [[unlikely]]
+    {
+      delete[] decfloat.first;
+      return false;
+    }
     (*newframe)->setNewData(field, decfloat.first, decfloat.second);
   }
   else if (type == "bool") // since booleans are stored as varints, this is identical to uint64/32 code
   {
     std::string val = (datastr == "true") ? "1" : "0";
     std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(val)));
-    if (!decdata.first)
+    if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
   }

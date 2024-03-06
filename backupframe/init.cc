@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -46,7 +46,6 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
           return false;
         unsigned char *fielddata = new unsigned char[length];
         std::memcpy(fielddata, data + processed, length);
-        //DEBUGOUT("FIELDNUMB: ", fieldnumber);
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, length));
         framedata->push_back(std::make_tuple(fieldnumber, fielddata, length));
         processed += length; // up to length was eaten
@@ -64,7 +63,6 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
         //DEBUGOUT("Got varint: ", val);
         unsigned char *fielddata = new unsigned char[sizeof(decltype(val))];
         std::memcpy(fielddata, reinterpret_cast<unsigned char *>(&val), sizeof(decltype(val)));
-        //DEBUGOUT("FIELDNUMB: ", fieldnumber);
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, sizeof(decltype(val))));
 
         // this used to say sizeof(sizeof(decltype(val))), I assumed it was a mistake
@@ -88,7 +86,6 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
           return false;
         unsigned char *fielddata = new unsigned char[length];
         std::memcpy(fielddata, data + processed, length);
-        //DEBUGOUT("FIELDNUMB: ", fieldnumber);
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, length));
         framedata->push_back(std::make_tuple(fieldnumber, fielddata, length));
         processed += length;

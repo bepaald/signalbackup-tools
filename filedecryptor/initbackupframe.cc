@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -37,7 +37,8 @@ BackupFrame *FileDecryptor::initBackupFrame(unsigned char *data, size_t length, 
   unsigned int offset = 1;
   int64_t datalength = BackupFrame::getLength(data, &offset, length);
 
-  DEBUGOUT("*** FIELDNUMBER: ", fieldnum);
+  DEBUGOUT("*** FRAMEDATA: ", bepaald::bytesToHexString(data, length));
+  DEBUGOUT("FIELDNUMBER: ", fieldnum);
   DEBUGOUT("DATALENGTH: ", datalength);
   DEBUGOUT("OFFSET: ", offset);
 

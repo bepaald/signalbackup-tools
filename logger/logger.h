@@ -179,7 +179,7 @@ inline Logger::~Logger()
     if (d_strstreambackend->tellp() != 0)
     {
       if (d_file)
-        (*d_file) << s_instance->d_strstreambackend->str();
+        (*d_file) << d_strstreambackend->str();
       d_strstreambackend->str("");
       d_strstreambackend->clear();
     }

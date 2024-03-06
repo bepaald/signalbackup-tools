@@ -103,7 +103,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 
   //std::cout << "LIST OF FOUND UUIDS:" << std::endl;
   //for (auto &uuid : uuids)
-  //  std::cout << uuid << std::endl;
+  //  std::cout << uuid << " (" << uuid.length() << ")" << std::endl;
 
   std::vector<long long int> ids;
 
@@ -117,6 +117,9 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
     for (std::string uuid : uuids)
 #endif
     {
+      if (uuid.length() < 32) [[unlikely]]
+        continue;
+
       if (pos > 0)
         q += ", ";
 

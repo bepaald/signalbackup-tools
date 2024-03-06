@@ -400,19 +400,8 @@ inline uint64_t BackupFrame::frameNumber() const
 template <typename T>
 inline void BackupFrame::intTypeToBytes(T val, unsigned char *b)
 {
-  int x = 4;
-  unsigned char t[sizeof(int)];
-  std::copy(static_cast<unsigned char*>(static_cast<void*>(&x)),
-            static_cast<unsigned char*>(static_cast<void*>(&x)) + sizeof(int),
-            t);
-  DEBUGOUT("WRODKS? ", bepaald::bytesToHexString(t, sizeof(int)));
-  DEBUGOUT("WROWR   ", bytesToUint32(t, sizeof(decltype(t))));
-
   for (size_t i = 0; i < sizeof(T); ++i)
-    b[i] = (val >> ((sizeof(T) - i) * 8));
-
-  DEBUGOUT("GOT: ", val);
-  DEBUGOUT("GOT: ", bepaald::bytesToHexString(b, sizeof(T)));
+    b[i] = (val >> ((sizeof(T) - (i + 1)) * 8)); // this may have a swap_endian builtin?
 }
 
 inline uint32_t BackupFrame::attachmentSize() const
