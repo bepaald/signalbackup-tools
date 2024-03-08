@@ -50,7 +50,7 @@ class SharedPrefFrame : public BackupFrame
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
   inline std::string key() const;
-  inline std::string value() const;
+  inline std::vector<std::string> value() const;
   inline std::string valueType() const;
  private:
   inline uint64_t dataSize() const override;
@@ -128,8 +128,8 @@ inline uint64_t SharedPrefFrame::dataSize() const
       case FIELD::BOOLEANVALUE:
       case FIELD::ISSTRINGSETVALUE:
       {
-        uint64_t value = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
-        size += varIntSize(value);
+        uint64_t val = bytesToInt64(std::get<1>(fd), std::get<2>(fd));
+        size += varIntSize(val);
         size += 1; // for fieldtype + wiretype
         break;
       }
@@ -256,18 +256,27 @@ inline std::string SharedPrefFrame::key() const
   return std::string();
 }
 
-inline std::string SharedPrefFrame::value() const
+inline std::vector<std::string> SharedPrefFrame::value() const
 {
+  std::vector<std::string> ret;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::VALUE) // string
-      return bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
+    {
+      ret.push_back(bepaald::bytesToString(std::get<1>(p), std::get<2>(p)));
+      break;
+    }
 
     if (std::get<0>(p) == FIELD::BOOLEANVALUE)
-      return (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s);
+    {
+      ret.emplace_back((bytesToInt64(std::get<1>(p), std::get<2>(p)) ? "true"s : "false"s));
+      break;
+    }
+
+    if (std::get<0>(p) == FIELD::STRINGSETVALUE)
+      ret.emplace_back(bepaald::bytesToString(std::get<1>(p), std::get<2>(p)));
   }
-  Logger::warning("Currently unsupported value type requested from SharedPrefrenceFrame");
-  return std::string();
+  return ret;
 }
 
 inline std::string SharedPrefFrame::valueType() const
@@ -282,6 +291,10 @@ inline std::string SharedPrefFrame::valueType() const
 
     if (std::get<0>(p) == FIELD::STRINGSETVALUE)
       return "STRINGSET";
+
+    if (std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
+      if (bytesToInt64(std::get<1>(p), std::get<2>(p)) == true)
+        return "STRINGSET";
   }
   Logger::warning("Currently unsupported value type requested from SharedPrefrenceFrame");
   return std::string();

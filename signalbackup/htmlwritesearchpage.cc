@@ -96,34 +96,34 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
 
 )";
 
-  outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
-  outputfile << "  /* " << (light ? "light" : "dark") << " */" << std::endl;
-  outputfile << "  --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl;
-  outputfile << "  --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  outputfile << "  --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-  outputfile << "  --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  outputfile << "  --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << std::endl;
-  outputfile << "  --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
-  outputfile << "  --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl;
-  outputfile << "  --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  outputfile << "  --msg-incoming-bc-hover: " << (light ? "#F9FEFF;" : "#46474A;") << std::endl;
-  outputfile << "}" << std::endl;
-  outputfile << std::endl;
+  outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << '\n';
+  outputfile << "  /* " << (light ? "light" : "dark") << " */" << '\n';
+  outputfile << "  --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << '\n';
+  outputfile << "  --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  outputfile << "  --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
+  outputfile << "  --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  outputfile << "  --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << '\n';
+  outputfile << "  --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
+  outputfile << "  --icon-f: " << (light ? "brightness(0);" : "none;") << '\n';
+  outputfile << "  --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  outputfile << "  --msg-incoming-bc-hover: " << (light ? "#F9FEFF;" : "#46474A;") << '\n';
+  outputfile << "}" << '\n';
+  outputfile << '\n';
   if (themeswitching)
   {
-    outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
-    outputfile << "  /* " << (!light ? "light" : "dark") << " */" << std::endl;
-    outputfile << "  --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl;
-    outputfile << "  --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    outputfile << "  --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-    outputfile << "  --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    outputfile << "  --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << std::endl;
-    outputfile << "  --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
-    outputfile << "  --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl;
-    outputfile << "  --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    outputfile << "  --msg-incoming-bc-hover: " << (!light ? "#F9FEFF;" : "#46474A;") << std::endl;
-    outputfile << "}" << std::endl;
-    outputfile << std::endl;
+    outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {" << '\n';
+    outputfile << "  /* " << (!light ? "light" : "dark") << " */" << '\n';
+    outputfile << "  --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << '\n';
+    outputfile << "  --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    outputfile << "  --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
+    outputfile << "  --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    outputfile << "  --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << '\n';
+    outputfile << "  --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
+    outputfile << "  --icon-f: " << (!light ? "brightness(0);" : "none;") << '\n';
+    outputfile << "  --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    outputfile << "  --msg-incoming-bc-hover: " << (!light ? "#F9FEFF;" : "#46474A;") << '\n';
+    outputfile << "}" << '\n';
+    outputfile << '\n';
   }
   outputfile << R"(
 body {
@@ -420,7 +420,7 @@ body {
     </style>
   </head>
 
-  <body>)" << std::endl;
+  <body>)" << '\n';
 
   if (themeswitching)
   {

@@ -307,7 +307,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {
         std::string statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
-        txtoutput << "[" << readable_date << "] " << "***" << " " << statusmsg <<  std::endl;
+        txtoutput << "[" << readable_date << "] " << "***" << " " << statusmsg <<  '\n';
       }
       else
       {
@@ -327,7 +327,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                     << (attachment_filename.empty() ? "" : " " + attachment_filename);
           if (body.empty())
             TXTaddReactions(&reaction_results, &txtoutput);
-          txtoutput << std::endl;
+          txtoutput << '\n';
         }
         if (!body.empty())
         {
@@ -349,7 +349,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
           txtoutput << "[" << readable_date << "] <" << user << "> " << body;
           TXTaddReactions(&reaction_results, &txtoutput);
-          txtoutput << std::endl;
+          txtoutput << '\n';
         }
       }
     }

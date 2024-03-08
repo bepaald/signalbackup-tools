@@ -467,8 +467,8 @@ inline uint64_t BackupFrame::varIntSize(uint64_t value) const
 
 inline uint64_t BackupFrame::setFieldAndWire(unsigned int field, unsigned int type, unsigned char *mem) const
 {
-  mem[0] = 0x00 | (field << 3);
-  mem[0] |= (type);
+  mem[0] = (field << 3);
+  mem[0] |= type;
   return 1;
 }
 

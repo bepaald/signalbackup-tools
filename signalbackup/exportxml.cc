@@ -184,7 +184,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
              << "read=\"" << read << "\" "
              << "status=\"" << status << "\" "
              << "locked=\"" << 0 << "\" "
-             << "/>" << std::endl;
+             << "/>" << '\n';
 }
 
 void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const
@@ -442,7 +442,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
              << "retr_txt_cs=\"" << retr_txt_cs << "\" "
              << "resp_txt=\"" << resp_txt << "\" "
              << "resp_st=\"" << resp_st << "\" "
-             << "text_only=\"" << text_only << "\">" << std::endl;
+             << "text_only=\"" << text_only << "\">" << '\n';
   // << "=\"" <<  << "\" "
 
   /* PART */
@@ -482,7 +482,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     escapeXmlString(&text);
   }
 
-  outputfile << "    <parts>" << std::endl;
+  outputfile << "    <parts>" << '\n';
 
   if (!text.empty())
   {
@@ -498,7 +498,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                << "ctt_s=\"null\" "
                << "ctt_t=\"null\" "
                << "text=\"" << text << "\" " // maybe this string needs to be escaped?
-               << "></part>" << std::endl;
+               << "></part>" << '\n';
   }
 
 
@@ -565,16 +565,16 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (!keepattachmentdatainmemory)
         attachment->second.get()->clearData();
     }
-    outputfile << "></part>" << std::endl;
+    outputfile << "></part>" << '\n';
   }
-  outputfile << "    </parts>" << std::endl;
+  outputfile << "    </parts>" << '\n';
 
   // ADDR
 
-  outputfile << "    <addrs>" << std::endl;
+  outputfile << "    <addrs>" << '\n';
   // 1-on-1 chat -> get conversation partners phone: <addr address="[PHONE]" type="151(outgoing)/137(incoming)" charset="106" />
   if (!isgroup)
-    outputfile << "      <addr address=\"" << address << "\" type=\"" << ((msg_box == 1) ? "137" : "151") << "\" charset=\"106\" />" << std::endl;
+    outputfile << "      <addr address=\"" << address << "\" type=\"" << ((msg_box == 1) ? "137" : "151") << "\" charset=\"106\" />" << '\n';
   // group chat -> for each phone number: above. Mark sender with 137, all others 151
   else
   {
@@ -594,12 +594,12 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       }
 
       outputfile << "      <addr address=\"" << mp << "\" type=\""
-                 << ((mp == sender) ? "137" : "151") << "\" charset=\"106\" />" << std::endl;
+                 << ((mp == sender) ? "137" : "151") << "\" charset=\"106\" />" << '\n';
     }
   }
-  outputfile << "    </addrs>" << std::endl;
+  outputfile << "    </addrs>" << '\n';
 
-  outputfile << "  </mms>" << std::endl;
+  outputfile << "  </mms>" << '\n';
 
 }
 
@@ -642,8 +642,8 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
 
   // output header
   std::ofstream outputfile(filename, std::ios_base::binary);
-  outputfile << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" << std::endl;
-  outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << std::endl;
+  outputfile << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" << '\n';
+  outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << '\n';
 
   SqliteDB::QueryResults sms_results;
   if (d_database.containsTable("sms"))
@@ -692,7 +692,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
 
   std::string date;
   outputfile << "<smses count=\"" << bepaald::toString(sms_results.rows() + mms_results.rows())
-             << "\" backup_date=\"" << date << "\" type=\"full\">" << std::endl;
+             << "\" backup_date=\"" << date << "\" type=\"full\">" << '\n';
   uint sms_row = 0;
   uint mms_row = 0;
   while (sms_row < sms_results.rows() ||
@@ -709,7 +709,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     //std::cout << "Handled row! Indices now: " << sms_row << "/" << sms_results.rows() << " " << mms_row << "/" << mms_results.rows() << std::endl;
   }
 
-  outputfile << "</smses>" << std::endl;
+  outputfile << "</smses>" << '\n';
 
   return true;
 }

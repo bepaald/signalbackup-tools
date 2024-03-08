@@ -87,72 +87,72 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     <title>)" << title << R"(</title>
     <style>)" << std::endl;
 
-  file << "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << std::endl;
-  file << "        /* " << (light ? "light" : "dark") << " */" << std::endl;
-  file << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << std::endl;
-  file << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-  file << "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << std::endl;
-  file << "        --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
-  file << "        --spoilerout-b: " << (light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
-  file << "        --spoilerin-b: " << (light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
-  file << "        --deletedmsg-border: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --deletedmsg-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --nobgbubble-footer-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --nobgbubble-checkmarks-f: " << (light ? "brightness(0);" : "none;") << std::endl;
-  file << "        --mentionin-bc: " << (light ? "#C6C6C6;" : "#5E5E5E;") << std::endl;
-  file << "        --msgreaction-bc: " << (light ? "#E7EBF3;" : "#303133;") << std::endl;
-  file << "        --msgreaction-border: " << (light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-  file << "        --msgreaction-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;": "#505050;") << std::endl;
-  file << "        --reactioncount-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --incominglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << std::endl;
-  file << "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << std::endl;
-  file << "        --icon-f: " << (light ? "brightness(0);" : "none;") << std::endl;
-  file << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << std::endl;
-  file << "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << std::endl;
-  file << "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << std::endl;
-  file << "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << std::endl;
-  file << "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << std::endl;
-  file << "      }" << std::endl;
-  file << std::endl;
+  file << "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << '\n';
+  file << "        /* " << (light ? "light" : "dark") << " */" << '\n';
+  file << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << '\n';
+  file << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
+  file << "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << '\n';
+  file << "        --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
+  file << "        --spoilerout-b: " << (light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
+  file << "        --spoilerin-b: " << (light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
+  file << "        --deletedmsg-border: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --deletedmsg-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --nobgbubble-footer-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --nobgbubble-checkmarks-f: " << (light ? "brightness(0);" : "none;") << '\n';
+  file << "        --mentionin-bc: " << (light ? "#C6C6C6;" : "#5E5E5E;") << '\n';
+  file << "        --msgreaction-bc: " << (light ? "#E7EBF3;" : "#303133;") << '\n';
+  file << "        --msgreaction-border: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
+  file << "        --msgreaction-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;": "#505050;") << '\n';
+  file << "        --reactioncount-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --incominglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << '\n';
+  file << "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << '\n';
+  file << "        --icon-f: " << (light ? "brightness(0);" : "none;") << '\n';
+  file << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
+  file << "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << '\n';
+  file << "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << '\n';
+  file << "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << '\n';
+  file << "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << '\n';
+  file << "      }" << '\n';
+  file << '\n';
 
   if (themeswitch)
   {
-    file << "      :root[data-theme=\"" << (!light ? "light" : "dark") << "\"] {" << std::endl;
-    file << "        /* " << (!light ? "light" : "dark") << " */" << std::endl;
-    file << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << std::endl;
-    file << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-    //file << "        --conversationbox-bc: " << (!light ? (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light.empty() ? "#FBFCFF;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light + ";") : (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark.empty() ? "#1B1C1F;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark + ";")) << std::endl;
-    file << "        --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << std::endl;
-    file << "        --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << std::endl;
-    file << "        --spoilerout-b: " << (!light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
-    file << "        --spoilerin-b: " << (!light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << std::endl;
-    file << "        --deletedmsg-border: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --deletedmsg-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --nobgbubble-footer-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --nobgbubble-checkmarks-f: " << (!light ? "brightness(0);" : "none;") << std::endl;
-    file << "        --mentionin-bc: " << (!light ? "#C6C6C6;" : "#5E5E5E;") << std::endl;
-    file << "        --msgreaction-bc: " << (!light ? "#E7EBF3;" : "#303133;") << std::endl;
-    file << "        --msgreaction-border: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << std::endl;
-    file << "        --msgreaction-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;": "#505050;") << std::endl;
-    file << "        --reactioncount-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --incominglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << std::endl;
-    file << "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << std::endl;
-    file << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << std::endl;
-    file << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << std::endl;
-    file << "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << std::endl;
-    file << "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << std::endl;
-    file << "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << std::endl;
-    file << "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << std::endl;
+    file << "      :root[data-theme=\"" << (!light ? "light" : "dark") << "\"] {" << '\n';
+    file << "        /* " << (!light ? "light" : "dark") << " */" << '\n';
+    file << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << '\n';
+    file << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
+    //file << "        --conversationbox-bc: " << (!light ? (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light.empty() ? "#FBFCFF;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light + ";") : (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark.empty() ? "#1B1C1F;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark + ";")) << '\n';
+    file << "        --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << '\n';
+    file << "        --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
+    file << "        --spoilerout-b: " << (!light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
+    file << "        --spoilerin-b: " << (!light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
+    file << "        --deletedmsg-border: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --deletedmsg-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --nobgbubble-footer-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --nobgbubble-checkmarks-f: " << (!light ? "brightness(0);" : "none;") << '\n';
+    file << "        --mentionin-bc: " << (!light ? "#C6C6C6;" : "#5E5E5E;") << '\n';
+    file << "        --msgreaction-bc: " << (!light ? "#E7EBF3;" : "#303133;") << '\n';
+    file << "        --msgreaction-border: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
+    file << "        --msgreaction-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;": "#505050;") << '\n';
+    file << "        --reactioncount-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --incominglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << '\n';
+    file << "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << '\n';
+    file << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << '\n';
+    file << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
+    file << "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << '\n';
+    file << "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << '\n';
+    file << "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << '\n';
+    file << "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << '\n';
     file << "      }";
-    file << std::endl;
+    file << '\n';
   }
 
   file << R"(      body {
@@ -177,29 +177,29 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   if (exportdetails)
   {
     file
-      << std::endl << std::endl
-      << "      .export-details {" << std::endl
-      << "        display: none;" << std::endl
-      << "        grid-template-columns: repeat(2 , 1fr);" << std::endl
-      << "        color: var(--body-c);" << std::endl
-      << "        margin-left: auto;" << std::endl
-      << "        margin-right: auto;" << std::endl
-      << "        margin-bottom: 10px;" << std::endl
-      << "        margin-top: 10px;" << std::endl
-      << "        grid-gap: 0px 15px;" << std::endl
-      << "        width: fit-content;" << std::endl
-      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << std::endl
-      << "        break-inside: avoid;" << std::endl
-      << "      }" << std::endl
-      << "      .export-details-fullwidth {" << std::endl
-      << "        text-align: center;" << std::endl
-      << "        font-weight: bold;" << std::endl
-      << "        grid-column: 1 / 3;" << std::endl
-      << "      }" << std::endl
-      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << std::endl
-      << "        text-align: right;" << std::endl
-      << "        font-style: italic;" << std::endl
-      << "      }" << std::endl;
+      << '\n' << '\n'
+      << "      .export-details {" << '\n'
+      << "        display: none;" << '\n'
+      << "        grid-template-columns: repeat(2 , 1fr);" << '\n'
+      << "        color: var(--body-c);" << '\n'
+      << "        margin-left: auto;" << '\n'
+      << "        margin-right: auto;" << '\n'
+      << "        margin-bottom: 10px;" << '\n'
+      << "        margin-top: 10px;" << '\n'
+      << "        grid-gap: 0px 15px;" << '\n'
+      << "        width: fit-content;" << '\n'
+      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << '\n'
+      << "        break-inside: avoid;" << '\n'
+      << "      }" << '\n'
+      << "      .export-details-fullwidth {" << '\n'
+      << "        text-align: center;" << '\n'
+      << "        font-weight: bold;" << '\n'
+      << "        grid-column: 1 / 3;" << '\n'
+      << "      }" << '\n'
+      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {" << '\n'
+      << "        text-align: right;" << '\n'
+      << "        font-style: italic;" << '\n'
+      << "      }" << '\n';
   }
 
   file << R"(
@@ -279,10 +279,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 )";
 
   for (long long int id : recipient_ids)
-    file << "      .msg-sender-" << id << " { background: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}" << std::endl;
-  file << std::endl;
+    file << "      .msg-sender-" << id << " { background: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}" << '\n';
+  file << '\n';
   for (long long int id : recipient_ids)
-    file << "      .msg-name-" << id << " { color: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}" << std::endl;
+    file << "      .msg-name-" << id << " { color: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}" << '\n';
 
   file << R"(
       .msg-outgoing {
@@ -1174,7 +1174,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         bottom: 20px;
         right: 20px;
       }
-)" << std::endl;
+)" << '\n';
 
   if (themeswitch || searchpage)
   {
@@ -1340,9 +1340,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     if (exportdetails)
     {
       file
-        << "      .export-details {" << std::endl
-        << "        display: grid;" << std::endl
-        << "      }" << std::endl;
+        << "      .export-details {" << '\n'
+        << "        display: grid;" << '\n'
+        << "      }" << '\n';
     }
 
     file << R"(
@@ -1646,30 +1646,30 @@ file << R"(
             )";
   if (isgroup)
   {
-    file << groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << std::endl;
-    file << "            <input type=\"checkbox\" id=\"showmembers\">" << std::endl;
-    file << "            <label for=\"showmembers\">" << std::endl;
-    file << "              <small> details)</small>" << std::endl;
-    file << "              <span class=\"groupdetails\">" << std::endl;
-    file << "                <span class=\"columnview\">" << std::endl;
+    file << groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << '\n';
+    file << "            <input type=\"checkbox\" id=\"showmembers\">" << '\n';
+    file << "            <label for=\"showmembers\">" << '\n';
+    file << "              <small> details)</small>" << '\n';
+    file << "              <span class=\"groupdetails\">" << '\n';
+    file << "                <span class=\"columnview\">" << '\n';
 
     // group description
     if (!groupinfo.description.empty())
     {
-      file << "                  <span class=\"left-column\">Description:</span>" << std::endl;
-      file << "                  <span class=\"right-column\">" << HTMLescapeString(groupinfo.description) << "</span>" << std::endl;
+      file << "                  <span class=\"left-column\">Description:</span>" << '\n';
+      file << "                  <span class=\"right-column\">" << HTMLescapeString(groupinfo.description) << "</span>" << '\n';
     }
 
     // group members
-    file << "                  <span class=\"left-column\">Members:</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Members:</span>" << '\n';
     file << "                  <span class=\"right-column\">";
     for (uint gm = 0; gm < groupmembers.size(); ++gm)
       file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name)
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
-    file << "</span>" << std::endl;
+    file << "</span>" << '\n';
 
     // pending members
-    file << "                  <span class=\"left-column\">Pending members:</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Pending members:</span>" << '\n';
     file << "                  <span class=\"right-column\">";
     if (groupinfo.pending_members.size() == 0)
       file << "(none)";
@@ -1677,10 +1677,10 @@ file << R"(
       for (uint pm = 0; pm < groupinfo.pending_members.size(); ++pm)
         file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name)
              << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
-    file << "</span>" << std::endl;
+    file << "</span>" << '\n';
 
     // 'requesting' members
-    file << "                  <span class=\"left-column\">Requesting members:</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Requesting members:</span>" << '\n';
     file << "                  <span class=\"right-column\">";
     if (groupinfo.requesting_members.size() == 0)
       file << "(none)";
@@ -1688,10 +1688,10 @@ file << R"(
       for (uint rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
         file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name)
              << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
-    file << "</span>" << std::endl;
+    file << "</span>" << '\n';
 
     // banned members
-    file << "                  <span class=\"left-column\">Banned members:</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Banned members:</span>" << '\n';
     file << "                  <span class=\"right-column\">";
     if (groupinfo.banned_members.size() == 0)
       file << "(none)";
@@ -1699,36 +1699,36 @@ file << R"(
       for (uint bm = 0; bm < groupinfo.banned_members.size(); ++bm)
         file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name)
              << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
-    file << "</span>" << std::endl;
+    file << "</span>" << '\n';
 
-    file << "                  <span class=\"columnview-header\">Options</span>" << std::endl;
+    file << "                  <span class=\"columnview-header\">Options</span>" << '\n';
 
     // expiration timer
-    file << "                  <span class=\"left-column\">Disappearing messages:</span>" << std::endl;
-    file << "                  <span class=\"right-column\">" << exptimer << "</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Disappearing messages:</span>" << '\n';
+    file << "                  <span class=\"right-column\">" << exptimer << "</span>" << '\n';
 
     // link enabled?
-    file << "                  <span class=\"left-column\">Group link:</span>" << std::endl;
-    file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>" << std::endl;
+    file << "                  <span class=\"left-column\">Group link:</span>" << '\n';
+    file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>" << '\n';
 
     // access control
-    file << "                  <span class=\"columnview-header\">Permissions</span>" << std::endl;
-    file << "                  <span class=\"left-column\">Add members:</span>" << std::endl;
-    file << "                  <span class=\"right-column\">" << groupinfo.access_control_members << "</span>" << std::endl;
-    file << "                  <span class=\"left-column\">Edit group info:</span>" << std::endl;
-    file << "                  <span class=\"right-column\">" << groupinfo.access_control_attributes << "</span>" << std::endl;
-    file << "                  <span class=\"left-column\">Send messages:</span>" << std::endl;
-    file << "                  <span class=\"right-column\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>" << std::endl;
-    file << "                  <span class=\"left-column\">Approve members from invite link:</span>" << std::endl;
-    file << "                  <span class=\"right-column\">" << groupinfo.access_control_addfromlinkinvite << "</span>" << std::endl;
+    file << "                  <span class=\"columnview-header\">Permissions</span>" << '\n';
+    file << "                  <span class=\"left-column\">Add members:</span>" << '\n';
+    file << "                  <span class=\"right-column\">" << groupinfo.access_control_members << "</span>" << '\n';
+    file << "                  <span class=\"left-column\">Edit group info:</span>" << '\n';
+    file << "                  <span class=\"right-column\">" << groupinfo.access_control_attributes << "</span>" << '\n';
+    file << "                  <span class=\"left-column\">Send messages:</span>" << '\n';
+    file << "                  <span class=\"right-column\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>" << '\n';
+    file << "                  <span class=\"left-column\">Approve members from invite link:</span>" << '\n';
+    file << "                  <span class=\"right-column\">" << groupinfo.access_control_addfromlinkinvite << "</span>" << '\n';
 
-    file << "                </span>" << std::endl;
-    file << "              </span>" << std::endl;
-    file << "            </label>" << std::endl;
+    file << "                </span>" << '\n';
+    file << "              </span>" << '\n';
+    file << "            </label>" << '\n';
   }
   else
     file << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
-             getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << std::endl;
+             getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << '\n';
   file << R"(          </div>
         </div>
         <div class="conversation-box">
@@ -1752,11 +1752,11 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
 
     if (pending_push != 0)
     {
-      htmloutput << std::string(indent, ' ') << "<div class=\"attachment\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  <div class=\"pending-attachment\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    (attachment not downloaded)" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "<div class=\"attachment\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "  <div class=\"pending-attachment\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    (attachment not downloaded)" << '\n';
+      htmloutput << std::string(indent, ' ') << "  </div>" << '\n';
+      htmloutput << std::string(indent, ' ') << "</div>" << '\n';
       return;
     }
 
@@ -1775,58 +1775,58 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     htmloutput << std::string(indent, ' ') << "<div class=\"attachment"
                << ((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) ?
                    " attachment-unknown-type" : "")
-               << "\">" << std::endl;
+               << "\">" << '\n';
 
     if (STRING_STARTS_WITH(content_type, "image/"))
     {
-      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << '\n';
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" alt=\"Image attachment\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    </label>" << std::endl;
+                 << "_" << uniqueid << ".bin\" alt=\"Image attachment\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    </label>" << '\n';
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
-        htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
+        htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>" << '\n';
+      htmloutput << std::string(indent, ' ') << "  </div>" << '\n';
     }
     else if (STRING_STARTS_WITH(content_type, "video/") ||
              STRING_STARTS_WITH(content_type, "audio/"))
     {
-      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    <" << content_type.substr(0, 5) << " controls>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    <" << content_type.substr(0, 5) << " controls>" << '\n';
       htmloutput << std::string(indent, ' ') << "      <source src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">" << '\n';
       htmloutput << std::string(indent, ' ') << "      Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    </" << content_type.substr(0, 5) << ">" << std::endl;
+                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << '\n';
+      htmloutput << std::string(indent, ' ') << "    </" << content_type.substr(0, 5) << ">" << '\n';
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
-        htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
+        htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>" << '\n';
+      htmloutput << std::string(indent, ' ') << "  </div>" << '\n';
     }
     else if (content_type.empty())
     {
       if (original_filename.empty())
         htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                   << "_" << uniqueid << ".bin\">&#129055;</a></span>" << std::endl;
+                   << "_" << uniqueid << ".bin\">&#129055;</a></span>" << '\n';
       else
         htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "' <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-          //<< "_" << uniqueid << ".bin\" download=\"" << original_filename << "\">&#129055;</a></span>" << std::endl; // does not work
-                   << "_" << uniqueid << ".bin\">&#129055;</a></span>" << std::endl;
+          //<< "_" << uniqueid << ".bin\" download=\"" << original_filename << "\">&#129055;</a></span>" << '\n'; // does not work
+                   << "_" << uniqueid << ".bin\">&#129055;</a></span>" << '\n';
     }
     else // other
     {
       if (original_filename.empty())
         htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
+                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << '\n';
       else
         htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "'<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-          //<< "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download=\"" << original_filename << "\">&#129055;</a></span>" << std::endl; // does not work
-                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << std::endl;
+          //<< "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download=\"" << original_filename << "\">&#129055;</a></span>" << '\n'; // does not work
+                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>" << '\n';
     }
 
-    htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "</div>" << '\n';
 
   }
 }
@@ -1906,27 +1906,27 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
       }
     }
 
-    //htmloutput << std::string(indent, ' ') << "<div class=\"attachment attachment-unknown-type\">" << std::endl;
+    //htmloutput << std::string(indent, ' ') << "<div class=\"attachment attachment-unknown-type\">" << '\n';
 
-    htmloutput << std::string(indent, ' ') << "<div class=\"shared-contact\">" << std::endl;
+    htmloutput << std::string(indent, ' ') << "<div class=\"shared-contact\">" << '\n';
     if (rowid > -1 && uniqueid > -1)
     {
       htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << ".bin" << "');\">"
-                 << std::endl;
-      htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\">" << std::endl;
-      htmloutput << std::string(indent, ' ') << "    </label>" << std::endl;
-      htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
+                 << '\n';
+      htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\">" << '\n';
+      htmloutput << std::string(indent, ' ') << "    </label>" << '\n';
+      htmloutput << std::string(indent, ' ') << "  </div>" << '\n';
     }
     else
-      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar shared-contact-avatar-default\"></div>" << std::endl;
+      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar shared-contact-avatar-default\"></div>" << '\n';
 
-    htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-info\">" << std::endl;
-    htmloutput << std::string(indent, ' ') << "    <span class=\"shared-contact-name\">" << HTMLescapeString(contact_name) << "</span>" << std::endl;
-    htmloutput << std::string(indent, ' ') << "    <pre>" << HTMLescapeString(contact_info) << "</pre>" << std::endl;
-    htmloutput << std::string(indent, ' ') << "  </div>" << std::endl;
-    htmloutput << std::string(indent, ' ') << "</div>" << std::endl;
+    htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-info\">" << '\n';
+    htmloutput << std::string(indent, ' ') << "    <span class=\"shared-contact-name\">" << HTMLescapeString(contact_name) << "</span>" << '\n';
+    htmloutput << std::string(indent, ' ') << "    <pre>" << HTMLescapeString(contact_info) << "</pre>" << '\n';
+    htmloutput << std::string(indent, ' ') << "  </div>" << '\n';
+    htmloutput << std::string(indent, ' ') << "</div>" << '\n';
   }
 }
 
@@ -1939,67 +1939,67 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   long long int quote_author_id = bepaald::toNumber<long long int>(msg_info.messages->valueAsString(msg_info.idx, "quote_author"));
 
-  htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->" << std::endl;
+  htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->" << '\n';
 
   if (searchpage) // output an anchor to link to in sarch results
-    htmloutput << "          <a id=\"" << msg_info.msg_id << "\"></a>" << std::endl;
+    htmloutput << "          <a id=\"" << msg_info.msg_id << "\"></a>" << '\n';
 
   // for incoming group (normal) message: insert avatar with initial
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
   {
-    htmloutput << "          <div class=\"incoming-group-msg\">" << std::endl;
+    htmloutput << "          <div class=\"incoming-group-msg\">" << '\n';
     htmloutput << "            <div class=\"avatar avatar-" << msg_info.msg_recipient_id
                << " convo-avatar msg-sender-" << msg_info.msg_recipient_id << "\">";
     if (!getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).hasavatar)
     {
-      htmloutput << std::endl;
-      htmloutput << "              <span>" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).initial << "</span>" << std::endl;
+      htmloutput << '\n';
+      htmloutput << "              <span>" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).initial << "</span>" << '\n';
       htmloutput << "            ";
     }
-    htmloutput << "</div>" << std::endl;
+    htmloutput << "</div>" << '\n';
     extraindent = 2;
   }
 
   // msg bubble
   htmloutput << std::string(extraindent, ' ') << "          <div class=\"msg ";
   if (Types::isStatusMessage(msg_info.type))
-    htmloutput << "msg-status\">" << std::endl;
+    htmloutput << "msg-status\">" << '\n';
   else
     htmloutput << "msg-" << (msg_info.incoming ? "incoming" : "outgoing")
                << (!msg_info.incoming ? " msg-sender-" + bepaald::toString(msg_info.msg_recipient_id) : "")
                << (msg_info.nobackground ? " no-bg-bubble" : "")
                << (msg_info.is_viewonce ? " msg-viewonce" : "")
                << ((msg_info.is_deleted && !msg_info.is_viewonce) ? " deleted-msg" : "")
-               << (msg_info.reaction_results->rows() ? " msg-with-reaction" : "")<< "\">" << std::endl;
+               << (msg_info.reaction_results->rows() ? " msg-with-reaction" : "")<< "\">" << '\n';
 
   // for incoming group (normal) message: Senders name before message content
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
     htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name msg-name-"
-               << msg_info.msg_recipient_id << "\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</span>" << std::endl;
+               << msg_info.msg_recipient_id << "\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</span>" << '\n';
 
   // insert quote
   if (msg_info.hasquote)
   {
-    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-quote\">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-quote\">" << '\n';
 
     // quote message
-    htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">" << '\n';
     htmloutput << std::string(extraindent, ' ') << "                <span class=\"msg-name\">"
                << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id).display_name)
-               << "</span>" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "              </div>" << std::endl;
+               << "</span>" << '\n';
+    htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>" << '\n';
+    htmloutput << std::string(extraindent, ' ') << "              </div>" << '\n';
 
     // quote attachment
     if (msg_info.quote_attachment_results->rows())
     {
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">" << std::endl;
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">" << '\n';
       HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 16 + extraindent,
                              msg_info.directory, msg_info.threaddir, false, msg_info.overwrite, msg_info.append);
-      htmloutput << "                </div>" << std::endl;
+      htmloutput << "                </div>" << '\n';
     }
 
-    htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            </div>" << '\n';
   }
 
   // insert attachment?
@@ -2016,21 +2016,21 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   // insert link_preview data?
   if (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty())
   {
-    htmloutput << "            <div class=\"linkpreview\">" << std::endl;
+    htmloutput << "            <div class=\"linkpreview\">" << '\n';
     if (!msg_info.link_preview_title.empty())
     {
-      htmloutput << "              <div class=\"linkpreview_title\">" << std::endl;
-      htmloutput << "                " << HTMLescapeString(msg_info.link_preview_title) << std::endl;
-      htmloutput << "              </div>" << std::endl;
+      htmloutput << "              <div class=\"linkpreview_title\">" << '\n';
+      htmloutput << "                " << HTMLescapeString(msg_info.link_preview_title) << '\n';
+      htmloutput << "              </div>" << '\n';
     }
     std::string cleaned_link_preview_description = HTMLprepLinkPreviewDescription(msg_info.link_preview_description);
     if (!cleaned_link_preview_description.empty())
     {
-      htmloutput << "              <div class=\"linkpreview_description\">" << std::endl;
-      htmloutput << "                " << cleaned_link_preview_description << std::endl;
-      htmloutput << "              </div>" << std::endl;
+      htmloutput << "              <div class=\"linkpreview_description\">" << '\n';
+      htmloutput << "                " << cleaned_link_preview_description << '\n';
+      htmloutput << "              </div>" << '\n';
     }
-    htmloutput << "            </div>" << std::endl;
+    htmloutput << "            </div>" << '\n';
   }
 
   //insert body
@@ -2040,7 +2040,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << (msg_info.only_emoji ? " class=\"msg-all-emoji\"" : "")
                << (Types::isStatusMessage(msg_info.type) ? " class=\"status-text" +
                    (Types::isMissedCall(msg_info.type) || Types::isMissedVideoCall(msg_info.type) ? " status-text-red"s : "") + "\"" : "")
-               << ">" << std::endl;
+               << ">" << '\n';
     htmloutput << std::string(extraindent, ' ') << "              <pre>";
     if (Types::isEndSession(msg_info.type) || Types::isIdentityDefault(msg_info.type)) // info-icon
       htmloutput << "<span class=\"msg-info-icon\"></span>";
@@ -2118,33 +2118,33 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     //   htmloutput << "<span class=\"msg-\"></span>";
 
 
-    htmloutput << msg_info.body << "</pre>" << std::endl;
-    htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
+    htmloutput << msg_info.body << "</pre>" << '\n';
+    htmloutput << std::string(extraindent, ' ') << "            </div>" << '\n';
   }
   else if (msg_info.is_viewonce)
   {
-    htmloutput << "            <div class=\"viewonce\">" << std::endl;
+    htmloutput << "            <div class=\"viewonce\">" << '\n';
     if (msg_info.incoming)
       htmloutput << "              <div class=\""
                  << (msg_info.is_deleted ? "viewonce_icon" : "unviewed_viewonce_icon") << "\"></div><pre>"
                  << (msg_info.is_deleted ? "Viewed" : "View-once media")
-                 << "</pre>" << std::endl;
+                 << "</pre>" << '\n';
     else
-      htmloutput << "              <div class=\"viewonce_icon\"></div><pre>Media</pre>" << std::endl;
-    htmloutput << "            </div>" << std::endl;
+      htmloutput << "              <div class=\"viewonce_icon\"></div><pre>Media</pre>" << '\n';
+    htmloutput << "            </div>" << '\n';
   }
   else if (msg_info.is_deleted)
   {
-    htmloutput << "            <div>" << std::endl;
+    htmloutput << "            <div>" << '\n';
     if (msg_info.incoming)
-      htmloutput << "              <pre>This message was deleted.</pre>" << std::endl;
+      htmloutput << "              <pre>This message was deleted.</pre>" << '\n';
     else
-      htmloutput << "              <pre>You deleted this message.</pre>" << std::endl;
-    htmloutput << "            </div>" << std::endl;
+      htmloutput << "              <pre>You deleted this message.</pre>" << '\n';
+    htmloutput << "            </div>" << '\n';
   }
 
   // insert msg-footer (date & checkmarks)
-  htmloutput << std::string(extraindent, ' ') << "            <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "            <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">" << '\n';
   if (msg_info.original_message_id != -1) // : is_edited = true
   {
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"edited\"><span>edited</span>";
@@ -2174,15 +2174,15 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         // else if (i < msg_info.edit_revisions->rows() - 1)
         //   htmloutput << "<hr>";
       }
-      htmloutput << "</div>" << std::endl;
+      htmloutput << "</div>" << '\n';
     }
-    htmloutput << "</div>" << std::endl;
+    htmloutput << "</div>" << '\n';
   }
-  htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>" << '\n';
   if (!Types::isStatusMessage(msg_info.type))
   {
     if (msg_info.expires_in > 0)
-      htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons is-expiring\"></div>" << std::endl;
+      htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons is-expiring\"></div>" << '\n';
     if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
     {
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons checkmarks-";
@@ -2192,15 +2192,15 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         htmloutput << "received";
       else // if something? type != failed? -> check for failed before outputting 'checkmarks-'
         htmloutput << "sent";
-      htmloutput << "\"></div>" << std::endl;
+      htmloutput << "\"></div>" << '\n';
     }
   }
-  htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "            </div>" << '\n';
 
   // insert reaction
   if (msg_info.reaction_results->rows())
   {
-    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-reactions\">" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-reactions\">" << '\n';
 
 
     std::set<std::string> skip;
@@ -2228,13 +2228,13 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-reaction\"><span class=\"msg-emoji\">"
                  << emojireaction << "</span>" << (count > 1 ? "<span class=\"reaction-count\">" + bepaald::toString(count) + "</span>": "")
-                 << "<div class=\"msg-reaction-info\">" << reaction_info << "</div></div>" << std::endl;
+                 << "<div class=\"msg-reaction-info\">" << reaction_info << "</div></div>" << '\n';
     }
-    htmloutput << std::string(extraindent, ' ') << "            </div>" << std::endl;
+    htmloutput << std::string(extraindent, ' ') << "            </div>" << '\n';
   }
   // end message
-  htmloutput << std::string(extraindent, ' ') << "          </div>" << std::endl;
+  htmloutput << std::string(extraindent, ' ') << "          </div>" << '\n';
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
-    htmloutput << "          </div>" << std::endl;
-  htmloutput << std::endl;
+    htmloutput << "          </div>" << '\n';
+  htmloutput << '\n';
 }

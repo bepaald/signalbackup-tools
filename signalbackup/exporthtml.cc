@@ -609,91 +609,91 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       }
 
-      htmloutput << "        </div>" << std::endl; // closes conversation-box
-      htmloutput << "        <a id=\"pagebottom\"></a>" << std::endl;
-      htmloutput << "      </div>" << std::endl; // closes conversation-wrapper
-      htmloutput << std::endl;
+      htmloutput << "        </div>" << '\n'; // closes conversation-box
+      htmloutput << "        <a id=\"pagebottom\"></a>" << '\n';
+      htmloutput << "      </div>" << '\n'; // closes conversation-wrapper
+      htmloutput << '\n';
 
       if (totalpages > 1)
       {
         std::string sanitized_filename = sanitizeFilename(raw_base_filename);
         HTMLescapeUrl(&sanitized_filename);
-        htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << std::endl;
-        htmloutput << "        <div title=\"First page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitized_filename << ".html" << "\">" << std::endl;
-        htmloutput << "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
-        htmloutput << "          </a>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "        <div title=\"Previous page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitized_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html" << "\">" << std::endl;
-        htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << std::endl;
-        htmloutput << "          </a>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "      </div>" << std::endl;
-        htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << std::endl;
-        htmloutput << "        <div title=\"Next page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitized_filename << "_" << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">" << std::endl;
-        htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
-        htmloutput << "          </a>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "        <div title=\"Last page\">" << std::endl;
-        htmloutput << "          <a href=\"" << sanitized_filename << "_" << bepaald::toString(totalpages - 1) << ".html" << "\">" << std::endl;
-        htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << std::endl;
-        htmloutput << "          </a>" << std::endl;
-        htmloutput << "        </div>" << std::endl;
-        htmloutput << "      </div>" << std::endl;
-        htmloutput << std::endl;
+        htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << '\n';
+        htmloutput << "        <div title=\"First page\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << ".html" << "\">" << '\n';
+        htmloutput << "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << '\n';
+        htmloutput << "          </a>" << '\n';
+        htmloutput << "        </div>" << '\n';
+        htmloutput << "        <div title=\"Previous page\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html" << "\">" << '\n';
+        htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << '\n';
+        htmloutput << "          </a>" << '\n';
+        htmloutput << "        </div>" << '\n';
+        htmloutput << "      </div>" << '\n';
+        htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << '\n';
+        htmloutput << "        <div title=\"Next page\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << "_" << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">" << '\n';
+        htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << '\n';
+        htmloutput << "          </a>" << '\n';
+        htmloutput << "        </div>" << '\n';
+        htmloutput << "        <div title=\"Last page\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << "_" << bepaald::toString(totalpages - 1) << ".html" << "\">" << '\n';
+        htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << '\n';
+        htmloutput << "          </a>" << '\n';
+        htmloutput << "        </div>" << '\n';
+        htmloutput << "      </div>" << '\n';
+        htmloutput << '\n';
       }
-      htmloutput << "     </div>" << std::endl; // closes controls-wrapper
-      htmloutput << std::endl;
-      htmloutput << "       <div id=\"bottom\">" << std::endl;
-      htmloutput << "         <a href=\"#pagebottom\" title=\"Jump to bottom\">" << std::endl;
-      htmloutput << "           <div class=\"menu-item-bottom\">" << std::endl;
-      htmloutput << "             <span class=\"menu-icon nav-one nav-bottom\">" << std::endl;
-      htmloutput << "             </span>" << std::endl;
-      htmloutput << "           </div>" << std::endl;
-      htmloutput << "         </a>" << std::endl;
-      htmloutput << "      </div>" << std::endl;
-      htmloutput << "      <div id=\"menu\">" << std::endl;
-      htmloutput << "        <a href=\"../index.html\">" << std::endl;
-      htmloutput << "          <div class=\"menu-item\">" << std::endl;
-      htmloutput << "            <div class=\"menu-icon nav-up\">" << std::endl;
-      htmloutput << "            </div>" << std::endl;
-      htmloutput << "            <div>" << std::endl;
-      htmloutput << "              index" << std::endl;
-      htmloutput << "            </div>" << std::endl;
-      htmloutput << "          </div>" << std::endl;
-      htmloutput << "        </a>" << std::endl;
-      htmloutput << "      </div>" << std::endl;
-      htmloutput << std::endl;
+      htmloutput << "     </div>" << '\n'; // closes controls-wrapper
+      htmloutput << '\n';
+      htmloutput << "       <div id=\"bottom\">" << '\n';
+      htmloutput << "         <a href=\"#pagebottom\" title=\"Jump to bottom\">" << '\n';
+      htmloutput << "           <div class=\"menu-item-bottom\">" << '\n';
+      htmloutput << "             <span class=\"menu-icon nav-one nav-bottom\">" << '\n';
+      htmloutput << "             </span>" << '\n';
+      htmloutput << "           </div>" << '\n';
+      htmloutput << "         </a>" << '\n';
+      htmloutput << "      </div>" << '\n';
+      htmloutput << "      <div id=\"menu\">" << '\n';
+      htmloutput << "        <a href=\"../index.html\">" << '\n';
+      htmloutput << "          <div class=\"menu-item\">" << '\n';
+      htmloutput << "            <div class=\"menu-icon nav-up\">" << '\n';
+      htmloutput << "            </div>" << '\n';
+      htmloutput << "            <div>" << '\n';
+      htmloutput << "              index" << '\n';
+      htmloutput << "            </div>" << '\n';
+      htmloutput << "          </div>" << '\n';
+      htmloutput << "        </a>" << '\n';
+      htmloutput << "      </div>" << '\n';
+      htmloutput << '\n';
       if (themeswitching || searchpage)
       {
-        htmloutput << "      <div id=\"theme\">" << std::endl;
+        htmloutput << "      <div id=\"theme\">" << '\n';
         if (searchpage)
         {
-          htmloutput << "        <div class=\"menu-item\">" << std::endl;
-          htmloutput << "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\" title=\"Search\">" << std::endl;
-          htmloutput << "            <span class=\"menu-icon searchbutton\">" << std::endl;
-          htmloutput << "            </span>" << std::endl;
-          htmloutput << "          </a>" << std::endl;
-          htmloutput << "        </div>" << std::endl;
+          htmloutput << "        <div class=\"menu-item\">" << '\n';
+          htmloutput << "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\" title=\"Search\">" << '\n';
+          htmloutput << "            <span class=\"menu-icon searchbutton\">" << '\n';
+          htmloutput << "            </span>" << '\n';
+          htmloutput << "          </a>" << '\n';
+          htmloutput << "        </div>" << '\n';
         }
         if (themeswitching)
         {
-          htmloutput << "        <div class=\"menu-item\">" << std::endl;
-          htmloutput << "          <label for=\"theme-switch\">" << std::endl;
-          htmloutput << "            <span class=\"menu-icon themebutton\">" << std::endl;
-          htmloutput << "            </span>" << std::endl;
-          htmloutput << "          </label>" << std::endl;
-          htmloutput << "        </div>" << std::endl;
+          htmloutput << "        <div class=\"menu-item\">" << '\n';
+          htmloutput << "          <label for=\"theme-switch\">" << '\n';
+          htmloutput << "            <span class=\"menu-icon themebutton\">" << '\n';
+          htmloutput << "            </span>" << '\n';
+          htmloutput << "          </label>" << '\n';
+          htmloutput << "        </div>" << '\n';
         }
-        htmloutput << "      </div>" << std::endl;
-        htmloutput << std::endl;
+        htmloutput << "      </div>" << '\n';
+        htmloutput << '\n';
       }
-      htmloutput << "  </div>" << std::endl; // closes div id=page (I think)
+      htmloutput << "  </div>" << '\n'; // closes div id=page (I think)
 
       if (addexportdetails)
-        htmloutput << std::endl << exportdetails_html << std::endl;
+        htmloutput << '\n' << exportdetails_html << '\n';
 
       if (themeswitching)
       {
@@ -718,8 +718,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
 )";
       }
-      htmloutput << "  </body>" << std::endl;
-      htmloutput << "</html>" << std::endl;
+      htmloutput << "  </body>" << '\n';
+      htmloutput << "</html>" << '\n';
 
       ++pagenumber;
       if (messagecount >= messages.rows())
