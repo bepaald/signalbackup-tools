@@ -87,6 +87,7 @@ class SignalBackup
   std::string d_recipient_system_joined_name;
   std::string d_recipient_profile_given_name;
   std::string d_recipient_storage_service;
+  std::string d_recipient_type;
   std::string d_groups_v1_members;
   std::string d_part_mid;
   std::string d_part_ct;
@@ -137,7 +138,7 @@ class SignalBackup
     std::string uuid;
     std::string phone;
     std::string group_id;
-    long long int group_type; //    NONE(0), MMS(1), SIGNAL_V1(2), SIGNAL_V2(3), DISTRIBUTION_LIST(4);
+    long long int group_type; //    NONE(0), MMS(1), SIGNAL_GV1(2), SIGNAL_GV2(3), DISTRIBUTION_LIST(4), CALL_LINK(5);
     std::string storage_service;
   };
 

@@ -60,6 +60,10 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn("recipient", "storage_service_key"))
     d_recipient_storage_service = "storage_service_key";
 
+  d_recipient_type = "type";
+  if (!d_database.tableContainsColumn("recipient", "type") &&    // before dbv201
+      d_database.tableContainsColumn("recipient", "group_type"))
+    d_recipient_type = "group_type";
 
 
 
