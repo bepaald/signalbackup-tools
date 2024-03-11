@@ -98,6 +98,7 @@ Arg::Arg(int argc, char *argv[])
   d_includecalllog(false),
   d_includeblockedlist(false),
   d_includesettings(false),
+  d_includefullcontactlist(false),
   d_exporttxt(std::string()),
   d_append(false),
   d_split(1000),
@@ -1094,6 +1095,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-includesettings")
     {
       d_includesettings = false;
+      continue;
+    }
+    if (option == "--includefullcontactlist")
+    {
+      d_includefullcontactlist = true;
+      continue;
+    }
+    if (option == "--no-includefullcontactlist")
+    {
+      d_includefullcontactlist = false;
       continue;
     }
     if (option == "--exporttxt")

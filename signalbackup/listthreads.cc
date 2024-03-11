@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2023  Selwin van Dijk
+  Copyright (C) 2022-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -42,7 +42,16 @@ void SignalBackup::listThreads() const
     // std::cout << d_sms_recipient_id << std::endl;
     // std::cout << d_mms_recipient_id << std::endl;
 
-    d_database.exec("SELECT thread._id, COALESCE(recipient." + d_recipient_e164 + ", recipient.group_id" + (uuid ? ", recipient."s + d_recipient_aci : ""s) + ") AS 'recipient_ids', thread.snippet, COALESCE(recipient." + d_recipient_system_joined_name +", " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient." + d_recipient_profile_given_name + ", groups.title) AS 'Conversation partner' FROM thread LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id LEFT JOIN groups ON recipient.group_id = groups.group_id ORDER BY thread._id ASC", &results);
+    d_database.exec("SELECT thread._id, "
+                    "COALESCE(recipient." + d_recipient_e164 + ", recipient.group_id" + (uuid ? ", recipient."s + d_recipient_aci : ""s) + ", recipient._id) AS 'recipient_ids', "
+                    "thread.snippet, "
+                    "COALESCE(recipient." + d_recipient_system_joined_name +", " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient." + d_recipient_profile_given_name + ", groups.title, " +
+                    (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, '')" : "") +") AS 'Conversation partner' "
+                    "FROM thread "
+                    "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id "
+                    "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
+                    (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
+                    "ORDER BY thread._id ASC", &results);
 
     // results.prettyPrint();
 

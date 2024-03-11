@@ -31,7 +31,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool calllog, bool searchpage, bool stickerpacks,
                               bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching,
-                              bool addexportdetails, bool blocked, bool settings)
+                              bool addexportdetails, bool blocked, bool fullcontacts, bool settings)
 {
   bool databasemigrated = false;
   MemSqliteDB backup_database;
@@ -755,7 +755,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     calllog = false;
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
-                 calllog, searchpage, stickerpacks, blocked, settings, overwrite, append, lighttheme,
+                 calllog, searchpage, stickerpacks, blocked, fullcontacts,
+                 settings, overwrite, append, lighttheme,
                  themeswitching, exportdetails_html);
 
   if (calllog)
@@ -770,6 +771,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
   if (blocked)
     HTMLwriteBlockedlist(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
+
+  if (fullcontacts)
+    HTMLwriteFullContacts(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   if (settings)
     HTMLwriteSettings(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);

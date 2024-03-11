@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -49,10 +49,14 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     std::string query = "SELECT COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
-      "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), "
+      "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
+      (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
       "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
       " recipient._id) AS 'chatpartner' "
-      "FROM recipient LEFT JOIN groups ON recipient.group_id = groups.group_id WHERE recipient._id = ?";
+      "FROM recipient "
+      "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
+      (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
+      "WHERE recipient._id = ?";
 
     // if ! limit.empty()
     // query += " AND _id == something, or chatpartner == ''

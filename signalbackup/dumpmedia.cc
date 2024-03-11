@@ -63,13 +63,16 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       d_mms_table + "." + d_mms_type + ", " +
       d_mms_table + ".thread_id, "
       "thread." + d_thread_recipient_id + ", "
-      "COALESCE(NULLIF(groups.title, ''), NULLIF(recipient." + d_recipient_system_joined_name + ", ''), "
+      "COALESCE(NULLIF(groups.title, ''), " +
+      (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
+      "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), "
       "NULLIF(recipient.profile_joined_name, ''), NULLIF(recipient." + d_recipient_profile_given_name + ", '')) AS 'chatpartner'"
       " FROM " + d_part_table + " "
       "LEFT JOIN " + d_mms_table + " ON " + d_part_table + "." + d_part_mid + " == " + d_mms_table + "._id "
       "LEFT JOIN thread ON " + d_mms_table + ".thread_id == thread._id "
       "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " == recipient._id "
-      "LEFT JOIN groups ON recipient.group_id == groups.group_id "
+      "LEFT JOIN groups ON recipient.group_id == groups.group_id " +
+      (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
       "WHERE " + d_part_table + "._id == ?" +
       (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "");
   }
