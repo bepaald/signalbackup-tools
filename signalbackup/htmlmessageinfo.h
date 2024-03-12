@@ -29,8 +29,10 @@ struct HTMLMessageInfo
   bool incoming;
   bool nobackground;
   bool hasquote;
+  bool quote_missing;
   bool overwrite;
   bool append;
+  bool story_reply;
   long long int type;
   long long int expires_in;
   long long int msg_id;

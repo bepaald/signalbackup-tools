@@ -1350,6 +1350,18 @@ void SignalBackup::scanMissingAttachments() const
       continue;
     }
 
+    d_database.exec("SELECT " + d_part_ct + " FROM " + d_part_table + " WHERE _id = ?" +
+                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(missing[i].second) : ""s),
+                    missing[i].first, &res);
+    if (res.rows() == 1 && res(0, d_part_ct) == "application/x-signal-view-once")
+    {
+      if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+        Logger::message("OK, EXPECTED (content_type = application/x-signal-view-once)");
+      else
+        Logger::message("FALSE HIT! (view_once)");
+      continue;
+    }
+
     if (d_attachments.find({missing[i].first, missing[i].second}) != d_attachments.end())
     {
       Logger::message("OK, EXPECTED (no special circumstances, but not missing)");

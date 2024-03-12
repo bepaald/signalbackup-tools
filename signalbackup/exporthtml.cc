@@ -252,17 +252,20 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
                     "_id, " + d_mms_recipient_id + ", body, "
-                    "date_received, " + d_mms_date_sent + ", quote_id, quote_author, quote_body, quote_mentions, " + d_mms_type + ", "
+                    "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
+                    "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
                     + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, shared_contacts, "
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
+                    + (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : "") +
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
                     "WHERE thread_id = ?"
                     + datewhereclause +
-                    + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
+                    + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " ") +
+                    + (d_database.tableContainsColumn(d_mms_table, "story_type") ? " AND story_type = 0 OR story_type IS NULL " : "") + // storytype NONE(0), STORY_WITH(OUT)_REPLIES(1/2), TEXT_...(3/4)
                     " ORDER BY date_received ASC", t, &messages);
     if (messages.rows() == 0)
     {
@@ -394,6 +397,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         long long int expires_in = messages.getValueAs<long long int>(messagecount, "expires_in");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
+        bool quote_missing = messages.valueAsInt(messagecount, "quote_missing", 0) != 0;
+        bool story_reply = (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? messages.valueAsInt(messagecount, "parent_story_id", 0) : 0);
 
         SqliteDB::QueryResults attachment_results;
         d_database.exec("SELECT "
@@ -502,8 +507,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   incoming,
                                   nobackground,
                                   hasquote,
+                                  quote_missing,
                                   overwrite,
                                   append,
+                                  story_reply,
                                   type,
                                   expires_in,
                                   msg_id,

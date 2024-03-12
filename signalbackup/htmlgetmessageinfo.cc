@@ -27,7 +27,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                        d_mms_recipient_id + ", " +
                        d_mms_date_sent + ", " +
                        d_mms_type + ", "
-                       "body, quote_author, quote_body, " + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
+                       "body, quote_missing, quote_author, quote_body, " + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                        "json_extract(link_previews, '$[0].description') AS link_preview_description, "
                        "shared_contacts, quote_id, expires_in, message_ranges, quote_mentions"
@@ -46,6 +46,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   long long int type = revision.getValueAs<long long int>(0, d_mms_type);
   long long int expires_in = revision.getValueAs<long long int>(0, "expires_in");
   bool hasquote = !revision.isNull(0, "quote_id") && revision.getValueAs<long long int>(0, "quote_id");
+  bool quote_missing = revision.valueAsInt(0, "quote_missing", 0) != 0;
 
   SqliteDB::QueryResults attachment_results;
   d_database.exec("SELECT "
@@ -117,8 +118,10 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             incoming,
                             nobackground,
                             hasquote,
+                            quote_missing,
                             parent_info.overwrite, // ?
                             parent_info.append,    // ?
+                            parent_info.story_reply,
                             type,
                             expires_in,
                             msg_id,

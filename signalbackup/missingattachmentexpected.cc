@@ -36,6 +36,12 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, int64_t unique_id) 
       return true;
 
 
+  // if the attachment is a view once type, it is expected to be missing
+  if (d_database.getSingleResultAs<std::string>("SELECT " + d_part_ct + " FROM " + d_part_table + " WHERE _id = ?" +
+                                                (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(unique_id) : ""),
+                                                rowid, std::string()) == "application/x-signal-view-once")
+    return true;
+
   SqliteDB::QueryResults isquote;
   d_database.exec("SELECT " + d_part_mid + " FROM " + d_part_table + " WHERE _id = ?" +
                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(unique_id) : "") +
