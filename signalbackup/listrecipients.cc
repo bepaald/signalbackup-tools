@@ -21,7 +21,9 @@
 
 void SignalBackup::listRecipients() const
 {
-  d_database.prettyPrint("SELECT recipient._id, recipient." + d_recipient_e164 + ", COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+  d_database.prettyPrint("SELECT recipient._id, "
+
+                         "COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                          (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                          "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), "
                          "NULLIF(groups.title, ''), " +
@@ -29,11 +31,14 @@ void SignalBackup::listRecipients() const
                          "NULLIF(recipient." + d_recipient_e164 + ", ''), "
                          "NULLIF(recipient." + d_recipient_aci + ", ''), "
                          " recipient._id) AS 'display_name', " +
+
+                         "recipient." + d_recipient_e164 + ", " +
                          (d_database.tableContainsColumn("recipient", "blocked") ? "blocked, " : "") +
                          (d_database.tableContainsColumn("recipient", "hidden") ? "hidden, " : "") +
                          "IFNULL(COALESCE(" + d_recipient_profile_avatar + ", groups.avatar_id), 0) IS NOT 0 AS 'has_avatar', "
                          "CASE " + d_recipient_type + " WHEN 0 THEN 'Individual' ELSE 'Group' END 'type' "
                          "FROM recipient "
                          "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
-                         (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id" : ""));
+                         (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : " ") +
+                         "ORDER BY display_name");
 }
