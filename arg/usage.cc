@@ -101,7 +101,8 @@ R"*(
                                          this option.
    --append                              Optional modifier for `--exporthtml'. Causes `--exporthtml' to
                                          not show an error when DIRECTORY is not empty, but also not
-                                         overwrite existing media files. Still regenerates the HTML file.
+                                         overwrite existing media files. Still regenerates and overwrites
+                                         existing HTML files.
    --split [N]                           Optional modifier for `--exporthtml'. Splits the generated HTML
                                          files to a maximum of N messages per page. By default, the pages
                                          are not split. When this option is given without a value for N,

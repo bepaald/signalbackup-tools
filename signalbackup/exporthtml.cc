@@ -772,8 +772,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   if (blocked)
     HTMLwriteBlockedlist(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
-  if (fullcontacts)
-    HTMLwriteFullContacts(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
+  if (false /*fullcontacts*/)
+  {
+    ;//HTMLwriteFullContacts(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
+  }
 
   if (settings)
     HTMLwriteSettings(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);

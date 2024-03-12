@@ -28,7 +28,9 @@ void SignalBackup::listRecipients() const
                          (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
                          "NULLIF(recipient." + d_recipient_e164 + ", ''), "
                          "NULLIF(recipient." + d_recipient_aci + ", ''), "
-                         " recipient._id) AS 'display_name' "
+                         " recipient._id) AS 'display_name' " +
+                         (d_database.tableContainsColumn("recipient", "blocked") ? ", blocked " : "") +
+                         (d_database.tableContainsColumn("recipient", "hidden") ? ", hidden " : "") +
                          "FROM recipient "
                          "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
                          (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id" : ""));
