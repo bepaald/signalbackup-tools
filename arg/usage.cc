@@ -51,6 +51,8 @@ changes, you must provide one of the output options.
                                large for your terminal, this is often much more readable.
 --listthreads                  List the threads in the database with their `_id' numbers. These id's are
                                required input for various other options.
+--listrecipients               List all recipients in the database with their `_id'. These id's are
+                               required input for various other options.
 
  = OUTPUT OPTIONS =
 -o, --output <OUTPUT>                    Either a file or a directory. When output is a file, this will
@@ -202,8 +204,8 @@ are mostly useful for the developer, others were custom functions for specific p
 expected to be very useful to other people. Most of these functions are poorly tested (if at all) and
 possibly outdated. Some will probably eventually be renamed and more thoroughly documented others will
 be removed.
---showdbinfo                                  Prints list of all tables and columns in the backups Sqlite
-                                              database.
+--showdbinfo                                  Prints a list of all tables and columns in the backups
+                                              Sqlite database.
 --scramble                                    Poorly censors backups, replacing all characters with 'x'.
                                               Useful to make screenshots.
 --scanmissingattachments                      If you see "warning attachment data not found" messages,
@@ -233,15 +235,15 @@ be removed.
                                               now)
 --stoponerror                                 Do not try to recover automatically when encountering bad
                                               data.
--v, --verbose                                 Makes the output even more verbose than it is already.
+-v, --verbose                                 Makes the output even more verbose than it already is.
 --mergerecipients <OLDNUMBER,NEWNUMBER>       Can be used to change a contacts number (for example when
                                               they get a new phone). Messages from OLDNUMBER are changed
                                               so they appear as coming from NEWNUMBER, and the threads
                                               are merged.
 --migrate214to215                             Migrate a v214 database to v215. Changes in the database
                                               prevent v214 and v215 from being compatible for merging. This
-                                              function attempts to migrate the older database and so it can
-                                              can be used as a source for `--importthreads'. See also
+                                              function attempts to migrate the older database so it can be
+                                              used as a source for `--importthreads'. See also
                                               https://github.com/bepaald/signalbackup-tools/issues/184)*";
    // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
    //                                            groups members from OLDNUMBER to NEWNUMBER. Might not

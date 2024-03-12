@@ -65,6 +65,11 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn("recipient", "group_type"))
     d_recipient_type = "group_type";
 
+  d_recipient_profile_avatar = "profile_avatar";
+  if (!d_database.tableContainsColumn("recipient", "profile_avatar") &&    // before dbv201
+      d_database.tableContainsColumn("recipient", "signal_profile_avatar"))
+    d_recipient_profile_avatar = "signal_profile_avatar";
+
 
 
   // started at dbv166
