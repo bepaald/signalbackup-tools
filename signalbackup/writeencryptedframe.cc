@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,11 +19,10 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> framedata)
+bool SignalBackup::writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile, std::pair<std::shared_ptr<unsigned char[]>, uint64_t> framedata)
 {
   // write frame (the non-attachmentdata part)
   std::pair<unsigned char *, uint64_t> encryptedframe = d_fe.encryptFrame(framedata);
-  delete[] framedata.first;
 
   if (!encryptedframe.first)
   {
@@ -41,8 +40,14 @@ bool SignalBackup::writeEncryptedFrameWithoutAttachment(std::ofstream &outputfil
 
 bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame)
 {
-  std::pair<unsigned char *, uint64_t> framedata = frame->getData();
-  if (!framedata.first)
+  std::pair<std::shared_ptr<unsigned char[]>, uint64_t> framedata(nullptr, 0);
+  {
+    std::pair<unsigned char *, uint64_t> framedataraw = frame->getData();
+    framedata.first.reset(framedataraw.first);
+    framedata.second = framedataraw.second;
+  }
+
+  if (!framedata.first) [[unlikely]]
   {
     Logger::error("Failed to get framedata from frame");
     return false;
@@ -59,7 +64,6 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
 
     if (!attachmentdata)
     {
-      delete[] framedata.first;
       if (badmac)
       {
         Logger::warning("Corrupted data encountered. Skipping frame.");
@@ -72,9 +76,11 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
     {
       Logger::error("Failed to write encrypt and write BackupFrame. Info:");
       frame->printInfo();
-      delete[] framedata.first;
       return false;
     }
+
+    // we are done with framedata now... lets destroy it already...
+    framedata.first.reset();
 
     // write attachment data
     std::pair<unsigned char *, uint64_t> newdata = d_fe.encryptAttachment(attachmentdata, attachmentsize);
@@ -82,10 +88,9 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
     outputfile.write(reinterpret_cast<char *>(newdata.first), newdata.second);
     delete[] newdata.first;
 
-    if (!outputfile.good())
+    if (!outputfile.good()) [[unlikely]]
     {
       Logger::error("Failed to write encrypted attachmentdata to file");
-      delete[] framedata.first;
       return false;
     }
   }
@@ -94,7 +99,6 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
     {
       Logger::error("Failed to write encrypt and write BackupFrame. Info:");
       frame->printInfo();
-      delete[] framedata.first;
       return false;
     }
 

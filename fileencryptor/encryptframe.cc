@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,11 +18,6 @@
 */
 
 #include "fileencryptor.ih"
-
-std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(std::pair<unsigned char *, uint64_t> const &data)
-{
-  return encryptFrame(data.first, data.second);
-}
 
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *data, uint64_t length)
 {

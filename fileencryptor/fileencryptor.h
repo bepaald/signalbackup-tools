@@ -22,6 +22,7 @@
 
 #include <cstring>
 #include <utility>
+#include <memory>
 
 #include "../cryptbase/cryptbase.h"
 #include "../common_be.h"
@@ -41,7 +42,8 @@ class FileEncryptor : public CryptBase
   inline FileEncryptor &operator=(FileEncryptor &&other);
   bool init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   bool init(unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size);
-  std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<unsigned char *, uint64_t> const &data);
+  inline std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<std::shared_ptr<unsigned char[]>, uint64_t> const &data);
+  inline std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<unsigned char *, uint64_t> const &data);
   std::pair<unsigned char *, uint64_t> encryptFrame(unsigned char *data, uint64_t length);
   std::pair<unsigned char *, uint64_t> encryptAttachment(unsigned char *data, uint64_t length);
  private:
@@ -87,6 +89,16 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other)
     d_verbose = std::move(other.d_verbose);
   }
   return *this;
+}
+
+inline std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(std::pair<unsigned char *, uint64_t> const &data)
+{
+  return encryptFrame(data.first, data.second);
+}
+
+inline std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(std::pair<std::shared_ptr<unsigned char[]>, uint64_t> const &data)
+{
+  return encryptFrame(data.first.get(), data.second);
 }
 
 #endif

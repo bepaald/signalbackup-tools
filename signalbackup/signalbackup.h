@@ -287,7 +287,8 @@ class SignalBackup
   [[nodiscard]] inline bool writeRawFrameDataToFile(std::string const &outputfile, std::unique_ptr<T> const &frame) const;
   [[nodiscard]] inline bool writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   [[nodiscard]] bool writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
-  [[nodiscard]] bool writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> framedata);
+  [[nodiscard]] bool writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile,
+                                                          std::pair<std::shared_ptr<unsigned char[]>, uint64_t> framedata);
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers,
                                            std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
