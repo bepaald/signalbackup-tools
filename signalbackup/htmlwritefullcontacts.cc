@@ -23,12 +23,6 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
                                          bool overwrite, bool append, bool light, bool themeswitching,
                                          std::string const &exportdetails) const
 {
-  return true;
-#if  __cpp_lib_unreachable >= 202202L
-  std::unreachable();
-#endif
-
-
   Logger::message("Writing fullcontactslist.html...");
 
   if (bepaald::fileOrDirExists(dir + "/fullcontactslist.html"))

@@ -1119,8 +1119,23 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       }
       else if (!outgoing && !incoming)
       {
-        warnOnce("Unsupported message type '" + type + "'. Skipping message. "
-                 "(this warning will be shown only once)");
+        if (!d_verbose) [[likely]]
+          warnOnce("Unhandled message type '" + type + "'. Skipping message. "
+                   "(this warning will be shown only once)");
+        else [[unlikely]]
+        {
+          // get some extra info and show it (threadname, timestamp?)
+          long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+          std::string date = "(unknown)";
+          std::string threadtitle = getNameFromRecipientId(address);
+          if (threadtitle.empty())
+            threadtitle = "(unknown)";
+          if (originaldate != -1)
+            date = bepaald::toDateString(originaldate / 1000, "%Y-%m-%d %H:%M:%S");
+
+          Logger::warning("Unhandled message type '" + type + "'. Skipping message. Threadtitle: \"", threadtitle, "\", Date: ", date);
+        }
+
         continue;
       }
 
@@ -1232,7 +1247,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             //         _id = 3
             //    thread_id = 39
             //   message_id = 4584
-            // recipient_id = 71  (= 93722273-78e3-4136-8640-c8261969714c)
+            // recipient_id = 71  (= 93722273-78e3-41 ...)
             //  range_start = 10
             // range_length = 1
             //
@@ -1270,8 +1285,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].length') AS qbr_length,"
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].style') AS qbr_style,"
-                                        "LOWER(COALESCE(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionAci'), json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid'))) AS qbr_uuid"
-                                        " FROM messages WHERE rowid = ?", rowid, &qbrres))
+                                        "LOWER(COALESCE(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionAci'), json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid'))) AS qbr_uuid "
+                                        "FROM messages WHERE rowid = ?", rowid, &qbrres))
               {
                 if (d_verbose) [[unlikely]] Logger::message_end();
                 Logger::error("Retrieving quote bodyranges");
@@ -1283,7 +1298,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
               long long int rec_id = -1;
               if (qbrres.isNull(0, "qbr_style"))
               {
-                if (qbrres.isNull(0, "qbr_uuid")) [[unlikely]]
+                if (qbrres.isNull(0, "qbr_uuid")) [[unlikely]] // if style = null, this must be a mention
                 {
                   if (d_verbose) [[unlikely]] Logger::message_end();
                   Logger::warning("Quote-bodyrange contains no recipient and no style. Skipping.");
@@ -1296,8 +1311,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                 {
                   if (createmissingcontacts)
                   {
-                    if ((rec_id = dtCreateRecipient(dtdb.d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
-                                                    databasedir, &recipientmap, &warned_createcontacts)) == -1)
+                    if (dtCreateRecipient(dtdb.d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
+                                          databasedir, &recipientmap, &warned_createcontacts) == -1)
                     {
                       if (d_verbose) [[unlikely]] Logger::message_end();
                       Logger::warning("Failed to create recipient for quote-mention. Skipping.");
