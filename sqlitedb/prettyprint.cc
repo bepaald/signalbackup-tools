@@ -19,7 +19,7 @@
 
 #include "sqlitedb.ih"
 
-void SqliteDB::QueryResults::prettyPrint(long long int row) const
+void SqliteDB::QueryResults::prettyPrint(long long int requestedrow) const
 {
   if (rows() == 0 && columns() == 0)
   {
@@ -35,8 +35,8 @@ void SqliteDB::QueryResults::prettyPrint(long long int row) const
     contents.back().emplace_back(d_headers[i]);
 
   // set data
-  long long int startrow = row == -1 ? 0 : row;
-  long long int endrow = row == -1 ? rows() : row + 1;
+  long long int startrow = requestedrow == -1 ? 0 : requestedrow;
+  long long int endrow = requestedrow == -1 ? rows() : requestedrow + 1;
   for (unsigned int i = startrow; i < endrow; ++i)
   {
     contents.resize(contents.size() + 1);
