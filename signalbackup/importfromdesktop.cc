@@ -1134,6 +1134,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             date = bepaald::toDateString(originaldate / 1000, "%Y-%m-%d %H:%M:%S");
 
           Logger::warning("Unhandled message type '" + type + "'. Skipping message. Threadtitle: \"", threadtitle, "\", Date: ", date);
+          Logger::warning_indent("Raw message data:");
+          results_all_messages_from_conversation.printLineMode(j);
         }
 
         continue;

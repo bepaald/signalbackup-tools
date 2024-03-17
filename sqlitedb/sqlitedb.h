@@ -63,9 +63,9 @@ class SqliteDB
     inline size_t rows() const;
     inline size_t columns() const;
     inline void clear();
-    void printLineMode() const;
-    void prettyPrint() const;
-    void print(bool printheader = true) const;
+    void printLineMode(long long int row = -1) const;
+    void prettyPrint(long long int row = -1) const;
+    void print(long long int row = -1, bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
     std::string valueAsString(size_t row, std::string const &header) const;
     long long int valueAsInt(size_t row, size_t column, long long int def = -1) const;

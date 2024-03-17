@@ -19,7 +19,7 @@
 
 #include "sqlitedb.ih"
 
-void SqliteDB::QueryResults::printLineMode() const
+void SqliteDB::QueryResults::printLineMode(long long int row) const
 {
   if (rows() == 0 && columns() == 0)
   {
@@ -34,7 +34,9 @@ void SqliteDB::QueryResults::printLineMode() const
       maxheader = h.size();
 
   // print
-  for (unsigned int i = 0; i < rows(); ++i)
+  long long int startrow = row == -1 ? 0 : row;
+  long long int endrow = row == -1 ? rows() : row + 1;
+  for (unsigned int i = startrow; i < endrow; ++i)
   {
     Logger::message(" === Row ", i + 1, "/", rows(), " ===");
     for (uint j = 0; j < columns(); ++j)
