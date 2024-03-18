@@ -476,7 +476,8 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     std::string username = results(order[ii].second, "username");
     bool hasavatar = getRecipientInfoFromMap(recipient_info, rec_id).hasavatar;
     bool isgroup = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM groups WHERE group_id = (SELECT IFNULL(group_id, 0) FROM recipient WHERE _id = ?)", rec_id, -1) == 1;
-    isgroup |= d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM distribution_list WHERE recipient_id = ?", rec_id, -1) == 1;
+    if (d_database.containsTable("distribution_list"))
+      isgroup |= d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM distribution_list WHERE recipient_id = ?", rec_id, -1) == 1;
     bool emoji_initial = getRecipientInfoFromMap(recipient_info, rec_id).initial_is_emoji;
 
     //Logger::message(rec_id, " : ", sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name));

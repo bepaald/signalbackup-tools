@@ -103,7 +103,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         }
         std::string fname = message_data(i, "forwarded_from");
         std::string tmp = db.getSingleResultAs<std::string>("SELECT json_array(json_object('type', 'italic', 'text', ?), json_object('type', 'plain', 'text', '\n'))",
-                                                            "Fowarded from " + fname + ":", std::string());
+                                                            "Forwarded from " + fname + ":", std::string());
         for (uint nt = 0; nt < n_text_entities; ++nt)
           tmp = db.getSingleResultAs<std::string>("SELECT json_insert(?, '$[#]', json_extract(?, '$[" + bepaald::toString(nt) + "]'))", {tmp, bodyjson}, std::string());
 

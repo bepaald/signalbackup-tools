@@ -245,7 +245,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     << "      }\n"
     << "\n"
     << "      .group-avatar-icon {\n"
-    << "        background: #315FF4;\n"
+    << "        background-color: #315FF4;\n"
     << "        background-position: center;\n"
     << "        background-repeat: no-repeat;\n"
     << "        background-size: 80%;\n"
