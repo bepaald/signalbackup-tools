@@ -121,9 +121,13 @@ R"*(
    --stickerpacks                        Optional modifier for `--exporthtml'. Generate an overview of
                                          installed and known stickerpacks.
    --includeblockedlist                  Optional modifier for `--exporthtml'. Generate an overview of
-                                         blocked contacts in the database.)*"
-//   --includesettings                     Optional modifier for `--exporthtml'. Generate a page showing
-//                                         settings found in the backup file.
+                                         blocked contacts in the database.
+   --includesettings                     Optional modifier for `--exporthtml'. Generate a page showing
+                                         settings found in the backup file.
+   --includefullcontactslist             Optional modifier for `--exporthtml'. Generate a page showing all
+                                         contacts present in the backups database. These include hidden
+                                         and blocked contacts, but also system contacts who might not use
+                                         Signal at all.)*"
 R"*(
    --addexportdetails                    Optional modifier for `--exporthtml'. Adds some metadata about this
                                          tools and the backup to the pages when printing.
