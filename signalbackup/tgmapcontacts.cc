@@ -108,6 +108,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     }
     if (found_id != -1)
     {
+      if (d_verbose) [[unlikely]]
+        Logger::message("Found json contact by name: ", contact, " -> ", found_id);
+
       // we found this contact, add it (and all names) to map
       realcontactmap.push_back({{contact}, found_id});
       for (uint j = 0; j < aliases.rows(); ++j)
@@ -144,6 +147,10 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     // if all ids except one occur only once, the exception surely is self
     if (ids_in_personal_chats.rows() == 1)
     {
+
+      if (d_verbose) [[unlikely]]
+        Logger::message("Found json contact for self: ", ids_in_personal_chats(0, "from_id"), " -> ", d_selfid);
+
       realcontactmap.push_back({{ids_in_personal_chats(0, "from_id")}, d_selfid});
       // copy aliases and erase from not found
       move_from_not_found_to_contactmap(json_contacts, ids_in_personal_chats(0, "from_id"));
@@ -185,6 +192,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
       // if one of the two is already in the contactmap, just make sure they link to the same Signal_id (and erase from notfound)
       if (contactidx != -1)
       {
+        if (d_verbose) [[unlikely]]
+          Logger::message("Linking contacts: ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
+
         realcontactmap.push_back({{linkchat}, realcontactmap[contactidx].second});
         // copy aliases and erase from not found
         move_from_not_found_to_contactmap(json_contacts, linkchat);
@@ -193,6 +203,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
       if (chatidx != -1)
       {
+        if (d_verbose) [[unlikely]]
+          Logger::message("Linking contacts: ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
+
         realcontactmap.push_back({{personal_chat_contacts(i, "from_id")}, realcontactmap[chatidx].second});
         // copy aliases and erase from not found
         move_from_not_found_to_contactmap(json_contacts, personal_chat_contacts(i, "from_id"));
@@ -218,6 +231,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
         Logger::warning("Something went wrong merging unknown json contacts");
       else // then merge its aliases into the others (if not present)
       {
+        if (d_verbose) [[unlikely]]
+          Logger::message("Linking unmapped contacts: ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
+
         for (auto it = recipientsnotfound.begin(); it != recipientsnotfound.end(); ++it)
         {
           if (json_contacts.valueAsString(it->first, "id") == personal_chat_contacts(i, "from_id"))
