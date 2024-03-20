@@ -87,6 +87,14 @@ ThreadTable::
         d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
                         "(SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
 
+        // at dbv199, an active column was added to thread. When deleted, only a thread contents are actually deleted,
+        // but the thread itself is simply marked inactive (preventing it from showing up in the thread list).
+        // Since this only happens to deleted threads, inactive implies 0 messages (meaningful or otherwise) in the thread,
+        // we set to active if _anything_ is there
+        if (d_database.tableContainsColumn("thread", "active"))
+          d_database.exec("UPDATE thread SET active = "
+                          "((SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") > 0) WHERE _id = " + threadid);
+
         d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
                         d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
                         " WHERE " + d_mms_table + ".thread_id = " + threadid +
