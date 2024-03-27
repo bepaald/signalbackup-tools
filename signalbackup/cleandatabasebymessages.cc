@@ -210,7 +210,7 @@ void SignalBackup::cleanDatabaseByMessages()
       Logger::message("Got recipients from groupmemberships. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     // get recipients mentioned in group updates (by uuid)
-    std::vector<long long int> mentioned_in_group_updates = getGroupUpdateRecipients();
+    std::vector<long long int> mentioned_in_group_updates(getGroupUpdateRecipients());
     for (long long int id : mentioned_in_group_updates)
       referenced_recipients.insert(id);
     if (d_verbose) [[unlikely]]

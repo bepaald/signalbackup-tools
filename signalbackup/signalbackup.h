@@ -189,7 +189,7 @@ class SignalBackup
 
   static std::vector<DatabaseLink> const s_databaselinks;
   static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
-  static char const *const s_emoji_unicode_list[3655];
+  static char const *const s_emoji_unicode_list[3773];
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;

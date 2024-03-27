@@ -87,9 +87,40 @@ bool SignalBackup::findRecipient(long long int id) const
   }
 
   // check in group updates
+  std::vector<long long int> mentioned_in_group_updates(getGroupUpdateRecipients());
+  if (bepaald::contains(mentioned_in_group_updates, id))
+    Logger::message("Found recipient ", id, " referenced in group updates");
 
-  // now check the other thigns (uuid in group updates?)
+  // check former gv1 members
+  std::set<long long int> gv1migrationrec;
+  getGroupV1MigrationRecipients(&gv1migrationrec);
+  if (bepaald::contains(gv1migrationrec, id))
+    Logger::message("Found recipient ", id, " referenced in GV1 migration message");
 
+  // check old style? group members
+  SqliteDB::QueryResults results;
+  std::set<long long int> oldstylegroupmembers;
+  for (auto const &members : {"members"s, d_groups_v1_members})
+  {
+    if (!d_database.tableContainsColumn("groups", members))
+      continue;
 
-  return false;
+    d_database.exec("SELECT "s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
+    for (uint i = 0; i < results.rows(); ++i)
+    {
+      std::string membersstr = results.getValueAs<std::string>(i, members);
+      std::stringstream ss(membersstr);
+      while (ss.good())
+      {
+        std::string substr;
+        std::getline(ss, substr, ',');
+        //Logger::message("ADDING ", members, " MEMBER: ", substr);
+        oldstylegroupmembers.insert(bepaald::toNumber<int>(substr));
+      }
+    }
+  }
+  if (bepaald::contains(oldstylegroupmembers, id))
+    Logger::message("Found recipient ", id, " referenced as group member (old style)");
+
+  return true;
 }

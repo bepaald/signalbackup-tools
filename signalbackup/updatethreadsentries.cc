@@ -93,7 +93,7 @@ ThreadTable::
         // we set to active if _anything_ is there
         if (d_database.tableContainsColumn("thread", "active"))
           d_database.exec("UPDATE thread SET active = "
-                          "((SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") > 0) WHERE _id = " + threadid);
+                          "((SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") > 0) WHERE _id = " + threadid + " AND active = 0");
 
         d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
                         d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
