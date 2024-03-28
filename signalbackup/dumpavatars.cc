@@ -47,7 +47,8 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     SqliteDB::QueryResults results;
 
-    std::string query = "SELECT COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+    std::string query = "SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+      "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
       "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
       (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +

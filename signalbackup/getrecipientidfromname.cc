@@ -28,7 +28,8 @@ long long int SignalBackup::getRecipientIdFromName(std::string const &name, bool
                       "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
                       (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id "s : ""s) +
                       "LEFT JOIN thread ON recipient._id = thread." + d_thread_recipient_id + " WHERE "
-                      "COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+                      "COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+                      "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                       "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
                       (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +

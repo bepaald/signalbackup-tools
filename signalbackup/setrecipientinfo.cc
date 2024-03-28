@@ -30,7 +30,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
 
     // get info
     SqliteDB::QueryResults results;
-    d_database.exec("SELECT COALESCE(NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+    d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+                    "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                     (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                     "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
                     (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +

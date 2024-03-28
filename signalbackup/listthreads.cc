@@ -45,8 +45,11 @@ void SignalBackup::listThreads() const
     d_database.exec("SELECT thread._id, "
                     "COALESCE(recipient." + d_recipient_e164 + ", recipient.group_id" + (uuid ? ", recipient."s + d_recipient_aci : ""s) + ", recipient._id) AS 'recipient_ids', "
                     "thread.snippet, "
-                    "COALESCE(recipient." + d_recipient_system_joined_name +", " + (profile_joined_name ? "recipient.profile_joined_name,"s : ""s) + "recipient." + d_recipient_profile_given_name + ", groups.title, " +
-                    (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, '')" : "") +") AS 'Conversation partner' "
+                    "COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''), " : "") +
+                    "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+                    (profile_joined_name ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+                    "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), groups.title, " +
+                    (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, '')" : "") + ") AS 'Conversation partner' "
                     "FROM thread "
                     "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id "
                     "LEFT JOIN groups ON recipient.group_id = groups.group_id " +

@@ -145,12 +145,13 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
     SqliteDB::QueryResults r2;
     if (d_databaseversion >= 24)
-    {
-      if (d_database.tableContainsColumn("recipient", "profile_joined_name"))
-        d_database.exec("SELECT COALESCE(recipient." + d_recipient_system_joined_name + ", recipient." + d_recipient_profile_given_name + ", recipient.profile_joined_name) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
-      else
-        d_database.exec("SELECT COALESCE(recipient." + d_recipient_system_joined_name + ", recipient." + d_recipient_profile_given_name + ") AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
-    }
+      d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+                      "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+                      (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+                      "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
+                      (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
+                      "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+                      " recipient._id) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
     else
       d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
     if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
@@ -336,7 +337,13 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     {
       SqliteDB::QueryResults r2;
       if (d_databaseversion >= 24)
-        d_database.exec("SELECT COALESCE(recipient." + d_recipient_system_joined_name + ", recipient." + d_recipient_profile_given_name + ") AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+        d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+                        "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+                        (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+                        "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
+                        (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
+                        "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+                        " recipient._id) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
       else
         d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
