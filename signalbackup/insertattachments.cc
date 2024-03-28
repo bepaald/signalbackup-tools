@@ -264,7 +264,9 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                     {"width", amd.width == -1 ? 0 : amd.width},
                     {"height", amd.height == -1 ? 0 : amd.height},
                     {"quote", isquote ? 1 : 0},
-                    {"data_hash", amd.hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), amd.hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), amd.hash},
                     {"upload_timestamp", results_attachment_data.value(0, "upload_timestamp")},      // will be 0 on sticker
                     {"cdn_number", results_attachment_data.value(0, "cdn_number")}, // will be 0 on sticker, usually 0 or 2, but I dont know what it means
                     {"file_name", results_attachment_data.value(0, "file_name")}},

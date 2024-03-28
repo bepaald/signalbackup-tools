@@ -353,6 +353,9 @@ class SignalBackup
   inline bool setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, std::string const &line) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
+  bool updateRows(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
+                  std::vector<std::pair<std::string, std::any>> whereclause,
+                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
                          long long int rowid, SqliteDB const &ddb, std::string const &where,
                          std::string const &databasedir, bool isquote, bool issticker);
@@ -785,10 +788,15 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
 
 inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &data, long long int id)
 {
-  if (!d_database.exec("UPDATE " + d_part_table + " SET " + d_part_ct + " = ?, data_size = ?, width = ?, "
-                       "height = ?, data_hash = ?, "
-                       "video_gif = 0, transform_properties = NULL, voice_note = 0, blur_hash = NULL WHERE _id = ?",
-                       {data.filetype, data.filesize, data.width, data.height, data.hash, id}) ||
+  if (!updateRows(d_part_table,
+                  {{d_part_ct, data.filetype},
+                   {"data_size", data.filesize},
+                   {"width", data.width},
+                   {"height", data.height},
+                   {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), data.hash},
+                   {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), data.hash},
+                   {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), data.hash}},
+                  {{"_id", id}}) ||
       d_database.changed() != 1)
     return false;
   return true;

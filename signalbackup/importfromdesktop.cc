@@ -165,6 +165,8 @@
 //"sticker_pack_key," // =
 //"sticker_id," // = -1
 "data_hash," // = Msx++MxFQPNuuCPnsO5Q9H2twoNFPMOKpH521FDVn+U=
+ |-> "data_hash_start,"
+ \-> "data_hash_end,"
 //"blur_hash," // = LN7nwD_M_M_M_M_M_M_M_M_M_M_M
 //"transform_properties," // = {"skipTransform":true,"videoTrim":false,"videoTrimStartTimeUs":0,"videoTrimEndTimeUs":0,"sentMediaQuality":0,"videoEdited":false}
 //"transfer_file," // =

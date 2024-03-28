@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,8 +23,10 @@
 #include <ranges>
 #endif
 
-bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
-                             std::string const &returnfield, std::any *returnvalue) const
+bool SignalBackup::updateRows(std::string const &table,
+                              std::vector<std::pair<std::string, std::any>> data,
+                              std::vector<std::pair<std::string, std::any>> whereclause,
+                              std::string const &returnfield, std::any *returnvalue) const
 {
   // check if columns exist...
   for (auto it = data.begin(); it != data.end();)
@@ -40,21 +42,28 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
       ++it;
   }
 
-  std::string query = "INSERT INTO " + table + " (";
+  std::string query = "UPDATE " + table + " SET ";
   for (uint i = 0; i < data.size(); ++i)
-    query += data[i].first + (i < data.size() -1 ? ", " : ") ");
-  query += "VALUES (";
-  for (uint i = 0; i < data.size(); ++i)
-    query += "?"s + (i < data.size() -1 ? ", " : ")");
+    query += data[i].first + (i < data.size() -1 ? " = ?, " : " = ?");
+
+  if (whereclause.size())
+  {
+    query += " WHERE ";
+    for (uint i = 0; i < whereclause.size(); ++i)
+      query += whereclause[i].first + (i < whereclause.size() -1 ? " = ? AND " : " = ?");
+  }
   if (!returnfield.empty() && returnvalue)
     query += " RETURNING " + returnfield;
 
   SqliteDB::QueryResults res;
-#if __cpp_lib_ranges >= 201911L && !defined(__clang__)
-  bool ret = d_database.exec(query, std::views::values(data), &res, d_verbose);
+
+  // when concat_view gets implemented... (__cpp_lib_ranges_concat >= 20XXXXL)
+#if false && __cpp_lib_ranges >= 201911L && !defined(__clang__)
+  bool ret = d_database.exec(query, std::views::values(std::views::concat(data, whereclause)), &res, d_verbose);
 #else
   std::vector<std::any> values;
   std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });
+  std::transform(whereclause.begin(), whereclause.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });
   bool ret = d_database.exec(query, values, &res, d_verbose);
 #endif
   if (ret && !returnfield.empty() && returnvalue && res.rows() && res.columns())

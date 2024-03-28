@@ -57,10 +57,16 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
 
   // set quoted-attachment
   SqliteDB::QueryResults quote_att_res;
-  if (d_database.exec("SELECT _id, " + d_part_mid + ", " + d_part_ct + ", " + d_part_pending + ", data_size, " +
-                      (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : "-1 AS unique_id") +
-                      ", voice_note, width, height, quote, data_hash "
-                      "FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", quoted_message_id, &quote_att_res) &&
+  std::string query = "SELECT _id, " + d_part_mid + ", " + d_part_ct + ", " + d_part_pending + ", data_size, " +
+    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : "-1 AS unique_id") +
+    ", voice_note, width, height, quote";
+  if (d_database.tableContainsColumn(d_part_table, "data_hash"))
+    query += ", data_hash";
+  else if (d_database.tableContainsColumn(d_part_table, "data_hash_start") &&
+           d_database.tableContainsColumn(d_part_table, "data_hash_end"))
+    query += ", data_hash_start, data_hash_end";
+  query += " FROM " + d_part_table + " WHERE " + d_part_mid + " = ?";
+  if (d_database.exec(query, quoted_message_id, &quote_att_res) &&
       quote_att_res.rows() >= 1)
   {
     //quote_att_res.prettyPrint();
@@ -96,7 +102,9 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
                       {"width", quote_att_res.value(i, "width")},
                       {"height", quote_att_res.value(i, "height")},
                       {"quote", 1},
-                      {"data_hash", quote_att_res.value(i, "data_hash")}},
+                      {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), quote_att_res.value(i, "data_hash")},
+                      {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), quote_att_res.value(i, "data_hash_start")},
+                      {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), quote_att_res.value(i, "data_hash_end")}},
                      "_id", &retval))
       {
         Logger::error("Inserting part-data");
