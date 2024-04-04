@@ -85,12 +85,10 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
 
     if (!d_database.exec("INSERT INTO chats SELECT "
                          "0, "
-                         "json_extract(?, '$.id') AS id, "
-                         "json_extract(?, '$.name') AS name, "
-                         "json_extract(?, '$.type') AS type",
-                         {SqliteDB::StaticTextParam(data.get(), datasize),
-                          SqliteDB::StaticTextParam(data.get(), datasize),
-                          SqliteDB::StaticTextParam(data.get(), datasize)}))
+                         "json_extract(?1, '$.id') AS id, "
+                         "json_extract(?1, '$.name') AS name, "
+                         "json_extract(?1, '$.type') AS type",
+                          SqliteDB::StaticTextParam(data.get(), datasize)))
     {
       Logger::error("Failed to fill sql table");
       return;
@@ -104,7 +102,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
 
   // INSERT DATA INTO MESSAGES TABLE
 
-  // note: to glob-match '$.chats.list[0].messages' for any number, we create a character class for the first '[' -> [[], since GLOB has no escape characters
+  // note: to glob-match '$.chats.list[0].messages' for any number, we create a character class for the first '[' -> '[[]', since GLOB has no escape characters
   if (d_verbose) [[unlikely]]
     Logger::message_start("Inserting messages from json...");
   if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, path "
@@ -147,7 +145,6 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   // std::cout << std::endl << "MESSAGES: " << std::endl;
   // d_database.prettyPrint("SELECT COUNT(*) FROM messages");
   // d_database.prettyPrint("SELECT * FROM messages");// WHERE chatidx = 42 LIMIT 10");
-  // // d_database.saveToFile("NEW_METHOD");
 
   d_ok = true;
 }

@@ -248,7 +248,10 @@ be removed.
                                               prevent v214 and v215 from being compatible for merging. This
                                               function attempts to migrate the older database so it can be
                                               used as a source for `--importthreads'. See also
-                                              https://github.com/bepaald/signalbackup-tools/issues/184)*";
+                                              https://github.com/bepaald/signalbackup-tools/issues/184
+--importtelegram <JSONFILE>                   Import messages from a JSON file as exported by Telegram. This
+                                              may be a somewhat complicated procedure. For details, see
+                                              https://github.com/bepaald/signalbackup-tools/issues/153)*";
    // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
    //                                            groups members from OLDNUMBER to NEWNUMBER. Might not
    //                                            always be wanted if the NEWNUMBER was already added to the

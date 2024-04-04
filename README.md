@@ -719,12 +719,14 @@ Done!
 
 This program supports a small number of other options, most of which are of little to no use for everyday users. A select few that may be useful are mentioned here. A more complete list can be found by running with `--help`.
 
+- `--no-showprogress` Disable (most) progress indicators. Especially usefull when trying to parse the programs output in a script.
 - `-v/--verbose` Run in verbose mode. This will print a _lot_ of text to output, may be useful in case of errors.
 - `--listrecipients` Lists all recipients found in the database.
 - `--showdbinfo` Prints a list of all tables and their columns in the backups Sqlite database.
 - `--scanmissingattachments` If you see _"warning attachment data not found"_ messages, feel free to use this option and provide the 
 output to the developer.
-- `--migrate214to215` Changes in the database prevent v214 and v215 from being compatible for merging. This function attempts to migrate the older database so it can be used as a source for `--importthreads'. See also https://github.com/bepaald/signalbackup-tools/issues/184.
+- `--migrate214to215` Changes in the database prevent v214 and v215 from being compatible for merging. This function attempts to migrate the older database so it can be used as a source for `--importthreads`. See also https://github.com/bepaald/signalbackup-tools/issues/184.
+- `--importtelegram` Import messages from a json file as exported by Telegram. This function will get better documentation in the future, but for now see: https://github.com/bepaald/signalbackup-tools/issues/153.
 
 **<span id="advanced">Advanced options</span>**
 
