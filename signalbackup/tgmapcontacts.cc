@@ -85,9 +85,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     // find it in android db by name
     long long int found_id = -1;
     SqliteDB::QueryResults aliases;
-    jsondb.d_database.exec("SELECT DISTINCT from_name AS name FROM messages WHERE from_id = ? "
+    jsondb.d_database.exec("SELECT DISTINCT from_name AS name FROM messages WHERE from_id = ?1 "
                            "UNION "
-                           "SELECT DISTINCT name FROM chats WHERE id = ?", {contact, contact}, &aliases);
+                           "SELECT DISTINCT name FROM chats WHERE id = ?1", contact, &aliases);
     for (uint j = 0; j < aliases.rows(); ++j)
     {
       if (bepaald::contains(inhibitmappping, aliases(j, "name")))

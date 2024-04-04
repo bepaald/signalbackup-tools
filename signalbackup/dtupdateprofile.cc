@@ -30,8 +30,8 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
   if (!ddb.exec("SELECT type, name, profileName, IFNULL(profileFamilyName, '') AS profileFamilyName, profileFullName, "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
                 "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar " // 'profileAvatar' for persons, 'avatar' for groups
-                "FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
-                {dtid, dtid, dtid}, &res))
+                "FROM conversations WHERE " + d_dt_c_uuid + " = ?1 OR e164 = ?1 OR groupId = ?1",
+                dtid, &res))
     return false;
 
   // check if we have some data

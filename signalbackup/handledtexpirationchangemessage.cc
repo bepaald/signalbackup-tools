@@ -59,7 +59,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
     std::string source = timer_results.valueAsString(0, "source");
 
     SqliteDB::QueryResults convresults;
-    if (ddb.exec("SELECT id FROM conversations WHERE e164 = ? OR " + d_dt_c_uuid + " = ?", {source, source}, &convresults) &&
+    if (ddb.exec("SELECT id FROM conversations WHERE e164 = ?1 OR " + d_dt_c_uuid + " = ?1", source, &convresults) &&
         convresults.rows() == 1)
       if (convresults.valueAsString(0, "id") == timer_results.valueAsString(0, "conversationId"))
       {
@@ -69,7 +69,7 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
 
     // if it is outgoing, source would be a conversationId in conversations
     SqliteDB::QueryResults sourceresults;
-    if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE id IS ? OR e164 = ?", {source, source}, &sourceresults) &&
+    if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE id IS ?1 OR e164 = ?1", source, &sourceresults) &&
         sourceresults.rows() != 1)
       incoming = true;
   }

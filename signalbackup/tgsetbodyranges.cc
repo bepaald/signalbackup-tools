@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -37,9 +37,9 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
   for (uint i = 0; i < fragments; ++i)
   {
     if (!d_database.exec("SELECT "
-                         "json_extract(?, '$[" + bepaald::toString(i) + "].text') AS text, "
-                         "json_extract(?, '$[" + bepaald::toString(i) + "].type') AS type",
-                         {bodyjson, bodyjson}, &br) || br.rows() != 1)
+                         "json_extract(?1, '$[" + bepaald::toString(i) + "].text') AS text, "
+                         "json_extract(?1, '$[" + bepaald::toString(i) + "].type') AS type",
+                         bodyjson, &br) || br.rows() != 1)
     {
       Logger::error("Failed to get text fragment (", i, ") from message body. Body data: '" + bodyjson + "'");
       return false;

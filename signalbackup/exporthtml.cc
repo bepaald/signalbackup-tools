@@ -433,8 +433,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         SqliteDB::QueryResults edit_revisions;
         if (d_database.tableContainsColumn(d_mms_table, "revision_number"))
           d_database.exec("SELECT _id,body,date_received," + d_mms_date_sent + ",revision_number FROM " + d_mms_table +
-                          " WHERE _id = ? OR original_message_id = ? ORDER BY " + d_mms_date_sent + " ASC", // skip actual current message
-                          {original_message_id, original_message_id}, &edit_revisions);
+                          " WHERE _id = ?1 OR original_message_id = ?1 ORDER BY " + d_mms_date_sent + " ASC", // skip actual current message
+                          original_message_id, &edit_revisions);
 
         bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
 

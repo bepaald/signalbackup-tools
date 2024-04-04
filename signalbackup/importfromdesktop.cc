@@ -557,9 +557,9 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         if (type == "profile-change")
         {
           if (!dtdb.d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
-                                    "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?) OR "
-                                    "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?)", // maybe id can be a phone number?
-                                    {rowid, rowid}, &statusmsguuid))
+                                    "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1) OR "
+                                    "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1)", // maybe id can be a phone number?
+                                    rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group profile-change.");
             // print some extra info
@@ -569,9 +569,9 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         else if (type == "keychange")
         {
           if (!dtdb.d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
-                                    + d_dt_c_uuid + " IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?) OR "
-                                    "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?)",     // 'key_changed' can be a phone number (confirmed)
-                                    {rowid, rowid}, &statusmsguuid))
+                                    + d_dt_c_uuid + " IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1) OR "
+                                    "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1)",     // 'key_changed' can be a phone number (confirmed)
+                                    rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group keychange.");
             // print some extra info
@@ -581,9 +581,9 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         else if (type == "verified-change")
         {
           if (!dtdb.d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
-                                    "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?) OR "
-                                    "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?)",// maybe id can be a phone number?
-                                    {rowid, rowid}, &statusmsguuid))
+                                    "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1) OR "
+                                    "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1)",// maybe id can be a phone number?
+                                    rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group verified-change.");
             // print some extra info
@@ -1602,7 +1602,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
   for (auto const &r : recipientmap)
   {
     //std::cout << "Recpients in map: " << r.first << " : " << r.second << std::endl;
-    long long int profile_date_desktop = dtdb.d_database.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE " + d_dt_c_uuid + " = ? OR groupId = ? OR e164 = ?", {r.first, r.first, r.first}, 0);
+    long long int profile_date_desktop = dtdb.d_database.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE " + d_dt_c_uuid + " = ?1 OR groupId = ?1 OR e164 = ?1", r.first, 0);
     long long int profile_date_android = d_database.getSingleResultAs<long long int>("SELECT last_profile_fetch FROM recipient WHERE _id = ?", r.second, 0);
     //std::cout << "Profile update? : " << r.first << " " << profile_date_desktop << " " << profile_date_android << std::endl;
     if (profile_date_desktop > profile_date_android)

@@ -69,8 +69,6 @@ void SignalBackup::initFromFile()
                                     (static_cast<float>(progress) / 10), std::defaultfloat, "%)...");
 
         prev_progress = progress;
-
-        //std::cout << std::endl;
       }
 
       // Logger::message_overwrite("FRAME ", frame->frameNumber(), " (",
@@ -115,7 +113,7 @@ void SignalBackup::initFromFile()
         // we lazily do not check for them here, since we are dealing with official exported files which do not contain
         // these tables as they are excluded on the export-side as well. Additionally, the official import should be able
         // to properly deal with them anyway (that is: ignore them)
-        if (!d_database.exec(s->bindStatement(), s->parameters()))
+        if (!d_database.exec(s->bindStatement(), s->parameters())) [[unlikely]]
           Logger::warning("Failed to execute statement: ", s->statement());
       }
       #ifdef BUILT_FOR_TESTING
