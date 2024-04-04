@@ -36,8 +36,9 @@ void SignalBackup::initFromFile()
   }
 
   int64_t totalsize = d_fd->total();
+  int prev_progress = 2000; // note this number will be max 1000 (10 * 100%), so this is an invalid number (to trigger on 0).
 
-  Logger::message("Reading backup file...");
+  Logger::message_overwrite("Reading backup file...");
   std::unique_ptr<BackupFrame> frame(nullptr);
 
   d_database.exec("BEGIN TRANSACTION");
@@ -53,16 +54,29 @@ void SignalBackup::initFromFile()
 
     if (d_showprogress) [[likely]]
     {
-      Logger::message_overwrite("FRAME ", frame->frameNumber(), " (",
-                                std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-                                (static_cast<float>(backupfile.tellg()) / totalsize) * 100,
-                                std::defaultfloat, "%)... ");
-      // std::cout << (d_verbose ? "" : "\33[2K\r") << "FRAME " << frame->frameNumber() << " ("
-      //           << std::fixed << std::setprecision(1) << std::setw(5) << std::setfill('0')
-      //           << (static_cast<float>(d_fd->curFilePos()) / totalsize) * 100 << "%)" << std::defaultfloat
-      //           << "... " << std::flush;
-      // if (d_verbose) [[unlikely]]
-      //   std::cout << "\n";
+      int64_t progress = (static_cast<float>(backupfile.tellg()) / totalsize) * 1000;
+
+      if (progress != prev_progress ||
+          d_verbose)
+      {
+        //std::cout << "Progress: " << progress <<  " " << std::fixed << (static_cast<float>(progress) / 10) << std::endl;
+
+        if (d_verbose) [[unlikely]]
+          Logger::message_overwrite("FRAME ", frame->frameNumber(), " (", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%)...");
+        else
+          Logger::message_overwrite("Reading backup file:", " (", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%)...");
+
+        prev_progress = progress;
+
+        //std::cout << std::endl;
+      }
+
+      // Logger::message_overwrite("FRAME ", frame->frameNumber(), " (",
+      //                           std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+      //                           (static_cast<float>(backupfile.tellg()) / totalsize) * 100,
+      //                           std::defaultfloat, "%)... ");
     }
 
     //if (frame->frameNumber() > 73085)
@@ -192,7 +206,12 @@ void SignalBackup::initFromFile()
   }
 
   if (backupfile.tellg() == totalsize)
-    Logger::message("done!");
+  {
+    if (d_verbose) [[unlikely]]
+      Logger::message_overwrite("FRAME ", frame->frameNumber(), " (100.0%)...done!", Logger::Control::ENDOVERWRITE);
+    else
+      Logger::message_overwrite("Reading backup file:", " (100.0%)...done!", Logger::Control::ENDOVERWRITE);
+  }
 
   d_ok = true;
 }

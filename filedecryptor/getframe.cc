@@ -31,7 +31,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
   if (static_cast<uint64_t>(filepos) == d_filesize) [[unlikely]]
   {
-    Logger::message("Read entire backup file...");
+    if (d_verbose) [[unlikely]]
+      Logger::message("Read entire backup file...");
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
