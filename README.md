@@ -344,14 +344,31 @@ _NOTE The original and new files are not actually guaranteed to be identical, it
 
 **<span id="dumpmedia">Dump media to disk</span>**
 
-To only export all media (like message attachments and avatars) from a backup, run as follows:
+##### Message attachments
+
+To only export media attachments from one or all of the threads in a backup, run with `--dumpmedia` as follows:
 
 ```
 signalbackups-tools [input] [passphrase] --dumpmedia [outputdirectory]
 ```
 
-Where `outputdirectory` is an empty directory, or does not exist (it will then be created). To limit the output to media from specified threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to media from the time periods listed. For the format of the date list, see the [crop to dates](#crop) option.
+Where `outputdirectory` is an empty directory, or does not exist (in which case it will be created). 
 
+To limit the export to certain threads, the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to media from the time periods listed. For the format of the date list, see the [crop to dates](#crop) option.
+
+Normally, stickers are included in the media export, as they are normal attachments in the database. To prevent this, add the option `--excludestickers`.
+
+##### Avatars
+
+To only export avatars from one or all contacts in a backup, run with `--dumpavatars` as follows:
+
+```
+signalbackups-tools [input] [passphrase] --dumpavatars [outputdirectory]
+```
+
+Where `outputdirectory` is an empty directory, or does not exist (in which case it will be created). 
+
+To limit the export to certain contacts, add the option `--limitcontacts [LIST_OF_CONTACTS]`. The list should look like this: `"Alice,Bob,John Doe(,...)"`, where each name is exaclty as it appears in Signal's conversation overview or from this program's `--listrecipients` output.
 
 **<span id="export">Export HTML, TXT, CSV & XML</span>**
 

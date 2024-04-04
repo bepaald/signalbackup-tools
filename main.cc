@@ -325,7 +325,7 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.dumpmedia().empty())
-    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.overwrite()))
+    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.excludestickers(), arg.overwrite()))
       return 1;
 
   if (!arg.dumpavatars().empty())

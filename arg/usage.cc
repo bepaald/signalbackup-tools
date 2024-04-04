@@ -76,11 +76,13 @@ changes, you must provide one of the output options.
    --limittodates <LIST_OF_DATES>        Optional modifier for `--dumpmedia'. Only export messages within
                                          the ranges defined by LIST_OF_DATES. List format is the same as
                                          `--croptodates'.
+   --excludestickers                     Optional modifier for `--dumpmedia'.  Exlcude stickers from the
+                                         media dump.
 --dumpavatars <DIRECTORY>                Save all avatars to DIRECTORY.
    --limitcontacts <CONTACTS>            Optional modifier for `--dumpavatars'. Only the avatars of
                                          listed contacts are saved. CONTACTS is a list "Name 1,Name
                                          2(,...)", where each name is exactly as it appears in Signal's
-                                         conversation overview or from this program's `--listhtreads'
+                                         conversation overview or from this program's `--listrecipients'
                                          output.
 --exportxml <FILE>                       Export the messages from the internal sms table to xml file FILE.)*"
 //   --includemms

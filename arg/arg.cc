@@ -51,6 +51,7 @@ Arg::Arg(int argc, char *argv[])
   d_desktopdirs_1(std::string()),
   d_desktopdirs_2(std::string()),
   d_dumpmedia(std::string()),
+  d_excludestickers(false),
   d_dumpavatars(std::string()),
   d_hhenkel(std::string()),
   d_devcustom(false),
@@ -540,6 +541,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
+      continue;
+    }
+    if (option == "--excludestickers")
+    {
+      d_excludestickers = true;
+      continue;
+    }
+    if (option == "--no-excludestickers")
+    {
+      d_excludestickers = false;
       continue;
     }
     if (option == "--dumpavatars")

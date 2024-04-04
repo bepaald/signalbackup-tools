@@ -20,7 +20,7 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> const &daterangelist,
-                             std::vector<long long int> const &threads, bool overwrite) const
+                             std::vector<long long int> const &threads, bool excludestickers, bool overwrite) const
 {
   Logger::message("Dumping media to dir '", dir, "'");
 
@@ -47,7 +47,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     d_part_table + ".file_name, " +
     d_part_table + ".display_order"
     " FROM " + d_part_table + " WHERE " + d_part_table + "._id == ?" +
-    (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "");
+    (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "") +
+    ((excludestickers && d_database.tableContainsColumn(d_part_table, "sticker_id")) ? " AND sticker_id = -1" : "");
 
   // if all tables for detailed info are present...
   if (d_database.containsTable(d_mms_table) && d_database.containsTable("thread") &&
@@ -76,7 +77,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       "LEFT JOIN groups ON recipient.group_id == groups.group_id " +
       (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
       "WHERE " + d_part_table + "._id == ?" +
-      (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "");
+      (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "") +
+      ((excludestickers && d_database.tableContainsColumn(d_part_table, "sticker_id")) ? " AND sticker_id = -1" : "");
   }
 
   if (!threads.empty())
@@ -129,15 +131,13 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     Logger::message("Dump media query: ", query);
 
 #if __cplusplus > 201703L
-  for (int count = 0; auto const &aframe : d_attachments)
+  for (int count = 1; auto const &aframe : d_attachments)
 #else
-  int count = 0;
+  int count = 1;
   for (auto const &aframe : d_attachments)
 #endif
   {
-
-    ++count;
-    Logger::message_overwrite("Saving attachments...  ", count, "/", d_attachments.size());
+    Logger::message_overwrite("Saving attachments... ", count); //, "/", results.rows());
 
     AttachmentFrame *a = aframe.second.get();
 
@@ -305,12 +305,15 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       continue;
     }
     else
+    {
+      ++count;
       if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
       {
         Logger::error("Failed to write data to file: '", targetdir, "/", filename, "'");
         a->clearData();
         continue;
       }
+    }
     attachmentstream.close(); // need to close, or the auto-close will change files mtime again.
     a->clearData();
 
@@ -320,6 +323,6 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     //std::error_code ec;
     //std::filesystem::last_write_time(dir + "/" + chatpartner + "/" + filename, std::chrono::clock_cast<std::filesystem::file_time_type>(datum / 1000), ec);
   }
-  Logger::message("done.");
+  Logger::message_overwrite("Saving attachments... done.", Logger::Control::ENDOVERWRITE);
   return true;
 }
