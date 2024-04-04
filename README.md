@@ -344,7 +344,7 @@ _NOTE The original and new files are not actually guaranteed to be identical, it
 
 **<span id="dumpmedia">Dump media to disk</span>**
 
-##### Message attachments
+##### Dumping message attachments
 
 To only export media attachments from one or all of the threads in a backup, run with `--dumpmedia` as follows:
 
@@ -358,7 +358,7 @@ To limit the export to certain threads, the option `--limittothreads [LIST_OF_TH
 
 Normally, stickers are included in the media export, as they are normal attachments in the database. To prevent this, add the option `--excludestickers`.
 
-##### Avatars
+##### Dumping avatars
 
 To only export avatars from one or all contacts in a backup, run with `--dumpavatars` as follows:
 
