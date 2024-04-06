@@ -33,12 +33,16 @@ class MemSqliteDB : public SqliteDB
 inline MemSqliteDB::MemSqliteDB()
   :
   SqliteDB(":memory:")
-{}
+{
+  exec("PRAGMA synchronous = OFF");
+}
 
 inline MemSqliteDB::MemSqliteDB(std::pair<unsigned char *, uint64_t> *data)
   :
   SqliteDB(data)
-{}
+{
+  exec("PRAGMA synchronous = OFF");
+}
 
 
 #endif

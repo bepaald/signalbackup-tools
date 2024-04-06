@@ -340,7 +340,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   else // reuse existing prepared statement
   {
     sqlite3_reset(d_stmt);
-    sqlite3_clear_bindings(d_stmt);
+    //sqlite3_clear_bindings(d_stmt);
   }
   // sqlite3_stmt *stmt;
   // if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &stmt, nullptr) != SQLITE_OK)
@@ -661,30 +661,30 @@ inline int SqliteDB::execParamFiller(int count, std::string const &param) const
 inline int SqliteDB::execParamFiller(int count, char const *param) const
 {
   //std::cout << "Binding CHAR CONST * at " << count << ": " << param << std::endl;
-  return sqlite3_bind_text(d_stmt, count, param, -1, SQLITE_TRANSIENT);
+  return sqlite3_bind_text(d_stmt, count, param, -1, SQLITE_STATIC);//TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, unsigned char const *param) const
 {
   //std::cout << "Binding UNSIGNED CHAR CONST * at " << count << std::endl;
-  return sqlite3_bind_text(d_stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_TRANSIENT);
+  return sqlite3_bind_text(d_stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_STATIC);//TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, size_t> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first.get()), param.second, SQLITE_TRANSIENT);
+  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first.get()), param.second, SQLITE_STATIC);//TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, std::pair<unsigned char *, size_t> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), param.second, SQLITE_TRANSIENT);
+  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), param.second, SQLITE_STATIC);//TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, StaticTextParam const &param) const
 {
-  //std::cout << "Binding BLOB at " << count << std::endl;
+  //std::cout << "Binding STATIC TEXT at " << count << std::endl;
   return sqlite3_bind_text(d_stmt, count, param.ptr, param.size, SQLITE_STATIC);
 }
 
