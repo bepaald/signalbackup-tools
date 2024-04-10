@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,35 +24,35 @@ void SignalBackup::escapeXmlString(std::string *str) const
   size_t pos = 0;
   while (pos != str->size())
   {
-    if (str->at(pos) == '&')
+    if ((*str)[pos] == '&')
     {
       str->replace(pos, 1, "&amp;");
       pos += STRLEN("&amp;");
       continue;
     }
 
-    if (str->at(pos) == '<')
+    if ((*str)[pos] == '<')
     {
       str->replace(pos, 1, "&lt;");
       pos += STRLEN("&lt;");
       continue;
     }
 
-    if (str->at(pos) == '>')
+    if ((*str)[pos] == '>')
     {
       str->replace(pos, 1, "&gt;");
       pos += STRLEN("&gt;");
       continue;
     }
 
-    if (str->at(pos) == '"')
+    if ((*str)[pos] == '"')
     {
       str->replace(pos, 1, "&quot;");
       pos += STRLEN("&quot;");
       continue;
     }
 
-    if (str->at(pos) == '\'')
+    if ((*str)[pos] == '\'')
     {
       str->replace(pos, 1, "&apos;");
       pos += STRLEN("&apos;");
@@ -64,9 +64,9 @@ void SignalBackup::escapeXmlString(std::string *str) const
     /*
       under \u0020 = control chars (escape, linebreak, etc...)
     */
-    if ((static_cast<unsigned int>(str->at(pos)) & 0xFF) < 0x20)
+    if ((static_cast<unsigned int>((*str)[pos]) & 0xFF) < 0x20)
     {
-      std::string rep = "&#" + bepaald::toString(static_cast<unsigned int>(str->at(pos)) & 0xFF) + ";";
+      std::string rep = "&#" + bepaald::toString(static_cast<unsigned int>((*str)[pos]) & 0xFF) + ";";
       str->replace(pos, 1, rep);
       pos += rep.length();
       continue;
@@ -91,7 +91,7 @@ void SignalBackup::escapeXmlString(std::string *str) const
     */
 
     //0x800 - 0xffff is only 3 byte utf chars, and are represented by utf16 points directly?
-    if ((str->at(pos) & 0b11110000) == 0b11100000)
+    if (((*str)[pos] & 0b11110000) == 0b11100000)
     {
       if (pos + 2 >= str->size())
       {
@@ -99,9 +99,9 @@ void SignalBackup::escapeXmlString(std::string *str) const
         continue;
       }
       uint32_t unicode = 0;
-      unicode += (static_cast<uint32_t>(str->at(pos) & 0b0001111) << 12);
-      unicode += (static_cast<uint32_t>(str->at(pos + 1) & 0b0111111) << 6);
-      unicode += (static_cast<uint32_t>(str->at(pos + 2) & 0b0111111));
+      unicode += (static_cast<uint32_t>((*str)[pos] & 0b0001111) << 12);
+      unicode += (static_cast<uint32_t>((*str)[pos + 1] & 0b0111111) << 6);
+      unicode += (static_cast<uint32_t>((*str)[pos + 2] & 0b0111111));
 
       std::string rep = "&#" + bepaald::toString(unicode) + ";";
 
@@ -111,7 +111,7 @@ void SignalBackup::escapeXmlString(std::string *str) const
     }
 
     // Beyond 0xffff is only 4 byte utf chars
-    if ((str->at(pos) & 0b11111000) == 0b11110000) // or 0b11110000
+    if (((*str)[pos] & 0b11111000) == 0b11110000) // or 0b11110000
     {
       if (pos + 3 >= str->size())
       {
@@ -128,10 +128,10 @@ void SignalBackup::escapeXmlString(std::string *str) const
         UTF16 HI : 110111zzzzzzzzzz     // THE ORIGINAL PROBABLY OUTPUT UTF16? BUT I DONT NEED TO
       */
       uint32_t unicode = 0;
-      unicode += (static_cast<uint32_t>(str->at(pos) & 0b0000111) << 18);
-      unicode += (static_cast<uint32_t>(str->at(pos + 1) & 0b0111111) << 12);
-      unicode += (static_cast<uint32_t>(str->at(pos + 2) & 0b0111111) << 6);
-      unicode += (static_cast<uint32_t>(str->at(pos + 3) & 0b0111111));
+      unicode += (static_cast<uint32_t>((*str)[pos] & 0b0000111) << 18);
+      unicode += (static_cast<uint32_t>((*str)[pos + 1] & 0b0111111) << 12);
+      unicode += (static_cast<uint32_t>((*str)[pos + 2] & 0b0111111) << 6);
+      unicode += (static_cast<uint32_t>((*str)[pos + 3] & 0b0111111));
       //unicode -= 0x10000;
       //std::string rep = "&#" + bepaald::toString(0xd800 + (unicode >> 10)) + ";&#" + bepaald::toString(0xdc00 + (unicode & 0x3FF)) + ";";
       std::string rep = "&#" + bepaald::toString(unicode) + ";";

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -60,7 +60,7 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
         }
       }
     }
-    //else if (str->at(i) != ' ') // spaces don't count
+    //else if ((*str)[i] != ' ') // spaces don't count
     //  all_emoji = false;
   }
   return results;

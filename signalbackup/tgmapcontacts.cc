@@ -30,8 +30,8 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     Logger::message("[INITIAL CONTACT MAP ]");
     for (uint i = 0; i < contactmap->size(); ++i)
     {
-      std::string name = getNameFromRecipientId(contactmap->at(i).second);
-      Logger::message(" * ", contactmap->at(i).first, " -> ", contactmap->at(i).second, "(", name, ")");
+      std::string name = getNameFromRecipientId((*contactmap)[i].second);
+      Logger::message(" * ", (*contactmap)[i].first, " -> ", (*contactmap)[i].second, "(", name, ")");
     }
   }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,18 +23,18 @@ void SignalBackup::HTMLescapeUrl(std::string *in) const
 {
   for (uint i = 0; i < in->size(); ++i)
   {
-    if (!(in->at(i) >= 'A' && in->at(i) <= 'Z') &&  // A-Z
-        !(in->at(i) >= 'a' && in->at(i) <= 'z') &&  // a-z
-        !(in->at(i) >= '0' && in->at(i) <= '9') &&  // 0-9
-        !(in->at(i) >= '\'' && in->at(i) <= '*') && // ' ( ) *
-        in->at(i) != '!' &&
-        in->at(i) != '-' &&
-        in->at(i) != '.' &&
-        in->at(i) != '_' &&
-        in->at(i) != '~')
+    if (!((*in)[i] >= 'A' && (*in)[i] <= 'Z') &&  // A-Z
+        !((*in)[i] >= 'a' && (*in)[i] <= 'z') &&  // a-z
+        !((*in)[i] >= '0' && (*in)[i] <= '9') &&  // 0-9
+        !((*in)[i] >= '\'' && (*in)[i] <= '*') && // ' ( ) *
+        (*in)[i] != '!' &&
+        (*in)[i] != '-' &&
+        (*in)[i] != '.' &&
+        (*in)[i] != '_' &&
+        (*in)[i] != '~')
     {
       // it is not an allowed character, escape it
-      std::string escape = "%" + bepaald::toString(static_cast<int>(in->at(i)) & 0xff, true);
+      std::string escape = "%" + bepaald::toString(static_cast<int>((*in)[i]) & 0xff, true);
       in->replace(i, 1, escape);
       i += escape.size() - 1;
     }

@@ -37,13 +37,17 @@ void SignalBackup::initFromFile()
 
   int64_t totalsize = d_fd->total();
   int prev_progress = 2000; // note this number will be max 1000 (10 * 100%), so this is an invalid number (to trigger on 0).
+  if (d_verbose || !d_showprogress) [[unlikely]]
+    Logger::message_overwrite("Reading backup file...");
+  else
+    Logger::message_overwrite("Reading backup file: 000.0%...");
 
-  Logger::message_overwrite("Reading backup file...");
-  std::unique_ptr<BackupFrame> frame(nullptr);
+  std::unique_ptr<BackupFrame> frame;
 
   d_database.exec("BEGIN TRANSACTION");
 
-  while ((frame = d_fd->getFrame(backupfile))) // deal with bad mac??
+  // get frames and handle them until file is fully read or error is encountered
+  while ((frame = d_fd->getFrame(backupfile)))
   {
     if (d_fd->badMac()) [[unlikely]]
     {
@@ -62,11 +66,11 @@ void SignalBackup::initFromFile()
         //std::cout << "Progress: " << progress <<  " " << std::fixed << (static_cast<float>(progress) / 10) << std::endl;
 
         if (d_verbose) [[unlikely]]
-          Logger::message_overwrite("FRAME ", frame->frameNumber(), " (", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%)...");
+          Logger::message_overwrite("FRAME ", frame->frameNumber(), " ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%...");
         else
-          Logger::message_overwrite("Reading backup file:", " (", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%)...");
+          Logger::message_overwrite("Reading backup file:", " ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%...");
 
         prev_progress = progress;
       }
@@ -184,7 +188,7 @@ void SignalBackup::initFromFile()
 
   d_database.exec("COMMIT");
 
-  if (!d_badattachments.empty())
+  if (!d_badattachments.empty()) [[unlikely]]
   {
     Logger::message("Attachment data with BAD MAC was encountered:");
     dumpInfoOnBadFrames();
@@ -197,7 +201,7 @@ void SignalBackup::initFromFile()
       return;
   }
 
-  if (!d_endframe)
+  if (!d_endframe) [[unlikely]]
   {
     Logger::warning("EndFrame was not read: backup is probably incomplete");
     addEndFrame();
@@ -206,9 +210,9 @@ void SignalBackup::initFromFile()
   if (backupfile.tellg() == totalsize)
   {
     if (d_verbose) [[unlikely]]
-      Logger::message_overwrite("FRAME ", frame->frameNumber(), " (100.0%)...done!", Logger::Control::ENDOVERWRITE);
-    else
-      Logger::message_overwrite("Reading backup file:", " (100.0%)...done!", Logger::Control::ENDOVERWRITE);
+      Logger::message_overwrite("FRAME ", frame->frameNumber(), " 100.0%... done!", Logger::Control::ENDOVERWRITE);
+    else if (d_showprogress) [[likely]]
+      Logger::message_overwrite("Reading backup file:", " 100.0%... done!", Logger::Control::ENDOVERWRITE);
   }
 
   d_ok = true;

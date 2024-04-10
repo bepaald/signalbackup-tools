@@ -149,7 +149,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
     {
       if (posidx >= pos.size() || i != pos[posidx].first)
       {
-        if (body->at(i) == ' ') // spaces dont count
+        if ((*body)[i] == ' ') // spaces dont count
           continue;
         all_emoji = false;
         break;

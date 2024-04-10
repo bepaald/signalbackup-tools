@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,8 +23,8 @@ SignalBackup::RecipientInfo const &SignalBackup::getRecipientInfoFromMap(std::ma
                                                                          long long int rid) const
 {
   if (bepaald::contains(recipient_info, rid))
-    return recipient_info->at(rid);
+    return (*recipient_info)[rid];
 
   setRecipientInfo({rid}, recipient_info);
-  return recipient_info->at(rid);
+  return (*recipient_info)[rid];
 }

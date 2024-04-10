@@ -33,7 +33,7 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
   for (uint i = 0; i < body->length(); ++i)
   {
     //std::cout << "I, POSITIONS_ADDED: " << i << "," << positions_added << std::endl;
-    switch (body->at(i))
+    switch ((*body)[i])
     {
       case '&':
         if (!positions_excluded_from_escape ||

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -56,20 +56,20 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
   unsigned int bodyidx = 0;
   while (bodyidx < body->size() && rangesidx < ranges->size())
   {
-    //std::cout << "Checking char idx: " << bodyidx << "('" << body->at(bodyidx) << "') for range with start: " << ranges->at(rangesidx).start << std::flush;
+    //std::cout << "Checking char idx: " << bodyidx << "('" << (*body)[bodyidx] << "') for range with start: " << (*ranges)[rangesidx].start << std::flush;
 
     int charsizeinbytes = bytesToUtf8CharSize(*body, bodyidx);
     int charsizeinutf16entities = utf16CharSize(*body, bodyidx);
 
     //std::cout << ", charsize: " << charsizeinbytes << " codepoints: " << charsizeinutf16entities <<  std::endl;
 
-    if (bodyidx == ranges->at(rangesidx).start)
+    if (bodyidx == (*ranges)[rangesidx].start)
     {
-      //int length = bytesToUtf8CharSize(*body, bodyidx, ranges->at(rangesidx).length);
-      int length = numBytesInUtf16Substring(*body, bodyidx, ranges->at(rangesidx).length);
-      std::string pre = ranges->at(rangesidx).pre;
-      std::string replacement = ranges->at(rangesidx).replacement;
-      std::string post = ranges->at(rangesidx).post;
+      //int length = bytesToUtf8CharSize(*body, bodyidx, (*ranges)[rangesidx].length);
+      int length = numBytesInUtf16Substring(*body, bodyidx, (*ranges)[rangesidx].length);
+      std::string pre = (*ranges)[rangesidx].pre;
+      std::string replacement = (*ranges)[rangesidx].replacement;
+      std::string post = (*ranges)[rangesidx].post;
 
       if (replacement.empty())
         replacement = body->substr(bodyidx, length);
@@ -88,7 +88,7 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
       //std::cout << "BODY: " << *body << std::endl;
 
       for (uint i = rangesidx + 1; i < ranges->size(); ++i)
-        ranges->at(i).start += pre.size() + post.size() + (replacement.size() - ranges->at(rangesidx).length);
+        (*ranges)[i].start += pre.size() + post.size() + (replacement.size() - (*ranges)[rangesidx].length);
 
       // skip the just inserted string
       bodyidx += pre.size() + post.size() + replacement.size();
@@ -97,14 +97,14 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
       // while the prepwork should make sure it is the first one,
       // interactions with mention replacements might throw it off?
       // just to be sure, lets not just `++rangesidx'
-      while (++rangesidx < ranges->size() && ranges->at(rangesidx).start < bodyidx)
+      while (++rangesidx < ranges->size() && (*ranges)[rangesidx].start < bodyidx)
         ;
       continue;
     }
 
     // update all following ranges for multibyte char
     for (uint i = rangesidx; i < ranges->size(); ++i)
-      ranges->at(i).start += (charsizeinbytes - charsizeinutf16entities);
+      (*ranges)[i].start += (charsizeinbytes - charsizeinutf16entities);
 
     // next char...
     bodyidx += charsizeinbytes;
@@ -208,125 +208,125 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
 
   for (uint i = 1; i < ranges->size(); ++i)
   {
-    if (ranges->at(i).start == ranges->at(i - 1).start)
+    if ((*ranges)[i].start == (*ranges)[i - 1].start)
     {
-      if (ranges->at(i).length == ranges->at(i -1).length)
+      if ((*ranges)[i].length == (*ranges)[i -1].length)
       {
         // (1) SAME START, SAME FINISH
-        if (!ranges->at(i - 1).replacement.empty() &&
-            !ranges->at(i).replacement.empty())
+        if (!(*ranges)[i - 1].replacement.empty() &&
+            !(*ranges)[i].replacement.empty())
         {
           Logger::warning("Illegal range-set (overlapping ranges both have replacement).");
           continue;
         }
         //std::cout << "CASE 1" << std::endl;
-        ranges->at(i - 1).pre += ranges->at(i).pre;
-        ranges->at(i - 1).post = ranges->at(i).post + ranges->at(i - 1).post;
-        if (!ranges->at(i).replacement.empty()) // only one can have replacement, if it's i-1 its already kept...
-          ranges->at(i - 1).replacement = ranges->at(i).replacement;
+        (*ranges)[i - 1].pre += (*ranges)[i].pre;
+        (*ranges)[i - 1].post = (*ranges)[i].post + (*ranges)[i - 1].post;
+        if (!(*ranges)[i].replacement.empty()) // only one can have replacement, if it's i-1 its already kept...
+          (*ranges)[i - 1].replacement = (*ranges)[i].replacement;
         ranges->erase(ranges->begin() + i);
         return prepRanges2(ranges);
       }
       // (2) SAME START, LATER FINISH
       // else -> i.length > (i - 1).length
-      if (!ranges->at(i).replacement.empty())
+      if (!(*ranges)[i].replacement.empty())
       {
         Logger::warning("Illegal range-set (overlapping ranges both have replacement).");
         continue;
       }
       //std::cout << "CASE 2" << std::endl;
-      // ranges->at(i - 1).replacement is automatically kept if it has one
-      ranges->at(i - 1).pre = ranges->at(i).pre + ranges->at(i - 1).pre;
-      ranges->at(i).pre = "";
-      ranges->at(i).start = ranges->at(i - 1).start + ranges->at(i - 1).length;
-      ranges->at(i).length -= ranges->at(i - 1).length;
+      // (*ranges)[i - 1].replacement is automatically kept if it has one
+      (*ranges)[i - 1].pre = (*ranges)[i].pre + (*ranges)[i - 1].pre;
+      (*ranges)[i].pre = "";
+      (*ranges)[i].start = (*ranges)[i - 1].start + (*ranges)[i - 1].length;
+      (*ranges)[i].length -= (*ranges)[i - 1].length;
       return prepRanges2(ranges);
     }
-    // else (i).start > (i - 1).start)
-    if (ranges->at(i).start + ranges->at(i).length == ranges->at(i - 1).start + ranges->at(i - 1).length) // same end pos
+    // else (i].start > (i - 1).start)
+    if ((*ranges)[i].start + (*ranges)[i].length == (*ranges)[i - 1].start + (*ranges)[i - 1].length) // same end pos
     {
       // (3) LATER START, SAME FINISH
-      if (!ranges->at(i - 1).replacement.empty())
+      if (!(*ranges)[i - 1].replacement.empty())
       {
         Logger::warning("Warning. Illegal range-set (overlapping ranges both have replacement).");
         continue;
       }
       //std::cout << "CASE 3" << std::endl;
-      // ranges->at(i).replacement is automatically kept if it has one
-      ranges->at(i).post = ranges->at(i).post + ranges->at(i - 1).post;
-      ranges->at(1 - 1).post = "";
-      ranges->at(i - 1).length = ranges->at(i).start - ranges->at(i - 1).start;
+      // (*ranges)[i].replacement is automatically kept if it has one
+      (*ranges)[i].post = (*ranges)[i].post + (*ranges)[i - 1].post;
+      (*ranges)[1 - 1].post = "";
+      (*ranges)[i - 1].length = (*ranges)[i].start - (*ranges)[i - 1].start;
       return prepRanges2(ranges);
     }
-    if (ranges->at(i).start < ranges->at(i - 1).start + ranges->at(i - 1).length)
+    if ((*ranges)[i].start < (*ranges)[i - 1].start + (*ranges)[i - 1].length)
     {
-      if (ranges->at(i).start + ranges->at(i).length > ranges->at(i - 1).start + ranges->at(i - 1).length) // end later
+      if ((*ranges)[i].start + (*ranges)[i].length > (*ranges)[i - 1].start + (*ranges)[i - 1].length) // end later
       {
         // (4) LATER START, LATER FINISH"
-        if (!ranges->at(i - 1).replacement.empty() ||
-            !ranges->at(i).replacement.empty())
+        if (!(*ranges)[i - 1].replacement.empty() ||
+            !(*ranges)[i].replacement.empty())
         {
           Logger::warning("Warning. Illegal range-set (overlapping ranges both have replacement).");
           continue;
         }
 
-        if (ranges->at(i).nobreak && !ranges->at(i - 1).nobreak)
+        if ((*ranges)[i].nobreak && !(*ranges)[i - 1].nobreak)
         {
           //std::cout << "CASE 4b" << std::endl;
-          Range newrange = {ranges->at(i - 1).start,
-                            ranges->at(i).start - ranges->at(i - 1).start,
-                            ranges->at(i - 1).pre,
+          Range newrange = {(*ranges)[i - 1].start,
+                            (*ranges)[i].start - (*ranges)[i - 1].start,
+                            (*ranges)[i - 1].pre,
                             "",
-                            ranges->at(i - 1).post + ranges->at(i).pre,
+                            (*ranges)[i - 1].post + (*ranges)[i].pre,
                             false}; // N1
           ranges->emplace_back(newrange);
 
-          ranges->at(i - 1).start = ranges->at(i).start;
-          ranges->at(i - 1).length = ranges->at(i - 1).length - newrange.length; // N2
+          (*ranges)[i - 1].start = (*ranges)[i].start;
+          (*ranges)[i - 1].length = (*ranges)[i - 1].length - newrange.length; // N2
 
-          ranges->at(i).start = ranges->at(i - 1).start + ranges->at(i - 1).length;
-          ranges->at(i).pre = "";
-          ranges->at(i).length = ranges->at(i).length - ranges->at(i - 1).length; // N3
+          (*ranges)[i].start = (*ranges)[i - 1].start + (*ranges)[i - 1].length;
+          (*ranges)[i].pre = "";
+          (*ranges)[i].length = (*ranges)[i].length - (*ranges)[i - 1].length; // N3
         }
         else
         {
           //std::cout << "CASE 4a" << std::endl;
-          Range newrange = {ranges->at(i).start,
-                            ranges->at(i - 1).length - (ranges->at(i).start - ranges->at(i - 1).start),
-                            ranges->at(i).pre,
+          Range newrange = {(*ranges)[i].start,
+                            (*ranges)[i - 1].length - ((*ranges)[i].start - (*ranges)[i - 1].start),
+                            (*ranges)[i].pre,
                             "",
-                            ranges->at(i).post + ranges->at(i - 1).post,
+                            (*ranges)[i].post + (*ranges)[i - 1].post,
                             false}; // N2
           ranges->emplace_back(newrange);
 
-          ranges->at(i - 1).length = newrange.start - ranges->at(i - 1).start; // N1
-          ranges->at(i - 1).post = "";
+          (*ranges)[i - 1].length = newrange.start - (*ranges)[i - 1].start; // N1
+          (*ranges)[i - 1].post = "";
 
-          ranges->at(i).start = newrange.start + newrange.length; // N3
-          ranges->at(i).length -= newrange.length;
+          (*ranges)[i].start = newrange.start + newrange.length; // N3
+          (*ranges)[i].length -= newrange.length;
         }
         return prepRanges2(ranges);
       }
-      //if (ranges->at(i).start + ranges->at(i).length < ranges->at(i - 1).start + ranges->at(i - 1).length) // end sooner
+      //if ((*ranges)[i].start + (*ranges)[i].length < (*ranges)[i - 1].start + (*ranges)[i - 1].length) // end sooner
       // (5) LATER START, EARLIER FINISH
-      if (!ranges->at(i - 1).replacement.empty())
+      if (!(*ranges)[i - 1].replacement.empty())
       {
         Logger::warning("Warning. Illegal range-set (overlapping ranges both have replacement).");
         continue;
       }
       //std::cout << "CASE 5" << std::endl;
-      Range newrange = {ranges->at(i).start + ranges->at(i).length,
-                        ranges->at(i - 1).start + ranges->at(i - 1).length - (ranges->at(i).start + ranges->at(i).length),
+      Range newrange = {(*ranges)[i].start + (*ranges)[i].length,
+                        (*ranges)[i - 1].start + (*ranges)[i - 1].length - ((*ranges)[i].start + (*ranges)[i].length),
                         "",
                         "",
-                        ranges->at(i - 1).post,
+                        (*ranges)[i - 1].post,
                         false};
       ranges->emplace_back(newrange);                                           // -> N3
 
-      ranges->at(i - 1).post = "";
-      ranges->at(i - 1).length = ranges->at(i).start - ranges->at(i - 1).start; // O1 -> N1
+      (*ranges)[i - 1].post = "";
+      (*ranges)[i - 1].length = (*ranges)[i].start - (*ranges)[i - 1].start; // O1 -> N1
 
-      // ranges->at(i).replacement is automatically kept if it has one
+      // (*ranges)[i].replacement is automatically kept if it has one
       // O2 == N2
       return prepRanges2(ranges);
     }
