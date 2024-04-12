@@ -323,12 +323,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   if (!d_stmt || std::string_view(sqlite3_sql(d_stmt)) != q)
   {
     // destroy the old one (NOTE "Invoking sqlite3_finalize() on a NULL pointer is a harmless no-op.")
-    if (sqlite3_finalize(d_stmt) != SQLITE_OK) [[unlikely]]
-    {
-      Logger::error("After sqlite3_finalize(): ", sqlite3_errmsg(d_db));
-      Logger::error_indent("-> Query: \"", q, "\"");
-      return false;
-    }
+    sqlite3_finalize(d_stmt);
 
     // create new statement
     if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &d_stmt, nullptr) != SQLITE_OK) [[unlikely]]

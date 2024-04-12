@@ -21,7 +21,10 @@
 
 void SignalBackup::compactIds(std::string const &table, std::string const &col)
 {
-  Logger::message(__FUNCTION__);
+  //Logger::message(__FUNCTION__);
+
+  if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM " + table, -1) == 0) // table is empty
+    return;
 
   Logger::message("  Compacting table: ", table, " (", col, ")");
 

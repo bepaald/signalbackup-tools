@@ -56,15 +56,17 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
         long long int newid = r.getValueAs<long long int>(i, "new_id");
         Logger::message(id, " : ", oldid, " -> ", newid, "\n");
 
-        Logger::message("Old id:");
-        source->d_database.print("SELECT * FROM recipient WHERE _id = ?", oldid);
-        Logger::message_end();
+        if (d_verbose) [[unlikely]]
+        {
+          Logger::message("Old id:");
+          source->d_database.print("SELECT * FROM recipient WHERE _id = ?", oldid);
+          Logger::message_end();
 
-        Logger::message("New id:");
-        source->d_database.print("SELECT * FROM recipient WHERE _id = ?", newid);
-        Logger::message_end();
+          Logger::message("New id:");
+          source->d_database.print("SELECT * FROM recipient WHERE _id = ?", newid);
+          Logger::message_end();
+        }
       }
-
       // apply the remapping (probably only some reactions _may_ need to be transferred?)
       source->remapRecipients();
       // now, the remapping was 'applied', old_id should not occur in database anymore, and remapped_recipients can be cleared?
@@ -590,7 +592,10 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       // get all phonenums/groups_ids for all in identities
-      d_database.exec("SELECT IFNULL(" + d_recipient_aci + ", '') AS uuid, IFNULL(" + d_recipient_e164 + ", '') AS phone, IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
+      d_database.exec("SELECT IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                      "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                      "IFNULL(group_id, '') AS group_id "
+                      "FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), -1, std::string()};
@@ -629,6 +634,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         "-1 AS 'group_type', "
                         "NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
       Logger::message("  updateRecipientIds (2)");
+      int count = 0;
       for (uint i = 0; i < results.rows(); ++i)
       {
         // if the recipient is already in target, we are going to delete it from
@@ -646,7 +652,6 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
         // now drop the already present recipient from source.
         // source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
-        int count = 0;
         if (d_database.tableContainsColumn("recipient", d_recipient_type))
         {
           source->d_database.exec("DELETE FROM recipient WHERE "
@@ -661,7 +666,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                                   + d_recipient_type + " IS 4 AND " + d_recipient_type + " IS ? AND "
                                   + source->d_recipient_storage_service + " IS ?)",
                                   {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
-          count = source->d_database.changed();
+          count += source->d_database.changed();
         }
         else
         {
@@ -670,12 +675,11 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                                   "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
                                   "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
                                   "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
-          count = source->d_database.changed();
+          count += source->d_database.changed();
         }
-
-        if (count)
-          Logger::message("Dropped ", count, " existing recipients from source database");
       }
+      if (count)
+        Logger::message("Dropped ", count, " existing recipients from source database");
     }
 
     // even though the source was cropped to single thread, and this thread was not in target, avatar might still already be in target
@@ -697,6 +701,21 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
           break;
       }
     }
+  }
+
+  // Just because the group has no thread, doesn't mean it doesn't exist already
+  if (source->d_database.containsTable("groups")) // usually always the case, but entire table was dropped if existing thread was found...
+  {
+    int count = 0;
+    SqliteDB::QueryResults existing_groups;
+    d_database.exec("SELECT group_id FROM groups", &existing_groups);
+    for (uint i = 0; i < existing_groups.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM groups WHERE group_id = ?", existing_groups.value(i, "group_id"));
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("Removed ", count, " existing groups from source database");
   }
 
   // delete group_membership's already present
@@ -794,12 +813,15 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         STRING_STARTS_WITH(table, d_mms_table + "_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))
       continue;
-    Logger::message_start("Importing statements from source table '", table, "'...");
+
     source->d_database.exec("SELECT * FROM " + table, &results);
-    Logger::message(results.rows(), " entries...");
 
     if (results.rows() == 0)
+    {
+      if (d_verbose) [[unlikely]]
+        Logger::message("Importing statements from source table '", table, "'... (0 entries) ...done");
       continue;
+    }
 
     if (!d_database.containsTable(table))
     {
@@ -820,7 +842,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         std::string oldname = results.headers()[idx];
         std::string newname = getTranslatedName(table, oldname);
         if (!newname.empty() && results.renameColumn(idx, newname))
+        {
           Logger::message("  NOTE: Translating column name from '", table, ".", oldname, "' (source) to '",  table, ".", newname, "' (target)");
+        }
         else //: drop
         {
           Logger::message("  NOTE: Dropping column '", table, ".", results.headers()[idx], "' from source : Column not present in target database");
@@ -840,6 +864,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       continue;
     }
 
+    Logger::message_start("Importing statements from source table '", table, "'... (", results.rows(), " entries)");
+
     for (uint i = 0; i < results.rows(); ++i)
     {
       // if (table == "identities")
@@ -853,6 +879,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.exec(newframe.bindStatement(), newframe.parameters());
       //newframe.printInfo();
     }
+    Logger::message(" ...done");
   }
 
   // and copy avatars and attachments.
@@ -861,6 +888,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
   for (auto &av : source->d_avatars)
     d_avatars.emplace_back(std::move(av));
+
+  // stickers???
 
   /*
     THIS IS NOT TRUE, CURRENTLY THE RELEASECHANNEL

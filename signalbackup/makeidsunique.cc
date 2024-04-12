@@ -34,11 +34,12 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
         !source->d_database.tableContainsColumn(dbl.table, dbl.column))
       continue;
 
-    if (dbl.flags & WARN)
     {
       SqliteDB::QueryResults results;
-      if (source->d_database.exec("SELECT * FROM " + dbl.table, &results) &&
-          results.rows() > 0)
+      source->d_database.exec("SELECT * FROM " + dbl.table, &results);
+      if (results.rows() == 0)
+        continue;
+      else if (dbl.flags & WARN)
         Logger::warning("Found entries in a usually empty table. Trying to deal with it, but problems may occur.");
     }
 
@@ -51,8 +52,6 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       {
         if (!source->d_database.containsTable(c.table) || !source->d_database.tableContainsColumn(c.table, c.column))
           continue;
-
-        Logger::message("  Adjusting '", c.table, ".", c.column, "' to match changes in '", dbl.table, "'");
 
         if (!c.json_path.empty())
         {
@@ -72,6 +71,9 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
         else
           source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = " + c.column + " + ? "
                                   + (c.whereclause.empty() ? "" : " WHERE " + c.whereclause), offsetvalue);
+        int count = source->d_database.changed();
+        if (count)
+          Logger::message("  Adjusted '", c.table, ".", c.column, "' to match changes in '", dbl.table, "' : ", count);
       }
     }
 

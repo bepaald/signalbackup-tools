@@ -39,12 +39,16 @@ void SignalBackup::cleanDatabaseByMessages()
   //Logger::message("Groups left:");
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
 
-  Logger::message("  Deleting removed groups...");
+  Logger::message_start("  Deleting removed groups...");
   if (d_databaseversion < 27)
+  {
     d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
+    Logger::message(" (", d_database.changed(), ")");
+  }
   else
   {
     d_database.exec("DELETE FROM groups WHERE recipient_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING group_id");
+    Logger::message(" (", d_database.changed(), ")");
     if (d_database.containsTable("group_membership"))
       d_database.exec("DELETE FROM group_membership WHERE group_id NOT IN (SELECT DISTINCT group_id FROM groups)");
   }
