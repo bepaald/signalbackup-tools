@@ -43,12 +43,12 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_databaseversion < 27)
   {
     d_database.exec("DELETE FROM groups WHERE group_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread)");
-    Logger::message(" (", d_database.changed(), ")");
+    Logger::message_end(" (", d_database.changed(), ")");
   }
   else
   {
     d_database.exec("DELETE FROM groups WHERE recipient_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING group_id");
-    Logger::message(" (", d_database.changed(), ")");
+    Logger::message_end(" (", d_database.changed(), ")");
     if (d_database.containsTable("group_membership"))
       d_database.exec("DELETE FROM group_membership WHERE group_id NOT IN (SELECT DISTINCT group_id FROM groups)");
   }
@@ -97,7 +97,7 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
     count_rec = d_database.changed();
 
-    Logger::message(" (", count_msg, ", ", count_payl, ", ", count_rec, ")");
+    Logger::message_end(" (", count_msg, ", ", count_payl, ", ", count_rec, ")");
   }
 
   if (d_database.containsTable("reaction")) // dbv >= 121
@@ -119,14 +119,14 @@ void SignalBackup::cleanDatabaseByMessages()
       d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
       count += d_database.changed();
     }
-    Logger::message(" (", count, ")");
+    Logger::message_end(" (", count, ")");
   }
 
   if (d_database.containsTable("call")) // dbv >= ~170?
   {
     Logger::message_start("  Deleting call details from non-existing messages...");
     d_database.exec("DELETE FROM call WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
-    Logger::message(" (", d_database.changed(), ")");
+    Logger::message_end(" (", d_database.changed(), ")");
   }
 
   // delete story_sends entries that no longer refer to an existing message?

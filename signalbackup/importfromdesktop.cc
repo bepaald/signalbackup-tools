@@ -639,7 +639,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           Logger::message_start("Dealing with ", type, " message... ");
         handleDTCallTypeMessage(dtdb.d_database, results_all_messages_from_conversation(j, "callId"), rowid, ttid, address, createmissingcontacts);
         if (d_verbose) [[unlikely]]
-          Logger::message("done");
+          Logger::message_end("done");
         continue;
       }
       else if (type == "group-v2-change")
@@ -823,7 +823,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           }
         }
         if (d_verbose) [[unlikely]]
-          Logger::message("done");
+          Logger::message_end("done");
         continue;
       }
       else if (type == "keychange")
@@ -894,7 +894,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           }
         }
         if (d_verbose) [[unlikely]]
-          Logger::message("done");
+          Logger::message_end("done");
         continue;
       }
       else if (type == "verified-change")
@@ -987,7 +987,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           }
         }
         if (d_verbose) [[unlikely]]
-          Logger::message("done");
+          Logger::message_end("done");
         continue;
       }
       else if (type == "profile-change")
@@ -1102,7 +1102,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           }
         }
         if (d_verbose) [[unlikely]]
-          Logger::message("done");
+          Logger::message_end("done");
         continue;
       }
       else if (type.empty())
@@ -1162,7 +1162,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       if (d_verbose) [[unlikely]] Logger::message_start("Handling reactions...");
       std::vector<std::vector<std::string>> reactions;
       getDTReactions(dtdb.d_database, rowid, numreactions, &reactions);
-      if (d_verbose) [[unlikely]] Logger::message("done");
+      if (d_verbose) [[unlikely]] Logger::message_end("done");
 
       // insert the collected data in the correct tables
       if (!d_database.containsTable("sms") || // starting at dbv168, the sms table is removed altogether
@@ -1355,7 +1355,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           //"mms.quote_attachment,"// = -1 Always -1??
 
           //quote_results.prettyPrint();
-          if (d_verbose) [[unlikely]] Logger::message("done");
+          if (d_verbose) [[unlikely]] Logger::message_end("done");
         }
 
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting message...");
@@ -1438,7 +1438,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
         //std::cout << "Raw any_cast 2" << std::endl;
         long long int new_mms_id = std::any_cast<long long int>(retval);
-        if (d_verbose) [[unlikely]] Logger::message("done");
+        if (d_verbose) [[unlikely]] Logger::message_end("done");
 
         //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
 
@@ -1490,7 +1490,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
                             "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
         }
-        if (d_verbose) [[unlikely]] Logger::message("done");
+        if (d_verbose) [[unlikely]] Logger::message_end("done");
 
         if (outgoing)
           dtSetMessageDeliveryReceipts(dtdb.d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
@@ -1499,7 +1499,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         // insert into reactions
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting reactions...");
         insertReactions(new_mms_id, reactions, true, &recipientmap);
-        if (d_verbose) [[unlikely]] Logger::message("done");
+        if (d_verbose) [[unlikely]] Logger::message_end("done");
 
         // insert into mentions
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting mentions...");
@@ -1556,7 +1556,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           //else
           //  std::cout << "  Inserted mention" << std::endl;
         }
-        if (d_verbose) [[unlikely]] Logger::message("done");
+        if (d_verbose) [[unlikely]] Logger::message_end("done");
 
       }
       else // database contains sms-table and message has no attachment/quote/mention and is not group

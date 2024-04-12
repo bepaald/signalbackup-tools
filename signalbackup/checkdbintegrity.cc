@@ -30,22 +30,16 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
   if (results.rows())
   {
     if (!warn)
-    {
-      Logger::message_end();
       Logger::error("Foreign key constraint violated. This will not end well, aborting."
                     "\n\n"
                     "Please report this error to the program author.");
-    }
     else
-    {
-      Logger::message_end();
       Logger::warning("Foreign key constraint violated.");
-    }
     results.prettyPrint();
     return false;
   }
   if (!warn)
-    Logger::message(" ok");
+    Logger::message_end(" ok");
 
   // std::cout << "Checking database integrity (quick)..." << std::flush;
   // d_database.exec("SELECT * FROM pragma_quick_check", &results);
@@ -65,22 +59,16 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
   if (results.rows() && results.valueAsString(0, "integrity_check") != "ok")
   {
     if (!warn)
-    {
-      Logger::message_end();
       Logger::error("Database integrity check failed. This will not end well, aborting."
                     "\n\n"
                     "Please report this error to the program author.");
-    }
     else
-    {
-      Logger::message_end();
       Logger::warning("Foreign key constraint violated.");
-    }
     results.prettyPrint();
     return false;
   }
   if (!warn)
-    Logger::message(" ok");
+    Logger::message_end(" ok");
 
   return true;
 }

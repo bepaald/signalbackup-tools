@@ -879,7 +879,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.exec(newframe.bindStatement(), newframe.parameters());
       //newframe.printInfo();
     }
-    Logger::message(" ...done");
+    Logger::message_end(" ...done");
   }
 
   // and copy avatars and attachments.

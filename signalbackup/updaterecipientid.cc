@@ -31,7 +31,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
                         "CASE WHEN NULLIF(distribution_list_id, '') IS NULL THEN '' ELSE 'd' END || "
                         "CASE WHEN NULLIF(notification_channel, '') IS NULL THEN '' ELSE 'n' END "
                         "AS recipient_type FROM recipient", &r))
-      Logger::message_start(" (", r.valueAsString(0, "recipient_type"), ")");
+      Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
   }
   Logger::message_end();
 

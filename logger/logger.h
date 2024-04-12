@@ -84,6 +84,7 @@ class Logger
   bool d_used;
   bool d_controlcodessupported;
   bool d_overwriting;
+  bool d_dangling;
   //std::sstream d_previousline;
  public:
   inline static void setFile(std::string const &f);
@@ -96,6 +97,10 @@ class Logger
   inline static void message(First const &f, Rest... r);
   template <typename First, typename... Rest>
   inline static void message_start(First const &f, Rest... r);
+  template <typename First, typename... Rest>
+  inline static void message_continue(First const &f, Rest... r);
+  template <typename First, typename... Rest>
+  inline static void message_end(First const &f, Rest... r);
   inline static void message_end();
 
   template <typename First, typename... Rest>
@@ -169,7 +174,8 @@ inline Logger::Logger()
   d_usetimestamps(false),
   d_used(false),
   d_controlcodessupported(isTerminal() && supportsAnsi()),
-  d_overwriting(false)
+  d_overwriting(false),
+  d_dangling(false)
 {}
 
 inline Logger::~Logger()
@@ -238,6 +244,14 @@ inline void Logger::messagePre() //static
       s_instance->d_strstreambackend->clear();
     }
   }
+
+  if (s_instance->d_dangling)
+  {
+    s_instance->d_dangling = false;
+    std::cout << std::endl;
+    if (s_instance->d_file)
+      (*s_instance->d_file) << '\n';
+  }
 }
 
 inline void Logger::setFile(std::string const &f) // static
@@ -292,13 +306,30 @@ template <typename First, typename... Rest>
 inline void Logger::message_start(First const &f, Rest... r) // static
 {
   messagePre();
+  s_instance->d_dangling = true;
   //outputHead("[MESSAGE] ", "[MESSAGE] ");
   s_instance->outputHead("", false, {"", ": "});
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
+template <typename First, typename... Rest>
+inline void Logger::message_continue(First const &f, Rest... r) // static
+{
+  s_instance->outputHead("", false, {"", ": "});
+  s_instance->outputMsg(Flags::NONEWLINE, f, r...);
+}
+
+template <typename First, typename... Rest>
+inline void Logger::message_end(First const &f, Rest... r) // static
+{
+  s_instance->d_dangling = false;
+  s_instance->outputHead("", false, {"", ": "});
+  s_instance->outputMsg(Flags::NONE, f, r...);
+}
+
 inline void Logger::message_end() // static
 {
+  s_instance->d_dangling = false;
   message("");
 }
 

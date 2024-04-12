@@ -38,7 +38,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
       if (i == 0)
         Logger::message_start("  Dealing with thread id: ", threadid);
       else
-        Logger::message_start(", ", threadid);
+        Logger::message_continue(", ", threadid);
 
       long long int thread_recipient = -1;
       if (results.valueHasType<long long int>(i, d_thread_recipient_id))

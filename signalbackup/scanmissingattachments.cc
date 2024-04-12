@@ -50,9 +50,9 @@ void SignalBackup::scanMissingAttachments() const
       if (res.rows() == 1)
       {
         if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
-          Logger::message("OK, EXPECTED (quote missing)");
+          Logger::message_end("OK, EXPECTED (quote missing)");
         else
-          Logger::message("FALSE HIT! (quote missing)");
+          Logger::message_end("FALSE HIT! (quote missing)");
         continue;
       }
 
@@ -64,9 +64,9 @@ void SignalBackup::scanMissingAttachments() const
         if (res.rows()) // can be more than 1 row if messages were doubled (before date_sent (=quote_id) had UNIQUE constraint)
         {
           if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
-            Logger::message("OK, EXPECTED (original message missing (remote deleted))");
+            Logger::message_end("OK, EXPECTED (original message missing (remote deleted))");
           else
-            Logger::message("FALSE HIT! (remote delete)");
+            Logger::message_end("FALSE HIT! (remote delete)");
           continue;
         }
       }
@@ -81,9 +81,9 @@ void SignalBackup::scanMissingAttachments() const
         if (res.rows() == 0)
         {
           if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
-            Logger::message("OK, EXPECTED (original message missing (deleted))");
+            Logger::message_end("OK, EXPECTED (original message missing (deleted))");
           else
-            Logger::message("FALSE HIT! (delete)");
+            Logger::message_end("FALSE HIT! (delete)");
           continue;
         }
       }
@@ -98,9 +98,9 @@ void SignalBackup::scanMissingAttachments() const
     if (res.rows() == 1)
     {
       if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
-        Logger::message("OK, EXPECTED (type = ",res.valueAsString(0, 0), ")");
+        Logger::message_end("OK, EXPECTED (type = ",res.valueAsString(0, 0), ")");
       else
-        Logger::message("FALSE HIT! (type)");
+        Logger::message_end("FALSE HIT! (type)");
       continue;
     }
 
@@ -110,9 +110,9 @@ void SignalBackup::scanMissingAttachments() const
     if (res.rows() == 1)
     {
       if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
-        Logger::message("OK, EXPECTED (pending_push = ", res.valueAsString(0, 0), ")");
+        Logger::message_end("OK, EXPECTED (pending_push = ", res.valueAsString(0, 0), ")");
       else
-        Logger::message("FALSE HIT! (pending_push)");
+        Logger::message_end("FALSE HIT! (pending_push)");
       continue;
     }
 
@@ -122,19 +122,19 @@ void SignalBackup::scanMissingAttachments() const
     if (res.rows() == 1 && res(0, d_part_ct) == "application/x-signal-view-once")
     {
       if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
-        Logger::message("OK, EXPECTED (content_type = application/x-signal-view-once)");
+        Logger::message_end("OK, EXPECTED (content_type = application/x-signal-view-once)");
       else
-        Logger::message("FALSE HIT! (view_once)");
+        Logger::message_end("FALSE HIT! (view_once)");
       continue;
     }
 
     if (d_attachments.find({missing[i].first, missing[i].second}) != d_attachments.end())
     {
-      Logger::message("OK, EXPECTED (no special circumstances, but not missing)");
+      Logger::message_end("OK, EXPECTED (no special circumstances, but not missing)");
       continue;
     }
 
-    Logger::message("UNEXPECTED! details:");
+    Logger::message(Logger::Control::BOLD, "UNEXPECTED!", Logger::Control::NORMAL, " details:");
     d_database.exec("SELECT quote," + d_part_ct + "," + d_part_pending + " FROM " + d_part_table + " WHERE _id = ?" +
                     (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(missing[i].second) : ""s),
                     missing[i].first, &res);
