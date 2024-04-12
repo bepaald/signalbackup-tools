@@ -577,8 +577,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   {
     Logger::message("  No existing thread found in target database for this recipient, importing.");
 
-    // check identities and recipient prefs for presence of values, they may be there (even though no
-    // thread was found (for example via a group chat or deleted thread))
+    // check identities and recipient prefs for presence of values, they may be there (even
+    // though no thread was found (for example via a group chat or deleted thread))
     // get identities from target, drop all rows from source that are already present
     if (d_databaseversion < 24)
     {
@@ -718,6 +718,24 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     for (uint i = 0; i < call_results.rows(); ++i)
       source->d_database.exec("DELETE FROM call WHERE call_id = ?",
                               call_results.value(i, "call_id"));
+  }
+
+  // delete double pendingpnisignaturemessages
+  if (d_database.containsTable("pending_pni_signature_message") && source->d_database.containsTable("pending_pni_signature_message"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT recipient_id, sent_timestamp, device_id FROM pending_pni_signature_message", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM pending_pni_signature_message "
+                              "WHERE recipient_id = ? AND sent_timestamp = ? AND devide_id = ?",
+                              {res.value(i, "recipient_id"), res.value(i, "sent_timestamp"), res.value(i, "device_id")});
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing pending_pni_signature_messages");
   }
 
   // // export database

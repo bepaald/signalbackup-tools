@@ -285,6 +285,13 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM notification_profile_allowed_members WHERE recipient_id NOT IN (SELECT DISTINCT _id FROM recipient)");
   }
 
+  if (d_database.containsTable("pending_pni_signature_message"))
+  {
+    Logger::message("  Deleting pending_pni_signature_messages not belonging to existing recipients...");
+
+    d_database.exec("DELETE FROM pending_pni_signature_message WHERE recipient_id NOT IN (SELECT DISTINCT _id FROM recipient)");
+  }
+
   //runSimpleQuery((d_databaseversion < 27) ? "SELECT _id, recipient_ids, system_display_name FROM recipient_preferences" : "SELECT _id, COALESCE(system_display_name,group_id,signal_profile_name) FROM recipient");
 
   // remove avatars not belonging to existing recipients
