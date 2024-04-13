@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -96,7 +96,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   std::memcpy(encryptedframe.get() + length, hash, 10);
 
   if (d_verbose) [[unlikely]]
-    Logger::message("done!");
+    Logger::message_end("done!");
 
   return {encryptedframe.release(), length + MACSIZE};
 }

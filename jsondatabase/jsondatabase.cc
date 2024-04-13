@@ -81,7 +81,10 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   if (d_database.changed() == 0) // maybe single-chat-json ?
   {
     if (d_verbose) [[unlikely]]
+    {
       Logger::message("No chats-list found, trying single chat list");
+      Logger::message_start("Inserting chats from json...");
+    }
 
     if (!d_database.exec("INSERT INTO chats SELECT "
                          "0, "
@@ -95,7 +98,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
     }
   }
   if (d_verbose) [[unlikely]]
-    Logger::message("done! (", d_database.changed(), ")");
+    Logger::message_end("done! (", d_database.changed(), ")");
   // std::cout << std::endl << "CHATS: " << std::endl;
   // d_database.prettyPrint("SELECT COUNT(*) FROM chats");
   // d_database.prettyPrint("SELECT * FROM chats LIMIT 10");
@@ -111,7 +114,10 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
   if (d_database.changed() == 0)
   {
     if (d_verbose) [[unlikely]]
+    {
       Logger::message("Json tree appears empty, trying to interpret json as single-chat-export");
+      Logger::message_start("Inserting messages from json...");
+    }
 
     if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, '$.chats.list[0].messages' AS path "
                          "FROM json_tree(?) WHERE path = '$.messages'", SqliteDB::StaticTextParam(data.get(), datasize)))
@@ -138,7 +144,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
     return;
 
   if (d_verbose) [[unlikely]]
-    Logger::message("done! (", d_database.changed(), ")");
+    Logger::message_end("done! (", d_database.changed(), ")");
 
   d_database.exec("DROP TABLE tmp_json_tree");
 

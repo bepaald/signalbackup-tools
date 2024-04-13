@@ -165,17 +165,18 @@ void SqliteDB::QueryResults::prettyPrint(long long int requestedrow) const
   Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
   for (uint row = 0; row < contents.size(); ++row)
   {
+    Logger::message_start();
     unsigned int pos = 1; // for seeking horizontal position with ANSI escape codes, this starts counting at 1
     for (uint col = 0; col < contents[row].size(); ++col)
     {
-      Logger::message_start(std::left, "| ", std::setw(widths[col]), std::setfill(' '), contents[row][col], std::setw(0), " ");
+      Logger::message_continue(std::left, "| ", std::setw(widths[col]), std::setfill(' '), contents[row][col], std::setw(0), " ");
       //if (ansi) // if we support control codes, make 'sure' the cursor is at the right position
       //{
         pos += 2 + widths[col] + 1; // "| " + content + " "
-        Logger::message_start(Logger::ControlChar("\033[" + bepaald::toString(pos - 1) + "G ")); // prints a space right before where the next '|' will come
+        Logger::message_continue(Logger::ControlChar("\033[" + bepaald::toString(pos - 1) + "G ")); // prints a space right before where the next '|' will come
       //}
     }
-    Logger::message("|");
+    Logger::message_end("|");
 
     // another bar under top row
     if (row == 0)

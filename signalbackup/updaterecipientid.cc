@@ -25,11 +25,22 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id", "notification_channel", "distribution_list_id"))
   {
     SqliteDB::QueryResults r;
-    if (d_database.exec("SELECT CASE WHEN NULLIF(" + d_recipient_aci + ", '') IS NULL THEN '' ELSE 'u' END || "
+    if (d_database.exec("SELECT "
+                        "CASE WHEN NULLIF(" + d_recipient_aci + ", '') IS NULL THEN '' ELSE 'u' END || "
                         "CASE WHEN NULLIF(" + d_recipient_e164 + ", '') IS NULL THEN '' ELSE 'p' END || "
                         "CASE WHEN NULLIF(group_id, '') IS NULL THEN '' ELSE 'g' END || "
                         "CASE WHEN NULLIF(distribution_list_id, '') IS NULL THEN '' ELSE 'd' END || "
                         "CASE WHEN NULLIF(notification_channel, '') IS NULL THEN '' ELSE 'n' END "
+                        "AS recipient_type FROM recipient", &r))
+      Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
+  }
+  else if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id"))
+  {
+    SqliteDB::QueryResults r;
+    if (d_database.exec("SELECT "
+                        "CASE WHEN NULLIF(" + d_recipient_aci + ", '') IS NULL THEN '' ELSE 'u' END || "
+                        "CASE WHEN NULLIF(" + d_recipient_e164 + ", '') IS NULL THEN '' ELSE 'p' END || "
+                        "CASE WHEN NULLIF(group_id, '') IS NULL THEN '' ELSE 'g' END "
                         "AS recipient_type FROM recipient", &r))
       Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
   }
