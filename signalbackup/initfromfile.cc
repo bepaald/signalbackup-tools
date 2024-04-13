@@ -66,7 +66,7 @@ void SignalBackup::initFromFile()
         //std::cout << "Progress: " << progress <<  " " << std::fixed << (static_cast<float>(progress) / 10) << std::endl;
 
         if (d_verbose) [[unlikely]]
-          Logger::message_overwrite("FRAME ", frame->frameNumber(), " ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
+          Logger::message_overwrite("FRAME ", frame->frameNumber(), ": ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
                                     (static_cast<float>(progress) / 10), std::defaultfloat, "%...");
         else
           Logger::message_overwrite("Reading backup file:", " ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
@@ -207,13 +207,8 @@ void SignalBackup::initFromFile()
     addEndFrame();
   }
 
-  if (backupfile.tellg() == totalsize)
-  {
-    if (d_verbose) [[unlikely]]
-      Logger::message_overwrite("FRAME ", frame->frameNumber(), " 100.0%... done!", Logger::Control::ENDOVERWRITE);
-    else if (d_showprogress) [[likely]]
-      Logger::message_overwrite("Reading backup file:", " 100.0%... done!", Logger::Control::ENDOVERWRITE);
-  }
+  if (backupfile.tellg() == totalsize && d_showprogress) [[likely]]
+    Logger::message_overwrite("Reading backup file:", " 100.0%... done!", Logger::Control::ENDOVERWRITE);
 
   d_ok = true;
 }

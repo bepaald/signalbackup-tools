@@ -22,7 +22,8 @@
 void SignalBackup::updateRecipientId(long long int targetid, long long int sourceid)
 {
   Logger::message_start("  Mapping ", sourceid, " -> ", targetid);
-  if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id", "notification_channel", "distribution_list_id"))
+
+  if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id", "distribution_list_id", "notification_channel"))
   {
     SqliteDB::QueryResults r;
     if (d_database.exec("SELECT "
@@ -31,8 +32,13 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
                         "CASE WHEN NULLIF(group_id, '') IS NULL THEN '' ELSE 'g' END || "
                         "CASE WHEN NULLIF(distribution_list_id, '') IS NULL THEN '' ELSE 'd' END || "
                         "CASE WHEN NULLIF(notification_channel, '') IS NULL THEN '' ELSE 'n' END "
-                        "AS recipient_type FROM recipient", &r))
-      Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
+                        "AS recipient_type FROM recipient WHERE _id = ?", sourceid, &r))
+    {
+      if (r.rows())
+        Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
+      else
+        Logger::message_continue(" (x)");
+    }
   }
   else if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id"))
   {
@@ -41,8 +47,13 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
                         "CASE WHEN NULLIF(" + d_recipient_aci + ", '') IS NULL THEN '' ELSE 'u' END || "
                         "CASE WHEN NULLIF(" + d_recipient_e164 + ", '') IS NULL THEN '' ELSE 'p' END || "
                         "CASE WHEN NULLIF(group_id, '') IS NULL THEN '' ELSE 'g' END "
-                        "AS recipient_type FROM recipient", &r))
-      Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
+                        "AS recipient_type FROM recipient WHERE _id = ?", sourceid, &r))
+    {
+      if (r.rows())
+        Logger::message_continue(" (", r.valueAsString(0, "recipient_type"), ")");
+      else
+        Logger::message_continue(" (x)");
+    }
   }
   Logger::message_end();
 
@@ -298,11 +309,25 @@ void SignalBackup::updateRecipientId(long long int targetid, RecipientIdentifica
 
   // get the current (to be deleted) recipient._id for this identifier (=phone,group_id,possibly uuid)
   SqliteDB::QueryResults results;
-  d_database.exec("SELECT _id FROM recipient WHERE "
-                  "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                  "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
-                  "(group_id IS NOT NULL AND group_id IS ?)",
-                  {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
+
+  if (d_database.tableContainsColumn("recipient", d_recipient_aci, d_recipient_e164, "group_id", "distribution_list_id", "notification_channel"))
+  {
+    long long int distribution_list_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM distribution_list WHERE distribution_id = ?",
+                                                                                     rec_id.distribution_id, -1);
+
+    d_database.exec("SELECT _id FROM recipient WHERE "
+                    "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                    "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                    "(group_id IS NOT NULL AND group_id IS ?) OR "
+                    "(distribution_list_id IS NOT NULL AND distribution_list_id = ?)",
+                    {rec_id.uuid, rec_id.phone, rec_id.group_id, distribution_list_id}, &results);
+  }
+  else
+    d_database.exec("SELECT _id FROM recipient WHERE "
+                    "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+                    "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) OR "
+                    "(group_id IS NOT NULL AND group_id IS ?)",
+                    {rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
 
   if (results.rows() > 1)
   {

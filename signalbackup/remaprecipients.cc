@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,7 +24,7 @@ void SignalBackup::remapRecipients()
 {
 
   // CALLED ON SOURCE
-  Logger::message(" REMAP RECIPIENTS! ");
+  Logger::message(" Remapping recipients! ");
 
   SqliteDB::QueryResults results;
   d_database.exec("SELECT * FROM remapped_recipients", &results);

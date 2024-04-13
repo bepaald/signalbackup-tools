@@ -48,16 +48,15 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (r.rows())
     {
       warnOnce("Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!");
-
-      for (uint i = 0; i < r.rows(); ++i)
+      if (d_verbose) [[unlikely]]
       {
-        long long int id = r.getValueAs<long long int>(i, "_id");
-        long long int oldid = r.getValueAs<long long int>(i, "old_id");
-        long long int newid = r.getValueAs<long long int>(i, "new_id");
-        Logger::message(id, " : ", oldid, " -> ", newid, "\n");
-
-        if (d_verbose) [[unlikely]]
+        for (uint i = 0; i < r.rows(); ++i)
         {
+          long long int id = r.getValueAs<long long int>(i, "_id");
+          long long int oldid = r.getValueAs<long long int>(i, "old_id");
+          long long int newid = r.getValueAs<long long int>(i, "new_id");
+          Logger::message(id, " : ", oldid, " -> ", newid, "\n");
+
           Logger::message("Old id:");
           source->d_database.print("SELECT * FROM recipient WHERE _id = ?", oldid);
           Logger::message_end();
@@ -123,11 +122,29 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   else // new database version
   {
     // get targetthread from source thread id (source.thread_id->source.recipient_id->source.recipient.phone/group_id->target.thread_id
-    source->d_database.exec("SELECT "
-                            "IFNULL(" + source->d_recipient_aci + ", '') AS uuid, "
-                            "IFNULL(" + source->d_recipient_e164 + ", '') AS phone, "
-                            "IFNULL(group_id, '') AS group_id FROM recipient WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)",
-                            thread, &results);
+    if (source->d_database.tableContainsColumn("recipient", source->d_recipient_aci, source->d_recipient_e164,
+                                               "group_id", "distribution_list_id",  source->d_recipient_storage_service))
+      source->d_database.exec("SELECT "
+                              "IFNULL(" + source->d_recipient_aci + ", '') AS uuid, "
+                              "IFNULL(" + source->d_recipient_e164 + ", '') AS phone, "
+                              "IFNULL(group_id, '') AS group_id, "
+                              "IFNULL(distribution_list.distribution_id, '') AS distribution_id, "
+                              "IFNULL(" + source->d_recipient_storage_service + ", '') AS storage_service "
+                              "FROM recipient "
+                              "LEFT JOIN distribution_list ON distribution_list._id = recipient.distribution_list_id "
+                              "WHERE recipient._id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE thread._id = ?)",
+                              thread, &results);
+    else
+      source->d_database.exec("SELECT "
+                              "IFNULL(" + source->d_recipient_aci + ", '') AS uuid, "
+                              "IFNULL(" + source->d_recipient_e164 + ", '') AS phone, "
+                              "IFNULL(group_id, '') AS group_id, "
+                              "'' AS distribution_id, "
+                              "'' AS storage_service "
+                              "FROM recipient "
+                              "WHERE _id IS (SELECT " + source->d_thread_recipient_id + " FROM thread WHERE _id = ?)",
+                              thread, &results);
+
     if (results.rows() != 1)
     {
       // skip current thread if it is the releasechannel-thread
@@ -148,16 +165,45 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
 
     //std::string phone_or_group = results.getValueAs<std::string>(0, 0);
-    RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id"), -1, std::string()};
+    RecipientIdentification rec_id = {results(0, "uuid"), results(0, "phone"), results(0, "group_id"), results(0, "distribution_id"), results(0, "storage_service")};
 
     if (d_verbose) [[unlikely]]
       Logger::message("Trying to match source recipient: {\"", rec_id.uuid, "\", \"", rec_id.phone, "\", \"", rec_id.group_id, "\"}");
 
-    d_database.exec("SELECT _id FROM recipient WHERE "
-                    "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
-                    "CASE WHEN (SELECT COUNT(_id) FROM recipient WHERE (" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?)) = 0 THEN "
-                    "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) END OR "
-                    "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
+
+    if (d_database.tableContainsColumn("recipient", "distribution_list_id"))
+    {
+      long long int distribution_list_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM distribution_list WHERE distribution_id = ?",
+                                                                                       rec_id.distribution_id, -1);
+      d_database.exec("SELECT _id FROM recipient WHERE "
+
+                      // match by aci
+                      "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+
+                      // only match by phone if match by aci fails:
+                      "CASE WHEN (SELECT COUNT(_id) FROM recipient WHERE (" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?)) = 0 THEN "
+                      "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) END OR "
+
+                      // match by group_id
+                      "(group_id IS NOT NULL AND group_id IS ?) OR "
+                      "(distribution_list_id IS NOT NULL AND distribution_list_id IS ?)",
+                      {rec_id.uuid, rec_id.uuid, rec_id.phone, rec_id.group_id, distribution_list_id}, &results);
+
+    }
+    else
+      d_database.exec("SELECT _id FROM recipient WHERE "
+
+                      // match by aci
+                      "(" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?) OR "
+
+                      // only match by phone if match by aci fails:
+                      "CASE WHEN (SELECT COUNT(_id) FROM recipient WHERE (" + d_recipient_aci + " IS NOT NULL AND " + d_recipient_aci + " IS ?)) = 0 THEN "
+                      "(" + d_recipient_e164 + " IS NOT NULL AND " + d_recipient_e164 + " IS ?) END OR "
+
+                      // match by group_id
+                      "(group_id IS NOT NULL AND group_id IS ?)", {rec_id.uuid, rec_id.uuid, rec_id.phone, rec_id.group_id}, &results);
+
+
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<long long int>(0, 0))
     {
@@ -328,25 +374,6 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       Logger::message("  Deleted ", count, " existing key values");
   }
 
-  // delete double distribution lists?
-  if (d_database.containsTable("distribution_list") && source->d_database.containsTable("distribution_list"))
-  {
-    SqliteDB::QueryResults res;
-    d_database.exec("SELECT distribution_id FROM distribution_list", &res);
-
-    int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
-    {
-      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.getValueAs<std::string>(i, 0));
-      count += source->d_database.changed();
-    }
-    if (count)
-      Logger::message("  Deleted ", count, " existing distribution lists");
-
-    // clean up the member table
-    source->d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
-  }
-
   // the target will have its own job_spec etc...
   if (source->d_database.containsTable("job_spec"))
     source->d_database.exec("DELETE FROM job_spec");
@@ -480,26 +507,29 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     if (d_databaseversion >= 24)
     {
       //d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
-      if (d_database.tableContainsColumn("recipient", d_recipient_type) &&
+      if (d_database.tableContainsColumn("recipient", "distribution_list_id") &&
           d_database.tableContainsColumn("recipient", d_recipient_storage_service))
-        d_database.exec("SELECT _id, "
+        d_database.exec("SELECT recipient._id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
-                        + d_recipient_type + " AS 'group_type', "
-                        + d_recipient_storage_service + " FROM recipient", &results);
+                        "IFNULL(distribution_list.distribution_id, '') AS distribution_id, "
+                        "IFNULL(" + d_recipient_storage_service + ", '') AS storage_service "
+                        "FROM recipient "
+                        "LEFT JOIN distribution_list ON distribution_list._id = recipient.distribution_list_id ", &results);
       else
         d_database.exec("SELECT _id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
-                        "-1 AS 'group_type', "
-                        "NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
+                        "'' AS 'distribution_id', "
+                        "'' AS 'storage_service' "
+                        "FROM recipient", &results);
 
       Logger::message("  updateRecipientIds");
       for (uint i = 0; i < results.rows(); ++i)
       {
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results(i, "distribution_id"), results(i, "storage_service")};
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
       }
@@ -521,42 +551,45 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     {
       // get the unique features of existing recipients
       SqliteDB::QueryResults existing_rec;
-      if (d_database.tableContainsColumn("recipient", d_recipient_type) &&
+      if (d_database.tableContainsColumn("recipient", "distribution_list_id") &&
           d_database.tableContainsColumn("recipient", d_recipient_storage_service))
-        d_database.exec("SELECT _id, "
+        d_database.exec("SELECT recipient._id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
-                        + d_recipient_type + " AS 'group_type', "
-                        + d_recipient_storage_service + " FROM recipient", &existing_rec);
+                        "IFNULL(distribution_list.distribution_id, '') AS distribution_id, "
+                        "IFNULL(" + source->d_recipient_storage_service + ", '') AS storage_service "
+                        "FROM recipient "
+                        "LEFT JOIN distribution_list ON distribution_list._id = recipient.distribution_list_id ", &existing_rec);
       else
         d_database.exec("SELECT _id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
-                        "-1 AS 'group_type', NULL AS '" + d_recipient_storage_service + "' FROM recipient", &existing_rec);
+                        "'' AS distribution_id, "
+                        "'' AS storage_service "
+                        "FROM recipient", &existing_rec);
 
       // for each of them, check if they are also in source, and delete
       int count = 0;
       for (uint i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {existing_rec(i, "uuid"), existing_rec(i, "phone"), existing_rec(i, "group_id"),
-                                          existing_rec.getValueAs<long long int>(i, "group_type"), existing_rec(i, d_recipient_storage_service)};
+                                          existing_rec(i, "distribution_id"), existing_rec(i, "storage_service")};
 
-        if (source->d_database.tableContainsColumn("recipient", d_recipient_type))
+        if (source->d_database.tableContainsColumn("recipient", "distribution_list_id"))
         {
+          long long int distribution_list_id = source->d_database.getSingleResultAs<long long int>("SELECT _id FROM distribution_list WHERE distribution_id = ?",
+                                                                                                   rec_id.distribution_id, -1);
+
           source->d_database.exec("DELETE FROM recipient WHERE "
-                                  // one-of uuid/phone/group_id is set and equal to existing recipient
+                                  // one-of uuid/phone/group_id is set and equal to existing recipient,
+                                  // or distribution_list_id points to dist_list with same _id
                                   "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
                                   "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
-                                  "(group_id IS NOT NULL AND group_id IS ?)) OR "
-                                  // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
-                                  "(" + source->d_recipient_aci + " IS NULL AND "
-                                  + source->d_recipient_e164 + " IS NULL AND "
-                                  "group_id IS NULL AND "
-                                  + d_recipient_type + " IS 4 AND " + d_recipient_type + " IS ? AND "
-                                  + source->d_recipient_storage_service + " IS ?)",
-                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
+                                  "(group_id IS NOT NULL AND group_id IS ?) OR "
+                                  "(distribution_list_id IS NOT NULL AND distribution_list_id IS ?))",
+                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, distribution_list_id});
           count += source->d_database.changed();
         }
         else
@@ -592,18 +625,49 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       // get all phonenums/groups_ids for all in identities
-      d_database.exec("SELECT IFNULL(" + d_recipient_aci + ", '') AS uuid, "
-                      "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
-                      "IFNULL(group_id, '') AS group_id "
-                      "FROM recipient WHERE _id IN (SELECT address FROM identities)", &results);
+      if (d_database.tableContainsColumn("recipient", "distribution_list_id",  source->d_recipient_storage_service))
+        d_database.exec("SELECT "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "IFNULL(distribution_list.distribution_id, '') AS distribution_id, "
+                        "IFNULL(" + source->d_recipient_storage_service + ", '') AS storage_service "
+                        "FROM recipient "
+                        "LEFT JOIN distribution_list ON distribution_list._id = recipient.distribution_list_id "
+                        "WHERE recipient._id IN (SELECT address FROM identities)", &results);
+      else
+        d_database.exec("SELECT "
+                        "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
+                        "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
+                        "IFNULL(group_id, '') AS group_id, "
+                        "'' AS distribution_id, "
+                        "'' AS storage_service "
+                        "FROM recipient "
+                        "WHERE _id IN (SELECT address FROM identities)", &results);
       for (uint i = 0; i < results.rows(); ++i)
       {
-        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), -1, std::string()};
+        RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results(i, "distribution_id"), results(i, "storage_service")};
         // source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
-        source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE "
-                                "(" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
-                                "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
-                                "(group_id IS NOT NULL AND group_id IS ?))", {rec_id.uuid, rec_id.phone, rec_id.group_id});
+
+        if (source->d_database.tableContainsColumn("recipient", "distribution_list_id"))
+        {
+          long long int distribution_list_id = source->d_database.getSingleResultAs<long long int>("SELECT _id FROM distribution_list WHERE distribution_id = ?",
+                                                                                                   rec_id.distribution_id, -1);
+          source->d_database.exec("DELETE FROM identities WHERE address IN "
+                                  "(SELECT _id FROM recipient WHERE "
+                                  "(" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                  "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
+                                  "(group_id IS NOT NULL AND group_id IS ?) OR "
+                                  "(distribution_list_id IS NOT NULL AND distribution_list_id IS ?))",
+                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, distribution_list_id});
+        }
+        else
+          source->d_database.exec("DELETE FROM identities WHERE address IN "
+                                  "(SELECT _id FROM recipient WHERE "
+                                  "(" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
+                                  "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
+                                  "(group_id IS NOT NULL AND group_id IS ?))",
+                                  {rec_id.uuid, rec_id.phone, rec_id.group_id});
       }
     }
 
@@ -618,21 +682,23 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       //d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
-      if (d_database.tableContainsColumn("recipient", d_recipient_type) &&
-          d_database.tableContainsColumn("recipient", d_recipient_storage_service))
-        d_database.exec("SELECT _id, "
+      if (d_database.tableContainsColumn("recipient", "distribution_list", d_recipient_storage_service))
+        d_database.exec("SELECT recipient._id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
-                        + d_recipient_type + " AS 'group_type', "
-                        + d_recipient_storage_service + " FROM recipient", &results);
+                        "IFNULL(distribution_list.distribution_id, '') AS distribution_id, "
+                        "IFNULL(" + source->d_recipient_storage_service + ", '') AS storage_service "
+                        "FROM recipient "
+                        "LEFT JOIN distribution_list ON distribution_list._id = recipient.distribution_list_id", &results);
       else
         d_database.exec("SELECT _id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
-                        "-1 AS 'group_type', "
-                        "NULL AS '" + d_recipient_storage_service + "' FROM recipient", &results);
+                        "'' AS distribution_id, "
+                        "'' AS storage_service "
+                        "FROM recipient", &results);
       Logger::message("  updateRecipientIds (2)");
       int count = 0;
       for (uint i = 0; i < results.rows(); ++i)
@@ -643,7 +709,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
         // and in the future probably uuid), the fields in other tables will point
         // to random or non-existing recipients, so we need to remap them:
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"),
-                                          results.getValueAs<long long int>(i, "group_type"), results(i, d_recipient_storage_service)};
+                                          results(i, "distribution_id"), results(i, "storage_service")};
         source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), rec_id);
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "ident"));
 
@@ -652,20 +718,18 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
         // now drop the already present recipient from source.
         // source->d_database.exec("DELETE FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, "ident") + "'");
-        if (d_database.tableContainsColumn("recipient", d_recipient_type))
+        if (d_database.tableContainsColumn("recipient", "distribution_list_id"))
         {
+          long long int distribution_list_id = source->d_database.getSingleResultAs<long long int>("SELECT _id FROM distribution_list WHERE distribution_id = ?",
+                                                                                                   rec_id.distribution_id, -1);
+
           source->d_database.exec("DELETE FROM recipient WHERE "
                                   // one-of uuid/phone/group_id is set and equal to existing recipient
                                   "((" + source->d_recipient_aci + " IS NOT NULL AND " + source->d_recipient_aci + " IS ?) OR "
                                   "(" + source->d_recipient_e164 + " IS NOT NULL AND " + source->d_recipient_e164 + " IS ?) OR "
-                                  "(group_id IS NOT NULL AND group_id IS ?)) OR "
-                                  // none of uuid/phone/group_id are set, but storage_service_key exists and both are distribution lists?
-                                  "(" + source->d_recipient_aci + " IS NULL AND "
-                                  + source->d_recipient_e164 + " IS NULL AND "
-                                  "group_id IS NULL AND "
-                                  + d_recipient_type + " IS 4 AND " + d_recipient_type + " IS ? AND "
-                                  + source->d_recipient_storage_service + " IS ?)",
-                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, rec_id.group_type, rec_id.storage_service});
+                                  "(group_id IS NOT NULL AND group_id IS ?) OR "
+                                  "(distribution_list_id IS NOT NULL AND distribution_list_id IS ?))",
+                                  {rec_id.uuid, rec_id.phone, rec_id.group_id, distribution_list_id});
           count += source->d_database.changed();
         }
         else
@@ -758,6 +822,25 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     }
     if (count)
       Logger::message("  Deleted ", count, " existing pending_pni_signature_messages");
+  }
+
+  // delete double distribution lists?
+  if (d_database.containsTable("distribution_list") && source->d_database.containsTable("distribution_list"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT distribution_id FROM distribution_list", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.getValueAs<std::string>(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing distribution lists");
+
+    // clean up the member table
+    source->d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
   }
 
   // // export database

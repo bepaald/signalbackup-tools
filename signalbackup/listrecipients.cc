@@ -21,6 +21,19 @@
 
 void SignalBackup::listRecipients() const
 {
+
+  /* Note on group types:
+
+     0 = individual (no group)
+     1 = mms
+     2 = group v1
+     3 = group v2
+     4 = distribution list (story)
+     5 = call link
+
+   */
+
+
   d_database.prettyPrint("SELECT recipient._id, "
 
                          "COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
@@ -37,7 +50,20 @@ void SignalBackup::listRecipients() const
                          (d_database.tableContainsColumn("recipient", "blocked") ? "blocked, " : "") +
                          (d_database.tableContainsColumn("recipient", "hidden") ? "hidden, " : "") +
                          "IFNULL(COALESCE(" + d_recipient_profile_avatar + ", groups.avatar_id), 0) IS NOT 0 AS 'has_avatar', "
-                         "CASE " + d_recipient_type + " WHEN 0 THEN 'Individual' ELSE 'Group' END 'type' "
+
+                         "CASE " + d_recipient_type + " WHEN 0 THEN 'Individual' ELSE "
+                         "  CASE " + d_recipient_type + " WHEN 3 THEN 'Group (v2)' ELSE "
+                         "    CASE " + d_recipient_type + " WHEN 4 THEN 'Group (story)' ELSE "
+                         "      CASE " + d_recipient_type + " WHEN 1 THEN 'Group (mms)' ELSE "
+                         "        CASE " + d_recipient_type + " WHEN 2 THEN 'Group (v1)' ELSE "
+                         "          CASE " + d_recipient_type + " WHEN 5 THEN 'Group (call)' ELSE 'unknown' "
+                         "          END "
+                         "        END "
+                         "      END "
+                         "    END "
+                         "  END "
+                         "END AS 'type' "
+
                          "FROM recipient "
                          "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
                          (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : " ") +

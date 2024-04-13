@@ -233,7 +233,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     if (d_showprogress)
       Logger::message_overwrite("  Dealing with table '", table, "'... ", results.rows(), "/", results.rows(), " entries...done", Logger::Control::ENDOVERWRITE);
     else
-      Logger::message_overwrite("  Dealing with table '", table, "'... done", Logger::Control::ENDOVERWRITE);
+      Logger::message_end("done");
   }
 
   Logger::message("Writing SharedPrefFrame(s)...");

@@ -139,7 +139,8 @@ class SignalBackup
     std::string uuid;
     std::string phone;
     std::string group_id;
-    long long int group_type; //    NONE(0), MMS(1), SIGNAL_GV1(2), SIGNAL_GV2(3), DISTRIBUTION_LIST(4), CALL_LINK(5);
+    std::string distribution_id;
+    //long long int group_type; //    NONE(0), MMS(1), SIGNAL_GV1(2), SIGNAL_GV2(3), DISTRIBUTION_LIST(4), CALL_LINK(5);
     std::string storage_service;
   };
 
