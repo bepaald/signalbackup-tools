@@ -701,18 +701,21 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
           break;
       }
     }
-  }
 
-  // Just because the group has no thread, doesn't mean it doesn't exist already
-  if (source->d_database.containsTable("groups")) // usually always the case, but entire table was dropped if existing thread was found...
-  {
+    // Just because the group has no thread, doesn't mean it doesn't exist already
     int count = 0;
     SqliteDB::QueryResults existing_groups;
-    d_database.exec("SELECT group_id FROM groups", &existing_groups);
+    d_database.exec("SELECT group_id, recipient_id FROM groups", &existing_groups);
     for (uint i = 0; i < existing_groups.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM groups WHERE group_id = ?", existing_groups.value(i, "group_id"));
-      count += source->d_database.changed();
+      SqliteDB::QueryResults removed_group_recipient_id;
+      source->d_database.exec("DELETE FROM groups WHERE group_id = ? RETURNING recipient_id", existing_groups.value(i, "group_id"), &removed_group_recipient_id);
+      int changed = source->d_database.changed();
+      count += changed;
+
+      if (changed && existing_groups.valueAsInt(i, "recipient_id", -1) != removed_group_recipient_id.valueAsInt(0, "recipient_id", -2))
+        Logger::warning("Existing group removed from source table, but recipient_ids did not match "
+                        "(", existing_groups.valueAsInt(i, "recipient_id", -1), ", ", removed_group_recipient_id.valueAsInt(0, "recipient_id", -2), ")");
     }
     if (count)
       Logger::message("Removed ", count, " existing groups from source database");
