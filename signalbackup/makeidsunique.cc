@@ -79,41 +79,36 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
     if (dbl.table == d_part_table)
     {
-      // update rowid's in attachments
+      // update rowid's in d_attachments
       std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> newattdb;
       for (auto &att : source->d_attachments)
       {
-        AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att.second.release());
-        a->setRowId(a->rowId() + offsetvalue);
+        AttachmentFrame *af = reinterpret_cast<AttachmentFrame *>(att.second.release());
+        af->setRowId(af->rowId() + offsetvalue);
 
-        int64_t attachmentid = a->attachmentId();
-        newattdb.emplace(std::make_pair(a->rowId(), attachmentid ? attachmentid : -1), a);
+        int64_t attachmentid = af->attachmentId();
+        newattdb.emplace(std::make_pair(af->rowId(), attachmentid ? attachmentid : -1), af);
       }
       source->d_attachments.clear();
       source->d_attachments = std::move(newattdb);
-
-      /*
-        REPLACED WITH JSON OPTION IN DatabaseConnections
-
-        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
-      SqliteDB::QueryResults results;
-      source->d_database.exec("SELECT _id,previews FROM mms WHERE previews IS NOT NULL", &results);
-      std::regex rowid_in_json(".*\"rowId\":([0-9]*)[,}].*");
-      std::smatch sm;
-      for (uint i = 0; i < results.rows(); ++i)
-      {
-        std::string line = results.valueAsString(i, "previews");
-        if (std::regex_match(line, sm, rowid_in_json))
-          if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
-          {
-            line.replace(sm.position(1), sm.length(1), bepaald::toString(bepaald::toNumber<unsigned long>(sm[1]) + offsetvalue));
-            source->d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {line, results.getValueAs<long long int>(i, "_id")});
-          }
-      }
-      */
     }
 
-    if (dbl.table == "recipient")
+    else if (dbl.table == "sticker")
+    {
+      // update id's in d_stickers
+      std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> newsdb;
+      for (auto &s : source->d_stickers)
+      {
+        StickerFrame *sf = reinterpret_cast<StickerFrame *>(s.second.release());
+        sf->setRowId(sf->rowId() + offsetvalue);
+
+        newsdb.emplace(std::make_pair(sf->rowId(), sf));
+      }
+      source->d_stickers.clear();
+      source->d_stickers = std::move(newsdb);
+    }
+
+    else if (dbl.table == "recipient")
     {
       source->updateGroupMembers(offsetvalue);
 

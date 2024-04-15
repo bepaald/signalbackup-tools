@@ -48,6 +48,7 @@ class StickerFrame : public FrameWithAttachment
   inline virtual uint32_t attachmentSize() const override;
   inline uint32_t length() const;
   inline uint64_t rowId() const;
+  inline void setRowId(uint64_t rid);
   inline virtual std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
@@ -120,6 +121,22 @@ inline uint64_t StickerFrame::rowId() const
     if (std::get<0>(p) == FIELD::ROWID)
       return bytesToUint64(std::get<1>(p), std::get<2>(p));
   return 0;
+}
+
+inline void StickerFrame::setRowId(uint64_t rid)
+{
+  for (auto &p : d_framedata)
+    if (std::get<0>(p) == FIELD::ROWID)
+    {
+      if (sizeof(rid) != std::get<2>(p)) [[unlikely]]
+      {
+        //std::cout << "       ************        DAMN!        **********        " << std::endl;
+        return;
+      }
+      uint64_t val = bepaald::swap_endian(rid);
+      std::memcpy(std::get<1>(p), reinterpret_cast<unsigned char *>(&val), sizeof(val));
+      return;
+    }
 }
 
 inline uint64_t StickerFrame::dataSize() const

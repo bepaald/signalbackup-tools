@@ -806,6 +806,35 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                               call_results.value(i, "call_id"));
   }
 
+  // delete double stickers
+  if (d_database.containsTable("sticker") && source->d_database.containsTable("sticker"))
+  {
+    SqliteDB::QueryResults installed_stickers;
+    d_database.exec("SELECT pack_id, sticker_id, cover FROM sticker", &installed_stickers);
+    int count = 0;
+    for (uint i = 0; i < installed_stickers.rows(); ++i)
+    {
+      SqliteDB::QueryResults deleted_sticker_ids;
+      source->d_database.exec("DELETE FROM sticker WHERE pack_id = ? AND sticker_id = ? AND cover = ? RETURNING _id",
+                              {installed_stickers.value(i, "pack_id"), installed_stickers.value(i, "sticker_id"), installed_stickers.value(i, "cover")},
+                              &deleted_sticker_ids);
+      count += source->d_database.changed();
+
+      // delete actual sticker image
+      for (uint j = 0; j < deleted_sticker_ids.rows(); ++j)
+      {
+        long long int erased = deleted_sticker_ids.valueAsInt(j, "_id");
+        if (erased == -1)
+          continue;
+        auto it = std::find_if(source->d_stickers.begin(), source->d_stickers.end(), [erased](auto const &s) { return s.first == static_cast<uint64_t>(erased); });
+        if (it != source->d_stickers.end())
+          source->d_stickers.erase(it);
+      }
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing stickers");
+  }
+
   // delete double pendingpnisignaturemessages
   if (d_database.containsTable("pending_pni_signature_message") && source->d_database.containsTable("pending_pni_signature_message"))
   {
@@ -976,6 +1005,9 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     d_avatars.emplace_back(std::move(av));
 
   // stickers???
+  for (auto &s : source->d_stickers)
+    d_stickers.emplace(std::move(s));
+
 
   /*
     THIS IS NOT TRUE, CURRENTLY THE RELEASECHANNEL

@@ -83,66 +83,34 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
         {
           if (reinterpret_cast<AttachmentFrame *>(att->second.get())->rowId() == static_cast<uint64_t>(valuetochange))
           {
-            AttachmentFrame *a = reinterpret_cast<AttachmentFrame *>(att->second.release());
+            AttachmentFrame *af = reinterpret_cast<AttachmentFrame *>(att->second.release());
             att = d_attachments.erase(att);
-            a->setRowId(nid);
-            int64_t uniqueid = a->attachmentId();
+            af->setRowId(nid);
+            int64_t uniqueid = af->attachmentId();
             if (uniqueid == 0)
               uniqueid = -1;
-            d_attachments.emplace(std::make_pair(a->rowId(), uniqueid), a);
+            d_attachments.emplace(std::make_pair(af->rowId(), uniqueid), af);
           }
           else
             ++att;
         }
-
-        /*
-        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
-        if (d_database.tableContainsColumn("mms", "previews"))
-          d_database.exec("UPDATE mms SET previews = json_replace(previews, '$[0].attachmentId.rowId', ?) "
-                          "WHERE json_extract(previews, '$[0].attachmentId.rowId') = ?", {nid, valuetochange});
-        */
-        /*
-        //  REPLACED WITH ABOVE
-
-        // update rowid in previews (mms.previews contains a json string referencing the 'rowId' == part._id)
-        SqliteDB::QueryResults results2;
-        d_database.exec("SELECT _id,previews FROM mms WHERE previews IS NOT NULL", &results2);
-        std::regex rowid_in_json(".*\"rowId\":(" + bepaald::toString(valuetochange) + ")[,}].*");
-        std::smatch sm;
-        for (uint i = 0; i < results2.rows(); ++i)
+      }
+      else if (table == "sticker")
+      {
+        for (auto s = d_stickers.begin(); s != d_stickers.end(); )
         {
-          std::string line = results2.valueAsString(i, "previews");
-          //std::cout << " OLD: " << line << std::endl;
-          if (std::regex_match(line, sm, rowid_in_json))
-            if (sm.size() == 2) // 0 is full match, 1 is first submatch (which is what we want)
-            {
-              //std::cout << "MATCHED:" << std::endl;
-              //std::cout << sm.size() << std::endl;
-              line.replace(sm.position(1), sm.length(1), bepaald::toString(nid));
-              //std::cout << " NEW: " << line << std::endl;
-
-              d_database.exec("UPDATE mms SET previews = ? WHERE _id = ?", {line, results2.getValueAs<long long int>(i, "_id")});
-            }
+          if (reinterpret_cast<StickerFrame *>(s->second.get())->rowId() == static_cast<uint64_t>(valuetochange))
+          {
+            StickerFrame *sf = reinterpret_cast<StickerFrame *>(s->second.release());
+            s = d_stickers.erase(s);
+            sf->setRowId(nid);
+            d_stickers.emplace(std::make_pair(sf->rowId(), sf));
+          }
+          else
+            ++s;
         }
-        */
       }
-      /*
-      else if (table == "msl_payload")
-      {
-        d_database.exec("UPDATE msl_message SET payload_id = ? WHERE payload_id = ?", {nid, valuetochange});
-        d_database.exec("UPDATE msl_recipient SET payload_id = ? WHERE payload_id = ?", {nid, valuetochange});
-      }
-      else if (table == "notification_profile") // should actually be cleared at this point...
-      {
-        d_database.exec("UPDATE notification_profile_allowed_members SET notification_profile_id = ? WHERE notification_profile_id = ?", {nid, valuetochange});
-        d_database.exec("UPDATE notification_profile_schedule SET notification_profile_id = ? WHERE notification_profile_id = ?", {nid, valuetochange});
-      }
-      else if (table == "distribution_list")
-      {
-        d_database.exec("UPDATE recipient SET distribution_list_id = ? WHERE distribution_list_id = ?", {nid, valuetochange});
-        d_database.exec("UPDATE distribution_list_member SET list_id = ? WHERE list_id = ?", {nid, valuetochange});
-      }
-      */
+
     }
 
     // gets first available _id in table

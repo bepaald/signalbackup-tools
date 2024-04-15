@@ -102,7 +102,7 @@ class SignalBackup
 
   std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
-  std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> d_stickers; //maps <rowid> to sticker
+  std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> d_stickers; //maps <sticker._id> to sticker
   DeepCopyingUniquePtr<HeaderFrame> d_headerframe;
   DeepCopyingUniquePtr<DatabaseVersionFrame> d_databaseversionframe;
   std::vector<DeepCopyingUniquePtr<SharedPrefFrame>> d_sharedpreferenceframes;
