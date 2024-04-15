@@ -34,6 +34,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
                 "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
+                "json_extract(json,'$.nicknameGivenName') AS nick_first, "
+                "json_extract(json,'$.nicknameFamilyName') AS nick_last, "
                 "TOKENCOUNT(members) AS nummembers, json_extract(json, '$.masterKey') AS masterKey "
                 "FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
                 {id, phone, groupidb64}, &res))
@@ -285,6 +287,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                  {{d_recipient_profile_given_name, res.value(0, "profileName")},
                   {"profile_family_name", res.value(0, "profileFamilyName")},
                   {"profile_joined_name", res.value(0, "profileFullName")},
+                  {"nickname_given_name", res.value(0, "nick_first")},
+                  {"nickname_family_name", res.value(0, "nick_last")},
+                  {(!res.isNull(0, "nick_first") || !res.isNull(0, "nick_last")) ?
+                   "nickname_joined_name" : "", res(0, "nick_first") + " " + res(0, "nick_last")},
                   {d_recipient_e164, res.value(0, "e164")},
                   {d_recipient_aci, res.value(0, "uuid")},
                   {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))

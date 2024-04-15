@@ -18,6 +18,7 @@
 */
 
 #include "signalbackup.ih"
+#include "msgrange.h"
 
 void SignalBackup::updateThreadsEntries(long long int thread)
 {
@@ -117,6 +118,8 @@ ThreadTable::
       if (results2.rows() == 0)
         continue;
 
+      std::any mid = results2.value(0, "mms._id"); // not d_mms_table, we used an alias in query
+
       std::any date = results2.value(0, "union_date");
       if (date.type() == typeid(long long int))
       {
@@ -130,6 +133,31 @@ ThreadTable::
       if (body.type() == typeid(std::string))
       {
         newsnippet = std::any_cast<std::string>(body);
+        if (d_database.containsTable("mention"))
+        {
+          SqliteDB::QueryResults snippet_mentions;
+          if (mid.type() == typeid(long long int))
+          {
+            if (d_database.exec("SELECT * FROM mention WHERE message_id = ?", mid, &snippet_mentions))
+            {
+              std::vector<Range> ranges;
+              for (uint m = 0; m < snippet_mentions.rows(); ++m)
+              {
+                std::string displayname = getNameFromRecipientId(snippet_mentions.getValueAs<long long int>(m, "recipient_id"));
+                if (displayname.empty())
+                  continue;
+                ranges.emplace_back(Range{snippet_mentions.getValueAs<long long int>(m, "range_start"),
+                                          snippet_mentions.getValueAs<long long int>(m, "range_length"),
+                                          "",
+                                          "@" + displayname,
+                                          "",
+                                          false});
+              }
+              applyRanges(&newsnippet, &ranges, nullptr);
+            }
+          }
+        }
+
         //std::cout << "    Updating snippet (" << newsnippet << ")" << std::endl;
         d_database.exec("UPDATE thread SET snippet = ? WHERE _id = ?", {newsnippet, threadid});
       }
@@ -146,7 +174,6 @@ ThreadTable::
         d_database.exec("UPDATE thread SET snippet_type = ? WHERE _id = ?", {std::any_cast<long long int>(type), threadid});
       }
 
-      std::any mid = results2.value(0, "mms._id"); // not d_mms_table, we used an alias in query
       if (mid.type() == typeid(long long int))
       {
         //std::cout << "Checking mms" << std::endl;

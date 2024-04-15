@@ -95,12 +95,14 @@ Arg::Arg(int argc, char *argv[])
   d_checkdbintegrity(false),
   d_interactive(false),
   d_exporthtml(std::string()),
+  d_exportdesktophtml(std::string()),
   d_addexportdetails(bool()),
   d_includecalllog(false),
   d_includeblockedlist(false),
   d_includesettings(false),
   d_includefullcontactlist(false),
   d_exporttxt(std::string()),
+  d_exportdesktoptxt(std::string()),
   d_append(false),
   d_split(1000),
   d_split_bool(false),
@@ -1068,6 +1070,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
+    if (option == "--exportdesktophtml")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_exportdesktophtml = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--addexportdetails")
     {
       d_addexportdetails = true;
@@ -1130,6 +1145,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
+      continue;
+    }
+    if (option == "--exportdesktoptxt")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_exportdesktoptxt = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--append")

@@ -25,10 +25,12 @@
 class DummyBackup : public SignalBackup
 {
  public:
-  inline DummyBackup(bool verbose, bool showprogress);
+  inline DummyBackup(std::string const &configdir, std::string const &databasedir, long long int cipherversion,
+                     bool ignorewal, bool verbose, bool showprogress);
 };
 
-inline DummyBackup::DummyBackup(bool verbose, bool showprogress)
+inline DummyBackup::DummyBackup(std::string const &configdir, std::string const &databasedir, long long int cipherversion,
+                                bool ignorewal, bool verbose, bool showprogress)
   :
   SignalBackup(verbose, showprogress)
 {
@@ -79,18 +81,29 @@ inline DummyBackup::DummyBackup(bool verbose, bool showprogress)
   setColumnNames();
 
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
-  DesktopDatabase ddb(verbose, true, 4);
+  DesktopDatabase ddb(configdir, databasedir, verbose, ignorewal, cipherversion);
   if (!ddb.ok())
     std::cout << "error" << std::endl;
+  dtSetColumnNames(&ddb.d_database);
 
-  std::string uuid = ddb.d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(sourceServiceId, '') FROM messages WHERE type = 'outgoing' AND sourceServiceId IS NOT NULL", std::string());
-  if (uuid.empty())
-    // warning
-    return;
+  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
+  std::string uuid = ddb.d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(" + d_dt_m_sourceuuid + ", '') FROM messages "
+                                                                   "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
+  if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
+  {
+    // a bit more complicated:
+    uuid = ddb.d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN (SELECT id FROM conversations WHERE type = 'group')", std::string());
+    if (uuid.empty())
+    {
+      Logger::error("Failed to determin uuid of self");
+      return;
+    }
+  }
 
   SqliteDB::QueryResults selfdata;
-  if (!ddb.d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color FROM conversations WHERE serviceId = ?",
-                uuid, &selfdata) ||
+  if (!ddb.d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color "
+                           "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
+                           uuid, &selfdata) ||
       selfdata.rows() != 1)
     // warning
     return;

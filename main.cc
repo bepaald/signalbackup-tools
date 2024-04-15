@@ -74,24 +74,6 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /*
-    // EXPORT DESKTOP TO HTML
-  {
-    DummyBackup db(arg.verbose(), arg.showprogress());
-    if (db.ok())
-      if (db.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
-                               arg.limittodates(), true, arg.autolimitdates(),
-                               arg.importstickers(), arg.ignorewal(), arg.setselfid()))
-        if (db.exportHtml("HTML_FROM_DUMMY", {}, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
-                          arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
-                          arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
-                          arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
-                          arg.includesettings()))
-        return 0;
-    return 1;
-  }
-  */
-
   if (arg.verbose()) [[unlikely]]
     Logger::message("Parsed command line arguments.");
     //std::cout << "Parsed command line arguments." << std::endl;
@@ -118,6 +100,32 @@ int main(int argc, char *argv[])
     if (!jdb.ok())
       return 1;
     jdb.listChats();
+  }
+
+  if (!arg.exportdesktophtml().empty() || !arg.exportdesktoptxt().empty())
+  {
+    DummyBackup dummydb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
+                        arg.ignorewal(), arg.verbose(), arg.showprogress());
+    if (!dummydb.ok())
+      return 1;
+
+    if (!dummydb.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
+                                   arg.limittodates(), true /*addincompletedata*/, false /*autolimittodates*/,
+                                   true /*importstickers*/, arg.ignorewal(), arg.setselfid()))
+      return 1;
+
+    if (!arg.exportdesktophtml().empty())
+      if (!dummydb.exportHtml(arg.exportdesktophtml(), {} /*limittothreads*/, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
+                              arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
+                              arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
+                              arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
+                              false /*arg.includesettings()*/))
+        return 1;
+
+    if (!arg.exportdesktoptxt().empty())
+      if (!dummydb.exportTxt(arg.exportdesktoptxt(), {} /*limittothreads*/, arg.limittodates(), arg.setselfid(),
+                             arg.migratedb(), arg.overwrite()))
+        return 1;
   }
 
   // run desktop sqlquery
