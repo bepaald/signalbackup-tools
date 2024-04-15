@@ -267,6 +267,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                                  "Note to self (_id" + results(i, "_id") + ")" :
                                  sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + results(i, "_id") + ")"));
       bepaald::replaceAll(&avatar_path, '\"', R"(\")");
+      HTMLescapeUrl(&avatar_path);
 
       outputfile
         << "      .avatar-" << rec_id << " {\n"

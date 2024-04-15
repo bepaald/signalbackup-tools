@@ -27,6 +27,7 @@
 #include "logger/logger.h"
 #include "desktopdatabase/desktopdatabase.h"
 #include "jsondatabase/jsondatabase.h"
+#include "dummybackup/dummybackup.h"
 
 #if __has_include("autoversion.h")
 #include "autoversion.h"
@@ -72,6 +73,24 @@ int main(int argc, char *argv[])
 
     return 1;
   }
+
+  /*
+    // EXPORT DESKTOP TO HTML
+  {
+    DummyBackup db(arg.verbose(), arg.showprogress());
+    if (db.ok())
+      if (db.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
+                               arg.limittodates(), true, arg.autolimitdates(),
+                               arg.importstickers(), arg.ignorewal(), arg.setselfid()))
+        if (db.exportHtml("HTML_FROM_DUMMY", {}, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
+                          arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
+                          arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
+                          arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
+                          arg.includesettings()))
+        return 0;
+    return 1;
+  }
+  */
 
   if (arg.verbose()) [[unlikely]]
     Logger::message("Parsed command line arguments.");

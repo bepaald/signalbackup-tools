@@ -55,6 +55,7 @@ class DesktopDatabase
   inline std::pair<std::string, std::string> getDesktopDir() const;
 
   friend class SignalBackup;
+  friend class DummyBackup;
 };
 
 inline DesktopDatabase::DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion)

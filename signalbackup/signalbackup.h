@@ -53,7 +53,7 @@ class SignalBackup
  public:
   static bool constexpr DROPATTACHMENTDATA = false;
 
- private:
+ protected:
   MemSqliteDB d_database;
   DeepCopyingUniquePtr<FileDecryptor> d_fd;
   FileEncryptor d_fe;
@@ -195,6 +195,8 @@ class SignalBackup
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
 
+ protected:
+  inline SignalBackup(bool verbose, bool showprogress);
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool showprogress, bool replaceattachments);
@@ -273,7 +275,7 @@ class SignalBackup
   bool custom_hugogithubs();
   /* CUSTOMS */
 
- private:
+ protected:
   [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,
                                         bool overwrite, bool keepattachmentdatainmemory);
   [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory, bool onlydb);
@@ -467,6 +469,13 @@ class SignalBackup
   std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;
   bool writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const;
 };
+
+// ONLY FOR DUMMYBACKUP
+inline SignalBackup::SignalBackup(bool verbose, bool showprogress)
+  :
+  d_showprogress(showprogress),
+  d_verbose(verbose)
+{}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
                                   bool verbose, bool showprogress, bool replaceattachments)

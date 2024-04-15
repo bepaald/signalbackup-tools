@@ -204,18 +204,20 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                                      bool createmissingcontacts, bool autodates, bool importstickers,
                                      bool ignorewal, std::string const &selfphone)
 {
-
-  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
   if (d_selfid == -1)
   {
-    Logger::error_start("Failed to determine id of 'self'.");
-    if (selfphone.empty())
-      Logger::message_start("Please pass `--setselfid \"[phone]\"' to set it manually");
-    Logger::message_end();
-    return false;
+    d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
+    if (d_selfid == -1)
+    {
+      Logger::error_start("Failed to determine id of 'self'.");
+      if (selfphone.empty())
+        Logger::message_start(" Please pass `--setselfid \"[phone]\"' to set it manually");
+      Logger::message_end();
+      return false;
+    }
+    if (d_selfuuid.empty())
+      d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
   }
-  d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
-
 
   DesktopDatabase dtdb(configdir_hint, databasedir_hint, d_verbose, ignorewal, sqlcipherversion);
   if (!dtdb.ok())
