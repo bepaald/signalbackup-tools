@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -31,11 +31,12 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
 
 #else // WINDOWS, NOT TESTED
 
-  auto icasecmp = [](char a, char b) {
+  auto icasecmp = [](char a, char b)
+  {
     return ((a == b) || (tolower(static_cast<unsigned char>(a)) == tolower(static_cast<unsigned char>(b))));
   };
 
-  std::vector<std::string> reserved =
+  std::vector<std::string> const reserved =
     {
       "CON",
       "PRN",
@@ -63,7 +64,8 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
 
   // filter reserved filenames
   for (auto const &r : reserved)
-    if (std::equal(filename.begin(), filename.end(),
+    if (filename.size() == r.size() &&
+        std::equal(filename.begin(), filename.end(),
                    r.begin(), r.end(), icasecmp))
       return "_" + filename;
 
@@ -73,7 +75,6 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
                 c == '*' || c == ':' || c == '|' ||
                 c == '"' || c == '<' || c == '>' ||
                 c <= 0x1f || c == 0x7f) ? '_' : c);
-
 
   // trailing whitespace or periods are (possibly) technically allowed
   // by the filesystem, but not supported by windows shell and UI

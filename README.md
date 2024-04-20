@@ -44,9 +44,11 @@ If you have `cmake` available on your system, running `cmake -B build && cmake -
 
 For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTIPROC.bash44` for a faster build, and let me know if it works).
 
-For Arch users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
+For **Arch** users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
 
-The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/). For those looking for more information on installing and running the Nix package, or those wanting to help others, there is an issue where information can be found and posted [here](https://github.com/bepaald/signalbackup-tools/issues/149).
+A pre-built rpm for **openSUSE** is available [here](https://software.opensuse.org/package/signalbackup-tools?search_term=signalbackup-tools), thanks to @marfrh (https://github.com/bepaald/signalbackup-tools/issues/205).
+
+The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on **NixOS** or any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/). For those looking for more information on installing and running the Nix package, or those wanting to help others, there is an issue where information can be found and posted [here](https://github.com/bepaald/signalbackup-tools/issues/149).
 
 Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is available at his gitlab page: <https://gitlab.com/splatops/cntn-signalbackup-tools>.
 
@@ -731,6 +733,8 @@ Done!
 
   </p>
 </details>
+
+A handy python script that uses this option was developed to replace attachments with shrunk versions. It is available [here](https://github.com/cycneuramus/signal-backup-shrink). Thanks @cycneuramus!
 
 **<span id="various">Various</span>**
 

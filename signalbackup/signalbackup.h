@@ -509,9 +509,6 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
     initFromFile();
   }
 
-  if (d_ok) // set by initfrom()
-    d_ok = setColumnNames();
-
   if (!d_ok)
     return;
 

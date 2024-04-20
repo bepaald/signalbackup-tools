@@ -210,5 +210,5 @@ void SignalBackup::initFromFile()
   if (backupfile.tellg() == totalsize && d_showprogress) [[likely]]
     Logger::message_overwrite("Reading backup file:", " 100.0%... done!", Logger::Control::ENDOVERWRITE);
 
-  d_ok = true;
+  d_ok = setColumnNames();
 }

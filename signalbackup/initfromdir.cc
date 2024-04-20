@@ -42,6 +42,8 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
   d_databaseversion = d_databaseversionframe->version();
   //d_databaseversionframe->printInfo();
 
+  setColumnNames();
+
   Logger::message("Reading SharedPreferenceFrame(s)");
   int idx = 1;
   while (true)
