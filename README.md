@@ -44,13 +44,10 @@ If you have `cmake` available on your system, running `cmake -B build && cmake -
 
 For people not comfortable compiling source code, a script is provided that should compile the binary on Arch and Fedora (and probably many other distributions). Assuming the needed [requirements](#requirements) are installed, a simple `sh BUILDSCRIPT` should build the program (or, when using bash on a multiprocessor system, use `bash BUILDSCRIPT_MULTIPROC.bash44` for a faster build, and let me know if it works).
 
-For **Arch** users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
-
-A pre-built rpm for **openSUSE** is available [here](https://software.opensuse.org/package/signalbackup-tools?search_term=signalbackup-tools), thanks to @marfrh (https://github.com/bepaald/signalbackup-tools/issues/205).
-
-The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on **NixOS** or any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/). For those looking for more information on installing and running the Nix package, or those wanting to help others, there is an issue where information can be found and posted [here](https://github.com/bepaald/signalbackup-tools/issues/149).
-
-Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is available at his gitlab page: <https://gitlab.com/splatops/cntn-signalbackup-tools>.
+- For **Arch** users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
+- A pre-built rpm for **openSUSE** is available [here](https://software.opensuse.org/package/signalbackup-tools?search_term=signalbackup-tools), thanks to @marfrh (https://github.com/bepaald/signalbackup-tools/issues/205).
+- The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on **NixOS** or any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/). For those looking for more information on installing and running the Nix package, or those wanting to help others, there is an issue where information can be found and posted [here](https://github.com/bepaald/signalbackup-tools/issues/149).
+- Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is available at his gitlab page: <https://gitlab.com/splatops/cntn-signalbackup-tools>.
 
 **<span id="macos">macOs</span>**
 
@@ -66,7 +63,8 @@ Note for Windows users: this is a command line application. This means you can n
 
 ### Running
 
-_NOTE: In all examples below, one or more passphrases are provided on the command line. If so desired, these can be omitted in which case you are prompted for the passphrase at runtime._
+> [!TIP]
+> In all examples below, one or more passphrases are provided on the command line. If so desired, these can be omitted in which case you are prompted for the passphrase at runtime.
 
 **<span id="fix">Fixing broken backups</span>**
 
@@ -734,7 +732,8 @@ Done!
   </p>
 </details>
 
-A handy python script that uses this option was developed to replace attachments with shrunk versions. It is available [here](https://github.com/cycneuramus/signal-backup-shrink). Thanks @cycneuramus!
+> [!TIP]
+> A handy python script that uses this option was developed to replace attachments with shrunk versions. It is available [here](https://github.com/cycneuramus/signal-backup-shrink). Thanks @cycneuramus!
 
 **<span id="various">Various</span>**
 
@@ -812,8 +811,6 @@ Ko-fi: [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/b
 BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
 
 ETH: 0xc59892f4E54E3e8Ab285f3C41B396d9E15C8B4aA
-
-ZCash: zs1mcr3nsjpewejld9acuqdvhslesck0glmz696wkw2l0mkg926xzegfn2kqhn8fmcz7ld3z4g0w3j
 
 Donations will help development in that they will put food in my mouth, and I need food to write code :smile:
 
