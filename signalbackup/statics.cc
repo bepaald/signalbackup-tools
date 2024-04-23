@@ -164,7 +164,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"story_sends", "recipient_id"},
       {"pending_pni_signature_message", "recipient_id"},
       {"call", "peer"},
-      {"group_membership", "recipient_id", "", "", SET_UNIQUELY}
+      {"group_membership", "recipient_id", "", "", SET_UNIQUELY},
+      {"name_collision_membership", "recipient_id"}
     },
     NO_COMPACT
   },
@@ -428,13 +429,27 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "_id",
     {},
     0
-  }
+  },
   // {
   //   "kyber_prekey",
   //   "key_id",
   //   {},
   //   0
-  // }
+  // },
+  {
+    "name_collision",
+    "_id",
+    {
+      {"name_collision_membership", "collision_id"}
+    },
+    0
+  },
+  {
+    "name_collision_membership",
+    "_id",
+    {},
+    0
+  }
 };
 
 std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup::s_columnaliases //static
