@@ -502,6 +502,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
     if (source->d_database.containsTable("mention"))
       source->d_database.exec("UPDATE mention SET thread_id = ?", targetthread);
+    if (source->d_database.containsTable("name_collision"))
+      source->d_database.exec("UPDATE name_collision SET thread_id = ?", targetthread);
 
     // see below for comment explaining this function
     if (d_databaseversion >= 24)
@@ -862,7 +864,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.getValueAs<std::string>(i, 0));
+      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.value(i, 0));
       count += source->d_database.changed();
     }
     if (count)
@@ -870,6 +872,19 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
     // clean up the member table
     source->d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
+  }
+
+  // delete exisiting name_collisions (only possible if targetthread is an existing thread)
+  if (source->d_database.containsTable("name_collision"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT thread_id FROM name_collision", &res);
+
+    for (uint i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM name_collision WHERE thread_id = ?", res.value(i, 0));
+
+    // delete corresponding collision_members
+    source->d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
   }
 
   // // export database

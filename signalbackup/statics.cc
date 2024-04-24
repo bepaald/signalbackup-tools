@@ -48,7 +48,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"mms", "thread_id"},    //       \ These are the same
       {"message", "thread_id"},//       /
       {"drafts", "thread_id"},
-      {"mention", "thread_id"}
+      {"mention", "thread_id"},
+      {"name_collision", "thread_id"}
     },
     NO_COMPACT
   },

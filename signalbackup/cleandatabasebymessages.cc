@@ -135,6 +135,15 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
   }
 
+  // delete name_collision for non existing thread
+  if(d_database.containsTable("name_collision"))
+  {
+    d_database.exec("DELETE FROM name_collision WHERE thread_id NOT IN (SELECT _id FROM thread)");
+
+    // delete name_collision_membership if name_collision was deleted
+    d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
+  }
+
   if (d_databaseversion < 24)
   {
     Logger::message("  Deleting unreferenced recipient_preferences entries...");
@@ -261,6 +270,8 @@ void SignalBackup::cleanDatabaseByMessages()
     {
       //deleted_recipients.prettyPrint();
       Logger::message("  Deleted ", deleted_recipients.rows(), " unreferenced recipients");
+
+      // delete story recipients
       if (d_database.containsTable("distribution_list"))
       {
         int count = 0;
@@ -278,6 +289,15 @@ void SignalBackup::cleanDatabaseByMessages()
         // clean up the member table
         d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROM distribution_list)");
       }
+
+      // delete name_collision_memberships with non-existing recipients? // UNTESTED
+      if (d_database.containsTable("name_collision"))
+      {
+        d_database.exec("DELETE FROM name_collision_membership WHERE recipient_id NOT IN (SELECT _id FROM recipient)");
+        // delete corresponding name_collisions
+        d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT collision_id FROM name_collision_membership)");
+      }
+
     }
   }
 
