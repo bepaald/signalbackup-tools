@@ -60,11 +60,11 @@ inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(std::string
                   bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(str.data()), str.size()));
     return {nullptr, 0};
   }
-  if (str.back() != '=')
+  if (str.empty() || str.back() != '=')
     return {output.release(), binarylength};
 
   int realsize = binarylength - 1;
-  if (str[str.size() - 2] == '=')
+  if (str.size() >= 2 && str[str.size() - 2] == '=')
     realsize = binarylength - 2;
 
   unsigned char *unpaddedoutput = new unsigned char[realsize];
