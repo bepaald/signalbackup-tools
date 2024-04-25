@@ -156,7 +156,9 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     return contactname + " reset the secure session.";
   }
   if (Types::isProfileChange(type))
+  {
     return decodeProfileChangeMessage(body, contactname);
+  }
   if (Types::isGroupUpdate(type) && Types::isGroupV2(type)) // see app/src/test/java/org/thoughtcrime/securesms/database/model/GroupsV2UpdateMessageProducerTest.java
   {
 
@@ -890,6 +892,31 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   }
 
   return body;
+}
+
+
+std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned char []>, size_t> const &body, long long int expiration,
+                                              long long int type, std::string const &contactname, IconType *icon) const
+{
+  // get GroupV2Context from MessageExtras, pass it as a base64string to decodestatusmessage
+  MessageExtras me(body);
+  auto field1 = me.getField<1>();
+  if (field1.has_value()) // GV2UpdateDescription
+  {
+    auto field1_1 = field1->getField<1>();
+    if (field1_1.has_value())
+    {
+      return decodeStatusMessage(field1_1->getDataString(), expiration, type, contactname, icon);
+
+    }
+  }
+  else
+  {
+    auto field3 = me.getField<3>(); // ProfileChangeDetails
+    if (field3.has_value())
+      return decodeProfileChangeMessage(field3->getDataString(), contactname);
+  }
+  return std::string();
 }
 
 /*

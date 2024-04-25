@@ -259,6 +259,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : "") +
+                    + (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
@@ -440,7 +441,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         IconType icon = IconType::NONE;
         if (Types::isStatusMessage(type))
-          body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
+        {
+          if (!body.empty())
+            body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
+          else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+                   messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))
+          {
+            body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
+                                       messages.getValueAs<long long int>(messagecount, "expires_in"), type,
+                                       getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
+          }
+        }
 
         // prep body (scan emoji? -> in <span>) and handle mentions...
         // if (prepbody)

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2023  Selwin van Dijk
+  Copyright (C) 2021-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,6 +21,7 @@
 #define GROUPV2STATUSMESSAGEPROTO_H_
 
 #include "../protobufparser/protobufparser.h"
+#include "../groupstatusmessageproto/groupstatusmessageproto.h"
 
 /*
  * For GroupV2 status messages
@@ -490,5 +491,124 @@ message DecryptedGroupV2Context {
 */
 typedef ProtoBufParser<GroupContextV2, DecryptedGroupChange,
                        DecryptedGroup, DecryptedGroup> DecryptedGroupV2Context;
+
+/*
+  message GroupChangeChatUpdate {
+    oneof update {
+      GenericGroupUpdate genericGroupUpdate = 1;
+      GroupCreationUpdate groupCreationUpdate = 2;
+      GroupNameUpdate groupNameUpdate = 3;
+      GroupAvatarUpdate groupAvatarUpdate = 4;
+      GroupDescriptionUpdate groupDescriptionUpdate = 5;
+      GroupMembershipAccessLevelChangeUpdate groupMembershipAccessLevelChangeUpdate = 6;
+      GroupAttributesAccessLevelChangeUpdate groupAttributesAccessLevelChangeUpdate = 7;
+      GroupAnnouncementOnlyChangeUpdate groupAnnouncementOnlyChangeUpdate = 8;
+      GroupAdminStatusUpdate groupAdminStatusUpdate = 9;
+      GroupMemberLeftUpdate groupMemberLeftUpdate = 10;
+      GroupMemberRemovedUpdate groupMemberRemovedUpdate = 11;
+      SelfInvitedToGroupUpdate selfInvitedToGroupUpdate = 12;
+      SelfInvitedOtherUserToGroupUpdate selfInvitedOtherUserToGroupUpdate = 13;
+      GroupUnknownInviteeUpdate groupUnknownInviteeUpdate = 14;
+      GroupInvitationAcceptedUpdate groupInvitationAcceptedUpdate = 15;
+      GroupInvitationDeclinedUpdate groupInvitationDeclinedUpdate = 16;
+      GroupMemberJoinedUpdate groupMemberJoinedUpdate = 17;
+      GroupMemberAddedUpdate groupMemberAddedUpdate = 18;
+      GroupSelfInvitationRevokedUpdate groupSelfInvitationRevokedUpdate = 19;
+      GroupInvitationRevokedUpdate groupInvitationRevokedUpdate = 20;
+      GroupJoinRequestUpdate groupJoinRequestUpdate = 21;
+      GroupJoinRequestApprovalUpdate groupJoinRequestApprovalUpdate = 22;
+      GroupJoinRequestCanceledUpdate groupJoinRequestCanceledUpdate = 23;
+      GroupInviteLinkResetUpdate groupInviteLinkResetUpdate = 24;
+      GroupInviteLinkEnabledUpdate groupInviteLinkEnabledUpdate = 25;
+      GroupInviteLinkAdminApprovalUpdate groupInviteLinkAdminApprovalUpdate = 26;
+      GroupInviteLinkDisabledUpdate groupInviteLinkDisabledUpdate = 27;
+      GroupMemberJoinedByLinkUpdate groupMemberJoinedByLinkUpdate = 28;
+      GroupV2MigrationUpdate groupV2MigrationUpdate = 29;
+      GroupV2MigrationSelfInvitedUpdate groupV2MigrationSelfInvitedUpdate = 30;
+      GroupV2MigrationInvitedMembersUpdate groupV2MigrationInvitedMembersUpdate = 31;
+      GroupV2MigrationDroppedMembersUpdate groupV2MigrationDroppedMembersUpdate = 32;
+      GroupSequenceOfRequestsAndCancelsUpdate groupSequenceOfRequestsAndCancelsUpdate = 33;
+      GroupExpirationTimerUpdate groupExpirationTimerUpdate = 34;
+    }
+    repeated Update updates = 1;
+    }
+ */
+typedef ProtoBufParser<protobuffer::optional::BYTES> GenericGroupUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupCreationUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::STRING> GroupNameUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BOOL> GroupAvatarUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::STRING> GroupDescriptionUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM> GroupMembershipAccessLevelChangeUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM> GroupAttributesAccessLevelChangeUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BOOL> GroupAnnouncementOnlyChangeUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES, protobuffer::optional::BOOL> GroupAdminStatusUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupMemberLeftUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES> GroupMemberRemovedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> SelfInvitedToGroupUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> SelfInvitedOtherUserToGroupUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT32> GroupUnknownInviteeUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES> GroupInvitationAcceptedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES> GroupInvitationDeclinedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupMemberJoinedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES, protobuffer::optional::BOOL, protobuffer::optional::BYTES> GroupMemberAddedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupSelfInvitationRevokedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES, protobuffer::optional::BYTES> Invitee;
+typedef ProtoBufParser<protobuffer::optional::BYTES, std::vector<Invitee>> GroupInvitationRevokedUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupJoinRequestUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES, protobuffer::optional::BOOL> GroupJoinRequestApprovalUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupJoinRequestCanceledUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupInviteLinkResetUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BOOL> GroupInviteLinkEnabledUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BOOL> GroupInviteLinkAdminApprovalUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupInviteLinkDisabledUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupMemberJoinedByLinkUpdate;
+typedef ProtoBufParser<> GroupV2MigrationUpdate;
+typedef ProtoBufParser<> GroupV2MigrationSelfInvitedUpdate;
+typedef ProtoBufParser<protobuffer::optional::UINT32> GroupV2MigrationInvitedMembersUpdate;
+typedef ProtoBufParser<protobuffer::optional::UINT32> GroupV2MigrationDroppedMembersUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT32> GroupSequenceOfRequestsAndCancelsUpdate;
+typedef ProtoBufParser<protobuffer::optional::UINT32, protobuffer::optional::BYTES> GroupExpirationTimerUpdate;
+
+typedef ProtoBufParser<GenericGroupUpdate, GroupCreationUpdate, GroupNameUpdate, GroupAvatarUpdate, GroupDescriptionUpdate,
+  GroupMembershipAccessLevelChangeUpdate, GroupAttributesAccessLevelChangeUpdate, GroupAnnouncementOnlyChangeUpdate, GroupAdminStatusUpdate, GroupMemberLeftUpdate,
+  GroupMemberRemovedUpdate, SelfInvitedToGroupUpdate, SelfInvitedOtherUserToGroupUpdate, GroupUnknownInviteeUpdate, GroupInvitationAcceptedUpdate,
+  GroupInvitationDeclinedUpdate, GroupMemberJoinedUpdate, GroupMemberAddedUpdate, GroupSelfInvitationRevokedUpdate, GroupInvitationRevokedUpdate, GroupJoinRequestUpdate, GroupJoinRequestApprovalUpdate, GroupJoinRequestCanceledUpdate, GroupInviteLinkResetUpdate, GroupInviteLinkEnabledUpdate,
+  GroupInviteLinkAdminApprovalUpdate, GroupInviteLinkDisabledUpdate, GroupMemberJoinedByLinkUpdate, GroupV2MigrationUpdate, GroupV2MigrationSelfInvitedUpdate,
+  GroupV2MigrationInvitedMembersUpdate, GroupV2MigrationDroppedMembersUpdate, GroupSequenceOfRequestsAndCancelsUpdate, GroupExpirationTimerUpdate> Update;
+typedef ProtoBufParser<std::vector<Update>> GroupChangeChatUpdate;
+
+/*
+message GV2UpdateDescription {
+    optional DecryptedGroupV2Context gv2ChangeDescription = 1;
+    backup.GroupChangeChatUpdate     groupChangeUpdate    = 2;
+}
+*/
+typedef ProtoBufParser<DecryptedGroupV2Context, GroupChangeChatUpdate> GV2UpdateDescription;
+
+
+/*
+message ProfileChangeDetails {
+    message StringChange {
+        string previous = 1;
+        string newValue = 2;
+    }
+
+    StringChange profileNameChange = 1;
+    StringChange learnedProfileName = 2;
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING> StringChange;
+typedef ProtoBufParser<StringChange, StringChange> ProfileChangeDetails;
+
+/*
+message MessageExtras {
+    oneof extra {
+        GV2UpdateDescription gv2UpdateDescription = 1;
+        signalservice.GroupContext gv1Context     = 2;
+        ProfileChangeDetails profileChangeDetails = 3;
+    }
+}
+*/
+typedef ProtoBufParser<GV2UpdateDescription, GroupContext, ProfileChangeDetails> MessageExtras;
 
 #endif

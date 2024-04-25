@@ -29,7 +29,8 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                        d_mms_type + ", "
                        "body, quote_missing, quote_author, quote_body, " + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "
-                       "json_extract(link_previews, '$[0].description') AS link_preview_description, "
+                       "json_extract(link_previews, '$[0].description') AS link_preview_description, " +
+                       (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                        "shared_contacts, quote_id, expires_in, message_ranges, quote_mentions"
                        " FROM message WHERE _id = ?", msg_id, &revision) ||
       revision.rows() != 1)
@@ -84,7 +85,14 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
 
   IconType icon = IconType::NONE;
   if (Types::isStatusMessage(type))
-    body = decodeStatusMessage(body, revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, msg_recipient_id).display_name, &icon);
+  {
+    if (!body.empty())
+      body = decodeStatusMessage(body, revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, msg_recipient_id).display_name, &icon);
+    else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+             revision.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"))
+      body = decodeStatusMessage(revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"),
+                                 revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, msg_recipient_id).display_name, &icon);
+  }
 
   // prep body (scan emoji? -> in <span>) and handle mentions...
   // if (prepbody)

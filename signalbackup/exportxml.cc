@@ -480,12 +480,24 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     }
     applyRanges(&text, &ranges, nullptr);
 
-    text = decodeStatusMessage(text, expiration, realtype, contact_name);
+    if (Types::isStatusMessage(realtype))
+    {
+      if (!text.empty())
+        text = decodeStatusMessage(text, expiration, realtype, contact_name);
+      else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+               results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
+        text = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
+                                   expiration, realtype, contact_name);
+    }
     escapeXmlString(&text);
   }
   else if (results.isNull(i, "body"))
   {
-    text = decodeStatusMessage(text, expiration, realtype, contact_name);
+    if (Types::isStatusMessage(realtype) &&
+        d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+        results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
+      text = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
+                                 expiration, realtype, contact_name);
     escapeXmlString(&text);
   }
 
@@ -678,7 +690,9 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     if (d_databaseversion >= 109)
       d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? ",to_recipient_id" : "") +
                       "," + d_mms_type + ","
-                      "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,ct_l,m_type,m_size,exp,tr_id,st FROM " + d_mms_table +
+                      "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in," +
+                      (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
+                      "read,ct_l,m_type,m_size,exp,tr_id,st FROM " + d_mms_table +
                       " WHERE "
                       + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND " +
                       (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND " : "") +

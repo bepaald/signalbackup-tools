@@ -22,16 +22,15 @@
 std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) const
 {
   SqliteDB::QueryResults res;
-  // d_database.exec("SELECT body FROM sms where _id = 120", &res);
-  // DecryptedGroupV2Context sts(res.valueAsString(0, "body"));
-  // sts.print();
 
   std::set<std::string> uuids;
 
-  std::vector<std::string> queries{"SELECT body FROM " + d_mms_table + " WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s +
+  std::vector<std::string> queries{"SELECT "s +
+                                   (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "COALESCE(message_extras, body) AS groupctx" : "body AS groupctx") +
+                                   " FROM " + d_mms_table + " WHERE (" + d_mms_type + " & ?) != 0 AND (" + d_mms_type + " & ?) != 0"s +
                                    (thread != -1 ? " AND thread_id = " + bepaald::toString(thread) : "")};
   if (d_database.containsTable("sms"))
-    queries.emplace_back("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s +
+    queries.emplace_back("SELECT body AS groupctx FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0"s +
                          (thread != -1 ? " AND thread_id = " + bepaald::toString(thread) : ""));
   for (auto const &q : queries)
   {
@@ -40,70 +39,35 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 
     for (uint i = 0; i < res.rows(); ++i)
     {
-      DecryptedGroupV2Context sts2(res.valueAsString(i, "body"));
-      //std::cout << "STATUS MSG " << i << std::endl;
-
-      // NEW DATA
-      auto field3 = sts2.getField<3>();
-      if (field3.has_value())
+      // std::cout << "GROUPCTX: " << "\"" << res.valueAsString(i, "groupctx") << "\"" << std::endl;
+      if (res.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupctx"))
       {
-        auto field3_7 = field3->getField<7>();
-        for (uint j = 0; j < field3_7.size(); ++j)
+        //std::cout << "FROM BLOB 1" << std::endl;
+        MessageExtras me(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupctx"));
+        //me.print();
+        //std::cout << "---" << std::endl;
+        auto field1 = me.getField<1>();
+        if (field1.has_value())
         {
-          auto field3_7_1 = field3_7[j].getField<1>();
-          if (field3_7_1.has_value())
-            uuids.insert(bepaald::bytesToHexString(*field3_7_1, true));
-          // else
-          // {
-          //   std::cout << "No members found in field 3" << std::endl;
-          //   sts2.print();
-          // }
+          auto field1_1 = field1->getField<1>();
+          if (field1_1.has_value())
+            getGroupUpdateRecipientsFromGV2Context(*field1_1, &uuids);
         }
-        // if (field3_7.size() == 0)
-        // {
-        //   std::cout << "No members found in field 3" << std::endl;
-        //   sts2.print();
-        // }
+        // std::cout << "FROM BLOB 2" << std::endl;
+        // sts2.print();
       }
-      // else
-      // {
-      //   std::cout << "No members found in field 3" << std::endl;
-      //   sts2.print();
-      // }
-
-      // OLD DATA?
-      auto field4 = sts2.getField<4>();
-      if (field4.has_value())
+      else // valueHasType<std::string>
       {
-        auto field4_7 = field4->getField<7>();
-        for (uint j = 0; j < field4_7.size(); ++j)
-        {
-          auto field4_7_1 = field4_7[j].getField<1>();
-          if (field4_7_1.has_value())
-            uuids.insert(bepaald::bytesToHexString(*field4_7_1, true));
-          // else
-          // {
-          //   std::cout << "No members found in field 4" << std::endl;
-          //   sts2.print();
-          // }
-        }
-        // if (field4_7.size() == 0)
-        // {
-        //   std::cout << "No members found in field 4" << std::endl;
-        //   sts2.print();
-        // }
+        getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Context{res.valueAsString(i, "groupctx")}, &uuids);
+        //std::cout << "FROM BASE64STRING" << std::endl;
+        //sts2.print();
       }
-      // else
-      // {
-      //   std::cout << "No members found in field 4" << std::endl;
-      //   sts2.print();
-      // }
     }
   }
 
-  //std::cout << "LIST OF FOUND UUIDS:" << std::endl;
-  //for (auto &uuid : uuids)
-  //  std::cout << uuid << " (" << uuid.length() << ")" << std::endl;
+  // std::cout << "LIST OF FOUND UUIDS:" << std::endl;
+  // for (auto &uuid : uuids)
+  //   std::cout << uuid << " (" << uuid.length() << ")" << std::endl;
 
   std::vector<long long int> ids;
 
@@ -136,4 +100,63 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 
   }
   return ids;
+}
+
+void SignalBackup::getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Context const &sts2, std::set<std::string> *uuids) const
+{
+  // NEW DATA
+  auto field3 = sts2.getField<3>();
+  if (field3.has_value())
+  {
+    auto field3_7 = field3->getField<7>();
+    for (uint j = 0; j < field3_7.size(); ++j)
+    {
+      auto field3_7_1 = field3_7[j].getField<1>();
+      if (field3_7_1.has_value())
+        uuids->insert(bepaald::bytesToHexString(*field3_7_1, true));
+      // else
+      // {
+      //   std::cout << "No members found in field 3" << std::endl;
+      //   sts2.print();
+      // }
+    }
+    // if (field3_7.size() == 0)
+    // {
+    //   std::cout << "No members found in field 3" << std::endl;
+    //   sts2.print();
+    // }
+  }
+  // else
+  // {
+  //   std::cout << "No members found in field 3" << std::endl;
+  //   sts2.print();
+  // }
+
+  // OLD DATA?
+  auto field4 = sts2.getField<4>();
+  if (field4.has_value())
+  {
+    auto field4_7 = field4->getField<7>();
+    for (uint j = 0; j < field4_7.size(); ++j)
+    {
+      auto field4_7_1 = field4_7[j].getField<1>();
+      if (field4_7_1.has_value())
+        uuids->insert(bepaald::bytesToHexString(*field4_7_1, true));
+      // else
+      // {
+      //   std::cout << "No members found in field 4" << std::endl;
+      //   sts2.print();
+      // }
+    }
+    // if (field4_7.size() == 0)
+    // {
+    //   std::cout << "No members found in field 4" << std::endl;
+    //   sts2.print();
+    // }
+  }
+  // else
+  // {
+  //   std::cout << "No members found in field 4" << std::endl;
+  //   sts2.print();
+  // }
 }

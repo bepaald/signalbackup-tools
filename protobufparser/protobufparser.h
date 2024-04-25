@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -186,9 +186,11 @@ class ProtoBufParser
   explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
   explicit ProtoBufParser(unsigned char *data, int64_t size);
   ProtoBufParser(ProtoBufParser const &other);
+  inline ProtoBufParser &operator=(ProtoBufParser const &other);
   ProtoBufParser(ProtoBufParser &&other);
   ~ProtoBufParser();
   inline bool operator==(ProtoBufParser const &other) const;
+  inline bool operator!=(ProtoBufParser const &other) const;
 
   inline int64_t size() const;
   inline unsigned char *data() const;
@@ -284,6 +286,18 @@ inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser const &other)
 }
 
 template <typename... Spec>
+inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParser const &other)
+{
+  if (this != &other)
+  {
+    d_data = new unsigned char[other.d_size];
+    std::memcpy(d_data, other.d_data, other.d_size);
+    d_size = other.d_size;
+  }
+  return *this;
+}
+
+template <typename... Spec>
 inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser &&other)
   :
   d_data(other.d_data),
@@ -341,6 +355,13 @@ inline bool ProtoBufParser<Spec...>::operator==(ProtoBufParser const &other) con
 {
   return d_size == other.d_size &&
     std::memcmp(d_data, other.d_data, d_size) == 0;
+}
+
+template <typename... Spec>
+inline bool ProtoBufParser<Spec...>::operator!=(ProtoBufParser const &other) const
+{
+  return d_size != other.d_size ||
+    std::memcmp(d_data, other.d_data, d_size) != 0;
 }
 
 template <typename... Spec>

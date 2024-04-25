@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023  Selwin van Dijk
+  Copyright (C) 2023-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -32,15 +32,15 @@ std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, st
     }
   */
 
+  ProfileChangeDetails profchangefull(body);
 
-  ProtoBufParser<ProtoBufParser<protobuffer::optional::STRING, // previous
-                                protobuffer::optional::STRING>> profchangefull(body);  // new
+  //std::cout << body << std::endl;
+  //profchangefull.print();
 
   if (!profchangefull.getField<1>().has_value())
     return name + " has changed their profile name.";
 
-  ProtoBufParser<protobuffer::optional::STRING,
-                 protobuffer::optional::STRING> profilenamechange = profchangefull.getField<1>().value();
+  StringChange profilenamechange = profchangefull.getField<1>().value();
 
   if ((!profilenamechange.getField<1>().has_value() || profilenamechange.getField<1>().value() == "") ||
       (!profilenamechange.getField<2>().has_value() || profilenamechange.getField<2>().value() == ""))

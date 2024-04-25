@@ -35,6 +35,7 @@
 #include "../sqlstatementframe/sqlstatementframe.h"
 #include "../logger/logger.h"
 #include "../deepcopyinguniqueptr/deepcopyinguniqueptr.h"
+#include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
 
 #include <map>
 #include <set>
@@ -328,6 +329,8 @@ class SignalBackup
   void duplicateQuotes(std::string *s) const;
   std::string decodeStatusMessage(std::string const &body, long long int expiration, long long int type,
                                   std::string const &contactname, IconType *icon = nullptr) const;
+  std::string decodeStatusMessage(std::pair<std::shared_ptr<unsigned char []>, size_t> const &body, long long int expiration,
+                                  long long int type, std::string const &contactname, IconType *icon = nullptr) const;
   void escapeXmlString(std::string *s) const;
   void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const;
   void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const;
@@ -348,6 +351,7 @@ class SignalBackup
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
+  void getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Context const &sts2, std::set<std::string> *uuids) const;
   bool getGroupMembersModern(std::vector<long long int> *members, std::string const &group_id) const;
   bool getGroupMembersOld(std::vector<long long int> *members, std::string const &group_id,
                           std::string const &column = "members") const;

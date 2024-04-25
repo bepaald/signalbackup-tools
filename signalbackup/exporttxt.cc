@@ -209,7 +209,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                          //"quote_id, quote_author, quote_body, quote_mentions, "
                          // + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
                          "IFNULL(remote_deleted, 0) AS remote_deleted, "
-                         "IFNULL(view_once, 0) AS view_once, "
+                         "IFNULL(view_once, 0) AS view_once, " +
+                         (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                          "expires_in"
                          //, message_ranges, "
                          //+ (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
@@ -306,7 +307,14 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {
-        std::string statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+        std::string statusmsg;
+        if (!body.empty())
+          statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+        else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+                 messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
+          statusmsg = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
+                                          messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+
         txtoutput << "[" << readable_date << "] " << "***" << " " << statusmsg <<  '\n';
       }
       else
