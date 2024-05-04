@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -27,7 +27,7 @@
   - Pagesize: 1024 -> 4096
 */
 
-SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version)
+SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version, bool verbose)
   :
   d_ok(false),
   d_configpath(configpath),
@@ -46,7 +46,8 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   d_digestsize(EVP_MD_size(d_digest)),
   d_pagesize(version >= 4 ? 4096 : 1024),
   d_decrypteddata(nullptr),
-  d_decrypteddatasize(0)
+  d_decrypteddatasize(0),
+  d_verbose(verbose)
 {
   if (!getKey())
     return;
@@ -64,6 +65,9 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   d_decrypteddatasize = dbfile.tellg();
   dbfile.seekg(0, std::ios_base::beg);
 
+  if (d_verbose) [[unlikely]]
+    Logger::message("Opening Desktop database `", d_apppath, "/sql/db.sqlite' (", d_decrypteddatasize, " bytes)");
+
   // read salt
   d_saltsize = 16;
   d_salt = new unsigned char[d_saltsize];
@@ -77,8 +81,12 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   if (!getHmacKey())
     return;
 
+  if (d_verbose) [[unlikely]]
+    Logger::message("Starting decrypt...");
   if (!decryptData(&dbfile))
     return;
+  if (d_verbose) [[unlikely]]
+    Logger::message("Done!");
 
   // std::cout << "CIPHER KEY: " << bepaald::bytesToHexString(d_key, d_keysize) << std::endl;
   // std::cout << "  HMAC KEY: " << bepaald::bytesToHexString(d_hmackey, d_hmackeysize) << std::endl;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2023  Selwin van Dijk
+  Copyright (C) 2019-2024  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -60,8 +60,10 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
 
     if (!dbfile->read(reinterpret_cast<char *>(page.get()), real_page_size))
     {
-      if (dbfile->gcount() == 0 && dbfile->eof())
+      if (dbfile->gcount() == 0 && dbfile->eof()) // all bytes were read
         break;
+
+      // we failed to read an entire page, but we did read _some_ data from the file, this should not be possible
       Logger::error("Unexpectedly failed to read next block", (dbfile->eof() ? " (EOF)" : ""));
       return false;
     }
@@ -107,12 +109,44 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
       return false;
     }
 #endif
-    if (std::memcmp(page.get() + (real_page_size - (d_digestsize + page_padding)), calculatedmac.get(), d_digestsize) != 0)
+
+    if (std::memcmp(page.get() + (real_page_size - (d_digestsize + page_padding)), calculatedmac.get(), d_digestsize) != 0) [[unlikely]]
     {
-      Logger::error("BAD MAC! (pagenumber: ", pagenumber, ")");
-      Logger::error_indent("MAC in file: ", bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize));
-      Logger::error_indent("Calculated : ", bepaald::bytesToHexString(calculatedmac.get(), d_digestsize));
-      return false;
+      // note: a bad mac can occur if the page is empty (all 0x00). An empty page is not an error, and should simply be skipped.
+      bool containsdata = false;
+      for (uint i = 0; i < page_data_to_hash_size; ++i)
+      {
+        if (page_data_to_hash[i] != 0x00)
+        {
+          containsdata = true;
+          break;
+        }
+      }
+      if (!containsdata) // UNTESTED  // skip decryption, but set entire page of zeros??
+      {
+        if (d_verbose) [[unlikely]]
+          Logger::message("Read empty page from SqlCipherDatabase. Inserting empty page in output...");
+
+        int decodedframelength = d_pagesize;
+        if (pagenumber == 1)
+          decodedframelength -= d_saltsize;
+
+        std::memset(d_decrypteddata + pos, 0, decodedframelength); // append zeros
+        pos += decodedframelength;
+
+        //std::cout << "Writing " << decodedframelength << " bytes to file" << std::endl;
+        //outputdb.write(reinterpret_cast<char *>(decodedframe2.get()), decodedframelength);
+
+        ++pagenumber;
+        continue;
+      }
+      else // mac did not match, but there was data in the page -> ERROR
+      {
+        Logger::error("BAD MAC! (pagenumber: ", pagenumber, " (", static_cast<unsigned int>(dbfile->tellg()) - (d_digestsize + page_padding), "/", d_decrypteddatasize, "))");
+        Logger::error_indent("MAC in file: ", bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize));
+        Logger::error_indent("Calculated : ", bepaald::bytesToHexString(calculatedmac.get(), d_digestsize));
+        return false;
+      }
     }
 
     //std::cout << ("MAC OK!" << std::endl;

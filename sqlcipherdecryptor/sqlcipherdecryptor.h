@@ -46,6 +46,7 @@ class SqlCipherDecryptor
   unsigned int d_pagesize;
   unsigned char *d_decrypteddata;
   uint64_t d_decrypteddatasize;
+  bool d_verbose;
 
   static unsigned char constexpr s_saltmask = 0x3a;
   static int constexpr s_sqlliteheader_size = 16;
@@ -58,7 +59,7 @@ class SqlCipherDecryptor
   };
 
  public:
-  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version);
+  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version, bool verbose);
   SqlCipherDecryptor(SqlCipherDecryptor const &other) = delete;
   SqlCipherDecryptor &operator=(SqlCipherDecryptor const &other) = delete;
   ~SqlCipherDecryptor();

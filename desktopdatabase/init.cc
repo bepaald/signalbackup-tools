@@ -37,7 +37,7 @@ bool DesktopDatabase::init()
   }
 
   // decrypt the database
-  d_cipherdb.reset(new SqlCipherDecryptor(d_configdir, d_databasedir, d_cipherversion));
+  d_cipherdb.reset(new SqlCipherDecryptor(d_configdir, d_databasedir, d_cipherversion, d_verbose));
   if (!d_cipherdb->ok())
     return false;
 
