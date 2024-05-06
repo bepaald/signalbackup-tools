@@ -110,6 +110,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     }
 #endif
 
+    // compare calculated mac to the mac from file
     if (std::memcmp(page.get() + (real_page_size - (d_digestsize + page_padding)), calculatedmac.get(), d_digestsize) != 0) [[unlikely]]
     {
       // note: a bad mac can occur if the page is empty (all 0x00). An empty page is not an error, and should simply be skipped.
@@ -131,18 +132,15 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
         if (pagenumber == 1)
           decodedframelength -= d_saltsize;
 
-        std::memset(d_decrypteddata + pos, 0, decodedframelength); // append zeros
+        std::memset(d_decrypteddata + pos, 0, decodedframelength); // write all-zero page
         pos += decodedframelength;
-
-        //std::cout << "Writing " << decodedframelength << " bytes to file" << std::endl;
-        //outputdb.write(reinterpret_cast<char *>(decodedframe2.get()), decodedframelength);
 
         ++pagenumber;
         continue;
       }
-      else // mac did not match, but there was data in the page -> ERROR
+      else // mac did not match, but page contained data -> ERROR
       {
-        Logger::error("BAD MAC! (pagenumber: ", pagenumber, " (", static_cast<unsigned int>(dbfile->tellg()) - (d_digestsize + page_padding), "/", d_decrypteddatasize, "))");
+        Logger::error("BAD MAC! (pagenumber: ", pagenumber, " (at ", static_cast<unsigned int>(dbfile->tellg()) - (d_digestsize + page_padding), "/", d_decrypteddatasize, "))");
         Logger::error_indent("MAC in file: ", bepaald::bytesToHexString(page.get() + (real_page_size - (d_digestsize + page_padding)), d_digestsize));
         Logger::error_indent("Calculated : ", bepaald::bytesToHexString(calculatedmac.get(), d_digestsize));
         return false;
