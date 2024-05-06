@@ -12,7 +12,7 @@ class SignalbackupTools < Formula
 
   def install
     system "cmake", "-B", "build", *std_cmake_args
-    system "cmake", "--build", "build", "-j"
+    system "cmake", "--build", "build"
     bin.install "build/signalbackup-tools"
   end
 
