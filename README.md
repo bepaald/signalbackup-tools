@@ -394,7 +394,7 @@ Other options that can be used together with `--exporthtml`:
 - `--includeblockedlist` Generates an overview of blocked contacts in the backup.
 - `--addexportdetails` Adds some meta information about the backup (like size, filename, and databaseversion) and this tool to the generated pages when printing.
 - `--includesettings` Generates a page showing settings found in the backup file.
-- `--inlcudefullcontactlist` Generates a page showing _all_ contacts present in the database, including contacts with whom no thread exists, who are blocked or hidden, or who appear in your system contact list and may not have Signal installed.
+- `--includefullcontactlist` Generates a page showing _all_ contacts present in the database, including contacts with whom no thread exists, who are blocked or hidden, or who appear in your system contact list and may not have Signal installed.
 
 A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
 
