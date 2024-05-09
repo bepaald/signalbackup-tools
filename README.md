@@ -30,9 +30,9 @@ Signal is an actively developed application and consequently, the database forma
 ### Requirements
 
 To compile this project, current stable released versions of the following are needed:
-- a c++ compiler supporting at least the c++17 standard (tested with [GCC](https://gcc.gnu.org) 13.1.1 and [Clang](https://clang.llvm.org) 15.0.7, also tested and working with a few older compiler versions)
-- [OpenSSL](https://www.openssl.org/) (tested with 3.1.1, but should also work with 1.1 versions).
-- [SQLite3](https://www.sqlite.org/) (tested with 3.42.0)
+- A c++ compiler supporting at least the c++17 standard (tested with [GCC](https://gcc.gnu.org) 14.1.1 and [Clang](https://clang.llvm.org) 17.0.6, also tested and working with a few older compiler versions)
+- [OpenSSL](https://www.openssl.org/) (any reasonably recent version from either the 3.X or 1.1x series)
+- [SQLite3](https://www.sqlite.org/) (any reasonably recent version)
 
 ### Obtaining
 
@@ -368,7 +368,7 @@ signalbackups-tools [input] [passphrase] --dumpavatars [outputdirectory]
 
 Where `outputdirectory` is an empty directory, or does not exist (in which case it will be created). 
 
-To limit the export to certain contacts, add the option `--limitcontacts [LIST_OF_CONTACTS]`. The list should look like this: `"Alice,Bob,John Doe(,...)"`, where each name is exaclty as it appears in Signal's conversation overview or from this program's `--listrecipients` output.
+To limit the export to certain contacts, add the option `--limitcontacts [LIST_OF_CONTACTS]`. The list should look like this: `"Alice,Bob,John Doe(,...)"`, where each name is exactly as it appears in Signal's conversation overview or from this program's `--listrecipients` output.
 
 **<span id="export">Export HTML, TXT, CSV & XML</span>**
 
@@ -376,7 +376,7 @@ To limit the export to certain contacts, add the option `--limitcontacts [LIST_O
 
 _NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). It is possible that some (very) old backups are not supported. If there is demand, support for older databases may be added in the future._
 
-To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files wil be rewritten. Example:
+To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files will be rewritten. Example:
 
 ```
 ./signalbackup-tools [input] [passphrase] --exporthtml [directory]
@@ -384,15 +384,15 @@ To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the ou
 
 Because browsers may have difficulty loading an entire conversation if it consists of a large number of messages, the option `--split [N]` can be added to split the output HTML in multiple pages. The optional number `N` is the maximum number of messages on each generated page (default: 1000).
 
-By default, the function will create a HTML page resembling Signal's dark mode. If you prefer a light theme, add the `--light` option. If you want to be able to switch between the two modes without generating a new HTML page, you could add the `--themeswitching` option to the command. This will add a button to switch themes. Be aware this causes the page to use javascript and cookies.
+By default, the function will create a HTML page resembling Signal's dark mode. If you prefer a light theme, add the `--light` option. If you want to be able to switch between the two modes without generating a new HTML page, you could add the `--themeswitching` option to the command. This will add a button to switch themes. Be aware this causes the page to use JavaScript and cookies.
 
 Other options that can be used together with `--exporthtml`:
 
-- `--searchpage` Generates a page from which conversations can be searched. This page requires javascript and generates an extra file named `searchidx.js` in the directory to facilitate searching.
+- `--searchpage` Generates a page from which conversations can be searched. This page requires JavaScript and generates an extra file named `searchidx.js` in the directory to facilitate searching.
 - `--includecalllog` Generates a page showing the call-log.
 - `--stickerpacks` Generates an overview of installed and known stickerpacks.
 - `--includeblockedlist` Generates an overview of blocked contacts in the backup.
-- `--addexportdetails` Adds some meta information about the backup (like size, filename, and databaseversion) and this tool to the generated pages when printing.
+- `--addexportdetails` Adds some meta information about the backup (like size, filename, and database version) and this tool to the generated pages when printing.
 - `--includesettings` Generates a page showing settings found in the backup file.
 - `--includefullcontactlist` Generates a page showing _all_ contacts present in the database, including contacts with whom no thread exists, who are blocked or hidden, or who appear in your system contact list and may not have Signal installed.
 
@@ -469,7 +469,7 @@ If you use this option and read this line, I would really appreciate it if you l
 
 _NOTE: This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
-_NOTE 2: While this program will compile and work with almost any version of sqlite3, this specific feature requires that the sqlite3 version used is at least as new as the one used by Signal Desktop. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
+_NOTE 2: While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is at least as new as the one used by Signal Desktop. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
 
 To import conversations from a Signal-Desktop installation, run:
 ```
@@ -739,7 +739,7 @@ Done!
 
 This program supports a small number of other options, most of which are of little to no use for everyday users. A select few that may be useful are mentioned here. A more complete list can be found by running with `--help`.
 
-- `--no-showprogress` Disable (most) progress indicators. Especially usefull when trying to parse the programs output in a script.
+- `--no-showprogress` Disable (most) progress indicators. Especially useful when trying to parse the programs output in a script.
 - `-v/--verbose` Run in verbose mode. This will print a _lot_ of text to output, may be useful in case of errors.
 - `--listrecipients` Lists all recipients found in the database.
 - `--showdbinfo` Prints a list of all tables and their columns in the backups Sqlite database.
