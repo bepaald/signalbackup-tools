@@ -199,7 +199,7 @@ R"*(
    --onlytype <FILETYPE>                 Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. Delete attachments only if matching mime
                                          type FILETYPE. The FILETYPE does not need to be complete
-                                         (i.e. `video/m' will match both `video/mp4' and `video/mpeg'
+                                         (i.e. `video/m' will match both `video/mp4' and `video/mpeg').
    --appendbody <STRING>                 Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. For each message whose attachment is
                                          deleted/replaced, append STRING to the message body.
