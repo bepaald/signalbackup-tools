@@ -260,12 +260,10 @@ inline void CryptBase::uintToFourBytes(unsigned char *bytes, uint32_t val) const
 
 inline uint32_t CryptBase::fourBytesToUint(unsigned char const *b) const
 {
-  uint32_t res = 0;
-  res |= static_cast<uint32_t>(b[3] & 0xFF);
-  res |= static_cast<uint32_t>(b[2] & 0xFF) << 8;
-  res |= static_cast<uint32_t>(b[1] & 0xFF) << 16;
-  res |= static_cast<uint32_t>(b[0] & 0xFF) << 24;
-  return res;
+  return static_cast<uint32_t>(b[3] & 0xFF) |
+    static_cast<uint32_t>(b[2] & 0xFF) << 8 |
+    static_cast<uint32_t>(b[1] & 0xFF) << 16 |
+    static_cast<uint32_t>(b[0] & 0xFF) << 24;
 }
 
 #endif

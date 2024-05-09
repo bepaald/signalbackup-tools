@@ -32,6 +32,10 @@
 #include <cstring>
 #include <algorithm>
 #include <ctime>
+#if __cpp_lib_byteswap >= 202110L
+#include <bit>
+#endif
+
 
 // #if defined(_WIN32) || defined(__MINGW64__)
 // #include <windows.h>

@@ -25,7 +25,7 @@ void Arg::usage() const
 Usage: )*" + d_progname + R"*( <INPUT> [<PASSPHRASE>] [OPTIONS]
 
 <INPUT> must be either a regular file, a backup file as exported by the Signal Android app, or a
-directory containing an unpacked backup as createed by this program. In case the input <INPUT> is
+directory containing an unpacked backup as created by this program. In case the input <INPUT> is
 a regular file, a <PASSPHRASE> is required. If it is omitted from the command line, a prompt is
 presented during runtime.
 Be sure to read the README at https://github.com/bepaald/signalbackup-tools/ for more detailed
@@ -53,6 +53,11 @@ changes, you must provide one of the output options.
                                required input for various other options.
 --listrecipients               List all recipients in the database with their `_id'. These id's are
                                required input for various other options.
+--setselfid <PHONENUMBER>      Various options need to know which recipient in the backup is 'self': the
+                               originator of the backup. These functions generally scan the backup to
+                               automatically determine the correct recipient. If this fails, this option
+                               can be used to set the <PHONENUMBER> of the backups owner, in the format
+                               it appears in the database, usually `+12345678901'.
 
  = OUTPUT OPTIONS =
 -o, --output <OUTPUT>                    Either a file or a directory. When output is a file, this will
@@ -64,10 +69,10 @@ changes, you must provide one of the output options.
 -op, --opassphrase <PASSPHRASE>          When output is a file, this will be the backups passphrase. May
                                          be omitted (in which case the <INPUT> passphrase is used.
    --onlydb                              Optional modifier for `--output', when <OUTPUT> is a directory.
-                                         This causes only the SQlite database to be written to disk.
+                                         This causes only the SQLite database to be written to disk.
 --dumpmedia <DIRECTORY>                  Save all media attachments to DIRECTORY. An attempt is made to
                                          give each attachment a correct name and timestamp as well as to
-                                         place the attachments in subfolders for each conversation.
+                                         place the attachments in sub-folders for each conversation.
    --limittothreads <THREADS_LIST>       Optional modifier for `--dumpmedia'. Only save the attachments
                                          from the listed threads. List format same as `--croptothreads'
    --limittothreadsbyname <THREADS_LIST> Optional modifier for `--dumpmedia'. Only save the attachments
@@ -76,7 +81,7 @@ changes, you must provide one of the output options.
    --limittodates <LIST_OF_DATES>        Optional modifier for `--dumpmedia'. Only export messages within
                                          the ranges defined by LIST_OF_DATES. List format is the same as
                                          `--croptodates'.
-   --excludestickers                     Optional modifier for `--dumpmedia'.  Exlcude stickers from the
+   --excludestickers                     Optional modifier for `--dumpmedia'. Exclude stickers from the
                                          media dump.
 --dumpavatars <DIRECTORY>                Save all avatars to DIRECTORY.
    --limitcontacts <CONTACTS>            Optional modifier for `--dumpavatars'. Only the avatars of
@@ -84,7 +89,7 @@ changes, you must provide one of the output options.
                                          2(,...)", where each name is exactly as it appears in Signal's
                                          conversation overview or from this program's `--listrecipients'
                                          output.
---exportxml <FILE>                       Export the messages from the internal sms table to xml file FILE.)*"
+--exportxml <FILE>                       Export the messages from the internal sms table to XML file FILE.)*"
 //   --includemms
 //   --includeattachmentdata
 //   --setselfid
@@ -115,9 +120,9 @@ R"*(
                                          option to output in a light theme instead.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
                                          to switch the theme between light and dark. This adds a bit of
-                                         javascript to the page, and sets a cookie when switching.
+                                         JavaScript to the page, and sets a cookie when switching.
    --searchpage                          Optional modifier for `--exporthtml'. Generates a page from where
-                                         conversations can be searched. This adds javascript to the page.
+                                         conversations can be searched. This adds JavaScript to the page.
                                          Also, a search index is generated to facilitate searching.
    --includecalllog                      Optional modifier for `--exporthtml'. Generate a call log-page.
    --stickerpacks                        Optional modifier for `--exporthtml'. Generate an overview of
@@ -193,8 +198,8 @@ R"*(
                                          SIZE bytes.
    --onlytype <FILETYPE>                 Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. Delete attachments only if matching mime
-                                         type FILETYPE. The type is need not be complete (ie. `video/m'
-                                         will match both `video/mp4' and `video/mpeg'
+                                         type FILETYPE. The FILETYPE does not need to be complete
+                                         (i.e. `video/m' will match both `video/mp4' and `video/mpeg'
    --appendbody <STRING>                 Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. For each message whose attachment is
                                          deleted/replaced, append STRING to the message body.
@@ -211,23 +216,24 @@ expected to be very useful to other people. Most of these functions are poorly t
 possibly outdated. Some will probably eventually be renamed and more thoroughly documented others will
 be removed.
 --showdbinfo                                  Prints a list of all tables and columns in the backups
-                                              Sqlite database.
+                                              SQLite database.
 --scramble                                    Poorly censors backups, replacing all characters with 'x'.
                                               Useful to make screenshots.
 --scanmissingattachments                      If you see "warning attachment data not found" messages,
                                               feel free to use this option and provide the output to the
-                                              developer.
---hiperfall <THREAD_ID>                       Switch sender and recipient. See
-                                              https://github.com/bepaald/signalbackup-tools/issues/44
-   --setselfid <PHONENUMBER>                  Optional modifier for `--hiperfall' and `--importwachat'
---importwachat <FILE>                         Import whatsapp data. See
-                                              https://github.com/bepaald/signalbackup-tools/issues/19
-   --setwatimefmt <TIMEFMT>                   Required modifier for `--importwachat'.
---dumpdesktopdb <DIR1><DIR2>                  Decrypts the Signal Desktop database and saves it to the
-                                              file `desktop.db'. PATH is the base path of Signal
-                                              Desktop's data (eg `~/.config/Signal' on Linux. The program
-                                              stupidly still needs an <INPUT> and <PASSPHRASE> parameter
-                                              to actually run.
+                                              developer.)*";
+// --hiperfall <THREAD_ID>                       Switch sender and recipient. See
+//                                               https://github.com/bepaald/signalbackup-tools/issues/44
+//    --setselfid <PHONENUMBER>                  Optional modifier for `--hiperfall' and `--importwachat'
+// --importwachat <FILE>                         Import whatsapp data. See
+//                                               https://github.com/bepaald/signalbackup-tools/issues/19
+//    --setwatimefmt <TIMEFMT>                   Required modifier for `--importwachat'.
+// --dumpdesktopdb <DIR1><DIR2>                  Decrypts the Signal Desktop database and saves it to the
+//                                               file `desktop.db'. PATH is the base path of Signal
+//                                               Desktop's data (eg `~/.config/Signal' on Linux. The program
+//                                               stupidly still needs an <INPUT> and <PASSPHRASE> parameter
+//                                               to actually run.
+std::cout << R"*(
 --assumebadframesizeonbadmac                  Used to fix a specific (long fixed) bug in Signal. See
                                               https://github.com/signalapp/Signal-Android/issues/9154
 --editattachmentsize                          Modifier for `--assumebadframesizeonbadmac'
@@ -259,10 +265,11 @@ be removed.
    //                                            always be wanted if the NEWNUMBER was already added to the
    //                                            group.
 std::cout << R"*(
---mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
---sleepyh34d <FILE[,PASSWD]>                  Try to import messages from a truncated backup file into a
-                                              complete one. See
-                                              https://github.com/bepaald/signalbackup-tools/issues/32
+--mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.)*";
+//--sleepyh34d <FILE[,PASSWD]>                  Try to import messages from a truncated backup file into a
+//                                              complete one. See
+//                                              https://github.com/bepaald/signalbackup-tools/issues/32
+std::cout << R"*(
 --hhenkel <STRING>                            See https://github.com/bepaald/signalbackup-tools/issues/17
 )*";
 }

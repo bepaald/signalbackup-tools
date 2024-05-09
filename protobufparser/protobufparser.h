@@ -182,12 +182,13 @@ class ProtoBufParser
 
  public:
   inline ProtoBufParser();
-  ProtoBufParser(std::string const &base64);
+  inline ProtoBufParser(std::string const &base64);
   explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
   explicit ProtoBufParser(unsigned char *data, int64_t size);
-  ProtoBufParser(ProtoBufParser const &other);
+  inline ProtoBufParser(ProtoBufParser const &other);
   inline ProtoBufParser &operator=(ProtoBufParser const &other);
-  ProtoBufParser(ProtoBufParser &&other);
+  inline ProtoBufParser(ProtoBufParser &&other);
+  inline ProtoBufParser &operator=(ProtoBufParser &&other);
   ~ProtoBufParser();
   inline bool operator==(ProtoBufParser const &other) const;
   inline bool operator!=(ProtoBufParser const &other) const;
@@ -281,7 +282,8 @@ inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser const &other)
   d_size(0)
 {
   d_data = new unsigned char[other.d_size];
-  std::memcpy(d_data, other.d_data, other.d_size);
+  if (other.d_data)
+    std::memcpy(d_data, other.d_data, other.d_size);
   d_size = other.d_size;
 }
 
@@ -290,8 +292,12 @@ inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParse
 {
   if (this != &other)
   {
+    if (d_data)
+      bepaald::destroyPtr(&d_data, &d_size);
+
     d_data = new unsigned char[other.d_size];
-    std::memcpy(d_data, other.d_data, other.d_size);
+    if (other.d_data)
+      std::memcpy(d_data, other.d_data, other.d_size);
     d_size = other.d_size;
   }
   return *this;
@@ -305,6 +311,23 @@ inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser &&other)
 {
   other.d_data = nullptr;
   other.d_size = 0;
+}
+
+template <typename... Spec>
+inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParser &&other)
+{
+  if (this != &other)
+  {
+    if (d_data)
+      bepaald::destroyPtr(&d_data, &d_size);
+
+    d_data = other.d_data;
+    d_size = other.d_size;
+
+    other.d_data = nullptr;
+    other.d_size = 0;
+  }
+  return *this;
 }
 
 template <typename... Spec>
@@ -333,7 +356,8 @@ ProtoBufParser<Spec...>::ProtoBufParser(unsigned char *data, int64_t size)
   d_size(0)
 {
   d_data = new unsigned char[size];
-  std::memcpy(d_data, data, size);
+  if (data)
+    std::memcpy(d_data, data, size);
   d_size = size;
 }
 
@@ -385,7 +409,8 @@ inline void ProtoBufParser<Spec...>::setData(unsigned char *data, int64_t size)
     delete[] d_data;
 
   d_data = new unsigned char[size];
-  std::memcpy(d_data, data, size);
+  if (data)
+    std::memcpy(d_data, data, size);
   d_size = size;
 }
 
@@ -864,8 +889,10 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
 
   //std::cout << "Adding: " << bepaald::bytesToHexString(mem, size) << std::endl;
 
+  // build the new protobuf data, by copying old plus new
   unsigned char *newdata = new unsigned char[d_size + size];
-  std::memcpy(newdata, d_data, d_size);
+  if (d_data) // when creating a new ProtoBuf from nothing, d_data starts empty, which is UB for memcpy
+    std::memcpy(newdata, d_data, d_size);
   std::memcpy(newdata + d_size, mem, size);
 
   delete[] mem;

@@ -525,7 +525,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
       {
         size_t blobsize = sqlite3_column_bytes(d_stmt, c);
         std::shared_ptr<unsigned char []> blob(new unsigned char[blobsize]);
-        std::memcpy(blob.get(), reinterpret_cast<unsigned char const *>(sqlite3_column_blob(d_stmt, c)), blobsize);
+        if (blobsize) // if 0, sqlite3_column_blob() is nullptr, which is UB for memcpy
+          std::memcpy(blob.get(), reinterpret_cast<unsigned char const *>(sqlite3_column_blob(d_stmt, c)), blobsize);
         results->emplaceValue(row, std::make_pair(blob, blobsize));
       }
     }

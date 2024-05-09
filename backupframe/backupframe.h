@@ -197,6 +197,12 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame const &other)
 {
   if (this != &other)
   {
+    // properly delete any data this is holding
+    for (uint i = 0; i < d_framedata.size(); ++i)
+      if (std::get<1>(d_framedata[i]))
+        delete[] std::get<1>(d_framedata[i]);
+    d_framedata.clear();
+
     d_ok = other.d_ok;
     d_count = other.d_count;
     d_constructedsize = other.d_constructedsize;
