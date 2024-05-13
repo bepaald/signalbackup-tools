@@ -323,6 +323,7 @@ class SignalBackup
   void updateReactionAuthors(long long int id1, long long int id2 = -1) const; // idem.
   void updateGV1MigrationMessage(long long int id1, long long int id2 = -1) const; // idem.
   void updateAvatars(long long int id1, long long int id2 = -1); // idem.
+  void updateSnippetExtrasRecipient(long long int id1, long long int id2 = -1) const; // idem.
   long long int dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring = nullptr) const;
   void dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame);
   void dumpInfoOnBadFrames() const;

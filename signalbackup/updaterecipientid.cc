@@ -78,6 +78,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   updateGroupMembers(sourceid, targetid);
   updateReactionAuthors(sourceid, targetid);
   updateAvatars(sourceid, targetid);
+  updateSnippetExtrasRecipient(sourceid, targetid);
 }
 
 // // OLD VERSION
