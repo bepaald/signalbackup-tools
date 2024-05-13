@@ -327,6 +327,7 @@ ThreadTable::
           else
           {
             // could not set 'individualRecipientId' for some reason, should probably clear it (the currently present id might not exist)?
+            Logger::message_end();
             Logger::warning("Not updating thread.snippet_extras: failed to get sender");
             Logger::warning_indent("Query: ",
                                    "SELECT " + d_mms_recipient_id + " FROM " + d_mms_table +
@@ -335,7 +336,7 @@ ThreadTable::
                                    " AND (" + d_mms_type + " & ", Types::BASE_TYPE_MASK, ") IS NOT ", Types::GV1_MIGRATION_TYPE,
                                    " AND (" + d_mms_type + " & ", Types::BASE_TYPE_MASK, ") IS NOT ", Types::CHANGE_NUMBER_TYPE,
                                    " AND (" + d_mms_type + " & ", Types::BASE_TYPE_MASK, ") IS NOT ", Types::BOOST_REQUEST_TYPE,
-                                   " AND (" + d_mms_type + " & ", Types::GROUP_V2_LEAVE_BITS, ") IS NOT", Types::GROUP_V2_LEAVE_BITS,
+                                   " AND (" + d_mms_type + " & ", Types::GROUP_V2_LEAVE_BITS, ") IS NOT ", Types::GROUP_V2_LEAVE_BITS,
                                    " AND (" + d_mms_type + " & ", Types::BASE_TYPE_MASK, ") IS NOT ", Types::THREAD_MERGE_TYPE,
                                    " ORDER BY " + d_mms_date_sent + " DESC LIMIT 1");
             d_database.prettyPrint("SELECT " + d_mms_recipient_id + " FROM " + d_mms_table +
