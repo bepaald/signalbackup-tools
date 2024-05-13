@@ -58,7 +58,7 @@ std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::
     ProtoBufParser<protobuffer::optional::INT32>,
     ProtoBufParser<protobuffer::optional::FLOAT, protobuffer::repeated::INT32, protobuffer::repeated::FLOAT>,
     ProtoBufParser<protobuffer::optional::STRING>,
-    protobuffer::optional::FLOAT> color_proto(colordata.first.get(), colordata.second);
+    protobuffer::optional::FLOAT> color_proto(colordata);
 
   if (color_proto.getField<1>().has_value() &&
       color_proto.getField<1>().value().getField<1>().has_value())

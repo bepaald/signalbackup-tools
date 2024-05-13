@@ -279,12 +279,11 @@ template <typename... Spec>
 inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser const &other)
   :
   d_data(nullptr),
-  d_size(0)
+  d_size(other.d_size)
 {
-  d_data = new unsigned char[other.d_size];
-  if (other.d_data)
-    std::memcpy(d_data, other.d_data, other.d_size);
-  d_size = other.d_size;
+  d_data = new unsigned char[d_size];
+  if (d_size)
+    std::memcpy(d_data, other.d_data, d_size);
 }
 
 template <typename... Spec>
@@ -292,13 +291,12 @@ inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParse
 {
   if (this != &other)
   {
-    if (d_data)
-      bepaald::destroyPtr(&d_data, &d_size);
+    bepaald::destroyPtr(&d_data, &d_size);
 
-    d_data = new unsigned char[other.d_size];
-    if (other.d_data)
-      std::memcpy(d_data, other.d_data, other.d_size);
     d_size = other.d_size;
+    d_data = new unsigned char[d_size];
+    if (d_size)
+      std::memcpy(d_data, other.d_data, d_size);
   }
   return *this;
 }
@@ -318,8 +316,7 @@ inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParse
 {
   if (this != &other)
   {
-    if (d_data)
-      bepaald::destroyPtr(&d_data, &d_size);
+    bepaald::destroyPtr(&d_data, &d_size);
 
     d_data = other.d_data;
     d_size = other.d_size;
@@ -353,12 +350,11 @@ template <typename... Spec>
 ProtoBufParser<Spec...>::ProtoBufParser(unsigned char *data, int64_t size)
   :
   d_data(nullptr),
-  d_size(0)
+  d_size(size)
 {
-  d_data = new unsigned char[size];
-  if (data)
-    std::memcpy(d_data, data, size);
-  d_size = size;
+  d_data = new unsigned char[d_size];
+  if (d_size)
+    std::memcpy(d_data, data, d_size);
 }
 
 template <typename... Spec>
@@ -366,7 +362,6 @@ ProtoBufParser<Spec...>::~ProtoBufParser()
 {
   bepaald::destroyPtr(&d_data, &d_size);
 }
-
 
 template <typename... Spec>
 inline void ProtoBufParser<Spec...>::clear()
