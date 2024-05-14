@@ -27,16 +27,31 @@ void SignalBackup::updateSnippetExtrasRecipient(long long int id1, long long int
     {
       d_database.exec("UPDATE thread SET snippet_extras = "
                       "json_set(snippet_extras, '$.individualRecipientId', CAST(json_extract(snippet_extras, '$.individualRecipientId') + ? AS text))", id1);
-      if (d_verbose) [[unlikely]]
-        Logger::message("     Updated ", d_database.changed(), " recipients in thread.snippet_extras");
+      int changed = d_database.changed();
+      if (d_verbose && changed) [[unlikely]]
+        Logger::message("     Updated ", changed, " individualrecipientids in thread.snippet_extras");
+
+      d_database.exec("UPDATE thread SET snippet_extras = "
+                      "json_set(snippet_extras, '$.groupAddedBy', CAST(json_extract(snippet_extras, '$.groupAddedBy') + ? AS text))", id1);
+      changed = d_database.changed();
+      if (d_verbose && changed) [[unlikely]]
+        Logger::message("     Updated ", changed, " groupaddedby-ids in thread.snippet_extras");
     }
     else
     {
       d_database.exec("UPDATE thread SET snippet_extras = "
                       "json_set(snippet_extras, '$.individualRecipientId', CAST(? AS text)) "
                       "WHERE json_extract(snippet_extras, '$.individualRecipientId') = CAST(? AS text)", {id2, id1});
-      if (d_verbose) [[unlikely]]
-        Logger::message("     Updated ", d_database.changed(), " recipients in thread.snippet_extras");
+      int changed = d_database.changed();
+      if (d_verbose && changed) [[unlikely]]
+        Logger::message("     Updated ", changed, " individualrecipientids in thread.snippet_extras");
+
+      d_database.exec("UPDATE thread SET snippet_extras = "
+                      "json_set(snippet_extras, '$.groupAddedBy', CAST(? AS text)) "
+                      "WHERE json_extract(snippet_extras, '$.groupAddedBy') = CAST(? AS text)", {id2, id1});
+      changed = d_database.changed();
+      if (d_verbose && changed) [[unlikely]]
+        Logger::message("     Updated ", changed, " groupaddedby-ids in thread.snippet_extras");
     }
   }
 }
