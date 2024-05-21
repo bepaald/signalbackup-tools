@@ -30,6 +30,7 @@
 #include <vector>
 #include <iomanip>
 #include <ctime>
+#include <algorithm>
 
 #if defined(_WIN32) || defined(__MINGW64__)
 #include <windows.h>

@@ -21,14 +21,14 @@
 
 std::string SignalBackup::tgBuildBody(std::string const &bodyjson) const
 {
+  std::string body;
   long long int fragments = d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", bodyjson, -1);
   if (fragments == -1)
   {
     Logger::error("Failed to get number of text fragments from message body. Body data: '" + bodyjson + "'");
-    return std::string();
+    return body;
   }
 
-  std::string body;
   for (uint i = 0; i < fragments; ++i)
     body += d_database.getSingleResultAs<std::string>("SELECT json_extract(?, '$[" + bepaald::toString(i) + "].text')", bodyjson, std::string());
 
