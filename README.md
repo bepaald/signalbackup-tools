@@ -396,7 +396,11 @@ Other options that can be used together with `--exporthtml`:
 - `--includesettings` Generates a page showing settings found in the backup file.
 - `--includefullcontactlist` Generates a page showing _all_ contacts present in the database, including contacts with whom no thread exists, who are blocked or hidden, or who appear in your system contact list and may not have Signal installed.
 
-A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
+> [!NOTE]
+> A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
+
+> [!NOTE]
+> An experimental feature to export Signal Desktop data to HTML exists. Internally, this first imports into an empty backup and then exports that to HTML. It is currently unknown if, and how well it works. Feedback is appreciated. See: https://github.com/bepaald/signalbackup-tools/issues/203
 
 ##### Export to TXT
 
