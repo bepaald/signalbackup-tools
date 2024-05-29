@@ -28,6 +28,8 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   // std::cout << Types::isGroupUpdate(type) << std::endl;
   // std::cout << Types::isGroupV2(type) << std::endl;
 
+
+  // old style group updates (v1)
   if (Types::isGroupUpdate(type) && !Types::isGroupV2(type))
   {
     if (Types::isOutgoing(type))
@@ -74,7 +76,14 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       result += "Group name is now '" + title + "'.";
     }
     return result;
-  }
+  } // GROUPUPDATE && !GROUP_V2
+
+
+
+
+
+  // SOME NON-GROUP TYPES (_can_ still occur in group)
+
   if (Types::isGroupQuit(type))
   {
     if (Types::isOutgoing(type))
@@ -159,6 +168,16 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   {
     return decodeProfileChangeMessage(body, contactname);
   }
+
+
+
+
+
+
+
+
+  /*    GROUP_V2 UPDATES    */
+
   if (Types::isGroupUpdate(type) && Types::isGroupV2(type)) // see app/src/test/java/org/thoughtcrime/securesms/database/model/GroupsV2UpdateMessageProducerTest.java
   {
 

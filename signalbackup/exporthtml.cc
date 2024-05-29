@@ -442,15 +442,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         IconType icon = IconType::NONE;
         if (Types::isStatusMessage(type))
         {
-          if (!body.empty())
-            body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
+          // decode from body if (body not empty) OR (message_extras not available)
+          if (!body.empty() ||
+              !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+                messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras")))
+            body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
+                                       type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
           else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                    messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))
-          {
             body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
                                        messages.getValueAs<long long int>(messagecount, "expires_in"), type,
                                        getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
-          }
         }
 
         // prep body (scan emoji? -> in <span>) and handle mentions...

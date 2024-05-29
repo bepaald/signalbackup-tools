@@ -187,17 +187,17 @@ struct Types
 
   inline static bool isIdentityUpdate(long type)
   {
-    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_UPDATE_BIT; // or & KEY_EXCHANGE... ?
+    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_UPDATE_BIT;
   }
 
   inline static bool isIdentityVerified(long type)
   {
-    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_VERIFIED_BIT; // or & KEY_EXCHANGE... ?
+    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_VERIFIED_BIT;
   }
 
   inline static bool isIdentityDefault(long type)
   {
-    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_DEFAULT_BIT; // or & KEY_EXCHANGE... ?
+    return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_DEFAULT_BIT;
   }
 
   inline static bool isSecureType(long type)

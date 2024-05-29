@@ -308,12 +308,16 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {
         std::string statusmsg;
-        if (!body.empty())
-          statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+        if (!body.empty() ||
+            !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+              messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras")))
+          statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type,
+                                          getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
         else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                  messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
           statusmsg = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
-                                          messages.getValueAs<long long int>(i, "expires_in"), type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+                                          messages.getValueAs<long long int>(i, "expires_in"), type,
+                                          getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
 
         txtoutput << "[" << readable_date << "] " << "***" << " " << statusmsg <<  '\n';
       }
