@@ -282,6 +282,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     << "        font-weight: bold;" << '\n'
     << "        margin-top: 20px;" << '\n'
     << "        margin-left: 10px;" << '\n'
+    << "        flex-basis: 100%;" << '\n'
     << "      }" << '\n'
     << '\n'
     << "      .sticker-pack-header {" << '\n'
@@ -529,20 +530,18 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
 
   // iterate stickers
   std::string prevpackid;
-  for (auto const *res : {&res_installed, &res_known})
+  for (auto const *const res : {&res_installed, &res_known})
   {
     if (res == &res_installed && res->rows())
       stickerhtml << "        <div class=\"pack-status\">Installed</div>" << '\n';
     if (res == &res_known && res->rows())
       stickerhtml << "        <div class=\"pack-status\">Available</div>" << '\n';
 
-
     for (uint i = 0; i < res->rows(); ++i)
     {
       std::string packid = res->valueAsString(i, "pack_id");
-      if (packid != prevpackid)
+      if (packid != prevpackid)  // output header!
       {
-        // output header!
         std::string packtitle = res->valueAsString(i, "pack_title");
         HTMLescapeString(&packtitle);
 
@@ -554,41 +553,29 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
 
         // get cover:
         long long int cover_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM sticker WHERE pack_id = ? AND cover = 1", packid, -1);
+
+        stickerhtml
+          << "        <div class=\"sticker-pack-header\">" << '\n'
+          << "          <div class=\"sticker-pack-header-container\">" << '\n';
         if (cover_id == -1 || !writeStickerToDisk(cover_id, packid, directory, overwrite, append)) [[unlikely]]
-        {
           Logger::message("No cover found for stickerpack ", packid);
-          stickerhtml
-            << "        <div class=\"sticker-pack-header\">" << '\n'
-            << "          <div class=\"sticker-pack-header-container\">" << '\n'
-            << "            <div>" << '\n'
-            << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << '\n'
-            << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << '\n'
-            << "            </div>" << '\n'
-            << "          </div>" << '\n'
-            << "        </div>" << '\n'
-            << '\n';
-        }
         else
-        {
-          //Logger::message("\"", packtitle, "\" by '", packauthor, "'");
           stickerhtml
-            << "        <div class=\"sticker-pack-header\">" << '\n'
-            << "          <div class=\"sticker-pack-header-container\">" << '\n'
             << "            <div class=\"sticker-pack-header-cover\">" << '\n'
             << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\">" << '\n'
-            << "            </div>" << '\n'
-            << "            <div>" << '\n'
-            << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << '\n'
-            << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << '\n'
-            << "            </div>" << '\n'
-            << "          </div>" << '\n'
-            << "        </div>" << '\n'
-            << '\n';
-        }
+            << "            </div>" << '\n';
+        stickerhtml
+          << "            <div>" << '\n'
+          << "              <div class=\"sticker-header-title\">" << packtitle << "</div>" << '\n'
+          << "              <div class=\"sticker-header-author\">" << packauthor << "</div>" << '\n'
+          << "            </div>" << '\n'
+          << "          </div>" << '\n'
+          << "        </div>" << '\n'
+          << '\n';
 
         prevpackid = packid;
 
-        if (res == &res_known)
+        if (res == &res_known) // for packs known, but not installed, stop here (only output header)
           continue;
       }
 
@@ -601,7 +588,6 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
       long long int stickerid = res->valueAsInt(i, "sticker_id");
       std::string emoji = res->valueAsString(i, "emoji");
 
-      // output some data for this?
       //Logger::message("Sticker ", stickerid, ": ", emoji);
       stickerhtml
         << "        <div class=\"sticker-list-item\">" << '\n'
