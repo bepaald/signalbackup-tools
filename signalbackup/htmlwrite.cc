@@ -1724,6 +1724,14 @@ file << R"(
     file << "                  <span class=\"left-column\">Group link:</span>\n";
     file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
 
+    // muted
+    if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
+    {
+      long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
+      file << "                  <span class=\"left-column\">Muted:</span>\n";
+      file << "                  <span class=\"right-column\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
+    }
+
     // notify-on-mention
     if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
     {
@@ -1737,7 +1745,6 @@ file << R"(
       file << "                  <span class=\"left-column\">Custom notifications:</span>\n";
       file << "                  <span class=\"right-column\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
 
-      /*
       // custom notifications were enabled, let's print them
       if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
       {
@@ -1745,22 +1752,21 @@ file << R"(
         if (d_database.exec("SELECT message_ringtone, message_vibrate, call_ringtone, call_vibrate FROM recipient WHERE _id = ?", thread_recipient_id, &notification_res) &&
             notification_res.rows() == 1)
         {
-          std::string msg_ringtone = notification_res.valueAsString(0, "message_ringtone");
+          //std::string msg_ringtone = notification_res.valueAsString(0, "message_ringtone");
           long long int msg_vibrate = notification_res.valueAsInt(0, "message_vibrate");
-          std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
+          //std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
           long long int call_vibrate = notification_res.valueAsInt(0, "call_vibrate");
 
-          file << "                  <span class=\"left-column\">Message ringtone:</span>\n";
-          file << "                  <span class=\"right-column\">" << msg_ringtone <<  "</span>\n";
+          //file << "                  <span class=\"left-column\">Message ringtone:</span>\n";
+          //file << "                  <span class=\"right-column\">" << msg_ringtone <<  "</span>\n";
           file << "                  <span class=\"left-column\">Message vibrate:</span>\n";
           file << "                  <span class=\"right-column\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
-          file << "                  <span class=\"left-column\">Call ringtone:</span>\n";
-          file << "                  <span class=\"right-column\">" << call_ringtone <<  "</span>\n";
+          //file << "                  <span class=\"left-column\">Call ringtone:</span>\n";
+          //file << "                  <span class=\"right-column\">" << call_ringtone <<  "</span>\n";
           file << "                  <span class=\"left-column\">Call vibrate:</span>\n";
           file << "                  <span class=\"right-column\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
         }
       }
-      */
     }
 
     file << "                </span>\n";

@@ -40,6 +40,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     (d_database.tableContainsColumn("recipient", "chat_colors") ? "NULLIF(recipient.chat_colors, '') AS chat_colors,"s : ""s) + //wallpaper_file, custom_chat_colors_id
                     "recipient.group_id, recipient." + d_recipient_avatar_color + ", " +
                     (d_database.tableContainsColumn("recipient", "notification_channel") ? "notification_channel, " : "") +
+                    (d_database.tableContainsColumn("recipient", "mute_until") ? "mute_until, " : "") +
                     (d_database.tableContainsColumn("recipient", "mention_setting") ? "mention_setting, " : "") +
                     "recipient.wallpaper "
                     "FROM recipient "
@@ -114,6 +115,10 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (d_database.tableContainsColumn("recipient", "mention_setting"))
       mention_setting = results.valueAsInt(0, "mention_setting");
 
+    long long int mute_until = -1;
+    if (d_database.tableContainsColumn("recipient", "mute_until"))
+      mute_until = results.valueAsInt(0, "mute_until");
+
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
@@ -123,6 +128,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                              results.valueAsString(0, d_recipient_aci),
                              results.valueAsString(0, d_recipient_e164),
                              results.valueAsString(0, "username"),
+                             mute_until,
                              mention_setting,
                              custom_notifications,
                              color,
