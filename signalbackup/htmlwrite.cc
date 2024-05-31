@@ -1703,16 +1703,6 @@ file << R"(
              << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
     file << "</span>\n";
 
-    file << "                  <span class=\"columnview-header\">Options</span>\n";
-
-    // expiration timer
-    file << "                  <span class=\"left-column\">Disappearing messages:</span>\n";
-    file << "                  <span class=\"right-column\">" << exptimer << "</span>\n";
-
-    // link enabled?
-    file << "                  <span class=\"left-column\">Group link:</span>\n";
-    file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
-
     // access control
     file << "                  <span class=\"columnview-header\">Permissions</span>\n";
     file << "                  <span class=\"left-column\">Add members:</span>\n";
@@ -1723,6 +1713,55 @@ file << R"(
     file << "                  <span class=\"right-column\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n";
     file << "                  <span class=\"left-column\">Approve members from invite link:</span>\n";
     file << "                  <span class=\"right-column\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n";
+
+    file << "                  <span class=\"columnview-header\">Options</span>\n";
+
+    // expiration timer
+    file << "                  <span class=\"left-column\">Disappearing messages:</span>\n";
+    file << "                  <span class=\"right-column\">" << exptimer << "</span>\n";
+
+    // link enabled?
+    file << "                  <span class=\"left-column\">Group link:</span>\n";
+    file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
+
+    // notify-on-mention
+    if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
+    {
+      file << "                  <span class=\"left-column\">Mentions:</span>\n";
+      file << "                  <span class=\"right-column\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
+    }
+
+    // custom notifications
+    if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications != -1)
+    {
+      file << "                  <span class=\"left-column\">Custom notifications:</span>\n";
+      file << "                  <span class=\"right-column\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
+
+      /*
+      // custom notifications were enabled, let's print them
+      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
+      {
+        SqliteDB::QueryResults notification_res;
+        if (d_database.exec("SELECT message_ringtone, message_vibrate, call_ringtone, call_vibrate FROM recipient WHERE _id = ?", thread_recipient_id, &notification_res) &&
+            notification_res.rows() == 1)
+        {
+          std::string msg_ringtone = notification_res.valueAsString(0, "message_ringtone");
+          long long int msg_vibrate = notification_res.valueAsInt(0, "message_vibrate");
+          std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
+          long long int call_vibrate = notification_res.valueAsInt(0, "call_vibrate");
+
+          file << "                  <span class=\"left-column\">Message ringtone:</span>\n";
+          file << "                  <span class=\"right-column\">" << msg_ringtone <<  "</span>\n";
+          file << "                  <span class=\"left-column\">Message vibrate:</span>\n";
+          file << "                  <span class=\"right-column\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+          file << "                  <span class=\"left-column\">Call ringtone:</span>\n";
+          file << "                  <span class=\"right-column\">" << call_ringtone <<  "</span>\n";
+          file << "                  <span class=\"left-column\">Call vibrate:</span>\n";
+          file << "                  <span class=\"right-column\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+        }
+      }
+      */
+    }
 
     file << "                </span>\n";
     file << "              </span>\n";

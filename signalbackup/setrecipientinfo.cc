@@ -38,7 +38,10 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
                     " recipient._id) AS 'display_name', recipient." + d_recipient_e164 + ", recipient.username, recipient." + d_recipient_aci + ", " +
                     (d_database.tableContainsColumn("recipient", "chat_colors") ? "NULLIF(recipient.chat_colors, '') AS chat_colors,"s : ""s) + //wallpaper_file, custom_chat_colors_id
-                    "recipient.group_id, recipient." + d_recipient_avatar_color + ", recipient.wallpaper "
+                    "recipient.group_id, recipient." + d_recipient_avatar_color + ", " +
+                    (d_database.tableContainsColumn("recipient", "notification_channel") ? "notification_channel, " : "") +
+                    (d_database.tableContainsColumn("recipient", "mention_setting") ? "mention_setting, " : "") +
+                    "recipient.wallpaper "
                     "FROM recipient "
                     "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
                     (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
@@ -103,6 +106,14 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
       }
     }
 
+    long long int custom_notifications = -1;
+    if (d_database.tableContainsColumn("recipient", "notification_channel"))
+      custom_notifications = (results.valueAsString(0, "notification_channel").empty() ? 0 : 1);
+
+    long long int mention_setting = -1;
+    if (d_database.tableContainsColumn("recipient", "mention_setting"))
+      mention_setting = results.valueAsInt(0, "mention_setting");
+
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
@@ -112,6 +123,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                              results.valueAsString(0, d_recipient_aci),
                              results.valueAsString(0, d_recipient_e164),
                              results.valueAsString(0, "username"),
+                             mention_setting,
+                             custom_notifications,
                              color,
                              wall_light,
                              wall_dark,

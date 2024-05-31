@@ -183,6 +183,8 @@ class SignalBackup
     std::string uuid;
     std::string phone;
     std::string username;
+    long long int mention_setting;      // -1 : n/a
+    long long int custom_notifications; // -1 : n/a
     std::string color; // "RRGGBB"
     std::string wall_light;
     std::string wall_dark;
