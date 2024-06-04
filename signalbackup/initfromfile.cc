@@ -74,11 +74,6 @@ void SignalBackup::initFromFile()
 
         prev_progress = progress;
       }
-
-      // Logger::message_overwrite("FRAME ", frame->frameNumber(), " (",
-      //                           std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-      //                           (static_cast<float>(backupfile.tellg()) / totalsize) * 100,
-      //                           std::defaultfloat, "%)... ");
     }
 
     //if (frame->frameNumber() > 73085)
@@ -86,32 +81,11 @@ void SignalBackup::initFromFile()
 
     //MEMINFO("At frame ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
 
-    if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
-    {
-      d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
-      d_backupfileversion = d_headerframe->version();
-
-      if (d_verbose) [[unlikely]]
-        d_headerframe->printInfo();
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION) [[unlikely]]
-    {
-      d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
-      d_databaseversion = d_databaseversionframe->version();
-
-      if (d_verbose) [[unlikely]]
-        Logger::message("Database version: ", d_databaseversionframe->version());
-    }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT) [[likely]]
+    if (frame->frameType() == BackupFrame::FRAMETYPE::SQLSTATEMENT) [[likely]]
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
 
-      // if (frame->frameNumber() > 110)
-      //   frame->printInfo();
-
-      //std::cout << s->statement() << std::endl;
-
-      if (s->statement().find("CREATE TABLE sqlite_") == std::string::npos) [[likely]] // skip creation of sqlite_ internal db's
+      if (!STRING_STARTS_WITH(s->bindStatement(), "CREATE TABLE sqlite_")) [[likely]] // skip creation of sqlite_ internal db's
       {
         // NOTE: in the official import, there are other tables that are skipped (virtual tables for search data)
         // we lazily do not check for them here, since we are dealing with official exported files which do not contain
@@ -120,7 +94,7 @@ void SignalBackup::initFromFile()
         if (!d_database.exec(s->bindStatement(), s->parameters())) [[unlikely]]
           Logger::warning("Failed to execute statement: ", s->statement());
       }
-      #ifdef BUILT_FOR_TESTING
+#ifdef BUILT_FOR_TESTING
       else if (s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {
         // force early creation of sqlite_sequence table, this is completely unnecessary and only used
@@ -130,7 +104,7 @@ void SignalBackup::initFromFile()
         d_database.exec("DROP TABLE dummy");
         d_found_sqlite_sequence_in_backup = true;
       }
-      #endif
+#endif
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT)
     {
@@ -153,6 +127,16 @@ void SignalBackup::initFromFile()
       }
       d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
     }
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
+    {
+      StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
+      if (d_fulldecode) [[unlikely]]
+      {
+        s->attachmentData(nullptr, d_verbose);
+        s->clearData();
+      }
+      d_stickers.emplace(s->rowId(), s);
+    }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::SHAREDPREFERENCE)
     {
       //frame->printInfo();
@@ -163,15 +147,21 @@ void SignalBackup::initFromFile()
       //frame->printInfo();
       d_keyvalueframes.emplace_back(reinterpret_cast<KeyValueFrame *>(frame.release()));
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
     {
-      StickerFrame *s = reinterpret_cast<StickerFrame *>(frame.release());
-      if (d_fulldecode) [[unlikely]]
-      {
-        s->attachmentData(nullptr, d_verbose);
-        s->clearData();
-      }
-      d_stickers.emplace(s->rowId(), s);
+      d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
+      d_backupfileversion = d_headerframe->version();
+
+      if (d_verbose) [[unlikely]]
+        d_headerframe->printInfo();
+    }
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION) [[unlikely]]
+    {
+      d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
+      d_databaseversion = d_databaseversionframe->version();
+
+      if (d_verbose) [[unlikely]]
+        Logger::message("Database version: ", d_databaseversionframe->version());
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::END) [[unlikely]]
     {

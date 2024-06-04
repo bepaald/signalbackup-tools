@@ -601,10 +601,16 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
         parameters.emplace_back(static_cast<long long int>(bytesToUint64(std::get<1>(p), std::get<2>(p))));
         break;
       }
+      case PARAMETER_FIELD::NULLPARAMETER:
+      {
+        //parameters.emplace_back(static_cast<long long int>(bytesToUint64(std::get<1>(p), std::get<2>(p))));
+        parameters.emplace_back(nullptr);
+        break;
+      }
       case PARAMETER_FIELD::STRING:
       {
         //if ()
-        //std::cout << "Retunring string parameter: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << std::endl;
+        //std::cout << "Returning string parameter: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << std::endl;
         parameters.emplace_back(bepaald::bytesToString(std::get<1>(p), std::get<2>(p)));
         /*
           std::string rep = bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
@@ -621,11 +627,6 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
         */
         break;
       }
-      case PARAMETER_FIELD::DOUBLE:
-      {
-        parameters.emplace_back(*reinterpret_cast<double *>(std::get<1>(p)));
-        break;
-      }
       case PARAMETER_FIELD::BLOB:
       {
         std::pair<std::shared_ptr<unsigned char []>, size_t> data{new unsigned char[std::get<2>(p)], std::get<2>(p)};
@@ -633,10 +634,9 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
         parameters.emplace_back(std::move(data));
         break;
       }
-      case PARAMETER_FIELD::NULLPARAMETER:
+      case PARAMETER_FIELD::DOUBLE:
       {
-        //parameters.emplace_back(static_cast<long long int>(bytesToUint64(std::get<1>(p), std::get<2>(p))));
-        parameters.emplace_back(nullptr);
+        parameters.emplace_back(*reinterpret_cast<double *>(std::get<1>(p)));
         break;
       }
     }
