@@ -168,7 +168,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   {
     return decodeProfileChangeMessage(body, contactname);
   }
-
+  if (Types::isMessageRequestAccepted(type))
+  {
+    return "You accepted the message request";
+  }
 
 
 

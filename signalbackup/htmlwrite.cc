@@ -1025,6 +1025,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--icon-f);
       }
 
+      .msg-status .msg-thread-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M5.33 2.32a3.35 3.35 0 0 0-3.35 3.35c0 .82.3 1.57.79 2.15a.99.99 0 0 1 .23.73l-.1 1.2.95-.65a1.01 1.01 0 0 1 .78-.16l.29.06h0a5.51 5.51 0 0 0 .15 1.3c-.2 0-.4-.03-.58-.06l-1.4.97c-.68.47-1.6-.06-1.54-.9l.15-1.73a4.61 4.61 0 0 1-1.02-2.9c0-2.57 2.09-4.65 4.65-4.65A4.64 4.64 0 0 1 9.39 3.4c-.44.1-.86.25-1.25.44a3.35 3.35 0 0 0-2.8-1.51zm5.34 2.03c2.56 0 4.65 2.08 4.65 4.65a4.61 4.61 0 0 1-1.01 2.89l.15 1.8a.99.99 0 0 1-1.54.9l-1.45-1.01a4.25 4.25 0 0 1-.8.07 4.65 4.65 0 1 1 0-9.3zM14.02 9a3.35 3.35 0 1 0-3.35 3.35 2.99 2.99 0 0 0 .67-.07 1.03 1.03 0 0 1 .77.16l1 .7-.1-1.27c-.03-.27.06-.53.23-.72A3.37 3.37 0 0 0 14.02 9z"></path></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-megaphone-icon {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M14.117,2C14.0399,2.0002 13.9658,2.0294 13.9094,2.0818L10.7086,5.0142H3.2721C2.9434,5.0142 2.6281,5.1448 2.3957,5.3773C2.1633,5.6097 2.0327,5.925 2.0327,6.2537V9.3522C2.0327,9.6809 2.1633,9.9962 2.3957,10.2286C2.6281,10.461 2.9434,10.5916 3.2721,10.5916H10.7086L13.9075,13.5241C13.9639,13.5765 14.0381,13.6057 14.1151,13.6059C14.1973,13.6059 14.2761,13.5732 14.3342,13.5151C14.3923,13.457 14.425,13.3782 14.425,13.296V2.3105C14.4251,2.2285 14.3928,2.1498 14.3351,2.0916C14.2774,2.0334 14.1989,2.0005 14.117,2ZM13.6522,12.2958L12.7784,11.2281L11.0699,9.6621H3.2721C3.1899,9.6621 3.1111,9.6294 3.053,9.5713C2.9949,9.5132 2.9622,9.4344 2.9622,9.3522V6.2537C2.9622,6.1715 2.9949,6.0927 3.053,6.0346C3.1111,5.9765 3.1899,5.9438 3.2721,5.9438H11.0699L12.7784,4.3778L13.6522,3.3101L13.4973,5.0142V10.5916L13.6522,12.2958Z"></path><path d="M5.7509,5.3241h0.9296v8.6759h-0.9296z"></path></svg>');
         filter: var(--icon-f);
@@ -1099,6 +1104,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-info-icon,
       .msg-status .msg-security-icon,
       .msg-status .msg-pencil-icon,
+      .msg-status .msg-thread-icon,
       .msg-status .msg-megaphone-icon,
       .msg-status .msg-member-add-icon,
       .msg-status .msg-member-remove-icon,
@@ -1457,7 +1463,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-member-rejected-icon,
       .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
-      .msg-status .msg-phone-icon,
+      .msg-status .msg-phone-icon, .msg-status .msg-thread-icon,
       .msg-incoming .shared-contact-avatar-default,
       .msg-outgoing .shared-contact-avatar-default {
         -webkit-print-color-adjust: exact;
@@ -2130,6 +2136,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-group-call\"></span>";
     else if (Types::isJoined(msg_info.type))
       htmloutput << "<span class=\"msg-member-add-icon\"></span>";
+    else if (Types::isMessageRequestAccepted(msg_info.type))
+      htmloutput << "<span class=\"msg-thread-icon\"></span>";
     else if (msg_info.type == Types::GV1_MIGRATION_TYPE)
     {
       if (msg_info.icon == IconType::MEMBER_ADD)
@@ -2154,6 +2162,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-expiration-timer-disabled\"></span>";
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::PENCIL)
       htmloutput << "<span class=\"msg-pencil-icon\"></span>";
+    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::THREAD)
+      htmloutput << "<span class=\"msg-thread-icon\"></span>";
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEGAPHONE)
       htmloutput << "<span class=\"msg-megaphone-icon\"></span>";
     else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBERS)

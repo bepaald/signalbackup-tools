@@ -33,6 +33,7 @@ enum class IconType
   MEMBER_REMOVE,
   PENCIL,
   AVATAR_UPDATE,
+  THREAD,
   //AVATAR_REMOVE,
 };
 

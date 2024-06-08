@@ -86,7 +86,15 @@ struct Types
 
   static uint64_t constexpr ENCRYPTION_REMOTE_NO_SESSION_BIT = 0x08000000;
 
-  static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_NOTIFICATION = 0x300000000L;
+  static uint64_t constexpr SPECIAL_TYPES_MASK                     = 0xF00000000L;
+  static uint64_t constexpr SPECIAL_TYPE_STORY_REACTION            = 0x100000000L;
+  static uint64_t constexpr SPECIAL_TYPE_GIFT_BADGE                = 0x200000000L;
+  static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_NOTIFICATION     = 0x300000000L;
+  static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_ACTIVATE_REQUEST = 0x400000000L;
+  static uint64_t constexpr SPECIAL_TYPE_REPORTED_SPAM             = 0x500000000L;
+  static uint64_t constexpr SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED  = 0x600000000L;
+  static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_ACTIVATED        = 0x800000000L;
+  static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_TOMBSTONE        = 0x900000000L;
 
  public:
   inline static bool isGroupUpdate(uint64_t type)
@@ -215,13 +223,18 @@ struct Types
     return (type & BASE_TYPE_MASK) == PROFILE_CHANGE_TYPE;
   }
 
+  inline static bool isMessageRequestAccepted(long type)
+  {
+    return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED;
+  }
+
   inline static bool isStatusMessage(long type)
   {
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
       isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE ||
-      isNumberChange(type) || isDonationRequest(type);
+      isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type);
   }
 
 };
