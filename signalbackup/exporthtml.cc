@@ -567,38 +567,39 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") +
                                " FROM " + d_mms_table + " "
                                "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
-                               "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' "
+                               "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 "
                                "WHERE " + d_mms_table + "._id = ?",
                                msg_info.msg_id, &search_idx_results) ||
-              search_idx_results.rows() != 1)
+              search_idx_results.rows() != 1) [[unlikely]]
           {
             Logger::warning("search_idx query failed ", search_idx_results.rows(), " results");
-            continue;
           }
-
-          std::string line = search_idx_results("line");
-          if (line.empty()) [[unlikely]]
-            continue;
-
-          if (search_idx_results.valueAsInt(0, "rowid") != -1
-              /* && search_idx_results.valueAsInt(0, "uniqueid") != -1*/)
+          else
           {
-            long long int rowid = search_idx_results.valueAsInt(0, "rowid");
-            long long int uniqueid = search_idx_results.valueAsInt(0, "uniqueid");
-            AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
-            std::string longbody = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
-            a->clearData();
+            std::string line = search_idx_results("line");
+            if (!line.empty()) [[likely]]
+            {
+              if (search_idx_results.valueAsInt(0, "rowid") != -1
+                  /* && search_idx_results.valueAsInt(0, "uniqueid") != -1*/)
+              {
+                long long int rowid = search_idx_results.valueAsInt(0, "rowid");
+                long long int uniqueid = search_idx_results.valueAsInt(0, "uniqueid");
+                AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
+                std::string longbody = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+                a->clearData();
 
-            longbody = d_database.getSingleResultAs<std::string>("SELECT json_set(?, '$.b', ?)", {line, longbody}, std::string());
-            if (!longbody.empty()) [[likely]]
-              line = longbody;
+                longbody = d_database.getSingleResultAs<std::string>("SELECT json_set(?, '$.b', ?)", {line, longbody}, std::string());
+                if (!longbody.empty()) [[likely]]
+                  line = longbody;
+              }
+
+              if (searchidx_write_started) [[likely]]
+                searchidx << "," << std::endl;
+
+              searchidx << "  " << line;
+              searchidx_write_started = true;
+            }
           }
-
-          if (searchidx_write_started) [[likely]]
-            searchidx << "," << std::endl;
-
-          searchidx << "  " << line;
-          searchidx_write_started = true;
         }
 
         if (++messagecount >= messages.rows())
