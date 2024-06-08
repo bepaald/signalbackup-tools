@@ -1799,6 +1799,9 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
   for (uint a = 0; a < attachment_results.rows(); ++a)
   {
 
+    if (attachment_results(a, d_part_ct) == "text/x-signal-plain")
+      continue;
+
     long long int rowid = attachment_results.getValueAs<long long int>(a, "_id");
     long long int uniqueid = attachment_results.getValueAs<long long int>(a, "unique_id");
     long long int pending_push = attachment_results.getValueAs<long long int>(a, d_part_pending);

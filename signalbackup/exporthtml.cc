@@ -410,7 +410,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                         + d_part_pending + ", " +
                         (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
                         "sticker_pack_id "
-                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
+                        "FROM " + d_part_table + " "
+                        "WHERE " + d_part_mid + " IS ? "
+                        "AND quote IS 0", msg_id, &attachment_results);
         // check attachments for long message body -> replace cropped body & remove from attachment results
         setLongMessageBody(&body, &attachment_results);
 
@@ -570,12 +572,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 "
                                "WHERE " + d_mms_table + "._id = ?",
                                msg_info.msg_id, &search_idx_results) ||
-              search_idx_results.rows() != 1) [[unlikely]]
+              search_idx_results.rows() < 1) [[unlikely]]
           {
-            Logger::warning("search_idx query failed ", search_idx_results.rows(), " results");
+            Logger::warning("Search_idx query failed or no results");
           }
           else
           {
+            if (search_idx_results.rows() > 1) [[unlikely]]
+              Logger::warning("Unexpected number of results from search_idx query (",
+                              search_idx_results.rows(), " results, using first)");
+
             std::string line = search_idx_results("line");
             if (!line.empty()) [[likely]]
             {

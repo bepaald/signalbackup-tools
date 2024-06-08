@@ -329,6 +329,9 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
         for (uint a = 0; a < attachment_results.rows(); ++a)
         {
           std::string content_type = attachment_results.valueAsString(a, d_part_ct);
+          if (content_type == "text/x-signal-plain") [[unlikely]]
+            continue;
+
           std::string attachment_filename;
           if (!attachment_results.isNull(a, "file_name") && !attachment_results(a, "file_name").empty())
             attachment_filename = '"' + attachment_results(a, "file_name") + '"';
