@@ -1442,8 +1442,6 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         long long int new_mms_id = std::any_cast<long long int>(retval);
         if (d_verbose) [[unlikely]] Logger::message_end("done");
 
-        //std::cout << "  Inserted mms message, new id: " << new_mms_id << std::endl;
-
         // add ranges if present
         // note 'bodyRanges' on desktop is also used for mentions,
         // in that case a range is {start, end, mentionUuid}, instead of {start, end, style}.

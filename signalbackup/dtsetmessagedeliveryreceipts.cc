@@ -46,6 +46,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
     Logger::error("Getting message delivery status");
     return;
   }
+
   // results:
   //              key = 37fb0475-13e7-43e6-965a-4b11d9370488
   //           status = Sent
@@ -59,11 +60,15 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
 
   long long int deliveryreceiptcount = 0;
   long long int readreceiptcount = 0;
+  long long int updatedtimestamp = -1;
   for (uint i = 0; i < status_results.rows(); ++i)
   {
     if (status_results.valueAsString(i, "status") == "Delivered")
     {
       ++deliveryreceiptcount;
+      if (updatedtimestamp == -1)
+        updatedtimestamp = status_results.valueAsInt(i, "updated_timestamp", -1);
+
       if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
       {
         long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
@@ -95,6 +100,9 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
     else if (status_results.valueAsString(i, "status") == "Read")
     {
       ++readreceiptcount;
+      if (updatedtimestamp == -1)
+        updatedtimestamp = status_results.valueAsInt(i, "updated_timestamp", -1);
+
       if (isgroup && !status_results.isNull(i, "updated_timestamp")) // add per-group-member details to cdelivery_receipts table
       {
         long long int member_id = getRecipientIdFromUuid(status_results.valueAsString(i, "uuid"), savedmap, createcontacts);
@@ -124,13 +132,22 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
       }
     }
   }
+
   // update the message in its table (mms/sms)
+  if (deliveryreceiptcount < readreceiptcount)
+    deliveryreceiptcount = readreceiptcount; // lets just say read messages are also delivered...
   if (deliveryreceiptcount)
     if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_delivery_receipts + " = ? WHERE _id = ?", {deliveryreceiptcount, msg_id}))
       Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_delivery_receipts, ".");
   if (readreceiptcount)
     if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET " + d_mms_read_receipts + " = ? WHERE _id = ?", {readreceiptcount, msg_id}))
       Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " ", d_mms_read_receipts, ".");
+
+  // update receipt timestamp (if available)
+  if (d_database.tableContainsColumn((is_mms ? d_mms_table : "sms"s), "receipt_timestamp"))
+    if (!d_database.exec("UPDATE " + (is_mms ? d_mms_table : "sms"s) + " SET receipt_timestamp = ? WHERE _id = ?", {updatedtimestamp, msg_id}))
+      Logger::error("Updating ", (is_mms ? d_mms_table : "sms"), " receipt_timestamp.");
+
 
 
   //insert into group_receipts

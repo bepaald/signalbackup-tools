@@ -81,17 +81,22 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (display_name[0] != '?' && (std::ispunct(display_name[0]) || std::isdigit(display_name[0])))
       initial = "#";
 
-    std::string color = results.isNull(0, "group_id") ? "555555" : s_html_colormap.at("group_color");
-    if (bepaald::contains(s_html_colormap, results.valueAsString(0, d_recipient_avatar_color)))
+    std::string color = s_html_colormap.at("group_color");
+    if (results.isNull(0, "group_id") && bepaald::contains(s_html_colormap, results.valueAsString(0, d_recipient_avatar_color)))
       color = s_html_colormap.at(results.valueAsString(0, d_recipient_avatar_color));
 
     // custom color?
     if (!results.isNull(0, "chat_colors"))
     {
-      //std::cout << "CHAT COLOR" << std::endl;
       auto [lightcolor, darkcolor] = getCustomColor(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "chat_colors"));
+
+      //std::cout << "CUSTOM CHAT COLOR (" << display_name << ")" << std::endl;
+      //std::cout << lightcolor << " " << darkcolor << std::endl;
+
       if (!lightcolor.empty())
         color = lightcolor;
+      else if (!darkcolor.empty())
+        color = darkcolor;
     }
 
     // custom wallpaper?
