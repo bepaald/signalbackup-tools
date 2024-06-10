@@ -335,6 +335,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
     if (!rid.empty())
     {
+      /*
       SqliteDB::QueryResults r2;
       if (d_databaseversion >= 24)
         d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
@@ -343,19 +344,27 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                         "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
                         (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
                         "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
-                        " recipient._id) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+                        " recipient._id) AS 'contact_name' FROM recipient "
+                        "LEFT JOIN groups ON groups.recipient_id = recipient._id " +
+                        (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
+                        "WHERE recipient._id = ?", rid, &r2);
       else
         d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
       if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
         contact_name = r2.getValueAs<std::string>(0, "contact_name");
+      */
+      contact_name = getNameFromRecipientId(bepaald::toNumber<long long int>(rid));
     }
   }
   else
   {
+    /*
     SqliteDB::QueryResults r2;
     if (d_database.exec("SELECT title FROM groups WHERE group_id IS (SELECT group_id FROM recipient WHERE _id = ?)", thread_address, &r2) &&
         r2.rows() == 1)
       contact_name = r2.valueAsString(0, "title");
+    */
+    contact_name = getNameFromRecipientId(bepaald::toNumber<long long int>(thread_address));
   }
   escapeXmlString(&contact_name);
 
@@ -387,6 +396,8 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
   // m_type - The type of the message defined by MMS spec.
   long long int m_type = getIntOr(results, i, "m_type", 0);
+  if (m_type == 0) // let's set this to 128/132 for outgoing/incoming to appease Google Messenger (#216)
+    m_type = Types::isOutgoing(realtype) ? 128 : 132;
 
   // m_cls
   std::string m_cls = getStringOr(results, i, "m_cls");  // if address == __textsecuregroup_ -> "personal" ???
@@ -524,10 +535,17 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   SqliteDB::QueryResults part_results;
   if (mid >= 0)
     d_database.exec("SELECT _id," +
-                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
-                    ",seq," + d_part_ct + ",name,chset," + d_part_cd + ",fn,cid,"
-                    + d_part_cl + ",ctt_s,ctt_t "
-                    "FROM " + d_part_table + " WHERE " + d_part_table + "." + d_part_mid + " = ?", mid, &part_results);
+                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) + ", " +
+                    (d_database.tableContainsColumn(d_part_table, "seq") ? "seq"s : "0 AS seq"s) + ", " +   // seq was removed in dbv215
+                    d_part_ct + ", file_name, " +
+                    d_part_cd + ", " +
+                    //"chset, " +   // chset was removed in dbv215 (always null in earlier dbs)
+                    //"fn, " +      // idem
+                    //"cid, " +     // idem
+                    //"ctt_s, " +   // idem
+                    //"ctt_t "      // idem
+                    d_part_cl +
+                    " FROM " + d_part_table + " WHERE " + d_part_table + "." + d_part_mid + " = ?", mid, &part_results);
 
   for (uint j = 0; j < part_results.rows(); ++j)
   {
@@ -692,21 +710,21 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                       "," + d_mms_type + ","
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in," +
                       (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
-                      "read,ct_l,m_type,m_size,exp,tr_id,st FROM " + d_mms_table +
+                      "read, ct_l, m_type, m_size, exp, tr_id, st FROM " + d_mms_table +
                       " WHERE "
                       + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND " +
                       (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND " : "") +
                       "(" + d_mms_type + " & ?) == 0 AND "
-                      "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
+                      "(base_type IN (?, ?, ?, ?, ?, ?, ?, ?))",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
     else
       d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,"
-                      "m_cls,sub_cs,ct_cls,v,pri,retr_st,retr_txt,retr_txt_cs,d_tm,d_rpt,exp,resp_txt,tr_id,st,resp_st,rpt_a FROM " + d_mms_table + " WHERE "
+                      "m_cls, sub_cs, ct_cls, v, pri, retr_st, retr_txt, retr_txt_cs, d_tm, d_rpt, exp, resp_txt, tr_id, st, resp_st, rpt_a FROM " + d_mms_table + " WHERE "
                       + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND "
                       "(" + d_mms_type + " & ?) == 0 AND "
-                      "(base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ? OR base_type == ?)",
+                      "(base_type IN (?, ?, ?, ?, ?, ?, ?, ?))",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
   }
