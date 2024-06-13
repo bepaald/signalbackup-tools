@@ -30,7 +30,7 @@ Signal is an actively developed application and consequently, the database forma
 ### Requirements
 
 To compile this project, current stable released versions of the following are needed:
-- A c++ compiler supporting at least the c++17 standard (tested with [GCC](https://gcc.gnu.org) 14.1.1 and [Clang](https://clang.llvm.org) 17.0.6, also tested and working with a few older compiler versions)
+- A C++ compiler supporting at least the C++17 standard (tested with [GCC](https://gcc.gnu.org) 14.1.1 and [Clang](https://clang.llvm.org) 17.0.6, also tested and working with a few older compiler versions)
 - [OpenSSL](https://www.openssl.org/) (any reasonably recent version from either the 3.X or 1.1x series)
 - [SQLite3](https://www.sqlite.org/) (any reasonably recent version)
 

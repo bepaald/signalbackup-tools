@@ -195,11 +195,11 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     }
     long long int thread_id = recid.getValueAs<long long int>(0, "_id");
 
-    // bool isgroup = false;
-    // SqliteDB::QueryResults groupcheck;
-    // d_database.exec("SELECT group_id FROM recipient WHERE _id = ? AND group_id IS NOT NULL", thread_recipient_id, &groupcheck);
-    // if (groupcheck.rows())
-    //   isgroup = true;
+    bool isgroup = false;
+    SqliteDB::QueryResults groupcheck;
+    d_database.exec("SELECT group_id FROM recipient WHERE _id = ? AND group_id IS NOT NULL", thread_recipient_id, &groupcheck);
+    if (groupcheck.rows())
+      isgroup = true;
 
     // now get all messages
     SqliteDB::QueryResults messages;
@@ -270,17 +270,18 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       bool is_viewonce = messages.getValueAs<long long int>(i, "view_once") == 1;
       if (is_deleted || is_viewonce)
         continue;
-
+      long long int type = messages.getValueAs<long long int>(i, d_mms_type);
       long long int msg_id = messages.getValueAs<long long int>(i, "_id");
       //bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(i, d_mms_type));
       long long int msg_recipient_id = messages.valueAsInt(i, d_mms_recipient_id);
+      if (isgroup && Types::isOutgoing(type))
+        msg_recipient_id = d_selfid;
       if (msg_recipient_id == -1) [[unlikely]]
       {
         Logger::warning("Failed to get message recipient id. Skipping.");
         continue;
       }
       std::string body = messages.valueAsString(i, "body");
-      long long int type = messages.getValueAs<long long int>(i, d_mms_type);
       std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(i, "date_received") / 1000,
                                                           "%b %d, %Y %H:%M:%S");
       SqliteDB::QueryResults attachment_results;

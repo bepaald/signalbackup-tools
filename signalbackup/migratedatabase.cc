@@ -85,7 +85,9 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                         std::pair<std::string, std::string>{"parent_story_id", "INTEGER DEFAULT 0"},
                         std::pair<std::string, std::string>{"export_state", "BLOB DEFAULT NULL"},
                         std::pair<std::string, std::string>{"server_guid", "TEXT DEFAULT NULL"},
-                        std::pair<std::string, std::string>{"exported", "INTEGER DEFAULT 0"}})
+                        std::pair<std::string, std::string>{"exported", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"viewed_receipt_count", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"notified_timestamp", "INTEGER DEFAULT 0"}})
   {
     if (!ensureColumns(d_mms_table, p.first, p.second))
     {
@@ -97,7 +99,8 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   for (auto const &p : {std::pair<std::string, std::string>{"receipt_timestamp", "INTEGER DEFAULT -1"},
                         std::pair<std::string, std::string>{"export_state", "BLOB DEFAULT NULL"},
                         std::pair<std::string, std::string>{"server_guid", "TEXT DEFAULT NULL"},
-                        std::pair<std::string, std::string>{"exported", "INTEGER DEFAULT 0"}})
+                        std::pair<std::string, std::string>{"exported", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"notified_timestamp", "INTEGER DEFAULT 0"}})
   {
     if (!ensureColumns("sms", p.first, p.second))
     {
