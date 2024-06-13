@@ -35,7 +35,7 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
                     "Please report this error to the program author.");
     else
       Logger::warning("Foreign key constraint violated.");
-    results.prettyPrint();
+    results.prettyPrint(d_truncate);
     return false;
   }
   if (!warn)
@@ -64,7 +64,7 @@ bool SignalBackup::checkDbIntegrity(bool warn) const
                     "Please report this error to the program author.");
     else
       Logger::warning("Foreign key constraint violated.");
-    results.prettyPrint();
+    results.prettyPrint(d_truncate);
     return false;
   }
   if (!warn)

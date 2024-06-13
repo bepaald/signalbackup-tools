@@ -26,13 +26,13 @@ class DummyBackup : public SignalBackup
 {
  public:
   inline DummyBackup(std::string const &configdir, std::string const &databasedir, long long int cipherversion,
-                     bool ignorewal, bool verbose, bool showprogress);
+                     bool ignorewal, bool verbose, bool truncate, bool showprogress);
 };
 
 inline DummyBackup::DummyBackup(std::string const &configdir, std::string const &databasedir, long long int cipherversion,
-                                bool ignorewal, bool verbose, bool showprogress)
+                                bool ignorewal, bool verbose, bool truncate, bool showprogress)
   :
-  SignalBackup(verbose, showprogress)
+  SignalBackup(verbose, truncate, showprogress)
 {
   // set up required tables (database version 223
 

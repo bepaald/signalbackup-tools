@@ -339,7 +339,8 @@ ThreadTable::
                                    " AND (" + d_mms_type + " & ", Types::GROUP_V2_LEAVE_BITS, ") IS NOT ", Types::GROUP_V2_LEAVE_BITS,
                                    " AND (" + d_mms_type + " & ", Types::BASE_TYPE_MASK, ") IS NOT ", Types::THREAD_MERGE_TYPE,
                                    " ORDER BY " + d_mms_date_sent + " DESC LIMIT 1");
-            d_database.prettyPrint("SELECT " + d_mms_recipient_id + " FROM " + d_mms_table +
+            d_database.prettyPrint(d_truncate,
+                                   "SELECT " + d_mms_recipient_id + " FROM " + d_mms_table +
                                    " WHERE " + d_mms_table + ".thread_id = " + threadid +
                                    " AND (" + d_mms_type + " & ?) IS NOT ?"
                                    " AND (" + d_mms_type + " & ?) IS NOT ?"

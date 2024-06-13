@@ -49,6 +49,9 @@ changes, you must provide one of the output options.
 --runsqlquery <QUERY>          Run <QUERY> against the backup's internal SQL database.
 --runprettysqlquery <QUERY>    As above, but try show output in a pretty table. If the output is not too
                                large for your terminal, this is often much more readable.
+--no-truncate                  By default, `--runprettysqlquery' truncates table columns to fit the
+                               terminal. With this option, this can be disabled, useful when redirecting
+                               output to file (or using the `--logfile' option.
 --listthreads                  List the threads in the database with their `_id' numbers. These id's are
                                required input for various other options.
 --listrecipients               List all recipients in the database with their `_id'. These id's are

@@ -283,7 +283,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
               r3.rows() != 1)
           {
             Logger::error("Failed to get phone number for recipient: ", id);
-            r3.prettyPrint();
+            r3.prettyPrint(d_truncate);
             return;
           }
           memberphones.insert(r3.valueAsString(0, d_recipient_e164));

@@ -1383,7 +1383,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                 {
                   if (d_verbose) [[unlikely]] Logger::message_end();
                   Logger::warning("Quote-bodyrange contains no recipient and no style. Skipping.");
-                  dtdb.d_database.prettyPrint("SELECT json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "] FROM messages WHERE rowid = ?", rowid);
+                  dtdb.d_database.prettyPrint(d_truncate,
+                                              "SELECT json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "] FROM messages WHERE rowid = ?", rowid);
                   continue;
                 }
 

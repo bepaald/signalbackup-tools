@@ -138,7 +138,7 @@ void SignalBackup::scanMissingAttachments() const
     d_database.exec("SELECT quote," + d_part_ct + "," + d_part_pending + " FROM " + d_part_table + " WHERE _id = ?" +
                     (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id = " + bepaald::toString(missing[i].second) : ""s),
                     missing[i].first, &res);
-    res.prettyPrint();
+    res.prettyPrint(d_truncate);
   }
 
 }

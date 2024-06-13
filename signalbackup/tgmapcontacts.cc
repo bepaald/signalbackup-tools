@@ -71,7 +71,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   if (d_verbose) [[unlikely]]
   {
     Logger::message("ALL CONTACTS IN JSON: ");
-    json_contacts.prettyPrint();
+    json_contacts.prettyPrint(d_truncate);
   }
 
   for (uint i = 0; i < json_contacts.rows(); ++i)

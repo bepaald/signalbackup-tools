@@ -229,7 +229,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       {
         Logger::message("Maybe inserted empty message.");
         Logger::message("Data:");
-        message_data.getRow(i).prettyPrint();
+        message_data.getRow(i).prettyPrint(d_truncate);
       }
 
     }

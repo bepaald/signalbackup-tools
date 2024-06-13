@@ -116,6 +116,7 @@ class SignalBackup
   bool d_showprogress;
   bool d_stoponerror;
   bool d_verbose;
+  bool d_truncate;
   bool d_fulldecode;
   std::set<std::string> d_warningsgiven;
   long long int d_selfid;
@@ -200,12 +201,12 @@ class SignalBackup
   static std::map<std::string, std::string> const s_html_colormap;
 
  protected:
-  inline SignalBackup(bool verbose, bool showprogress);
+  inline SignalBackup(bool verbose, bool truncate, bool showprogress);
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool showprogress, bool replaceattachments);
+                      bool truncate, bool showprogress, bool replaceattachments);
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
+                      bool truncate, bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
                       std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode);
   inline SignalBackup(SignalBackup const &other) = default;
   inline SignalBackup &operator=(SignalBackup const &other) = default;
@@ -479,20 +480,21 @@ class SignalBackup
 };
 
 // ONLY FOR DUMMYBACKUP
-inline SignalBackup::SignalBackup(bool verbose, bool showprogress)
+inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress)
   :
   d_showprogress(showprogress),
-  d_verbose(verbose)
-{}
-
-inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase,
-                                  bool verbose, bool showprogress, bool replaceattachments)
-  :
-  SignalBackup(filename, passphrase, verbose, showprogress, replaceattachments, false, std::vector<long long int>(), false, false)
+  d_verbose(verbose),
+  d_truncate(truncate)
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                                  bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
+                                  bool truncate, bool showprogress, bool replaceattachments)
+  :
+  SignalBackup(filename, passphrase, verbose, truncate, showprogress, replaceattachments, false, std::vector<long long int>(), false, false)
+{}
+
+inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
+                                  bool truncate, bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
                                   std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode)
   :
   d_filename(filename),
@@ -504,6 +506,7 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   d_showprogress(showprogress),
   d_stoponerror(stoponerror),
   d_verbose(verbose),
+  d_truncate(truncate),
   d_fulldecode(fulldecode),
   d_selfid(-1)
 {
@@ -746,7 +749,7 @@ inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
   }
 
   if (pretty)
-    res.prettyPrint();
+    res.prettyPrint(d_truncate);
   else
     res.print();
 }

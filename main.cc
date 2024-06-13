@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 
   if (!arg.listjsonchats().empty())
   {
-    JsonDatabase jdb(arg.listjsonchats(), arg.verbose());
+    JsonDatabase jdb(arg.listjsonchats(), arg.verbose(), arg.truncate());
     if (!jdb.ok())
       return 1;
     jdb.listChats();
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
   if (!arg.exportdesktophtml().empty() || !arg.exportdesktoptxt().empty())
   {
     DummyBackup dummydb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
-                        arg.ignorewal(), arg.verbose(), arg.showprogress());
+                        arg.ignorewal(), arg.verbose(), arg.truncate(), arg.showprogress());
     if (!dummydb.ok())
       return 1;
 
@@ -209,7 +209,8 @@ int main(int argc, char *argv[])
   // open input
   if (arg.verbose()) [[unlikely]]
     Logger::message("Opening input");
-  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.passphrase(), arg.verbose(), arg.showprogress(),
+  std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.passphrase(), arg.verbose(),
+                                                    arg.truncate(), arg.showprogress(),
                                                     arg.replaceattachments_bool(),
                                                     arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
                                                     arg.stoponerror(), arg.fulldecode()));
@@ -238,7 +239,8 @@ int main(int argc, char *argv[])
 
   if (!arg.source().empty())
   {
-    SignalBackup src(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.showprogress(), !arg.replaceattachments().empty());
+    SignalBackup src(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.truncate(),
+                     arg.showprogress(), !arg.replaceattachments().empty());
     std::vector<long long int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {

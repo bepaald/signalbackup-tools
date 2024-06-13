@@ -27,8 +27,9 @@ class JsonDatabase
   MemSqliteDB d_database;
   bool d_ok;
   bool d_verbose;
+  bool d_truncate;
  public:
-  JsonDatabase(std::string const &jsonfile, bool verbose);
+  JsonDatabase(std::string const &jsonfile, bool verbose, bool truncate);
   JsonDatabase(JsonDatabase const &other) = default;
   JsonDatabase(JsonDatabase &&other) = default;
   JsonDatabase &operator=(JsonDatabase const &other) = default;
@@ -46,7 +47,7 @@ inline bool JsonDatabase::ok() const
 
 inline void JsonDatabase::listChats() const
 {
-  d_database.prettyPrint("SELECT * FROM chats");
+  d_database.prettyPrint(d_truncate, "SELECT * FROM chats");
 }
 
 #endif

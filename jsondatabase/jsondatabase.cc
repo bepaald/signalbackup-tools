@@ -19,10 +19,11 @@
 
 #include "jsondatabase.ih"
 
-JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose)
+JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool truncate)
   :
   d_ok(false),
-  d_verbose(verbose)
+  d_verbose(verbose),
+  d_truncate(truncate)
 {
   // open file, get size and read data
   std::ifstream sourcefile(jsonfile, std::ios_base::binary | std::ios_base::in);

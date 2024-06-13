@@ -64,7 +64,7 @@ class SqliteDB
     inline size_t columns() const;
     inline void clear();
     void printLineMode(long long int row = -1) const;
-    void prettyPrint(long long int row = -1) const;
+    void prettyPrint(bool truncate, long long int row = -1) const;
     void print(long long int row = -1, bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
     std::string valueAsString(size_t row, std::string const &header) const;
@@ -137,9 +137,9 @@ class SqliteDB
   inline bool print(std::string const &q) const;
   inline bool print(std::string const &q, std::any const &param) const;
   inline bool print(std::string const &q, std::vector<std::any> const &params) const;
-  inline bool prettyPrint(std::string const &q) const;
-  inline bool prettyPrint(std::string const &q, std::any const &param) const;
-  inline bool prettyPrint(std::string const &q, std::vector<std::any> const &params) const;
+  inline bool prettyPrint(bool truncate, std::string const &q) const;
+  inline bool prettyPrint(bool truncate, std::string const &q, std::any const &param) const;
+  inline bool prettyPrint(bool truncate, std::string const &q, std::vector<std::any> const &params) const;
   inline bool printLineMode(std::string const &q) const;
   inline bool printLineMode(std::string const &q, std::any const &param) const;
   inline bool printLineMode(std::string const &q, std::vector<std::any> const &params) const;
@@ -604,21 +604,21 @@ inline bool SqliteDB::print(std::string const &q, std::vector<std::any> const &p
   return ret;
 }
 
-inline bool SqliteDB::prettyPrint(std::string const &q) const
+inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q) const
 {
-  return prettyPrint(q, std::vector<std::any>());
+  return prettyPrint(truncate, q, std::vector<std::any>());
 }
 
-inline bool SqliteDB::prettyPrint(std::string const &q, std::any const &param) const
+inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q, std::any const &param) const
 {
-  return prettyPrint(q, std::vector<std::any>{param});
+  return prettyPrint(truncate, q, std::vector<std::any>{param});
 }
 
-inline bool SqliteDB::prettyPrint(std::string const &q, std::vector<std::any> const &params) const
+inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q, std::vector<std::any> const &params) const
 {
   QueryResults results;
   bool ret = exec(q, params, &results);
-  results.prettyPrint();
+  results.prettyPrint(truncate);
   return ret;
 }
 

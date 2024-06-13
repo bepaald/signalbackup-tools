@@ -34,7 +34,8 @@ void SignalBackup::listRecipients() const
    */
 
 
-  d_database.prettyPrint("SELECT recipient._id, "
+  d_database.prettyPrint(d_truncate,
+                         "SELECT recipient._id, "
 
                          "COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
                          "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +

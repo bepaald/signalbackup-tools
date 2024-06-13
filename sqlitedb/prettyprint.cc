@@ -19,7 +19,7 @@
 
 #include "sqlitedb.ih"
 
-void SqliteDB::QueryResults::prettyPrint(long long int requestedrow) const
+void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedrow) const
 {
   if (rows() == 0 && columns() == 0)
   {
@@ -68,7 +68,7 @@ void SqliteDB::QueryResults::prettyPrint(long long int requestedrow) const
         contents.back().emplace_back("(NULL)");
       else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
         contents.back().emplace_back(bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
-                                                                getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
+                                                               getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
       else
         contents.back().emplace_back("(unhandled type)");
     }
@@ -82,20 +82,21 @@ void SqliteDB::QueryResults::prettyPrint(long long int requestedrow) const
         widths[col] = charCount(contents[row][col]);
 
   int totalw = std::accumulate(widths.begin(), widths.end(), 0) + 3 * columns() + 1;
+  int availablewidth = truncate ? availableWidth() : std::numeric_limits<int>::max();
   //std::cout << " total width: " << totalw << std::endl;
-  //std::cout << " available width: " << availableWidth() << std::endl;
+  //std::cout << " available width: " << availablewidth << std::endl;
 
-  if (totalw > availableWidth())
+  if (totalw > availablewidth)
   {
-    uint fairwidthpercol = (availableWidth() - 1) / contents[0].size() - 3;
-    //std::cout << "cols: " << contents[0].size() << " size per col (adjusted for table space): " << fairwidthpercol << " LEFT: " << availableWidth() - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1) << std::endl;
-    int spaceleftbyshortcols = availableWidth() - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1);
+    uint fairwidthpercol = (availablewidth - 1) / contents[0].size() - 3;
+    //std::cout << "cols: " << contents[0].size() << " size per col (adjusted for table space): " << fairwidthpercol << " LEFT: " << availableWidth - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1) << std::endl;
+    int spaceleftbyshortcols = availablewidth - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1);
     std::vector<int> oversizedcols;
     uint widestcol = 0;
     uint maxwidth = 0;
-    // each column has availableWidth() / nCols (- tableedges) available by fairness.
+    // each column has availableWidth / nCols (- tableedges) available by fairness.
     // add to this all the space not needed by the columns that are
-    // less wide than availableWidth() / nCols anyway.
+    // less wide than availableWidth / nCols anyway.
     for (uint i = 0; i < widths.size(); ++i)
     {
       if (widths[i] > maxwidth)

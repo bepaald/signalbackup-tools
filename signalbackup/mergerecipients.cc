@@ -361,7 +361,7 @@ Field 4 (optional::protobuf):
     {
       d_database.exec(d.second, &results2);
       if (d_verbose) [[unlikely]]
-        results2.prettyPrint();
+        results2.prettyPrint(d_truncate);
       for (uint j = 0; j < results2.rows(); ++j)
       {
         std::string body = std::any_cast<std::string>(results2.value(j, "body"));
