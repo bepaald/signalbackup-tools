@@ -88,18 +88,19 @@ long long int SignalBackup::scanSelf() const
 
     //std::cout << "Dealing with thread: " << tid << " (recipient: " << rid << ")" << std::endl;
 
-    /*
-      // in earlier versions, it was possible to quote someone cross-thread. That makes this method unreliable
+    // in earlier versions, it was possible to quote someone cross-thread. So we need to limit
+    // this query to quotes with quote_id referencing a quote in the same thread.
     if (!d_database.exec("SELECT DISTINCT quote_author FROM " + d_mms_table + " "
                          "WHERE thread_id IS ? AND quote_id IS NOT 0 AND quote_id IS NOT NULL "
-                         "AND quote_author IS NOT NULL AND quote_author IS NOT ?", {tid, rid}, &res2))
+                         "AND quote_author IS NOT NULL AND quote_author IS NOT ? "
+                         "AND (quote_id IN (SELECT " + d_mms_date_sent + " FROM " + d_mms_table + " WHERE thread_id = ?)" +
+                         (d_database.containsTable("sms") ? " OR quote_id IN (SELECT date_sent FROM sms WHERE thread_id = " + bepaald::toString(tid) + "))" : ")"), {tid, rid, tid}, &res2))
       continue;
     for (uint j = 0; j < res2.rows(); ++j)
     {
-      std::cout << "  From quote:" << res2.valueAsString(j, "quote_author") << std::endl;
+      //std::cout << "  From quote:" << res2.valueAsString(j, "quote_author") << std::endl;
       options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "quote_author")));
     }
-    */
 
     for (auto const &t : {"sms"s, d_mms_table}) // OLD STYLE REACTIONS
     {
