@@ -71,7 +71,6 @@ long long int SignalBackup::scanSelf() const
   if (selfid != -1)
     return selfid;
 
-
   // get thread ids of all 1-on-1 conversations
   SqliteDB::QueryResults res;
   if (!d_database.exec("SELECT _id, " + d_thread_recipient_id + " FROM thread WHERE " + d_thread_recipient_id + " IN (SELECT _id FROM recipient WHERE group_id IS NULL)", &res))
@@ -81,61 +80,53 @@ long long int SignalBackup::scanSelf() const
 
   for (uint i = 0; i < res.rows(); ++i)
   {
+    // try to find another recipient in this one-on-one thread
+
     long long int tid = res.getValueAs<long long int>(i, "_id");
     long long int rid = bepaald::toNumber<long long int>(res.valueAsString(i, d_thread_recipient_id));
+    SqliteDB::QueryResults res2;
+
     //std::cout << "Dealing with thread: " << tid << " (recipient: " << rid << ")" << std::endl;
 
-    // try to find other recipient in thread
-    SqliteDB::QueryResults res2;
+    /*
+      // in earlier versions, it was possible to quote someone cross-thread. That makes this method unreliable
     if (!d_database.exec("SELECT DISTINCT quote_author FROM " + d_mms_table + " "
                          "WHERE thread_id IS ? AND quote_id IS NOT 0 AND quote_id IS NOT NULL "
                          "AND quote_author IS NOT NULL AND quote_author IS NOT ?", {tid, rid}, &res2))
       continue;
     for (uint j = 0; j < res2.rows(); ++j)
     {
-      //std::cout << "  From quote:" << res2.valueAsString(j, "quote_author") << std::endl;
+      std::cout << "  From quote:" << res2.valueAsString(j, "quote_author") << std::endl;
       options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "quote_author")));
     }
+    */
 
-    if (d_database.tableContainsColumn("sms", "reactions"))
+    for (auto const &t : {"sms"s, d_mms_table}) // OLD STYLE REACTIONS
     {
-      if (!d_database.exec("SELECT reactions FROM sms WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
-        continue;
-      for (uint j = 0; j < res2.rows(); ++j)
+      if (d_database.tableContainsColumn(t, "reactions"))
       {
-        ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
-        for (uint k = 0; k < reactions.numReactions(); ++k)
+        if (!d_database.exec("SELECT reactions FROM " + t + " WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
+          continue;
+        for (uint j = 0; j < res2.rows(); ++j)
         {
-          if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
+          ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
+          for (uint k = 0; k < reactions.numReactions(); ++k)
           {
-            //std::cout << "  From reaction (old): " << reactions.getAuthor(k) << std::endl;
-            options.insert(reactions.getAuthor(k));
+            if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
+            {
+              //std::cout << "  From " + t + ".reaction (old): " << reactions.getAuthor(k) << std::endl;
+              options.insert(reactions.getAuthor(k));
+            }
           }
         }
       }
     }
-    if (d_database.tableContainsColumn(d_mms_table, "reactions"))
-    {
-      if (!d_database.exec("SELECT reactions FROM " + d_mms_table + " WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
-        continue;
-      for (uint j = 0; j < res2.rows(); ++j)
-      {
-        ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
-        for (uint k = 0; k < reactions.numReactions(); ++k)
-        {
-          if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
-          {
-            //std::cout << "  From reaction (old): " << reactions.getAuthor(k) << std::endl;
-            options.insert(reactions.getAuthor(k));
-          }
-        }
-      }
-    }
-    if (d_database.containsTable("reaction"))
+    if (d_database.containsTable("reaction")) // NEW STYLE REACTIONS
     {
       if (d_database.containsTable("sms"))
       {
-        if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
+        if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND "s +
+                             "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
           continue;
         for (uint j = 0; j < res2.rows(); ++j)
         {
@@ -148,7 +139,6 @@ long long int SignalBackup::scanSelf() const
                            (d_database.tableContainsColumn("reaction", "is_mms") ? "is_mms IS 1 AND " : "") +
                            "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id = ?)", {rid, tid} , &res2))
           continue;
-
       for (uint j = 0; j < res2.rows(); ++j)
       {
         //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
@@ -208,7 +198,14 @@ long long int SignalBackup::scanSelf() const
                              "recipient_id NOT IN (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE thread_id IS ? AND type IS NOT ?)",
                              {gid, tid, Types::GROUP_CALL_TYPE}, &res3))
           continue;
-        //res3.prettyPrint();
+        else
+        {
+          for (uint j = 0; j < res3.rows(); ++j)
+          {
+            //std::cout << "  From group membership (<185):" << res3.valueAsString(j, "recipient_id") << std::endl;
+            options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "recipient_id")));
+          }
+        }
       }
       else
       {
@@ -238,12 +235,15 @@ long long int SignalBackup::scanSelf() const
                              {gid, tid, Types::GROUP_CALL_TYPE,
                               Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
                               Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
+          continue;
+        else
+        {
           for (uint j = 0; j < res3.rows(); ++j)
           {
-            Logger::message("  From group membership (NEW):", res3(j, "recipeint_id"));
-            options.insert(bepaald::toNumber<long long int>(res3(j, "recipient_id")));
+            //std::cout << "  From group membership (NEW):" << res3(j, "recipient_id") << std::endl;
+            options.insert(res3.valueAsInt(j, "recipient_id"));
           }
-
+        }
       }
     }
   }
@@ -257,3 +257,24 @@ long long int SignalBackup::scanSelf() const
 
   return -1;
 }
+
+
+/*
+  Another possible option, maybe also for older (but not oldest) databases:
+
+  SELECT address FROM identites WHERE first_use = 1 AND verified = 1 AND nonblocking_approval = 1;
+
+  This seems to return 1 or two 'address'es, which seem to all point to the same recipient (='self');
+
+  dbv10 : not working
+  dbv23 : address == e164 of self
+  dbv27 - dbv99 : address == recipient._id of self
+  dbv123 - dbv198 : address == recipient.uuid (/aci) of self
+  dbv201 - dbv231 : address (result 1) == recipient.uuid (/aci) of self
+                    address (result 2) == recipient.pni of self
+
+  In my databases it only has 1 questionable result for DEVDBV23 where it returns 2 distinct e164s,
+  One is self, the other is unknown (does not appear in recipient_preferences or elsewhere). Possible
+  number change, or backup restore after new SIM card placed?
+
+*/
