@@ -777,20 +777,20 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   // disable calllog if not presents in database, or it is empty
-  if (!d_database.containsTable("call") ||
-      d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM call", -1) == 0)
+  if (calllog &&
+      (!d_database.containsTable("call") ||
+       d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM call", -1) == 0))
   {
-    if (calllog)
-      Logger::warning("Not writing calllog.html: Call log is empty");
+    Logger::warning("Not writing calllog.html: Call log is empty");
     calllog = false;
   }
 
   // disable blockedlist if not present, or it is empty
-  if (!d_database.tableContainsColumn("recipient", "blocked") ||
-      d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM recipient WHERE blocked = 1", -1) == 0)
+  if (blocked &&
+      (!d_database.tableContainsColumn("recipient", "blocked") ||
+       d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM recipient WHERE blocked = 1", -1) == 0))
   {
-    if (blocked)
-      Logger::warning("Not writing blockedlist.html: No blocked recipients");
+    Logger::warning("Not writing blockedlist.html: No blocked recipients");
     blocked = false;
   }
 
