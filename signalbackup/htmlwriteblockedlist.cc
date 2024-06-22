@@ -48,6 +48,12 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     return false;
   }
 
+  if (results.rows() == 0)
+  {
+    Logger::warning("Skipping writing of blockedlist: no blocked contacts found");
+    return true;
+  }
+
   // write start of html
 
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
