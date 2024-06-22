@@ -107,6 +107,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << "        --msgreaction-border: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
   file << "        --msgreaction-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
   file << "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;": "#505050;") << '\n';
+  file << "        --msgreactioninfo-border: " << (light ? "#1B1C1F;": "#FBFCFF;") << '\n';
   file << "        --reactioncount-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
   file << "        --incominglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << '\n';
   file << "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << '\n';
@@ -142,6 +143,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << "        --msgreaction-border: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
     file << "        --msgreaction-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
     file << "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;": "#505050;") << '\n';
+    file << "        --msgreactioninfo-border: " << (!light ? "#1B1C1F;": "#FBFCFF;") << '\n';
     file << "        --reactioncount-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
     file << "        --incominglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << '\n';
     file << "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << '\n';
@@ -837,10 +839,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         visibility: hidden;
         width: 250px;
         background-color: var(--msgreactioninfo-bc);
+        border: 1px solid var(--msgreactioninfo-border);
         padding: 5px;
         border-radius: 6px;
         margin-left: -131px;
-        bottom: 125%;
+        bottom: 135%;
         left: 50%;
         opacity: 0;
         transition: opacity 0.2s;
@@ -865,12 +868,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-reaction .msg-reaction-info::before {
         content: "";
         position: absolute;
-        top: 100%;
-        left: 50%;
-        margin-left: -5px;
-        border-width: 5px;
-        border-style: solid;
-        border-color: var(--msgreactioninfo-bc) transparent transparent transparent;
+        top: calc(100% - 5px);
+        left: calc(50% - 5px);
+        width: 10px;
+        height: 10px;
+        transform: rotate(45deg);
+        background-color: var(--msgreactioninfo-bc);
+        border-bottom: 1px solid var(--msgreactioninfo-border);
+        border-right: 1px solid var(--msgreactioninfo-border);
       }
 
       .edited:hover,
@@ -2289,7 +2294,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         if (emojireaction == msg_info.reaction_results->valueAsString(r2, "emoji"))
         {
           ++count;
-          reaction_info += (reaction_info.empty() ? "" : "<hr>") + "From "s + getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r2, "author_id")).display_name +
+          reaction_info += (reaction_info.empty() ? "" : "<hr>") + "From: "s + getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r2, "author_id")).display_name +
             "<br>Sent: " + msg_info.reaction_results->valueAsString(r2, "date_sent") +
             "<br>Received: " + msg_info.reaction_results->valueAsString(r2, "date_received");
         }

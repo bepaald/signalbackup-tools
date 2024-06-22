@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
   if (!arg.croptothreads().empty() || !arg.croptothreadsbyname().empty())
   {
     std::vector<long long int> threads = arg.croptothreads();
-    if (!addThreadIdsFromString(sb.get(), arg.importthreadsbyname(), &threads))
+    if (!addThreadIdsFromString(sb.get(), arg.croptothreadsbyname(), &threads))
       return 1;
     sb->cropToThread(threads);
   }
@@ -496,6 +496,10 @@ bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::s
 
     long long int r = backup->getRecipientIdFromName(names[i], true);
     if (r == -1)
+      r = backup->getRecipientIdFromPhone(names[i], true);
+    if (r == -1)
+      r = backup->getRecipientIdFromUsername(names[i], true);
+    if (r == -1)
     {
       Logger::error("Failed to find threadId for recipient '", names[i], "'");
       return false;
@@ -513,7 +517,6 @@ bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::s
   std::sort(threads->begin(), threads->end());
   return true;
 }
-
 
 /* Database version notes
 

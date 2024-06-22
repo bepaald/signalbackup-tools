@@ -358,7 +358,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           if (d_verbose) [[unlikely]]
             Logger::message("Trying to match group-v1 by 'derivedGroupV2Id'");
           person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
-          if (getRecipientIdFromUuid(person_or_group_id, &recipientmap) != -1)
+          if (getRecipientIdFromUuidMapped(person_or_group_id, &recipientmap) != -1)
             found_new_group = true;
           bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
         }
@@ -397,13 +397,13 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
     long long int recipientid_for_thread = -1;
     std::string phone;
     if (!person_or_group_id.empty())
-      recipientid_for_thread = getRecipientIdFromUuid(person_or_group_id, &recipientmap, createmissingcontacts);
+      recipientid_for_thread = getRecipientIdFromUuidMapped(person_or_group_id, &recipientmap, createmissingcontacts);
     else
     {
       Logger::warning("Failed to determine uuid. Trying with phone number...");
       phone = results_all_conversations.valueAsString(i, "e164");
       if (!phone.empty())
-        recipientid_for_thread = getRecipientIdFromPhone(phone, &recipientmap, createmissingcontacts);
+        recipientid_for_thread = getRecipientIdFromPhoneMapped(phone, &recipientmap, createmissingcontacts);
     }
 
     if (recipientid_for_thread == -1)
@@ -545,8 +545,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       if (!results_all_messages_from_conversation.isNull(j, "group_call_init"))
       {
         // group calls always have address set to the one initiating the call
-        address = getRecipientIdFromUuid(results_all_messages_from_conversation.valueAsString(j, "group_call_init"),
-                                         &recipientmap, createmissingcontacts);
+        address = getRecipientIdFromUuidMapped(results_all_messages_from_conversation.valueAsString(j, "group_call_init"),
+                                               &recipientmap, createmissingcontacts);
       }
       else if (isgroupconversation && incoming && type != "group-v1-migration")
         //if (isgroupconversation && (incoming || (type == "call-history" & something)))
@@ -602,8 +602,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           statusmsguuid.valueAsString(0, "e164") :
           results_all_messages_from_conversation.valueAsString(j, "sourcephone");
 
-        if (source_uuid.empty() || (address = getRecipientIdFromUuid(source_uuid, &recipientmap, createmissingcontacts)) == -1) // try with phone number
-          address = getRecipientIdFromPhone(source_phone, &recipientmap, createmissingcontacts);
+        if (source_uuid.empty() || (address = getRecipientIdFromUuidMapped(source_uuid, &recipientmap, createmissingcontacts)) == -1) // try with phone number
+          address = getRecipientIdFromPhoneMapped(source_phone, &recipientmap, createmissingcontacts);
         if (address == -1)
         {
           if (createmissingcontacts)
@@ -1289,9 +1289,9 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           if (mmsquote_author_uuid.empty()) // possibly old database, try conversations.uuid
             mmsquote_author_uuid = quote_results.valueAsString(0, "quote_author_uuid_from_phone");
           if (mmsquote_author_uuid.empty()) // failed to get uuid from desktopdatabase, try matching on phone number
-            mmsquote_author = getRecipientIdFromPhone(quote_results.valueAsString(0, "quote_author_phone"), &recipientmap, createmissingcontacts);
+            mmsquote_author = getRecipientIdFromPhoneMapped(quote_results.valueAsString(0, "quote_author_phone"), &recipientmap, createmissingcontacts);
           else
-            mmsquote_author = getRecipientIdFromUuid(mmsquote_author_uuid, &recipientmap, createmissingcontacts);
+            mmsquote_author = getRecipientIdFromUuidMapped(mmsquote_author_uuid, &recipientmap, createmissingcontacts);
           if (mmsquote_author == -1)
           {
             if (d_verbose) [[unlikely]] Logger::message_end();
@@ -1388,7 +1388,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                   continue;
                 }
 
-                rec_id = getRecipientIdFromUuid(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
+                rec_id = getRecipientIdFromUuidMapped(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
                 if (rec_id == -1)
                 {
                   if (createmissingcontacts)
@@ -1599,7 +1599,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           if (results_mentions.isNull(0, "mention_uuid"))
             continue;
 
-          long long int rec_id = getRecipientIdFromUuid(results_mentions.valueAsString(0, "mention_uuid"), &recipientmap, createmissingcontacts);
+          long long int rec_id = getRecipientIdFromUuidMapped(results_mentions.valueAsString(0, "mention_uuid"), &recipientmap, createmissingcontacts);
           if (rec_id == -1)
           {
             if (createmissingcontacts)

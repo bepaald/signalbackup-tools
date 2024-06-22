@@ -36,9 +36,9 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
       if (!ddb.exec("SELECT COALESCE(" + d_dt_c_uuid + ",e164) AS rid FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
           dm_id.rows() != 1)
         continue;
-      long long int recid = getRecipientIdFromUuid(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
+      long long int recid = getRecipientIdFromUuidMapped(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
       if (recid < 0)
-        recid = getRecipientIdFromPhone(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
+        recid = getRecipientIdFromPhoneMapped(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
       if (recid < 0)
       {
         // let's just check the uuid's aren't recipient uuid's to make sure
@@ -87,9 +87,9 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
         if (!ddb.exec("SELECT COALESCE(" + d_dt_c_uuid + ", e164) AS rid FROM conversations WHERE id IS ?", convuuid, &im_id) ||
             im_id.rows() != 1)
           continue;
-        long long int recid = getRecipientIdFromUuid(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
+        long long int recid = getRecipientIdFromUuidMapped(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
         if (recid < 0)
-          recid = getRecipientIdFromPhone(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
+          recid = getRecipientIdFromPhoneMapped(im_id.valueAsString(0, "rid"), recipientmap, createcontacts);
         if (recid < 0)
         {
           // let's just check the uuid's aren't recipient uuid's to make sure

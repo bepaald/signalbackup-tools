@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 206> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--split", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate"};
+  std::array<std::string, 206> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--split", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -113,19 +113,19 @@ class Arg
   bool d_includeblockedlist;
   bool d_includesettings;
   bool d_includefullcontactlist;
-  std::string d_exporttxt;
-  std::string d_exportdesktoptxt;
-  bool d_append;
-  long long int d_split;
-  bool d_split_bool;
-  long long int d_desktopdbversion;
-  bool d_migratedb;
-  bool d_importstickers;
-  bool d_addincompletedataforhtmlexport;
-  bool d_light;
   bool d_themeswitching;
   bool d_searchpage;
   bool d_stickerpacks;
+  long long int d_split;
+  bool d_split_bool;
+  bool d_addincompletedataforhtmlexport;
+  bool d_light;
+  std::string d_exporttxt;
+  std::string d_exportdesktoptxt;
+  bool d_append;
+  long long int d_desktopdbversion;
+  bool d_migratedb;
+  bool d_importstickers;
   long long int d_findrecipient;
   std::string d_importtelegram;
   std::string d_listjsonchats;
@@ -225,19 +225,19 @@ class Arg
   inline bool includeblockedlist() const;
   inline bool includesettings() const;
   inline bool includefullcontactlist() const;
-  inline std::string const &exporttxt() const;
-  inline std::string const &exportdesktoptxt() const;
-  inline bool append() const;
-  inline long long int split() const;
-  inline bool split_bool() const;
-  inline long long int desktopdbversion() const;
-  inline bool migratedb() const;
-  inline bool importstickers() const;
-  inline bool addincompletedataforhtmlexport() const;
-  inline bool light() const;
   inline bool themeswitching() const;
   inline bool searchpage() const;
   inline bool stickerpacks() const;
+  inline long long int split() const;
+  inline bool split_bool() const;
+  inline bool addincompletedataforhtmlexport() const;
+  inline bool light() const;
+  inline std::string const &exporttxt() const;
+  inline std::string const &exportdesktoptxt() const;
+  inline bool append() const;
+  inline long long int desktopdbversion() const;
+  inline bool migratedb() const;
+  inline bool importstickers() const;
   inline long long int findrecipient() const;
   inline std::string const &importtelegram() const;
   inline std::string const &listjsonchats() const;
@@ -663,6 +663,41 @@ inline bool Arg::includefullcontactlist() const
   return d_includefullcontactlist;
 }
 
+inline bool Arg::themeswitching() const
+{
+  return d_themeswitching;
+}
+
+inline bool Arg::searchpage() const
+{
+  return d_searchpage;
+}
+
+inline bool Arg::stickerpacks() const
+{
+  return d_stickerpacks;
+}
+
+inline long long int Arg::split() const
+{
+  return d_split;
+}
+
+inline bool Arg::split_bool() const
+{
+  return d_split_bool;
+}
+
+inline bool Arg::addincompletedataforhtmlexport() const
+{
+  return d_addincompletedataforhtmlexport;
+}
+
+inline bool Arg::light() const
+{
+  return d_light;
+}
+
 inline std::string const &Arg::exporttxt() const
 {
   return d_exporttxt;
@@ -678,16 +713,6 @@ inline bool Arg::append() const
   return d_append;
 }
 
-inline long long int Arg::split() const
-{
-  return d_split;
-}
-
-inline bool Arg::split_bool() const
-{
-  return d_split_bool;
-}
-
 inline long long int Arg::desktopdbversion() const
 {
   return d_desktopdbversion;
@@ -701,31 +726,6 @@ inline bool Arg::migratedb() const
 inline bool Arg::importstickers() const
 {
   return d_importstickers;
-}
-
-inline bool Arg::addincompletedataforhtmlexport() const
-{
-  return d_addincompletedataforhtmlexport;
-}
-
-inline bool Arg::light() const
-{
-  return d_light;
-}
-
-inline bool Arg::themeswitching() const
-{
-  return d_themeswitching;
-}
-
-inline bool Arg::searchpage() const
-{
-  return d_searchpage;
-}
-
-inline bool Arg::stickerpacks() const
-{
-  return d_stickerpacks;
 }
 
 inline long long int Arg::findrecipient() const

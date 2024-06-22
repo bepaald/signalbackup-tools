@@ -354,7 +354,7 @@ signalbackups-tools [input] [passphrase] --dumpmedia [outputdirectory]
 
 Where `outputdirectory` is an empty directory, or does not exist (in which case it will be created). 
 
-To limit the export to certain threads, the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to media from the time periods listed. For the format of the date list, see the [crop to dates](#crop) option.
+To limit the export to certain threads, the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by a string representing the display name, phone number or username of the recipient: `--limittothreadsbyname "Alice","Family Group","+14255550123"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to media from the time periods listed. For the format of the date list, see the [crop to dates](#crop) option.
 
 Normally, stickers are included in the media export, as they are normal attachments in the database. To prevent this, add the option `--excludestickers`.
 
@@ -376,7 +376,7 @@ To limit the export to certain contacts, add the option `--limitcontacts [LIST_O
 
 _NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). It is possible that some (very) old backups are not supported. If there is demand, support for older databases may be added in the future._
 
-To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by name: `--limittothreadsbyname "Alice","Bob","Family Group"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files will be rewritten. Example:
+To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by a string representing the display name, phone number or username of the recipient: `--limittothreadsbyname "Alice","Family Group","+14255550123"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files will be rewritten. Example:
 
 ```
 ./signalbackup-tools [input] [passphrase] --exporthtml [directory]
@@ -404,7 +404,7 @@ Other options that can be used together with `--exporthtml`:
 
 ##### Export to TXT
 
-To export to plain text use `--exporttxt [DIRECTORY]`. Some data is omitted from this export, such as attachment data and quotes. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be specified with `--limittothreadsbyname "Alice","Bob","Group Name"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Example:
+To export to plain text use `--exporttxt [DIRECTORY]`. Some data is omitted from this export, such as attachment data and quotes. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be specified by display name, phone number or username: `--limittothreadsbyname "Alice","Group Name","+14255550123"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Example:
 
 ```
 ./signalbackup-tools [input] [passphrase] --exporttxt [directory]
@@ -441,7 +441,7 @@ To crop a backup file to certain threads, run:
 signalbackup-tools [input] [passphrase] --croptothreads [list-of-threads] --output [output] (--passphrase [newpassphrase])
 ```
 
-Where the list of threads are the ids as reported by `signalbackup-tools [input] [passphrase] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`. Additionally, threads can be specified by name: `--croptothreadsbyname "Alice","Bob","Some Group"`.
+Where the list of threads are the ids as reported by `signalbackup-tools [input] [passphrase] --listthreads`. The list supports commas for single ids and hyphens for ranges, for example: `--croptothreads 1,2,5-8,10`. Additionally, threads can be specified by display name, phone number or username: `--croptothreadsbyname "Alice","Some Group","+14255550123"`.
 
 ##### Crop to dates
 
@@ -463,7 +463,7 @@ To merge two backups, the backups must be at compatible database versions. The d
 signalbackup-tools [first_database] [passphrase] --importthreads ALL --source [second_database] --sourcepassphrase [passphrase] --output [output_file] (--opassphrase [output passphrase])
 ```
 
-It is recommended to use the larger (containing the most data (contacts, threads,...)) as the 'first_database' and the smaller one source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`. Threads can additionally be specified by name using `--importthreadsbyname "Bob","Alice"`.
+It is recommended to use the larger (containing the most data (contacts, threads,...)) as the 'first_database' and the smaller one source. If not all threads should be imported from the source, a list of thread ids can be supplied (e.g. `--importthreads 1,2,3,8-16,20`). The thread ids can be determined from the output of `--listthreads`. Threads can additionally be specified by display name, phone number or username by using `--importthreadsbyname "Bob","Family Group","+14255550123"`.
 
 Note this function does not automatically discard duplicate messages. If the backups you are merging contain (partly) the same messages &mdash; for example if they originate from some common backup/installation &mdash; you will probably want to [crop the source backup by date](#crop) before merging so it only contains messages not in the target. For newer databases, omitting this step will cause errors, as Signal does not allow duplicate messages in its database anymore.
 
@@ -813,8 +813,6 @@ Paypal: [![Paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif
 Ko-fi: [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/bepaald)
 
 BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
-
-ETH: 0xc59892f4E54E3e8Ab285f3C41B396d9E15C8B4aA
 
 Donations will help development in that they will put food in my mouth, and I need food to write code :smile:
 

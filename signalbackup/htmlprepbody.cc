@@ -62,7 +62,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       std::string mentionuuid = br.getField<3>().value_or(std::string());
       if (!mentionuuid.empty())
       {
-        long long int authorid = getRecipientIdFromUuid(mentionuuid, nullptr);
+        long long int authorid = getRecipientIdFromUuidMapped(mentionuuid, nullptr);
         std::string author = getRecipientInfoFromMap(recipient_info, authorid).display_name;
         if (!author.empty())
           ranges.emplace_back(Range{start, length,

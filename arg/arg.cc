@@ -96,24 +96,24 @@ Arg::Arg(int argc, char *argv[])
   d_interactive(false),
   d_exporthtml(std::string()),
   d_exportdesktophtml(std::string()),
-  d_addexportdetails(bool()),
+  d_addexportdetails(false),
   d_includecalllog(false),
   d_includeblockedlist(false),
   d_includesettings(false),
   d_includefullcontactlist(false),
-  d_exporttxt(std::string()),
-  d_exportdesktoptxt(std::string()),
-  d_append(false),
-  d_split(1000),
-  d_split_bool(false),
-  d_desktopdbversion(4),
-  d_migratedb(false),
-  d_importstickers(false),
-  d_addincompletedataforhtmlexport(false),
-  d_light(false),
   d_themeswitching(false),
   d_searchpage(false),
   d_stickerpacks(false),
+  d_split(1000),
+  d_split_bool(false),
+  d_addincompletedataforhtmlexport(false),
+  d_light(false),
+  d_exporttxt(std::string()),
+  d_exportdesktoptxt(std::string()),
+  d_append(false),
+  d_desktopdbversion(4),
+  d_migratedb(false),
+  d_importstickers(false),
   d_findrecipient(-1),
   d_importtelegram(std::string()),
   d_listjsonchats(std::string()),
@@ -1134,6 +1134,71 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_includefullcontactlist = false;
       continue;
     }
+    if (option == "--themeswitching")
+    {
+      d_themeswitching = true;
+      continue;
+    }
+    if (option == "--no-themeswitching")
+    {
+      d_themeswitching = false;
+      continue;
+    }
+    if (option == "--searchpage")
+    {
+      d_searchpage = true;
+      continue;
+    }
+    if (option == "--no-searchpage")
+    {
+      d_searchpage = false;
+      continue;
+    }
+    if (option == "--stickerpacks")
+    {
+      d_stickerpacks = true;
+      continue;
+    }
+    if (option == "--no-stickerpacks")
+    {
+      d_stickerpacks = false;
+      continue;
+    }
+    if (option == "--split")
+    {
+      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      {
+        if (!ston(&d_split, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+        d_split_bool = true;
+      }
+      else
+        d_split_bool = true;
+      continue;
+    }
+    if (option == "--addincompletedataforhtmlexport")
+    {
+      d_addincompletedataforhtmlexport = true;
+      continue;
+    }
+    if (option == "--no-addincompletedataforhtmlexport")
+    {
+      d_addincompletedataforhtmlexport = false;
+      continue;
+    }
+    if (option == "--light")
+    {
+      d_light = true;
+      continue;
+    }
+    if (option == "--no-light")
+    {
+      d_light = false;
+      continue;
+    }
     if (option == "--exporttxt")
     {
       if (i < arguments.size() - 1)
@@ -1171,21 +1236,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_append = false;
       continue;
     }
-    if (option == "--split")
-    {
-      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
-      {
-        if (!ston(&d_split, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-        d_split_bool = true;
-      }
-      else
-        d_split_bool = true;
-      continue;
-    }
     if (option == "--desktopdbversion")
     {
       if (i < arguments.size() - 1)
@@ -1221,56 +1271,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-importstickers")
     {
       d_importstickers = false;
-      continue;
-    }
-    if (option == "--addincompletedataforhtmlexport")
-    {
-      d_addincompletedataforhtmlexport = true;
-      continue;
-    }
-    if (option == "--no-addincompletedataforhtmlexport")
-    {
-      d_addincompletedataforhtmlexport = false;
-      continue;
-    }
-    if (option == "--light")
-    {
-      d_light = true;
-      continue;
-    }
-    if (option == "--no-light")
-    {
-      d_light = false;
-      continue;
-    }
-    if (option == "--themeswitching")
-    {
-      d_themeswitching = true;
-      continue;
-    }
-    if (option == "--no-themeswitching")
-    {
-      d_themeswitching = false;
-      continue;
-    }
-    if (option == "--searchpage")
-    {
-      d_searchpage = true;
-      continue;
-    }
-    if (option == "--no-searchpage")
-    {
-      d_searchpage = false;
-      continue;
-    }
-    if (option == "--stickerpacks")
-    {
-      d_stickerpacks = true;
-      continue;
-    }
-    if (option == "--no-stickerpacks")
-    {
-      d_stickerpacks = false;
       continue;
     }
     if (option == "--findrecipient")

@@ -183,7 +183,7 @@ message AccessControl {
 
       if (role == 2) // ADMIN
       {
-        long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+        long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
         if (id != -1)
           groupinfo->admin_ids.push_back(id);
       }
@@ -220,7 +220,7 @@ message AccessControl {
       if (pendingmembers[i].getField<2>().has_value())
         role = pendingmembers[i].getField<2>().value();
 
-      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
       if (id != -1)
         groupinfo->pending_members.push_back(id);
 
@@ -251,7 +251,7 @@ message AccessControl {
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
       if (id != -1)
         groupinfo->requesting_members.push_back(id);
 
@@ -282,7 +282,7 @@ message AccessControl {
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-      long long int id = getRecipientIdFromUuid(uuidstr, nullptr);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
       if (id != -1)
         groupinfo->banned_members.push_back(id);
 

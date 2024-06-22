@@ -71,7 +71,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     if (timer_results("sourceuuid").empty())
       return;
     if (incoming)
-      address = getRecipientIdFromUuid(timer_results("sourceuuid"), savedmap);
+      address = getRecipientIdFromUuidMapped(timer_results("sourceuuid"), savedmap);
 
     if (address == -1)
     {

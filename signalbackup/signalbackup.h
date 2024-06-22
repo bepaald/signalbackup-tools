@@ -263,6 +263,8 @@ class SignalBackup
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
   long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
+  long long int getRecipientIdFromPhone(std::string const &phone, bool withthread) const;
+  long long int getRecipientIdFromUsername(std::string const &phone, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
   inline long long int getThreadIdFromRecipient(long long int recipientid) const;
   bool importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
@@ -382,10 +384,10 @@ class SignalBackup
                       std::vector<std::vector<std::string>> *reactions) const;
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
                        std::map<std::string, long long int> *savedmap) const;
-  long long int getRecipientIdFromUuid(std::string const &uuid, std::map<std::string, long long int> *savedmap,
-                                       bool suppresswarning = false) const;
-  long long int getRecipientIdFromPhone(std::string const &phone, std::map<std::string, long long int> *savedmap,
-                                        bool suppresswarning = false) const;
+  long long int getRecipientIdFromUuidMapped(std::string const &uuid, std::map<std::string, long long int> *savedmap,
+                                             bool suppresswarning = false) const;
+  long long int getRecipientIdFromPhoneMapped(std::string const &phone, std::map<std::string, long long int> *savedmap,
+                                              bool suppresswarning = false) const;
   inline std::string getNameFromUuid(std::string const &uuid) const;
   std::string getNameFromRecipientId(long long int id) const;
   void dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
@@ -477,6 +479,7 @@ class SignalBackup
 
   std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;
   bool writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const;
+  long long int getRecipientIdFromField(std::string const &field, std::string const &value, bool withthread) const;
 };
 
 // ONLY FOR DUMMYBACKUP
@@ -822,7 +825,7 @@ inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &da
 
 inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
 {
-  return getNameFromRecipientId(getRecipientIdFromUuid(uuid, nullptr));
+  return getNameFromRecipientId(getRecipientIdFromUuidMapped(uuid, nullptr));
 }
 
 inline int SignalBackup::utf16CharSize(std::string const &body, int idx) const

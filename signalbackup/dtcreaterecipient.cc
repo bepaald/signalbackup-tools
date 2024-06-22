@@ -131,7 +131,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
       //std::cout << "Got members: " << mem("member") << std::endl;
 
-      long long int member_rid = getRecipientIdFromUuid(mem("member"), recipient_info);
+      long long int member_rid = getRecipientIdFromUuidMapped(mem("member"), recipient_info);
       if (member_rid == -1)
       {
         Logger::message("Trying to create");

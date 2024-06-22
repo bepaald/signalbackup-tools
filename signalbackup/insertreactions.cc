@@ -35,9 +35,9 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
 
     long long int author = -1;
     if (!r[2].empty())
-      author = getRecipientIdFromUuid(r[2], savedmap);
+      author = getRecipientIdFromUuidMapped(r[2], savedmap);
     if (author == -1)
-      author = getRecipientIdFromPhone(r[3], savedmap);
+      author = getRecipientIdFromPhoneMapped(r[3], savedmap);
 
     if (author == -1)
     {
