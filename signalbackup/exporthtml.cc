@@ -785,7 +785,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     calllog = false;
   }
 
-  // disable blockedlist, or it is empty
+  // disable blockedlist if not present, or it is empty
   if (!d_database.tableContainsColumn("recipient", "blocked") ||
       d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM recipient WHERE blocked = 1", -1) == 0)
   {
