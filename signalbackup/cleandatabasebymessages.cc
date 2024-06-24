@@ -135,6 +135,15 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
   }
 
+  // clean up distribution_lists...
+  if (d_database.containsTable("distribution_list"))
+  {
+    //d_database.prettyPrint(true, "SELECT * FROM distribution_list");
+    d_database.exec("DELETE FROM distribution_list WHERE recipient_id NOT IN (SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) AND _id != 1");
+    d_database.exec("DELETE FROM distribution_list_member WHERE list_id NOT IN (SELECT DISTINCT _id FROm distribution_list)");
+    //d_database.prettyPrint(true, "SELECT * FROM distribution_list");
+  }
+
   // delete name_collision for non existing thread
   if(d_database.containsTable("name_collision"))
   {
@@ -247,7 +256,6 @@ void SignalBackup::cleanDatabaseByMessages()
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from MY_STORY. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
-
     std::string referenced_recipients_query;
     if (!referenced_recipients.empty())
     {
@@ -273,6 +281,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
+                    (d_database.containsTable("distribution_list_member") ? " UNION SELECT DISTINCT recipient_id FROM distribution_list_member"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
                     //",COALESCE(NULLIF(" + d_recipient_system_joined_name + ", ''), NULLIF(profile_joined_name, ''), NULLIF(" + d_recipient_profile_given_name + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), recipient._id) AS 'display_name'," + d_recipient_e164 +
@@ -282,7 +291,7 @@ void SignalBackup::cleanDatabaseByMessages()
       //deleted_recipients.prettyPrint();
       Logger::message("  Deleted ", deleted_recipients.rows(), " unreferenced recipients");
 
-      // delete story recipients
+      // if story recipients were deleted, delete corresponding distribution_list
       if (d_database.containsTable("distribution_list"))
       {
         int count = 0;
@@ -388,5 +397,9 @@ void SignalBackup::cleanDatabaseByMessages()
   // maybe remap recipients?
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
-
+  // #warning REMOVE ME
+  // d_database.prettyPrint(d_truncate, "SELECT _id FROM recipient");
+  // d_database.prettyPrint(d_truncate, "SELECT * FROM distribution_list");
+  // d_database.prettyPrint(d_truncate, "SELECT * FROM distribution_list_member");
+  //d_database.exec("DELETE FROM recipient WHERE _id = 8");
 }

@@ -200,5 +200,21 @@ void SignalBackup::initFromFile()
   if (backupfile.tellg() == totalsize && d_showprogress) [[likely]]
     Logger::message_overwrite("Reading backup file:", " 100.0%... done!", Logger::Control::ENDOVERWRITE);
 
+  /*
+  #warning REMOVE ME
+  // INJECT SOME OTHER SQLITE DATABASE
+  {
+    // NOTE THIS LEAKS
+    std::pair<unsigned char *, uint64_t> *data = new std::pair<unsigned char *, uint64_t>;
+    std::ifstream file("WITH_SOME_STORIES_PRESENT/database.sqlite");
+    file.seekg(0, std::ios_base::end);
+    data->second = file.tellg();
+    file.seekg(0);
+    data->first = new unsigned char[data->second];
+    file.read(reinterpret_cast<char *>(data->first), data->second);
+    d_database = MemSqliteDB(data);
+  }
+  */
+
   d_ok = setColumnNames();
 }
