@@ -233,9 +233,20 @@ void SignalBackup::cleanDatabaseByMessages()
     for (auto const &kv : d_keyvalueframes)
       if (kv->key() == "releasechannel.recipient_id")
         referenced_recipients.insert(bepaald::toNumber<int>(kv->value()));
-
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from releasechannel. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+
+    // get recipient for MY_STORY distribution_list, make sure it is referenced (it must exist)
+    long long int my_story_recipient = -1;
+    if (d_database.containsTable("distribution_list"))
+    {
+      my_story_recipient = d_database.getSingleResultAs<long long int>("SELECT recipient_id FROM distribution_list WHERE _id = 1", -1);
+      if (my_story_recipient != -1)
+        referenced_recipients.insert(my_story_recipient);
+    }
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from MY_STORY. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+
 
     std::string referenced_recipients_query;
     if (!referenced_recipients.empty())

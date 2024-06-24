@@ -298,7 +298,11 @@ ThreadTable::
             {
               long long int mmstype = snippet_extras.getValueAs<long long int>(0, d_mms_type);
               if (Types::isOutgoing(mmstype))
+              {
+                if (d_selfid == -1)
+                  d_selfid = scanSelf();
                 sender = d_selfid;
+              }
               else
                 sender = snippet_extras.getValueAs<long long int>(0, d_mms_recipient_id);
             }
@@ -328,7 +332,7 @@ ThreadTable::
           {
             // could not set 'individualRecipientId' for some reason, should probably clear it (the currently present id might not exist)?
             Logger::message_end();
-            Logger::warning("Not updating thread.snippet_extras: failed to get sender");
+            Logger::warning("Not updating thread[", threadid, "].snippet_extras: failed to get sender (", sender, ")");
             Logger::warning_indent("Query: ",
                                    "SELECT " + d_mms_recipient_id + " FROM " + d_mms_table +
                                    " WHERE " + d_mms_table + ".thread_id = " + threadid +

@@ -535,7 +535,13 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   if (rc != SQLITE_DONE)
   {
     Logger::error("After sqlite3_step(): ", sqlite3_errmsg(d_db));
-    Logger::error_indent("-> Query: \"", q, "\"");
+    char *expanded_query = sqlite3_expanded_sql(d_stmt);
+    if (expanded_query)
+    {
+      Logger::error_indent("-> Query: \"", expanded_query, "\"");
+      sqlite3_free(expanded_query);
+    }
+
     return false;
   }
 

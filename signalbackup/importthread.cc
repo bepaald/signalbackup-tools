@@ -509,8 +509,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     if (d_databaseversion >= 24)
     {
       //d_database.exec("SELECT _id, COALESCE(uuid,phone,group_id) AS identifier FROM recipient", &results);
-      if (d_database.tableContainsColumn("recipient", "distribution_list_id") &&
-          d_database.tableContainsColumn("recipient", d_recipient_storage_service))
+      if (d_database.tableContainsColumn("recipient", "distribution_list_id", d_recipient_storage_service))
         d_database.exec("SELECT recipient._id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
@@ -529,6 +528,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         "FROM recipient", &results);
 
       Logger::message("  updateRecipientIds");
+      //results.prettyPrint(d_truncate);
+
       for (uint i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results(i, "distribution_id"), results(i, "storage_service")};
@@ -543,7 +544,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     // exist in target. For example: current thread is group conversation, in the source
     // a member was added, but this member did not yet exist in the target.
     //
-    // the same probably goees for ancient (<24) databases, but I'll write that if someone ever
+    // the same probably goes for ancient (<24) databases, but I'll write that if someone ever
     // tries to merge those.
     //
     // delete existsing recipients (recipient table has unique constraint on phone, uuid and group_id)
@@ -684,13 +685,13 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     else
     {
       //d_database.exec("SELECT _id,COALESCE(uuid,phone,group_id) AS ident FROM recipient", &results);
-      if (d_database.tableContainsColumn("recipient", "distribution_list", d_recipient_storage_service))
+      if (d_database.tableContainsColumn("recipient", "distribution_list_id", d_recipient_storage_service))
         d_database.exec("SELECT recipient._id, "
                         "IFNULL(" + d_recipient_aci + ", '') AS uuid, "
                         "IFNULL(" + d_recipient_e164 + ", '') AS phone, "
                         "IFNULL(group_id, '') AS group_id, "
                         "IFNULL(distribution_list.distribution_id, '') AS distribution_id, "
-                        "IFNULL(" + source->d_recipient_storage_service + ", '') AS storage_service "
+                        "IFNULL(" + d_recipient_storage_service + ", '') AS storage_service "
                         "FROM recipient "
                         "LEFT JOIN distribution_list ON distribution_list._id = recipient.distribution_list_id", &results);
       else
@@ -702,6 +703,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         "'' AS storage_service "
                         "FROM recipient", &results);
       Logger::message("  updateRecipientIds (2)");
+      //results.prettyPrint(d_truncate);
+
       int count = 0;
       for (uint i = 0; i < results.rows(); ++i)
       {
@@ -864,8 +867,23 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ?", res.value(i, 0));
+      SqliteDB::QueryResults deleted_distribution_list_recipients;
+      source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ? RETURNING recipient_id", res.value(i, 0), &deleted_distribution_list_recipients);
       count += source->d_database.changed();
+
+      //deleted_distribution_list_recipients.prettyPrint(d_truncate);
+
+      // delete the corresponding recipient
+      for (uint j = 0; j < deleted_distribution_list_recipients.rows(); ++j)
+      {
+        source->d_database.exec("DELETE FROM recipient WHERE _id = ?", deleted_distribution_list_recipients.value(j, "recipient_id"));
+
+        // the number can be zero 0, as the recipient is matched (by distribution_list_id, for
+        // MY_STORY it is always 00000000-0000-0000-0000-000000000000), after which it is deleted
+        // as a doubled, existing recipient above (see: Dropped x existing recipients from source database)
+        if (source->d_database.changed() > 1) [[unlikely]]
+          Logger::warning("Unexpected number of distribution_list recipients deleted: ", source->d_database.changed());
+      }
     }
     if (count)
       Logger::message("  Deleted ", count, " existing distribution lists");
