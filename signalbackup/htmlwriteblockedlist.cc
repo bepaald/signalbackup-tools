@@ -48,14 +48,11 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     return false;
   }
 
+  bool listempty = false;
   if (results.rows() == 0)
-  {
-    Logger::warning("Skipping writing of blockedlist: no blocked contacts found");
-    return true;
-  }
+    listempty = true;
 
   // write start of html
-
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   outputfile
     << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S") // %F an d%T do not work on minGW
@@ -227,6 +224,7 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     << "        color: var(--conversationlist-c);" << '\n'
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << '\n'
     << "        border-radius: 10px;" << '\n'
+    << "        min-width: 460px;" << '\n'
     << "      }" << '\n'
     << '\n'
     << "      .conversation-list-item {" << '\n'
@@ -465,6 +463,14 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
       << "          <div class=\"name-and-snippet\">" << '\n'
       << "            <pre class=\"name\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</pre>" << '\n'
       << "          </div>" << '\n'
+      << "        </div>" << '\n';
+  }
+
+  if (listempty)
+  {
+    outputfile
+      << "        <div class=\"conversation-list-item\">" << '\n'
+      << "            <span style=\"font-weight: bold; font-size: 18px\">(none)</span>" << '\n'
       << "        </div>" << '\n';
   }
 

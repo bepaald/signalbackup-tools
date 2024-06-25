@@ -776,6 +776,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
+  /*
   // disable calllog if not presents in database, or it is empty
   if (calllog &&
       (!d_database.containsTable("call") ||
@@ -784,7 +785,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     Logger::warning("Not writing calllog.html: Call log is empty");
     calllog = false;
   }
+  */
 
+  /*
   // disable blockedlist if not present, or it is empty
   if (blocked &&
       (!d_database.tableContainsColumn("recipient", "blocked") ||
@@ -793,6 +796,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     Logger::warning("Not writing blockedlist.html: No blocked recipients");
     blocked = false;
   }
+  */
 
   HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts,

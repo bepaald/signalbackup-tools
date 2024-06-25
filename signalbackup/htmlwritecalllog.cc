@@ -64,6 +64,11 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     Logger::error("Failed to query database for call data.");
     return;
   }
+
+  bool listempty = false;
+  if (results.rows() == 0)
+    listempty = true;
+
   //results.prettyPrint();
 
   /*
@@ -257,6 +262,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << "        color: var(--conversationlist-c);" << '\n'
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << '\n'
     << "        border-radius: 10px;" << '\n'
+    << "        min-width: 503px;" << '\n'
     << "      }" << '\n'
     << '\n'
     << "      .conversation-list-item {" << '\n'
@@ -643,6 +649,15 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       << "        </div>" << '\n'
       << '\n';
   }
+
+  if (listempty)
+  {
+    outputfile
+      << "        <div class=\"conversation-list-item\">" << '\n'
+      << "            <span style=\"font-weight: bold; font-size: 18px\">(none)</span>" << '\n'
+      << "        </div>" << '\n';
+  }
+
 
   outputfile
     << "        <div id=\"menu\">" << '\n'
