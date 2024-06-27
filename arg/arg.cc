@@ -127,6 +127,7 @@ Arg::Arg(int argc, char *argv[])
   d_logfile(std::string()),
   d_custom_hugogithubs(false),
   d_truncate(true),
+  d_skipmessagereorder(false),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1441,6 +1442,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-truncate")
     {
       d_truncate = false;
+      continue;
+    }
+    if (option == "--skipmessagereorder")
+    {
+      d_skipmessagereorder = true;
+      continue;
+    }
+    if (option == "--no-skipmessagereorder")
+    {
+      d_skipmessagereorder = false;
       continue;
     }
     if (option[0] != '-')

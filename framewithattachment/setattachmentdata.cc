@@ -28,6 +28,17 @@ bool FrameWithAttachment::setAttachmentData(unsigned char *data) // override
   return true;
 }
 
+bool FrameWithAttachment::setAttachmentData(unsigned char const *data, long long int datalength)
+{
+  bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
+
+  d_attachmentdata_size = datalength;
+  d_attachmentdata = new unsigned char[d_attachmentdata_size];
+  std::memcpy(d_attachmentdata, data, datalength);
+  d_noclear = true;
+  return true;
+}
+
 bool FrameWithAttachment::setAttachmentData(std::string const &filename) // override
 {
   std::ifstream file(filename, std::ios_base::binary | std::ios_base::in);

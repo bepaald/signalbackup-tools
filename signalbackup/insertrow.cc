@@ -64,5 +64,9 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
                       "', but query returned multiple results. Returning first.");
     *returnvalue = res.value(0, 0);
   }
+
+  if (d_verbose) [[unlikely]]
+    Logger::message("Inserted new row into table '", table, "'. New _id: ", d_database.lastId());
+
   return ret;
 }

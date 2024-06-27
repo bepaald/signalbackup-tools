@@ -61,8 +61,16 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
         return false;
       }
       else
-        if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+      {
+        unsigned char *data = a->attachmentData();
+        if (!data)
+        {
+          Logger::error("Failed to retrieve attachment data for attachment (rowid: ", rowid, " uniqueid: ", uniqueid, ")");
           return false;
+        }
+        if (!attachmentstream.write(reinterpret_cast<char *>(data), a->attachmentSize()))
+          return false;
+      }
 
       if (!keepattachmentdatainmemory)
       {

@@ -38,7 +38,8 @@
 bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
                                       std::vector<std::pair<std::string, long long int>> contactmap,
                                       std::vector<std::string> const &inhibitmapping, bool prependforwarded,
-                                      bool markdelivered, bool markread, std::string const &selfphone)
+                                      bool skipmessagereorder, bool markdelivered, bool markread,
+                                      std::string const &selfphone)
 {
   Logger::message("Import from Telegram json export");
 
@@ -103,7 +104,8 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
     }
   }
 
-  reorderMmsSmsIds();
+  if (!skipmessagereorder) [[likely]]
+    reorderMmsSmsIds();
   updateThreadsEntries();
   return checkDbIntegrity();
 }

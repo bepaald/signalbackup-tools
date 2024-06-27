@@ -250,7 +250,7 @@ class SignalBackup
   inline void showDBInfo() const;
   bool scramble() const;
   //std::pair<std::string, std::string> getDesktopDir() const;
-  bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion,
+  bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion, bool skipmessagereorder,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
                          bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
   bool checkDbIntegrity(bool warn = false) const;
@@ -270,7 +270,7 @@ class SignalBackup
   bool importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
                           std::vector<std::pair<std::string, long long int>> contactmap,
                           std::vector<std::string> const &inhibitmapping, bool prependforwarded,
-                          bool markdelivered, bool markread, std::string const &selfphone);
+                          bool skipmessagereorder, bool markdelivered, bool markread, std::string const &selfphone);
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
@@ -443,6 +443,8 @@ class SignalBackup
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, int idx) const;
+  inline int utf8Chars(std::string const &body) const;
+  inline void resizeToNUtf8Chars(std::string &body, unsigned long size) const;
   inline int bytesToUtf8CharSize(std::string const &body, int idx/*, int length = 1*/) const;
   //inline int utf8CharsToByteSize() const;
   inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
@@ -475,6 +477,7 @@ class SignalBackup
                        long long int r, long long int new_msg_id);
   bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
   bool dtImportStickerPacks(SqliteDB const &ddb, std::string const &databasedir);
+  void dtImportLongText(std::string const &msgbody_full, long long int new_mms_id, long long int uniqueid);
   bool prepareOutputDirectory(std::string const &dir, bool overwrite, bool allowappend = false, bool append = false) const;
 
   std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;
@@ -875,14 +878,42 @@ inline int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsig
   return bytecount;
 }
 
+inline int SignalBackup::utf8Chars(std::string const &body) const
+{
+  int res = 0;
+  for (uint i = 0; i < body.size(); )
+  {
+    ++res;
+    i += bytesToUtf8CharSize(body, i);
+  }
+  return res;
+}
+
+inline void SignalBackup::resizeToNUtf8Chars(std::string &body, unsigned long size) const
+{
+  unsigned long res = 0;
+  uint idx = 0;
+  while (idx < body.size())
+  {
+    ++res;
+    idx += bytesToUtf8CharSize(body, idx);
+    if (res == size)
+      break;
+  }
+  if (idx < body.size())
+    body.resize(idx);
+}
+
 inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx/*, int length*/) const
 {
-  if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
-    return 4;
-  else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
-    return 3;
+  if ((static_cast<uint8_t>(body[idx]) & 0b10000000) == 0b00000000)
+    return 1;
   else if ((static_cast<uint8_t>(body[idx]) & 0b11100000) == 0b11000000) // 2 byte char
     return 2;
+  else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
+    return 3;
+  else if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
+    return 4;
   else
     return 1;
   /*

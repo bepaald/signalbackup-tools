@@ -199,7 +199,7 @@
 */
 
 bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string databasedir_hint,
-                                     long long int sqlcipherversion,
+                                     long long int sqlcipherversion, bool skipmessagereorder,
                                      std::vector<std::string> const &daterangelist,
                                      bool createmissingcontacts, bool autodates, bool importstickers,
                                      bool ignorewal, std::string const &selfphone)
@@ -300,7 +300,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
     return false;
 
   //std::cout << "Conversations in desktop:" << std::endl;
-  //results.prettyPrint();
+  //results_all_conversations.prettyPrint(true);
 
   // this map will map desktop-recipient-uuid's to android recipient._id's
   std::map<std::string, long long int> recipientmap;
@@ -520,7 +520,9 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
     {
       std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
       if (d_verbose) [[unlikely]]
-        Logger::message("Message ", j + 1, "/", results_all_messages_from_conversation.rows(), ":", (!type.empty() ? " '" + type + "'" : ""));
+        Logger::message("Message ", j + 1, "/", results_all_messages_from_conversation.rows(), ":",
+                        (!type.empty() ? " '" + type + "'" : ""),
+                        " (", results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid"), ")");
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
@@ -1241,6 +1243,15 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       getDTReactions(dtdb.d_database, rowid, numreactions, &reactions);
       if (d_verbose) [[unlikely]] Logger::message_end("done");
 
+      // LONG_TEXT messages (> 2000 bytes) are sent with an attachment in android (not on desktop)
+      std::string msgbody = results_all_messages_from_conversation(j, "body");
+      std::string msgbody_full;
+      if (utf8Chars(msgbody) > 2000)
+      {
+        msgbody_full = msgbody;
+        resizeToNUtf8Chars(msgbody, 2000);
+      }
+
       // insert the collected data in the correct tables
       if (!d_database.containsTable("sms") || // starting at dbv168, the sms table is removed altogether
           (numattachments > 0 || nummentions > 0 || hasquote || (isgroupconversation && outgoing))) // this goes in mms table on older database versions
@@ -1445,7 +1456,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                                        {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
                                        {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
                                        {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                                       {"body", results_all_messages_from_conversation.value(j, "body")},
+                                       {"body", msgbody},
                                        {"read", 1}, // defaults to 0, but causes tons of unread message notifications
                                        //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                                        //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
@@ -1488,7 +1499,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                                        {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                        {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
                                        {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                                       {"body", results_all_messages_from_conversation.value(j, "body")},
+                                       {"body", msgbody},
                                        {"read", 1}, // defaults to 0, but causes tons of unread message notifications
                                        //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                                        //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
@@ -1567,6 +1578,11 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                             "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
         }
         if (d_verbose) [[unlikely]] Logger::message_end("done");
+
+        // insert LONG_TEXT attachment
+        if (!msgbody_full.empty())
+          dtImportLongText(msgbody_full, new_mms_id,
+                           results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"));
 
         if (outgoing)
           dtSetMessageDeliveryReceipts(dtdb.d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
@@ -1703,7 +1719,8 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
     }
   }
 
-  reorderMmsSmsIds();
+  if (!skipmessagereorder) [[likely]]
+    reorderMmsSmsIds();
   updateThreadsEntries();
   return checkDbIntegrity();
 }

@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     if (!dummydb.ok())
       return 1;
 
-    if (!dummydb.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
+    if (!dummydb.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(), arg.skipmessagereorder(),
                                    arg.limittodates(), true /*addincompletedata*/, false /*autolimittodates*/,
                                    true /*importstickers*/, arg.ignorewal(), arg.setselfid()))
       return 1;
@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
   if (arg.importfromdesktop())
   {
     MEMINFO("Before importfromdesktop");
-    if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
+    if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(), arg.skipmessagereorder(),
                                arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
                                arg.importstickers(), arg.ignorewal(), arg.setselfid()))
       return 1;
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.importtelegram().empty())
-    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(), arg.jsonprependforward(), arg.jsonmarkdelivered(), arg.jsonmarkread(), arg.setselfid()))
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(), arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(), arg.setselfid()))
       return 1;
 
   if (arg.removedoubles_bool())

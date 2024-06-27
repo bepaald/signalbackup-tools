@@ -39,6 +39,7 @@ class FrameWithAttachment : public BackupFrame
   uint64_t d_cipherkey_size;
   unsigned char *d_cipherkey;
   std::string d_filename;
+  bool d_noclear;
 
   //BaseDecryptor *d_dec; // DONT OWN THIS!
  public:
@@ -50,6 +51,7 @@ class FrameWithAttachment : public BackupFrame
   inline FrameWithAttachment &operator=(FrameWithAttachment const &other);
   inline virtual ~FrameWithAttachment();
   bool setAttachmentData(unsigned char *data) override;
+  bool setAttachmentData(unsigned char const *data, long long int length);
   bool setAttachmentData(std::string const &filename);
   inline unsigned char *iv() const;
   inline uint32_t iv_size() const;
@@ -81,7 +83,8 @@ inline FrameWithAttachment::FrameWithAttachment(uint64_t count)
   d_mackey_size(0),
   d_mackey(nullptr),
   d_cipherkey_size(0),
-  d_cipherkey(nullptr)
+  d_cipherkey(nullptr),
+  d_noclear(false)
   //d_dec(nullptr)
 {}
 
@@ -96,7 +99,8 @@ inline FrameWithAttachment::FrameWithAttachment(unsigned char *bytes, size_t len
   d_mackey_size(0),
   d_mackey(nullptr),
   d_cipherkey_size(0),
-  d_cipherkey(nullptr)
+  d_cipherkey(nullptr),
+  d_noclear(false)
   //d_dec(nullptr)
 {}
 
@@ -112,7 +116,8 @@ inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment &&other)
   d_mackey(std::move(other.d_mackey)),
   d_cipherkey_size(std::move(other.d_cipherkey_size)),
   d_cipherkey(std::move(other.d_cipherkey)),
-  d_filename(std::move(other.d_filename))
+  d_filename(std::move(other.d_filename)),
+  d_noclear(std::move(other.d_noclear))
 //d_dec(std::move(other.d_dec))
 {
   other.d_attachmentdata = nullptr;
@@ -146,6 +151,7 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &
     d_cipherkey_size = std::move(other.d_cipherkey_size);
     d_cipherkey = std::move(other.d_cipherkey);
     d_filename = std::move(other.d_filename);
+    d_noclear = std::move(other.d_noclear);
     //d_dec = std::move(other.d_dec);
 
     other.d_attachmentdata = nullptr;
@@ -173,7 +179,8 @@ inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment const &other
   d_mackey(nullptr),
   d_cipherkey_size(other.d_cipherkey_size),
   d_cipherkey(nullptr),
-  d_filename(other.d_filename)
+  d_filename(other.d_filename),
+  d_noclear(other.d_noclear)
   //d_dec(other.d_dec)
 {
   if (other.d_attachmentdata)
@@ -217,6 +224,7 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment c
     d_cipherkey_size = other.d_cipherkey_size;
     d_filepos = other.d_filepos;
     d_filename = other.d_filename;
+    d_noclear = other.d_noclear;
     //d_dec = other.d_dec;
 
     if (other.d_attachmentdata)
@@ -365,6 +373,12 @@ inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac, bool ver
 
 inline void FrameWithAttachment::clearData()
 {
+  if (d_noclear) [[unlikely]]
+  {
+    Logger::message("Ignoring request to clear attachmentdata as it is marked NOCLEAR");
+    return;
+  }
+
   if (d_attachmentdata) // do not use bepaald::destroyPtr, it will set size to zero
   {
     delete[] d_attachmentdata;
