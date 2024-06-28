@@ -44,6 +44,8 @@ Arg::Arg(int argc, char *argv[])
   d_exportxml(std::string()),
   d_runsqlquery(std::vector<std::string>()),
   d_runprettysqlquery(std::vector<std::string>()),
+  d_rundtsqlquery(std::vector<std::string>()),
+  d_rundtprettysqlquery(std::vector<std::string>()),
   d_limitcontacts(std::vector<std::string>()),
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
@@ -460,6 +462,32 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
+      continue;
+    }
+    if (option == "--rundtsqlquery")
+    {
+      if (i < arguments.size() - 1)
+      {
+          d_rundtsqlquery.push_back(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--rundtprettysqlquery")
+    {
+      if (i < arguments.size() - 1)
+      {
+          d_rundtprettysqlquery.push_back(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--limitcontacts")

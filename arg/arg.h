@@ -33,7 +33,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 208> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--split", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder"};
+  std::array<std::string, 212> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--rundtsqlquery", "--rundtprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--hhenkel", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "-//", "--importwachat", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--split", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -56,6 +56,8 @@ class Arg
   std::string d_exportxml;
   std::vector<std::string> d_runsqlquery;
   std::vector<std::string> d_runprettysqlquery;
+  std::vector<std::string> d_rundtsqlquery;
+  std::vector<std::string> d_rundtprettysqlquery;
   std::vector<std::string> d_limitcontacts;
   bool d_assumebadframesizeonbadmac;
   std::vector<long long int> d_editattachmentsize;
@@ -169,6 +171,8 @@ class Arg
   inline std::string const &exportxml() const;
   inline std::vector<std::string> const &runsqlquery() const;
   inline std::vector<std::string> const &runprettysqlquery() const;
+  inline std::vector<std::string> const &rundtsqlquery() const;
+  inline std::vector<std::string> const &rundtprettysqlquery() const;
   inline std::vector<std::string> const &limitcontacts() const;
   inline bool assumebadframesizeonbadmac() const;
   inline std::vector<long long int> const &editattachmentsize() const;
@@ -378,6 +382,16 @@ inline std::vector<std::string> const &Arg::runsqlquery() const
 inline std::vector<std::string> const &Arg::runprettysqlquery() const
 {
   return d_runprettysqlquery;
+}
+
+inline std::vector<std::string> const &Arg::rundtsqlquery() const
+{
+  return d_rundtsqlquery;
+}
+
+inline std::vector<std::string> const &Arg::rundtprettysqlquery() const
+{
+  return d_rundtprettysqlquery;
 }
 
 inline std::vector<std::string> const &Arg::limitcontacts() const

@@ -37,10 +37,11 @@ class DesktopDatabase
   bool d_verbose;
   bool d_ignorewal;
   long long int d_cipherversion;
+  bool d_truncate;
  public:
-  inline DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion);
+  inline DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion, bool truncate);
   inline DesktopDatabase(std::string const &configdir, std::string const &databasedir,
-                         bool verbose, bool ignorewal, long long int cipherversion);
+                         bool verbose, bool ignorewal, long long int cipherversion, bool truncate);
   DesktopDatabase(DesktopDatabase const &other) = delete;
   DesktopDatabase(DesktopDatabase &&other) = delete;
   DesktopDatabase &operator=(DesktopDatabase const &other) = delete;
@@ -49,6 +50,7 @@ class DesktopDatabase
   inline bool dumpDb(std::string const &file, bool overwrite) const;
   inline std::string getConfigDir() const;
   inline std::string getDatabaseDir() const;
+  inline void runQuery(std::string const &q, bool pretty = true) const;
 
  private:
   bool init();
@@ -58,19 +60,20 @@ class DesktopDatabase
   friend class DummyBackup;
 };
 
-inline DesktopDatabase::DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion)
+inline DesktopDatabase::DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion, bool truncate)
   :
-  DesktopDatabase(std::string(), std::string(), verbose, ignorewal, cipherversion)
+  DesktopDatabase(std::string(), std::string(), verbose, ignorewal, cipherversion, truncate)
 {}
 
-inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir, bool verbose, bool ignorewal, long long int cipherversion)
+inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir, bool verbose, bool ignorewal, long long int cipherversion, bool truncate)
   :
   d_configdir(configdir),
   d_databasedir(databasedir),
   d_ok(false),
   d_verbose(verbose),
   d_ignorewal(ignorewal),
-  d_cipherversion(cipherversion)
+  d_cipherversion(cipherversion),
+  d_truncate(truncate)
 {
   d_ok = init();
 }
@@ -149,6 +152,29 @@ inline std::string DesktopDatabase::getConfigDir() const
 inline std::string DesktopDatabase::getDatabaseDir() const
 {
   return d_databasedir;
+}
+
+inline void DesktopDatabase::runQuery(std::string const &q, bool pretty) const
+{
+  Logger::message(" * Executing query: ", q);
+  SqliteDB::QueryResults res;
+  if (!d_database.exec(q, &res))
+    return;
+
+  std::string q_comm = q.substr(0, STRLEN("DELETE")); // delete, insert and update are same length...
+  std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) { ch = std::toupper(ch); });
+
+  if (q_comm == "DELETE" || q_comm == "INSERT" || q_comm == "UPDATE")
+  {
+    Logger::message("Modified ", d_database.changed(), " rows");
+    if (res.rows() == 0 && res.columns() == 0)
+      return;
+  }
+
+  if (pretty)
+    res.prettyPrint(d_truncate);
+  else
+    res.print();
 }
 
 #endif

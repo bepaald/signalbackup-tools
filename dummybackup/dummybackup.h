@@ -81,7 +81,7 @@ inline DummyBackup::DummyBackup(std::string const &configdir, std::string const 
   setColumnNames();
 
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
-  DesktopDatabase ddb(configdir, databasedir, verbose, ignorewal, cipherversion);
+  DesktopDatabase ddb(configdir, databasedir, verbose, ignorewal, cipherversion, truncate);
   if (!ddb.ok())
     std::cout << "error" << std::endl;
   dtSetColumnNames(&ddb.d_database);

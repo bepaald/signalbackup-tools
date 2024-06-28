@@ -219,7 +219,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
   }
 
-  DesktopDatabase dtdb(configdir_hint, databasedir_hint, d_verbose, ignorewal, sqlcipherversion);
+  DesktopDatabase dtdb(configdir_hint, databasedir_hint, d_verbose, ignorewal, sqlcipherversion, d_truncate);
   if (!dtdb.ok())
   {
     Logger::error("Failed to open Signal Desktop sqlite database");
@@ -522,7 +522,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       if (d_verbose) [[unlikely]]
         Logger::message("Message ", j + 1, "/", results_all_messages_from_conversation.rows(), ":",
                         (!type.empty() ? " '" + type + "'" : ""),
-                        " (", results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid"), ")");
+                        " (rowid: ", results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid"), ")");
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);

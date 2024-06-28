@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
   if (!arg.dumpdesktopdb().empty())
   {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion());
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
     if (!ddb.ok())
       return 1;
     if (!ddb.dumpDb(arg.dumpdesktopdb(), arg.overwrite()))
@@ -128,9 +128,39 @@ int main(int argc, char *argv[])
         return 1;
   }
 
+  if (!arg.rundtsqlquery().empty())
+  {
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
+    for (auto const &q : arg.rundtsqlquery())
+      ddb.runQuery(q, false);
+  }
+
+  if (!arg.rundtprettysqlquery().empty())
+  {
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
+    for (auto const &q : arg.rundtprettysqlquery())
+      ddb.runQuery(q, true);
+  }
+
   // run desktop sqlquery
 
   //***** *****//
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   if (!arg.input_required() && arg.input().empty()) // no input is required -> all following operations require it
     return 0;                                       // -> none of the following was requested (but still decode if
                                                     // input was provided)
