@@ -495,7 +495,7 @@ This function has some limitations, most notably the contacts referenced in the 
 
 The program has successfully been used to import messages from a Telegram export (in JSON format). Telegram's JSON format is [publically documented](https://core.telegram.org/import-export), so any data that can be converted to this format can be imported.
 
-This feature will be better documented in the future. For now, more details are available [here](https://github.com/bepaald/signalbackup-tools/issues/153), and any questions and remarks can be added there. It is run like so:
+This feature will be better documented in the future. For now, more details are available [here](https://github.com/bepaald/signalbackup-tools/issues/153), and any questions and remarks can be added there. General usage:
 
 ```
 $ ./signalbackup-tools [INPUT] [PASSPHRASE] --importtelegram [JSONFILE] -o [OUTPUT]
