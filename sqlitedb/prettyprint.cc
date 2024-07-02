@@ -42,7 +42,11 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
     contents.resize(contents.size() + 1);
     for (uint j = 0; j < columns(); ++j)
     {
-      if (valueHasType<std::string>(i, j))
+      if (valueHasType<long long int>(i, j))
+        contents.back().emplace_back(bepaald::toString(getValueAs<long long int>(i, j)));
+      else if (valueHasType<std::nullptr_t>(i, j))
+        contents.back().emplace_back("(NULL)");
+      else if (valueHasType<std::string>(i, j))
       {
         contents.back().emplace_back(getValueAs<std::string>(i, j));
         std::string::size_type newline = std::string::npos;
@@ -52,23 +56,19 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
           contents.back().back() += "[\\n...]";
         }
       }
+      else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
+        contents.back().emplace_back(bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
+                                                               getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
+      else if (valueHasType<double>(i, j))
+        contents.back().emplace_back(bepaald::toString(getValueAs<double>(i, j)));
       else if (valueHasType<int>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<int>(i, j)));
       else if (valueHasType<unsigned int>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<unsigned int>(i, j)));
-      else if (valueHasType<long long int>(i, j))
-        contents.back().emplace_back(bepaald::toString(getValueAs<long long int>(i, j)));
       else if (valueHasType<unsigned long long int>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<unsigned long long int>(i, j)));
       else if (valueHasType<unsigned long>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<unsigned long>(i, j)));
-      else if (valueHasType<double>(i, j))
-        contents.back().emplace_back(bepaald::toString(getValueAs<double>(i, j)));
-      else if (valueHasType<std::nullptr_t>(i, j))
-        contents.back().emplace_back("(NULL)");
-      else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
-        contents.back().emplace_back(bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
-                                                               getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
       else
         contents.back().emplace_back("(unhandled type)");
     }

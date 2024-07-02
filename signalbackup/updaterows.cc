@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-#if __cpp_lib_ranges >= 201911L && !defined(__clang__) // ranges does not seem to work with clang ATM
+#if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
 
@@ -57,9 +57,12 @@ bool SignalBackup::updateRows(std::string const &table,
 
   SqliteDB::QueryResults res;
 
-  // when concat_view gets implemented... (__cpp_lib_ranges_concat >= 20XXXXL)
-#if false && __cpp_lib_ranges >= 201911L && !defined(__clang__)
-  bool ret = d_database.exec(query, std::views::values(std::views::concat(data, whereclause)), &res, d_verbose);
+  // when concat_view gets implemented...
+  // llvms feature test macro list does not have this value yet:
+  // - https://en.cppreference.com/w/cpp/utility/feature_test
+  // - https://libcxx.llvm.org/FeatureTestMacroTable.html)
+#if false && __cpp_lib_ranges >= 201911L && __cpp_lib_ranges_concat >= 202403L
+  bool ret = d_database.exec(query, std::ranges::views::values(std::ranges::views::concat(data, whereclause)), &res, d_verbose);
 #else
   std::vector<std::any> values;
   std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });

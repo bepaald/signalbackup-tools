@@ -56,6 +56,11 @@ void SqlStatementFrame::buildStatement()
         d_statement.replace(pos, 1, std::to_string(static_cast<int64_t>(bytesToUint64(std::get<1>(p), std::get<2>(p)))));
         break;
       }
+      case PARAMETER_FIELD::NULLPARAMETER:
+      {
+        d_statement.replace(pos, 1, "NULL");
+        break;
+      }
       case PARAMETER_FIELD::STRING:
       {
         std::string rep = bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
@@ -71,22 +76,17 @@ void SqlStatementFrame::buildStatement()
         pos += rep.length();
         break;
       }
+      case PARAMETER_FIELD::BLOB:
+      {
+        d_statement.replace(pos, 1, "X'" + bepaald::bytesToHexString(std::get<1>(p), std::get<2>(p), true) + '\'');
+        break;
+      }
       case PARAMETER_FIELD::DOUBLE:
       {
         std::stringstream ss;
         ss.imbue(std::locale(std::locale(), new Period)); // make sure we get periods as decimal indicators
         ss << std::defaultfloat << std::setprecision(17) << *reinterpret_cast<double *>(std::get<1>(p));
         d_statement.replace(pos, 1, ss.str());
-        break;
-      }
-      case PARAMETER_FIELD::BLOB:
-      {
-        d_statement.replace(pos, 1, "X'" + bepaald::bytesToHexString(std::get<1>(p), std::get<2>(p), true) + '\'');
-        break;
-      }
-      case PARAMETER_FIELD::NULLPARAMETER:
-      {
-        d_statement.replace(pos, 1, "NULL");
         break;
       }
     }

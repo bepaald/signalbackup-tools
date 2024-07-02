@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-#if __cpp_lib_ranges >= 201911L && !defined(__clang__) // ranges does not seem to work with clang ATM
+#if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
 
@@ -50,7 +50,7 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
     query += " RETURNING " + returnfield;
 
   SqliteDB::QueryResults res;
-#if __cpp_lib_ranges >= 201911L && !defined(__clang__)
+#if __cpp_lib_ranges >= 201911L
   bool ret = d_database.exec(query, std::views::values(data), &res, d_verbose);
 #else
   std::vector<std::any> values;

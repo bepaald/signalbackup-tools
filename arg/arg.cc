@@ -1193,6 +1193,18 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_stickerpacks = false;
       continue;
     }
+    if (option == "--allhtmlpages")
+    {
+      d_includecalllog = true;
+      d_includeblockedlist = true;
+      d_includesettings = true;
+      d_includefullcontactlist = true;
+      d_themeswitching = true;
+      d_searchpage = true;
+      d_stickerpacks = true;
+      d_addexportdetails = true;
+      continue;
+    }
     if (option == "--split")
     {
       if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))

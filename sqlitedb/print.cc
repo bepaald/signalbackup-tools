@@ -43,25 +43,25 @@ void SqliteDB::QueryResults::print(long long int row, bool printheader) const
     Logger::message_start();
     for (uint j = 0; j < columns(); ++j)
     {
-      if (valueHasType<std::string>(i, j))
+      if (valueHasType<long long int>(i, j))
+        Logger::message_continue(bepaald::toString(getValueAs<long long int>(i, j)));
+      else if (valueHasType<std::nullptr_t>(i, j))
+        Logger::message_continue("(NULL)");
+      else if (valueHasType<std::string>(i, j))
         Logger::message_continue(getValueAs<std::string>(i, j));
+      else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
+        Logger::message_continue(bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
+                                                           getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
+      else if (valueHasType<double>(i, j))
+        Logger::message_continue(bepaald::toString(getValueAs<double>(i, j)));
       else if (valueHasType<int>(i, j))
         Logger::message_continue(bepaald::toString(getValueAs<int>(i, j)));
       else if (valueHasType<unsigned int>(i, j))
         Logger::message_continue(bepaald::toString(getValueAs<unsigned int>(i, j)));
-      else if (valueHasType<long long int>(i, j))
-        Logger::message_continue(bepaald::toString(getValueAs<long long int>(i, j)));
       else if (valueHasType<unsigned long long int>(i, j))
         Logger::message_continue(bepaald::toString(getValueAs<unsigned long long int>(i, j)));
       else if (valueHasType<unsigned long>(i, j))
         Logger::message_continue(bepaald::toString(getValueAs<unsigned long>(i, j)));
-      else if (valueHasType<double>(i, j))
-        Logger::message_continue(bepaald::toString(getValueAs<double>(i, j)));
-      else if (valueHasType<std::nullptr_t>(i, j))
-        Logger::message_continue("(NULL)");
-      else if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j))
-        Logger::message_continue(bepaald::bytesToHexString(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).first.get(),
-                                                        getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, j).second));
       else
         Logger::message_continue("(unhandled type)");
 
