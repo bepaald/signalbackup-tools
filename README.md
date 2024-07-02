@@ -498,7 +498,7 @@ The program has successfully been used to import messages from a Telegram export
 This feature will be better documented in the future. For now, more details are available [here](https://github.com/bepaald/signalbackup-tools/issues/153), and any questions and remarks can be added there. It is run like so:
 
 ```
-$ ./signalbackup-tools [INPUT] [PASSPHRASE] --importtelegram [JSONFILE]
+$ ./signalbackup-tools [INPUT] [PASSPHRASE] --importtelegram [JSONFILE] -o [OUTPUT]
 ```
 
 The program will attempt to map the contacts present in the JSON file to those present in the Android backup. It is important all contacts exist in the Android backup, new contacts can not be created. For any JSON contact that the program can not automatically map, this mapping must be done manually using `--mapjsoncontacts`.
@@ -509,6 +509,8 @@ Other related options:
 - `--selectjsonchats [list-of-indices]` Only import chat in the list. The indices are obtained from `--listjsonchats`.
 - `--jsonprependforward` Forwarded messages are marked as such in Telegram, but not in Signal. This option prepends forwarded messages with the string "_Forwarded from NAME:_". 
 - `--preventjsonmapping` If the auto mapping makes a mistake for any reason (for example, multiple contacts with the same name), `--preventjsonmapping "Bob Smith"` will prevent the auto mapping of that specific name. It will then need to be mapped manually (using a unique identifier such as the id) with `--mapjsoncontacts`.
+- `--jsonmarkdelivered` The Telegram export does not contain message delivery information. This option marks all messages imported from the JSON file as 'delivered'. Defaults to true.
+- `--jsonmarkread` This option marks all messages imported from the JSON file as 'read'. Defaults to false.
 
 **<span id="deleting_attachments">Deleting/Replacing attachments</span>**
 
@@ -765,12 +767,12 @@ Done!
 
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 
-Running with these options does not require an input file to be provided. All options support the same modifying options as `--importfromdesktop`: `--desktopdirs` and `--ignorewal`.
+Running with these options does not require an input file to be provided. These options support some of the same  modifying options as `--importfromdesktop`, namely: `--desktopdirs`, and `--ignorewal`.
 
 - `--dumpdesktopdb [OUTPUTFILE]` Save the Desktop database to `[OUTPUTFILE]` without encryption.
-- `--rundtsqlquery [QUERY]` Run a SQL query on the Desktop SQL database. Note that the database only resides in memory and any changes are _not_ saved to disk.
+- `--rundtsqlquery [QUERY]` Run a query on the Desktop SQL database. Note that the database only resides in memory and any changes are _not_ saved to disk.
 - `--rundtprettysqlquery [QUERY]` As above, but tries to make the output a bit nicer to look at. Depending on the size of the query and the size of the output terminal, may make the output more ledgible (or less so).
-- `--exportdesktophtml [OUTPUTDIR]` Export the Signal Desktop database to HTML. This function works internally by creating an empty Android backup, importing the desktop into this and then exporting that internal Android backup to HTML. As a result it supports all modifying options mentioned in [import from Desktop](#desktop) and [export to HTML](#export-to-html) (excluding `--limittothreads`). It also has the same limitations as both of these functions combined. It is currently unknown if, and how well it works. Feedback is appreciated. See: #203
+- `--exportdesktophtml [OUTPUTDIR]` Export the Signal Desktop database to HTML. This function works internally by creating an empty Android backup, importing the desktop into this and then exporting that internal Android backup to HTML. As a result it supports almost all modifying options mentioned in [import from Desktop](#desktop) and [export to HTML](#export-to-html) (excluding `--limittothreads`, and `--includesettings`). It also has the same limitations as both of these functions combined. It is currently unknown if, and how well it works. Feedback is appreciated. See: https://github.com/bepaald/signalbackup-tools/issues/203.
 - `--exportdesktoptxt [OUTPUTDIR]` Export the Signal Desktop database to plain text. Works as the above function, except the internal Android backup is [exported to TXT](#export-to-txt) instead.
 
 **<span id="various">Various</span>**

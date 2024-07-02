@@ -121,6 +121,8 @@ R"*(
                                          N is 1000.
    --light                               By default a dark theme is used for the rendered HTML. Add this
                                          option to output in a light theme instead.
+   --allhtmlpages                        Optional modifier for `--exporthtml'. Convenience option that
+                                         enables all the modifying options for `--exporthtml' listed below.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
                                          to switch the theme between light and dark. This adds a bit of
                                          JavaScript to the page, and sets a cookie when switching.
@@ -137,16 +139,15 @@ R"*(
    --includefullcontactslist             Optional modifier for `--exporthtml'. Generate a page showing all
                                          contacts present in the backups database. These include hidden
                                          and blocked contacts, but also system contacts who might not use
-                                         Signal at all.)*"
-R"*(
+                                         Signal at all.
    --addexportdetails                    Optional modifier for `--exporthtml'. Adds some metadata about this
                                          tools and the backup to the pages when printing.
---exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
-                                         "tablename1=filename1,tablename2=filename2(,...)"
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
                                          This option also supports the `--limittothreads',
                                          `--limittothreadbybame', `--limittodates', and `--migratedb'
                                          modifiers as mentioned above.
+--exportcsv <MAP_OF_FILES>               Export the database to file of comma separated values. Argument:
+                                         "tablename1=filename1,tablename2=filename2(,...)"
 --overwrite                              Optional modifier for all output operations. Overwrite output
                                          files if they exist. When <OUTPUT> is a directory this will
                                          delete ALL directory contents.
