@@ -397,7 +397,7 @@ Other options that can be used together with `--exporthtml`:
 - `--addexportdetails` Adds some meta information about the backup (like size, filename, and database version) and this tool to the generated pages when printing.
 - `--includesettings` Generates a page showing settings found in the backup file.
 - `--includefullcontactlist` Generates a page showing _all_ contacts present in the database, including contacts with whom no thread exists, who are blocked or hidden, or who appear in your system contact list and may not have Signal installed.
-- `--allhtmlpages` Enables all of the above options, plus `--themeswitching`. Any spcific option can be excluded by adding `--no-(option)` after this option on the command line.
+- `--allhtmlpages` Enables all of the above options, plus `--themeswitching`. Any specific option can be excluded by adding `--no-(option)` after this option on the command line.
 - `--includereceipts` Adds available information from read/delivery receipts to outgoing messages as a popup when hovering the checkmarks. Be aware this has the potential to significantly slow down page loading for larger conversations. In this case it is recommended to also use the `--split [N]` option to limit the page size.
 
 > [!NOTE]
