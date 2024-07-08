@@ -562,7 +562,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
         else
           stickerhtml
             << "            <div class=\"sticker-pack-header-cover\">" << '\n'
-            << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\">" << '\n'
+            << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\" loading=\"lazy\">" << '\n'
             << "            </div>" << '\n';
         stickerhtml
           << "            <div>" << '\n'
@@ -595,7 +595,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
         << "            <form autocomplete=\"off\">" << '\n'
         << "              <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << '\n'
         << "              <label for=\"zoomCheck-" << packid << "-" << id << "\">" << '\n'
-        << "                <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\">" << '\n'
+        << "                <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\" loading=\"lazy\">" << '\n'
         << "              </label>" << '\n'
         << "            </form>" << '\n'
         << "          </div>" << '\n'

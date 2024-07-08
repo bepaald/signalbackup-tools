@@ -260,43 +260,44 @@ inline std::string BackupFrame::frameTypeString() const
 {
   switch (frameType())
   {
-    case 1:
+    case FRAMETYPE::HEADER:
     {
       return "HeaderFrame";
     }
-    case 2:
+    case FRAMETYPE::SQLSTATEMENT:
     {
       return "SqlStatementFrame";
     }
-    case 3:
+    case FRAMETYPE::SHAREDPREFERENCE:
     {
       return "SharedPreferenceFrame";
     }
-    case 4:
+    case FRAMETYPE::ATTACHMENT:
     {
       return "AttachmentFrame";
     }
-    case 5:
+    case FRAMETYPE::DATABASEVERSION:
     {
       return "DatabaseVersionFrame";
     }
-    case 6:
+    case FRAMETYPE::END:
     {
       return "EndFrame";
     }
-    case 7:
+    case FRAMETYPE::AVATAR:
     {
       return "AvatarFrame";
     }
-    case 8:
+    case FRAMETYPE::STICKER:
     {
       return "StickerFrame";
     }
-    case 9:
+    case FRAMETYPE::KEYVALUE:
     {
       return "KeyValueFrame";
     }
-    case std::numeric_limits<unsigned int>::max():
+    //case FRAMETYPE::INVALID:
+    default:
     {
       return "InvalidFrame";
     }

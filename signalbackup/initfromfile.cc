@@ -147,7 +147,7 @@ void SignalBackup::initFromFile()
       //frame->printInfo();
       d_keyvalueframes.emplace_back(reinterpret_cast<KeyValueFrame *>(frame.release()));
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER) [[unlikely]]
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::HEADER)
     {
       d_headerframe.reset(reinterpret_cast<HeaderFrame *>(frame.release()));
       d_backupfileversion = d_headerframe->version();
@@ -155,7 +155,7 @@ void SignalBackup::initFromFile()
       if (d_verbose) [[unlikely]]
         d_headerframe->printInfo();
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION) [[unlikely]]
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::DATABASEVERSION)
     {
       d_databaseversionframe.reset(reinterpret_cast<DatabaseVersionFrame *>(frame.release()));
       d_databaseversion = d_databaseversionframe->version();
@@ -163,16 +163,16 @@ void SignalBackup::initFromFile()
       if (d_verbose) [[unlikely]]
         Logger::message("Database version: ", d_databaseversionframe->version());
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::END) [[unlikely]]
+    else if (frame->frameType() == BackupFrame::FRAMETYPE::END)
     {
       //frame->printInfo();
       if (d_verbose) [[unlikely]]
         Logger::message("Read EndFrame");
       d_endframe.reset(reinterpret_cast<EndFrame *>(frame.release()));
     }
-    else if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID) [[unlikely]]
+    else [[unlikely]] // if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID)
     {
-      Logger::warning(Logger::Control::BOLD, "SKIPPING INVALID FRAME!", Logger::Control::NORMAL);
+      Logger::warning(Logger::Control::BOLD, "SKIPPING INVALID FRAME! (", frame->frameType(), ")", Logger::Control::NORMAL);
     }
   }
 

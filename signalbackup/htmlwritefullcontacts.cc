@@ -509,17 +509,17 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     {
       switch (registered)
       {
-        case 0:
+        case 0: // Registration status UNKNOWN
         {
           outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Registered:</span> unknown</div>\n";
           break;
         }
-        case 1:
+        case 1: // Registration status REGISTERED
         {
           outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Registered:</span> yes</div>\n";
           break;
         }
-        case 2:
+        case 2: // Registration status NOT REGISTERED
         {
           outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Registered:</span> no</div>\n";
           break;
@@ -535,32 +535,32 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
       outputfile << "            <div class=\"extrainfo\">" << "<span class=\"key\">Group type:</span> ";
       switch (grouptype)
       {
-        case 0: // should not occur
+        case 0: // GROUP TYPE NONE (should not occur, because of if (isgroup) {...})
         {
           outputfile << " (none)";
           break;
         }
-        case 1:
+        case 1: // GROUP TYPE MMS
         {
           outputfile << " MMS";
           break;
         }
-        case 2:
+        case 2: // GROUP TYPE GROUP v1
         {
           outputfile << " version 1";
           break;
         }
-        case 3:
+        case 3: // GROUP TYPE GROUP v2
         {
           outputfile << " version 2";
           break;
         }
-        case 4:
+        case 4: // GROUP TYPE DISTRIBUTION LIST (story recipients)
         {
           outputfile << " distribution list";
           break;
         }
-        case 5: // dont know what this is
+        case 5: // GROUP TYPE CALL LINK (dont know what this is)
         {
           outputfile << " call link";
           break;

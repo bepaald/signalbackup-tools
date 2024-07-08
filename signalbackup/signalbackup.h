@@ -258,7 +258,7 @@ class SignalBackup
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
                   bool calllog, bool searchpage, bool stickerpacks, bool migrate, bool overwrite, bool append,
                   bool theme, bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                  bool settings);
+                  bool settings, bool receipts);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
@@ -411,9 +411,12 @@ class SignalBackup
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo,
-                        bool searchpage) const;
+                        bool searchpage, bool writereceipts) const;
   void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
                          std::map<long long int, RecipientInfo> *recipientinfo) const;
+  void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,
+                               long long int message_id, bool isgroup, long long int read_count,
+                               long long int delivered_count, long long int timestamp, int indent) const;
   void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
                       std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
                       bool searchpage, bool overwrite, bool stickerpacks, bool blocked, bool fullcontacts,
@@ -633,16 +636,30 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   std::string type = line.substr(pos, pos2 - pos);
   std::string datastr = line.substr(pos2 + 1);
 
-  if (type == "bytes")
-  {
-    std::pair<unsigned char *, size_t> decdata = Base64::base64StringToBytes(datastr);
+  if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
+  {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
     if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
   }
-  else if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
-  {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
-    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
+  else if (type == "string")
+  {
+    unsigned char *data = new unsigned char[datastr.size()];
+    std::memcpy(data, datastr.data(), datastr.size());
+    (*newframe)->setNewData(field, data, datastr.size());
+  }
+  else if (type == "bool") // since booleans are stored as varints, this is identical to uint64/32 code
+  {
+    std::string val = (datastr == "true") ? "1" : "0";
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(val)));
+    if (!decdata.first) [[unlikely]]
+      return false;
+    (*newframe)->setNewData(field, decdata.first, decdata.second);
+  }
+  else if (type == "bytes")
+  {
+    std::pair<unsigned char *, size_t> decdata = Base64::base64StringToBytes(datastr);
     if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
@@ -665,20 +682,6 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
       return false;
     }
     (*newframe)->setNewData(field, decfloat.first, decfloat.second);
-  }
-  else if (type == "bool") // since booleans are stored as varints, this is identical to uint64/32 code
-  {
-    std::string val = (datastr == "true") ? "1" : "0";
-    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(val)));
-    if (!decdata.first) [[unlikely]]
-      return false;
-    (*newframe)->setNewData(field, decdata.first, decdata.second);
-  }
-  else if (type == "string")
-  {
-    unsigned char *data = new unsigned char[datastr.size()];
-    std::memcpy(data, datastr.data(), datastr.size());
-    (*newframe)->setNewData(field, data, datastr.size());
   }
   else
     return false;

@@ -46,10 +46,10 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
     else
       newstatement.append("?)");
 
-    if (result[j].type() == typeid(nullptr))
-      newframe.addNullParameter();
-    else if (result[j].type() == typeid(long long int))
+    if (result[j].type() == typeid(long long int))
       newframe.addIntParameter(std::any_cast<long long int>(result[j]));
+    else if (result[j].type() == typeid(nullptr))
+      newframe.addNullParameter();
     else if (result[j].type() == typeid(std::string))
       newframe.addStringParameter(std::any_cast<std::string>(result[j]));
     else if (result[j].type() == typeid(std::pair<std::shared_ptr<unsigned char []>, size_t>))
@@ -79,10 +79,11 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
       newstatement.append("?,");
     else
       newstatement.append("?)");
-    if (result[j].type() == typeid(nullptr))
-      newframe.addNullParameter();
-    else if (result[j].type() == typeid(long long int))
+
+    if (result[j].type() == typeid(long long int))
       newframe.addIntParameter(std::any_cast<long long int>(result[j]));
+    else if (result[j].type() == typeid(nullptr))
+      newframe.addNullParameter();
     else if (result[j].type() == typeid(std::string))
       newframe.addStringParameter(std::any_cast<std::string>(result[j]));
     else if (result[j].type() == typeid(std::pair<std::shared_ptr<unsigned char []>, size_t>))

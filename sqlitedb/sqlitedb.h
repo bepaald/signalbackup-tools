@@ -516,12 +516,10 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     {
       if (sqlite3_column_type(d_stmt, c) == SQLITE_INTEGER)
         results->emplaceValue(row, sqlite3_column_int64(d_stmt, c));
-      else if (sqlite3_column_type(d_stmt, c) == SQLITE_FLOAT)
-        results->emplaceValue(row, sqlite3_column_double(d_stmt, c));
-      else if (sqlite3_column_type(d_stmt, c) == SQLITE_TEXT)
-        results->emplaceValue(row, std::string(reinterpret_cast<char const *>(sqlite3_column_text(d_stmt, c))));
       else if (sqlite3_column_type(d_stmt, c) == SQLITE_NULL)
         results->emplaceValue(row, nullptr);
+      else if (sqlite3_column_type(d_stmt, c) == SQLITE_TEXT)
+        results->emplaceValue(row, std::string(reinterpret_cast<char const *>(sqlite3_column_text(d_stmt, c))));
       else if (sqlite3_column_type(d_stmt, c) == SQLITE_BLOB)
       {
         size_t blobsize = sqlite3_column_bytes(d_stmt, c);
@@ -530,6 +528,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
           std::memcpy(blob.get(), reinterpret_cast<unsigned char const *>(sqlite3_column_blob(d_stmt, c)), blobsize);
         results->emplaceValue(row, std::make_pair(blob, blobsize));
       }
+      else if (sqlite3_column_type(d_stmt, c) == SQLITE_FLOAT)
+        results->emplaceValue(row, sqlite3_column_double(d_stmt, c));
     }
     ++row;
   }

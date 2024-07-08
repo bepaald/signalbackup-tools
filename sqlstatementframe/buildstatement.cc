@@ -89,6 +89,8 @@ void SqlStatementFrame::buildStatement()
         d_statement.replace(pos, 1, ss.str());
         break;
       }
+      [[unlikely]] default:
+        Logger::error("Unknown parameter type in SqlStatementFrame (", std::get<0>(p), ").");
     }
   }
 }

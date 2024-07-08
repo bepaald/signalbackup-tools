@@ -36,17 +36,6 @@
 #include <bit>
 #endif
 
-
-// #if defined(_WIN32) || defined(__MINGW64__)
-// #include <windows.h>
-// #else // !windows
-// #include <sys/ioctl.h>
-// #if __has_include("unistd.h")
-// #define HAS_UNISTD_H_
-// #include <unistd.h>
-// #endif
-// #endif
-
 #include "logger/logger.h"
 
 #ifdef DEBUGMSG
@@ -96,7 +85,6 @@ namespace bepaald
   inline constexpr int strlitLength(char const *str, int pos = 0);
   inline int strlitLength(std::string const &str);
   inline bool fileOrDirExists(std::string const &path);
-  inline bool fileOrDirExists(std::filesystem::path const &path);
   inline bool isDir(std::string const &path);
   inline bool createDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
@@ -294,12 +282,6 @@ inline bool bepaald::fileOrDirExists(std::string const &path)
   return std::filesystem::exists(path, ec);
 }
 
-inline bool bepaald::fileOrDirExists(std::filesystem::path const &path)
-{
-  std::error_code ec;
-  return std::filesystem::exists(path, ec);
-}
-
 inline bool bepaald::isDir(std::string const &path)
 {
   std::error_code ec;
@@ -340,62 +322,6 @@ inline int bepaald::numDigits(long long int num)
   }
   return count;
 }
-
-// // This function was taken from https://github.com/agauniyal/rang/
-// // Used here to (poorly!) detect support for ansi escape codes
-// inline bool bepaald::supportsAnsi()
-// {
-// #if defined(_WIN32) || defined(__MINGW64__)
-//   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-//   DWORD mode = 0;
-//   GetConsoleMode(hConsole, &mode);
-//   return mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-// #endif
-//   static const bool result = []
-//   {
-//     const char *Terms[] =
-//       { "ansi",    "color",  "console", "cygwin", "gnome",
-//         "konsole", "kterm",  "linux",   "msys",   "putty",
-//         "rxvt",    "screen", "vt100",   "xterm" };
-//     const char *env_p = std::getenv("TERM");
-//     if (env_p == nullptr)
-//       return false;
-//     return std::any_of(std::begin(Terms), std::end(Terms),
-//                        [&](const char *term) { return std::strstr(env_p, term) != nullptr; });
-//   }();
-//   return result;
-// }
-
-// inline bool bepaald::isTerminal()
-// {
-// #ifdef HAS_UNISTD_H_ // defined if unistd.h is available
-//   static const bool result = []
-//   {
-//     return isatty(STDOUT_FILENO);
-//   }();
-//   return result;
-// #else
-// #if defined(_WIN32) || defined(__MINGW64__)
-//   DWORD filetype = GetFileType(GetStdHandle(STD_OUTPUT_HANDLE));
-//   return filetype != FILE_TYPE_PIPE &&  filetype != FILE_TYPE_DISK; // this is not foolproof (eg output is printer)...
-// #endif
-//   return false;
-// #endif
-// }
-
-// inline std::ostream &bepaald::bold_on(std::ostream &os)
-// {
-//   if (!supportsAnsi() || !isTerminal()) [[unlikely]]
-//     return os;
-//   return os << "\033[1m";
-// }
-
-// inline std::ostream &bepaald::bold_off(std::ostream &os)
-// {
-//   if (!supportsAnsi() || !isTerminal()) [[unlikely]]
-//     return os;
-//   return os << "\033[0m";
-// }
 
 inline std::string bepaald::toDateString(std::time_t epoch, std::string const &format)
 {

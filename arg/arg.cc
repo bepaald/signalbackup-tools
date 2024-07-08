@@ -106,6 +106,7 @@ Arg::Arg(int argc, char *argv[])
   d_themeswitching(false),
   d_searchpage(false),
   d_stickerpacks(false),
+  d_includereceipts(false),
   d_split(1000),
   d_split_bool(false),
   d_addincompletedataforhtmlexport(false),
@@ -1191,6 +1192,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-stickerpacks")
     {
       d_stickerpacks = false;
+      continue;
+    }
+    if (option == "--includereceipts")
+    {
+      d_includereceipts = true;
+      continue;
+    }
+    if (option == "--no-includereceipts")
+    {
+      d_includereceipts = false;
       continue;
     }
     if (option == "--allhtmlpages")

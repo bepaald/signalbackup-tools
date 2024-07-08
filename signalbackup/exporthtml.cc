@@ -31,7 +31,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               std::vector<std::string> const &daterangelist, long long int split,
                               std::string const &selfphone, bool calllog, bool searchpage, bool stickerpacks,
                               bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching,
-                              bool addexportdetails, bool blocked, bool fullcontacts, bool settings)
+                              bool addexportdetails, bool blocked, bool fullcontacts, bool settings,
+                              bool receipts)
 {
   bool databasemigrated = false;
   MemSqliteDB backup_database;
@@ -175,6 +176,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
     if (split > -1)
       options += "<br>--split " + bepaald::toString(split);
+    if (receipts)
+      options += "<br>--includereceipts";
     if (calllog)
       options += "<br>--includecalllog";
     if (blocked)
@@ -260,6 +263,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
+                    + (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, ") + // introduced in 117
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
@@ -551,7 +555,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
                                   icon
           });
-        HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage);
+        HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage, receipts);
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {

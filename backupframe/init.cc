@@ -31,7 +31,7 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
     int fieldnumber = getFieldnumber(data[processed]);
     if (fieldnumber < 0)
       return false;
-    uint32_t type = wiretype(data[processed]);
+    unsigned int type = wiretype(data[processed]);
     ++processed; // first byte was eaten
 
     //DEBUGOUT("FIELDNUMBER: ", fieldnumber);
@@ -105,6 +105,8 @@ bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<uns
         processed += length; // ????
         break;
       }
+      [[unlikely]] default:
+        Logger::error("Unknown wiretype (", type, ").");
     }
     //DEBUGOUT("Offset: ", processed);
   }

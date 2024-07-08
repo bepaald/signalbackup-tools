@@ -121,6 +121,9 @@ R"*(
                                          N is 1000.
    --light                               By default a dark theme is used for the rendered HTML. Add this
                                          option to output in a light theme instead.
+   --includereceipts                     Optional modifier for `--exporthtml'. Adds available info from
+                                         message receipts to the HTML page. Note, this potentionally slows
+                                         down page loading for large conversations significantly.
    --allhtmlpages                        Optional modifier for `--exporthtml'. Convenience option that
                                          enables all the modifying options for `--exporthtml' listed below.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML

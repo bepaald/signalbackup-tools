@@ -28,11 +28,11 @@ bool SignalBackup::setFileTimeStamp(std::string const &file, long long int time_
 {
   struct timespec ntimes[] =
   {
-    {                                   // ntimes[0] =
+    {                                   // ntimes[0] = // last access time
       time_usec / 1000,                 // tv_sec, seconds
       (time_usec % 1000) * 1000         // tv_usec, nanoseconds
     },
-    {                                   // ntimes[1] =
+    {                                   // ntimes[1] = // last modification time
       time_usec / 1000,                 // tv_sec, seconds
       (time_usec % 1000) * 1000         // tv_usec, nanoseconds
     }

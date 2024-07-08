@@ -831,24 +831,39 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-left: 5px;
       }
 
+      .msg-receipt-info,
       .edited-info,
       .msg-reaction .msg-reaction-info {
         display: block;
         position: absolute;
         z-index: 1;
-        visibility: hidden;
-        width: 250px;
         background-color: var(--msgreactioninfo-bc);
         border: 1px solid var(--msgreactioninfo-border);
         padding: 5px;
         border-radius: 6px;
-        margin-left: -131px;
-        bottom: 135%;
-        left: 50%;
+        visibility: hidden;
         opacity: 0;
         transition: opacity 0.2s;
       }
 
+      .edited-info,
+      .msg-reaction .msg-reaction-info {
+        bottom: 36px;
+        left: -118px;
+        width: 250px;
+      }
+
+      .msg-receipt-info {)";
+  file << '\n'
+       <<"        width: " << (isgroup ? "270" : "210") << "px;"
+       << '\n'
+       << "        right: calc(((" << (isgroup ? "270" : "210") << "px / 2) * -1) + 15px);";
+  file << R"(
+        font-size: small;
+        bottom: 33px;
+      }
+
+      .msg-receipt-info,
       .msg-reaction .msg-reaction-info {
         text-align: center;
       }
@@ -864,6 +879,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       /* Draw an arrow using border styles */
+      .msg-receipt-info::before,
       .edited-info::before,
       .msg-reaction .msg-reaction-info::before {
         content: "";
@@ -878,6 +894,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         border-right: 1px solid var(--msgreactioninfo-border);
       }
 
+      .footer-icons:hover,
+      .footer-icons:hover .msg-receipt-info,
       .edited:hover,
       .edited:hover .edited-info,
       .msg-reaction:hover .msg-reaction-info {
@@ -1308,17 +1326,17 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       overflow-wrap: anywhere;
     }
 
-    .left-column,
-    .right-column {
+    .column-left-align,
+    .column-right-align {
       flex: 0 0 49%;
     }
 
-    .left-column {
+    .column-right-align {
       padding-right: 1%;
       text-align: right;
     }
 
-    .right-column {
+    .column-left-align {
       padding-left: 1%;
       text-align: left;
     }
@@ -1326,7 +1344,17 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     .columnview-header {
       flex: 0 0 100%;
       text-align: center;
+    }
+
+    .groupdetails .columnview-header {
       font-style: italic;
+    }
+
+    .msg-receipt-info .columnview-header {
+      text-align: left;
+      font-weight: bold;
+      padding-top: 3px;
+      padding-left: 1%;
     }
 
     #thread-subtitle input[type=checkbox]:checked ~ label > .groupdetails {
@@ -1669,21 +1697,21 @@ file << R"(
     // group description
     if (!groupinfo.description.empty())
     {
-      file << "                  <span class=\"left-column\">Description:</span>\n";
-      file << "                  <span class=\"right-column\">" << HTMLescapeString(groupinfo.description) << "</span>\n";
+      file << "                  <span class=\"column-right-align\">Description:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << HTMLescapeString(groupinfo.description) << "</span>\n";
     }
 
     // group members
-    file << "                  <span class=\"left-column\">Members:</span>\n";
-    file << "                  <span class=\"right-column\">";
+    file << "                  <span class=\"column-right-align\">Members:</span>\n";
+    file << "                  <span class=\"column-left-align\">";
     for (uint gm = 0; gm < groupmembers.size(); ++gm)
       file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name)
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
     file << "</span>\n";
 
     // pending members
-    file << "                  <span class=\"left-column\">Pending members:</span>\n";
-    file << "                  <span class=\"right-column\">";
+    file << "                  <span class=\"column-right-align\">Pending members:</span>\n";
+    file << "                  <span class=\"column-left-align\">";
     if (groupinfo.pending_members.size() == 0)
       file << "(none)";
     else
@@ -1693,8 +1721,8 @@ file << R"(
     file << "</span>\n";
 
     // 'requesting' members
-    file << "                  <span class=\"left-column\">Requesting members:</span>\n";
-    file << "                  <span class=\"right-column\">";
+    file << "                  <span class=\"column-right-align\">Requesting members:</span>\n";
+    file << "                  <span class=\"column-left-align\">";
     if (groupinfo.requesting_members.size() == 0)
       file << "(none)";
     else
@@ -1704,8 +1732,8 @@ file << R"(
     file << "</span>\n";
 
     // banned members
-    file << "                  <span class=\"left-column\">Banned members:</span>\n";
-    file << "                  <span class=\"right-column\">";
+    file << "                  <span class=\"column-right-align\">Banned members:</span>\n";
+    file << "                  <span class=\"column-left-align\">";
     if (groupinfo.banned_members.size() == 0)
       file << "(none)";
     else
@@ -1716,45 +1744,45 @@ file << R"(
 
     // access control
     file << "                  <span class=\"columnview-header\">Permissions</span>\n";
-    file << "                  <span class=\"left-column\">Add members:</span>\n";
-    file << "                  <span class=\"right-column\">" << groupinfo.access_control_members << "</span>\n";
-    file << "                  <span class=\"left-column\">Edit group info:</span>\n";
-    file << "                  <span class=\"right-column\">" << groupinfo.access_control_attributes << "</span>\n";
-    file << "                  <span class=\"left-column\">Send messages:</span>\n";
-    file << "                  <span class=\"right-column\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n";
-    file << "                  <span class=\"left-column\">Approve members from invite link:</span>\n";
-    file << "                  <span class=\"right-column\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n";
+    file << "                  <span class=\"column-right-align\">Add members:</span>\n";
+    file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_members << "</span>\n";
+    file << "                  <span class=\"column-right-align\">Edit group info:</span>\n";
+    file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_attributes << "</span>\n";
+    file << "                  <span class=\"column-right-align\">Send messages:</span>\n";
+    file << "                  <span class=\"column-left-align\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n";
+    file << "                  <span class=\"column-right-align\">Approve members from invite link:</span>\n";
+    file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n";
 
     file << "                  <span class=\"columnview-header\">Options</span>\n";
 
     // expiration timer
-    file << "                  <span class=\"left-column\">Disappearing messages:</span>\n";
-    file << "                  <span class=\"right-column\">" << exptimer << "</span>\n";
+    file << "                  <span class=\"column-right-align\">Disappearing messages:</span>\n";
+    file << "                  <span class=\"column-left-align\">" << exptimer << "</span>\n";
 
     // link enabled?
-    file << "                  <span class=\"left-column\">Group link:</span>\n";
-    file << "                  <span class=\"right-column\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
+    file << "                  <span class=\"column-right-align\">Group link:</span>\n";
+    file << "                  <span class=\"column-left-align\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
 
     // muted
     if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
     {
       long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
-      file << "                  <span class=\"left-column\">Muted:</span>\n";
-      file << "                  <span class=\"right-column\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
+      file << "                  <span class=\"column-right-align\">Muted:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
     }
 
     // notify-on-mention
     if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
     {
-      file << "                  <span class=\"left-column\">Mentions:</span>\n";
-      file << "                  <span class=\"right-column\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
+      file << "                  <span class=\"column-right-align\">Mentions:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
     }
 
     // custom notifications
     if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications != -1)
     {
-      file << "                  <span class=\"left-column\">Custom notifications:</span>\n";
-      file << "                  <span class=\"right-column\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
+      file << "                  <span class=\"column-right-align\">Custom notifications:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
 
       // custom notifications were enabled, let's print them
       if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
@@ -1768,14 +1796,14 @@ file << R"(
           //std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
           long long int call_vibrate = notification_res.valueAsInt(0, "call_vibrate");
 
-          //file << "                  <span class=\"left-column\">Message ringtone:</span>\n";
-          //file << "                  <span class=\"right-column\">" << msg_ringtone <<  "</span>\n";
-          file << "                  <span class=\"left-column\">Message vibrate:</span>\n";
-          file << "                  <span class=\"right-column\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
-          //file << "                  <span class=\"left-column\">Call ringtone:</span>\n";
-          //file << "                  <span class=\"right-column\">" << call_ringtone <<  "</span>\n";
-          file << "                  <span class=\"left-column\">Call vibrate:</span>\n";
-          file << "                  <span class=\"right-column\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+          //file << "                  <span class=\"column-right-align\">Message ringtone:</span>\n";
+          //file << "                  <span class=\"column-left-align\">" << msg_ringtone <<  "</span>\n";
+          file << "                  <span class=\"column-right-align\">Message vibrate:</span>\n";
+          file << "                  <span class=\"column-left-align\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+          //file << "                  <span class=\"column-right-align\">Call ringtone:</span>\n";
+          //file << "                  <span class=\"column-left-align\">" << call_ringtone <<  "</span>\n";
+          file << "                  <span class=\"column-right-align\">Call vibrate:</span>\n";
+          file << "                  <span class=\"column-left-align\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
         }
       }
     }
@@ -1844,7 +1872,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" alt=\"Image attachment\">\n";
+                 << "_" << uniqueid << ".bin\" alt=\"Image attachment\" loading=\"lazy\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
@@ -1976,7 +2004,7 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
                  << '\n';
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
-      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\">\n";
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\" loading=\"lazy\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       htmloutput << std::string(indent, ' ') << "  </div>\n";
     }
@@ -1993,7 +2021,7 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
 
 void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info,
                                     std::map<long long int, RecipientInfo> *recipient_info,
-                                    bool searchpage) const
+                                    bool searchpage, bool writereceipts) const
 {
   int extraindent = 0;
   // insert message
@@ -2265,7 +2293,17 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         htmloutput << "received";
       else // if something? type != failed? -> check for failed before outputting 'checkmarks-'
         htmloutput << "sent";
-      htmloutput << "\"></div>\n";
+      htmloutput << "\">\n";
+      // msg receipt details
+      if (writereceipts &&
+          (msg_info.messages->valueAsInt(msg_info.idx, d_mms_delivery_receipts, -1) > 0 ||
+           msg_info.messages->valueAsInt(msg_info.idx, d_mms_read_receipts, -1) > 0))
+        HTMLwriteMsgReceiptInfo(htmloutput, recipient_info, msg_info.msg_id, msg_info.isgroup,
+                                msg_info.messages->valueAsInt(msg_info.idx, d_mms_read_receipts, 0),
+                                msg_info.messages->valueAsInt(msg_info.idx, d_mms_delivery_receipts, 0),
+                                msg_info.messages->valueAsInt(msg_info.idx, "receipt_timestamp", -1),
+                                extraindent);
+      htmloutput << std::string(extraindent, ' ') << "              </div>\n";
     }
   }
   htmloutput << std::string(extraindent, ' ') << "            </div>\n";

@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
                               arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
                               arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
-                              false /*arg.includesettings()*/))
+                              false /*arg.includesettings()*/, arg.includereceipts()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
@@ -414,7 +414,7 @@ int main(int argc, char *argv[])
                         arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
                         arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                         arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
-                        arg.includesettings()))
+                        arg.includesettings(), arg.includereceipts()))
       return 1;
 
   if (!arg.exporttxt().empty())

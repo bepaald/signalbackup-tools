@@ -30,6 +30,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                        "body, quote_missing, quote_author, quote_body, " + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                        "json_extract(link_previews, '$[0].description') AS link_preview_description, " +
+                       (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, ") +
                        (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                        "shared_contacts, quote_id, expires_in, message_ranges, quote_mentions"
                        " FROM message WHERE _id = ?", msg_id, &revision) ||
@@ -155,5 +156,5 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
 
                             icon});
 
-  HTMLwriteMessage(filt, msg_info, recipient_info, false /*searchpage*/);
+  HTMLwriteMessage(filt, msg_info, recipient_info, false /*searchpage*/, false /*writereceipts*/);
 }
