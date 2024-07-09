@@ -34,8 +34,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
                 "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
-                "json_extract(json,'$.nicknameGivenName') AS nick_first, "
-                "json_extract(json,'$.nicknameFamilyName') AS nick_last, "
+                "NULLIF(json_extract(json,'$.nicknameGivenName'), '') AS nick_first, "
+                "NULLIF(json_extract(json,'$.nicknameFamilyName'), '') AS nick_last, "
                 "TOKENCOUNT(members) AS nummembers, json_extract(json, '$.masterKey') AS masterKey "
                 "FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
                 {id, phone, groupidb64}, &res))
@@ -43,7 +43,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
     return -1;
   }
-  //res.prettyPrint();
+  //res.prettyPrint(d_truncate);
 
   if (res.rows() != 1)
   {
@@ -290,7 +290,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                   {"nickname_given_name", res.value(0, "nick_first")},
                   {"nickname_family_name", res.value(0, "nick_last")},
                   {(!res.isNull(0, "nick_first") || !res.isNull(0, "nick_last")) ?
-                   "nickname_joined_name" : "", res(0, "nick_first") + " " + res(0, "nick_last")},
+                   "nickname_joined_name" :
+                   "", (res(0, "nick_first").empty() ? res(0, "nick_last") :
+                        (res(0, "nick_last").empty() ? res(0, "nick_first") :
+                         res(0, "nick_first") + " " + res(0, "nick_last")))},
                   {d_recipient_e164, res.value(0, "e164")},
                   {d_recipient_aci, res.value(0, "uuid")},
                   {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
@@ -308,22 +311,9 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   // set avatar
   dtSetAvatar(res("avatar"), new_rec_id, databasedir);
-  // std::string avatarpath = res("avatar");
-  // if (!avatarpath.empty())
-  // {
-  //   AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
-  //   if (amd)
-  //   {
-  //     std::unique_ptr<AvatarFrame> new_avatar_frame;
-  //     if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(new_rec_id),
-  //                                                                         "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
-  //     {
-  //       new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
-  //       d_avatars.emplace_back(std::make_pair(bepaald::toString(new_rec_id), std::move(new_avatar_frame)));
-  //     }
-  //   }
-  // }
+
   Logger::message("Succesfully created new recipient (id: ", new_rec_id, ").");
+  //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);
   return new_rec_id;
 }
 

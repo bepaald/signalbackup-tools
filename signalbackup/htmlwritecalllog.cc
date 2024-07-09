@@ -51,7 +51,8 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       threadlist += ",";
   }
   SqliteDB::QueryResults results;
-  if (!d_database.exec("SELECT "
+  if (d_database.containsTable("call") &&
+      !d_database.exec("SELECT "
                        //"_id, "
                        "message_id, peer, type, direction, event, timestamp "
                        //", ringer, deletion_timestamp, "

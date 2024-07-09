@@ -28,6 +28,17 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (bepaald::contains(recipientinfo, rid)) // already present
       continue;
 
+    // d_database.printLineMode("SELECT " + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+    //                          "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+    //                          (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+    //                          "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
+    //                          "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+    //                          " recipient._id, recipient." + d_recipient_e164 + ", recipient.username, recipient." + d_recipient_aci +
+    //                          " FROM recipient "
+    //                          "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
+    //                          "WHERE recipient._id = ?",
+    //                          rid);
+
     // get info
     SqliteDB::QueryResults results;
     d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +

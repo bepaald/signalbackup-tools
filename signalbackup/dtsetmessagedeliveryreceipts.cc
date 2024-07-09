@@ -40,7 +40,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
                 "json_extract(delivery_details.value, '$.status') AS status,"
                 "COALESCE(json_extract(delivery_details.value, '$.updatedAt'), delivery_details.sent_at) AS updated_timestamp"
                 " FROM "
-                "(SELECT sent_at,key,value FROM messages,json_each(messages.json, '$.sendStateByConversationId') WHERE rowid IS ?) delivery_details"
+                "(SELECT sent_at,key,value FROM messages,json_each(messages.json, '$.sendStateByConversationId') WHERE rowid IS ?) AS delivery_details"
                 " LEFT JOIN conversations ON conversations.id IS conv_id", rowid, &status_results))
   {
     Logger::error("Getting message delivery status");
