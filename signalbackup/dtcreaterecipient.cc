@@ -29,7 +29,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   //std::cout << "Creating new recipient for id: " << id << ", phone: " << phone << std::endl;
 
   SqliteDB::QueryResults res;
-  if (!ddb.exec("SELECT type, name, profileName, profileFamilyName, "
+  if (!ddb.exec("SELECT type, TRIM(name) AS name, profileName, profileFamilyName, "
                 "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(json,'$.color') AS color, "
                 "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
                 "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
@@ -263,7 +263,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     (*recipient_info)[groupidb64] = new_rec_id;
 
     // set avatar
-    dtSetAvatar(res("avatar"), new_rec_id, databasedir);
+    if (!dtSetAvatar(res("avatar"), new_rec_id, databasedir))
+      Logger::warning("Failed to set avatar for new recipient.");
 
     Logger::message("Succesfully created new recipient for group (id: ", new_rec_id, ").");
     return new_rec_id; //-1;

@@ -24,7 +24,7 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, long long int rid,
   // set avatar
   //std::string avatarpath = res("avatar");
   if (avatarpath.empty())
-    return false;
+    return true;
 
   AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
   if (!amd)

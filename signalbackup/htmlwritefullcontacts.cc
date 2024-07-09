@@ -306,6 +306,8 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
         avatarpath += "/";
 
       bepaald::replaceAll(&avatarpath, '\"', R"(\")");
+      HTMLescapeUrl(&avatarpath);
+
       outputfile
         << "      .avatar-" << rec_id << " {\n"
         << "        background-image: url(\"" << avatarpath << "media/Avatar_" << rec_id << ".bin\");\n"
