@@ -27,7 +27,8 @@ long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date, bool 
   std::regex datestring("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
   if (std::regex_match(date, datestring))
   {
-    std::tm t = {};
+    std::tm t = {};  // sets all to 0: NO daylight savings...
+    t.tm_isdst = -1; // set daylight savings time to unknown (handle automatically)
     std::istringstream ss(date);
     if (ss >> std::get_time(&t, "%Y-%m-%d %H:%M:%S"))
       ret = std::mktime(&t) * 1000;

@@ -20,6 +20,7 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
+                                    std::string const &datewhereclause,
                                     std::map<long long int, RecipientInfo> *recipientinfo,
                                     long long int notetoself_tid [[maybe_unused]],
                                     bool overwrite, bool append, bool light, bool themeswitching,
@@ -58,7 +59,8 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
                        //", ringer, deletion_timestamp, "
                        //"datetime((timestamp / 1000), 'unixepoch', 'localtime') "
                        "FROM call WHERE "
-                       "message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id IN (" + threadlist + ")) "
+                       "message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id IN (" + threadlist + ")) " +
+                       datewhereclause + " "
                        "ORDER BY timestamp DESC",
                        &results))
   {
@@ -70,7 +72,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
   if (results.rows() == 0)
     listempty = true;
 
-  //results.prettyPrint();
+  //results.prettyPrint(d_truncate);
 
   /*
     CALL LOG:

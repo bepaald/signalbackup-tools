@@ -108,6 +108,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     for (uint i = 0; i < daterangelist.size(); i += 2)
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
   std::string datewhereclause;
+  std::string datewhereclausecalllog;
   for (uint i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
@@ -128,8 +129,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     dateranges[i].second = bepaald::toString(endrange);
 
     datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "date_received BETWEEN "s + dateranges[i].first + " AND " + dateranges[i].second;
+    datewhereclausecalllog += (datewhereclausecalllog.empty() ? " AND (" : " OR ") + "timestamp BETWEEN "s + dateranges[i].first + " AND " + dateranges[i].second;
     if (i == dateranges.size() - 1)
+    {
       datewhereclause += ')';
+      datewhereclausecalllog += ')';
+    }
   }
   std::sort(dateranges.begin(), dateranges.end());
 
@@ -792,7 +797,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                  themeswitching, exportdetails_html);
 
   if (calllog)
-    HTMLwriteCallLog(threads, directory, &recipient_info, note_to_self_thread_id,
+    HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,
                      overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   if (searchpage)

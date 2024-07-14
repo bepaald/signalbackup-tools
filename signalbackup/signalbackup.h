@@ -423,8 +423,9 @@ class SignalBackup
                       bool settings, bool append, bool light, bool themeswitching, std::string const &exportdetails) const;
   void HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const;
   void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
-                        std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid,
-                        bool overwrite, bool append, bool light, bool themeswitching, std::string const &exportdetails) const;
+                        std::string const &datewhereclause, std::map<long long int, RecipientInfo> *recipientinfo,
+                        long long int notetoself_tid, bool overwrite, bool append, bool light, bool themeswitching,
+                        std::string const &exportdetails) const;
   bool HTMLwriteStickerpacks(std::string const &dir, bool overwrite, bool append, bool light, bool themeswitching,
                              std::string const &exportdetails) const;
   bool HTMLwriteBlockedlist(std::string const &dir, std::map<long long int, RecipientInfo> *recipientinfo,
