@@ -297,6 +297,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                          res(0, "nick_first") + " " + res(0, "nick_last")))},
                   {d_recipient_e164, res.value(0, "e164")},
                   {d_recipient_aci, res.value(0, "uuid")},
+                  // {d_database.tableContainsColumn("recipient", "blocked") ? // blocked recipients do not exist in Desktop?
+                  //  "blocked" : "", res.value(0, "blocked")},
                   {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
   {
     Logger::error("Failed to insert new recipient into database.");

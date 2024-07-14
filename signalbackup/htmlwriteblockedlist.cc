@@ -285,9 +285,10 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
           avatarpath = std::move(thread_dir);
       }
 
-      if (avatarpath.empty()) // avatar not already present in thread, write out own...
+      if (avatarpath.empty()) // avatar not already present anywhere, write out own...
       {
-        if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())
+        if (!bepaald::fileOrDirExists(dir + "/" + "/media/Avatar_" + bepaald::toString(rec_id) + ".bin")) // maybe htmlroot/media/avatar was already
+        if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                     // written by writefullcontacts...
         {
           Logger::warning("Failed to set path or write avatar. Skipping");
           continue;
@@ -297,6 +298,8 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
         avatarpath += "/";
 
       bepaald::replaceAll(&avatarpath, '\"', R"(\")");
+      HTMLescapeUrl(&avatarpath);
+
       outputfile
         << "      .avatar-" << rec_id << " {" << '\n'
         << "        background-image: url(\"" << avatarpath << "media/Avatar_" << rec_id << ".bin\");" << '\n'

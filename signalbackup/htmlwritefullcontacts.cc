@@ -40,7 +40,6 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     return false;
   }
 
-
   SqliteDB::QueryResults results;
   if (!d_database.exec("SELECT _id, " + d_recipient_type + " AS 'group_type', " +
                        d_recipient_e164 + " AS 'phone', " +
@@ -294,13 +293,14 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
           avatarpath = std::move(thread_dir);
       }
 
-      if (avatarpath.empty()) // avatar not already present in thread, write out own...
+      if (avatarpath.empty()) // avatar not already present anywhere, write out own...
       {
-        if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())
-        {
-          Logger::warning("Failed to set path or write avatar. Skipping");
-          continue;
-        }
+        if (!bepaald::fileOrDirExists(dir + "/" + "/media/Avatar_" + bepaald::toString(rec_id) + ".bin")) // maybe htmlroot/media/avatar was already
+          if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                     // written by writeblockedlist...
+          {
+            Logger::warning("Failed to set path or write avatar. Skipping");
+            continue;
+          }
       }
       else
         avatarpath += "/";

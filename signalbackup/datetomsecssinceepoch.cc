@@ -36,7 +36,7 @@ long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date, bool 
   }
   else
   {
-    ret = bepaald::toNumber<long long int>(date);
+    ret = bepaald::toNumber<long long int>(date, -1);
     if (fromdatestring)
       *fromdatestring = false;
   }

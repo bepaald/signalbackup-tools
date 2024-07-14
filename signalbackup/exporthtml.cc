@@ -98,6 +98,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
   std::vector<long long int> threads = ((limittothreads.empty() || (limittothreads.size() == 1 && limittothreads[0] == -1)) ?
                                         threadIds() : limittothreads);
+  std::vector<long long int> excludethreads; // threads excluded by limittodates...
 
   std::map<long long int, RecipientInfo> recipient_info;
 
@@ -276,6 +277,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       if (d_verbose) [[unlikely]]
         Logger::message("Thread appears empty. Skipping...");
+      excludethreads.push_back(t);
       continue;
     }
 
@@ -780,29 +782,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
-  /*
-  // disable calllog if not presents in database, or it is empty
-  if (calllog &&
-      (!d_database.containsTable("call") ||
-       d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM call", -1) == 0))
-  {
-    Logger::warning("Not writing calllog.html: Call log is empty");
-    calllog = false;
-  }
-  */
-
-  /*
-  // disable blockedlist if not present, or it is empty
-  if (blocked &&
-      (!d_database.tableContainsColumn("recipient", "blocked") ||
-       d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM recipient WHERE blocked = 1", -1) == 0))
-  {
-    Logger::warning("Not writing blockedlist.html: No blocked recipients");
-    blocked = false;
-  }
-  */
-
-  HTMLwriteIndex(threads, directory, &recipient_info, note_to_self_thread_id,
+  std::vector<long long int> indexedthreads;
+  std::set_difference(threads.begin(), threads.end(),
+                      excludethreads.begin(), excludethreads.end(),
+                      std::back_inserter(indexedthreads));
+  HTMLwriteIndex(indexedthreads, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts,
                  settings, overwrite, append, lighttheme,
                  themeswitching, exportdetails_html);

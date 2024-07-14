@@ -846,7 +846,7 @@ inline bool Arg::parseStringList(std::string const &strlist, std::vector<std::st
   size_t pos = 0;
   while ((pos = tr.find(',', start)) != std::string::npos)
   {
-    list->push_back(tr.substr(start, pos - start));
+    list->emplace_back(tr.substr(start, pos - start));
     start = pos + 1;
   }
   list->push_back(tr.substr(start));
@@ -887,7 +887,7 @@ bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, bool
     if (!parseNumberListToken(tr.substr(start, pos - start), list))  // get&parse token
     {
       if (faillist)
-        faillist->push_back(tr.substr(start, pos - start));
+        faillist->emplace_back(tr.substr(start, pos - start));
       else
         return false;
     }
@@ -896,7 +896,7 @@ bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, bool
   if (!parseNumberListToken(tr.substr(start), list)) // get last bit
   {
     if (faillist)
-      faillist->push_back(tr.substr(start));
+      faillist->emplace_back(tr.substr(start));
     else
       return false;
   }

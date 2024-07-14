@@ -1153,7 +1153,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_accepted_type) ? d_selfid : address);
             if (freedate == -1)
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
