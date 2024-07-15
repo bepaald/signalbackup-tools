@@ -20,9 +20,19 @@
 #include "sqlitedb.ih"
 
 std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) const
-{
+{  // order empirically determined
+  if (valueHasType<std::nullptr_t>(row, column))
+    return std::string();
+
   if (valueHasType<std::string>(row, column))
     return getValueAs<std::string>(row, column);
+
+  if (valueHasType<long long int>(row, column))
+    return bepaald::toString(getValueAs<long long int>(row, column));
+
+  if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column))
+    return Base64::bytesToBase64String(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).first.get(),
+                                       getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).second);
 
   if (valueHasType<unsigned int>(row, column))
     return bepaald::toString(getValueAs<unsigned int>(row, column));
@@ -33,18 +43,8 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
   if (valueHasType<unsigned long>(row, column))
     return bepaald::toString(getValueAs<unsigned long>(row, column));
 
-  if (valueHasType<long long int>(row, column))
-    return bepaald::toString(getValueAs<long long int>(row, column));
-
   if (valueHasType<double>(row, column))
     return bepaald::toString(getValueAs<double>(row, column));
-
-  if (valueHasType<std::nullptr_t>(row, column))
-    return std::string();
-
-  if (valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column))
-    return Base64::bytesToBase64String(getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).first.get(),
-                                       getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(row, column).second);
 
   else [[unlikely]]
     return "(unhandled type)";

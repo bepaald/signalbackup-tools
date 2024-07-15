@@ -109,6 +109,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
   std::string datewhereclause;
   std::string datewhereclausecalllog;
+  long long int maxdate = -1;
   for (uint i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
@@ -121,6 +122,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       continue;
     }
     Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
+
+    if (endrange > maxdate)
+      maxdate = endrange;
 
     if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
       endrange += 999; // to get everything in the second specified...
@@ -619,8 +623,19 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           }
         }
 
+        // set daterangeidx (which range were we in for the just written message...)
+        for (uint dri = 0; dri < dateranges.size(); ++dri)
+          if (messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[dri].first) &&
+              messages.getValueAs<long long int>(messagecount, "date_received") <= bepaald::toNumber<long long int>(dateranges[dri].second))
+          {
+            daterangeidx = dri;
+            break;
+          }
+
         if (++messagecount >= messages.rows())
           break;
+
+        // // BREAK THE CONVERSTAION BOX BETWEN CONSECUTIVE DATE RANGES
 
         // std::cout << daterangeidx << std::endl;
         // std::cout << "curm: " << messages.getValueAs<long long int>(messagecount, "date_received") << std::endl;
@@ -628,21 +643,19 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         // std::cout << "rlow: " << bepaald::toNumber<long long int>(dateranges[daterangeidx + 1].first) << std::endl;
         // std::cout << (messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second) &&
         //               messages.getValueAs<long long int>(messagecount, "date_received") <= bepaald::toNumber<long long int>(dateranges[daterangeidx + 1].first)) << std::endl;
-
         if (!dateranges.empty() &&
             daterangeidx < dateranges.size() - 1 && // dont split if it's the last range
             messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second))
         {
-          if (messagecount < (max_msg_per_page * (pagenumber + 1)))
+          if (messagecount < (max_msg_per_page * (pagenumber + 1))) // dont break convo-box if we are moving to a new page (because of --split)
           {
-            //std::cout << "SPLITTING! (rangeend(" << daterangeidx << "): " << dateranges[daterangeidx].second << ")" << std::endl;
+            // std::cout << "SPLITTING! (rangeend(" << daterangeidx << "): " << dateranges[daterangeidx].second << ")" << std::endl;
+            // std::cout << "         ! (rangeend(" << daterangeidx << "): " << dateranges[daterangeidx + 1].first << ")" << std::endl;
+            // std::cout << "         ! " << messages.getValueAs<long long int>(messagecount, "date_received") << std::endl;
             htmloutput << "        </div>" << std::endl;
             htmloutput << "        <div class=\"conversation-box\">" << std::endl;
             htmloutput << std::endl;
           }
-          while (daterangeidx < dateranges.size() - 1 &&
-                 messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second))
-            ++daterangeidx;
         }
 
       }
@@ -791,10 +804,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   std::set_difference(threads.begin(), threads.end(),
                       excludethreads.begin(), excludethreads.end(),
                       std::back_inserter(indexedthreads));
-  HTMLwriteIndex(indexedthreads, directory, &recipient_info, note_to_self_thread_id,
-                 calllog, searchpage, stickerpacks, blocked, fullcontacts,
-                 settings, overwrite, append, lighttheme,
-                 themeswitching, exportdetails_html);
+  HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
+                 calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
+                 append, lighttheme, themeswitching, exportdetails_html);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,

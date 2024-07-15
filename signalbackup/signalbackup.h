@@ -417,7 +417,7 @@ class SignalBackup
   void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,
                                long long int message_id, bool isgroup, long long int read_count,
                                long long int delivered_count, long long int timestamp, int indent) const;
-  void HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
+  void HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                       std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
                       bool searchpage, bool overwrite, bool stickerpacks, bool blocked, bool fullcontacts,
                       bool settings, bool append, bool light, bool themeswitching, std::string const &exportdetails) const;

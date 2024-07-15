@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std::string const &directory,
+void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                                   bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts,
                                   bool settings,  bool overwrite,
@@ -67,22 +67,97 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
                        "IFNULL(thread.date, 0) AS date, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        "json_extract(thread.snippet_extras, '$.bodyRanges') AS 'snippet_ranges', "
+                       "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        "recipient.group_id, "
-                       "recipient.blocked, "
-                       "(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
+                       "recipient.blocked "
+                       //"(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
                        "WHERE thread._id IN (" + threadlist + ") AND " + d_thread_message_count + " > 0 ORDER BY "
-                       + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, " : "") +
+                       + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, pinned ASC, " : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
-                       "date DESC", &results)) // order by pinned DESC archived ASC date DESC??
+                       "date DESC", &results))
   {
     Logger::error("Failed to query database for thread snippets.");
     return;
   }
-  //results.prettyPrint();
+  //results.prettyPrint(true);
+
+  //maxtimestamp = 9999999999999;
+  if (maxtimestamp != -1)
+  {
+    if (!d_database.exec("WITH partitioned_messages AS ("
+                         "SELECT "
+                         "ROW_NUMBER() OVER (PARTITION BY thread_id ORDER BY " + d_mms_table + ".date_received DESC) AS partition_idx, " +
+                         d_mms_table + ".thread_id AS _id, "
+                         "thread." + d_thread_recipient_id + ", "
+                         "NULLIF(" + d_mms_table + ".body, '') AS snippet, " +
+                         d_part_table + "." + d_part_ct + " AS partct, "
+                         /*
+                         // this messes up body ranges
+                         "CASE "
+                         "  WHEN NULLIF(" + d_mms_table + ".body, '') NOT NULL THEN " // body NOT NULL
+                         "  CASE "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " IS NULL THEN NULLIF(" + d_mms_table + ".body, '') " // no attachment
+                         "    WHEN " + d_part_table + "." + d_part_ct + " IS 'image/gif' THEN CONCAT('\xF0\x9F\x8E\xA1 ', NULLIF(" + d_mms_table + ".body, '')) "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'image/%' THEN CONCAT('\xF0\x9F\x93\xB7 ', NULLIF(" + d_mms_table + ".body, '')) "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'audio/%' THEN CONCAT('\xF0\x9F\x8E\xA4 ', NULLIF(" + d_mms_table + ".body, '')) "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'video/%' THEN CONCAT('\xF0\x9F\x8E\xA5 ', NULLIF(" + d_mms_table + ".body, '')) "
+                         "    ELSE NULLIF(" + d_mms_table + ".body, '') "
+                         "  END "
+                         "ELSE " // body IS NULL
+                         "  CASE "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " IS NULL THEN NULL " // no attachment
+                         "    WHEN " + d_part_table + "." + d_part_ct + " IS 'image/gif' THEN '\xF0\x9F\x8E\xA1 GIF' "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'image/%' THEN '\xF0\x9F\x93\xB7 Photo' "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'audio/%' THEN '\xF0\x9F\x8E\xA4 Audio' "
+                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'video/%' THEN '\xF0\x9F\x8E\xA5 Video' "
+                         "  ELSE NULL "
+                         "  END "
+                         "END AS snippet, "
+                         */
+                         + d_mms_table + "." + d_mms_type + " AS snippet_type, "
+                         "thread.expires_in, "
+                         "IFNULL(" + d_mms_table + "." + d_mms_date_sent + ", 0) AS date, "
+                         "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', " +
+                         "message_ranges AS 'snippet_ranges', "
+                         + (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ")
+                         + (d_database.tableContainsColumn("thread", "pinned") ? "thread.pinned, " : "") +
+                         + (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
+                         "recipient.group_id, "
+                         "recipient.blocked "
+                         //"-1 AS message_count "
+                         "FROM " + d_mms_table + " "
+                         "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
+                         "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
+                         "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id "
+                         "WHERE thread._id IN (" + threadlist + ") AND " + d_thread_message_count + " > 0 "
+                         "AND " + d_mms_table + ".date_received <= ? "
+                         "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
+                         "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
+                         "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
+                         "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
+                         "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
+                         "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ?) SELECT * FROM partitioned_messages WHERE partition_idx = 1 "
+                         "ORDER BY "
+                         + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, pinned ASC, " : "") +
+                         + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") + "date DESC",
+                         {maxtimestamp,
+                          Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
+                          Types::BASE_TYPE_MASK, Types::GV1_MIGRATION_TYPE,
+                          Types::BASE_TYPE_MASK, Types::CHANGE_NUMBER_TYPE,
+                          Types::BASE_TYPE_MASK, Types::BOOST_REQUEST_TYPE,
+                          Types::GROUP_V2_LEAVE_BITS, Types::GROUP_V2_LEAVE_BITS,
+                          Types::BASE_TYPE_MASK, Types::THREAD_MERGE_TYPE},
+                         &results))
+    {
+      Logger::error("Failed to query database for thread snippets.");
+      return;
+    }
+    //results.prettyPrint(true);
+  }
 
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   //outputfile << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F and %T do not work on minGW
@@ -729,13 +804,44 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, std
     std::string snippet_ranges = results.valueAsString(i, "snippet_ranges");
     if (!snippet_ranges.empty())
     {
-      auto [data, length] = Base64::base64StringToBytes(snippet_ranges);
-      std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(data, length);
-      HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info, !Types::isOutgoing(snippet_type), brdata, false);
+      if (maxtimestamp == -1) // ranges were taken from thread table, here they are base64 encoded
+      {
+        auto [data, length] = Base64::base64StringToBytes(snippet_ranges);
+        std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(data, length);
+        HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info, !Types::isOutgoing(snippet_type), brdata, false);
+      }
+      else // range from message, here range is in binary format
+      {
+        std::pair<std::shared_ptr<unsigned char []>, size_t> brdata = results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_ranges");
+        HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info, !Types::isOutgoing(snippet_type), brdata, false);
+      }
+    }
+
+    if (maxtimestamp != -1) // we are creating a new snippet, add attchment icon if needed
+    {                       // needs to be done _after_ applying ranges.
+      std::string attachmenttype = results.valueAsString(i, "partct");
+      if (STRING_STARTS_WITH(attachmenttype, "image/gif"))
+        snippet = "<span class=\"msg-emoji\">\xF0\x9F\x8E\xA1</span> " + (snippet.empty() ? "GIF" : snippet); // ferris wheel emoji for some reason
+      else if (STRING_STARTS_WITH(attachmenttype, "image"))
+        snippet = "<span class=\"msg-emoji\">\xF0\x9F\x93\xB7</span> " + (snippet.empty() ? "Photo" : snippet); // (still) camera emoji
+      else if (STRING_STARTS_WITH(attachmenttype, "audio"))
+        snippet = "<span class=\"msg-emoji\">\xF0\x9F\x8E\xA4</span> " + (snippet.empty() ? "Voice message" : snippet); // microphone emoji
+      else if (STRING_STARTS_WITH(attachmenttype, "video"))
+        snippet = "<span class=\"msg-emoji\">\xF0\x9F\x8E\xA5</span> " + (snippet.empty() ? "Video" : snippet); //  (movie) camera emoji
+      else if (!attachmenttype.empty()) // if binary file
+        snippet = "<span class=\"msg-emoji\">\xF0\x9F\x93\x8E</span> " + (snippet.empty() ? "File" : snippet); // paperclip
+    }
+
+    if (results.valueAsInt(i, "deleted", 0) == 1)
+    {
+      if (Types::isOutgoing(snippet_type))
+        snippet = "<i>You deleted this message.</i>";
+      else
+        snippet = "<i>This message was deleted.</i>";
     }
 
     if (Types::isStatusMessage(snippet_type))
-      snippet = "(status message)"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
+      snippet = "<i>(status message)</i>"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");

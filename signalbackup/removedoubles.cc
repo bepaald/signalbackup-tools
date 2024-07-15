@@ -35,7 +35,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
       //   d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, _id ASC) t WHERE RNum%2 = 0)");
 
       d_database.exec("DELETE FROM sms WHERE _id IN "
-                      "(SELECT _id FROM sms GROUP BY " + d_sms_date_received + ", body, thread_id, CAST(" + d_sms_recipient_id + " AS STRING), read, type, " +
+                      "(SELECT _id FROM sms GROUP BY " + d_sms_date_received + ", body, thread_id, CAST(" + d_sms_recipient_id + " AS text), read, type, " +
                       (d_database.tableContainsColumn("sms", "protocol") ? "protocol, " : "") + "date_sent HAVING COUNT(*) IS 2)");
 
       Logger::message("  Removed ", d_database.changed(), " entries.");
@@ -47,14 +47,14 @@ void SignalBackup::removeDoubles(long long int milliseconds)
     if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
     {
       d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
-                      "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, CAST(" + d_mms_recipient_id + " AS STRING), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
+                      "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, CAST(" + d_mms_recipient_id + " AS text), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
       Logger::message("  Removed ", d_database.changed(), " entries.");
     }
     else
     {
       d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
                       "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, "
-                      "CAST(from_recipient_id AS STRING), CAST(to_recipient_id AS STRING), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
+                      "CAST(from_recipient_id AS text), CAST(to_recipient_id AS text), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
       Logger::message("  Removed ", d_database.changed(), " entries.");
     }
   }
@@ -69,7 +69,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
 
     Logger::message("  Removing duplicate entries from mms table...");
     SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT _id, body, thread_id, CAST(" + d_mms_recipient_id + " AS STRING) AS " + d_mms_recipient_id + ", " + d_mms_date_sent + ", " + d_mms_type +
+    if (!d_database.exec("SELECT _id, body, thread_id, CAST(" + d_mms_recipient_id + " AS text) AS " + d_mms_recipient_id + ", " + d_mms_date_sent + ", " + d_mms_type +
                          " FROM " + d_mms_table + " ORDER BY " + d_mms_date_sent + " ASC", &res))
       return;
     long long int count = 0;
@@ -79,7 +79,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
       long long int timestamp = res.valueAsInt(i, d_mms_date_sent);
 
       SqliteDB::QueryResults res2;
-      d_database.exec("DELETE FROM " + d_mms_table + " WHERE body IS ? AND thread_id IS ? AND CAST(" + d_mms_recipient_id + " AS STRING) IS ? AND " +
+      d_database.exec("DELETE FROM " + d_mms_table + " WHERE body IS ? AND thread_id IS ? AND CAST(" + d_mms_recipient_id + " AS text) IS ? AND " +
                       d_mms_type + " IS ? AND " + d_mms_date_sent + " != ? AND " + d_mms_date_sent + " BETWEEN ? AND ? RETURNING _id",
                       {res.value(i, "body"), res.value(i, "thread_id"), res.value(i, d_mms_recipient_id), res.value(i, d_mms_type),
                        timestamp, timestamp, timestamp + milliseconds}, &res2);

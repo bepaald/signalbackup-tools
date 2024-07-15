@@ -272,13 +272,14 @@ std::cout << R"*(
    //                                            always be wanted if the NEWNUMBER was already added to the
    //                                            group.
 std::cout << R"*(
---mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.)*";
+--mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
+)*";
 //--sleepyh34d <FILE[,PASSWD]>                  Try to import messages from a truncated backup file into a
 //                                              complete one. See
 //                                              https://github.com/bepaald/signalbackup-tools/issues/32
-std::cout << R"*(
---hhenkel <STRING>                            See https://github.com/bepaald/signalbackup-tools/issues/17
-)*";
+//std::cout << R"*(
+//--hhenkel <STRING>                            See https://github.com/bepaald/signalbackup-tools/issues/17
+//)*";
 }
 
 
