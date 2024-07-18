@@ -20,8 +20,10 @@
 #include "sqlcipherdecryptor.ih"
 
 #if defined(_WIN32) || defined(__MINGW64__)
-#include <dpapi.h>
 #include "../base64/base64.h"
+
+#include <dpapi.h>
+#include <openssl/core_names.h>
 #endif
 
 bool SqlCipherDecryptor::getEncryptedKey()
@@ -124,8 +126,6 @@ bool SqlCipherDecryptor::getEncryptedKey()
 
 
 
-
-
   // 3. Now decrypt the encrypted_key using the decrypted key from local state
   // the encrypted key (from step 1) is made up of
   // - a 3 byte header ('v', '1', '0')
@@ -149,25 +149,23 @@ bool SqlCipherDecryptor::getEncryptedKey()
   if (std::memcmp(header, v10header, header_length) != 0) [[unlikely]]
     Logger::warning("Unexpected header value: ", bepaald::bytesToHexString(header, header_length));
 
-  /* Create and initialise the context */
+  // Create and initialize the decryption context & cipher
   std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-
-  if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_gcm(), nullptr, nullptr, nullptr)) [[unlikely]]
+  std::unique_ptr<EVP_CIPHER, decltype(&::EVP_CIPHER_free)> cipher(EVP_CIPHER_fetch(NULL, "AES-256-GCM", NULL), &::EVP_CIPHER_free);
+  if (!ctx || !cipher)
   {
-    Logger::error("Failed to initialise decryption operation");
+    Logger::error("Failed to create decryption context or cipher");
     return false;
   }
 
-  // set IV size (not actually necessary since the value is 12, which is default, but lets do it anyway)
-  if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_IVLEN, nonce_length, nullptr)) [[unlikely]]
-  {
-    Logger::error("Failed setting IV size");
-    return false;
-  }
+  // set parameters (to set and check MAC)
+  OSSL_PARAM params[2];
+  params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, mac, mac_length);
+  params[1] = OSSL_PARAM_construct_end();
 
-  if (!EVP_DecryptInit_ex(ctx.get(), nullptr, nullptr, encryptedkey_key.get(), nonce)) [[unlikely]]
+  if (!EVP_DecryptInit_ex2(ctx.get(), cipher.get(), encryptedkey_key.get(), nonce, params)) [[unlikely]]
   {
-    Logger::error("Failed to initialise key and IV");
+    Logger::error("Failed to initialize decryption operation");
     return false;
   }
 
@@ -180,27 +178,18 @@ bool SqlCipherDecryptor::getEncryptedKey()
     return false;
   }
 
-  // check the mac
-  if (!EVP_CIPHER_CTX_ctrl(ctx.get(), EVP_CTRL_GCM_SET_TAG, mac_length, mac)) [[unlikely]]
-  {
-    Logger::error("Mac check failed");
-    return false;
-  }
-
   if (EVP_DecryptFinal_ex(ctx.get(), key_hexstr.get() + len, &len) > 0) [[likely]]
   {
-    //std::cout << "KEY HEX : " << bepaald::bytesToHexString(key_hexstr.get(), key_hexstr_length) << std::endl;
-
     // the decrypted data is not the actual key, but the key as hex in ascii for some reason...
     d_keysize = 32;
     d_key = new unsigned char[d_keysize];
     bepaald::hexStringToBytes(key_hexstr.get(), key_hexstr_length, d_key, d_keysize);
-    //std::cout << "KEY !! : " << bepaald::bytesToHexString(key.get(), key_length) << std::endl;
+    //std::cout << "KEY !! : " << bepaald::bytesToHexString(d_key, d_keysize) << std::endl;
     return true;
   }
   else [[unlikely]]
   {
-    Logger::error("Failed to finalise decryption");
+    Logger::error("Failed to finalize decryption (possibly MAC failed)");
     return false;
   }
 
