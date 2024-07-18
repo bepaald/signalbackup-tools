@@ -635,7 +635,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (++messagecount >= messages.rows())
           break;
 
-        // // BREAK THE CONVERSTAION BOX BETWEN CONSECUTIVE DATE RANGES
+        // // BREAK THE CONVERSATION BOX BETWEEN SEPARATE DATE RANGES
 
         // std::cout << daterangeidx << std::endl;
         // std::cout << "curm: " << messages.getValueAs<long long int>(messagecount, "date_received") << std::endl;

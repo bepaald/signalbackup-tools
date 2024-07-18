@@ -361,6 +361,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
   for (auto const &p : params)
 #endif
   {
+    // order empirically determined
     if (isType<long long int>(p))
     {
       if (execParamFiller(i + 1, std::any_cast<long long int>(p)) != SQLITE_OK) [[unlikely]]
@@ -513,7 +514,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
 
     // set values
     for (int c = 0; c < sqlite3_column_count(d_stmt); ++c)
-    {
+    {  // order empirically determined
       if (sqlite3_column_type(d_stmt, c) == SQLITE_INTEGER)
         results->emplaceValue(row, sqlite3_column_int64(d_stmt, c));
       else if (sqlite3_column_type(d_stmt, c) == SQLITE_NULL)

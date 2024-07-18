@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
   if (!arg.dumpdesktopdb().empty())
   {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
+                        arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
     if (!ddb.ok())
       return 1;
     if (!ddb.dumpDb(arg.dumpdesktopdb(), arg.overwrite()))
@@ -104,21 +105,23 @@ int main(int argc, char *argv[])
 
   if (!arg.exportdesktophtml().empty() || !arg.exportdesktoptxt().empty())
   {
-    DummyBackup dummydb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(),
+    DummyBackup dummydb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.desktopdbversion(),
                         arg.ignorewal(), arg.verbose(), arg.truncate(), arg.showprogress());
     if (!dummydb.ok())
       return 1;
 
-    if (!dummydb.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(), arg.skipmessagereorder(),
+    if (!dummydb.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
+                                   arg.desktopdbversion(), arg.skipmessagereorder(),
                                    arg.limittodates(), true /*addincompletedata*/, false /*autolimittodates*/,
                                    true /*importstickers*/, arg.ignorewal(), arg.setselfid()))
       return 1;
 
     if (!arg.exportdesktophtml().empty())
-      if (!dummydb.exportHtml(arg.exportdesktophtml(), {} /*limittothreads*/, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
-                              arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
-                              arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
-                              arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
+      if (!dummydb.exportHtml(arg.exportdesktophtml(), {} /*limittothreads*/, arg.limittodates(),
+                              (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(),
+                              arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
+                              arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(),
+                              arg.includeblockedlist(), arg.includefullcontactlist(),
                               false /*arg.includesettings()*/, arg.includereceipts()))
         return 1;
 
@@ -130,14 +133,16 @@ int main(int argc, char *argv[])
 
   if (!arg.rundtsqlquery().empty())
   {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
+                        arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
     for (auto const &q : arg.rundtsqlquery())
       ddb.runQuery(q, false);
   }
 
   if (!arg.rundtprettysqlquery().empty())
   {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
+    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
+                        arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
     for (auto const &q : arg.rundtprettysqlquery())
       ddb.runQuery(q, true);
   }
@@ -334,7 +339,8 @@ int main(int argc, char *argv[])
   if (arg.importfromdesktop())
   {
     MEMINFO("Before importfromdesktop");
-    if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopdbversion(), arg.skipmessagereorder(),
+    if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
+                               arg.desktopdbversion(), arg.skipmessagereorder(),
                                arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
                                arg.importstickers(), arg.ignorewal(), arg.setselfid()))
       return 1;

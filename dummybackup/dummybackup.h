@@ -25,11 +25,13 @@
 class DummyBackup : public SignalBackup
 {
  public:
-  inline DummyBackup(std::string const &configdir, std::string const &databasedir, long long int cipherversion,
+  inline DummyBackup(std::string const &configdir, std::string const &databasedir,
+                     std::string const &hexkey, long long int cipherversion,
                      bool ignorewal, bool verbose, bool truncate, bool showprogress);
 };
 
-inline DummyBackup::DummyBackup(std::string const &configdir, std::string const &databasedir, long long int cipherversion,
+inline DummyBackup::DummyBackup(std::string const &configdir, std::string const &databasedir,
+                                std::string const &hexkey, long long int cipherversion,
                                 bool ignorewal, bool verbose, bool truncate, bool showprogress)
   :
   SignalBackup(verbose, truncate, showprogress)
@@ -81,7 +83,7 @@ inline DummyBackup::DummyBackup(std::string const &configdir, std::string const 
   setColumnNames();
 
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
-  DesktopDatabase ddb(configdir, databasedir, verbose, ignorewal, cipherversion, truncate);
+  DesktopDatabase ddb(configdir, databasedir, hexkey, verbose, ignorewal, cipherversion, truncate);
   if (!ddb.ok())
     std::cout << "error" << std::endl;
   dtSetColumnNames(&ddb.d_database);

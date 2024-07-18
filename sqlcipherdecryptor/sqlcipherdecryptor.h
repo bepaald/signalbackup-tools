@@ -59,7 +59,8 @@ class SqlCipherDecryptor
   };
 
  public:
-  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version, bool verbose);
+  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath,
+                              std::string const &hexkey, int version, bool verbose);
   SqlCipherDecryptor(SqlCipherDecryptor const &other) = delete;
   SqlCipherDecryptor &operator=(SqlCipherDecryptor const &other) = delete;
   ~SqlCipherDecryptor();
@@ -68,6 +69,7 @@ class SqlCipherDecryptor
   inline bool writeToFile(std::string const &filename, bool overwrite) const;
  private:
   bool getKey();
+  bool getEncryptedKey();
   bool getHmacKey();
   bool decryptData(std::ifstream *dbfile);
 };

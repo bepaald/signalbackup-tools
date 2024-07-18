@@ -52,6 +52,7 @@ Arg::Arg(int argc, char *argv[])
   d_dumpdesktopdb(std::string()),
   d_desktopdirs_1(std::string()),
   d_desktopdirs_2(std::string()),
+  d_desktopkey(std::string()),
   d_dumpmedia(std::string()),
   d_excludestickers(false),
   d_dumpavatars(std::string()),
@@ -559,6 +560,26 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         d_desktopdirs_1 = arguments[++i];
         d_desktopdirs_2 = arguments[++i];
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--desktopkey")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::regex validator("^[0-9a-fA-F]{64}$");
+        if (!std::regex_match(arguments[i + 1], validator))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+          continue;
+        }
+        d_desktopkey = arguments[++i];
       }
       else
       {

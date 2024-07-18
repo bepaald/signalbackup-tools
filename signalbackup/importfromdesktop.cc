@@ -199,8 +199,8 @@
 */
 
 bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string databasedir_hint,
-                                     long long int sqlcipherversion, bool skipmessagereorder,
-                                     std::vector<std::string> const &daterangelist,
+                                     std::string const &hexkey, long long int sqlcipherversion,
+                                     bool skipmessagereorder, std::vector<std::string> const &daterangelist,
                                      bool createmissingcontacts, bool autodates, bool importstickers,
                                      bool ignorewal, std::string const &selfphone)
 {
@@ -219,7 +219,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
   }
 
-  DesktopDatabase dtdb(configdir_hint, databasedir_hint, d_verbose, ignorewal, sqlcipherversion, d_truncate);
+  DesktopDatabase dtdb(configdir_hint, databasedir_hint, hexkey, d_verbose, ignorewal, sqlcipherversion, d_truncate);
   if (!dtdb.ok())
   {
     Logger::error("Failed to open Signal Desktop sqlite database");

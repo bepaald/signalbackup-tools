@@ -19,7 +19,7 @@
 
 #include "desktopdatabase.ih"
 
-bool DesktopDatabase::init()
+bool DesktopDatabase::init(std::string const &hexkey)
 {
   if (d_configdir.empty() || d_databasedir.empty())
     std::tie(d_configdir, d_databasedir) = getDesktopDir();
@@ -37,7 +37,7 @@ bool DesktopDatabase::init()
   }
 
   // decrypt the database
-  d_cipherdb.reset(new SqlCipherDecryptor(d_configdir, d_databasedir, d_cipherversion, d_verbose));
+  d_cipherdb.reset(new SqlCipherDecryptor(d_configdir, d_databasedir, hexkey, d_cipherversion, d_verbose));
   if (!d_cipherdb->ok())
     return false;
 

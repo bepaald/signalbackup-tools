@@ -77,6 +77,8 @@ namespace bepaald
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
   std::string bytesToString(unsigned char const *data, unsigned int length);
   std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
+  inline bool hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize);
+  inline bool hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize);
   template <typename P, typename T>
   void destroyPtr(P **p, T *psize);
   template <typename T>
@@ -143,7 +145,6 @@ namespace bepaald
 
   template <typename T, typename U>
   inline int findIdxOf(T const &container, U const &value);
-  inline bool hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize);
 }
 
 template <typename T>
@@ -239,6 +240,43 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
     prevwashex = curishex;
   }
   return oss.str();
+}
+
+inline bool bepaald::hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize)
+{
+  if (insize % 2 ||
+      outsize != insize / 2)
+  {
+    Logger::error("Invalid size for hex string or output array too small");
+    return false;
+  }
+
+  auto charToInt = [] (char c)
+  {
+    if (c <= '9' && c >= '0')
+      return c - '0';
+    if (c <= 'F' && c >= 'A')
+      return c - 'A' + 10;
+    // if (c <= 'f' && c >= 'a') // lets assume input is valid...
+    return c - 'a' + 10;
+  };
+
+  uint64_t outpos = 0;
+  for (uint i = 0; i < insize - 1; i += 2)
+    out[outpos++] = charToInt(in[i]) * 16 + charToInt(in[i + 1]);
+
+  return true;
+}
+
+inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize)
+{
+  // sanitize input;
+  std::string input = in;
+  auto newend = std::remove_if(input.begin(), input.end(), [](char c) {
+    return (c > '9' || c < '0') && (c > 'F' || c < 'A') && (c > 'f' || c < 'a'); });
+  input.erase(newend, input.end());
+
+  return hexStringToBytes(reinterpret_cast<unsigned char const *>(input.c_str()), input.size(), out, outsize);
 }
 
 template <typename P, typename T>
@@ -371,38 +409,6 @@ inline int bepaald::findIdxOf(T const &container, U const &value)
   if (it == container.end())
     return -1;
   return std::distance(container.begin(), it);
-}
-
-inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize)
-{
-  // sanitize input;
-  std::string input = in;
-  auto newend = std::remove_if(input.begin(), input.end(), [](char c) {
-    return (c > '9' || c < '0') && (c > 'F' || c < 'A') && (c > 'f' || c < 'a'); });
-  input.erase(newend, input.end());
-
-  if (input.size() % 2 ||
-      outsize != input.size() / 2)
-  {
-    Logger::error("Invalid size for hex string or output array too small");
-    return false;
-  }
-
-  auto charToInt = [] (char c)
-  {
-    if (c <= '9' && c >= '0')
-      return c - '0';
-    if (c <= 'F' && c >= 'A')
-      return c - 'A' + 10;
-    //if (c <= 'f' && c >= 'a') // guaranteed at this point
-    return c - 'a' + 10;
-  };
-
-  uint64_t outpos = 0;
-  for (uint i = 0; i < input.size() - 1; i += 2)
-    out[outpos++] = charToInt(input[i]) * 16 + charToInt(input[i + 1]);
-
-  return true;
 }
 
 #ifdef SIGNALBACKUP_TOOLS_REPORT_MEM

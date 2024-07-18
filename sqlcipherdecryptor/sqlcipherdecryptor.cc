@@ -27,7 +27,8 @@
   - Pagesize: 1024 -> 4096
 */
 
-SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::string const &apppath, int version, bool verbose)
+SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::string const &apppath,
+                                       std::string const &hexkey, int version, bool verbose)
   :
   d_ok(false),
   d_configpath(configpath),
@@ -49,7 +50,17 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   d_decrypteddatasize(0),
   d_verbose(verbose)
 {
-  if (!getKey())
+  if (!hexkey.empty())
+  {
+    d_keysize = 32;
+    d_key = new unsigned char[d_keysize];
+    if (!bepaald::hexStringToBytes(hexkey, d_key, d_keysize))
+    {
+      Logger::error("Failed to set key from provided hex string");
+      return;
+    }
+  }
+  else if (!getKey())
     return;
 
   // open database file

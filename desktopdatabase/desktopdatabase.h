@@ -39,8 +39,9 @@ class DesktopDatabase
   long long int d_cipherversion;
   bool d_truncate;
  public:
-  inline DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion, bool truncate);
-  inline DesktopDatabase(std::string const &configdir, std::string const &databasedir,
+  inline DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal,
+                         long long int cipherversion, bool truncate);
+  inline DesktopDatabase(std::string const &configdir, std::string const &databasedir, std::string const &hexkey,
                          bool verbose, bool ignorewal, long long int cipherversion, bool truncate);
   DesktopDatabase(DesktopDatabase const &other) = delete;
   DesktopDatabase(DesktopDatabase &&other) = delete;
@@ -53,19 +54,22 @@ class DesktopDatabase
   inline void runQuery(std::string const &q, bool pretty = true) const;
 
  private:
-  bool init();
+  bool init(std::string const &hexkey);
   inline std::pair<std::string, std::string> getDesktopDir() const;
 
   friend class SignalBackup;
   friend class DummyBackup;
 };
 
-inline DesktopDatabase::DesktopDatabase(bool verbose, bool ignorewal, long long int cipherversion, bool truncate)
+inline DesktopDatabase::DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal,
+                                        long long int cipherversion, bool truncate)
   :
-  DesktopDatabase(std::string(), std::string(), verbose, ignorewal, cipherversion, truncate)
+  DesktopDatabase(std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate)
 {}
 
-inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir, bool verbose, bool ignorewal, long long int cipherversion, bool truncate)
+inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir,
+                                        std::string const &hexkey, bool verbose, bool ignorewal,
+                                        long long int cipherversion, bool truncate)
   :
   d_configdir(configdir),
   d_databasedir(databasedir),
@@ -75,7 +79,7 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   d_cipherversion(cipherversion),
   d_truncate(truncate)
 {
-  d_ok = init();
+  d_ok = init(hexkey);
 }
 
 inline bool DesktopDatabase::ok() const

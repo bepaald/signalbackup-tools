@@ -250,7 +250,8 @@ class SignalBackup
   inline void showDBInfo() const;
   bool scramble() const;
   //std::pair<std::string, std::string> getDesktopDir() const;
-  bool importFromDesktop(std::string configdir, std::string appdir, long long int dbversion, bool skipmessagereorder,
+  bool importFromDesktop(std::string configdir, std::string appdir, std::string const &hexkey,
+                         long long int dbversion, bool skipmessagereorder,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
                          bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
   bool checkDbIntegrity(bool warn = false) const;

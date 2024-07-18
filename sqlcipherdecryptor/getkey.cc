@@ -21,8 +21,17 @@
 
 bool SqlCipherDecryptor::getKey()
 {
-  // read key from config.json
 
+#if defined(_WIN32) || defined(__MINGW64__) // only windows for now...
+  if (getEncryptedKey())
+  {
+    if (d_verbose) [[unlikely]]
+      Logger::message("Initialized from encryptedkey");
+    return true;
+  }
+#endif
+
+  // read key from config.json
   std::fstream config(d_configpath + "/config.json", std::ios_base::in | std::ios_base::binary);
   if (!config.is_open())
   {
