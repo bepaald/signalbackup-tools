@@ -475,6 +475,9 @@ If you use this option and read this line, I would really appreciate it if you l
 
 **<span id="desktop">Importing conversations from Signal-Desktop</span>**
 
+> [!NOTE]
+> Starting at Signal Desktop version 7.17, this function may not work on Linux/macOS. See the note at [Operations for Signal Desktop](#desktop_functions) for more info.
+
 _NOTE: This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
 _NOTE 2: While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is at least as new as the one used by Signal Desktop. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
@@ -766,6 +769,9 @@ Done!
 
 **<span id="desktop_functions">Operations for Signal Desktop</span>**
 
+> [!NOTE]
+> Starting at version 7.17, Signal Desktop will encrypt the key used to read the database. On Windows, decryption of this key should already be implemented, but this has not been done for Linux an macOS. To use any of the desktop functions of this tool on Linux/macOS, the decrypted key must be manually supplied through the `--desktopkey` option (see below). For Linux users a simple tool that attempts to decrypt and show the key is available here: [https://github.com/bepaald/get_signal_desktop_key](https://github.com/bepaald/get_signal_desktop_key).
+
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 
 Running with these options does not require an input file to be provided. These options support some of the same  modifying options as `--importfromdesktop`, namely: `--desktopdirs`, and `--ignorewal`.
@@ -776,9 +782,6 @@ Running with these options does not require an input file to be provided. These 
 - `--exportdesktophtml [OUTPUTDIR]` Export the Signal Desktop database to HTML. This function works internally by creating an empty Android backup, importing the desktop into this and then exporting that internal Android backup to HTML. As a result it supports almost all modifying options mentioned in [import from Desktop](#desktop) and [export to HTML](#export-to-html) (excluding `--limittothreads`, and `--includesettings`). It also has the same limitations as both of these functions combined. It is currently unknown if, and how well it works. Feedback is appreciated. See: https://github.com/bepaald/signalbackup-tools/issues/203.
 - `--exportdesktoptxt [OUTPUTDIR]` Export the Signal Desktop database to plain text. Works as the above function, except the internal Android backup is [exported to TXT](#export-to-txt) instead.
 - `--desktopkey [HEXSTRING]` This is a modifying option for all desktop functions. Manually set the cipher key to use for decrypting the Desktop database.
-
-> [!NOTE]
-> A future update to Signal Desktop will encrypt the key used to read the database. On Windows key decryption should already be implemented, but this has not been done for Linux an macOS. Currently (Signal Desktop 7.16) the plaintext key is still present in the config file, but this is planned to be removed in a future version. It is possible none of the Desktop functions of this program will work for Linux and macOS at that point (though work on this is planned).
 
 **<span id="various">Various</span>**
 

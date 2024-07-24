@@ -87,7 +87,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
   uintToFourBytes(d_iv, d_counter++);
 
   // create context
-  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);  // disable padding
+  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
+  // disable padding
   EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
 
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
