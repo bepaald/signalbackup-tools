@@ -93,7 +93,7 @@ int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool ver
   }
 #else
   std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
-  if (HMAC_Init_ex(hctx.get(), mackey.get(), mackey_length, digest, nullptr) != 1)
+  if (HMAC_Init_ex(hctx.get(), mackey, mackey_length, digest, nullptr) != 1)
   {
     Logger::error("Failed to initialize HMAC context");
     return false;
@@ -118,17 +118,16 @@ int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool ver
 
   // DECRYPT DATA:
 
-  // init cipher and context
+  // init decryption context
   std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-  std::unique_ptr<EVP_CIPHER, decltype(&::EVP_CIPHER_free)> cipher(EVP_CIPHER_fetch(NULL, "AES-256-CBC", NULL), &::EVP_CIPHER_free);
-  if (!ctx || !cipher) [[unlikely]]
+  if (!ctx) [[unlikely]]
   {
-    Logger::error("Failed to create cipher or context");
+    Logger::error("Failed to create decryption context");
     return 1;
   }
 
   // init decrypt
-  if (!EVP_DecryptInit_ex2(ctx.get(), cipher.get(), aeskey, iv.get(), nullptr)) [[unlikely]]
+  if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_cbc(), nullptr, aeskey, iv.get())) [[unlikely]]
   {
     Logger::error("Failed to initialize decryption operation");
     return 1;
