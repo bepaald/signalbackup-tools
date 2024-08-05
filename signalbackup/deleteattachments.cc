@@ -264,7 +264,8 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
           return false;
 
         attachment->second->setLength(amd.filesize);
-        attachment->second->setLazyDataRAW(amd.filesize, replace[j].second);
+        //attachment->second->setLazyDataRAW(amd.filesize, replace[j].second);
+        attachment->second->setReader(new RawFileAttachmentReader(replace[j].second));
 
         Logger::message("Replaced attachment at ", i + 1, "/", res.rows(), " with file \"", replace[j].second, "\"");
         break;

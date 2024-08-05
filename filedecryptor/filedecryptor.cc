@@ -21,7 +21,7 @@
 
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror, bool assumebadframesize, std::vector<long long int> const &editattachments)
   :
-  BaseDecryptor(verbose),
+  CryptBase(verbose),
   d_headerframe(nullptr),
   d_filename(filename),
   d_framecount(0),

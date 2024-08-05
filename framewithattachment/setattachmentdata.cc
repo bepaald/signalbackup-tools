@@ -19,48 +19,30 @@
 
 #include "framewithattachment.h"
 
-bool FrameWithAttachment::setAttachmentData(unsigned char *data) // override
+bool FrameWithAttachment::setAttachmentDataBacked(unsigned char *data, long long int datalength) // override
 {
   if (!data)
     return false;
   d_attachmentdata = data;
-  d_attachmentdata_size = length();
+  d_attachmentdata_size = datalength;
   return true;
 }
 
-bool FrameWithAttachment::setAttachmentData(unsigned char const *data, long long int datalength)
+bool FrameWithAttachment::setAttachmentDataUnbacked(unsigned char const *data, long long int datalength)
 {
   bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
 
   d_attachmentdata_size = datalength;
   d_attachmentdata = new unsigned char[d_attachmentdata_size];
   std::memcpy(d_attachmentdata, data, datalength);
-  d_noclear = true;
-  return true;
-}
 
-bool FrameWithAttachment::setAttachmentData(std::string const &filename) // override
-{
-  std::ifstream file(filename, std::ios_base::binary | std::ios_base::in);
-  if (!file.is_open())
-  {
-    Logger::error("Setting attachment data. Failed to open '", filename, "' for reading");
-    return false;
-  }
-  file.seekg(0, std::ios_base::end);
-  d_attachmentdata_size = file.tellg();
-  if (d_attachmentdata_size == 0)
-  {
-    Logger::error("Setting attachment data for file '", filename, "'. Filesize 0.");
-    return false;
-  }
-  file.seekg(0);
-  d_attachmentdata = new unsigned char[d_attachmentdata_size];
-  if (!file.read(reinterpret_cast<char *>(d_attachmentdata), d_attachmentdata_size))
-  {
-    Logger::error("Failed to read data from '", filename, "'");
-    bepaald::destroyPtr(&d_attachmentdata, &d_attachmentdata_size);
-    return false;
-  }
+  /* used for importing LONGTEXT messages from desktop.
+     While on desktop they are normal message bodies, on Android
+     they are attachments. Since we are creating these attachments
+     on import from bytes in memory (not file backed), these can
+     not be clearData()'s at any point, since the data can not
+     be read back in that case.
+   */
+  d_noclear = true;
   return true;
 }

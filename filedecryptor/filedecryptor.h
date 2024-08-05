@@ -26,11 +26,12 @@
 #include "../common_be.h"
 #include "../backupframe/backupframe.h"
 #include "../framewithattachment/framewithattachment.h"
-#include "../basedecryptor/basedecryptor.h"
+//#include "../basedecryptor/basedecryptor.h"
+#include "../cryptbase/cryptbase.h"
 #include "../invalidframe/invalidframe.h"
 #include "../logger/logger.h"
 
-class  FileDecryptor : public BaseDecryptor
+class  FileDecryptor : public CryptBase //BaseDecryptor
 {
   std::unique_ptr<BackupFrame> d_headerframe;
   std::string d_filename;
@@ -75,7 +76,7 @@ class  FileDecryptor : public BaseDecryptor
 
 inline FileDecryptor::FileDecryptor(FileDecryptor const &other)
   :
-  BaseDecryptor(other),
+  CryptBase(other),
   d_headerframe(nullptr),
   d_filename(other.d_filename),
   d_framecount(other.d_framecount),
@@ -99,7 +100,7 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
 {
   if (this != &other)
   {
-    BaseDecryptor::operator=(other);
+    CryptBase::operator=(other);
     if (other.d_headerframe)
       d_headerframe.reset(other.d_headerframe->clone());
     d_filename = other.d_filename;
@@ -117,7 +118,7 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
 
 inline FileDecryptor::FileDecryptor(FileDecryptor &&other)
   :
-  BaseDecryptor(std::move(other)),
+  CryptBase(std::move(other)),
   d_headerframe(std::move(other.d_headerframe)),
   d_filename(std::move(other.d_filename)),
   d_framecount(std::move(other.d_framecount)),
@@ -133,7 +134,7 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
 {
   if (this != &other)
   {
-    BaseDecryptor::operator=(std::move(other));
+    CryptBase::operator=(std::move(other));
     d_headerframe = std::move(other.d_headerframe);
     d_filename = std::move(other.d_filename);
     d_framecount = std::move(other.d_framecount);

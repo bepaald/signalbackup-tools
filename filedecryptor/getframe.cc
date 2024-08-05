@@ -261,7 +261,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
     uintToFourBytes(d_iv, d_counter++);
 
-    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
+    //reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setReader(new AndroidAttachmentReader(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg()));
 
     file.seekg(attsize + MACSIZE, std::ios_base::cur);
   }
@@ -455,7 +456,8 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
 
     uintToFourBytes(d_iv, d_counter++);
 
-    reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
+    //reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
+    reinterpret_cast<FrameWithAttachment *>(frame.get())->setReader(new AndroidAttachmentReader(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg()));
 
     file.seekg(attsize + MACSIZE, std::ios_base::cur);
   }

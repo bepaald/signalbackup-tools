@@ -120,8 +120,9 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     DeepCopyingUniquePtr<AvatarFrame> temp;
     if (!setFrameFromFile(&temp, avatarframe.string()))
       return;
-    if (!temp->setAttachmentData(avatarbin.string()))
-      return;
+    //if (!temp->setAttachmentDataFromFile(avatarbin.string()))
+    //  return;
+    temp->setReader(new RawFileAttachmentReader(avatarbin.string()));
 
     //temp->printInfo();
 
@@ -166,7 +167,8 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
     //if (!temp->setAttachmentData(attbin.string()))
     //  return;
-    temp->setLazyDataRAW(temp->length(), attbin.string());
+    //temp->setLazyDataRAW(temp->length(), attbin.string());
+    temp->setReader(new RawFileAttachmentReader(/*temp->length(), */attbin.string()));
 
     if (replaced_attachement)
     {
@@ -178,7 +180,8 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
         attbin.replace_extension(".bin");
         //if (!temp->setAttachmentData(attbin.string()))
         //  return;
-        temp->setLazyDataRAW(temp->length(), attbin.string());
+        //temp->setLazyDataRAW(temp->length(), attbin.string());
+        temp->setReader(new RawFileAttachmentReader(/*temp->length(), */attbin.string()));
       }
       else
       {
@@ -226,8 +229,9 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     DeepCopyingUniquePtr<StickerFrame> temp;
     if (!setFrameFromFile(&temp, stickerframe.string()))
       return;
-    if (!temp->setAttachmentData(stickerbin.string()))
-      return;
+    //if (!temp->setAttachmentDataFromFile(stickerbin.string()))
+    //  return;
+    temp->setReader(new RawFileAttachmentReader(stickerbin.string()));
 
     uint64_t rowid = temp->rowId();
     d_stickers.emplace(std::make_pair(rowid, temp.release()));

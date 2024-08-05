@@ -31,7 +31,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, TRIM(name) AS name, profileName, profileFamilyName, "
                 "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(json,'$.color') AS color, "
-                "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
+                "COALESCE(json_extract(json, '$.profileAvatar.path'), json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
+                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.localKey'), json_extract(json, '$.avatar.localKey')), '') AS localKey, "
+                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.size'), json_extract(json, '$.avatar.size')), 0) AS size, "
+                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.version'), json_extract(json, '$.avatar.version')), 0) AS version, "
                 "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
                 "NULLIF(json_extract(json,'$.nicknameGivenName'), '') AS nick_first, "
@@ -263,7 +266,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     (*recipient_info)[groupidb64] = new_rec_id;
 
     // set avatar
-    if (!dtSetAvatar(res("avatar"), new_rec_id, databasedir))
+    if (!dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir))
       Logger::warning("Failed to set avatar for new recipient.");
 
     Logger::message("Succesfully created new recipient for group (id: ", new_rec_id, ").");
@@ -313,7 +316,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   (*recipient_info)[id.empty() ? phone : id] = new_rec_id;
 
   // set avatar
-  dtSetAvatar(res("avatar"), new_rec_id, databasedir);
+  dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
 
   Logger::message("Succesfully created new recipient (id: ", new_rec_id, ").");
   //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);

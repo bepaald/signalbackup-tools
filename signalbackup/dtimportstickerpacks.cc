@@ -69,7 +69,13 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     long long int dtcoversticker = dtstickerpacks.valueAsInt(i, "coverStickerId");
 
     SqliteDB::QueryResults dtstickers;
-    ddb.exec("SELECT id, emoji, isCoverOnly, path FROM stickers WHERE packId IS ?" +
+    std::string stickerquery = "SELECT id, emoji, isCoverOnly, path";
+    if (ddb.tableContainsColumn("stickers", "version", "localKey", "size")) [[likely]]
+      stickerquery += ", version, localKey, size";
+    else
+      stickerquery += ", 0 AS version, '' AS localKey, 0 AS size";
+    stickerquery += " FROM stickers WHERE packId = ?";
+    ddb.exec(stickerquery +
              (dt_installed == 0 ? " AND id = " + bepaald::toString(dtcoversticker) : "") , dtpackid, &dtstickers);
     if (dtstickers.rows() == 0)
       continue;
@@ -79,18 +85,21 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
 
     for (uint j = 0; j < dtstickers.rows(); ++j)
     {
-      std::string dtpath = dtstickers(j, "path");
       long long int dtcoveronly = dtstickers.valueAsInt(j, "isCoverOnly");
       long long int dtstickerid = dtstickers.valueAsInt(j, "id");
       std::string dtemoji = dtstickers(j, "emoji");
+      long long int filelength = dtstickers.valueAsInt(j, "size");
+      long long int version = dtstickers.valueAsInt(j, "version");
+      std::string localkey = dtstickers(j, "localKey");
+      std::string fullpath(databasedir + "/stickers.noindex/" + dtstickers(j, "path"));
 
-      // get filelength
-      long long int filelength = -1;
+      // get filelength if not in database
+      if (filelength <= 0)
       {
-        std::ifstream dtstickerfile(databasedir + "/stickers.noindex/" + dtpath, std::ios_base::binary | std::ios_base::in);
+        std::ifstream dtstickerfile(fullpath, std::ios_base::binary | std::ios_base::in);
         if (!dtstickerfile.is_open())
         {
-          Logger::error("Error opening Desktop sticker at path '", databasedir + "/stickers.noindex/" + dtpath, "'. Skipping...");
+          Logger::error("Error opening Desktop sticker at path '", fullpath, "'. Skipping...");
           continue;
         }
         dtstickerfile.seekg(0, std::ios_base::end);
@@ -127,7 +136,9 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
         if (setFrameFromStrings(&new_sticker_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_sticker_id),
                                                                              "LENGTH:uint32:" + bepaald::toString(filelength)}))
         {
-          new_sticker_frame->setLazyDataRAW(filelength, databasedir + "/stickers.noindex/" + dtpath);
+          //new_sticker_frame->setLazyDataRAW(filelength, databasedir + "/stickers.noindex/" + dtpath);
+          //new_sticker_frame->setReader(new RawFileAttachmentReader(databasedir + "/stickers.noindex/" + dtpath));
+          new_sticker_frame->setReader(new DesktopAttachmentReader(version, fullpath, localkey, filelength));
           d_stickers.emplace(new_sticker_id, new_sticker_frame.release());
         }
         else
@@ -166,7 +177,9 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
         if (setFrameFromStrings(&new_sticker_frame2, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_sticker_id),
                                                                               "LENGTH:uint32:" + bepaald::toString(filelength)}))
         {
-          new_sticker_frame2->setLazyDataRAW(filelength, databasedir + "/stickers.noindex/" + dtpath);
+          //new_sticker_frame2->setLazyDataRAW(filelength, databasedir + "/stickers.noindex/" + dtpath);
+          //new_sticker_frame2->setReader(new RawFileAttachmentReader(databasedir + "/stickers.noindex/" + dtpath));
+          new_sticker_frame2->setReader(new DesktopAttachmentReader(version, fullpath, localkey, filelength));
           d_stickers.emplace(new_sticker_id, new_sticker_frame2.release());
         }
         else

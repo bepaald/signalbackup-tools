@@ -31,7 +31,6 @@ class FileEncryptor : public CryptBase
 {
   std::string d_passphrase;
   uint32_t d_backupfileversion;
-  bool d_verbose;
  public:
   FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   explicit FileEncryptor(std::string const &passphrase, uint32_t backupfileversion, bool verbose);
@@ -46,17 +45,13 @@ class FileEncryptor : public CryptBase
   inline std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<unsigned char *, uint64_t> const &data);
   std::pair<unsigned char *, uint64_t> encryptFrame(unsigned char *data, uint64_t length);
   std::pair<unsigned char *, uint64_t> encryptAttachment(unsigned char *data, uint64_t length);
- private:
-  //bool getCipherAndMac(uint hashoutputsize, uint outputsize); // MOVED TO BASE
-  //bool getBackupKey(std::string const &passphrase);           // MOVED TO BASE
 };
 
 inline FileEncryptor::FileEncryptor(FileEncryptor const &other)
   :
   CryptBase(other),
   d_passphrase(other.d_passphrase),
-  d_backupfileversion(other.d_backupfileversion),
-  d_verbose(other.d_verbose)
+  d_backupfileversion(other.d_backupfileversion)
 {}
 
 inline FileEncryptor &FileEncryptor::operator=(FileEncryptor const &other)
@@ -66,7 +61,6 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor const &other)
     CryptBase::operator=(other);
     d_passphrase = other.d_passphrase;
     d_backupfileversion = other.d_backupfileversion;
-    d_verbose = other.d_verbose;
   }
   return *this;
 }
@@ -75,8 +69,7 @@ inline FileEncryptor::FileEncryptor(FileEncryptor &&other)
   :
   CryptBase(std::move(other)),
   d_passphrase(std::move(other.d_passphrase)),
-  d_backupfileversion(std::move(other.d_backupfileversion)),
-  d_verbose(std::move(other.d_verbose))
+  d_backupfileversion(std::move(other.d_backupfileversion))
 {}
 
 inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other)
@@ -86,7 +79,6 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other)
     CryptBase::operator=(other);
     d_passphrase = std::move(other.d_passphrase);
     d_backupfileversion = std::move(other.d_backupfileversion);
-    d_verbose = std::move(other.d_verbose);
   }
   return *this;
 }

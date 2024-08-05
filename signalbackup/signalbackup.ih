@@ -28,6 +28,9 @@
 #include <set>
 #include <iterator>
 
+#include "../androidattachmentreader/androidattachmentreader.h"
+#include "../rawfileattachmentreader/rawfileattachmentreader.h"
+#include "../desktopattachmentreader/desktopattachmentreader.h"
 #include "../msgtypes/msgtypes.h"
 #include "../protobufparser/protobufparser.h"
 #include "../reactionlist/reactionlist.h"

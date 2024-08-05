@@ -19,14 +19,50 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir)
+bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
+                               long long int rid, std::string const &databasedir)
 {
   // set avatar
   //std::string avatarpath = res("avatar");
   if (avatarpath.empty())
     return true;
 
-  AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + avatarpath);
+  if (version >= 2 && (key.empty() || size <= 0))
+  {
+    Logger::error("Decryption info for avatar not valid. (version: ", version, ", key: ", key, ", size: ", size, ")");
+    return false;
+  }
+
+
+  // get attachment metadata !! NOTE RAW POINTER
+  AttachmentMetadata amd;
+  std::string fullpath(databasedir + "/attachments.noindex/" + avatarpath);
+  if (version >= 2)
+  {
+    DesktopAttachmentReader dar(version, fullpath, key, size);
+#if __cpp_lib_out_ptr >= 202106L
+    std::unique_ptr<unsigned char[]> att_data;
+    if (!dar.getAttachmentData(std::out_ptr(att_data), d_verbose) == 0)
+#else
+    unsigned char *att_data = nullptr;
+    if (!dar.getAttachmentData(&att_data, d_verbose) == 0)
+#endif
+    {
+      Logger::error("Failed to get avatar data");
+      return false;
+    }
+#if __cpp_lib_out_ptr >= 202106L
+    amd = getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
+#else
+    amd = getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
+    if (att_data)
+      delete[] att_data;
+#endif
+  }
+  else
+    amd = getAttachmentMetaData(fullpath);                        // get from file
+
+
   if (!amd)
     return false;
 
@@ -34,7 +70,7 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, long long int rid,
   if (setFrameFromStrings(&new_avatar_frame, std::vector<std::string>{"RECIPIENT:string:" + bepaald::toString(rid),
                                                                       "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
   {
-    new_avatar_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + avatarpath);
+    new_avatar_frame->setReader(new DesktopAttachmentReader(version, fullpath, key, size));
     d_avatars.emplace_back(std::make_pair(bepaald::toString(rid), std::move(new_avatar_frame)));
     return true;
   }

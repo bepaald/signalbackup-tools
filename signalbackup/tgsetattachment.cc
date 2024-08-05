@@ -101,7 +101,8 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
                               "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
                              "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
     {
-      new_attachment_frame->setLazyDataRAW(amd.filesize, datapath + a);
+      //new_attachment_frame->setLazyDataRAW(amd.filesize, datapath + a);
+      new_attachment_frame->setReader(new RawFileAttachmentReader(datapath + a));
       d_attachments.emplace(std::make_pair(new_part_id, (d_database.tableContainsColumn(d_part_table, "unique_id") ? unique_id : -1)), new_attachment_frame.release());
     }
     else

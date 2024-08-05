@@ -27,9 +27,11 @@
 
 class CryptBase
 {
- protected:
+ public:
   uint static constexpr MACSIZE = 10;
+ protected:
   bool d_ok;
+  bool d_verbose;
   unsigned char *d_backupkey;
   uint64_t d_backupkey_size;
   unsigned char *d_cipherkey;
@@ -42,7 +44,7 @@ class CryptBase
   uint64_t d_salt_size;
   uint64_t d_counter;
  public:
-  inline CryptBase();
+  inline CryptBase(bool verbose);
   inline CryptBase(CryptBase const &other);
   inline CryptBase &operator=(CryptBase const &other);
   inline CryptBase(CryptBase &&other);
@@ -56,9 +58,10 @@ class CryptBase
   inline uint32_t fourBytesToUint(unsigned char const *b) const;
 };
 
-inline CryptBase::CryptBase()
+inline CryptBase::CryptBase(bool verbose)
   :
   d_ok(false),
+  d_verbose(verbose),
   d_backupkey(nullptr),
   d_backupkey_size(0),
   d_cipherkey(nullptr),
@@ -75,6 +78,7 @@ inline CryptBase::CryptBase()
 inline CryptBase::CryptBase(CryptBase const &other)
   :
   d_ok(false),
+  d_verbose(other.d_verbose),
   d_backupkey(nullptr),
   d_backupkey_size(other.d_backupkey_size),
   d_cipherkey(nullptr),
@@ -164,6 +168,7 @@ inline CryptBase &CryptBase::operator=(CryptBase const &other)
       std::memcpy(d_salt, other.d_salt, d_salt_size);
     }
     d_counter = other.d_counter;
+    d_verbose = other.d_verbose;
     d_ok = other.d_ok;
   }
   return *this;
@@ -172,6 +177,7 @@ inline CryptBase &CryptBase::operator=(CryptBase const &other)
 inline CryptBase::CryptBase(CryptBase &&other)
   :
   d_ok(std::move(other.d_ok)),
+  d_verbose(std::move(other.d_verbose)),
   d_backupkey(std::move(other.d_backupkey)),
   d_backupkey_size(std::move(other.d_backupkey_size)),
   d_cipherkey(std::move(other.d_cipherkey)),
@@ -184,7 +190,6 @@ inline CryptBase::CryptBase(CryptBase &&other)
   d_salt_size(std::move(other.d_salt_size)),
   d_counter(std::move(other.d_counter))
 {
-  other.d_ok = false;
   other.d_backupkey = nullptr;
   other.d_backupkey_size = 0;
   other.d_cipherkey = nullptr;
@@ -210,6 +215,7 @@ inline CryptBase &CryptBase::operator=(CryptBase &&other)
 
     // take over other's data
     d_ok = std::move(other.d_ok);
+    d_verbose = std::move(other.d_verbose);
     d_backupkey = std::move(other.d_backupkey);
     d_backupkey_size = std::move(other.d_backupkey_size);
     d_cipherkey = std::move(other.d_cipherkey);
@@ -223,7 +229,6 @@ inline CryptBase &CryptBase::operator=(CryptBase &&other)
     d_counter = std::move(other.d_counter);
 
     // invalidate other
-    other.d_ok = false;
     other.d_backupkey = nullptr;
     other.d_backupkey_size = 0;
     other.d_cipherkey = nullptr;

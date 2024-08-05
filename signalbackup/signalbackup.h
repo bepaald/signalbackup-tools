@@ -170,7 +170,7 @@ class SignalBackup
     int width;
     int height;
     std::string filetype;
-    unsigned long filesize;
+    long long int filesize;
     std::string hash;
     std::string filename;
     operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
@@ -356,6 +356,7 @@ class SignalBackup
   long long int scanSelf() const;
   bool cleanAttachments();
   AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
+  AttachmentMetadata getAttachmentMetaData(std::string const &filename, unsigned char *data, long long int data_size) const;
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
@@ -371,9 +372,9 @@ class SignalBackup
   bool updateRows(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                   std::vector<std::pair<std::string, std::any>> whereclause,
                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
-  bool insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
-                         long long int rowid, SqliteDB const &ddb, std::string const &where,
-                         std::string const &databasedir, bool isquote, bool issticker);
+  bool dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
+                           long long int rowid, SqliteDB const &ddb, std::string const &where,
+                           std::string const &databasedir, bool isquote, bool issticker);
   bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address, bool insertincompletedataforexport) const;
   void handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
                                   long long int date, std::map<long long int, long long int> *adjusted_timestamps, std::map<std::string, long long int> *savedmap, bool istimermessage) const;
@@ -461,7 +462,8 @@ class SignalBackup
                                   std::string const &databasedir, std::map<std::string, long long int> *recipient_info,
                                   bool *warn);
   bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
-  bool dtSetAvatar(std::string const &avatarpath, long long int rid, std::string const &databasedir);
+  bool dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
+                   long long int rid, std::string const &databasedir);
   std::string dtSetSharedContactsJsonString(SqliteDB const &ddb, long long int rowid) const;
   inline void warnOnce(std::string const &msg, bool error = false);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;

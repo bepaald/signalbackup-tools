@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,
+bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,
                                      long long int rowid, SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
                                      bool isquote, bool issticker)
 {
@@ -92,6 +92,8 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
                   "json_extract(json, '" + jsonpath + ".contentType') AS content_type,"
                   "json_extract(json, '" + jsonpath + ".size') AS size,"
                   //"json_extract(json, '" + jsonpath + ".cdnKey') AS cdn_key,"
+                  "json_extract(json, '" + jsonpath + ".localKey') AS localKey,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".version'), 1) AS version,"
 
                   // only in sticker
                   "json_extract(json, '" + jsonpath + ".emoji') AS sticker_emoji,"
@@ -110,6 +112,8 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       Logger::error("Failed to get attachment data from desktop database");
       continue;
     }
+
+    //results_attachment_data.printLineMode();
 
     // insert any attachments with missing data. (pending != 0)
     if (results_attachment_data.valueAsString(0, "path").empty())
@@ -222,17 +226,46 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
       continue;
     }
 
-    AttachmentMetadata amd = getAttachmentMetaData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
-    // PROBABLY JUST NOT AN IMAGE, WE STILL WANT THE HASH
-    // if (!amd)
-    // {
-    //   std::cout << "Failed to get metadata on new attachment: "
-    //             << databasedir << "/attachments.noindex/" << results_attachment_data.valueAsString(0, "path") << std::endl;
-    // }
+    int version = results_attachment_data.valueAsInt(0, "version", -1);
+    std::string localkey(results_attachment_data(0, "localKey"));
+    int64_t size = results_attachment_data.valueAsInt(0, "size", -1);
+    std::string fullpath(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
 
-    // attachmentdata.emplace_back(getAttachmentMetaData(configdir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path")));
-    // if (!results_attachment_data.isNull(0, "file_name"))
-    //   attachmentdata.back().filename = results_attachment_data.valueAsString(0, "file_name");
+    if (version >= 2 && (localkey.empty() || size == -1))
+    {
+      Logger::error("Decryption info for attachment not valid. (version: ", version, ", key: ", localkey, ", size: ", size, ")");
+      //results_attachment_data.printLineMode();
+      continue;
+    }
+
+
+    // get attachment metadata !! NOTE RAW POINTER
+    AttachmentMetadata amd;
+    if (version >= 2) [[likely]]
+    {
+      DesktopAttachmentReader dar(version, fullpath, localkey, size);
+#if __cpp_lib_out_ptr >= 202106L
+      std::unique_ptr<unsigned char[]> att_data;
+      if (!dar.getAttachmentData(std::out_ptr(att_data), d_verbose) == 0)
+#else
+      unsigned char *att_data = nullptr;
+      if (!dar.getAttachmentData(&att_data, d_verbose) == 0)
+#endif
+      {
+        Logger::error("Failed to get attachment data");
+        continue;
+      }
+
+#if __cpp_lib_out_ptr >= 202106L
+      amd = getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
+#else
+      amd = getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
+      if (att_data)
+        delete[] att_data;
+#endif
+    }
+    else
+      amd = getAttachmentMetaData(fullpath);                        // get from file
 
     if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.valueAsInt(0, "size", 0) != 0))
     {
@@ -397,13 +430,16 @@ bool SignalBackup::insertAttachments(long long int mms_id, long long int unique_
     */
 
     DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
-    if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
-                                                                            (d_database.tableContainsColumn(d_part_table, "unique_id") ? "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
-                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))/* &&
-      new_attachment_frame->setAttachmentData(databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path")))*/
+    if (setFrameFromStrings(&new_attachment_frame,
+                            std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
+                                                     (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                                      "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
+                                                     "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
     {
-      new_attachment_frame->setLazyDataRAW(amd.filesize, databasedir + "/attachments.noindex/" + results_attachment_data.valueAsString(0, "path"));
-      d_attachments.emplace(std::make_pair(new_part_id, d_database.tableContainsColumn(d_part_table, "unique_id") ? unique_id : -1), new_attachment_frame.release());
+      new_attachment_frame->setReader(new DesktopAttachmentReader(version, fullpath, localkey, size));
+      d_attachments.emplace(std::make_pair(new_part_id,
+                                           d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                           unique_id : -1), new_attachment_frame.release());
     }
     else
     {

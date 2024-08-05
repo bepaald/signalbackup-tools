@@ -25,9 +25,8 @@
 
 #include "../base64/base64.h"
 
-SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file) const
+SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size) const
 {
-
   //struct AttachmentMetadata
   //{
   //  int width;
@@ -39,68 +38,36 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   //  operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   //};
 
-  std::ifstream filestream(file, std::ios_base::binary | std::ios_base::in);
-  if (!filestream.is_open())
-  {
-    Logger::warning("Failed to open image for reading: ", file);
-    return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
-  }
 
-  filestream.seekg(0, std::ios_base::end);
-  unsigned long file_size = filestream.tellg();
-  filestream.seekg(0, std::ios_base::beg);
 
-  if (file_size == 0)
+  if (data_size == 0)
   {
     Logger::warning("Attachment '", file, "' is zero bytes");
-    return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
+    return AttachmentMetadata{-1, -1, std::string(), data_size, std::string(), file};
   }
+
+
 
   // gethash
   std::string hash;
-  int buffer_size = std::max(file_size, 1024 * 1024ul);
-  std::unique_ptr<unsigned char[]> buffer(new unsigned char[buffer_size]);
   unsigned char rawhash[SHA256_DIGEST_LENGTH];
-  bool fail = true;
   std::unique_ptr<EVP_MD_CTX, decltype(&::EVP_MD_CTX_free)> sha256(EVP_MD_CTX_new(), &::EVP_MD_CTX_free);
-  if (sha256.get() && EVP_DigestInit_ex(sha256.get(), EVP_sha256(), nullptr) == 1)
+  if (!sha256 ||
+      EVP_DigestInit_ex(sha256.get(), EVP_sha256(), nullptr) != 1 ||
+      EVP_DigestUpdate(sha256.get(), data, data_size) != 1 ||
+      EVP_DigestFinal_ex(sha256.get(), rawhash, nullptr) != 1) [[unlikely]]
   {
-    fail = false;
-    while (filestream)
-    {
-      filestream.read(reinterpret_cast<char *>(buffer.get()), buffer_size);
-      if (EVP_DigestUpdate(sha256.get(), buffer.get(), filestream.gcount()) != 1)
-      {
-        fail |= true;
-        break;
-      }
-    }
-    fail |= (EVP_DigestFinal_ex(sha256.get(), rawhash, nullptr) != 1);
+    Logger::warning("Failed to set hash");
+    hash = std::string();
   }
-  hash = fail ? std::string() : Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
+  hash = Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
   //std::cout << bepaald::bytesToHexString(rawhash, SHA256_DIGEST_LENGTH) << std::endl;
   //std::cout << "GOT HASH: " << hash << std::endl;
 
-  // rewind and reset
-  filestream.clear();
-  filestream.seekg(0, std::ios_base::beg);
-  int bufsize = std::min(file_size, 30ul);
 
-  // no longer possible
-  if (file_size < static_cast<unsigned int>(bufsize))
-  {
-    //std::cout << "File unexpectedly small" << std::endl; // only unexpected when it is _supposed_ to be png/jpg/gif
-    return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
-  }
-
-  std::unique_ptr<unsigned char[]> buf(new unsigned char[bufsize]);
-  if (!filestream.read(reinterpret_cast<char *>(buf.get()), bufsize))
-  {
-    Logger::warning("Failed to read ", bufsize, " bytes from file");
-    return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
-  }
-
-
+  // set buffer for file header
+  int bufsize = std::min(data_size, 30ll);
+  unsigned char *buf = data;
 
 
 
@@ -116,7 +83,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0);
     return AttachmentMetadata{(buf[16] << 24) + (buf[17] << 16) + (buf[18] << 8) + (buf[19] << 0),
       (buf[20] << 24) + (buf[21] << 16) + (buf[22] << 8) + (buf[23] << 0),
-      "image/png", file_size, hash, file};
+      "image/png", data_size, hash, file};
   }
 
 
@@ -134,7 +101,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     //*y = buf[8] + (buf[9] << 8);
     return AttachmentMetadata{buf[8] + (buf[9] << 8),
       buf[6] + (buf[7] << 8),
-      "image/gif", file_size, hash, file};
+      "image/gif", data_size, hash, file};
   }
 
 
@@ -151,24 +118,24 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       buf[0] == 'R' && buf[1] == 'I' && buf[2] == 'F' && buf[3] == 'F' &&
       buf[8] == 'W' && buf[9] == 'E' && buf[10] == 'B' && buf[11] == 'P')
   {
-    if (std::memcmp(buf.get() + 12, "VP8 ", 4) == 0) // 'lossless'
+    if (std::memcmp(buf + 12, "VP8 ", 4) == 0) // 'lossless'
     {
       //std::cout << "lossy" << std::endl;
       int w = ((buf[26] | buf[27] << 8) & 0x3fff);
       int h = ((buf[28] | buf[29] << 8) & 0x3fff);
       //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
-      return AttachmentMetadata{w, h, "image/webp", file_size, hash, file};
+      return AttachmentMetadata{w, h, "image/webp", data_size, hash, file};
     }
-    else if (std::memcmp(buf.get() + 12, "VP8L", 4) == 0) // 'lossy'
+    else if (std::memcmp(buf + 12, "VP8L", 4) == 0) // 'lossy'
     {
       //std::cout << "lossless" << std::endl;
       uint32_t size = (buf[21] | (buf[22] << 8) | (buf[23] << 16) | (buf[24] << 24));
       int w = (size & 0x3fff) + 1;
       int h = ((size >> 14) & 0x3fff) + 1;
       //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
-      return AttachmentMetadata{w, h, "image/webp", file_size, hash, file};
+      return AttachmentMetadata{w, h, "image/webp", data_size, hash, file};
     }
-    else if (std::memcmp(buf.get() + 12, "VP8X", 4) == 0) // 'extended'
+    else if (std::memcmp(buf + 12, "VP8X", 4) == 0) // 'extended'
     {
       //std::cout << "extended" << std::endl;
 
@@ -185,13 +152,13 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         int w = (buf[24] | (buf[25] << 8) | (buf[26] << 16)) + 1;
         int h = (buf[27] | (buf[28] << 8) | (buf[29] << 16)) + 1;
         //std::cout << "WidhtxHeight: " << w << "x" << h << std::endl<< std::endl;
-        return AttachmentMetadata{w, h, "image/webp", file_size, hash, file};
+        return AttachmentMetadata{w, h, "image/webp", data_size, hash, file};
       }
       else
-        return AttachmentMetadata{-1, -1, "image/webp", file_size, hash, file};
+        return AttachmentMetadata{-1, -1, "image/webp", data_size, hash, file};
     }
     else
-      return AttachmentMetadata{-1, -1, "image/webp", file_size, hash, file};
+      return AttachmentMetadata{-1, -1, "image/webp", data_size, hash, file};
   }
 
 
@@ -216,8 +183,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   //
   // from : (https://web.archive.org/web/20131016210645/)http://www.64lines.com/jpeg-width-height
 
-  //for (int i = 0; i < bufsize; ++i)
-  //  std::cout << i << " : " << std::hex << reinterpret_cast<int>(buf[i] & 0xff) << std::dec << std::endl;
+  //std::cout << "DATA: " << bepaald::bytesToHexString(buf, 100) << std::endl;
 
   if (/*(buf[0] == 0xFF && buf[1] == 0xD8 && buf[2] == 0xFF && buf[3] == 0xE0 &&
        buf[6] == 'J' && buf[7] == 'F' && buf[8] == 'I' && buf[9] == 'F' &&
@@ -229,7 +195,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   {
 
     int jpeg_bufsize = 9;
-    filestream.seekg(jpeg_bufsize, std::ios_base::beg); // seek to this position, as if we were always reading just jpeg_bufsize bytes
+    int seekpos = 0;
     int pos = 2; // offset for 0xff 0xd8 which always seem to be the first two bytes
 
     while (true)
@@ -238,7 +204,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
       if (buf[pos] != 0xFF)
       {
         Logger::warning("Failed to find start of JPEG header frame");
-        return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
+        return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
       }
       // skip any extra frame markers
       while (buf[pos + 1] == 0xFF)
@@ -248,7 +214,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         if (pos >= jpeg_bufsize)
         {
           Logger::message("This could be fixed...");
-          return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
+          return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
         }
       }
 
@@ -258,27 +224,38 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
         //*y = (buf[pos + 5] << 8) + buf[pos + 6];
         //*x = (buf[pos + 7] << 8) + buf[pos + 8];
 
+        //std::cout << "GOT MARKER" << std::endl;
+
         return AttachmentMetadata{(buf[pos + 7] << 8) + buf[pos + 8],
           (buf[pos + 5] << 8) + buf[pos + 6],
-          "image/jpeg", file_size, hash, file};
+          "image/jpeg", data_size, hash, file};
       }
       else // this was a different frame, skip it
       {
+        //std::cout << "DIFFERENT MARKER, SKIP!" << std::endl;
+
         int block_length = (buf[pos + 2] << 8) + buf[pos + 3];
         //std::cout << "Skipping frame (" << block_length << ")" << std::endl;
 
-        //std::cout << block_length << " " << jpeg_bufsize << " " << pos << std::endl;
-        //std::cout << block_length + 2 - (jpeg_bufsize - pos) << std::endl;
+        //std::cout << block_length << " " << jpeg_bufsize << " " << pos << " " << block_length + 2 - (jpeg_bufsize - pos) << std::endl;
 
-        filestream.seekg(block_length + 2 - (jpeg_bufsize - pos), std::ios_base::cur); // + 2 skip marker itself
+        if ((block_length + pos + 2) > static_cast<int64_t>(data_size - jpeg_bufsize))
+        {
+          Logger::warning("Failed to read next jpeg_buffer from data");
+          return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
+        }
 
+        //filestream.seekg(block_length + 2 - (jpeg_bufsize - pos), std::ios_base::cur); // + 2 skip marker itself
+        // if (!filestream.read(reinterpret_cast<char *>(buf.get()), jpeg_bufsize))
+        // {
+        //   Logger::warning("Failed to read next 24 bytes from file");
+        //   return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
+        // }
         //std::cout << "Pos is now: " << filestream.tellg() << std::endl;
 
-        if (!filestream.read(reinterpret_cast<char *>(buf.get()), jpeg_bufsize))
-        {
-          Logger::warning("Failed to read next 24 bytes from file");
-          return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
-        }
+        seekpos += block_length + pos + 2;
+        buf = data + seekpos;
+
 
         //for (int i = 0; i < bufsize; ++i)
         //  std::cout << i << " : " << std::hex << reinterpret_cast<int>(buf[i] & 0xff) << std::dec << std::endl;
@@ -288,5 +265,47 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     }
 
   }
-  return AttachmentMetadata{-1, -1, std::string(), file_size, hash, file};
+  return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
+}
+
+SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file) const
+{
+
+  //struct AttachmentMetadata
+  //{
+  //  int width;
+  //  int height;
+  //  std::string filetype;
+  //  unsigned long filesize;
+  //  std::string hash;
+  //  std::string filename;
+  //  operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
+  //};
+
+  std::ifstream filestream(file, std::ios_base::binary | std::ios_base::in);
+  if (!filestream.is_open())
+  {
+    Logger::warning("Failed to open image for reading: ", file);
+    return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
+  }
+
+  filestream.seekg(0, std::ios_base::end);
+  long long int file_size = filestream.tellg();
+  filestream.seekg(0, std::ios_base::beg);
+
+  if (file_size == 0)
+  {
+    Logger::warning("Attachment '", file, "' is zero bytes");
+    return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
+  }
+
+  std::unique_ptr<unsigned char[]> file_data(new unsigned char[file_size]);
+  if (!filestream.read(reinterpret_cast<char *>(file_data.get()), file_size) ||
+      filestream.gcount() != static_cast<long>(file_size))
+  {
+    Logger::warning("Failed to read ", file_size, " bytes from file '", file, "'");
+    return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
+  }
+
+  return getAttachmentMetaData(file, file_data.get(), file_size);
 }

@@ -73,17 +73,14 @@ bool SignalBackup::custom_hugogithubs()
     std::string line;
     while (std::getline(old_attachment_frame, line))
     {
-      if (line.starts_with("ATTACHMENTID"))
+      if (line.starts_with("ATTACHMENTID")) // = uniqueid
         continue;
       new_attachment_frame_strings.emplace_back(line);
     }
 
     uint64_t rowid = a.first.first;
-    // uint64_t asize = af->length();
-    // uint64_t aframenum = af->frameNumber();
 
-    DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;//(new AttachmentFrame(aframenum));
-    // new_attachment_frame->setLength(asize);
+    DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
 
     // new_attachment_frame->printInfo();
 
@@ -92,10 +89,12 @@ bool SignalBackup::custom_hugogithubs()
       Logger::error("Failed to create new attachmentframe");
       return false;
     }
-    new_attachment_frame->setLazyData(af->iv(), af->iv_size(),
-                                      af->mackey(), af->mackey_size(),
-                                      af->cipherkey(), af->cipherkey_size(),
-                                      af->length(), af->filename(), af->filepos());
+    // new_attachment_frame->setLazyData(af->iv(), af->iv_size(),
+    //                                   af->mackey(), af->mackey_size(),
+    //                                   af->cipherkey(), af->cipherkey_size(),
+    //                                   af->length(), af->filename(), af->filepos());
+    new_attachment_frame->setReader(af->reader()->clone()); // UNTESTED!
+
     d_new_attachments.emplace(std::make_pair(rowid, -1), new_attachment_frame.release());
 
     // auto const &rit = d_new_attachments.rbegin();

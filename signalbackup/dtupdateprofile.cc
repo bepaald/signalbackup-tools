@@ -29,7 +29,10 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT type, name, profileName, IFNULL(profileFamilyName, '') AS profileFamilyName, profileFullName, "
                 "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
-                "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar " // 'profileAvatar' for persons, 'avatar' for groups
+                "COALESCE(json_extract(json, '$.profileAvatar.path'),json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
+                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.localKey'), json_extract(json, '$.avatar.localKey')), '') AS localKey, "
+                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.size'), json_extract(json, '$.avatar.size')), 0) AS size, "
+                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.version'), json_extract(json, '$.avatar.version')), 0) AS version "
                 "FROM conversations WHERE " + d_dt_c_uuid + " = ?1 OR e164 = ?1 OR groupId = ?1",
                 dtid, &res))
     return false;
@@ -117,7 +120,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
       d_avatars.erase(pos);
     }
 
-    if (!dtSetAvatar(res("avatar"), aid, databasedir))
+    if (!dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), aid, databasedir))
     {
       if (d_verbose && !backup) [[unlikely]]
         Logger::message_overwrite("Updating avatar... Failed to set new avatar", Logger::Control::ENDOVERWRITE);

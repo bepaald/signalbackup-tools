@@ -28,7 +28,6 @@
 #include <limits>
 
 #include "../common_be.h"
-#include "../basedecryptor/basedecryptor.h"
 #include "../logger/logger.h"
 
 class BackupFrame
@@ -95,7 +94,7 @@ class BackupFrame
   virtual void printInfo() const = 0;
   inline uint64_t frameNumber() const;
   inline virtual uint32_t attachmentSize() const;
-  inline virtual bool setAttachmentData(unsigned char *data);
+  inline virtual bool setAttachmentDataBacked(unsigned char *data, long long int size);
   inline virtual std::pair<unsigned char *, uint64_t> getData() const;
   inline virtual std::string getHumanData() const;
   inline bool setNewData(unsigned int field, unsigned char *data, uint64_t size);
@@ -416,7 +415,7 @@ inline uint32_t BackupFrame::attachmentSize() const
   return 0;
 }
 
-inline bool BackupFrame::setAttachmentData(unsigned char *) // virtual
+inline bool BackupFrame::setAttachmentDataBacked(unsigned char *, long long int) // virtual
 {
   return false;
 }

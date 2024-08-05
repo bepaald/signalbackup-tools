@@ -67,7 +67,7 @@ void SignalBackup::dtImportLongText(std::string const &msgbody_full, long long i
                                                      (d_database.tableContainsColumn(d_part_table, "unique_id") ? "ATTACHMENTID:uint64:" + bepaald::toString(uniqueid) : ""),
                                                      "LENGTH:uint32:" + bepaald::toString(msgbody_full.length())}))
     {
-      new_attachment_frame->setAttachmentData(reinterpret_cast<unsigned char const *>(msgbody_full.c_str()), msgbody_full.length());
+      new_attachment_frame->setAttachmentDataUnbacked(reinterpret_cast<unsigned char const *>(msgbody_full.c_str()), msgbody_full.length());
       d_attachments.emplace(std::make_pair(new_part_id, d_database.tableContainsColumn(d_part_table, "unique_id") ? uniqueid : -1), new_attachment_frame.release());
     }
     else
