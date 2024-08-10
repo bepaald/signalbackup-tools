@@ -41,7 +41,8 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
   }
 
   SqliteDB::QueryResults results;
-  if (!d_database.exec("SELECT _id, " + d_recipient_type + " AS 'group_type', " +
+  if (!d_database.exec("SELECT _id, " +
+                       (d_database.tableContainsColumn("recipient", d_recipient_type) ? d_recipient_type : "-1") + " AS 'group_type', " +
                        d_recipient_e164 + " AS 'phone', " +
                        (d_database.tableContainsColumn("recipient", "username") ? "username, " : "") +
                        "registered, blocked, hidden "
@@ -567,8 +568,11 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
           outputfile << " call link";
           break;
         }
-        default:
+        default: // could happen if recipient.(group_)type does not exist (dbv < 79?)
+        {
+          outputfile << " (unknown)";
           break;
+        }
       }
       outputfile << "</div>\n";
     }
