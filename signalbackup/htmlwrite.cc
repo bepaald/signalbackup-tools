@@ -1709,110 +1709,116 @@ file << R"(
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
     file << "</span>\n";
 
-    // pending members
-    file << "                  <span class=\"column-right-align\">Pending members:</span>\n";
-    file << "                  <span class=\"column-left-align\">";
-    if (groupinfo.pending_members.size() == 0)
-      file << "(none)";
-    else
-      for (uint pm = 0; pm < groupinfo.pending_members.size(); ++pm)
-        file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name)
-             << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
-    file << "</span>\n";
-
-    // 'requesting' members
-    file << "                  <span class=\"column-right-align\">Requesting members:</span>\n";
-    file << "                  <span class=\"column-left-align\">";
-    if (groupinfo.requesting_members.size() == 0)
-      file << "(none)";
-    else
-      for (uint rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
-        file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name)
-             << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
-    file << "</span>\n";
-
-    // banned members
-    file << "                  <span class=\"column-right-align\">Banned members:</span>\n";
-    file << "                  <span class=\"column-left-align\">";
-    if (groupinfo.banned_members.size() == 0)
-      file << "(none)";
-    else
-      for (uint bm = 0; bm < groupinfo.banned_members.size(); ++bm)
-        file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name)
-             << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
-    file << "</span>\n";
-
-    // access control
-    file << "                  <span class=\"columnview-header\">Permissions</span>\n";
-    file << "                  <span class=\"column-right-align\">Add members:</span>\n";
-    file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_members << "</span>\n";
-    file << "                  <span class=\"column-right-align\">Edit group info:</span>\n";
-    file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_attributes << "</span>\n";
-    file << "                  <span class=\"column-right-align\">Send messages:</span>\n";
-    file << "                  <span class=\"column-left-align\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n";
-    file << "                  <span class=\"column-right-align\">Approve members from invite link:</span>\n";
-    file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n";
-
-    file << "                  <span class=\"columnview-header\">Options</span>\n";
-
-    // expiration timer
-    file << "                  <span class=\"column-right-align\">Disappearing messages:</span>\n";
-    file << "                  <span class=\"column-left-align\">" << exptimer << "</span>\n";
-
-    // link enabled?
-    file << "                  <span class=\"column-right-align\">Group link:</span>\n";
-    file << "                  <span class=\"column-left-align\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
-
-    // muted
-    if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
+    if (d_database.tableContainsColumn("groups", "decrypted_group"))
     {
-      long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
-      file << "                  <span class=\"column-right-align\">Muted:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
-    }
+      // pending members
+      file << "                  <span class=\"column-right-align\">Pending members:</span>\n";
+      file << "                  <span class=\"column-left-align\">";
+      if (groupinfo.pending_members.size() == 0)
+        file << "(none)";
+      else
+        for (uint pm = 0; pm < groupinfo.pending_members.size(); ++pm)
+          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name)
+               << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
+      file << "</span>\n";
 
-    // notify-on-mention
-    if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
-    {
-      file << "                  <span class=\"column-right-align\">Mentions:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
-    }
+      // 'requesting' members
+      file << "                  <span class=\"column-right-align\">Requesting members:</span>\n";
+      file << "                  <span class=\"column-left-align\">";
+      if (groupinfo.requesting_members.size() == 0)
+        file << "(none)";
+      else
+        for (uint rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
+          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name)
+               << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
+      file << "</span>\n";
 
-    // custom notifications
-    if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications != -1)
-    {
-      file << "                  <span class=\"column-right-align\">Custom notifications:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
+      // banned members
+      file << "                  <span class=\"column-right-align\">Banned members:</span>\n";
+      file << "                  <span class=\"column-left-align\">";
+      if (groupinfo.banned_members.size() == 0)
+        file << "(none)";
+      else
+        for (uint bm = 0; bm < groupinfo.banned_members.size(); ++bm)
+          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name)
+               << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
+      file << "</span>\n";
 
-      // custom notifications were enabled, let's print them
-      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
+      // access control
+      file << "                  <span class=\"columnview-header\">Permissions</span>\n";
+      file << "                  <span class=\"column-right-align\">Add members:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_members << "</span>\n";
+      file << "                  <span class=\"column-right-align\">Edit group info:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_attributes << "</span>\n";
+      file << "                  <span class=\"column-right-align\">Send messages:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n";
+      file << "                  <span class=\"column-right-align\">Approve members from invite link:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n";
+
+      file << "                  <span class=\"columnview-header\">Options</span>\n";
+
+      // expiration timer
+      file << "                  <span class=\"column-right-align\">Disappearing messages:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << exptimer << "</span>\n";
+
+      // link enabled?
+      file << "                  <span class=\"column-right-align\">Group link:</span>\n";
+      file << "                  <span class=\"column-left-align\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
+
+      // muted
+      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
       {
-        SqliteDB::QueryResults notification_res;
-        if (d_database.exec("SELECT message_ringtone, message_vibrate, call_ringtone, call_vibrate FROM recipient WHERE _id = ?", thread_recipient_id, &notification_res) &&
-            notification_res.rows() == 1)
-        {
-          //std::string msg_ringtone = notification_res.valueAsString(0, "message_ringtone");
-          long long int msg_vibrate = notification_res.valueAsInt(0, "message_vibrate");
-          //std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
-          long long int call_vibrate = notification_res.valueAsInt(0, "call_vibrate");
+        long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
+        file << "                  <span class=\"column-right-align\">Muted:</span>\n";
+        file << "                  <span class=\"column-left-align\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
+      }
 
-          //file << "                  <span class=\"column-right-align\">Message ringtone:</span>\n";
-          //file << "                  <span class=\"column-left-align\">" << msg_ringtone <<  "</span>\n";
-          file << "                  <span class=\"column-right-align\">Message vibrate:</span>\n";
-          file << "                  <span class=\"column-left-align\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
-          //file << "                  <span class=\"column-right-align\">Call ringtone:</span>\n";
-          //file << "                  <span class=\"column-left-align\">" << call_ringtone <<  "</span>\n";
-          file << "                  <span class=\"column-right-align\">Call vibrate:</span>\n";
-          file << "                  <span class=\"column-left-align\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+      // notify-on-mention
+      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
+      {
+        file << "                  <span class=\"column-right-align\">Mentions:</span>\n";
+        file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
+      }
+
+      // custom notifications
+      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications != -1)
+      {
+        file << "                  <span class=\"column-right-align\">Custom notifications:</span>\n";
+        file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
+
+        // custom notifications were enabled, let's print them
+        if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
+        {
+          SqliteDB::QueryResults notification_res;
+          if (d_database.exec("SELECT message_ringtone, message_vibrate, call_ringtone, call_vibrate FROM recipient WHERE _id = ?", thread_recipient_id, &notification_res) &&
+              notification_res.rows() == 1)
+          {
+            //std::string msg_ringtone = notification_res.valueAsString(0, "message_ringtone");
+            long long int msg_vibrate = notification_res.valueAsInt(0, "message_vibrate");
+            //std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
+            long long int call_vibrate = notification_res.valueAsInt(0, "call_vibrate");
+
+            //file << "                  <span class=\"column-right-align\">Message ringtone:</span>\n";
+            //file << "                  <span class=\"column-left-align\">" << msg_ringtone <<  "</span>\n";
+            file << "                  <span class=\"column-right-align\">Message vibrate:</span>\n";
+            file << "                  <span class=\"column-left-align\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+            //file << "                  <span class=\"column-right-align\">Call ringtone:</span>\n";
+            //file << "                  <span class=\"column-left-align\">" << call_ringtone <<  "</span>\n";
+            file << "                  <span class=\"column-right-align\">Call vibrate:</span>\n";
+            file << "                  <span class=\"column-left-align\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+          }
         }
       }
     }
-
+    else // decrypted_group info not available
+    {
+      file << "                  <span class=\"columnview-header\">More group details not available</span>\n";
+    }
     file << "                </span>\n";
     file << "              </span>\n";
     file << "            </label>\n";
   }
-  else
+  else // !isgroup
     file << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
              getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << '\n';
   file << R"(          </div>

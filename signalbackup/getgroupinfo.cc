@@ -22,7 +22,9 @@
 void SignalBackup::getGroupInfo(long long int rid, GroupInfo *groupinfo) const
 {
   std::pair<std::shared_ptr<unsigned char []>, size_t> groupdata =
-    d_database.getSingleResultAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>("SELECT decrypted_group FROM groups WHERE recipient_id = ?", rid, {nullptr, 0});
+    d_database.tableContainsColumn("groups", "decrypted_group") ?
+    d_database.getSingleResultAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>("SELECT decrypted_group FROM groups WHERE recipient_id = ?", rid, {nullptr, 0}) :
+    std::make_pair(nullptr, 0);
 
   if (!groupdata.first || !groupdata.second)
     return;

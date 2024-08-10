@@ -144,7 +144,7 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
     std::string rid = results.valueAsString(i, d_sms_recipient_id);
 
     SqliteDB::QueryResults r2;
-    if (d_databaseversion >= 24)
+    if (d_database.containsTable("recipient")) // d_databaseversion >= 24)
       d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
                       "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
@@ -337,7 +337,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     {
       /*
       SqliteDB::QueryResults r2;
-      if (d_databaseversion >= 24)
+      if (d_database.containsTable("recipient")) // d_databaseversion >= 24)
         d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
                         "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                         (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +

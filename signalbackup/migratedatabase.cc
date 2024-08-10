@@ -31,6 +31,251 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   if (!d_database.exec("BEGIN TRANSACTION"))
     return false;
 
+
+  // this is a tough one, from 23 -> ~27
+  if (d_database.containsTable("recipient_preferences") &&
+      !d_database.containsTable("recipient"))
+  {
+    // -> 24, adapted from RecipientidMigrationHelper.java
+    // insert missing recipients mentioned in other tables
+    auto insertMissingRecipients = [&](std::string const &table, std::string const &column)
+    {
+      if (!d_database.exec("INSERT INTO recipient_preferences(recipient_ids) SELECT DISTINCT " + column + " FROM " + table + " WHERE " +
+                           column + " != '' AND " +
+                           column + " != 'insert-address-column' AND " +
+                           column + " NOT NULL AND " +
+                           column + " NOT IN (SELECT recipient_ids FROM recipient_preferences)"))
+        return false;
+      return true;
+    };
+
+    for (auto const &p : {std::pair<std::string, std::string>{"identities", "address"},
+                          std::pair<std::string, std::string>{"sessions", "address"},
+                          std::pair<std::string, std::string>{"thread", "recipient_ids"},
+                          std::pair<std::string, std::string>{"sms", "address"},
+                          std::pair<std::string, std::string>{"mms", "address"},
+                          std::pair<std::string, std::string>{"mms", "quote_author"},
+                          std::pair<std::string, std::string>{"group_receipts", "address"},
+                          std::pair<std::string, std::string>{"groups", "group_id"}})
+    {
+      if (!insertMissingRecipients(p.first, p.second))
+      {
+        d_database.exec("ROLLBACK TRANSACTION");
+        return false;
+      }
+    }
+
+    // update invalid/missing addresses
+    auto updateMissingAddress = [&](std::string const &table, std::string const &column)
+    {
+      if (!d_database.exec("UPDATE " + table + " SET " + column + " = -1 " + "WHERE " +
+                           column + " = '' OR " +
+                           column + " IS NULL OR " +
+                           column + " = 'insert-address-token'"))
+        return false;
+      return true;
+    };
+
+    for (auto const &p : {std::pair<std::string, std::string>{"sms", "address"},
+                          std::pair<std::string, std::string>{"mms", "address"},
+                          std::pair<std::string, std::string>{"mms", "quote_author"}})
+    {
+      if (!updateMissingAddress(p.first, p.second))
+      {
+        d_database.exec("ROLLBACK TRANSACTION");
+        return false;
+      }
+    }
+
+    // add column to groups
+    if (!d_database.exec("ALTER TABLE groups ADD COLUMN recipient_id INTEGER DEFAULT 0"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+
+    // update address -> recipient_id
+    auto addressTorecipientId = [&](std::string const &table, std::string const &column)
+    {
+      if (!d_database.exec("UPDATE " + table + " SET " + column + " = "
+                           "(SELECT _id FROM recipient_preferences WHERE recipient_preferences.recipient_ids = " + table + "." + column + ")"))
+        return false;
+      return true;
+    };
+
+    for (auto const &p : {std::pair<std::string, std::string>{"identities", "address"},
+                          std::pair<std::string, std::string>{"sessions", "address"},
+                          std::pair<std::string, std::string>{"thread", "recipient_ids"},
+                          std::pair<std::string, std::string>{"sms", "address"},
+                          std::pair<std::string, std::string>{"mms", "address"},
+                          std::pair<std::string, std::string>{"mms", "quote_author"},
+                          std::pair<std::string, std::string>{"group_receipts", "address"}})
+    {
+      if (!addressTorecipientId(p.first, p.second))
+      {
+        d_database.exec("ROLLBACK TRANSACTION");
+        return false;
+      }
+    }
+
+    // same for new groups.recipient_id column
+    if (!d_database.exec("UPDATE groups SET recipient_id = (SELECT _id FROM recipient_preferences WHERE recipient_preferences.recipient_ids = groups.group_id)"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+
+    // find missing recipients in group members
+    std::set<std::string> missinggroupmembers;
+    SqliteDB::QueryResults groupmembers;
+    if (!d_database.exec("SELECT members FROM groups", &groupmembers))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+
+    for (uint i = 0; i < groupmembers.rows(); ++i)
+    {
+      std::vector<std::string> individual_groupmembers;
+
+      std::string membersstring(groupmembers(i, "members"));
+      std::regex comma(",");
+      std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
+      std::transform(iter, std::sregex_token_iterator(), std::back_inserter(individual_groupmembers),
+                     [](std::string const &m) -> std::string { return m; });
+      for (auto const &m : individual_groupmembers)
+        if (!m.empty() &&
+            d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient_preferences WHERE recipient_ids = ?", m, -1) == -1)
+          missinggroupmembers.insert(m);
+    }
+
+    // insert missing group members:
+    for (auto const &mm : missinggroupmembers)
+    {
+      std::cout << "Missing member: " << mm << std::endl;
+
+      if (!d_database.exec("INSERT INTO recipient_preferences(recipient_ids) VALUES (?)", mm))
+      {
+        d_database.exec("ROLLBACK TRANSACTION");
+        return false;
+      }
+    }
+
+    // now migrate group members address -> _id
+    if (!d_database.exec("SELECT _id, members FROM groups", &groupmembers))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+    for (uint i = 0; i < groupmembers.rows(); ++i)
+    {
+      long long int gid = groupmembers.getValueAs<long long int>(i, "_id");
+      std::vector<std::string> individual_groupmembers;
+      std::string membersstring(groupmembers(i, "members"));
+      std::regex comma(",");
+      std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
+      std::transform(iter, std::sregex_token_iterator(), std::back_inserter(individual_groupmembers),
+                     [](std::string const &m) -> std::string { return m; });
+      std::string members_id_str;
+
+      for (auto const &m : individual_groupmembers)
+      {
+        long long int mid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient_preferences WHERE recipient_ids = ?", m, -1);
+        if (mid == -1)
+        {
+          d_database.exec("ROLLBACK TRANSACTION");
+          return false;
+        }
+        members_id_str += (members_id_str.empty() ? "" : ",") + bepaald::toString(mid);
+      }
+      //std::cout << membersstring << " -> " << members_id_str << std::endl;
+      if (!d_database.exec("UPDATE groups SET members = ? WHERE _id = ?", {members_id_str, gid}))
+      {
+        d_database.exec("ROLLBACK TRANSACTION");
+        return false;
+      }
+    }
+
+    // create recipient table
+    // NOTE setColumnNames() WAS ALREADY CALLED AT THIS POINT, SINCE IT CHECKS FOR COLUMN NAMES IN THE 'recipient' TABLE WHICH
+    // DID NOT EXIST AT THIS POINT, SOME COLUMNS ARE EXPECTED TO HAVE DIFFERENT (MORE MODERN) NAMES
+    if (!d_database.exec("CREATE TABLE recipient (_id INTEGER PRIMARY KEY AUTOINCREMENT, " + d_recipient_aci + " TEXT UNIQUE DEFAULT NULL, " + d_recipient_e164 + " TEXT UNIQUE DEFAULT NULL, email TEXT UNIQUE DEFAULT NULL, group_id TEXT UNIQUE DEFAULT NULL, blocked INTEGER DEFAULT 0, message_ringtone TEXT DEFAULT NULL, message_vibrate INTEGER DEFAULT 0, call_ringtone TEXT DEFAULT NULL, call_vibrate INTEGER DEFAULT 0, notification_channel TEXT DEFAULT NULL, mute_until INTEGER DEFAULT 0, " + d_recipient_avatar_color + " TEXT DEFAULT NULL, seen_invite_reminder INTEGER DEFAULT 0, default_subscription_id INTEGER DEFAULT -1, message_expiration_time INTEGER DEFAULT 0, registered INTEGER DEFAULT 0, " + d_recipient_system_joined_name + " TEXT DEFAULT NULL, system_photo_uri TEXT DEFAULT NULL, system_phone_label TEXT DEFAULT NULL, system_contact_uri TEXT DEFAULT NULL, profile_key TEXT DEFAULT NULL, " + d_recipient_profile_given_name + " TEXT DEFAULT NULL, " + d_recipient_profile_avatar + " TEXT DEFAULT NULL, profile_sharing INTEGER DEFAULT 0, unidentified_access_mode INTEGER DEFAULT 0, force_sms_selection INTEGER DEFAULT 0)"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+
+    // fill new table
+    SqliteDB::QueryResults recipient_preferences_contents;
+    if (!d_database.exec("SELECT * FROM recipient_preferences", &recipient_preferences_contents))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+
+    for (uint i = 0; i < recipient_preferences_contents.rows(); ++i)
+    {
+      std::string address = recipient_preferences_contents(i, "recipient_ids");
+      bool isgroup = STRING_STARTS_WITH(address, "__textsecure_group__!");
+      bool isemail = (address.find('@') != std::string::npos) && (address.find('.') != std::string::npos); // THIS IS CERTAINLY NOT CORRECT
+      bool isphone = !isgroup && !isemail;
+
+      insertRow("recipient",
+                {{"_id", recipient_preferences_contents.value(i, "_id")},
+                 {isphone ? d_recipient_e164 : "", address},
+                 {isemail ? "email" : "", address},
+                 {isgroup ? "group_id" : "", address},
+                 {"blocked", recipient_preferences_contents.value(i, "block")},
+                 {"message_ringtone", recipient_preferences_contents.value(i, "notification")},
+                 {"message_vibrate", recipient_preferences_contents.value(i, "vibrate")},
+                 {"call_ringtone", recipient_preferences_contents.value(i, "call_ringtone")},
+                 {"call_vibrate", recipient_preferences_contents.value(i, "call_vibrate")},
+                 {"notification_channel", recipient_preferences_contents.value(i, "notification_channel")},
+                 {"mute_until", recipient_preferences_contents.value(i, "mute_until")},
+                 {d_recipient_avatar_color, recipient_preferences_contents.value(i, "color")},
+                 {"seen_invite_reminder", recipient_preferences_contents.value(i, "seen_invite_reminder")},
+                 {"default_subscription_id", recipient_preferences_contents.value(i, "default_subscription_id")},
+                 {"message_expiration_time", recipient_preferences_contents.value(i, "expire_messages")},
+                 {"registered", recipient_preferences_contents.value(i, "registered")},
+                 {d_recipient_system_joined_name, recipient_preferences_contents.value(i, "system_display_name")},
+                 {"system_photo_uri", recipient_preferences_contents.value(i, "system_phone_label")},
+                 {"system_contact_uri", recipient_preferences_contents.value(i, "system_contact_uri")},
+                 {"profile_key", recipient_preferences_contents.value(i, "profile_key")},
+                 {d_recipient_profile_given_name, recipient_preferences_contents.value(i, "signal_profile_name")},
+                 {d_recipient_profile_avatar, recipient_preferences_contents.value(i, "signal_profile_avatar")},
+                 {"profile_sharing", recipient_preferences_contents.value(i, "profile_sharing_approval")},
+                 {"unidentified_access_mode", recipient_preferences_contents.value(i, "unidentified_access_mode")},
+                 {"force_sms_selection", recipient_preferences_contents.value(i, "force_sms_selection")}});
+    }
+
+    // drop old
+    d_database.exec("DROP TABLE recipient_preferences");
+
+
+    // -> 25
+    if (!d_database.exec("ALTER TABLE recipient ADD COLUMN system_phone_type INTEGER DEFAULT -1"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+    // then it makes sure own phone number is in recipient table and
+    // sets phone/registered/profile_sharing/signal_profile_name columns
+    // but we can't do that because we cant know own phone number...
+    // let's assume it is present already (I think it usually is)
+
+    // -> 26
+    // this migration attempts to find non-group recipients that are not used anywhere to delete them (unless
+    // their 'email' column is not null for some reason). we dont care and will just leave them.
+
+    // -> 27
+    // appears to set address to -1 if address is 0 in mms table...
+    if (!d_database.exec("UPDATE mms SET address = -1 WHERE address = 0"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+  }
+
   // create reaction table if not present
   if (!d_database.containsTable("reaction"))
   {
@@ -43,6 +288,11 @@ bool SignalBackup::migrateDatabase(int from, int to) const
     // fill it
     for (auto const &msgtable : {"sms"s, d_mms_table})
     {
+
+      // skip if not present
+      if (!d_database.tableContainsColumn(msgtable, "reactions"))
+        continue;
+
       SqliteDB::QueryResults results;
       d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
       for (uint i = 0; i < results.rows(); ++i)
@@ -67,6 +317,16 @@ bool SignalBackup::migrateDatabase(int from, int to) const
     }
   }
 
+  // create mention table if not present
+  if (!d_database.containsTable("mention"))
+  {
+    if (!d_database.exec("CREATE TABLE mention (_id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER, message_id INTEGER, recipient_id INTEGER, range_start INTEGER, range_length INTEGER)"))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+  }
+
   // add any missing columns to mms (from dbv 123 ( or hopefully -> 99)
   auto ensureColumns = [&](std::string const &table, std::string const &column, std::string const &columndefinition)
   {
@@ -77,6 +337,12 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   };
 
   for (auto const &p : {std::pair<std::string, std::string>{"receipt_timestamp", "INTEGER DEFAULT -1"},
+                        std::pair<std::string, std::string>{"date_server", "INTEGER DEFAULT -1"},
+                        std::pair<std::string, std::string>{"reactions_unread", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"remote_deleted", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"mentions_self", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"reactions_last_seen", "INTEGER DEFAULT -1"},
+                        std::pair<std::string, std::string>{"quote_mentions", "BLOB DEFAULT NULL"},
                         std::pair<std::string, std::string>{"quote_type", "INTEGER DEFAULT 0"},
                         std::pair<std::string, std::string>{"link_previews", "TEXT DEFAULT NULL"},
                         std::pair<std::string, std::string>{"view_once", "INTEGER DEFAULT 0"},
@@ -97,6 +363,10 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   }
 
   for (auto const &p : {std::pair<std::string, std::string>{"receipt_timestamp", "INTEGER DEFAULT -1"},
+                        std::pair<std::string, std::string>{"date_server", "INTEGER DEFAULT -1"},
+                        std::pair<std::string, std::string>{"reactions_unread", "INTEGER DEFAULT 0"},
+                        std::pair<std::string, std::string>{"reactions_last_seen", "INTEGER DEFAULT -1"},
+                        std::pair<std::string, std::string>{"remote_deleted", "INTEGER DEFAULT 0"},
                         std::pair<std::string, std::string>{"export_state", "BLOB DEFAULT NULL"},
                         std::pair<std::string, std::string>{"server_guid", "TEXT DEFAULT NULL"},
                         std::pair<std::string, std::string>{"exported", "INTEGER DEFAULT 0"},
@@ -111,6 +381,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
 
   for (auto const &p : {std::pair<std::string, std::string>{"wallpaper", "BLOB DEFAULT NULL"},
                         std::pair<std::string, std::string>{"chat_colors", "BLOB DEFAULT NULL"},
+                        std::pair<std::string, std::string>{"username", "TEXT DEFAULT NULL"},
                         std::pair<std::string, std::string>{"hidden", "INTEGER DEFAULT 0"}})
   {
     if (!ensureColumns("recipient", p.first, p.second))

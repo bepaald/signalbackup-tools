@@ -47,7 +47,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       {
         // get name from members string
         SqliteDB::QueryResults res;
-        if (d_databaseversion >= 24)
+        if (d_database.containsTable("recipient")) [[likely]] // dbv >= 24
           d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
                           "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                           (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
