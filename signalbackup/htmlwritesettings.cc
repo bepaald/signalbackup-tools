@@ -346,9 +346,13 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
     << "    <div class=\"settings-list\">" << '\n'
     << '\n';
 
-  // output keyvalueframes if "settings.*"
+  bool hasoutput = false;
+
+  // output keyvalueframes if "settings.*" (others may include private keys and such)
   if (std::any_of(d_keyvalueframes.begin(), d_keyvalueframes.end(), [](auto const &kv) { return STRING_STARTS_WITH(kv->key(), "settings."); } ))
   {
+    hasoutput = true;
+
     outputfile
       << "      <div class=\"header\">From KeyValue frames</div>" << '\n'
       << "      <div class=\"keyvaluepair-container\">" << '\n'
@@ -386,9 +390,12 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
       << "      </div>" << '\n';
   }
 
-  // output sharedpreferenceframes
-  if (d_sharedpreferenceframes.size())
+  // output sharedpreferenceframes (if not private keys (these were in these frames only in (very) old databases))
+  if (std::any_of(d_sharedpreferenceframes.begin(), d_sharedpreferenceframes.end(),
+                  [](auto const &sp) { return !STRING_STARTS_WITH(sp->key(), "pref_identity_") && sp->key().find("private") == std::string::npos; } ))
   {
+    hasoutput = true;
+
     outputfile
       << "      <div class=\"header\">From SharedPreference frames</div>" << '\n'
       << "      <div class=\"keyvaluepair-container\">" << '\n'
@@ -397,6 +404,8 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
     for (auto const &sp : d_sharedpreferenceframes)
     {
       std::string key = sp->key();
+      if (STRING_STARTS_WITH(key, "pref_identity_") || (key.find("private") != std::string::npos))
+        continue;
       std::vector<std::string> values = sp->value();
       std::string valuetype = sp->valueType();
 
@@ -432,6 +441,12 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
     outputfile
       << "      </div>" << '\n';
   }
+
+  if (!hasoutput)
+    outputfile
+      << "        <div class=\"conversation-list-item\">" << '\n'
+      << "            <span style=\"font-weight: bold; font-size: 18px\">(none)</span>" << '\n'
+      << "        </div>" << '\n';
 
   outputfile
     << "    </div>" << '\n'
