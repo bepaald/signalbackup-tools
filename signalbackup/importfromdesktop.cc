@@ -198,11 +198,15 @@
 
 */
 
-bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string databasedir_hint,
-                                     std::string const &hexkey, long long int sqlcipherversion,
-                                     bool skipmessagereorder, std::vector<std::string> const &daterangelist,
-                                     bool createmissingcontacts, bool autodates, bool importstickers,
-                                     bool ignorewal, std::string const &selfphone)
+bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
+                                     std::vector<std::string> const &daterangelist, bool createmissingcontacts,
+                                     bool autodates, bool importstickers, std::string const &selfphone)
+
+// bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string databasedir_hint,
+//                                      std::string const &hexkey, long long int sqlcipherversion,
+//                                      bool skipmessagereorder, std::vector<std::string> const &daterangelist,
+//                                      bool createmissingcontacts, bool autodates, bool importstickers,
+//                                      bool ignorewal, std::string const &selfphone)
 {
   if (d_selfid == -1)
   {
@@ -219,15 +223,16 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
   }
 
-  DesktopDatabase dtdb(configdir_hint, databasedir_hint, hexkey, d_verbose, ignorewal, sqlcipherversion, d_truncate);
-  if (!dtdb.ok())
+  // DesktopDatabase dtdb(configdir_hint, databasedir_hint, hexkey, d_verbose, ignorewal, sqlcipherversion, d_truncate);
+  if (!dtdb->ok())
   {
     Logger::error("Failed to open Signal Desktop sqlite database");
     return false;
   }
-  dtSetColumnNames(&dtdb.d_database);
-  std::string configdir = dtdb.getConfigDir();
-  std::string databasedir = dtdb.getDatabaseDir();
+
+  dtSetColumnNames(&dtdb->d_database);
+  std::string configdir = dtdb->getConfigDir();
+  std::string databasedir = dtdb->getDatabaseDir();
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
@@ -276,7 +281,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
   bool warned_createcontacts = false;
 
   // find out which database is newer
-  long long int maxdate_desktop_db = dtdb.d_database.getSingleResultAs<long long int>("SELECT MAX(MAX(json_extract(json, '$.received_at_ms')),MAX(received_at)) FROM messages", 0);
+  long long int maxdate_desktop_db = dtdb->d_database.getSingleResultAs<long long int>("SELECT MAX(MAX(json_extract(json, '$.received_at_ms')),MAX(received_at)) FROM messages", 0);
   long long int maxdate_android_db = d_database.getSingleResultAs<long long int>("SELECT MAX(date_received) FROM " + d_mms_table, 0);
   if (d_database.containsTable("sms"))
     maxdate_android_db = d_database.getSingleResultAs<long long int>("SELECT MAX((SELECT MAX(date_received) FROM " + d_mms_table + "),(SELECT MAX(" + d_sms_date_received + ") FROM sms))", 0);
@@ -284,7 +289,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
-  if (!dtdb.d_database.exec("SELECT "
+  if (!dtdb->d_database.exec("SELECT "
                             "rowid,"
                             "id,"
                             "e164,"
@@ -310,7 +315,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
   {
     // skip convo's with no messages...
     SqliteDB::QueryResults messagecount;
-    if (dtdb.d_database.exec("SELECT COUNT(*) AS count FROM messages WHERE conversationId = ?" + datewhereclause, results_all_conversations(i, "id"), &messagecount))
+    if (dtdb->d_database.exec("SELECT COUNT(*) AS count FROM messages WHERE conversationId = ?" + datewhereclause, results_all_conversations(i, "id"), &messagecount))
       if (messagecount.rows() == 1 && messagecount.getValueAs<long long int>(0, "count") == 0)
       {
         Logger::message("Skipping conversation, conversation has no messages ",
@@ -344,7 +349,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         else
         {
           Logger::error("Conversation is 'group'-type, but groupId unexpectedly was not base64 data. Maybe this is a groupV1 group? Here is the data: ");
-          dtdb.d_database.printLineMode("SELECT * FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"));
+          dtdb->d_database.printLineMode("SELECT * FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"));
           continue;
         }
       }
@@ -370,7 +375,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           /*
           std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": Group V1 type not yet supported" << std::endl;
           SqliteDB::QueryResults groupid_res;
-          dtdb.d_database.exec("SELECT HEX(groupId) FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"), &groupid_res);
+          dtdb->d_database.exec("SELECT HEX(groupId) FROM conversations WHERE id = ?", results_all_conversations.value(i, "id"), &groupid_res);
           if (groupid_res.rows())
             std::cout << "       Possible group id: " << groupid_res.valueAsString(0, 0) << std::endl;
           */
@@ -410,7 +415,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
     {
       if (createmissingcontacts)
       {
-        recipientid_for_thread = dtCreateRecipient(dtdb.d_database, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
+        recipientid_for_thread = dtCreateRecipient(dtdb->d_database, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
                                                    results_all_conversations.valueAsString(i, "groupId"), databasedir, &recipientmap,
                                                    &warned_createcontacts);
         if (recipientid_for_thread == -1)
@@ -479,7 +484,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
     // now lets get all messages for this conversation
     SqliteDB::QueryResults results_all_messages_from_conversation;
-    if (!dtdb.d_database.exec("SELECT "
+    if (!dtdb->d_database.exec("SELECT "
                               "rowid,"
                               "json_extract(json, '$.quote') AS quote,"
                               "IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments,"
@@ -560,38 +565,38 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         SqliteDB::QueryResults statusmsguuid;
         if (type == "profile-change")
         {
-          if (!dtdb.d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
+          if (!dtdb->d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
                                     "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1) OR "
                                     "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1)", // maybe id can be a phone number?
                                     rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group profile-change.");
             // print some extra info
-            //dtdb.d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+            //dtdb->d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
           }
         }
         else if (type == "keychange")
         {
-          if (!dtdb.d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
+          if (!dtdb->d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
                                     + d_dt_c_uuid + " IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1) OR "
                                     "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1)",     // 'key_changed' can be a phone number (confirmed)
                                     rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group keychange.");
             // print some extra info
-            //dtdb.d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+            //dtdb->d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
           }
         }
         else if (type == "verified-change")
         {
-          if (!dtdb.d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
+          if (!dtdb->d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
                                     "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1) OR "
                                     "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1)",// maybe id can be a phone number?
                                     rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group verified-change.");
             // print some extra info
-            //dtdb.d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+            //dtdb->d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
           }
         }
 
@@ -610,7 +615,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         {
           if (createmissingcontacts)
           {
-            if ((address = dtCreateRecipient(dtdb.d_database, source_uuid, source_phone,
+            if ((address = dtCreateRecipient(dtdb->d_database, source_uuid, source_phone,
                                              std::string(), databasedir,
                                              &recipientmap, &warned_createcontacts)) == -1)
             {
@@ -622,7 +627,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           {
             Logger::error("Failed to set address of incoming group message. Skipping");
             //std::cout << "Some more info: " << std::endl;
-            //dtdb.d_database.printLineMode("SELECT * from messages WHERE rowid = ?", results_all_messages_from_conversation.value(j, "rowid"));
+            //dtdb->d_database.printLineMode("SELECT * from messages WHERE rowid = ?", results_all_messages_from_conversation.value(j, "rowid"));
             continue;
           }
         }
@@ -641,7 +646,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       {
         if (d_verbose) [[unlikely]]
           Logger::message_start("Dealing with ", type, " message... ");
-        handleDTCallTypeMessage(dtdb.d_database, results_all_messages_from_conversation(j, "callId"), rowid, ttid, address, createmissingcontacts);
+        handleDTCallTypeMessage(dtdb->d_database, results_all_messages_from_conversation(j, "callId"), rowid, ttid, address, createmissingcontacts);
         if (d_verbose) [[unlikely]]
           Logger::message_end("done");
         continue;
@@ -649,7 +654,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       else if (type == "group-v2-change")
       {
         //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
-        handleDTGroupChangeMessage(dtdb.d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, false);
+        handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, false);
 
         warnOnce("Unsupported message type 'group-v2-change'. Skipping..."
                  " (this warning will be shown only once)");
@@ -660,14 +665,14 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       {
         // std::cout << bepaald::bold_on << "Warning" << bepaald::bold_off << ": Unsupported message type '"
         //           << results_all_messages_from_conversation.valueAsString(j, "type") << "'. ";
-        // // dtdb.d_database.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
+        // // dtdb->d_database.printLineMode("SELECT json_extract(json, '$.groupMigration.areWeInvited') AS areWeInvited,"
         // //                   "json_extract(json, '$.groupMigration.invitedMembers') AS invitedMembers,"
         // //                   "json_extract(json, '$.groupMigration.droppedMemberIds') AS droppedmemberIds"
         // //                   " FROM messages WHERE rowid = ?", rowid);
         // std::cout << "Skipping message." << std::endl;
         // continue;
 
-        if (!handleDTGroupV1Migration(dtdb.d_database, rowid, ttid,
+        if (!handleDTGroupV1Migration(dtdb->d_database, rowid, ttid,
                                       results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
                                       recipientid_for_thread, &recipientmap, createmissingcontacts, databasedir,
                                       &warned_createcontacts))
@@ -682,17 +687,17 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
         {
           if (createmissingcontacts)
-            handleDTGroupChangeMessage(dtdb.d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, true);
+            handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, true);
           else
           {
             warnOnce("Unsupported message type 'timer-notification (in group)'. Skipping... "
                      "(this warning will be shown only once)");
-            //handleDTGroupChangeMessage(dtdb.d_database, rowid, ttid, address, true);
+            //handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, true);
           }
           continue;
         }
 
-        if (!handleDTExpirationChangeMessage(dtdb.d_database, rowid, ttid,
+        if (!handleDTExpirationChangeMessage(dtdb->d_database, rowid, ttid,
                                              results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
                                              address))
           return false;
@@ -790,7 +795,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting number-change into mms");
-              dtdb.d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
           }
@@ -821,7 +826,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting number-change into mms");
-              dtdb.d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
           }
@@ -862,7 +867,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting keychange into mms");
-              dtdb.d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
           }
@@ -892,7 +897,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting keychange into mms");
-              dtdb.d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
           }
@@ -906,7 +911,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         if (d_verbose) [[unlikely]]
           Logger::message_start("Dealing with ", type, " message... ");
         SqliteDB::QueryResults identityverification_results;
-        if (!dtdb.d_database.exec("SELECT "
+        if (!dtdb->d_database.exec("SELECT "
                                   "json_extract(json, '$.local') AS 'local', "
                                   "json_extract(json, '$.verified') AS 'verified' "
                                   "FROM messages WHERE rowid = ?", rowid, &identityverification_results))
@@ -999,7 +1004,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         if (d_verbose) [[unlikely]]
           Logger::message_start("Dealing with ", type, " message... ");
         SqliteDB::QueryResults profilechange_data;
-        if (!dtdb.d_database.exec("SELECT "
+        if (!dtdb->d_database.exec("SELECT "
                                   "json_extract(json, '$.profileChange.type') AS type, "
                                   "IFNULL(json_extract(json, '$.profileChange.oldName'), '') AS old_name, "
                                   "IFNULL(json_extract(json, '$.profileChange.newName'), '') AS new_name "
@@ -1144,7 +1149,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting ", type, " into sms");
-              dtdb.d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
           }
@@ -1174,7 +1179,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting ", type, " into mms");
-              dtdb.d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+              dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
               return false;
             }
           }
@@ -1231,7 +1236,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       std::string shared_contacts_json;
       if (hassharedcontact)
       {
-        shared_contacts_json = dtSetSharedContactsJsonString(dtdb.d_database, rowid);
+        shared_contacts_json = dtSetSharedContactsJsonString(dtdb->d_database, rowid);
         //std::cout << shared_contacts_json << std::endl;
         //warnOnce("Message is 'contact share'. This is not yet supported, skipping...");
         //continue;
@@ -1240,7 +1245,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       // get emoji reactions
       if (d_verbose) [[unlikely]] Logger::message_start("Handling reactions...");
       std::vector<std::vector<std::string>> reactions;
-      getDTReactions(dtdb.d_database, rowid, numreactions, &reactions);
+      getDTReactions(dtdb->d_database, rowid, numreactions, &reactions);
       if (d_verbose) [[unlikely]] Logger::message_end("done");
 
       // LONG_TEXT messages (> 2000 bytes) are sent with an attachment in android (not on desktop)
@@ -1272,7 +1277,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
           //std::cout << "  Message has quote" << std::endl;
           SqliteDB::QueryResults quote_results;
-          if (!dtdb.d_database.exec("SELECT "
+          if (!dtdb->d_database.exec("SELECT "
                                     "json_extract(messages.json, '$.quote.id') AS quote_id,"
                                     "json_extract(messages.json, '$.quote.author') AS quote_author_phone,"     // in old databases, authorUuid does not exist, but this holds the phone number
                                     "conversations." + d_dt_c_uuid + " AS quote_author_uuid_from_phone,"       // this is filled from a left join on the possible phone number above
@@ -1310,7 +1315,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
             // DEBUG
             Logger::message("Additional info:");
-            dtdb.d_database.print("SELECT json_extract(json, '$.quote') FROM messages WHERE rowid = ?", rowid);
+            dtdb->d_database.print("SELECT json_extract(json, '$.quote') FROM messages WHERE rowid = ?", rowid);
             hasquote = false;
           }
 
@@ -1373,7 +1378,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
             for (uint qbr = 0; qbr < quote_results.getValueAs<long long int>(0, "num_quote_bodyranges"); ++qbr)
             {
               SqliteDB::QueryResults qbrres;
-              if (!dtdb.d_database.exec("SELECT "
+              if (!dtdb->d_database.exec("SELECT "
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].length') AS qbr_length,"
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].style') AS qbr_style,"
@@ -1394,7 +1399,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                 {
                   if (d_verbose) [[unlikely]] Logger::message_end();
                   Logger::warning("Quote-bodyrange contains no recipient and no style. Skipping.");
-                  dtdb.d_database.prettyPrint(d_truncate,
+                  dtdb->d_database.prettyPrint(d_truncate,
                                               "SELECT json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "] FROM messages WHERE rowid = ?", rowid);
                   continue;
                 }
@@ -1404,7 +1409,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                 {
                   if (createmissingcontacts)
                   {
-                    if (dtCreateRecipient(dtdb.d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
+                    if (dtCreateRecipient(dtdb->d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
                                           databasedir, &recipientmap, &warned_createcontacts) == -1)
                     {
                       if (d_verbose) [[unlikely]] Logger::message_end();
@@ -1535,12 +1540,12 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         // (so style == NULL) these must be skipped here.
         if (hasranges)
         {
-          //dtdb.d_database.prettyPrint("SELECT json_extract(json, '$.bodyRanges') FROM messages WHERE rowid IS ?", rowid);
+          //dtdb->d_database.prettyPrint("SELECT json_extract(json, '$.bodyRanges') FROM messages WHERE rowid IS ?", rowid);
           BodyRanges bodyrangelist;
           SqliteDB::QueryResults ranges_results;
           for (uint r = 0; r < hasranges; ++r)
           {
-            if (dtdb.d_database.exec("SELECT "
+            if (dtdb->d_database.exec("SELECT "
                                      "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].start') AS range_start,"
                                      "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].length') AS range_length,"
                                      "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].style') AS range_style"
@@ -1569,11 +1574,11 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         // insert message attachments
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting attachments...");
         dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
-                          rowid, dtdb.d_database, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false, issticker);
+                          rowid, dtdb->d_database, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false, issticker);
         if (hasquote && !mmsquote_missing)
         {
           // insert quotes attachments
-          dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, dtdb.d_database,
+          dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, dtdb->d_database,
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
                             "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
         }
@@ -1585,7 +1590,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
                            results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"));
 
         if (outgoing)
-          dtSetMessageDeliveryReceipts(dtdb.d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
+          dtSetMessageDeliveryReceipts(dtdb->d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
                                        new_mms_id, true/*mms*/, isgroupconversation, &warned_createcontacts);
 
         // insert into reactions
@@ -1598,7 +1603,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
         for (uint k = 0; k < nummentions; ++k)
         {
           SqliteDB::QueryResults results_mentions;
-          if (!dtdb.d_database.exec("SELECT "
+          if (!dtdb->d_database.exec("SELECT "
                                     "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].start') AS start,"
                                     "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].length') AS length,"
                                     "LOWER(COALESCE(json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionAci'), json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionUuid'))) AS mention_uuid"
@@ -1620,7 +1625,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
           {
             if (createmissingcontacts)
             {
-              if ((rec_id = dtCreateRecipient(dtdb.d_database, results_mentions("mention_uuid"), std::string(), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
+              if ((rec_id = dtCreateRecipient(dtdb->d_database, results_mentions("mention_uuid"), std::string(), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
               {
                 if (d_verbose) [[unlikely]] Logger::message_end();
                 Logger::warning("Failed to create recipient for mention. Skipping.");
@@ -1681,7 +1686,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
 
         // set delivery/read counts
         if (outgoing)
-          dtSetMessageDeliveryReceipts(dtdb.d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
+          dtSetMessageDeliveryReceipts(dtdb->d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
                                        new_sms_id, false/*mms*/, isgroupconversation, &warned_createcontacts);
 
         // insert into reactions
@@ -1694,7 +1699,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
   for (auto const &r : recipientmap)
   {
     //std::cout << "Recpients in map: " << r.first << " : " << r.second << std::endl;
-    long long int profile_date_desktop = dtdb.d_database.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE " + d_dt_c_uuid + " = ?1 OR groupId = ?1 OR e164 = ?1", r.first, 0);
+    long long int profile_date_desktop = dtdb->d_database.getSingleResultAs<long long int>("SELECT profileLastFetchedAt FROM conversations WHERE " + d_dt_c_uuid + " = ?1 OR groupId = ?1 OR e164 = ?1", r.first, 0);
     long long int profile_date_android = d_database.getSingleResultAs<long long int>("SELECT last_profile_fetch FROM recipient WHERE _id = ?", r.second, 0);
     //std::cout << "Profile update? : " << r.first << " " << profile_date_desktop << " " << profile_date_android << std::endl;
     if (profile_date_desktop > profile_date_android)
@@ -1704,7 +1709,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
       if (d_verbose) [[unlikely]]
         Logger::message("Attempting to update profile");
 
-      if (!dtUpdateProfile(dtdb.d_database, r.first, r.second, databasedir))
+      if (!dtUpdateProfile(dtdb->d_database, r.first, r.second, databasedir))
         Logger::warning("Failed to update profile data.");
     }
   }
@@ -1712,7 +1717,7 @@ bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string dat
   if (importstickers)
   {
     Logger::message("Importing installed stickerpacks");
-    if (!dtImportStickerPacks(dtdb.d_database, databasedir))
+    if (!dtImportStickerPacks(dtdb->d_database, databasedir))
     {
       Logger::error("Failed to import stickers");
       return false;

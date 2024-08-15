@@ -21,18 +21,21 @@
 #define DUMMYBACKUP_H_
 
 #include "../signalbackup/signalbackup.h"
+#include "../desktopdatabase/desktopdatabase.h"
 
 class DummyBackup : public SignalBackup
 {
  public:
-  inline DummyBackup(std::string const &configdir, std::string const &databasedir,
+  inline DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
+                     /*std::string const &configdir, std::string const &databasedir,
                      std::string const &hexkey, long long int cipherversion,
-                     bool ignorewal, bool verbose, bool truncate, bool showprogress);
+                     bool ignorewal, */bool verbose, bool truncate, bool showprogress);
 };
 
-inline DummyBackup::DummyBackup(std::string const &configdir, std::string const &databasedir,
+inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
+                                /*std::string const &configdir, std::string const &databasedir,
                                 std::string const &hexkey, long long int cipherversion,
-                                bool ignorewal, bool verbose, bool truncate, bool showprogress)
+                                bool ignorewal, */bool verbose, bool truncate, bool showprogress)
   :
   SignalBackup(verbose, truncate, showprogress)
 {
@@ -83,18 +86,18 @@ inline DummyBackup::DummyBackup(std::string const &configdir, std::string const 
   setColumnNames();
 
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
-  DesktopDatabase ddb(configdir, databasedir, hexkey, verbose, ignorewal, cipherversion, truncate);
-  if (!ddb.ok())
-    std::cout << "error" << std::endl;
-  dtSetColumnNames(&ddb.d_database);
+  //DesktopDatabase ddb(configdir, databasedir, hexkey, verbose, ignorewal, cipherversion, truncate);
+  if (!ddb->ok())
+    std::cout << "DesktopDatabase was not ok" << std::endl;
+  dtSetColumnNames(&ddb->d_database);
 
   // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
-  std::string uuid = ddb.d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(" + d_dt_m_sourceuuid + ", '') FROM messages "
+  std::string uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(" + d_dt_m_sourceuuid + ", '') FROM messages "
                                                                    "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
   if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
   {
     // a bit more complicated:
-    uuid = ddb.d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN (SELECT id FROM conversations WHERE type = 'group')", std::string());
+    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN (SELECT id FROM conversations WHERE type = 'group')", std::string());
     if (uuid.empty())
     {
       Logger::error("Failed to determin uuid of self");
@@ -103,7 +106,7 @@ inline DummyBackup::DummyBackup(std::string const &configdir, std::string const 
   }
 
   SqliteDB::QueryResults selfdata;
-  if (!ddb.d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color "
+  if (!ddb->d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color "
                            "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
                            uuid, &selfdata) ||
       selfdata.rows() != 1)

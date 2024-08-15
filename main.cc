@@ -85,13 +85,34 @@ int main(int argc, char *argv[])
   }
 
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
+  std::unique_ptr<DesktopDatabase> ddb;
+
+  // run desktop sqlquery
+  if (!arg.rundtsqlquery().empty())
+  {
+    if (!ddb)
+      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    for (auto const &q : arg.rundtsqlquery())
+      ddb->runQuery(q, false);
+  }
+  if (!arg.rundtprettysqlquery().empty())
+  {
+    if (!ddb)
+      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    for (auto const &q : arg.rundtprettysqlquery())
+      ddb->runQuery(q, true);
+  }
+
   if (!arg.dumpdesktopdb().empty())
   {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
-                        arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
-    if (!ddb.ok())
+    if (!ddb)
+      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    if (!ddb->ok())
       return 1;
-    if (!ddb.dumpDb(arg.dumpdesktopdb(), arg.overwrite()))
+    if (!ddb->dumpDb(arg.dumpdesktopdb(), arg.overwrite()))
       return 1;
   }
 
@@ -105,15 +126,17 @@ int main(int argc, char *argv[])
 
   if (!arg.exportdesktophtml().empty() || !arg.exportdesktoptxt().empty())
   {
-    DummyBackup dummydb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.desktopdbversion(),
-                        arg.ignorewal(), arg.verbose(), arg.truncate(), arg.showprogress());
+    if (!ddb)
+      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+
+    DummyBackup dummydb(ddb, /*arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.desktopdbversion(),
+                        arg.ignorewal(), */arg.verbose(), arg.truncate(), arg.showprogress());
     if (!dummydb.ok())
       return 1;
 
-    if (!dummydb.importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
-                                   arg.desktopdbversion(), arg.skipmessagereorder(),
-                                   arg.limittodates(), true /*addincompletedata*/, false /*autolimittodates*/,
-                                   true /*importstickers*/, arg.ignorewal(), arg.setselfid()))
+    if (!dummydb.importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(), true /*addincompletedata*/,
+                                   false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
       return 1;
 
     if (!arg.exportdesktophtml().empty())
@@ -131,23 +154,8 @@ int main(int argc, char *argv[])
         return 1;
   }
 
-  if (!arg.rundtsqlquery().empty())
-  {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
-                        arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
-    for (auto const &q : arg.rundtsqlquery())
-      ddb.runQuery(q, false);
-  }
+  // dump desktop attachments...
 
-  if (!arg.rundtprettysqlquery().empty())
-  {
-    DesktopDatabase ddb(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
-                        arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate());
-    for (auto const &q : arg.rundtprettysqlquery())
-      ddb.runQuery(q, true);
-  }
-
-  // run desktop sqlquery
 
   //***** *****//
 
@@ -338,17 +346,21 @@ int main(int argc, char *argv[])
 
   if (arg.importfromdesktop())
   {
+    if (!ddb)
+      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+
     MEMINFO("Before importfromdesktop");
-    if (!sb->importFromDesktop(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(),
-                               arg.desktopdbversion(), arg.skipmessagereorder(),
-                               arg.limittodates(), arg.addincompletedataforhtmlexport(), arg.autolimitdates(),
-                               arg.importstickers(), arg.ignorewal(), arg.setselfid()))
+    if (!sb->importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(), arg.addincompletedataforhtmlexport(),
+                               arg.autolimitdates(),  arg.importstickers(), arg.setselfid()))
       return 1;
     MEMINFO("After importfromdesktop");
   }
 
   if (!arg.importtelegram().empty())
-    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(), arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(), arg.setselfid()))
+    if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
+                                arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(),
+                                arg.setselfid()))
       return 1;
 
   if (arg.removedoubles_bool())

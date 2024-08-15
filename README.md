@@ -770,7 +770,7 @@ Done!
 **<span id="desktop_functions">Operations for Signal Desktop</span>**
 
 > [!NOTE]
-> Starting at version 7.17, Signal Desktop will encrypt the key used to read the database. On Windows, decryption of this key should already be implemented, but this has not been done for Linux an macOS. To use any of the desktop functions of this tool on Linux/macOS, the decrypted key must be manually supplied through the `--desktopkey` option (see below). For Linux users a simple tool that attempts to decrypt and show the key is available here: [https://github.com/bepaald/get_signal_desktop_key](https://github.com/bepaald/get_signal_desktop_key).
+> Starting at version 7.17, Signal Desktop will encrypt the key used to read the database. On Windows, decryption of this key should already be implemented, but this has not been done for Linux and macOS. To use any of the desktop functions of this tool on Linux/macOS, the decrypted key must be manually supplied through the `--desktopkey` option (see below). For Linux users a simple tool that attempts to decrypt and show the key is available here: [https://github.com/bepaald/get_signal_desktop_key](https://github.com/bepaald/get_signal_desktop_key).
 
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 
@@ -781,7 +781,7 @@ Running with these options does not require an input file to be provided. These 
 - `--rundtprettysqlquery [QUERY]` As above, but tries to make the output a bit nicer to look at. Depending on the size of the query and the size of the output terminal, may make the output more ledgible (or less so).
 - `--exportdesktophtml [OUTPUTDIR]` Export the Signal Desktop database to HTML. This function works internally by creating an empty Android backup, importing the desktop into this and then exporting that internal Android backup to HTML. As a result it supports almost all modifying options mentioned in [import from Desktop](#desktop) and [export to HTML](#export-to-html) (excluding `--limittothreads`, and `--includesettings`). It also has the same limitations as both of these functions combined. It is currently unknown if, and how well it works. Feedback is appreciated. See: https://github.com/bepaald/signalbackup-tools/issues/203.
 - `--exportdesktoptxt [OUTPUTDIR]` Export the Signal Desktop database to plain text. Works as the above function, except the internal Android backup is [exported to TXT](#export-to-txt) instead.
-- `--desktopkey [HEXSTRING]` This is a modifying option for all desktop functions. Manually set the cipher key to use for decrypting the Desktop database.
+- `--desktopkey [HEXSTRING]` This is a modifying option for all desktop functions. Manually set the cipher key to use for decrypting the Desktop database (see above note).
 
 **<span id="various">Various</span>**
 

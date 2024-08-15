@@ -48,6 +48,7 @@ struct Range;
 struct GroupInfo;
 enum class IconType;
 class JsonDatabase;
+class DesktopDatabase;
 
 class SignalBackup
 {
@@ -250,10 +251,14 @@ class SignalBackup
   inline void showDBInfo() const;
   bool scramble() const;
   //std::pair<std::string, std::string> getDesktopDir() const;
-  bool importFromDesktop(std::string configdir, std::string appdir, std::string const &hexkey,
-                         long long int dbversion, bool skipmessagereorder,
+  bool importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
-                         bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
+                         bool autodates, bool importstickers, std::string const &selfphone);
+  // bool importFromDesktop(std::string configdir, std::string appdir, std::string const &hexkey,
+  //                        long long int dbversion, bool skipmessagereorder,
+  //                        std::vector<std::string> const &dateranges, bool createmissingcontacts,
+  //                        bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
+
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
