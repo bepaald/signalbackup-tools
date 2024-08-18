@@ -20,3 +20,5 @@
 #include "desktopdatabase.h"
 
 #include <tuple>
+#include <regex>
+#include <fstream>

@@ -86,32 +86,37 @@ int main(int argc, char *argv[])
 
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
   std::unique_ptr<DesktopDatabase> ddb;
-
-  // run desktop sqlquery
-  if (!arg.rundtsqlquery().empty())
+  auto initDesktopDatabase = [&]()
   {
     if (!ddb)
       ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
                                     arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    return ddb->ok();
+  };
+
+  // run desktop sqlquery
+  if (!arg.rundtsqlquery().empty())
+  {
+    if (!initDesktopDatabase())
+      return 1;
+
     for (auto const &q : arg.rundtsqlquery())
       ddb->runQuery(q, false);
   }
   if (!arg.rundtprettysqlquery().empty())
   {
-    if (!ddb)
-      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    if (!initDesktopDatabase())
+      return 1;
+
     for (auto const &q : arg.rundtprettysqlquery())
       ddb->runQuery(q, true);
   }
 
   if (!arg.dumpdesktopdb().empty())
   {
-    if (!ddb)
-      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
-    if (!ddb->ok())
+    if (!initDesktopDatabase())
       return 1;
+
     if (!ddb->dumpDb(arg.dumpdesktopdb(), arg.overwrite()))
       return 1;
   }
@@ -126,9 +131,8 @@ int main(int argc, char *argv[])
 
   if (!arg.exportdesktophtml().empty() || !arg.exportdesktoptxt().empty())
   {
-    if (!ddb)
-      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    if (!initDesktopDatabase())
+      return 1;
 
     DummyBackup dummydb(ddb, /*arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.desktopdbversion(),
                         arg.ignorewal(), */arg.verbose(), arg.truncate(), arg.showprogress());
@@ -346,9 +350,8 @@ int main(int argc, char *argv[])
 
   if (arg.importfromdesktop())
   {
-    if (!ddb)
-      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+    if (!initDesktopDatabase())
+      return 1;
 
     MEMINFO("Before importfromdesktop");
     if (!sb->importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(), arg.addincompletedataforhtmlexport(),

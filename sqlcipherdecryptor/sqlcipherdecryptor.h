@@ -31,8 +31,7 @@ struct evp_md_st;
 class SqlCipherDecryptor
 {
   bool d_ok;
-  std::string d_configpath;
-  std::string d_apppath;
+  std::string d_databasepath;
   unsigned char *d_key;
   unsigned int d_keysize;
   unsigned char *d_hmackey;
@@ -59,8 +58,8 @@ class SqlCipherDecryptor
   };
 
  public:
-  explicit SqlCipherDecryptor(std::string const &configpath, std::string const &apppath,
-                              std::string const &hexkey, int version, bool verbose);
+  explicit SqlCipherDecryptor(std::string const &databasepath, std::string const &hexkey,
+                              int version, bool verbose);
   SqlCipherDecryptor(SqlCipherDecryptor const &other) = delete;
   SqlCipherDecryptor &operator=(SqlCipherDecryptor const &other) = delete;
   ~SqlCipherDecryptor();
@@ -68,8 +67,6 @@ class SqlCipherDecryptor
   inline DecodedData data() const;
   inline bool writeToFile(std::string const &filename, bool overwrite) const;
  private:
-  bool getKey();
-  bool getEncryptedKey();
   bool getHmacKey();
   bool decryptData(std::ifstream *dbfile);
 };

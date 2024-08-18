@@ -27,12 +27,11 @@
   - Pagesize: 1024 -> 4096
 */
 
-SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::string const &apppath,
-                                       std::string const &hexkey, int version, bool verbose)
+SqlCipherDecryptor::SqlCipherDecryptor(std::string const &databasepath, std::string const &hexkey,
+                                       int version, bool verbose)
   :
   d_ok(false),
-  d_configpath(configpath),
-  d_apppath(apppath),
+  d_databasepath(databasepath),
   d_key(nullptr),
   d_keysize(0),
   d_hmackey(nullptr),
@@ -50,24 +49,22 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   d_decrypteddatasize(0),
   d_verbose(verbose)
 {
-  if (!hexkey.empty())
-  {
-    d_keysize = 32;
-    d_key = new unsigned char[d_keysize];
-    if (!bepaald::hexStringToBytes(hexkey, d_key, d_keysize))
-    {
-      Logger::error("Failed to set key from provided hex string");
-      return;
-    }
-  }
-  else if (!getKey())
+  if (hexkey.empty())
     return;
 
+  d_keysize = hexkey.size() / 2;
+  d_key = new unsigned char[d_keysize];
+  if (!bepaald::hexStringToBytes(hexkey, d_key, d_keysize))
+  {
+    Logger::error("Failed to set key from provided hex string");
+    return;
+  }
+
   // open database file
-  std::ifstream dbfile(d_apppath + "/sql/db.sqlite", std::ios_base::in | std::ios_base::binary);
+  std::ifstream dbfile(d_databasepath, std::ios_base::in | std::ios_base::binary);
   if (!dbfile.is_open())
   {
-    Logger::error("Failed to open database file '", d_apppath + "/sql/db.sqlite", "'");
+    Logger::error("Failed to open database file '", d_databasepath, "'");
     return;
   }
 
@@ -77,7 +74,7 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &configpath, std::strin
   dbfile.seekg(0, std::ios_base::beg);
 
   if (d_verbose) [[unlikely]]
-    Logger::message("Opening Desktop database `", d_apppath, "/sql/db.sqlite' (", d_decrypteddatasize, " bytes)");
+    Logger::message("Opening Desktop database `", d_databasepath, "' (", d_decrypteddatasize, " bytes)");
 
   // read salt
   d_saltsize = 16;

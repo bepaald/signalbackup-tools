@@ -476,7 +476,7 @@ If you use this option and read this line, I would really appreciate it if you l
 **<span id="desktop">Importing conversations from Signal-Desktop</span>**
 
 > [!NOTE]
-> Starting at Signal Desktop version 7.17, this function may not work on Linux/macOS. See the note at [Operations for Signal Desktop](#desktop_functions) for more info.
+> Starting at Signal Desktop version 7.17, this function may not work on Linux without extra steps. See the note at [Operations for Signal Desktop](#desktop_functions) for more info.
 
 _NOTE: This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
@@ -770,7 +770,7 @@ Done!
 **<span id="desktop_functions">Operations for Signal Desktop</span>**
 
 > [!NOTE]
-> Starting at version 7.17, Signal Desktop will encrypt the key used to read the database. On Windows, decryption of this key should already be implemented, but this has not been done for Linux and macOS yet. To use any of the desktop functions of this tool on Linux/macOS, the decrypted key must be manually supplied through the `--desktopkey` option (see below). For Linux users a simple tool that attempts to decrypt and show the key is available here: [https://github.com/bepaald/get_signal_desktop_key](https://github.com/bepaald/get_signal_desktop_key). For macOS users a similar tool is available here: [https://github.com/bepaald/get_signal_desktop_key_mac](https://github.com/bepaald/get_signal_desktop_key_mac).
+> Starting at version 7.17, Signal Desktop will encrypt the key used to read the database. On Windows and macOS, decryption of this key should already be implemented, but this has not been done for Linux yet. To use any of the desktop functions of this tool on Linux, the decrypted key must be manually supplied through the `--desktopkey` option (see below). For Linux users a simple tool that attempts to decrypt and show the key is available here: [https://github.com/bepaald/get_signal_desktop_key](https://github.com/bepaald/get_signal_desktop_key). For macOS users a similar tool is available here (though it should not be needed): [https://github.com/bepaald/get_signal_desktop_key_mac](https://github.com/bepaald/get_signal_desktop_key_mac).
 
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 

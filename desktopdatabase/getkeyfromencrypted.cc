@@ -17,9 +17,13 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "desktopdatabase.ih"
 
-#define VERSIONDATE "20240818.193540"
-
+bool DesktopDatabase::getKeyFromEncrypted()
+{
+#if defined(_WIN32) || defined(__MINGW64__)
+  return getKeyFromEncrypted_win();
+#else
+  return getKeyFromEncrypted_mac_linux();
 #endif
+}

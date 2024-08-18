@@ -22,6 +22,7 @@
 
 #include <cstdlib>
 #include <memory>
+#include <set>
 
 #include "../common_be.h"
 #include "../memsqlitedb/memsqlitedb.h"
@@ -33,6 +34,7 @@ class DesktopDatabase
   MemSqliteDB d_database;
   std::string d_configdir;
   std::string d_databasedir;
+  std::string d_hexkey;
   bool d_ok;
   bool d_verbose;
   bool d_ignorewal;
@@ -54,8 +56,22 @@ class DesktopDatabase
   inline void runQuery(std::string const &q, bool pretty = true) const;
 
  private:
-  bool init(std::string const &hexkey);
+  bool init();
   inline std::pair<std::string, std::string> getDesktopDir() const;
+  std::string readEncryptedKey() const;
+  bool getKey();
+  bool getKeyFromEncrypted();
+#if defined(_WIN32) || defined(__MINGW64__)
+  bool getKeyFromEncrypted_win();
+#else
+  bool getKeyFromEncrypted_mac_linux();
+  std::string decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr) const;
+#endif
+#if defined(__APPLE__) && defined(__MACH__)
+  void getSecrets_mac(std::set<std::string> *secrets) const;
+#elif !defined(_WIN32) && !defined(__MINGW64__) // not apple, but also not windows
+  void getSecrets_linux(std::set<std::string> *secrets) const;
+#endif
 
   friend class SignalBackup;
   friend class DummyBackup;
@@ -73,13 +89,14 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   :
   d_configdir(configdir),
   d_databasedir(databasedir),
+  d_hexkey(hexkey),
   d_ok(false),
   d_verbose(verbose),
   d_ignorewal(ignorewal),
   d_cipherversion(cipherversion),
   d_truncate(truncate)
 {
-  d_ok = init(hexkey);
+  d_ok = init();
 }
 
 inline bool DesktopDatabase::ok() const
@@ -90,7 +107,6 @@ inline bool DesktopDatabase::ok() const
 inline std::pair<std::string, std::string> DesktopDatabase::getDesktopDir() const
 {
 #if defined(_WIN32) || defined(__MINGW64__)
-
   // Windows: concatenate HOMEDRIVE+HOMEPATH
   // probably only works on windows 7 and newer? (if at all)
   const char *homedrive_cs = std::getenv("HOMEDRIVE");

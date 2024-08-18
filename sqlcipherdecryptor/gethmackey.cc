@@ -33,7 +33,7 @@ bool SqlCipherDecryptor::getHmacKey()
   d_hmackeysize = 32;
   d_hmackey = new unsigned char[d_hmackeysize];
 
-  return PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(d_key), d_keysize, hmac_salt.get(), hmac_saltsize, 2, d_digest, d_hmackeysize, d_hmackey) == 1;
+  return PKCS5_PBKDF2_HMAC(reinterpret_cast<char *>(d_key), d_keysize, hmac_salt.get(), hmac_saltsize, 2/*iterations*/, d_digest, d_hmackeysize, d_hmackey) == 1;
 
   return true;
 }

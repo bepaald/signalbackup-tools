@@ -17,25 +17,22 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "sqlcipherdecryptor.ih"
+#include "desktopdatabase.ih"
 
-bool SqlCipherDecryptor::getKey()
+bool DesktopDatabase::getKey()
 {
-
-#if defined(_WIN32) || defined(__MINGW64__) // only windows for now...
-  if (getEncryptedKey())
+  if (getKeyFromEncrypted())
   {
     if (d_verbose) [[unlikely]]
       Logger::message("Initialized from encryptedkey");
     return true;
   }
-#endif
 
   // read key from config.json
-  std::fstream config(d_configpath + "/config.json", std::ios_base::in | std::ios_base::binary);
+  std::fstream config(d_configdir + "/config.json", std::ios_base::in | std::ios_base::binary);
   if (!config.is_open())
   {
-    Logger::error("Failed to open input: ", d_configpath, "/config.json");
+    Logger::error("Failed to open input: ", d_configdir, "/config.json");
     return false;
   }
   std::string line;
@@ -65,21 +62,7 @@ bool SqlCipherDecryptor::getKey()
     return false;
   }
 
-  d_keysize = 32;
-  d_key = new unsigned char[d_keysize];
-
-  std::string keystr = m[1].str();
-
-  for (uint i = 0; i < keystr.size(); i += 2)
-  {
-    auto [p, ec] = std::from_chars(keystr.c_str() + i, keystr.c_str() + i + 2,
-                                   *reinterpret_cast<uint8_t *>(d_key + i / 2), 16);
-    if (ec != std::errc())
-    {
-      Logger::error("Failed to parse key from hex data");
-      return false;
-    }
-  }
+  d_hexkey = m[1].str();
 
   //std::cout << bepaald::bytesToHexString(d_key, d_keysize) << std::endl;
 

@@ -17,52 +17,21 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "sqlcipherdecryptor.ih"
-
 #if defined(_WIN32) || defined(__MINGW64__)
-#include "../base64/base64.h"
 
+#include "desktopdatabase.ih"
+
+#include "../base64/base64.h"
 #include <dpapi.h>
 #include <openssl/core_names.h>
-#endif
 
-bool SqlCipherDecryptor::getEncryptedKey()
+bool DesktopDatabase::getKeyFromEncrypted_win()
 {
-#if defined(_WIN32) || defined(__MINGW64__)
-
-
 
 
 
   // 1. get the encrypted key from config.json
-  std::fstream config(d_configpath + "/config.json", std::ios_base::in | std::ios_base::binary);
-  if (!config.is_open()) [[unlikely]]
-  {
-    Logger::error("Failed to open input: ", d_configpath, "/config.json");
-    return false;
-  }
-  std::string line;
-  std::regex keyregex("^\\s*\"encryptedKey\":\\s*\"([a-zA-Z0-9]+)\",?$");
-  std::smatch m;
-  bool found = false;
-  while (std::getline(config, line))
-  {
-    //std::cout << "Line: " << line << std::endl;
-    if (std::regex_match(line, m, keyregex))
-      if (m.size() == 2) // m[0] is full match, m[1] is first submatch (which we want)
-      {
-        found = true;
-        break;
-      }
-  }
-
-  if (!found)
-  {
-    Logger::error("Failed to read (encrypted) key from config.json");
-    return false;
-  }
-
-  std::string keystr = m[1].str();
+  std::string keystr = readEncryptedKey();
   unsigned long encryptedkey_data_length = keystr.size() / 2;
   std::unique_ptr<unsigned char []> encryptedkey_data(new unsigned char[encryptedkey_data_length]);
   bepaald::hexStringToBytes(keystr, encryptedkey_data.get(), encryptedkey_data_length);
@@ -74,14 +43,16 @@ bool SqlCipherDecryptor::getEncryptedKey()
 
   // 2. get the key to decrypt the encrypted key
   //*****  2a. get the base64 encoded encrypted key to decrypt the encrypted key ******//
-  std::fstream localstate(d_configpath + "/Local State", std::ios_base::in | std::ios_base::binary);
+  std::fstream localstate(d_configdir + "/Local State", std::ios_base::in | std::ios_base::binary);
   if (!localstate.is_open())
   {
-    Logger::error("Failed to open input: ", d_configpath, "/Local State");
+    Logger::error("Failed to open input: ", d_configdir, "/Local State");
     return false;
   }
-  keyregex = ".*\"encrypted_key\":\\s*\"([^\"]*)\".*";
-  found = false;
+  std::string line;
+  std::regex keyregex(".*\"encrypted_key\":\\s*\"([^\"]*)\".*");
+  std::smatch m;
+  bool found = false;
   while (std::getline(localstate, line))
   {
     //std::cout << "Line: " << line << std::endl;
@@ -181,10 +152,8 @@ bool SqlCipherDecryptor::getEncryptedKey()
   if (EVP_DecryptFinal_ex(ctx.get(), key_hexstr.get() + len, &len) > 0) [[likely]]
   {
     // the decrypted data is not the actual key, but the key as hex in ascii for some reason...
-    d_keysize = 32;
-    d_key = new unsigned char[d_keysize];
-    bepaald::hexStringToBytes(key_hexstr.get(), key_hexstr_length, d_key, d_keysize);
-    //std::cout << "KEY !! : " << bepaald::bytesToHexString(d_key, d_keysize) << std::endl;
+    d_hexkey = std::string(reinterpret_cast<char const *>(key_hexstr.get()), key_hexstr_length);
+    //std::cout << "KEY !! : " << d_hexkey << std::endl;
     return true;
   }
   else [[unlikely]]
@@ -192,8 +161,6 @@ bool SqlCipherDecryptor::getEncryptedKey()
     Logger::error("Failed to finalize decryption (possibly MAC failed)");
     return false;
   }
-
-#else // not windows
-  return false;
-#endif
 }
+
+#endif

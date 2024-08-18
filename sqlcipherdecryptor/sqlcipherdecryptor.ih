@@ -19,9 +19,6 @@
 
 #include "sqlcipherdecryptor.h"
 
-#include <regex>
-#include <fstream>
-#include <charconv>
 #include <cstring>
 
 #include <openssl/evp.h>
