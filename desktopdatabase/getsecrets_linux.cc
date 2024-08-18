@@ -23,7 +23,7 @@
 
 #include "desktopdatabase.ih"
 
-void DesktopDatabase::getSecrets_linux(std::set<std::string> *secrets) const
+void DesktopDatabase::getSecrets_linux(std::set<std::string> *secrets [[maybe_unused]]) const
 {
   Logger::error       ("Found encrypted sqlcipher key in config file. Decrypting this key");
   Logger::error_indent("is not yet supported on Linux. To obtain the decrypted key, please");
