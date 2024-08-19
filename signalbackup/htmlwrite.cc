@@ -1855,10 +1855,6 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       return;
     }
 
-    // write the attachment data
-    if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, overwrite, append))
-      continue;
-
     std::string content_type = attachment_results.valueAsString(a, d_part_ct);
     std::string original_filename;
     if (!attachment_results.isNull(a, "file_name") && !attachment_results(a, "file_name").empty())
@@ -1866,6 +1862,12 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       original_filename = attachment_results(a, "file_name");
       HTMLescapeString(&original_filename);
     }
+
+    std::string extension(MimeTypes::getExtension(content_type, "bin"));
+
+    // write the attachment data
+    if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, extension, overwrite, append))
+      continue;
 
     htmloutput << std::string(indent, ' ') << "<div class=\"attachment"
                << ((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) ?
@@ -1878,7 +1880,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" alt=\"Image attachment\" loading=\"lazy\">\n";
+                 << "_" << uniqueid << "." << extension << "\" alt=\"Image attachment\" loading=\"lazy\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
@@ -1891,9 +1893,9 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <" << content_type.substr(0, 5) << " controls>\n";
       htmloutput << std::string(indent, ' ') << "      <source src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">\n";
+                 << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">\n";
       htmloutput << std::string(indent, ' ') << "      Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>\n";
+                 << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
       htmloutput << std::string(indent, ' ') << "    </" << content_type.substr(0, 5) << ">\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
@@ -1904,21 +1906,21 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     {
       if (original_filename.empty())
         htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                   << "_" << uniqueid << ".bin\">&#129055;</a></span>\n";
+                   << "_" << uniqueid << "." << extension << "\">&#129055;</a></span>\n";
       else
         htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "' <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
           //<< "_" << uniqueid << ".bin\" download=\"" << original_filename << "\">&#129055;</a></span>\n"; // does not work
-                   << "_" << uniqueid << ".bin\">&#129055;</a></span>\n";
+                   << "_" << uniqueid << "." << extension << "\">&#129055;</a></span>\n";
     }
     else // other
     {
       if (original_filename.empty())
         htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>\n";
+                   << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
       else
         htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "'<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
           //<< "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n"; // does not work
-                   << "_" << uniqueid << ".bin\" type=\"" << content_type << "\">&#129055;</a></span>\n";
+                   << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
     }
 
     htmloutput << std::string(indent, ' ') << "</div>\n";
@@ -1947,10 +1949,11 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
 
     long long int rowid = sc.valueAsInt(0, "avatar_rowid", -1);
     long long int uniqueid = sc.valueAsInt(0, "avatar_uniqueid", -1);
+    std::string extension("bin");
     if (rowid >= 0 && uniqueid >= 0)
     {
       // write the attachment data
-      HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, overwrite, append);
+      HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, extension, overwrite, append);
     }
 
     // prefer phone number
@@ -2006,11 +2009,10 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
     htmloutput << std::string(indent, ' ') << "<div class=\"shared-contact\">\n";
     if (rowid > -1 && uniqueid > -1)
     {
-      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << ".bin" << "');\">"
-                 << '\n';
+      htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << "." << extension << "');\">\n";
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
-      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << ".bin\" alt=\"Shared avatar\" loading=\"lazy\">\n";
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << "." << extension << "\" alt=\"Shared avatar\" loading=\"lazy\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       htmloutput << std::string(indent, ' ') << "  </div>\n";
     }

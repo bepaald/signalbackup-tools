@@ -34,7 +34,6 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
   if (!prepareOutputDirectory(dir, overwrite))
     return false;
 
-  MimeTypes mimetypes;
   std::pair<std::vector<int>, std::vector<std::string>> conversations; // links thread_id to thread title, if the
                                                                        // folder already exists, but from another _id,
                                                                        // it is a different thread with the same name
@@ -137,7 +136,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
   for (auto const &aframe : d_attachments)
 #endif
   {
-    Logger::message_overwrite("Saving attachments... ", count); //, "/", results.rows());
+    Logger::message_overwrite("Saving attachments... ", count, "/", d_attachments.size());
 
     AttachmentFrame *a = aframe.second.get();
 
@@ -198,7 +197,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
 
       // get file ext
       std::string mime = results.valueAsString(0, d_part_ct);
-      std::string ext = std::string(mimetypes.getExtension(mime));
+      std::string ext = std::string(MimeTypes::getExtension(mime));
       if (ext.empty())
       {
         ext = "attach";

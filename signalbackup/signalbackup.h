@@ -360,8 +360,9 @@ class SignalBackup
   void dtSetColumnNames(SqliteDB *ddb);
   long long int scanSelf() const;
   bool cleanAttachments();
-  AttachmentMetadata getAttachmentMetaData(std::string const &filename) const;
-  AttachmentMetadata getAttachmentMetaData(std::string const &filename, unsigned char *data, long long int data_size) const;
+  AttachmentMetadata getAttachmentMetaData(std::string const &filename, bool skiphash = false) const;
+  AttachmentMetadata getAttachmentMetaData(std::string const &filename, unsigned char *data,
+                                           long long int data_size, bool skiphash = false) const;
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
@@ -411,7 +412,7 @@ class SignalBackup
                                  std::string const &directory, std::string const &threaddir,
                                  bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
-                           long long int uniqueid, bool overwrite, bool append) const;
+                           long long int uniqueid, std::string const &ext, bool overwrite, bool append) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
@@ -982,6 +983,7 @@ inline std::string SignalBackup::utf8BytesToHexString(std::string const &data) c
   return utf8BytesToHexString(reinterpret_cast<unsigned char const *>(data.data()), data.size());
 }
 
+// the const here is supposed to be temporary (2024-19-08)
 inline void SignalBackup::warnOnce(std::string const &warning, bool error)
 {
   if (!bepaald::contains(d_warningsgiven, warning))

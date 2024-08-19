@@ -25,7 +25,7 @@
 
 #include "../base64/base64.h"
 
-SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size) const
+SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size, bool skiphash) const
 {
   //struct AttachmentMetadata
   //{
@@ -48,22 +48,24 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
 
 
 
-  // gethash
   std::string hash;
-  unsigned char rawhash[SHA256_DIGEST_LENGTH];
-  std::unique_ptr<EVP_MD_CTX, decltype(&::EVP_MD_CTX_free)> sha256(EVP_MD_CTX_new(), &::EVP_MD_CTX_free);
-  if (!sha256 ||
-      EVP_DigestInit_ex(sha256.get(), EVP_sha256(), nullptr) != 1 ||
-      EVP_DigestUpdate(sha256.get(), data, data_size) != 1 ||
-      EVP_DigestFinal_ex(sha256.get(), rawhash, nullptr) != 1) [[unlikely]]
+  if (!skiphash)
   {
-    Logger::warning("Failed to set hash");
-    hash = std::string();
+    // gethash
+    unsigned char rawhash[SHA256_DIGEST_LENGTH];
+    std::unique_ptr<EVP_MD_CTX, decltype(&::EVP_MD_CTX_free)> sha256(EVP_MD_CTX_new(), &::EVP_MD_CTX_free);
+    if (!sha256 ||
+        EVP_DigestInit_ex(sha256.get(), EVP_sha256(), nullptr) != 1 ||
+        EVP_DigestUpdate(sha256.get(), data, data_size) != 1 ||
+        EVP_DigestFinal_ex(sha256.get(), rawhash, nullptr) != 1) [[unlikely]]
+    {
+      Logger::warning("Failed to set hash");
+      hash = std::string();
+    }
+    hash = Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
+    //std::cout << bepaald::bytesToHexString(rawhash, SHA256_DIGEST_LENGTH) << std::endl;
+    //std::cout << "GOT HASH: " << hash << std::endl;
   }
-  hash = Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
-  //std::cout << bepaald::bytesToHexString(rawhash, SHA256_DIGEST_LENGTH) << std::endl;
-  //std::cout << "GOT HASH: " << hash << std::endl;
-
 
   // set buffer for file header
   int bufsize = std::min(data_size, 30ll);
@@ -268,7 +270,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
 }
 
-SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file) const
+SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file, bool skiphash) const
 {
 
   //struct AttachmentMetadata
@@ -307,5 +309,5 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
     return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
   }
 
-  return getAttachmentMetaData(file, file_data.get(), file_size);
+  return getAttachmentMetaData(file, file_data.get(), file_size, skiphash);
 }
