@@ -93,7 +93,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
   if (bodyrangelist.size())
   {
     std::pair<unsigned char *, size_t> bodyrangesdata(bodyrangelist.data(), bodyrangelist.size());
-    if (!d_database.exec("UPDATE " + d_mms_table + " SET message_ranges = ? WHERE rowid = ?", {bodyrangesdata, message_id}) ||
+    if (!d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_ranges + " = ? WHERE rowid = ?", {bodyrangesdata, message_id}) ||
         d_database.changed() != 1)
     {
       Logger::error("Failed to set body ranges for message. Body data: '" + bodyjson + "'");

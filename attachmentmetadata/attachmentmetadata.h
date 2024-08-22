@@ -17,9 +17,27 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef ATTACHMENTMETADATA_H_
+#define ATTACHMENTMETADATA_H_
 
-#define VERSIONDATE "20240822.211310"
+#include <string>
+
+struct AttachmentMetadata
+{
+  int width;
+  int height;
+  std::string filetype;
+  long long int filesize;
+  std::string hash;
+  std::string filename;
+  operator bool() const
+  {
+    return (width != -1 && height != -1 && !filetype.empty() && filesize != 0);
+  }
+
+  static AttachmentMetadata getAttachmentMetaData(std::string const &filename, bool skiphash = false);
+  static AttachmentMetadata getAttachmentMetaData(std::string const &filename, unsigned char *data,
+                                                  long long int data_size, bool skiphash = false);
+};
 
 #endif

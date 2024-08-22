@@ -32,7 +32,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                        "json_extract(link_previews, '$[0].description') AS link_preview_description, " +
                        (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, ") +
                        (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
-                       "shared_contacts, quote_id, expires_in, message_ranges, quote_mentions"
+                       "shared_contacts, quote_id, expires_in, " + d_mms_ranges + ", quote_mentions"
                        " FROM message WHERE _id = ?", msg_id, &revision) ||
       revision.rows() != 1)
     return;
@@ -103,8 +103,8 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                           mention_results.getValueAs<long long int>(mi, "range_start"),
                                           mention_results.getValueAs<long long int>(mi, "range_length")));
   std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
-  if (!revision.isNull(0, "message_ranges"))
-    brdata = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_ranges");
+  if (!revision.isNull(0, d_mms_ranges))
+    brdata = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, d_mms_ranges);
 
   bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, false /*isquote*/);
 

@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../attachmentmetadata/attachmentmetadata.h"
+
 bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids,
                                      std::string const &before, std::string const &after,
                                      long long int filesize, std::vector<std::string> const &mimetypes,
@@ -139,7 +141,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
         {
           // update message ranges if present:
           std::pair<std::shared_ptr<unsigned char []>, size_t> brdata =
-            d_database.getSingleResultAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>("SELECT message_ranges FROM " + d_mms_table + " WHERE LENGTH(message_ranges) != 0 AND _id = ?",
+            d_database.getSingleResultAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>("SELECT " + d_mms_ranges + " FROM " + d_mms_table + " WHERE LENGTH(" + d_mms_ranges + ") != 0 AND _id = ?",
                                                                                                res.getValueAs<long long int>(i, d_part_mid), {nullptr, 0});
           if (brdata.second)
           {
@@ -162,7 +164,8 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
               new_bodyrange_vec.addField<1>(new_bodyrange);
             }
 
-            if (!d_database.exec("UPDATE " + d_mms_table + " SET message_ranges = ? WHERE _id = ?", {std::make_pair(new_bodyrange_vec.data(), static_cast<size_t>(new_bodyrange_vec.size())), res.getValueAs<long long int>(i, d_part_mid)}))
+            if (!d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_ranges + " = ? WHERE _id = ?",
+                                 {std::make_pair(new_bodyrange_vec.data(), static_cast<size_t>(new_bodyrange_vec.size())), res.getValueAs<long long int>(i, d_part_mid)}))
               return false;
           }
 
@@ -171,9 +174,11 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
           if (d_verbose) [[unlikely]]
             Logger::message("Updated ", d_database.changed(), " mention to adjust for prependbody");
 
-          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')", {prepend + "\n\n", res.getValueAs<long long int>(i, d_part_mid)}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? || body WHERE _id = ? AND (body IS NOT NULL AND body != '')",
+                               {prepend + "\n\n", res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
-          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')", {prepend, res.getValueAs<long long int>(i, d_part_mid)}))
+          if (!d_database.exec("UPDATE " + d_mms_table + " SET body = ? WHERE _id = ? AND (body IS NULL OR body == '')",
+                               {prepend, res.getValueAs<long long int>(i, d_part_mid)}))
             return false;
         }
       }
@@ -250,7 +255,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
           continue;
         }
 
-        AttachmentMetadata amd = getAttachmentMetaData(replace[j].second);
+        AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(replace[j].second);
         if (!amd)
         {
           Logger::message("Failed to get metadata on new attachment: \"", replace[j].second, "\", skipping...");

@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../attachmentmetadata/attachmentmetadata.h"
+
 bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
                                    long long int r, long long int new_msg_id)
 {
@@ -36,7 +38,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
 
     //std::cout << "Attachment: " << datapath << a << std::endl;
 
-    AttachmentMetadata amd = getAttachmentMetaData(datapath + a);
+    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(datapath + a);
     if (amd.filename.empty() || amd.filesize == 0)
     {
       Logger::warning("Failed to get attachment data. Skipping.");

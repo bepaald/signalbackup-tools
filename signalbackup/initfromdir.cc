@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../attachmentmetadata/attachmentmetadata.h"
+
 void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments)
 {
 
@@ -172,7 +174,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
     if (replaced_attachement)
     {
-      AttachmentMetadata amd = getAttachmentMetaData(attbin.string());
+      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(attbin.string());
 
       if (!amd) // undo the replacement
       {

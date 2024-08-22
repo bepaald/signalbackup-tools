@@ -19,11 +19,14 @@
 
 #include "signalbackup.ih"
 
+#include "../attachmentmetadata/attachmentmetadata.h"
+
 bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,
                                      long long int rowid, SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
                                      bool isquote, bool issticker)
 {
   bool quoted_linkpreview = false;
+  bool quoted_sticker = false;
   if (numattachments == -1 && isquote) // quote attachments, number not known yet
   {
     SqliteDB::QueryResults res;
@@ -43,6 +46,16 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
         quoted_linkpreview = true;
         numattachments = 1;
         //std::cout << "GOT QUOTED LINK PREVIEW" << std::endl;
+      }
+    }
+
+    if (numattachments == 0)
+    {
+      if (ddb.exec("SELECT json_extract(json, '$.sticker.data.path') IS NOT NULL AS quoteissticker FROM messages " + where, &res) &&
+          res.rows() == 1 && res.getValueAs<long long int>(0, "quoteissticker") != 0)
+      {
+        quoted_sticker = true;
+        numattachments = 1;
       }
     }
   }
@@ -80,7 +93,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
                " FROM messages WHERE rowid = ?",
                rowid, &linkpreview_results);
     }
-    if (issticker)
+    if (issticker || quoted_sticker)
       jsonpath = "$.sticker.data";
 
     if (quoted_linkpreview)
@@ -239,7 +252,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
     }
 
 
-    // get attachment metadata !! NOTE RAW POINTER
+    // get attachment metadata
     AttachmentMetadata amd;
     if (version >= 2) [[likely]]
     {
@@ -248,7 +261,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       std::unique_ptr<unsigned char[]> att_data;
       if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
 #else
-      unsigned char *att_data = nullptr;
+      unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
       if (dar.getAttachmentData(&att_data, d_verbose) != 0)
 #endif
       {
@@ -257,15 +270,15 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       }
 
 #if __cpp_lib_out_ptr >= 202106L
-      amd = getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
+      amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
 #else
-      amd = getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
+      amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
       if (att_data)
         delete[] att_data;
 #endif
     }
     else
-      amd = getAttachmentMetaData(fullpath);                        // get from file
+      amd = AttachmentMetadata::getAttachmentMetaData(fullpath);                        // get from file
 
     if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.valueAsInt(0, "size", 0) != 0))
     {
@@ -311,7 +324,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
     long long int new_part_id = std::any_cast<long long int>(retval);
     //std::cout << "Inserted part, new id: " << new_part_id << std::endl;
 
-    if (issticker)
+    if (issticker || quoted_sticker)
     {
       // get the data from $.sticker (instead of $.sticker.data)
       SqliteDB::QueryResults stickerdata;

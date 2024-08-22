@@ -268,7 +268,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
                     + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
-                    "IFNULL(view_once, 0) AS view_once, expires_in, message_ranges, shared_contacts, "
+                    "IFNULL(view_once, 0) AS view_once, expires_in, " + d_mms_ranges + ", shared_contacts, "
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : "") +
@@ -480,8 +480,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                                 mention_results.getValueAs<long long int>(mi, "range_start"),
                                                 mention_results.getValueAs<long long int>(mi, "range_length")));
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
-        if (!messages.isNull(messagecount, "message_ranges"))
-          brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_ranges");
+        if (!messages.isNull(messagecount, d_mms_ranges))
+          brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
 
         bool only_emoji = HTMLprepMsgBody(&body, mentions, &recipient_info, incoming, brdata, false /*isquote*/);
 

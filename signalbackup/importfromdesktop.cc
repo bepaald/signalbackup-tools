@@ -1564,10 +1564,10 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
               bodyrangelist.addField<1>(bodyrange);
             }
           }
-          if (bodyrangelist.size())
+          if (bodyrangelist.size() && d_database.tableContainsColumn(d_mms_table, d_mms_ranges))
           {
             std::pair<unsigned char *, size_t> bodyrangesdata(bodyrangelist.data(), bodyrangelist.size());
-            d_database.exec("UPDATE " + d_mms_table + " SET message_ranges = ? WHERE rowid = ?", {bodyrangesdata, new_mms_id});
+            d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_ranges + " = ? WHERE rowid = ?", {bodyrangesdata, new_mms_id});
           }
         }
 

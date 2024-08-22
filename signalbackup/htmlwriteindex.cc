@@ -121,8 +121,8 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
                          + d_mms_table + "." + d_mms_type + " AS snippet_type, "
                          "thread.expires_in, "
                          "IFNULL(" + d_mms_table + "." + d_mms_date_sent + ", 0) AS date, "
-                         "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', " +
-                         "message_ranges AS 'snippet_ranges', "
+                         "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', "
+                         + d_mms_ranges + " AS 'snippet_ranges', "
                          + (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ")
                          + (d_database.tableContainsColumn("thread", "pinned") ? "thread.pinned, " : "") +
                          + (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +

@@ -21,10 +21,11 @@
 
 bool SignalBackup::migrateDatabase(int from, int to) const
 {
+  // NOTE: This function does not perform a full migrate to a (necessarily) working
+  // backup file. Its only just enough for this programs exportHTML() function.
+
   // interpreted from
   // https://github.com/signalapp/Signal-Android/blob/main/app/src/main/java/org/thoughtcrime/securesms/database/helpers/migration/V168_SingleMessageTableMigration.kt
-  //
-  // NOTE this function does not perform a full migrate to a (necessarily) working backup file. Its just enough for this programs exportHTML() function.
 
   Logger::message("Attempting to migrate database from version ", from, " to version ", to, "...");
 
@@ -346,7 +347,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                         std::pair<std::string, std::string>{"quote_type", "INTEGER DEFAULT 0"},
                         std::pair<std::string, std::string>{"link_previews", "TEXT DEFAULT NULL"},
                         std::pair<std::string, std::string>{"view_once", "INTEGER DEFAULT 0"},
-                        std::pair<std::string, std::string>{"message_ranges", "BLOB DEFAULT NULL"},
+                        std::pair<std::string, std::string>{d_mms_ranges, "BLOB DEFAULT NULL"},
                         std::pair<std::string, std::string>{"story_type", "INTEGER DEFAULT 0"},
                         std::pair<std::string, std::string>{"parent_story_id", "INTEGER DEFAULT 0"},
                         std::pair<std::string, std::string>{"export_state", "BLOB DEFAULT NULL"},
@@ -470,7 +471,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                          "mentions_self, "
                          "notified_timestamp, "
                          "server_guid, "
-                         "message_ranges, "
+                         + d_mms_ranges + ", "
                          "story_type, "
                          "parent_story_id, "
                          "export_state, "

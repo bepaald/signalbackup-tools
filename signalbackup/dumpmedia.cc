@@ -303,16 +303,15 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       Logger::error("Failed to open file for writing: '", targetdir, "/", filename, "'");
       continue;
     }
-    else
+
+    ++count;
+    if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
     {
-      ++count;
-      if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
-      {
-        Logger::error("Failed to write data to file: '", targetdir, "/", filename, "'");
-        a->clearData();
-        continue;
-      }
+      Logger::error("Failed to write data to file: '", targetdir, "/", filename, "'");
+      a->clearData();
+      continue;
     }
+
     attachmentstream.close(); // need to close, or the auto-close will change files mtime again.
     a->clearData();
 

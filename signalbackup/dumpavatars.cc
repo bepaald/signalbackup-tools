@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../attachmentmetadata/attachmentmetadata.h"
+
 bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const
 {
   Logger::message_overwrite("Dumping avatars to dir '", dir, "'...");
@@ -81,7 +83,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
     std::string extension;
     unsigned char *avatardata = af->attachmentData();
     uint64_t avatarsize = af->attachmentSize();
-    AttachmentMetadata amd = getAttachmentMetaData(std::string(), avatardata, avatarsize, true/*skiphash*/);
+    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), avatardata, avatarsize, true/*skiphash*/);
     extension = "." + std::string(MimeTypes::getExtension(amd.filetype, "jpg"));
     std::string filename = sanitizeFilename(name + extension);
     if (filename.empty() || filename == extension) // filename was not set in database or was not impossible
@@ -97,15 +99,17 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
     if (!attachmentstream.is_open())
     {
       Logger::error("Failed to open file for writing: ", dir, "/", filename);
+      af->clearData();
       continue;
     }
-    else
-      if (!attachmentstream.write(reinterpret_cast<char *>(af->attachmentData()), af->attachmentSize()))
-      {
-        Logger::error("Failed to write data to file: ", dir, "/", filename);
-        af->clearData();
-        continue;
-      }
+
+    if (!attachmentstream.write(reinterpret_cast<char *>(af->attachmentData()), af->attachmentSize()))
+    {
+      Logger::error("Failed to write data to file: ", dir, "/", filename);
+      af->clearData();
+      continue;
+    }
+
     attachmentstream.close(); // need to close, or the auto-close will change files mtime again.
     af->clearData();
   }

@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../attachmentmetadata/attachmentmetadata.h"
+
 bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
                                long long int rid, std::string const &databasedir)
 {
@@ -52,15 +54,15 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const 
       return false;
     }
 #if __cpp_lib_out_ptr >= 202106L
-    amd = getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
+    amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
 #else
-    amd = getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
+    amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
     if (att_data)
       delete[] att_data;
 #endif
   }
   else
-    amd = getAttachmentMetaData(fullpath);                        // get from file
+    amd = AttachmentMetadata::getAttachmentMetaData(fullpath);                        // get from file
 
 
   if (!amd)

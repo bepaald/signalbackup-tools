@@ -17,15 +17,13 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.ih"
+#include "attachmentmetadata.h"
 
-#ifndef USE_CRYPTOPP
 #include <openssl/sha.h>
-#endif
 
 #include "../base64/base64.h"
 
-SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size, bool skiphash) const
+AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size, bool skiphash) // static
 {
   //struct AttachmentMetadata
   //{
@@ -270,7 +268,7 @@ SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string
   return AttachmentMetadata{-1, -1, std::string(), data_size, hash, file};
 }
 
-SignalBackup::AttachmentMetadata SignalBackup::getAttachmentMetaData(std::string const &file, bool skiphash) const
+AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &file, bool skiphash) //static
 {
 
   //struct AttachmentMetadata

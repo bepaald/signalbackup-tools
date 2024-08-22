@@ -16,7 +16,7 @@ else
 fi
 
 CXX="${CXX:-g++}"
-CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3 -flto}"
+CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto}"
 CXXARCH="${CXXARCH:--march=native}"
 CXXSTD="${CXXSTD:--std=c++2a}"
 CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
@@ -26,7 +26,6 @@ BIN="${BIN:-signalbackup-tools}"
 
 # CONFIG: brew
 if [ "$CONFIG" = "brew" ] ; then
-  CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto"
   LDFLAGS="-Wall -Wextra -O3 -flto=auto"
 fi
 
@@ -37,14 +36,14 @@ fi
 
 # CONFIG: nixpkgs-darwin
 if [ "$CONFIG" = "nixpkgs-darwin" ] ; then
-  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -O3"
+  CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3"
   LDFLAGS="-Wall -Wextra -Wl,-framework,Security -Wl,-framework,CoreFoundation -O3"
 fi
 
 # CONFIG: windows
 if [ "$CONFIG" = "windows" ] ; then
   CXX="x86_64-w64-mingw32-g++"
-  CXXFLAGS="-Wall -Wextra -Wshadow -Wold-style-cast -Woverloaded-virtual -pedantic -D_WIN32_WINNT=0x600 -I/usr/x86_64-w64-mingw32/include/ -O3 -flto"
+  CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -D_WIN32_WINNT=0x600 -I/usr/x86_64-w64-mingw32/include/ -O3 -flto"
   CXXARCH=""
   LDFLAGS="-Wall -Wextra -Wl,--as-needed -static-libgcc -static-libstdc++ -static -L/usr/x86_64-w64-mingw32/lib/ -O3 -s -flto=auto"
   LDLIBS="-lcrypto -lsqlite3 -lssp -luser32 -lcrypt32 -ladvapi32 -lgdi32 -lws2_32"
@@ -82,7 +81,6 @@ SRC=("keyvalueframe/statics.cc"
      "signalbackup/listrecipients.cc"
      "signalbackup/importwachat.cc"
      "signalbackup/dumpmedia.cc"
-     "signalbackup/getattachmentmetadata.cc"
      "signalbackup/makeidsunique.cc"
      "signalbackup/dtimportstickerpacks.cc"
      "signalbackup/getallthreadrecipients.cc"
@@ -218,6 +216,7 @@ SRC=("keyvalueframe/statics.cc"
      "desktopdatabase/getsecrets_linux.cc"
      "reactionlist/setauthor.cc"
      "jsondatabase/jsondatabase.cc"
+     "attachmentmetadata/getattachmentmetadata.cc"
      "fileencryptor/init.cc"
      "fileencryptor/encryptframe.cc"
      "fileencryptor/fileencryptor.cc"
@@ -263,7 +262,6 @@ OBJ=("keyvalueframe/o/statics.o"
      "signalbackup/o/listrecipients.o"
      "signalbackup/o/importwachat.o"
      "signalbackup/o/dumpmedia.o"
-     "signalbackup/o/getattachmentmetadata.o"
      "signalbackup/o/makeidsunique.o"
      "signalbackup/o/dtimportstickerpacks.o"
      "signalbackup/o/getallthreadrecipients.o"
@@ -399,6 +397,7 @@ OBJ=("keyvalueframe/o/statics.o"
      "desktopdatabase/o/getsecrets_linux.o"
      "reactionlist/o/setauthor.o"
      "jsondatabase/o/jsondatabase.o"
+     "attachmentmetadata/o/getattachmentmetadata.o"
      "fileencryptor/o/init.o"
      "fileencryptor/o/encryptframe.o"
      "fileencryptor/o/fileencryptor.o"

@@ -36,6 +36,7 @@
 #include "../logger/logger.h"
 #include "../deepcopyinguniqueptr/deepcopyinguniqueptr.h"
 #include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
+#include "../attachmentmetadata/attachmentmetadata.h"
 
 #include <map>
 #include <set>
@@ -76,6 +77,7 @@ class SignalBackup
   std::string d_sms_recipient_id;
   std::string d_sms_recipient_device_id;
   std::string d_mms_date_sent;
+  std::string d_mms_ranges;
   std::string d_mms_recipient_id;
   std::string d_mms_recipient_device_id;
   std::string d_mms_type;
@@ -164,17 +166,6 @@ class SignalBackup
     std::string column;
     std::vector<TableConnection> const connections;
     int flags;
-  };
-
-  struct AttachmentMetadata
-  {
-    int width;
-    int height;
-    std::string filetype;
-    long long int filesize;
-    std::string hash;
-    std::string filename;
-    operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   };
 
   struct RecipientInfo
@@ -360,9 +351,6 @@ class SignalBackup
   void dtSetColumnNames(SqliteDB *ddb);
   long long int scanSelf() const;
   bool cleanAttachments();
-  AttachmentMetadata getAttachmentMetaData(std::string const &filename, bool skiphash = false) const;
-  AttachmentMetadata getAttachmentMetaData(std::string const &filename, unsigned char *data,
-                                           long long int data_size, bool skiphash = false) const;
   inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
