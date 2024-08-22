@@ -21,6 +21,7 @@
 #define AVATARFRAME_H_
 
 #include <cstring>
+#include <optional>
 
 #include "../framewithattachment/framewithattachment.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
