@@ -33,10 +33,9 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     AvatarFrame *a = pos->second.get();
     ScopeGuard clear_avatar_data([&](){a->clearData();});
     std::optional<std::string> mimetype = a->mimetype();
-    unsigned char *avatardata = nullptr;
+    unsigned char *avatardata [[maybe_unused]] = nullptr;
     if (!mimetype)
-      // get the data, so the mimetype gets set.
-      avatardata = a->attachmentData();
+      avatardata = a->attachmentData();  // get the data, so the mimetype gets set.
 
     std::string ext("bin");
     mimetype = a->mimetype();

@@ -20,6 +20,8 @@
 #ifndef STICKERFRAME_H_
 #define STICKERFRAME_H_
 
+#include <optional>
+
 #include "../framewithattachment/framewithattachment.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
