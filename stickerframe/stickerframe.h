@@ -21,6 +21,7 @@
 #define STICKERFRAME_H_
 
 #include "../framewithattachment/framewithattachment.h"
+#include "../attachmentmetadata/attachmentmetadata.h"
 
 class StickerFrame : public FrameWithAttachment
 {
@@ -32,6 +33,7 @@ class StickerFrame : public FrameWithAttachment
   };
 
   static Registrar s_registrar;
+  std::optional<std::string> d_mimetype;
  public:
   inline explicit StickerFrame(uint64_t count = 0);
   inline StickerFrame(unsigned char *data, size_t length, uint64_t count = 0);
@@ -53,6 +55,8 @@ class StickerFrame : public FrameWithAttachment
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string const &str) const;
+  inline std::optional<std::string> mimetype() const;
+  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
  private:
   inline uint64_t dataSize() const override;
 };
@@ -234,6 +238,23 @@ inline unsigned int StickerFrame::getField(std::string const &str) const
   if (str == "LENGTH")
     return FIELD::LENGTH;
   return FIELD::INVALID;
+}
+
+inline std::optional<std::string> StickerFrame::mimetype() const
+{
+  return d_mimetype;
+}
+
+inline unsigned char *StickerFrame::attachmentData(bool *badmac, bool verbose)
+{
+  unsigned char *data = FrameWithAttachment::attachmentData(badmac, verbose);
+  if (data && !d_mimetype) // try to get mimetype
+  {
+    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), data, d_attachmentdata_size, true/*skiphash*/);
+    if (!amd.filetype.empty())
+      d_mimetype = amd.filetype;
+  }
+  return data;
 }
 
 #endif

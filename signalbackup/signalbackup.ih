@@ -27,6 +27,7 @@
 #include <regex>
 #include <set>
 #include <iterator>
+#include <optional>
 
 #include "../androidattachmentreader/androidattachmentreader.h"
 #include "../rawfileattachmentreader/rawfileattachmentreader.h"

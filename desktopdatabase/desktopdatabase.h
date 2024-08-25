@@ -40,11 +40,12 @@ class DesktopDatabase
   bool d_ignorewal;
   long long int d_cipherversion;
   bool d_truncate;
+  bool d_showkey;
  public:
   inline DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal,
-                         long long int cipherversion, bool truncate);
+                         long long int cipherversion, bool truncate, bool showkey);
   inline DesktopDatabase(std::string const &configdir, std::string const &databasedir, std::string const &hexkey,
-                         bool verbose, bool ignorewal, long long int cipherversion, bool truncate);
+                         bool verbose, bool ignorewal, long long int cipherversion, bool truncate, bool showkey);
   DesktopDatabase(DesktopDatabase const &other) = delete;
   DesktopDatabase(DesktopDatabase &&other) = delete;
   DesktopDatabase &operator=(DesktopDatabase const &other) = delete;
@@ -78,14 +79,14 @@ class DesktopDatabase
 };
 
 inline DesktopDatabase::DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal,
-                                        long long int cipherversion, bool truncate)
+                                        long long int cipherversion, bool truncate, bool showkey)
   :
-  DesktopDatabase(std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate)
+  DesktopDatabase(std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate, showkey)
 {}
 
 inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir,
                                         std::string const &hexkey, bool verbose, bool ignorewal,
-                                        long long int cipherversion, bool truncate)
+                                        long long int cipherversion, bool truncate, bool showkey)
   :
   d_configdir(configdir),
   d_databasedir(databasedir),
@@ -94,7 +95,8 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   d_verbose(verbose),
   d_ignorewal(ignorewal),
   d_cipherversion(cipherversion),
-  d_truncate(truncate)
+  d_truncate(truncate),
+  d_showkey(showkey)
 {
   d_ok = init();
 }

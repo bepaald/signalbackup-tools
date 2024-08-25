@@ -17,9 +17,25 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef SCOPEGUARD_H_
+#define SCOPEGUARD_H_
 
-#define VERSIONDATE "20240825.093154"
+// a _very_ simple (limited) scope guard
+
+template <typename F>
+class ScopeGuard
+{
+  F d_function;
+ public:
+  ScopeGuard(F &&fn)
+    :
+    d_function(std::forward<F>(fn))
+  {};
+
+  ~ScopeGuard()
+  {
+    d_function();
+  };
+};
 
 #endif

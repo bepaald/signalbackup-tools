@@ -277,22 +277,23 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
       std::string avatarpath;
+      std::string avatar_extension = getAvatarExtension(rec_id);
       long long int thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", rec_id, -1);
       if (thread_id != -1)
       {
         std::string thread_dir = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + bepaald::toString(thread_id) + ")");
-        if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + ".bin"))
+        if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension))
           avatarpath = std::move(thread_dir);
       }
 
       if (avatarpath.empty()) // avatar not already present anywhere, write out own...
       {
-        if (!bepaald::fileOrDirExists(dir + "/" + "/media/Avatar_" + bepaald::toString(rec_id) + ".bin")) // maybe htmlroot/media/avatar was already
-        if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                     // written by writefullcontacts...
-        {
-          Logger::warning("Failed to set path or write avatar. Skipping");
-          continue;
-        }
+        if (!bepaald::fileOrDirExists(dir + "/" + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension)) // maybe htmlroot/media/avatar was already
+          if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                                     // written by writefullcontacts...
+          {
+            Logger::warning("Failed to set path or write avatar. Skipping");
+            continue;
+          }
       }
       else
         avatarpath += "/";
@@ -301,12 +302,12 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
       HTMLescapeUrl(&avatarpath);
 
       outputfile
-        << "      .avatar-" << rec_id << " {" << '\n'
-        << "        background-image: url(\"" << avatarpath << "media/Avatar_" << rec_id << ".bin\");" << '\n'
-        << "        background-position: center;" << '\n'
-        << "        background-repeat: no-repeat;" << '\n'
-        << "        background-size: cover;" << '\n'
-        << "      }" << '\n'
+        << "      .avatar-" << rec_id << " {\n"
+        << "        background-image: url(\"" << avatarpath << "media/Avatar_" << rec_id << "." << avatar_extension << "\");\n"
+        << "        background-position: center;\n"
+        << "        background-repeat: no-repeat;\n"
+        << "        background-size: cover;\n"
+        << "      }\n"
         << '\n';
     }
     else
@@ -314,82 +315,82 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
       if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM groups WHERE group_id = (SELECT IFNULL(group_id, 0) FROM recipient WHERE _id = ?)", rec_id, -1) == 0)   // no avatar, no group
       {
         outputfile
-          << "      .avatar-" << rec_id << " {" << '\n'
-          << "        background: #" << getRecipientInfoFromMap(recipient_info, rec_id).color << ";" << '\n'
-          << "      }" << '\n'
+          << "      .avatar-" << rec_id << " {\n"
+          << "        background: #" << getRecipientInfoFromMap(recipient_info, rec_id).color << ";\n"
+          << "      }\n"
           << '\n';
       }
     }
   }
 
   outputfile
-    << "      .name-and-snippet {" << '\n'
-    << "        position: relative;" << '\n'
-    << "        display: flex;" << '\n'
-    << "        flex-direction: column;" << '\n'
-    << "        padding-left: 30px;" << '\n'
-    << "        justify-content: center;" << '\n'
-    << "        align-content: center;" << '\n'
-    << "        width: 350px;" << '\n'
-    << "        font-weight: bold;" << '\n'
-    << "        font-size: 18px;" << '\n'
-    << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << '\n'
-    << "        margin: 0px;" << '\n'
-    << "      }" << '\n'
+    << "      .name-and-snippet {\n"
+    << "        position: relative;\n"
+    << "        display: flex;\n"
+    << "        flex-direction: column;\n"
+    << "        padding-left: 30px;\n"
+    << "        justify-content: center;\n"
+    << "        align-content: center;\n"
+    << "        width: 350px;\n"
+    << "        font-weight: bold;\n"
+    << "        font-size: 18px;\n"
+    << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
+    << "        margin: 0px;\n"
+    << "      }\n"
     << '\n'
-    << "      .name-and-snippet pre {" << '\n'
-    << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;" << '\n'
-    << "      }" << '\n'
+    << "      .name-and-snippet pre {\n"
+    << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
+    << "      }\n"
     << '\n';
 
   outputfile
-    << "      @media print {" << '\n'
-    << "        .conversation-list-header {" << '\n'
-    << "          padding: 0;" << '\n'
-    << "        }" << '\n'
+    << "      @media print {\n"
+    << "        .conversation-list-header {\n"
+    << "          padding: 0;\n"
+    << "        }\n"
     << '\n'
-    << "        .conversation-list-item {" << '\n'
-    << "          break-inside: avoid;" << '\n'
-    << "        }" << '\n'
+    << "        .conversation-list-item {\n"
+    << "          break-inside: avoid;\n"
+    << "        }\n"
     << '\n'
-    << "        .conversation-list {" << '\n'
-    << "          margin: 0 auto;" << '\n'
-    << "          display: block;" << '\n'
-    << "          border-radius: 0;" << '\n'
-    << "        }" << '\n'
+    << "        .conversation-list {\n"
+    << "          margin: 0 auto;\n"
+    << "          display: block;\n"
+    << "          border-radius: 0;\n"
+    << "        }\n"
     << '\n'
-    << "        .avatar {" << '\n'
-    << "          -webkit-print-color-adjust: exact;" << '\n'
-    << "          color-adjust: exact;" << '\n'
-    << "          print-color-adjust: exact;" << '\n'
-    << "          flex-shrink: 0;" << '\n'
-    << "        }" << '\n'
+    << "        .avatar {\n"
+    << "          -webkit-print-color-adjust: exact;\n"
+    << "          color-adjust: exact;\n"
+    << "          print-color-adjust: exact;\n"
+    << "          flex-shrink: 0;\n"
+    << "        }\n"
     << '\n';
 
   if (!exportdetails.empty())
     outputfile
-      << "        .export-details {" << '\n'
-      << "          display: grid;" << '\n'
-      << "        }" << '\n'
+      << "        .export-details {\n"
+      << "          display: grid;\n"
+      << "        }\n"
       << '\n';
 
   outputfile
-    << "        #menu {" << '\n'
-    << "          display: none;" << '\n'
-    << "        }" << '\n'
+    << "        #menu {\n"
+    << "          display: none;\n"
+    << "        }\n"
     << '\n'
-    << "        #theme {" << '\n'
-    << "          display: none;" << '\n'
-    << "        }" << '\n'
-    << "      }" << '\n'
+    << "        #theme {\n"
+    << "          display: none;\n"
+    << "        }\n"
+    << "      }\n"
     << '\n';
   outputfile
-    << "    </style>" << '\n'
-    << "  </head>" << '\n';
+    << "    </style>\n"
+    << "  </head>\n";
 
   // BODY
   outputfile
-    << "  <body>" << '\n';
+    << "  <body>\n";
   if (themeswitching)
   {
     outputfile << R"(    <script>
@@ -434,15 +435,15 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
   }
   outputfile
     << '\n'
-    << "    <input type=\"checkbox\" id=\"theme-switch\">" << '\n'
+    << "    <input type=\"checkbox\" id=\"theme-switch\">\n"
     << '\n'
-    << "    <div id=\"page\">" << '\n'
+    << "    <div id=\"page\">\n"
     << '\n'
-    << "      <div class=\"conversation-list-header\">" << '\n'
-    << "        Signal blocked contacts" << '\n'
-    << "      </div>" << '\n'
+    << "      <div class=\"conversation-list-header\">\n"
+    << "        Signal blocked contacts\n"
+    << "      </div>\n"
     << '\n'
-    << "      <div class=\"conversation-list\">" << '\n'
+    << "      <div class=\"conversation-list\">\n"
     << '\n';
 
   // write blocked list
@@ -456,60 +457,60 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     //Logger::message(rec_id, " : ", sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name));
 
     outputfile
-      << "        <div class=\"conversation-list-item\">" << '\n'
+      << "        <div class=\"conversation-list-item\">\n"
       << "          <div class=\"avatar"
       << ((hasavatar || !isgroup) ? " avatar-" + bepaald::toString(rec_id) : "")
       << ((isgroup && !hasavatar) ? " group-avatar-icon" : "")
-      << ((emoji_initial && !hasavatar) ? " avatar-emoji-initial" : "") << "\">" << '\n'
+      << ((emoji_initial && !hasavatar) ? " avatar-emoji-initial" : "") << "\">\n"
       << ((!hasavatar && !isgroup) ? "            <span>" + getRecipientInfoFromMap(recipient_info, rec_id).initial + "</span>\n" : "")
-      << "          </div>" << '\n'
-      << "          <div class=\"name-and-snippet\">" << '\n'
-      << "            <pre class=\"name\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</pre>" << '\n'
-      << "          </div>" << '\n'
-      << "        </div>" << '\n';
+      << "          </div>\n"
+      << "          <div class=\"name-and-snippet\">\n"
+      << "            <pre class=\"name\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, rec_id).display_name) << "</pre>\n"
+      << "          </div>\n"
+      << "        </div>\n";
   }
 
   if (listempty)
   {
     outputfile
-      << "        <div class=\"conversation-list-item\">" << '\n'
-      << "            <span style=\"font-weight: bold; font-size: 18px\">(none)</span>" << '\n'
-      << "        </div>" << '\n';
+      << "        <div class=\"conversation-list-item\">\n"
+      << "            <span style=\"font-weight: bold; font-size: 18px\">(none)</span>\n"
+      << "        </div>\n";
   }
 
   // write end of html
   outputfile
     << '\n'
-    << "        <div id=\"menu\">" << '\n'
-    << "          <a href=\"index.html\">" << '\n'
-    << "            <div class=\"menu-item\">" << '\n'
-    << "              <div class=\"menu-icon nav-up\">" << '\n'
-    << "              </div>" << '\n'
-    << "              <div>" << '\n'
-    << "                index" << '\n'
-    << "              </div>" << '\n'
-    << "            </div>" << '\n'
-    << "          </a>" << '\n'
-    << "        </div>" << '\n'
+    << "        <div id=\"menu\">\n"
+    << "          <a href=\"index.html\">\n"
+    << "            <div class=\"menu-item\">\n"
+    << "              <div class=\"menu-icon nav-up\">\n"
+    << "              </div>\n"
+    << "              <div>\n"
+    << "                index\n"
+    << "              </div>\n"
+    << "            </div>\n"
+    << "          </a>\n"
+    << "        </div>\n"
     << '\n';
 
   if (themeswitching)
   {
     outputfile
-      << "      <div id=\"theme\">" << '\n'
-      << "        <div class=\"menu-item\">" << '\n'
-      << "          <label for=\"theme-switch\">" << '\n'
-      << "            <span class=\"menu-icon themebutton\">" << '\n'
-      << "           </span>" << '\n'
-      << "         </label>" << '\n'
-      << "        </div>" << '\n'
-      << "      </div>" << '\n'
+      << "      <div id=\"theme\">\n"
+      << "        <div class=\"menu-item\">\n"
+      << "          <label for=\"theme-switch\">\n"
+      << "            <span class=\"menu-icon themebutton\">\n"
+      << "           </span>\n"
+      << "         </label>\n"
+      << "        </div>\n"
+      << "      </div>\n"
       << '\n';
   }
 
   outputfile
-    << "      </div>" << '\n'
-    << "    </div>" << '\n';
+    << "      </div>\n"
+    << "    </div>\n";
 
   if (!exportdetails.empty())
     outputfile << '\n' << exportdetails << '\n';
@@ -538,8 +539,8 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
 
   outputfile
     << '\n'
-    << "  </body>" << '\n'
-    << "</html>" << '\n';
+    << "  </body>\n"
+    << "</html>\n";
 
   return true;
 }

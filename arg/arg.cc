@@ -53,6 +53,7 @@ Arg::Arg(int argc, char *argv[])
   d_desktopdirs_1(std::string()),
   d_desktopdirs_2(std::string()),
   d_desktopkey(std::string()),
+  d_showdesktopkey(false),
   d_dumpmedia(std::string()),
   d_excludestickers(false),
   d_dumpavatars(std::string()),
@@ -586,6 +587,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--showdesktopkey")
+    {
+      d_showdesktopkey = true;
+      continue;
+    }
+    if (option == "--no-showdesktopkey")
+    {
+      d_showdesktopkey = false;
       continue;
     }
     if (option == "--dumpmedia")

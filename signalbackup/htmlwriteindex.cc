@@ -22,8 +22,8 @@
 void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                   std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                                   bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts,
-                                  bool settings,  bool overwrite,
-                                  bool append, bool light, bool themeswitching, std::string const &exportdetails) const
+                                  bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
+                                  std::string const &exportdetails) const
 {
 
   Logger::message("Writing index.html...");
@@ -341,12 +341,14 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       std::string avatar_path = (results.getValueAs<long long int>(i, "_id") == note_to_self_tid ?
                                  "Note to self (_id" + results(i, "_id") + ")" :
                                  sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + results(i, "_id") + ")"));
+      std::string avatar_extension = getAvatarExtension(rec_id);
       bepaald::replaceAll(&avatar_path, '\"', R"(\")");
       HTMLescapeUrl(&avatar_path);
 
       outputfile
         << "      .avatar-" << rec_id << " {\n"
-        << "        background-image: url(\"" << avatar_path << "/media/Avatar_" << rec_id << ".bin\");\n"
+        << "        background-image: url(\"" << avatar_path << "/media/Avatar_" << rec_id << "." << avatar_extension << "\");\n"
+//        << "        background-image: url(\"" << avatar_path << "/" << avatar << "\");\n"
         << "        background-position: center;\n"
         << "        background-repeat: no-repeat;\n"
         << "        background-size: cover;\n"

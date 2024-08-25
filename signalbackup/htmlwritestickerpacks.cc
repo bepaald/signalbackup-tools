@@ -557,12 +557,13 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
         stickerhtml
           << "        <div class=\"sticker-pack-header\">" << '\n'
           << "          <div class=\"sticker-pack-header-container\">" << '\n';
-        if (cover_id == -1 || !writeStickerToDisk(cover_id, packid, directory, overwrite, append)) [[unlikely]]
+        std::string ext("bin");
+        if (cover_id == -1 || !writeStickerToDisk(cover_id, packid, directory, overwrite, append, &ext)) [[unlikely]]
           Logger::message("No cover found for stickerpack ", packid);
         else
           stickerhtml
             << "            <div class=\"sticker-pack-header-cover\">" << '\n'
-            << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << ".bin\" alt=\"cover\" loading=\"lazy\">" << '\n'
+            << "              <img src=\"stickers/" << packid << "/Sticker_" << cover_id << "." << ext << "\" alt=\"cover\" loading=\"lazy\">" << '\n'
             << "            </div>" << '\n';
         stickerhtml
           << "            <div>" << '\n'
@@ -588,6 +589,14 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
       long long int stickerid = res->valueAsInt(i, "sticker_id");
       std::string emoji = res->valueAsString(i, "emoji");
 
+      // write actual file to disk
+      std::string ext("bin");
+      if (!writeStickerToDisk(id, packid, directory, overwrite, append, &ext)) [[unlikely]]
+      {
+        Logger::warning("There was a problem writing the sitcker data to file");
+        continue;
+      }
+
       //Logger::message("Sticker ", stickerid, ": ", emoji);
       stickerhtml
         << "        <div class=\"sticker-list-item\">" << '\n'
@@ -595,20 +604,13 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
         << "            <form autocomplete=\"off\">" << '\n'
         << "              <input type=\"checkbox\" id=\"zoomCheck-" << packid << "-" << id << "\">" << '\n'
         << "              <label for=\"zoomCheck-" << packid << "-" << id << "\">" << '\n'
-        << "                <img src=\"stickers/" << packid << "/Sticker_" << id << ".bin\" alt=\"Sticker_" << id << ".bin\" loading=\"lazy\">" << '\n'
+        << "                <img src=\"stickers/" << packid << "/Sticker_" << id << "." << ext << "\" alt=\"Sticker_" << id << "." << ext << "\" loading=\"lazy\">" << '\n'
         << "              </label>" << '\n'
         << "            </form>" << '\n'
         << "          </div>" << '\n'
         << "          <div class=\"footer\">" << stickerid << ". <span class=\"emoji\">" << emoji << "</span></div>" << '\n'
         << "        </div>" << '\n'
         << '\n';
-
-      // write actual file to disk
-      if (!writeStickerToDisk(id, packid, directory, overwrite, append)) [[unlikely]]
-      {
-        Logger::warning("There was a problem writing the sitcker data to file");
-        continue;
-      }
     }
   }
 
@@ -689,7 +691,10 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
   return true;
 }
 
-bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const
+#include "../scopeguard/scopeguard.h"
+
+bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory,
+                                      bool overwrite, bool append, std::string *extension) const
 {
   // write actual file to disk
 
@@ -718,7 +723,18 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
       return false;
     }
   }
-  std::string stickerdatapath = directory + "/stickers/" + packid + "/Sticker_" + bepaald::toString(id) + ".bin";
+
+  StickerFrame *s = it->second.get();
+
+  // get the data, so the mimetype is determined
+  unsigned char *stickerdata = s->attachmentData();
+  ScopeGuard clear_sticker_data([&](){s->clearData();});
+
+  std::optional<std::string> mimetype = s->mimetype();
+  if (mimetype)
+    *extension = MimeTypes::getExtension(*mimetype, "bin");
+
+  std::string stickerdatapath = directory + "/stickers/" + packid + "/Sticker_" + bepaald::toString(id) + "." + *extension;
   // check actual sticker file
   if (bepaald::fileOrDirExists(stickerdatapath) && !overwrite)
   {
@@ -736,13 +752,10 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
     Logger::error("Failed to open '", stickerdatapath, "' for writing");
     return false;
   }
-  StickerFrame *s = it->second.get();
-  if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize())) [[unlikely]]
+  if (!stickerstream.write(reinterpret_cast<char *>(stickerdata), s->attachmentSize())) [[unlikely]]
   {
     Logger::error("Failed to write sticker data to file");
     return false;
   }
-
-  s->clearData();
   return true;
 }

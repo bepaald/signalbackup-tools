@@ -21,7 +21,6 @@
 
 bool DesktopDatabase::init()
 {
-
   // get directories
   if (d_configdir.empty() || d_databasedir.empty())
     std::tie(d_configdir, d_databasedir) = getDesktopDir();
@@ -45,6 +44,9 @@ bool DesktopDatabase::init()
       Logger::error("Failed to get sqlcipher key to decrypt Signal Desktop database");
       return false;
     }
+
+  if (d_showkey)
+    Logger::message("Signal Desktop key (hex): ", d_hexkey);
 
   // decrypt the database
   d_cipherdb.reset(new SqlCipherDecryptor(d_databasedir + "/sql/db.sqlite", d_hexkey, d_cipherversion, d_verbose));

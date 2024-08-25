@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../scopeguard/scopeguard.h"
+
 std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::string const &directory,
                                           std::string const &threaddir, bool overwrite, bool append) const
 {
@@ -28,7 +30,19 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
        std::find_if(d_avatars.begin(), d_avatars.end(),
                     [recipient_id](auto const &p) { return p.first == bepaald::toString(recipient_id); })) != d_avatars.end())
   {
-    avatar = "media/Avatar_" + pos->first + ".bin";
+    AvatarFrame *a = pos->second.get();
+    ScopeGuard clear_avatar_data([&](){a->clearData();});
+    std::optional<std::string> mimetype = a->mimetype();
+    unsigned char *avatardata = nullptr;
+    if (!mimetype)
+      // get the data, so the mimetype gets set.
+      avatardata = a->attachmentData();
+
+    std::string ext("bin");
+    mimetype = a->mimetype();
+    if (mimetype)
+      ext = MimeTypes::getExtension(*mimetype, "bin");
+    avatar = "media/Avatar_" + pos->first + "." + ext;
 
     // directory + threaddir is guaranteed to exist at this point, check/create 'media'
     if (!bepaald::fileOrDirExists(directory + "/" + threaddir + "/media"))
@@ -58,8 +72,6 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     }
 
     // directory exists, now write avatar
-    AvatarFrame *a = pos->second.get();
-
     std::ofstream avatarstream(directory + "/" + threaddir + "/" + avatar, std::ios_base::binary);
     if (!avatarstream.is_open())
     {
@@ -67,8 +79,11 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
       return std::string();
     }
     else
-      if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+    {
+      avatardata = a->attachmentData();
+      if (!avatardata || !avatarstream.write(reinterpret_cast<char *>(avatardata), a->attachmentSize()))
         return std::string();
+    }
   }
   return avatar;
 }

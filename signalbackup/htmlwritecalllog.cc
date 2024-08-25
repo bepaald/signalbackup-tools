@@ -325,12 +325,13 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
           continue;
         std::string avatar_path = (sanitizeFilename(getRecipientInfoFromMap(recipientinfo, peer).display_name + " (_id" + bepaald::toString(threadid) + ")"));
         bepaald::replaceAll(&avatar_path, '\"', R"(\")");
+        std::string avatar_extension = getAvatarExtension(peer);
 
         // actually write avatar! (it may not exist....)
 
         outputfile
           << "      .avatar-" << peer << " {" << '\n'
-          << "        background-image: url(\"" << avatar_path << "/media/Avatar_" << peer << ".bin\");" << '\n'
+          << "        background-image: url(\"" << avatar_path << "/media/Avatar_" << peer << "." << avatar_extension << "\");" << '\n'
           << "        background-position: center;" << '\n'
           << "        background-repeat: no-repeat;" << '\n'
           << "        background-size: cover;" << '\n'

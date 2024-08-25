@@ -286,18 +286,19 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
       std::string avatarpath;
+      std::string avatar_extension = getAvatarExtension(rec_id);
       long long int thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", rec_id, -1);
       if (thread_id != -1)
       {
         std::string thread_dir = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + bepaald::toString(thread_id) + ")");
-        if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + ".bin"))
+        if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension))
           avatarpath = std::move(thread_dir);
       }
 
       if (avatarpath.empty()) // avatar not already present anywhere, write out own...
       {
-        if (!bepaald::fileOrDirExists(dir + "/" + "/media/Avatar_" + bepaald::toString(rec_id) + ".bin")) // maybe htmlroot/media/avatar was already
-          if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                     // written by writeblockedlist...
+        if (!bepaald::fileOrDirExists(dir + "/" + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension)) // maybe htmlroot/media/avatar was already
+          if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                                     // written by writeblockedlist...
           {
             Logger::warning("Failed to set path or write avatar. Skipping");
             continue;
@@ -311,7 +312,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
 
       outputfile
         << "      .avatar-" << rec_id << " {\n"
-        << "        background-image: url(\"" << avatarpath << "media/Avatar_" << rec_id << ".bin\");\n"
+        << "        background-image: url(\"" << avatarpath << "media/Avatar_" << rec_id << "." << avatar_extension << "\");\n"
         << "        background-position: center;\n"
         << "        background-repeat: no-repeat;\n"
         << "        background-size: cover;\n"

@@ -1675,8 +1675,7 @@ file << R"(
     file << R"(
           <input type="checkbox" id="zoomCheck-avatar">
           <label for="zoomCheck-avatar">
-            <img class="avatar avatar-)" << thread_recipient_id
-             << R"( header-avatar msg-sender-)" << thread_recipient_id << R"(" src="media/Avatar_)" << thread_recipient_id << R"(.bin" alt=")" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial + R"(">
+            <img class="avatar avatar-)" << thread_recipient_id << " header-avatar msg-sender-" << thread_recipient_id << "\" src=\"" << thread_avatar << R"(" alt=")" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial + R"(">
           </label>)";
   }
   file << R"(

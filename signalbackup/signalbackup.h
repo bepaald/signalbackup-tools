@@ -435,6 +435,7 @@ class SignalBackup
   void HTMLescapeUrl(std::string *in) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
   void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
+  std::string getAvatarExtension(long long int recipient_id) const;
   //void prepRanges(std::vector<Range> *ranges) const;
   void prepRanges2(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
@@ -482,7 +483,8 @@ class SignalBackup
   bool prepareOutputDirectory(std::string const &dir, bool overwrite, bool allowappend = false, bool append = false) const;
 
   std::string getTranslatedName(std::string const &table, std::string const &old_column_name) const;
-  bool writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory, bool overwrite, bool append) const;
+  bool writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory,
+                          bool overwrite, bool append, std::string *extension) const;
   long long int getRecipientIdFromField(std::string const &field, std::string const &value, bool withthread) const;
 };
 

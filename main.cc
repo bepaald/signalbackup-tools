@@ -90,9 +90,14 @@ int main(int argc, char *argv[])
   {
     if (!ddb)
       ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate()));
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate(), arg.showdesktopkey()));
     return ddb->ok();
   };
+
+  // show desktop key
+  if (arg.showdesktopkey())
+    if (!initDesktopDatabase())
+      return 1;
 
   // run desktop sqlquery
   if (!arg.rundtsqlquery().empty())
