@@ -47,7 +47,7 @@ inline bool JsonDatabase::ok() const
 
 inline void JsonDatabase::listChats() const
 {
-  d_database.prettyPrint(d_truncate, "SELECT * FROM chats");
+  d_database.prettyPrint(d_truncate, "SELECT idx, id, name, type, (SELECT COUNT(*) FROM messages WHERE messages.chatidx = chats.idx) AS message_count FROM chats");
 }
 
 #endif

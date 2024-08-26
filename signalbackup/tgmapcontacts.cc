@@ -80,7 +80,11 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
     // if it's already in contactmap, we can skip it
     if (find_in_contactmap(contact) != -1)
+    {
+      std::cout << "Skipping " << contact << std::endl;
+      //std::cout << realcontactmap[contact].first << std::endl;
       continue;
+    }
 
     // find it in android db by name
     long long int found_id = -1;
@@ -135,7 +139,32 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
       break;
     }
 
-  // try to determine: only one from_id will be present in multiple 1-on-1 chats
+  // try to determine: 1. If the database has a 'saved_messages' type chat, it should only contain messages "from": self (messages.from_id => self)
+  // also, the chat itself should be self (chat.id => self)
+  if (self_json_id.empty())
+  {
+    SqliteDB::QueryResults ids_in_saved_messages;
+    if (jsondb.d_database.exec("SELECT DISTINCT from_id FROM messages WHERE chatidx IN (SELECT DISTINCT idx FROM chats WHERE type = 'saved_messages')", &ids_in_saved_messages) &&
+        ids_in_saved_messages.rows() == 1)
+    {
+      realcontactmap.push_back({{ids_in_saved_messages("from_id")}, d_selfid});
+      // copy aliases and erase from not found
+      move_from_not_found_to_contactmap(json_contacts, ids_in_saved_messages("from_id"));
+      self_json_id = realcontactmap.back().first;
+    }
+
+    SqliteDB::QueryResults saved_messages_id;
+    if (jsondb.d_database.exec("SELECT DISTINCT id FROM chats WHERE type = 'saved_messages'", &saved_messages_id) &&
+        saved_messages_id.rows() == 1)
+    {
+      realcontactmap.push_back({{saved_messages_id("id")}, d_selfid});
+      // copy aliases and erase from not found
+      move_from_not_found_to_contactmap(json_contacts, saved_messages_id("id"));
+      self_json_id = realcontactmap.back().first;
+    }
+  }
+
+  // try to determine: 2. only one from_id will be present in multiple 1-on-1 chats
   if (self_json_id.empty())
   {
     SqliteDB::QueryResults ids_in_personal_chats;
@@ -151,9 +180,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
       if (d_verbose) [[unlikely]]
         Logger::message("Found json contact for self: ", ids_in_personal_chats(0, "from_id"), " -> ", d_selfid);
 
-      realcontactmap.push_back({{ids_in_personal_chats(0, "from_id")}, d_selfid});
+      realcontactmap.push_back({{ids_in_personal_chats("from_id")}, d_selfid});
       // copy aliases and erase from not found
-      move_from_not_found_to_contactmap(json_contacts, ids_in_personal_chats(0, "from_id"));
+      move_from_not_found_to_contactmap(json_contacts, ids_in_personal_chats("from_id"));
       self_json_id = realcontactmap.back().first;
     }
   }

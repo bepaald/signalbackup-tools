@@ -56,7 +56,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
       !d_database.exec("CREATE TABLE messages(chatidx INT, id INT, type TEXT, date INT, "
                        "from_name TEXT, from_id TEXT, body TEXT, "
                        "reply_to_id INT, forwarded_from TEXT, "
-                       "photo TEXT, width INT, height INT, "
+                       "saved_from TEXT, photo TEXT, width INT, height INT, "
                        "file TEXT, media_type TEXT, mime_type TEXT, "
                        "poll)"))
   {
@@ -101,12 +101,13 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
   if (d_verbose) [[unlikely]]
     Logger::message_end("done! (", d_database.changed(), ")");
   // std::cout << std::endl << "CHATS: " << std::endl;
-  // d_database.prettyPrint("SELECT COUNT(*) FROM chats");
-  // d_database.prettyPrint("SELECT * FROM chats LIMIT 10");
+  // d_database.prettyPrint(d_truncate, "SELECT COUNT(*) FROM chats");
+  // d_database.prettyPrint(d_truncate, "SELECT * FROM chats LIMIT 10");
 
   // INSERT DATA INTO MESSAGES TABLE
 
-  // note: to glob-match '$.chats.list[0].messages' for any number, we create a character class for the first '[' -> '[[]', since GLOB has no escape characters
+  // note: to glob-match '$.chats.list[0].messages' for any number, we create a character class
+  //       for the first '[' -> '[[]', since GLOB has no escape characters
   if (d_verbose) [[unlikely]]
     Logger::message_start("Inserting messages from json...");
   if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, path "
@@ -135,6 +136,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "json_extract(value, '$.text_entities') AS body, "
                        "json_extract(value, '$.reply_to_message_id') AS reply_to_id, "
                        "json_extract(value, '$.forwarded_from') AS forwarded_from, "
+                       "json_extract(value, '$.saved_from') AS saved_from, "
                        "json_extract(value, '$.photo') AS photo, "
                        "json_extract(value, '$.width') AS width, "
                        "json_extract(value, '$.height') AS height, "
@@ -144,14 +146,22 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "json_extract(value, '$.poll') AS poll FROM tmp_json_tree"))
     return;
 
+  // the 'saved_messages' chat has no 'name' field. Since this is note-to-self, the name should be the name of the
+  // 'from' field of all messages in that chat.
+  SqliteDB::QueryResults saved_messages_name;
+  if (d_database.exec("SELECT DISTINCT from_name FROM messages WHERE chatidx IN "
+                      "(SELECT DISTINCT idx FROM chats WHERE type = 'saved_messages')", &saved_messages_name) &&
+      saved_messages_name.rows() == 1)
+    d_database.exec("UPDATE chats SET name = ? WHERE name IS NULL AND type = 'saved_messages'", saved_messages_name.value(0, 0));
+
   if (d_verbose) [[unlikely]]
     Logger::message_end("done! (", d_database.changed(), ")");
 
   d_database.exec("DROP TABLE tmp_json_tree");
 
   // std::cout << std::endl << "MESSAGES: " << std::endl;
-  // d_database.prettyPrint("SELECT COUNT(*) FROM messages");
-  // d_database.prettyPrint("SELECT * FROM messages");// WHERE chatidx = 42 LIMIT 10");
+  // d_database.prettyPrint(d_truncate, "SELECT COUNT(*) FROM messages");
+  // d_database.prettyPrint(d_truncate, "SELECT * FROM messages");// WHERE chatidx = 42 LIMIT 10");
 
   d_ok = true;
 }

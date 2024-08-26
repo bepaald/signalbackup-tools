@@ -190,6 +190,9 @@ R"*(
    --autolimitdates                      Optional modifier for `--importfromdesktop'. Automatically limit
                                          the import of messages to those older than the first message in the
                                          INPUT backup file.
+--desktopkey <HEXKEY>                    Provide the decrypted SQLCipher key for decrypting the desktop
+                                         database (see README).
+--showdesktopkey                         Show the (hex) SQLCipher key used for the desktop database.
 --deleteattachments                      Delete attachments from backup file.
    --onlyinthreads <LIST_OF_THREADS>     Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. Only deal with attachments within these

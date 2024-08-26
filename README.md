@@ -781,7 +781,8 @@ Running with these options does not require an input file to be provided. These 
 - `--rundtprettysqlquery [QUERY]` As above, but tries to make the output a bit nicer to look at. Depending on the size of the query and the size of the output terminal, may make the output more ledgible (or less so).
 - `--exportdesktophtml [OUTPUTDIR]` Export the Signal Desktop database to HTML. This function works internally by creating an empty Android backup, importing the desktop into this and then exporting that internal Android backup to HTML. As a result it supports almost all modifying options mentioned in [import from Desktop](#desktop) and [export to HTML](#export-to-html) (excluding `--limittothreads`, and `--includesettings`). It also has the same limitations as both of these functions combined. It is currently unknown if, and how well it works. Feedback is appreciated. See: https://github.com/bepaald/signalbackup-tools/issues/203.
 - `--exportdesktoptxt [OUTPUTDIR]` Export the Signal Desktop database to plain text. Works as the above function, except the internal Android backup is [exported to TXT](#export-to-txt) instead.
-- `--desktopkey [HEXSTRING]` This is a modifying option for all desktop functions. Manually set the cipher key to use for decrypting the Desktop database (see above note).
+- `--desktopkey [HEXSTRING]` This is a modifying option for all desktop functions. Manually set the cipher key to use for decrypting the Signal Desktop database (see above note).
+- `--showdesktopkey` Shows the key used to decrypt the Signal Desktop database.
 
 **<span id="various">Various</span>**
 

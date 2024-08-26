@@ -97,6 +97,8 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
       tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, true); // deal with group chat
     else if (chats.valueAsString(i, "type") == "personal_chat") // ????
       tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false); // deal with 1-on-1 convo
+    else if (chats.valueAsString(i, "type") == "saved_messages")
+      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false); // deal note-to-self
     else
     {
       Logger::warning("Unsupported chat type `", chats.valueAsString(i, "type"), "'. Skipping...");
