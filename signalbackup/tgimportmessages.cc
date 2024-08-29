@@ -179,6 +179,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         continue;
       }
       long long int new_msg_id = std::any_cast<long long int>(retval);
+      bool msg_deleted = false;
 
       // add attachments
       if (!tgSetAttachment(message_data, datapath, i, new_msg_id))
@@ -186,7 +187,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         if (body.empty())
         {
           Logger::warning("Failed to set attachment on otherwise empty message. Deleting message...");
-          d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id);
+          if (d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id))
+            msg_deleted = true;
         }
         else
           Logger::warning("Failed to set attachment");
@@ -223,7 +225,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       }
 
 
-      if (d_database.getSingleResultAs<std::string>("SELECT body FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, std::string()).empty() && // no message body
+      if (!msg_deleted &&
+          d_database.getSingleResultAs<std::string>("SELECT body FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, std::string()).empty() && // no message body
           d_database.getSingleResultAs<long long int>("SELECT _id FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", new_msg_id, -1) == -1 && // no attachment
           d_database.getSingleResultAs<long long int>("SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, 0) == 0)            // no quote
       {
