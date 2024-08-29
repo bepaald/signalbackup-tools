@@ -37,6 +37,8 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
       continue;
 
     //std::cout << "Attachment: " << datapath << a << std::endl;
+    std::string filename_for_db(std::filesystem::path(a).filename());
+    //std::cout << filename_for_db << std::endl;
 
     AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(datapath + a);
     if (amd.filename.empty() || amd.filesize == 0)
@@ -77,6 +79,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
                     {d_part_pending, 0},
                     {"data_size", amd.filesize},
                     {(d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : ""), unique_id},
+                    {(!filename_for_db.empty() ? "file_name" : ""), filename_for_db},
                     {"voice_note", voice_note},
                     {"width", amd.width == -1 ? w : amd.width},
                     {"height", amd.height == -1 ? h : amd.height},
