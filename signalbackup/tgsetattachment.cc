@@ -37,7 +37,7 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
       continue;
 
     //std::cout << "Attachment: " << datapath << a << std::endl;
-    std::string filename_for_db(std::filesystem::path(a).filename());
+    std::string filename_for_db(std::filesystem::path(a).filename().string());
     //std::cout << filename_for_db << std::endl;
 
     AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(datapath + a);
