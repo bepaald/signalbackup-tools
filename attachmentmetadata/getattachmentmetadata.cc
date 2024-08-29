@@ -282,7 +282,7 @@ AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &
   //  operator bool() const { return (width != -1 && height != -1 && !filetype.empty() && filesize != 0); }
   //};
 
-  std::ifstream filestream(file, std::ios_base::binary | std::ios_base::in);
+  std::ifstream filestream(std::filesystem::path(file), std::ios_base::binary | std::ios_base::in);
   if (!filestream.is_open())
   {
     Logger::warning("Failed to open image for reading: ", file);

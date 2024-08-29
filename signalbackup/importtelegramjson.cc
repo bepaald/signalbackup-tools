@@ -67,10 +67,8 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
 
   // get base path of file (we need it to set the resolve relative paths
   // referenced in the JSON data
-  std::string datapath;
   std::filesystem::path p(file);
-
-  datapath = p.parent_path().string();
+  std::string datapath(p.parent_path().string());
   if (!datapath.empty())
     datapath += static_cast<char>(std::filesystem::path::preferred_separator);
 
