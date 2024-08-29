@@ -102,9 +102,12 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
                       {"width", quote_att_res.value(i, "width")},
                       {"height", quote_att_res.value(i, "height")},
                       {"quote", 1},
-                      {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), quote_att_res.value(i, "data_hash")},
-                      {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), quote_att_res.value(i, "data_hash_start")},
-                      {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), quote_att_res.value(i, "data_hash_end")}},
+                      {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""),
+                       (d_database.tableContainsColumn(d_part_table, "data_hash") ? quote_att_res.value(i, "data_hash") : std::any())},
+                      {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""),
+                       (d_database.tableContainsColumn(d_part_table, "data_hash_start") ? quote_att_res.value(i, "data_hash_start") : std::any())},
+                      {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""),
+                       (d_database.tableContainsColumn(d_part_table, "data_hash_end") ? quote_att_res.value(i, "data_hash_end") : std::any())}},
                      "_id", &retval))
       {
         Logger::error("Inserting part-data");

@@ -46,10 +46,10 @@ int RawFileAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verb
 {
   //std::cout << " *** REALLY GETTING ATTACHMENT (RAW) ***" << std::endl;
 
-  std::ifstream file(d_filename, std::ios_base::binary | std::ios_base::in);
+  std::ifstream file(std::filesystem::path(d_filename), std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())
   {
-    Logger::error("Failed to open backup file '", d_filename, "' for reading attachment");
+    Logger::error("Failed to open file '", d_filename, "' for reading attachment");
     return 1;
   }
   file.seekg(0, std::ios_base::end);
