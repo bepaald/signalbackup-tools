@@ -69,7 +69,10 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
   // referenced in the JSON data
   std::string datapath;
   std::filesystem::path p(file);
-  datapath = p.parent_path().string() + static_cast<char>(std::filesystem::path::preferred_separator);
+
+  datapath = p.parent_path().string();
+  if (!datapath.empty())
+    datapath += static_cast<char>(std::filesystem::path::preferred_separator);
 
   // build chatlist:
   std::string chatlist;
