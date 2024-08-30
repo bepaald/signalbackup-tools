@@ -26,12 +26,13 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
 {
   std::string photo = message_data.valueAsString(r, "photo");
   std::string file = message_data.valueAsString(r, "file");
+  std::string vcard = message_data.valueAsString(r, "contact_vcard");
 
-  if (photo.empty() && file.empty())
+  if (photo.empty() && file.empty() && vcard.empty())
     return true;
 
   bool attachmentadded = false;
-  for (std::string const &a : {photo, file})
+  for (std::string const &a : {photo, file, vcard})
   {
     if (a.empty())
       continue;
@@ -50,6 +51,8 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     std::string ct = message_data.valueAsString(r, "mime_type");
     if (ct.empty())
       ct = amd.filetype;
+    if (a == vcard)
+      ct = "text/vcard";
     if (ct.empty())
     {
       Logger::warning("Attachment has no mime_type. Skipping.");

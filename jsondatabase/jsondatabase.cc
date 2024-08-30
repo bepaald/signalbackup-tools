@@ -58,7 +58,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "reply_to_id INT, forwarded_from TEXT, "
                        "saved_from TEXT, photo TEXT, width INT, height INT, "
                        "file TEXT, media_type TEXT, mime_type TEXT, "
-                       "poll)"))
+                       "contact_vcard TEXT, poll)"))
   {
     Logger::error("Failed to set up sql tables");
     return;
@@ -143,6 +143,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "json_extract(value, '$.file') AS file, "
                        "json_extract(value, '$.media_type') AS media_type, "
                        "json_extract(value, '$.mime_type') AS mime_type, "
+                       "json_extract(value, '$.contact_vcard') AS contact_vcard, "
                        "json_extract(value, '$.poll') AS poll FROM tmp_json_tree"))
     return;
 

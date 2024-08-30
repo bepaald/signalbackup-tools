@@ -65,7 +65,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
   // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
-  if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, poll FROM messages "
+  if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, contact_vcard, poll FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
                chat_idx, &message_data))
