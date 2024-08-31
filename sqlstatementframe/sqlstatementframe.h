@@ -543,42 +543,40 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
   }
 }
 
-/*
-inline void SqlStatementFrame::setParameter(uint idx, unsigned char *data, uint32_t length)
-{
-  if (std::get<1>(d_parameterdata[idx]))
-  {
-    delete[] std::get<1>(d_parameterdata[idx]);
-    std::get<1>(d_parameterdata[idx]) = new unsigned char[length];
-    std::memcpy(std::get<1>(d_parameterdata[idx]), data, length);
-    std::get<2>(d_parameterdata[idx]) = length;
-  }
-}
+// inline void SqlStatementFrame::setParameter(uint idx, unsigned char *data, uint32_t length)
+// {
+//   if (std::get<1>(d_parameterdata[idx]))
+//   {
+//     delete[] std::get<1>(d_parameterdata[idx]);
+//     std::get<1>(d_parameterdata[idx]) = new unsigned char[length];
+//     std::memcpy(std::get<1>(d_parameterdata[idx]), data, length);
+//     std::get<2>(d_parameterdata[idx]) = length;
+//   }
+// }
 
-inline void SqlStatementFrame::getParameter(uint idx) const
-{
-  if (std::get<1>(d_parameterdata[idx]))
-  {
-    std::cout << bepaald::bytesToString(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx])) << std::endl;
-  }
-  else
-    std::cout << "nullptr" << std::endl;
-}
+// inline void SqlStatementFrame::getParameter(uint idx) const
+// {
+//   if (std::get<1>(d_parameterdata[idx]))
+//   {
+//     std::cout << bepaald::bytesToString(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx])) << std::endl;
+//   }
+//   else
+//     std::cout << "nullptr" << std::endl;
+// }
 
-inline std::string SqlStatementFrame::getParameterAsString(uint idx) const
-{
-  if (std::get<1>(d_parameterdata[idx]))
-    return bepaald::bytesToString(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx]));
-  return "";
-}
+// inline std::string SqlStatementFrame::getParameterAsString(uint idx) const
+// {
+//   if (std::get<1>(d_parameterdata[idx]))
+//     return bepaald::bytesToString(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx]));
+//   return "";
+// }
 
-inline uint64_t SqlStatementFrame::getParameterAsUint64(uint idx) const
-{
-  if (std::get<1>(d_parameterdata[idx]))
-    return bytesToUint64(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx]));
-  return 0;
-}
-*/
+// inline uint64_t SqlStatementFrame::getParameterAsUint64(uint idx) const
+// {
+//   if (std::get<1>(d_parameterdata[idx]))
+//     return bytesToUint64(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx]));
+//   return 0;
+// }
 
 inline std::string SqlStatementFrame::bindStatement() const
 {

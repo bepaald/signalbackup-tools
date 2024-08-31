@@ -16,28 +16,33 @@ else
 fi
 
 CXX="${CXX:-g++}"
-CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto}"
+CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto $(pkg-config --cflags dbus-1)}"
 CXXARCH="${CXXARCH:--march=native}"
 CXXSTD="${CXXSTD:--std=c++2a}"
 CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
 LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,-z,now -Wl,--as-needed -O3 -s -flto=auto}"
-LDLIBS="${LDLIBS:--lcrypto -lsqlite3}"
+LDLIBS="${LDLIBS:-$(pkg-config --libs dbus-1) -lcrypto -lsqlite3}"
 BIN="${BIN:-signalbackup-tools}"
 
 # CONFIG: brew
 if [ "$CONFIG" = "brew" ] ; then
+  CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto"
   LDFLAGS="-Wall -Wextra -O3 -flto=auto"
+  LDLIBS="-lcrypto -lsqlite3"
 fi
 
 # CONFIG: darwin
 if [ "$CONFIG" = "darwin" ] ; then
+  CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3 -flto"
   LDFLAGS="-Wall -Wextra -flto -Wl,-framework,Security -Wl,-framework,CoreFoundation -O3"
+  LDLIBS="-lcrypto -lsqlite3"
 fi
 
 # CONFIG: nixpkgs-darwin
 if [ "$CONFIG" = "nixpkgs-darwin" ] ; then
   CXXFLAGS="-Wall -Wextra -Wshadow -Woverloaded-virtual -pedantic -O3"
   LDFLAGS="-Wall -Wextra -Wl,-framework,Security -Wl,-framework,CoreFoundation -O3"
+  LDLIBS="-lcrypto -lsqlite3"
 fi
 
 # CONFIG: windows
@@ -213,8 +218,9 @@ SRC=("keyvalueframe/statics.cc"
      "desktopdatabase/getkeyfromencrypted_win.cc"
      "desktopdatabase/readencryptedkey.cc"
      "desktopdatabase/getsecrets_mac.cc"
+     "desktopdatabase/getsecrets_linux_secretservice.cc"
+     "desktopdatabase/getsecrets_linux_kwallet.cc"
      "desktopdatabase/getkeyfromencrypted_mac_linux.cc"
-     "desktopdatabase/getsecrets_linux.cc"
      "reactionlist/setauthor.cc"
      "jsondatabase/jsondatabase.cc"
      "attachmentmetadata/getattachmentmetadata.cc"
@@ -395,8 +401,9 @@ OBJ=("keyvalueframe/o/statics.o"
      "desktopdatabase/o/getkeyfromencrypted_win.o"
      "desktopdatabase/o/readencryptedkey.o"
      "desktopdatabase/o/getsecrets_mac.o"
+     "desktopdatabase/o/getsecrets_linux_secretservice.o"
+     "desktopdatabase/o/getsecrets_linux_kwallet.o"
      "desktopdatabase/o/getkeyfromencrypted_mac_linux.o"
-     "desktopdatabase/o/getsecrets_linux.o"
      "reactionlist/o/setauthor.o"
      "jsondatabase/o/jsondatabase.o"
      "attachmentmetadata/o/getattachmentmetadata.o"

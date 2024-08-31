@@ -45,18 +45,15 @@ bool DesktopDatabase::getKeyFromEncrypted_mac_linux()
   if (tryDecrypt())
     return true;
 #else
-  getSecrets_linux(&secrets);
+  getSecrets_linux_SecretService(&secrets);
   if (tryDecrypt())
     return true;
-  // getSecrets_linux_libsecret(&secrets);
-  // if (tryDecrypt())
-  //   return true;
-  //getSecrets_linux_kwallet(6, &secrets); // nothing from libsecret, try kwallet6...
-  // if (tryDecrypt())
-  //   return true;
-  //getSecrets_linux_kwallet(5, &secrets); // nothing from kwallet6, try kwallet5...
-  // if (tryDecrypt())
-  //   return true;
+  getSecrets_linux_Kwallet(6, &secrets); // nothing from libsecret, try kwallet6...
+  if (tryDecrypt())
+    return true;
+  getSecrets_linux_Kwallet(5, &secrets); // nothing from kwallet6, try kwallet5...
+  if (tryDecrypt())
+    return true;
 #endif
   if (secrets.empty())
   {

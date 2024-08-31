@@ -88,7 +88,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
   //DesktopDatabase ddb(configdir, databasedir, hexkey, verbose, ignorewal, cipherversion, truncate);
   if (!ddb->ok())
-    std::cout << "DesktopDatabase was not ok" << std::endl;
+    Logger::error("DesktopDatabase was not ok");
   dtSetColumnNames(&ddb->d_database);
 
   // on messages sent from Desktop, sourceServiceId/sourceUuid is empty

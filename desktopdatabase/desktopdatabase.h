@@ -37,6 +37,7 @@ class DesktopDatabase
   std::string d_hexkey;
   bool d_ok;
   bool d_verbose;
+  bool d_dbus_verbose;
   bool d_ignorewal;
   long long int d_cipherversion;
   bool d_truncate;
@@ -68,10 +69,11 @@ class DesktopDatabase
   bool getKeyFromEncrypted_mac_linux();
   std::string decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr) const;
 #endif
-#if defined(__APPLE__) && defined(__MACH__)
+#if defined(__APPLE__) && defined(__MACH__) // if apple...
   void getSecrets_mac(std::set<std::string> *secrets) const;
 #elif !defined(_WIN32) && !defined(__MINGW64__) // not apple, but also not windows
-  void getSecrets_linux(std::set<std::string> *secrets) const;
+  void getSecrets_linux_SecretService(std::set<std::string> *secrets) const;
+  void getSecrets_linux_Kwallet(int version, std::set<std::string> *secrets) const;
 #endif
 
   friend class SignalBackup;
@@ -93,6 +95,7 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   d_hexkey(hexkey),
   d_ok(false),
   d_verbose(verbose),
+  d_dbus_verbose(false),
   d_ignorewal(ignorewal),
   d_cipherversion(cipherversion),
   d_truncate(truncate),

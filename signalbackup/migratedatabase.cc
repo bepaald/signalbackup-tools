@@ -153,8 +153,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
     // insert missing group members:
     for (auto const &mm : missinggroupmembers)
     {
-      std::cout << "Missing member: " << mm << std::endl;
-
+      //std::cout << "Missing member: " << mm << std::endl;
       if (!d_database.exec("INSERT INTO recipient_preferences(recipient_ids) VALUES (?)", mm))
       {
         d_database.exec("ROLLBACK TRANSACTION");

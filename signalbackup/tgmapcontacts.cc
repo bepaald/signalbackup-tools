@@ -81,7 +81,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     // if it's already in contactmap, we can skip it
     if (find_in_contactmap(contact) != -1)
     {
-      std::cout << "Skipping " << contact << std::endl;
+      //std::cout << "Skipping " << contact << std::endl;
       //std::cout << realcontactmap[contact].first << std::endl;
       continue;
     }
