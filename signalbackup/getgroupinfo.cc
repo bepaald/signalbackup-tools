@@ -79,7 +79,7 @@ message DecryptedGroup {
       }
     */
     DecryptedTimer timerdata(group_info.getField<4>().value());
-    long long int timer [[maybe_unused]] = -1;
+    long long int timer = -1;
     if (timerdata.getField<1>().has_value())
       timer = timerdata.getField<1>().value();
     //std::cout << "Timer: " << timer << std::endl;
@@ -129,18 +129,18 @@ message AccessControl {
 
     AccessControl acdata(group_info.getField<5>().value());
 
-    long long int attributes [[maybe_unused]] = 0;
+    long long int attributes = 0;
     if (acdata.getField<1>().has_value())
       attributes = acdata.getField<1>().value();
     groupinfo->access_control_attributes = enumToString(attributes);
 
 
-    long long int members [[maybe_unused]] = 0;
+    long long int members = 0;
     if (acdata.getField<2>().has_value())
       members = acdata.getField<2>().value();
     groupinfo->access_control_members = enumToString(members);
 
-    long long int addfrominvitelink [[maybe_unused]] = 0;
+    long long int addfrominvitelink = 0;
     if (acdata.getField<3>().has_value())
       addfrominvitelink = acdata.getField<3>().value();
     groupinfo->access_control_addfromlinkinvite = enumToString(addfrominvitelink);
@@ -177,7 +177,7 @@ message AccessControl {
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
       // role
-      long long int role [[maybe_unused]] = -1;
+      long long int role = -1;
       if (newmembers[i].getField<2>().has_value())
         role = newmembers[i].getField<2>().value();
 
@@ -217,10 +217,10 @@ message AccessControl {
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-      // role
-      long long int role [[maybe_unused]] = -1;
-      if (pendingmembers[i].getField<2>().has_value())
-        role = pendingmembers[i].getField<2>().value();
+      // // role
+      // long long int role = -1;
+      // if (pendingmembers[i].getField<2>().has_value())
+      //   role = pendingmembers[i].getField<2>().value();
 
       long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
       if (id != -1)

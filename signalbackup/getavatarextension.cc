@@ -32,7 +32,7 @@ std::string SignalBackup::getAvatarExtension(long long int recipient_id) const
   std::optional<std::string> mimetype = it->second->mimetype();
   if (!mimetype) // ensure that mimetype is set
   {
-    unsigned char *data [[maybe_unused]] = it->second->attachmentData();
+    it->second->attachmentData(); // counting on the side effect of setting mimetype
     ScopeGuard clear_avatar_data([&](){it->second->clearData();});
     mimetype = it->second->mimetype();
     if (!mimetype)

@@ -25,6 +25,7 @@
 #if !defined WITHOUT_DBUS
 
 #include <dbus/dbus.h>
+#include <cstring>
 #include <memory>
 #include <variant>
 #include <type_traits>
@@ -329,7 +330,7 @@ inline void DBusCon::passArg(DBusArg const &arg, DBusMessageIter *dbus_iter, boo
 
     DBusMessageIter dbus_array_iter;
 
-    char const *arraytype = DBUS_TYPE_INVALID;
+    char const *arraytype = DBUS_TYPE_INVALID_AS_STRING;
     DBusArray const *array = &std::get<DBusArray>(arg);
     if (array->empty()) // something
       ;
@@ -353,7 +354,7 @@ inline void DBusCon::passArg(DBusArg const &arg, DBusMessageIter *dbus_iter, boo
       //else if (std::holds_alternative<recursive_wrapper<DBusDict>>(array->at(0)))
       //  arraytype = DBUS_TYPE_VARIANT_AS_STRING;
     }
-    if (arraytype == DBUS_TYPE_INVALID)
+    if (std::strcmp(arraytype, DBUS_TYPE_INVALID_AS_STRING) == 0)
       return;
 
     dbus_message_iter_open_container(dbus_iter, DBUS_TYPE_ARRAY, arraytype, &dbus_array_iter);
@@ -538,7 +539,7 @@ inline void DBusCon::showResponse(DBusMessage *reply)
 }
 
 template <typename T>
-inline bool DBusCon::setBasicTypeReturn(T *target, int current_type, DBusMessageIter *iter)
+inline bool DBusCon::setBasicTypeReturn(T *target [[maybe_unused]], int current_type, DBusMessageIter *iter [[maybe_unused]])
 {
   if constexpr (std::is_same_v<T, bool>)
   {
