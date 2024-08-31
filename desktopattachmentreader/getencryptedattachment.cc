@@ -73,8 +73,8 @@ int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool ver
 
   // calculate MAC
   evp_md_st const *digest = EVP_sha256();
-  char digestname[] = "SHA256";
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  char digestname[] = "SHA256";
   std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
   std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
   OSSL_PARAM params[] = {OSSL_PARAM_construct_utf8_string("digest", digestname, 0), OSSL_PARAM_construct_end()};

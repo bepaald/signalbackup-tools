@@ -26,25 +26,11 @@ jobs:
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
+          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev libdbus-1-dev
 
       - name: Build default
         run: |
-          g++ --std=c++2a */*.cc *.cc -o signalbackup-tools -lcrypto -lsqlite3
-
-  do-build-tests-script:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: |
-          set -x
-          sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
-
-      - name: Build simple script
-        run: |
-          sh BUILDSCRIPT.sh
+          g++ --std=c++2a -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include */*.cc *.cc -o signalbackup-tools -lcrypto -lsqlite3 -ldbus-1
 
   do-build-tests-parallel-script:
     runs-on: ubuntu-latest
@@ -54,7 +40,7 @@ jobs:
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
+          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev libdbus-1-dev
 
       - name: Build new script
         run: |
@@ -68,7 +54,7 @@ jobs:
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev
+          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev libdbus-1-dev
 
       - name: Build new script (legacy)
         run: |

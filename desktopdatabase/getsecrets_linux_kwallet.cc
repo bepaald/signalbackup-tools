@@ -80,7 +80,7 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
                      path.c_str(),
                      interface.c_str(),
                      "open",
-                     {walletname, 0ll /*(int64) window id*/, "signalbackup-tools"});
+                     {walletname, int64_t{0}, "signalbackup-tools"});
   int32_t handle = dbuscon.get<int32_t>("i", 0 - 1);
   if (handle < 0)
   {
