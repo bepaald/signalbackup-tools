@@ -90,7 +90,8 @@ int main(int argc, char *argv[])
   {
     if (!ddb)
       ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate(), arg.showdesktopkey()));
+                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate(), arg.showdesktopkey(),
+                                    arg.dbusverbose()));
     return ddb->ok();
   };
 
@@ -518,6 +519,13 @@ int main(int argc, char *argv[])
     if (!sb->custom_hugogithubs())
     {
       Logger::error("An error occurred running custom function");
+      return 1;
+    }
+
+  if (arg.migrate_to_191())
+    if (!sb->migrate_to_191())
+    {
+      Logger::error("Migration failed");
       return 1;
     }
 

@@ -40,7 +40,7 @@ jobs:
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev libdbus-1-dev
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
 
       - name: Build new script
         run: |
@@ -54,7 +54,7 @@ jobs:
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ libsqlite3-dev libssl-dev libdbus-1-dev
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
 
       - name: Build new script (legacy)
         run: |

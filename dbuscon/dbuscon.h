@@ -17,6 +17,17 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/*
+ *  !! NOTE !!
+ *
+ * This class is by no means a complete dbus service interface
+ * it (hopefully) works for the current purpose of this program.
+ *
+ * There are certainly limitations in sending/receiving
+ * complex nested types (DICTS of ARRAYS of DICTS...)
+ *
+ */
+
 #ifndef DBUSCONNECTION_H_
 #define DBUSCONNECTION_H_
 
@@ -91,7 +102,6 @@ struct DBusVariant
 
 struct DBusDictElement
 {
-  //std::variant<std::string, int32_t, int64_t, bool> d_key;
   DBusArg d_key; // NOTE: only basic types are allowed as dict key by dbus spec
   DBusArg d_value;
 };
@@ -111,6 +121,8 @@ class DBusCon
 
  public:
   inline DBusCon(bool dbus_verbose);
+  inline DBusCon(DBusCon const &other) = delete;
+  inline DBusCon &operator=(DBusCon const &other) = delete;
   inline ~DBusCon();
   inline bool ok() const;
 
@@ -213,7 +225,7 @@ inline bool DBusCon::waitSignal(int attempts, int timeoutms_per_attempt, std::st
       {
         if (d_dbus_verbose)
         {
-          Logger::message(" *** RECEIVED SIGNAL WE WERE WATING FOR... ");
+          Logger::message(" *** RECEIVED SIGNAL WE WERE WATING FOR...");
           showResponse(dbus_signal_msg.get());
         }
         return true;
@@ -519,7 +531,9 @@ inline void DBusCon::showresponse2(DBusMessageIter *iter, int indent)
     {
       unsigned char b = '\0';
       dbus_message_iter_get_basic(iter, &b);
-      Logger::message_continue("VALUE (byte): ", b, " ", std::hex, std::setfill('0'), std::setw(2), (static_cast<int32_t>(b) & 0xFF), std::dec);
+      std::isprint(b) ?
+        Logger::message_continue("VALUE (byte): '", b, "' (0x", std::hex, std::setfill('0'), std::setw(2), (static_cast<int32_t>(b) & 0xFF), std::dec, ")") :
+        Logger::message_continue("VALUE (byte): 0x", std::hex, std::setfill('0'), std::setw(2), (static_cast<int32_t>(b) & 0xFF), std::dec);
     }
     else
     {

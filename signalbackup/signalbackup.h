@@ -277,6 +277,9 @@ class SignalBackup
   //void devCustom() const;
   //bool carowit(std::string const &sourcefile, std::string const &sourcepw) const;
   bool custom_hugogithubs();
+
+  // for bug 233/13034
+  bool migrate_to_191();
   /* CUSTOMS */
 
  protected:

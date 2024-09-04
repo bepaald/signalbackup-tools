@@ -70,7 +70,7 @@ class Logger
   {
     std::vector<T> const &data;
     std::string const &delim;
-    VECTOR(std::vector<T> const &v, std::string const &d) :
+    VECTOR(std::vector<T> const &v, std::string const &d = std::string()) :
       data(v),
       delim(d)
     {}

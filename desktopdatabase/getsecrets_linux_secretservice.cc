@@ -217,12 +217,8 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
       }
 
       if (d_dbus_verbose) [[unlikely]]
-      {
-        Logger::message_start(" *** SECRET: ");
-        for (auto c : secret_bytes)
-          Logger::message_continue(c);
-        Logger::message_end();
-      }
+        Logger::message(" *** SECRET: ", Logger::VECTOR(secret_bytes));
+
       secrets->emplace(std::string{secret_bytes.begin(), secret_bytes.end()});
     }
   }

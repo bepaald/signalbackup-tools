@@ -78,52 +78,47 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
   Logger::message("Writing SqlStatementFrame(s)...");
 
   // get and write schema
-  std::string q("SELECT sql, name, type FROM sqlite_master");
   SqliteDB::QueryResults results;
-  d_database.exec(q, &results);
+  d_database.exec("SELECT sql, name, type FROM sqlite_master WHERE sql NOT NULL", &results);
   std::vector<std::string> tables;
-
   for (uint i = 0; i < results.rows(); ++i)
   {
-    if (!results.isNull(i, 0))
+    if (results.valueHasType<std::string>(i, 1) &&
+        (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
+         STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
+      continue;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
+
+    if (results.valueHasType<std::string>(i, 1) &&
+        (results.getValueAs<std::string>(i, 1) != d_mms_table + "_fts" &&
+         STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), d_mms_table + "_fts")))
+      continue;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
+
+    if (results.valueHasType<std::string>(i, 1) &&
+        (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
+         STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "emoji_search")))
+      continue;//std::cout << "Skipping " << results[i][1].second << " because it is emoji_search_ftssecrettable" << std::endl;
+
+    if (results.valueHasType<std::string>(i, 1) &&
+        STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sqlite_"))
     {
-      if (results.valueHasType<std::string>(i, 1) &&
-          (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
-           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sms_fts")))
-        continue;//std::cout << "Skipping " << results[i][1].second << " because it is sms_ftssecrettable" << std::endl;
-
-      if (results.valueHasType<std::string>(i, 1) &&
-          (results.getValueAs<std::string>(i, 1) != d_mms_table + "_fts" &&
-           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), d_mms_table + "_fts")))
-        continue;//std::cout << "Skipping " << results[i][1].second << " because it is mms_ftssecrettable" << std::endl;
-
-      if (results.valueHasType<std::string>(i, 1) &&
-          (results.getValueAs<std::string>(i, 1) != "emoji_search" &&
-           STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "emoji_search")))
-        continue;//std::cout << "Skipping " << results[i][1].second << " because it is emoji_search_ftssecrettable" << std::endl;
-
-      if (results.valueHasType<std::string>(i, 1) &&
-          STRING_STARTS_WITH(results.getValueAs<std::string>(i, 1), "sqlite_"))
-      {
-        // this is normally skipped, but for testing purposes we won't skip if it was found in input
+      // this is normally skipped, but for testing purposes we won't skip if it was found in input
 #ifdef BUILT_FOR_TESTING
-        if (d_found_sqlite_sequence_in_backup)
-          ;
-        else
+      if (d_found_sqlite_sequence_in_backup)
+        ;
+      else
 #endif
-          continue;
-      }
-
-      if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
-        tables.emplace_back(results.getValueAs<std::string>(i, 1));
-
-      SqlStatementFrame newframe;
-      newframe.setStatementField(results.getValueAs<std::string>(i, 0));
-
-      //std::cout << "Writing SqlStatementFrame..." << std::endl;
-      if (!writeEncryptedFrame(outputfile, &newframe))
-        return false;
+        continue;
     }
+
+    if (results.valueHasType<std::string>(i, 2) && results.getValueAs<std::string>(i, 2) == "table")
+      tables.emplace_back(results.getValueAs<std::string>(i, 1));
+
+    SqlStatementFrame newframe;
+    newframe.setStatementField(results.getValueAs<std::string>(i, 0));
+
+    //std::cout << "Writing SqlStatementFrame..." << std::endl;
+    if (!writeEncryptedFrame(outputfile, &newframe))
+      return false;
   }
 
   // write contents of tables
@@ -140,7 +135,8 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
         //table == "sender_key_shared" ||
         //table == "pending_retry_receipts" ||
         //table == "avatar_picker" ||
-        //table == "" ||
+        //table == "remapped_recipients" ||
+        //table == "remapped_threads" ||
         STRING_STARTS_WITH(table, "sms_fts") ||
         STRING_STARTS_WITH(table, d_mms_table + "_fts") ||
         STRING_STARTS_WITH(table, "sqlite_"))

@@ -425,7 +425,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   long long int min = minmax.getValueAs<long long int>(0, "min");
   long long int max = minmax.getValueAs<long long int>(0, "max");
 
-  for (uint i = min; i < max; ++i)
+  for (uint i = min; i <= max; ++i)
   {
     SqliteDB::QueryResults newmmsid;
     if (!d_database.exec("INSERT INTO mms "
@@ -527,17 +527,26 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                          "FROM "
                          "sms "
                          "WHERE "
+#if SQLITE_VERSION_NUMBER < 3035000 // RETURNING was not available prior to 3.35.0
+                         "_id IS ?", i))
+#else
                          "_id IS ? RETURNING _id", i, &newmmsid))
+#endif
     {
       Logger::error("copying sms._id: ", i);
       d_database.exec("ROLLBACK TRANSACTION");
       return false;
     }
 
+#if SQLITE_VERSION_NUMBER < 3035000 // RETURNING was not available prior to 3.35.0
+    if (true)
+    {
+      long long int newestmmsid = d_database.lastId();
+#else
     if (newmmsid.rows())
     {
       long long int newestmmsid = newmmsid.getValueAs<long long int>(0, "_id");
-
+#endif
       // update reactions
       if (!d_database.exec("UPDATE reaction SET message_id = ?, is_mms = 1 WHERE message_id IS ? AND is_mms = 0", {newestmmsid, i}))
       {

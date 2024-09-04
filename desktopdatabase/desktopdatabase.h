@@ -43,10 +43,11 @@ class DesktopDatabase
   bool d_truncate;
   bool d_showkey;
  public:
-  inline DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal,
-                         long long int cipherversion, bool truncate, bool showkey);
+  inline DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal, long long int cipherversion,
+                         bool truncate, bool showkey, bool dbus_verbose);
   inline DesktopDatabase(std::string const &configdir, std::string const &databasedir, std::string const &hexkey,
-                         bool verbose, bool ignorewal, long long int cipherversion, bool truncate, bool showkey);
+                         bool verbose, bool ignorewal, long long int cipherversion, bool truncate, bool showkey,
+                         bool dbus_verbose);
   DesktopDatabase(DesktopDatabase const &other) = delete;
   DesktopDatabase(DesktopDatabase &&other) = delete;
   DesktopDatabase &operator=(DesktopDatabase const &other) = delete;
@@ -81,21 +82,23 @@ class DesktopDatabase
 };
 
 inline DesktopDatabase::DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal,
-                                        long long int cipherversion, bool truncate, bool showkey)
+                                        long long int cipherversion, bool truncate, bool showkey,
+                                        bool dbus_verbose)
   :
-  DesktopDatabase(std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate, showkey)
+  DesktopDatabase(std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate, showkey, dbus_verbose)
 {}
 
 inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir,
                                         std::string const &hexkey, bool verbose, bool ignorewal,
-                                        long long int cipherversion, bool truncate, bool showkey)
+                                        long long int cipherversion, bool truncate, bool showkey,
+                                        bool dbus_verbose)
   :
   d_configdir(configdir),
   d_databasedir(databasedir),
   d_hexkey(hexkey),
   d_ok(false),
   d_verbose(verbose),
-  d_dbus_verbose(false),
+  d_dbus_verbose(dbus_verbose),
   d_ignorewal(ignorewal),
   d_cipherversion(cipherversion),
   d_truncate(truncate),

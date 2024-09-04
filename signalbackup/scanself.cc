@@ -21,12 +21,8 @@
 
 long long int SignalBackup::scanSelf() const
 {
-  // only 'works' on 'newer' versions
-  if (!d_database.containsTable("recipient") ||
-      !d_database.tableContainsColumn("thread", d_thread_recipient_id) ||
-      !d_database.tableContainsColumn(d_mms_table, "quote_author") ||
-      (!d_database.tableContainsColumn(d_mms_table, "reactions") && !d_database.containsTable("reaction")))
-    return -1;
+  if (!d_database.containsTable("recipient"))
+    return false;
 
   ///// FIRST TRY BY GETTING KEY 'account.pni_identity_public_key' FROM KeyValues, and matching it to uuid from identites-table
   std::string identity_public_key;
@@ -61,6 +57,14 @@ long long int SignalBackup::scanSelf() const
     if (selfid != -1)
       return selfid;
   }
+
+
+  // only 'works' on 'newer' versions
+  if (!d_database.tableContainsColumn("thread", d_thread_recipient_id) ||
+      !d_database.tableContainsColumn(d_mms_table, "quote_author") ||
+      (!d_database.tableContainsColumn(d_mms_table, "reactions") && !d_database.containsTable("reaction")))
+    return -1;
+
 
   // in newer databases (>= dbv185), message.from_recipient_id should always be set to self on outgoing messages.
   long long int selfid = d_database.getSingleResultAs<long long int>("SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + " WHERE (" + d_mms_type + " & 0x1f) IN (?, ?, ?, ?, ?, ?, ?, ?)",

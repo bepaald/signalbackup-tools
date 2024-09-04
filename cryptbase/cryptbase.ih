@@ -23,21 +23,6 @@
 
 #include "../logger/logger.h"
 
-#ifndef USE_CRYPTOPP
-
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-
-#else
-
-#include <cryptopp/aes.h>
-#include <cryptopp/ccm.h>
-#include <cryptopp/sha.h>
-// this defines ConstByteParameter which is used in hkfd, probably a bug
-#if (CRYPTOPP_VERSION == 700)
-#include <cryptopp/algparam.h>
-#endif
-#include <cryptopp/hkdf.h>
-
-#endif

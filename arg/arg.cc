@@ -1,22 +1,3 @@
-/*
-  Copyright (C) 2021-2024  Selwin van Dijk
-
-  This file is part of signalbackup-tools.
-
-  signalbackup-tools is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  signalbackup-tools is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
-*/
-
 #include "arg.h"
 
 Arg::Arg(int argc, char *argv[])
@@ -71,6 +52,7 @@ Arg::Arg(int argc, char *argv[])
   d_reordermmssmsids(false),
   d_stoponerror(false),
   d_verbose(false),
+  d_dbusverbose(false),
   d_strugee(-1),
   d_strugee3(-1),
   d_ashmorgan(false),
@@ -131,6 +113,7 @@ Arg::Arg(int argc, char *argv[])
   d_custom_hugogithubs(false),
   d_truncate(true),
   d_skipmessagereorder(false),
+  d_migrate_to_191(false),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -155,7 +138,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_input = arguments[++i];
+        d_input = std::move(arguments[++i]);
       }
       else
       {
@@ -168,7 +151,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_passphrase = arguments[++i];
+        d_passphrase = std::move(arguments[++i]);
       }
       else
       {
@@ -265,7 +248,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_output = arguments[++i];
+        d_output = std::move(arguments[++i]);
       }
       else
       {
@@ -279,7 +262,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_opassphrase = arguments[++i];
+        d_opassphrase = std::move(arguments[++i]);
       }
       else
       {
@@ -292,7 +275,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_source = arguments[++i];
+        d_source = std::move(arguments[++i]);
       }
       else
       {
@@ -305,7 +288,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_sourcepassphrase = arguments[++i];
+        d_sourcepassphrase = std::move(arguments[++i]);
       }
       else
       {
@@ -434,7 +417,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_exportxml = arguments[++i];
+        d_exportxml = std::move(arguments[++i]);
       }
       else
       {
@@ -448,7 +431,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-          d_runsqlquery.push_back(arguments[++i]);
+          d_runsqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -462,7 +445,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-          d_runprettysqlquery.push_back(arguments[++i]);
+          d_runprettysqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -476,7 +459,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-          d_rundtsqlquery.push_back(arguments[++i]);
+          d_rundtsqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -489,7 +472,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-          d_rundtprettysqlquery.push_back(arguments[++i]);
+          d_rundtprettysqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -546,7 +529,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_dumpdesktopdb = arguments[++i];
+        d_dumpdesktopdb = std::move(arguments[++i]);
       }
       else
       {
@@ -559,8 +542,8 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 2)
       {
-        d_desktopdirs_1 = arguments[++i];
-        d_desktopdirs_2 = arguments[++i];
+        d_desktopdirs_1 = std::move(arguments[++i]);
+        d_desktopdirs_2 = std::move(arguments[++i]);
       }
       else
       {
@@ -580,7 +563,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ok = false;
           continue;
         }
-        d_desktopkey = arguments[++i];
+        d_desktopkey = std::move(arguments[++i]);
       }
       else
       {
@@ -603,7 +586,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_dumpmedia = arguments[++i];
+        d_dumpmedia = std::move(arguments[++i]);
       }
       else
       {
@@ -627,7 +610,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_dumpavatars = arguments[++i];
+        d_dumpavatars = std::move(arguments[++i]);
       }
       else
       {
@@ -651,7 +634,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_importcsv = arguments[++i];
+        d_importcsv = std::move(arguments[++i]);
       }
       else
       {
@@ -683,7 +666,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_setselfid = arguments[++i];
+        d_setselfid = std::move(arguments[++i]);
       }
       else
       {
@@ -791,6 +774,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_verbose = false;
       continue;
     }
+    if (option == "--dbusverbose")
+    {
+      d_dbusverbose = true;
+      continue;
+    }
+    if (option == "--no-dbusverbose")
+    {
+      d_dbusverbose = false;
+      continue;
+    }
     if (option == "--strugee")
     {
       if (i < arguments.size() - 1)
@@ -884,7 +877,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ok = false;
           continue;
         }
-        d_onlyolderthan = arguments[++i];
+        d_onlyolderthan = std::move(arguments[++i]);
       }
       else
       {
@@ -904,7 +897,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ok = false;
           continue;
         }
-        d_onlynewerthan = arguments[++i];
+        d_onlynewerthan = std::move(arguments[++i]);
       }
       else
       {
@@ -951,7 +944,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_appendbody = arguments[++i];
+        d_appendbody = std::move(arguments[++i]);
       }
       else
       {
@@ -964,7 +957,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_prependbody = arguments[++i];
+        d_prependbody = std::move(arguments[++i]);
       }
       else
       {
@@ -1123,7 +1116,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_exporthtml = arguments[++i];
+        d_exporthtml = std::move(arguments[++i]);
       }
       else
       {
@@ -1137,7 +1130,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_exportdesktophtml = arguments[++i];
+        d_exportdesktophtml = std::move(arguments[++i]);
       }
       else
       {
@@ -1287,7 +1280,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_exporttxt = arguments[++i];
+        d_exporttxt = std::move(arguments[++i]);
       }
       else
       {
@@ -1301,7 +1294,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_exportdesktoptxt = arguments[++i];
+        d_exportdesktoptxt = std::move(arguments[++i]);
       }
       else
       {
@@ -1378,7 +1371,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_importtelegram = arguments[++i];
+        d_importtelegram = std::move(arguments[++i]);
       }
       else
       {
@@ -1392,7 +1385,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_listjsonchats = arguments[++i];
+        d_listjsonchats = std::move(arguments[++i]);
       }
       else
       {
@@ -1486,6 +1479,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--fulldecode")
     {
       d_fulldecode = true;
+      d_input_required = true;
       continue;
     }
     if (option == "--no-fulldecode")
@@ -1497,7 +1491,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        d_logfile = arguments[++i];
+        d_logfile = std::move(arguments[++i]);
       }
       else
       {
@@ -1537,6 +1531,17 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_skipmessagereorder = false;
       continue;
     }
+    if (option == "--migrate_to_191")
+    {
+      d_migrate_to_191 = true;
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--no-migrate_to_191")
+    {
+      d_migrate_to_191 = false;
+      continue;
+    }
     if (option[0] != '-')
     {
       if (d_positionals >= 2)
@@ -1546,12 +1551,12 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       if (i == 0)
       {
-        d_input = arguments[i];
+        d_input = std::move(option);
         //std::cout << "Got 'input' at pos " << i << std::endl;
       }
       else if (i == 1)
       {
-        d_passphrase = arguments[i];
+        d_passphrase = std::move(option);
         //std::cout << "Got 'passphrase' at pos " << i << std::endl;
       }
       else
