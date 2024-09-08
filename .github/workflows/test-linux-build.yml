@@ -44,7 +44,7 @@ jobs:
 
       - name: Build new script
         run: |
-          bash BUILDSCRIPT_MULTIPROC.bash44
+          bash BUILDSCRIPT.bash
           
   do-build-tests-legacy:
     runs-on: ubuntu-20.04
@@ -58,4 +58,4 @@ jobs:
 
       - name: Build new script (legacy)
         run: |
-          CXXFLAGSEXTRA=-Wno-attributes bash BUILDSCRIPT_MULTIPROC.bash44
+          CXXFLAGSEXTRA=-Wno-attributes bash BUILDSCRIPT.bash
