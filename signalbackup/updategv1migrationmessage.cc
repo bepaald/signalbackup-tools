@@ -42,7 +42,7 @@ void SignalBackup::updateGV1MigrationMessage(long long int id1, long long int id
         unsigned int body_idx = 0;
         while (true)
         {
-          if (!std::isdigit(body[body_idx]) || body_idx >= body.length())
+          if (body_idx >= body.length() || !std::isdigit(body[body_idx]))
           {
             // deal with any number we have
             if (tmp.size())

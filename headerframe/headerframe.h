@@ -37,8 +37,8 @@ class HeaderFrame : public BackupFrame
 
  public:
   inline explicit HeaderFrame(uint64_t count = 0);
-  inline HeaderFrame(unsigned char *data, size_t length, uint64_t count = 0);
-  inline virtual ~HeaderFrame() = default;
+  inline HeaderFrame(unsigned char const *data, size_t length, uint64_t count = 0);
+  inline virtual ~HeaderFrame() override = default;
   inline virtual HeaderFrame *clone() const override;
   inline virtual HeaderFrame *move_clone() override;
   inline virtual FRAMETYPE frameType() const override;
@@ -47,7 +47,7 @@ class HeaderFrame : public BackupFrame
   inline unsigned char *salt() const;
   inline uint64_t salt_length() const;
   inline uint32_t version() const;
-  inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
+  inline static BackupFrame *create(unsigned char const *data, size_t length, uint64_t count = 0);
   //inline static BackupFrame *createFromHumanData(std::ifstream *datastream, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
@@ -73,7 +73,7 @@ inline HeaderFrame *HeaderFrame::move_clone()
   return new HeaderFrame(std::move(*this));
 }
 
-inline HeaderFrame::HeaderFrame(unsigned char *data, size_t length, uint64_t count)
+inline HeaderFrame::HeaderFrame(unsigned char const *data, size_t length, uint64_t count)
   :
   BackupFrame(data, length, count)
 {
@@ -125,7 +125,7 @@ inline uint32_t HeaderFrame::version() const
   return 0;
 }
 
-inline BackupFrame *HeaderFrame::create(unsigned char *data, size_t length, uint64_t count) // static
+inline BackupFrame *HeaderFrame::create(unsigned char const *data, size_t length, uint64_t count) // static
 {
   return new HeaderFrame(data, length, count);
 }

@@ -49,7 +49,7 @@ class AndroidAttachmentReader : public AttachmentReader<AndroidAttachmentReader>
   inline AndroidAttachmentReader(AndroidAttachmentReader &&other);
   inline AndroidAttachmentReader &operator=(AndroidAttachmentReader const &other);
   inline AndroidAttachmentReader &operator=(AndroidAttachmentReader &&other);
-  inline virtual ~AndroidAttachmentReader();
+  inline virtual ~AndroidAttachmentReader() override;
   inline virtual int getAttachment(FrameWithAttachment *frame,  bool verbose) override;
 };
 

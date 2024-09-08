@@ -32,15 +32,15 @@ class FileEncryptor : public CryptBase
   std::string d_passphrase;
   uint32_t d_backupfileversion;
  public:
-  FileEncryptor(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
+  FileEncryptor(std::string const &passphrase, unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   explicit FileEncryptor(std::string const &passphrase, uint32_t backupfileversion, bool verbose);
   FileEncryptor();
   inline FileEncryptor(FileEncryptor const &other);
   inline FileEncryptor &operator=(FileEncryptor const &other);
   inline FileEncryptor(FileEncryptor &&other);
   inline FileEncryptor &operator=(FileEncryptor &&other);
-  bool init(std::string const &passphrase, unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
-  bool init(unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size);
+  inline bool init(std::string const &passphrase, unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
+  bool init(unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size);
   inline std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<std::shared_ptr<unsigned char[]>, uint64_t> const &data);
   inline std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<unsigned char *, uint64_t> const &data);
   std::pair<unsigned char *, uint64_t> encryptFrame(unsigned char *data, uint64_t length);
@@ -81,6 +81,14 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other)
     d_backupfileversion = std::move(other.d_backupfileversion);
   }
   return *this;
+}
+
+inline bool FileEncryptor::init(std::string const &passphrase, unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose)
+{
+  d_passphrase = passphrase;
+  d_backupfileversion = backupfileversion;
+  d_verbose = verbose;
+  return init(salt, salt_size, iv, iv_size);
 }
 
 inline std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(std::pair<unsigned char *, uint64_t> const &data)

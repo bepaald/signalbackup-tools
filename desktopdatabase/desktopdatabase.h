@@ -54,8 +54,8 @@ class DesktopDatabase
   DesktopDatabase &operator=(DesktopDatabase &&other) = delete;
   inline bool ok() const;
   inline bool dumpDb(std::string const &file, bool overwrite) const;
-  inline std::string getConfigDir() const;
-  inline std::string getDatabaseDir() const;
+  inline std::string const &getConfigDir() const;
+  inline std::string const &getDatabaseDir() const;
   inline void runQuery(std::string const &q, bool pretty = true) const;
 
  private:
@@ -172,12 +172,12 @@ inline bool DesktopDatabase::dumpDb(std::string const &file, bool overwrite) con
   return true;
 }
 
-inline std::string DesktopDatabase::getConfigDir() const
+inline std::string const &DesktopDatabase::getConfigDir() const
 {
   return d_configdir;
 }
 
-inline std::string DesktopDatabase::getDatabaseDir() const
+inline std::string const &DesktopDatabase::getDatabaseDir() const
 {
   return d_databasedir;
 }

@@ -40,11 +40,11 @@ class AvatarFrame : public FrameWithAttachment
   std::optional<std::string> d_mimetype;
  public:
   inline explicit AvatarFrame(uint64_t count = 0);
-  inline AvatarFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
-  inline virtual ~AvatarFrame() = default;
+  inline AvatarFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline virtual ~AvatarFrame() override = default;
   inline virtual AvatarFrame *clone() const override;
   inline virtual AvatarFrame *move_clone() override;
-  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
+  inline static BackupFrame *create(unsigned char const *bytes, size_t length, uint64_t count);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t length() const;
@@ -67,7 +67,7 @@ inline AvatarFrame::AvatarFrame(uint64_t count)
   FrameWithAttachment(count)
 {}
 
-inline AvatarFrame::AvatarFrame(unsigned char *bytes, size_t length, uint64_t count)
+inline AvatarFrame::AvatarFrame(unsigned char const *bytes, size_t length, uint64_t count)
   :
   FrameWithAttachment(bytes, length, count)
 {}
@@ -82,7 +82,7 @@ inline AvatarFrame *AvatarFrame::move_clone()
   return new AvatarFrame(std::move(*this));
 }
 
-inline BackupFrame *AvatarFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
+inline BackupFrame *AvatarFrame::create(unsigned char const *bytes, size_t length, uint64_t count) // static
 {
   return new AvatarFrame(bytes, length, count);
 }

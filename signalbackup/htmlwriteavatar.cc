@@ -25,7 +25,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
                                           std::string const &threaddir, bool overwrite, bool append) const
 {
   std::string avatar;
-  auto pos = d_avatars.end();
+  decltype(d_avatars.end()) pos;
   if ((pos =
        std::find_if(d_avatars.begin(), d_avatars.end(),
                     [recipient_id](auto const &p) { return p.first == bepaald::toString(recipient_id); })) != d_avatars.end())
@@ -78,8 +78,8 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     }
     else
     {
-      unsigned char *avatardata = a->attachmentData();
-      if (!avatardata || !avatarstream.write(reinterpret_cast<char *>(avatardata), a->attachmentSize()))
+      unsigned char const *avatardata = a->attachmentData();
+      if (!avatardata || !avatarstream.write(reinterpret_cast<char const *>(avatardata), a->attachmentSize()))
         return std::string();
     }
   }

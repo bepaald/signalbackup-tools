@@ -38,16 +38,16 @@ class StickerFrame : public FrameWithAttachment
   std::optional<std::string> d_mimetype;
  public:
   inline explicit StickerFrame(uint64_t count = 0);
-  inline StickerFrame(unsigned char *data, size_t length, uint64_t count = 0);
+  inline StickerFrame(unsigned char const *data, size_t length, uint64_t count = 0);
   inline StickerFrame(StickerFrame &&other) = default;
   inline StickerFrame &operator=(StickerFrame &&other) = default;
   inline StickerFrame(StickerFrame const &other) = default;
   inline StickerFrame &operator=(StickerFrame const &other) = default;
-  inline virtual ~StickerFrame() = default;
+  inline virtual ~StickerFrame() override = default;
   inline virtual StickerFrame *clone() const override;
   inline virtual StickerFrame *move_clone() override;
   inline virtual FRAMETYPE frameType() const override;
-  inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
+  inline static BackupFrame *create(unsigned char const *data, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual uint32_t attachmentSize() const override;
   inline uint32_t length() const;
@@ -68,7 +68,7 @@ inline StickerFrame::StickerFrame(uint64_t count)
   FrameWithAttachment(count)
 {}
 
-inline StickerFrame::StickerFrame(unsigned char *data, size_t length, uint64_t count)
+inline StickerFrame::StickerFrame(unsigned char const *data, size_t length, uint64_t count)
   :
   FrameWithAttachment(data, length, count)
 {}
@@ -88,7 +88,7 @@ inline BackupFrame::FRAMETYPE StickerFrame::frameType() const // virtual overrid
   return FRAMETYPE::STICKER;
 }
 
-inline BackupFrame *StickerFrame::create(unsigned char *data, size_t length, uint64_t count) // static
+inline BackupFrame *StickerFrame::create(unsigned char const *data, size_t length, uint64_t count) // static
 {
   return new StickerFrame(data, length, count);
 }

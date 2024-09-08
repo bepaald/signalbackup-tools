@@ -19,7 +19,7 @@
 
 #include "fileencryptor.ih"
 
-bool FileEncryptor::init(unsigned char *salt, uint64_t salt_size, unsigned char *iv, uint64_t iv_size)
+bool FileEncryptor::init(unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size)
 {
   // set salt;
   d_salt_size = salt_size;

@@ -254,7 +254,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       //std::cout << "CASE 3" << std::endl;
       // (*ranges)[i].replacement is automatically kept if it has one
       (*ranges)[i].post = (*ranges)[i].post + (*ranges)[i - 1].post;
-      (*ranges)[1 - 1].post = "";
+      (*ranges)[i - 1].post = "";
       (*ranges)[i - 1].length = (*ranges)[i].start - (*ranges)[i - 1].start;
       return prepRanges2(ranges);
     }

@@ -45,13 +45,13 @@ class DesktopAttachmentReader : public AttachmentReader<DesktopAttachmentReader>
   std::string d_key;
   uint64_t d_size;
  public:
-  inline DesktopAttachmentReader(std::string const &path);
+  inline explicit DesktopAttachmentReader(std::string const &path);
   inline DesktopAttachmentReader(int version, std::string const &path, std::string const &key, uint64_t size);
   inline DesktopAttachmentReader(DesktopAttachmentReader const &other) = default;
   inline DesktopAttachmentReader(DesktopAttachmentReader &&other) = default;
   inline DesktopAttachmentReader &operator=(DesktopAttachmentReader const &other) = default;
   inline DesktopAttachmentReader &operator=(DesktopAttachmentReader &&other) = default;
-  inline virtual ~DesktopAttachmentReader() = default;
+  inline virtual ~DesktopAttachmentReader() override = default;
   inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) override;
   int getAttachmentData(unsigned char **data, bool verbose);
   //decryptdata

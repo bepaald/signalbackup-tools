@@ -29,7 +29,7 @@ bool SignalBackup::makeFilenameUnique(std::string const &path, std::string *file
     std::regex numberedfile(".*( \\(([0-9]*)\\))$");
     std::smatch sm;
     std::string filestem(p.stem().string());
-    std::string ext(p.extension().string());
+    //std::string ext(p.extension().string());
     int counter = 2;
     if (regex_match(filestem, sm, numberedfile) && sm.size() >= 3 && sm[2].matched)
     {

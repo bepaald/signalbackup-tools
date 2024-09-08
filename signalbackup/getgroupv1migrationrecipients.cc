@@ -41,7 +41,7 @@ void SignalBackup::getGroupV1MigrationRecipients(std::set<long long int> *refere
         unsigned int body_idx = 0;
         while (true)
         {
-          if (!std::isdigit(body[body_idx]) || body_idx >= body.length()) // we are reading '|', ',' or end of string
+          if (body_idx >= body.length() || !std::isdigit(body[body_idx])) // we are reading '|', ',' or end of string
           {
             // deal with any number we have
             if (tmp.size())

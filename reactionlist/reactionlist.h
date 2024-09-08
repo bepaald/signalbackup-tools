@@ -41,7 +41,7 @@ class ReactionList : public ProtoBufParser<std::vector<ProtoBufParser<protobuffe
                                                                       protobuffer::optional::UINT64>>>
 {
  public:
-  inline ReactionList(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
+  inline explicit ReactionList(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
 
   inline unsigned int numReactions() const;
   inline std::string getEmoji(int idx) const;

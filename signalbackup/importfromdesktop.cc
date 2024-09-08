@@ -1391,8 +1391,6 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
               }
               //qbrres.prettyPrint();
 
-
-              long long int rec_id = -1;
               if (qbrres.isNull(0, "qbr_style"))
               {
                 if (qbrres.isNull(0, "qbr_uuid")) [[unlikely]] // if style = null, this must be a mention
@@ -1404,7 +1402,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                   continue;
                 }
 
-                rec_id = getRecipientIdFromUuidMapped(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
+                long long int rec_id = getRecipientIdFromUuidMapped(qbrres.valueAsString(0, "qbr_uuid"), &recipientmap, createmissingcontacts);
                 if (rec_id == -1)
                 {
                   if (createmissingcontacts)

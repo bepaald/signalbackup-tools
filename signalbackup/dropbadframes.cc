@@ -28,13 +28,12 @@ bool SignalBackup::dropBadFrames()
   for (auto it = d_badattachments.begin(); it != d_badattachments.end(); )
   {
     uint32_t rowid = it->first;
-    int64_t uniqueid = it->second;
 
     SqliteDB::QueryResults results;
     std::string query = "SELECT " + d_part_mid + " FROM " + d_part_table
       + " WHERE _id = " + bepaald::toString(rowid);
     if (d_database.tableContainsColumn(d_part_table, "unique_id"))
-      query += " AND unique_id = " + bepaald::toString(uniqueid);
+      query += " AND unique_id = " + bepaald::toString(it->second);
 
     long long int mid = -1;
     d_database.exec(query, &results);

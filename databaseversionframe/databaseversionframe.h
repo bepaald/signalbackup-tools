@@ -33,11 +33,11 @@ class DatabaseVersionFrame : public BackupFrame
   static Registrar s_registrar;
  public:
   inline explicit DatabaseVersionFrame(uint64_t count = 0);
-  inline DatabaseVersionFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
-  inline virtual ~DatabaseVersionFrame() = default;
+  inline DatabaseVersionFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline virtual ~DatabaseVersionFrame() override = default;
   inline virtual DatabaseVersionFrame *clone() const override;
   inline virtual DatabaseVersionFrame *move_clone() override;
-  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
+  inline static BackupFrame *create(unsigned char const *bytes, size_t length, uint64_t count = 0);
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t version() const;
   inline virtual void printInfo() const override;
@@ -55,7 +55,7 @@ inline DatabaseVersionFrame::DatabaseVersionFrame(uint64_t count)
   BackupFrame(count)
 {}
 
-inline DatabaseVersionFrame::DatabaseVersionFrame(unsigned char *bytes, size_t length, uint64_t count)
+inline DatabaseVersionFrame::DatabaseVersionFrame(unsigned char const *bytes, size_t length, uint64_t count)
   :
   BackupFrame(bytes, length, count)
 {
@@ -72,7 +72,7 @@ inline DatabaseVersionFrame *DatabaseVersionFrame::move_clone()
   return new DatabaseVersionFrame(std::move(*this));
 }
 
-inline BackupFrame *DatabaseVersionFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
+inline BackupFrame *DatabaseVersionFrame::create(unsigned char const *bytes, size_t length, uint64_t count) // static
 {
   return new DatabaseVersionFrame(bytes, length, count);
 }

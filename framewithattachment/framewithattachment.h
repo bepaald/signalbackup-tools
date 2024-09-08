@@ -37,12 +37,12 @@ class FrameWithAttachment : public BackupFrame
 
  public:
   inline explicit FrameWithAttachment(uint64_t count = 0);
-  inline FrameWithAttachment(unsigned char *bytes, size_t length, uint64_t count = 0);
+  inline FrameWithAttachment(unsigned char const *bytes, size_t length, uint64_t count = 0);
   inline FrameWithAttachment(FrameWithAttachment &&other);
   inline FrameWithAttachment &operator=(FrameWithAttachment &&other);
   inline FrameWithAttachment(FrameWithAttachment const &other);
   inline FrameWithAttachment &operator=(FrameWithAttachment const &other);
-  inline virtual ~FrameWithAttachment();
+  inline virtual ~FrameWithAttachment() override;
   bool setAttachmentDataBacked(unsigned char *data, long long int length) override;
   bool setAttachmentDataUnbacked(unsigned char const *data, long long int length);
   inline uint32_t length() const;
@@ -62,7 +62,7 @@ inline FrameWithAttachment::FrameWithAttachment(uint64_t count)
   d_attachmentreader(nullptr)
 {}
 
-inline FrameWithAttachment::FrameWithAttachment(unsigned char *bytes, size_t length, uint64_t count)
+inline FrameWithAttachment::FrameWithAttachment(unsigned char const *bytes, size_t length, uint64_t count)
   :
   BackupFrame(bytes, length, count),
   d_attachmentdata(nullptr),

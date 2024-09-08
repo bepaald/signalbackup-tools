@@ -37,15 +37,15 @@ class AttachmentFrame : public FrameWithAttachment
   static Registrar s_registrar;
  public:
   inline explicit AttachmentFrame(uint64_t count = 0);
-  inline AttachmentFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
+  inline AttachmentFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
   inline AttachmentFrame(AttachmentFrame &&other) = default;
   inline AttachmentFrame &operator=(AttachmentFrame &&other) = default;
   inline AttachmentFrame(AttachmentFrame const &other) = default;
   inline AttachmentFrame &operator=(AttachmentFrame const &other) = default;
-  inline virtual ~AttachmentFrame() = default;
+  inline virtual ~AttachmentFrame() override = default;
   inline virtual AttachmentFrame *clone() const override;
   inline virtual AttachmentFrame *move_clone() override;
-  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
+  inline static BackupFrame *create(unsigned char const *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline uint32_t length() const;
@@ -69,7 +69,7 @@ inline AttachmentFrame::AttachmentFrame(uint64_t count)
   FrameWithAttachment(count)
 {}
 
-inline AttachmentFrame::AttachmentFrame(unsigned char *bytes, size_t length, uint64_t count)
+inline AttachmentFrame::AttachmentFrame(unsigned char const *bytes, size_t length, uint64_t count)
   :
   FrameWithAttachment(bytes, length, count)
 {}
@@ -84,7 +84,7 @@ inline AttachmentFrame *AttachmentFrame::move_clone()
   return new AttachmentFrame(std::move(*this));
 }
 
-inline BackupFrame *AttachmentFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
+inline BackupFrame *AttachmentFrame::create(unsigned char const *bytes, size_t length, uint64_t count) // static
 {
   return new AttachmentFrame(bytes, length, count);
 }

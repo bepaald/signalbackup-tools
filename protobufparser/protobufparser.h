@@ -182,9 +182,9 @@ class ProtoBufParser
 
  public:
   inline ProtoBufParser();
-  inline ProtoBufParser(std::string const &base64);
+  inline explicit ProtoBufParser(std::string const &base64);
   explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
-  explicit ProtoBufParser(unsigned char *data, int64_t size);
+  explicit ProtoBufParser(unsigned char const *data, int64_t size);
   inline ProtoBufParser(ProtoBufParser const &other);
   inline ProtoBufParser &operator=(ProtoBufParser const &other);
   inline ProtoBufParser(ProtoBufParser &&other);
@@ -197,7 +197,7 @@ class ProtoBufParser
   inline unsigned char *data() const;
   inline std::string getDataString() const;
   inline void setData(std::string const &base64);
-  inline void setData(unsigned char *data, int64_t size);
+  inline void setData(unsigned char const *data, int64_t size);
 
   template <typename T>
   inline typename ProtoBufParserReturn::item_return<T, false>::type getFieldAs(int num) const;
@@ -234,8 +234,8 @@ class ProtoBufParser
  private:
   template <unsigned int idx, typename T>
   inline bool addFieldInternal(T const &value);
-  int64_t readVarInt(int *pos, unsigned char *data, int size, bool zigzag = false) const;
-  int64_t getVarIntFieldLength(int pos, unsigned char *data, int size) const;
+  int64_t readVarInt(int *pos, unsigned char const *data, int size, bool zigzag = false) const;
+  int64_t getVarIntFieldLength(int pos, unsigned char const *data, int size) const;
   std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint) const;
   std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint, int *pos) const;
   void getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const;
@@ -333,9 +333,9 @@ ProtoBufParser<Spec...>::ProtoBufParser(std::string const &base64)
   d_data(nullptr),
   d_size(0)
 {
-  std::pair<unsigned char *, size_t> data = Base64::base64StringToBytes(base64);
-  d_data = data.first;
-  d_size = data.second;
+  std::pair<unsigned char *, size_t> l_data = Base64::base64StringToBytes(base64);
+  d_data = l_data.first;
+  d_size = l_data.second;
 
   //std::cout << "INPUT: " << bepaald::bytesToHexString(d_data, d_size) << std::endl;
 }
@@ -347,7 +347,7 @@ ProtoBufParser<Spec...>::ProtoBufParser(std::pair<std::shared_ptr<unsigned char 
 {}
 
 template <typename... Spec>
-ProtoBufParser<Spec...>::ProtoBufParser(unsigned char *data, int64_t size)
+ProtoBufParser<Spec...>::ProtoBufParser(unsigned char const *data, int64_t size)
   :
   d_data(nullptr),
   d_size(size)
@@ -390,14 +390,14 @@ inline void ProtoBufParser<Spec...>::setData(std::string const &base64)
   if (d_data)
     delete[] d_data;
 
-  std::pair<unsigned char *, size_t> data = Base64::base64StringToBytes(base64);
+  std::pair<unsigned char *, size_t> l_data = Base64::base64StringToBytes(base64);
 
-  d_data = data.first;
-  d_size = data.second;
+  d_data = l_data.first;
+  d_size = l_data.second;
 }
 
 template <typename... Spec>
-inline void ProtoBufParser<Spec...>::setData(unsigned char *data, int64_t size)
+inline void ProtoBufParser<Spec...>::setData(unsigned char const *data, int64_t size)
 {
   // destroy old
   if (d_data)
@@ -606,8 +606,8 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
 
       if constexpr (std::is_constructible<T, char *, int64_t>::value) // meant for probably for std::strings
       {
-        std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
-        T tmp(reinterpret_cast<char *>(data.first), data.second);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        T tmp(reinterpret_cast<char *>(l_data.first), l_data.second);
 
         //std::cout << "Created tmp1: " << tmp << std::endl;
 
@@ -616,38 +616,38 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
       }
       else if constexpr (std::is_same<T, std::pair<char *, uint64_t>>::value)
       {
-        std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
-        if (value->second == data.second && std::memcmp(reinterpret_cast<char *>(value->first), data.first, data.second) == 0)
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        if (value->second == l_data.second && std::memcmp(reinterpret_cast<char *>(value->first), l_data.first, l_data.second) == 0)
           del = true;
       }
       else if constexpr (std::is_same<T, std::pair<unsigned char *, uint64_t>>::value)
       {
-        std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
-        if (value->second == data.second && std::memcmp(value->first, data.first, data.second) == 0)
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        if (value->second == l_data.second && std::memcmp(value->first, l_data.first, l_data.second) == 0)
           del = true;
       }
       else if constexpr (is_specialization_of<ProtoBufParser, T>::value)
       {
         //std::cout << "YO666" << std::endl;
-        std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
-        T tmp(data.first, data.second);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        T tmp(l_data.first, l_data.second);
         if (tmp == *value)
           del = true;
       }
       else if constexpr (std::is_integral<T>::value)
       {
-        std::pair<unsigned char *, uint64_t> data = getField(num, &isvarint, &tmppos);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
         if (isvarint)
         {
           int lpos = 0;
-          T vint = readVarInt(&lpos, data.first, data.second, false); // zigzag not (yet) supported
+          T vint = readVarInt(&lpos, l_data.first, l_data.second, false); // zigzag not (yet) supported
           if (vint == *value)
             del = true;
         }
         else // fixed numerical (int32 (enum), int64, float or double)
         {
           T tmp = 0;
-          std::memcpy(reinterpret_cast<char *>(&tmp), reinterpret_cast<char *>(data.first), data.second);
+          std::memcpy(reinterpret_cast<char *>(&tmp), reinterpret_cast<char *>(l_data.first), l_data.second);
           if (tmp == *value)
             del = true;
         }
@@ -950,11 +950,11 @@ inline typename std::enable_if<std::is_same<typename std::remove_reference<declt
 }
 
 template <typename... Spec>
-int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char *data, int size, bool zigzag) const
+int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char const *data, int size, bool zigzag) const
 {
   uint64_t value = 0;
   uint64_t times = 0;
-  while ((data[*pos]) & 0b10000000 && *pos < size)
+  while (*pos < size && (data[*pos]) & 0b10000000)
     value |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << (times++ * 7));
   value |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << (times * 7));
 
@@ -965,10 +965,10 @@ int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char *data, int s
 }
 
 template <typename... Spec>
-int64_t ProtoBufParser<Spec...>::getVarIntFieldLength(int pos, unsigned char *data, int size) const
+int64_t ProtoBufParser<Spec...>::getVarIntFieldLength(int pos, unsigned char const *data, int size) const
 {
   uint64_t length = 0;
-  while ((data[pos]) & 0b10000000 && pos < size)
+  while (pos < size && (data[pos]) & 0b10000000)
   {
     ++length;
     ++pos;
@@ -986,8 +986,8 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
     int32_t wiretype = d_data[localpos] & 0b00000000000000000000000000000111;
     int fieldshift = 4;
     unsigned int localpos2 = localpos;
-    while (d_data[localpos2] & 0b00000000000000000000000010000000 && // skipping the shift
-           localpos2 < d_size - 1)
+    while (localpos2 < d_size - 1 &&
+           d_data[localpos2] & 0b00000000000000000000000010000000) // skipping the shift
     {
       field |= (d_data[++localpos2] & 0b00000000000000000000000001111111) << fieldshift;
       fieldshift += 7;
@@ -1060,7 +1060,6 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       {
         Logger::error("Unknown wiretype: ", wiretype);
         return;
-        break;
       }
     }
   }
@@ -1153,8 +1152,8 @@ bool ProtoBufParser<Spec...>::fieldExists(int num) const
     int32_t field    = (d_data[pos] & 0b00000000000000000000000001111000) >> 3;
     int32_t wiretype = d_data[pos] & 0b00000000000000000000000000000111;
     int fieldshift = 4;
-    while (d_data[pos] & 0b00000000000000000000000010000000 && // skipping the shift
-           pos < d_size - 1)
+    while (pos < d_size - 1 &&
+           d_data[pos] & 0b00000000000000000000000010000000) // skipping the shift
     {
       field |= (d_data[++pos] & 0b00000000000000000000000001111111) << fieldshift;
       fieldshift += 7;

@@ -416,10 +416,11 @@ class SignalBackup
   void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,
                                long long int message_id, bool isgroup, long long int read_count,
                                long long int delivered_count, long long int timestamp, int indent) const;
+
   void HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                      std::map<long long int, RecipientInfo> *recipientinfo, long long int notetoself_tid, bool calllog,
-                      bool searchpage, bool overwrite, bool stickerpacks, bool blocked, bool fullcontacts,
-                      bool settings, bool append, bool light, bool themeswitching, std::string const &exportdetails) const;
+                      std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid, bool calllog,
+                      bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
+                      bool append, bool light, bool themeswitching, std::string const &exportdetails) const;
   void HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const;
   void HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                         std::string const &datewhereclause, std::map<long long int, RecipientInfo> *recipientinfo,
@@ -494,9 +495,16 @@ class SignalBackup
 // ONLY FOR DUMMYBACKUP
 inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress)
   :
+  d_found_sqlite_sequence_in_backup(false),
+  d_ok(false),
+  d_databaseversion(-1),
+  d_backupfileversion(-1),
   d_showprogress(showprogress),
+  d_stoponerror(false),
   d_verbose(verbose),
-  d_truncate(truncate)
+  d_truncate(truncate),
+  d_fulldecode(false),
+  d_selfid(-1)
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,

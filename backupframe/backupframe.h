@@ -59,11 +59,11 @@ class BackupFrame
   };
 
  protected:
-  inline static std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> &s_registry();
+  inline static std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char const *, size_t, uint64_t)> &s_registry();
 
   struct Registrar
   {
-    Registrar(FRAMETYPE ft, BackupFrame *(*func)(unsigned char *, size_t, uint64_t))
+    Registrar(FRAMETYPE ft, BackupFrame *(*func)(unsigned char const *, size_t, uint64_t))
     {
       DEBUGOUT("Registering class type: ", ft);
       s_registry()[ft] = func;
@@ -75,7 +75,7 @@ class BackupFrame
   size_t d_constructedsize;
  public:
   explicit inline BackupFrame(uint64_t count);
-  inline BackupFrame(unsigned char *data, size_t length, uint64_t count);
+  inline BackupFrame(unsigned char const *data, size_t length, uint64_t count);
   inline BackupFrame(BackupFrame &&other);
   inline BackupFrame &operator=(BackupFrame &&other);
   inline BackupFrame(BackupFrame const &other);
@@ -86,8 +86,8 @@ class BackupFrame
   inline bool ok();
   inline static int getFieldnumber(unsigned char head);
   inline static unsigned int wiretype(unsigned char head);
-  inline static int64_t getLength(unsigned char *data, unsigned int *offset, unsigned int totallength);
-  inline static int64_t getVarint(unsigned char *data, unsigned int *offset, unsigned int totallength);
+  inline static int64_t getLength(unsigned char const *data, unsigned int *offset, unsigned int totallength);
+  inline static int64_t getVarint(unsigned char const *data, unsigned int *offset, unsigned int totallength);
   virtual FRAMETYPE frameType() const = 0;
   inline std::string frameTypeString() const;
   inline static BackupFrame *instantiate(FRAMETYPE, unsigned char *data, size_t length, uint64_t count = 0);
@@ -105,7 +105,7 @@ class BackupFrame
   inline uint64_t bytesToUint64(unsigned char const *data, size_t len) const;
   inline int32_t bytesToInt32(unsigned char const *data, size_t len) const;
   inline int64_t bytesToInt64(unsigned char const *data, size_t len) const;
-  bool init(unsigned char *data, size_t length, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata);
+  bool init(unsigned char const *data, size_t length, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata);
   template <typename T>
   inline void intTypeToBytes(T val, unsigned char *b);
   inline uint64_t putVarInt(uint64_t val, unsigned char *mem) const;
@@ -118,12 +118,12 @@ class BackupFrame
   inline uint64_t putFixed64Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
 
  private:
-  inline static int64_t getLengthOrVarint(unsigned char *data, unsigned int *offset, unsigned int totallength);
+  inline static int64_t getLengthOrVarint(unsigned char const *data, unsigned int *offset, unsigned int totallength);
 };
 
-inline std::unordered_map<BackupFrame::FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> &BackupFrame::s_registry() // static
+inline std::unordered_map<BackupFrame::FRAMETYPE, BackupFrame *(*)(unsigned char const *, size_t, uint64_t)> &BackupFrame::s_registry() // static
 {
-  static std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char *, size_t, uint64_t)> impl;
+  static std::unordered_map<FRAMETYPE, BackupFrame *(*)(unsigned char const *, size_t, uint64_t)> impl;
   return impl;
 }
 
@@ -134,7 +134,7 @@ inline BackupFrame::BackupFrame(uint64_t num)
   d_constructedsize(0)
 {}
 
-inline BackupFrame::BackupFrame(unsigned char *data, size_t l, uint64_t num)
+inline BackupFrame::BackupFrame(unsigned char const *data, size_t l, uint64_t num)
   :
   d_ok(false),
   d_count(num),
@@ -245,12 +245,12 @@ inline unsigned int BackupFrame::wiretype(unsigned char head) // static
   return (head & 0b00000111);
 }
 
-inline int64_t BackupFrame::getLength(unsigned char *data, unsigned int *offset, unsigned int totallength) // static
+inline int64_t BackupFrame::getLength(unsigned char const *data, unsigned int *offset, unsigned int totallength) // static
 {
   return getLengthOrVarint(data, offset, totallength);
 }
 
-inline int64_t BackupFrame::getVarint(unsigned char *data, unsigned int *offset, unsigned int totallength) // static
+inline int64_t BackupFrame::getVarint(unsigned char const *data, unsigned int *offset, unsigned int totallength) // static
 {
   return getLengthOrVarint(data, offset, totallength);
 }
@@ -304,7 +304,7 @@ inline std::string BackupFrame::frameTypeString() const
   return "Unknown frame type";
 }
 
-inline int64_t BackupFrame::getLengthOrVarint(unsigned char *data, unsigned int *offset, unsigned int totallength) // static
+inline int64_t BackupFrame::getLengthOrVarint(unsigned char const *data, unsigned int *offset, unsigned int totallength) // static
 {
   if (*offset >= totallength)
     return -1;

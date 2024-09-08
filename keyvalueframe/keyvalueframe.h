@@ -40,11 +40,11 @@ class KeyValueFrame : public BackupFrame
   static Registrar s_registrar;
  public:
   inline explicit KeyValueFrame(uint64_t count = 0);
-  inline KeyValueFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
-  inline virtual ~KeyValueFrame() = default;
+  inline KeyValueFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline virtual ~KeyValueFrame() override = default;
   inline virtual KeyValueFrame *clone() const override;
   inline virtual KeyValueFrame *move_clone() override;
-  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count = 0);
+  inline static BackupFrame *create(unsigned char const *bytes, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
@@ -63,7 +63,7 @@ inline KeyValueFrame::KeyValueFrame(uint64_t count)
   BackupFrame(count)
 {}
 
-inline KeyValueFrame::KeyValueFrame(unsigned char *bytes, size_t length, uint64_t count)
+inline KeyValueFrame::KeyValueFrame(unsigned char const *bytes, size_t length, uint64_t count)
   :
   BackupFrame(bytes, length, count)
 {}
@@ -78,7 +78,7 @@ inline KeyValueFrame *KeyValueFrame::move_clone()
   return new KeyValueFrame(std::move(*this));
 }
 
-inline BackupFrame *KeyValueFrame::create(unsigned char *bytes, size_t length, uint64_t count)
+inline BackupFrame *KeyValueFrame::create(unsigned char const *bytes, size_t length, uint64_t count)
 {
   return new KeyValueFrame(bytes, length, count);
 }

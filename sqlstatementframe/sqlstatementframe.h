@@ -59,17 +59,17 @@ class SqlStatementFrame : public BackupFrame
 
  public:
   inline SqlStatementFrame();
-  inline SqlStatementFrame(unsigned char *data, size_t length, uint64_t count = 0);
+  inline SqlStatementFrame(unsigned char const *data, size_t length, uint64_t count = 0);
   inline SqlStatementFrame(SqlStatementFrame &&other);
   inline SqlStatementFrame &operator=(SqlStatementFrame &&other);
   inline SqlStatementFrame(SqlStatementFrame const &other);
   inline SqlStatementFrame &operator=(SqlStatementFrame const &other);
-  inline virtual ~SqlStatementFrame();
+  inline virtual ~SqlStatementFrame() override;
   inline virtual SqlStatementFrame *clone() const override;
   inline virtual SqlStatementFrame *move_clone() override;
 
   inline virtual FRAMETYPE frameType() const override;
-  inline static BackupFrame *create(unsigned char *data, size_t length, uint64_t count = 0);
+  inline static BackupFrame *create(unsigned char const *data, size_t length, uint64_t count = 0);
   inline virtual void printInfo() const override;
   inline void printInfo(std::vector<std::string> const &paramternames) const;
 
@@ -103,7 +103,7 @@ inline SqlStatementFrame::SqlStatementFrame()
   BackupFrame(-1)
 {}
 
-inline SqlStatementFrame::SqlStatementFrame(unsigned char *data, size_t length, uint64_t count)
+inline SqlStatementFrame::SqlStatementFrame(unsigned char const *data, size_t length, uint64_t count)
   :
   BackupFrame(data, length, count)
 {
@@ -206,7 +206,7 @@ inline BackupFrame::FRAMETYPE SqlStatementFrame::frameType() const // virtual ov
   return FRAMETYPE::SQLSTATEMENT;
 }
 
-inline BackupFrame *SqlStatementFrame::create(unsigned char *data, size_t length, uint64_t count) // static
+inline BackupFrame *SqlStatementFrame::create(unsigned char const *data, size_t length, uint64_t count) // static
 {
   return new SqlStatementFrame(data, length, count);
 }

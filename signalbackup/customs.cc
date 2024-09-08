@@ -62,7 +62,7 @@ bool SignalBackup::custom_hugogithubs()
   std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_new_attachments;
   for (auto const &a : d_attachments)
   {
-    AttachmentFrame *af = a.second.get();
+    AttachmentFrame const *af = a.second.get();
 
     // std::cout << "OLD FRAME:" << std::endl;
     // std::cout << a.first.first << " " << a.first.second << std::endl;

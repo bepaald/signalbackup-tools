@@ -25,7 +25,7 @@
 class FileSqliteDB : public SqliteDB
 {
  public:
-  inline FileSqliteDB(std::string const &filename);
+  inline explicit FileSqliteDB(std::string const &filename);
   FileSqliteDB(FileSqliteDB const &other) = delete;
   FileSqliteDB &operator=(FileSqliteDB const &other) = delete;
   ~FileSqliteDB() = default;

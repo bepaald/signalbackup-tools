@@ -44,7 +44,7 @@ class CryptBase
   uint64_t d_salt_size;
   uint64_t d_counter;
  public:
-  inline CryptBase(bool verbose);
+  inline explicit CryptBase(bool verbose);
   inline CryptBase(CryptBase const &other);
   inline CryptBase &operator=(CryptBase const &other);
   inline CryptBase(CryptBase &&other);

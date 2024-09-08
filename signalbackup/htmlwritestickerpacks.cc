@@ -727,7 +727,7 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
   StickerFrame *s = it->second.get();
 
   // get the data, so the mimetype is determined
-  unsigned char *stickerdata = s->attachmentData();
+  unsigned char const *stickerdata = s->attachmentData();
   ScopeGuard clear_sticker_data([&](){s->clearData();});
 
   std::optional<std::string> mimetype = s->mimetype();
@@ -752,7 +752,7 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
     Logger::error("Failed to open '", stickerdatapath, "' for writing");
     return false;
   }
-  if (!stickerstream.write(reinterpret_cast<char *>(stickerdata), s->attachmentSize())) [[unlikely]]
+  if (!stickerstream.write(reinterpret_cast<char const *>(stickerdata), s->attachmentSize())) [[unlikely]]
   {
     Logger::error("Failed to write sticker data to file");
     return false;

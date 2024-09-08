@@ -27,12 +27,12 @@ class RawFileAttachmentReader : public AttachmentReader<RawFileAttachmentReader>
 {
   std::string d_filename;
  public:
-  inline RawFileAttachmentReader(std::string const &filename);
+  inline explicit RawFileAttachmentReader(std::string const &filename);
   RawFileAttachmentReader(RawFileAttachmentReader const &other) = default;
   RawFileAttachmentReader(RawFileAttachmentReader &&other) = default;
   RawFileAttachmentReader &operator=(RawFileAttachmentReader const &other) = default;
   RawFileAttachmentReader &operator=(RawFileAttachmentReader &&other) = default;
-  virtual ~RawFileAttachmentReader() = default;
+  virtual ~RawFileAttachmentReader() override = default;
 
   inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) override;
 };

@@ -26,11 +26,11 @@ class EndFrame: public BackupFrame
 {
   static Registrar s_registrar;
  public:
-  inline EndFrame(unsigned char *bytes, size_t length, uint64_t count = 0);
-  inline virtual ~EndFrame() = default;
+  inline EndFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline virtual ~EndFrame() override = default;
   inline virtual EndFrame *clone() const override;
   inline virtual EndFrame *move_clone() override;
-  inline static BackupFrame *create(unsigned char *bytes, size_t length, uint64_t count);
+  inline static BackupFrame *create(unsigned char const *bytes, size_t length, uint64_t count);
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
@@ -39,7 +39,7 @@ class EndFrame: public BackupFrame
   inline uint64_t dataSize() const override;
 };
 
-inline EndFrame::EndFrame(unsigned char *, size_t length, uint64_t count)
+inline EndFrame::EndFrame(unsigned char const *, size_t length, uint64_t count)
   :
   BackupFrame(count) // endframe is a raw bool, not a message, so no field type (it sorta IS its only field), length is value
 {
@@ -58,7 +58,7 @@ inline EndFrame *EndFrame::move_clone()
   return new EndFrame(std::move(*this));
 }
 
-inline BackupFrame *EndFrame::create(unsigned char *bytes, size_t length, uint64_t count) // static
+inline BackupFrame *EndFrame::create(unsigned char const *bytes, size_t length, uint64_t count) // static
 {
   return new EndFrame(bytes, length, count);
 }

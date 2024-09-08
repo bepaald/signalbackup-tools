@@ -27,7 +27,7 @@ class ScopeGuard
 {
   F d_function;
  public:
-  ScopeGuard(F &&fn)
+  explicit ScopeGuard(F &&fn)
     :
     d_function(std::forward<F>(fn))
   {};

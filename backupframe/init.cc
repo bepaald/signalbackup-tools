@@ -19,7 +19,7 @@
 
 #include "backupframe.ih"
 
-bool BackupFrame::init(unsigned char *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
+bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
 {
 
   //std::cout << "INITIALIZING FRAME OF " << l << " BYTES" << std::endl;

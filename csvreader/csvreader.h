@@ -42,7 +42,7 @@ class CSVReader
   bool d_ok;
   unsigned int d_fields; // an extra check
  public:
-  inline CSVReader(std::string const &filename);
+  inline explicit CSVReader(std::string const &filename);
   inline bool ok() const;
   inline size_t fields() const;
   inline size_t rows() const;

@@ -49,7 +49,7 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
       else if (valueHasType<std::string>(i, j))
       {
         contents.back().emplace_back(getValueAs<std::string>(i, j));
-        std::string::size_type newline = std::string::npos;
+        std::string::size_type newline;
         if ((newline = contents.back().back().find('\n')) != std::string::npos)
         {
           contents.back().back().resize(newline);
