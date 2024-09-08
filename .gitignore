@@ -2,7 +2,7 @@
 !README.md
 !LICENSE
 !BUILDSCRIPT.sh
-!BUILDSCRIPT_MULTIPROC.bash44
+!BUILDSCRIPT.bash
 !CMakeLists.txt
 !signalbackup-tools.rb
 !*.cc
