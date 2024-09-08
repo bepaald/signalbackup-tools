@@ -62,20 +62,20 @@ Manually compiling should also be possible assuming the dependencies are install
 
 To compile the program, three main options are available:
 
-- CMake. Make sure to have cmake installed. On Linux this method also requires `pkg-config` (unless building without `dbus`). From the project directory, run:
-```
-$ cmake -B build -DCMAKE_BUILD_TYPE=Release
-$ cmake --build build -j $(nproc)
-```
-To build without `dbus` (and `pkg-config`), add `-DWITHOUT_DBUS=1` to the first command.
+- CMake. Make sure to have `cmake` installed. On Linux this method also requires `pkg-config` (unless building without `dbus`). From the project directory, run:
+    ```Shell
+    $ cmake -B build -DCMAKE_BUILD_TYPE=Release
+    $ cmake --build build -j $(nproc)
+    ```
+    To build without `dbus` (and `pkg-config`), add `-DWITHOUT_DBUS=1` to the first command.
 
 - The bash script. In the project directory is a bash script `BUILDSCRIPT.bash`. Simply run it:
-```
-$ ./BUILDSCRIPT.bash
-```
-To build without `dbus`, add `--config without_dbus` to the above command. the script can of course be edited at will to change compilation behavior. The flags can also be changed on the command line when running, for example to build with `clang++` instead of `g++`, simply run `$ CXX=clang++ ./BUILDSCRIPT.bash`.
+  ```Shell
+  $ ./BUILDSCRIPT.bash
+  ```
+    To build without `dbus`, add `--config without_dbus` to the above command. the script can of course be edited at will to change compilation behavior. The flags can also be changed on the command line when running, for example to build with `clang++` instead of `g++`, simply run `$ CXX=clang++ ./BUILDSCRIPT.bash`.
 
-- Manually. The program can be manually compiled simply by running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqlite3`. On linux, by default one needs to add the location of the dbus headers and libraries (simplest way, add: `$(pkg-config --cflags --libs dbus-1)`). Alternatively, to build on Linux without `dbus`, add `-DWIHTOUT_DBUS=1`. On macOS, the program must be linked to the Security and CoreFoundation frameworks by adding `-framework Security -framework CoreFoundation` to the build command. Any compiler flags you feel usefull can be added, personally I use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the -lstdc++fs flag and replace -std=c++20 with -std=c++17.
+- Manually. The program can be manually compiled simply by running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqlite3`. On linux, by default one needs to add the location of the dbus headers and libraries (simplest way, add: `$(pkg-config --cflags --libs dbus-1)`). Alternatively, to build on Linux without `dbus`, add `-DWITHOUT_DBUS=1`. On macOS, the program must be linked to the Security and CoreFoundation frameworks by adding `-framework Security -framework CoreFoundation` to the build command. Any compiler flags you feel useful can be added, personally I use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the -lstdc++fs flag and replace -std=c++20 with -std=c++17.
 
 ### Running
 
@@ -112,7 +112,7 @@ To skip exporting media (like message attachments, avatars and stickers), add th
   <summary>Example (click to show)</summary>
   <p>
     
-```
+```Shell
 [~/programming/signalbackup-tools] $ mkdir RAWBACKUP
 [~/programming/signalbackup-tools] $ ll RAWBACKUP/
 total 0
@@ -210,8 +210,6 @@ To limit the export to certain contacts, add the option `--limitcontacts [LIST_O
 > [!IMPORTANT]
 > Around version 6.26 of Signal Android (circa July 2023), the backup format was changed in a way that makes it impossible to recover from data corruption that happens across fame boundaries. This functionality is disabled for newer backups. In other cases (corruption within a single frame, the occasional bug in Signal), part of the data could possibly still be recovered, though it might require a custom function. You could always open an issue if you need help. Note that this type of corruption, where only a single frame is affected, is rare and recent versions of Signal Android usually deal with this case quite well.
 
-so in most cases recovery will be impossible with modern backup files.
-
 At the moment it has been used successfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
 
 ```
@@ -228,7 +226,7 @@ If the 'output' is omitted only the scan is done, and the broken message is iden
   <summary>Example (click to show)</summary>
   <p>
     
-```
+```Shell
 [~/programming/signalbackup-tools] $ ./signalbackup-tools CORRUPTEDSIGNALBACKUPS/signal-2019-05-20-05-29-06.backup3 949543593573534240555368549437 --output NEWBACKUPFILE --opassphrase 949543593573534240555368549437
 signalbackup-tools source version 20190926.164320
 IV: (hex:) 12 16 72 95 7a 00 68 44 7e cf 7d 20 26 f9 d3 7d (size: 16)
@@ -507,12 +505,9 @@ If you use this option and read this line, I would really appreciate it if you l
 
 **<span id="desktop">Importing conversations from Signal-Desktop</span>**
 
-> [!NOTE]
-> Starting at Signal Desktop version 7.17, this function may not work on Linux without extra steps. See the note at [Operations for Signal Desktop](#desktop_functions) for more info.
-
 _NOTE: This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated_
 
-_NOTE 2: While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is at least as new as the one used by Signal Desktop. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
+_NOTE 2: While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is at least as new as the one used by the Signal Desktop client. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
 
 To import conversations from a Signal-Desktop installation, run:
 ```
@@ -800,9 +795,6 @@ Done!
 > A handy python script that uses this option was developed to replace attachments with shrunk versions. It is available [here](https://github.com/cycneuramus/signal-backup-shrink). Thanks @cycneuramus!
 
 **<span id="desktop_functions">Operations for Signal Desktop</span>**
-
-> [!NOTE]
-> Starting at version 7.17, Signal Desktop will encrypt the key used to read the database. On Windows and macOS, decryption of this key should already be implemented, but this has not been done for Linux yet. To use any of the desktop functions of this tool on Linux, the decrypted key must be manually supplied through the `--desktopkey` option (see below). For Linux users a simple tool that attempts to decrypt and show the key is available here: [https://github.com/bepaald/get_signal_desktop_key](https://github.com/bepaald/get_signal_desktop_key). For macOS users a similar tool is available here (though it should not be needed): [https://github.com/bepaald/get_signal_desktop_key_mac](https://github.com/bepaald/get_signal_desktop_key_mac).
 
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 
