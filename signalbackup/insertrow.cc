@@ -46,8 +46,10 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
   query += "VALUES (";
   for (uint i = 0; i < data.size(); ++i)
     query += "?"s + (i < data.size() -1 ? ", " : ")");
+#if SQLITE_VERSION_NUMBER >= 3035000 // RETURNING was not available prior to 3.35.0
   if (!returnfield.empty() && returnvalue)
     query += " RETURNING " + returnfield;
+#endif
 
   SqliteDB::QueryResults res;
 #if __cpp_lib_ranges >= 201911L
@@ -57,11 +59,20 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
   std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });
   bool ret = d_database.exec(query, values, &res, d_verbose);
 #endif
+
+#if SQLITE_VERSION_NUMBER < 3035000 // RETURNING was not available prior to 3.35.0
+  if (ret && !returnfield.empty() && returnvalue)
+  {
+    long long int lastid = d_database.lastId();
+    ret = d_database.exec("SELECT " + returnfield + " FROM " + table + " WHERE rowid = ?", lastid, &res, d_verbose);
+  }
+#endif
+
   if (ret && !returnfield.empty() && returnvalue && res.rows() && res.columns())
   {
     if (res.rows() > 1 || res.columns() > 1)
-      Logger::warning("Requested return of '", returnfield,
-                      "', but query returned multiple results. Returning first.");
+      Logger::warning("Requested return of '", returnfield, "', "
+                      "but query returned multiple results. Returning first.");
     *returnvalue = res.value(0, 0);
   }
 

@@ -28,7 +28,9 @@ std::string SignalBackup::getNameFromRecipientId(long long int rid) const
                       "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
                       (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
                       "NULLIF(recipient." + d_recipient_aci + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), "
-                      " recipient._id) AS 'display_name',recipient." + d_recipient_e164 + ",recipient.username,recipient." + d_recipient_aci + " "
+                      " recipient._id) AS 'display_name',recipient." + d_recipient_e164 +
+                      (d_database.tableContainsColumn("recipient", "username") ? ",recipient.username" : "") +
+                      ",recipient." + d_recipient_aci + " "
                       "FROM recipient "
                       "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
                       (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +

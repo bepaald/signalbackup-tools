@@ -145,13 +145,19 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
     SqliteDB::QueryResults r2;
     if (d_database.containsTable("recipient")) // d_databaseversion >= 24)
-      d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
-                      "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
-                      (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
-                      "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
-                      (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
-                      "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
-                      " recipient._id) AS 'contact_name' FROM recipient WHERE _id = ?", rid, &r2);
+    {
+      if (!d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+                           "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+                           (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+                           "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
+                           (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
+                           "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+                           " recipient._id) AS 'contact_name' FROM recipient "
+                           "LEFT JOIN groups ON groups.recipient_id = recipient._id " +
+                           (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
+                           "WHERE recipient._id = ?", rid, &r2))
+        Logger::error("Failed to get contact_name");
+    }
     else
       d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'contact_name' FROM recipient_preferences WHERE recipient_ids = ?", rid, &r2);
     if (r2.rows() == 1 && r2.valueHasType<std::string>(0, "contact_name"))
@@ -668,7 +674,6 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   if (d_selfid != -1)
     d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
 
-
   Logger::message("\nExporting backup to '", filename, "'");
 
   if (!overwrite && (bepaald::fileOrDirExists(filename) && !bepaald::isDir(filename)))
@@ -680,7 +685,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   // output header
   std::ofstream outputfile(filename, std::ios_base::binary);
   outputfile << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" << '\n';
-  outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\"?>" << '\n';
+  outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\" ?>" << '\n';
 
   SqliteDB::QueryResults sms_results;
   if (d_database.containsTable("sms"))
@@ -729,9 +734,10 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
   }
 
-  std::string date;
+  //std::string date;
   outputfile << "<smses count=\"" << bepaald::toString(sms_results.rows() + mms_results.rows())
-             << "\" backup_date=\"" << date << "\" type=\"full\">" << '\n';
+  //         << "\" backup_date=\"" << date << "\" type=\"full\">" << '\n';
+             << "\">\n";
   uint sms_row = 0;
   uint mms_row = 0;
   while (sms_row < sms_results.rows() ||
