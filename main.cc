@@ -26,6 +26,7 @@
 #include "signalbackup/signalbackup.h"
 #include "logger/logger.h"
 #include "desktopdatabase/desktopdatabase.h"
+#include "signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 #include "jsondatabase/jsondatabase.h"
 #include "dummybackup/dummybackup.h"
 
@@ -86,6 +87,7 @@ int main(int argc, char *argv[])
 
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
   std::unique_ptr<DesktopDatabase> ddb;
+  std::unique_ptr<SignalPlaintextBackupDatabase> ptdb;
   auto initDesktopDatabase = [&]()
   {
     if (!ddb)
@@ -93,6 +95,12 @@ int main(int argc, char *argv[])
                                     arg.ignorewal(), arg.desktopdbversion(), arg.truncate(), arg.showdesktopkey(),
                                     arg.dbusverbose()));
     return ddb->ok();
+  };
+  auto initPlaintextDatabase = [&](std::string const &xmlfile)
+  {
+    if (!ptdb)
+      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfile, arg.verbose()));
+    return ptdb->ok();
   };
 
   // show desktop key
@@ -140,12 +148,11 @@ int main(int argc, char *argv[])
     if (!initDesktopDatabase())
       return 1;
 
-    DummyBackup dummydb(ddb, /*arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.desktopdbversion(),
-                        arg.ignorewal(), */arg.verbose(), arg.truncate(), arg.showprogress());
+    DummyBackup dummydb(ddb, arg.verbose(), arg.truncate(), arg.showprogress());
     if (!dummydb.ok())
       return 1;
 
-    if (!dummydb.importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(), true /*addincompletedata*/,
+    if (!dummydb.importFromDesktop(ddb, true /*arg.skipmessagereorder()*/, arg.limittodates(), true /*addincompletedata*/,
                                    false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
       return 1;
 
@@ -162,6 +169,28 @@ int main(int argc, char *argv[])
       if (!dummydb.exportTxt(arg.exportdesktoptxt(), {} /*limittothreads*/, arg.limittodates(), arg.setselfid(),
                              arg.migratedb(), arg.overwrite()))
         return 1;
+  }
+
+  if (!arg.exportplaintextbackuphtml_1().empty())
+  {
+    if (!initPlaintextDatabase(arg.exportplaintextbackuphtml_1()))
+      return 1;
+
+    DummyBackup dummydb(arg.setselfid(), arg.verbose(), arg.truncate(), arg.showprogress());
+    if (!dummydb.ok())
+      return 1;
+
+    if (!dummydb.importFromPlaintextBackup(ptdb, true /*arg.skipmessagereorder()*/, arg.mapxmlcontacts(), arg.limittodates(),
+                                           true /*addincompletedata*/, false /*autolimittodates*/, arg.setselfid()))
+      return 1;
+
+    if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(),
+                            (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(),
+                            arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
+                            arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(),
+                            arg.includeblockedlist(), arg.includefullcontactlist(),
+                            false /*arg.includesettings()*/, arg.includereceipts()))
+      return 1;
   }
 
   // dump desktop attachments...
@@ -364,6 +393,16 @@ int main(int argc, char *argv[])
                                arg.autolimitdates(),  arg.importstickers(), arg.setselfid()))
       return 1;
     MEMINFO("After importfromdesktop");
+  }
+
+  if (!arg.importplaintextbackup().empty())
+  {
+    if (!initPlaintextDatabase(arg.importplaintextbackup()))
+      return 1;
+
+    if (!sb->importFromPlaintextBackup(ptdb, arg.skipmessagereorder(), arg.mapxmlcontacts(), arg.limittodates(),
+                                       arg.addincompletedataforhtmlexport(), arg.autolimitdates(), arg.setselfid()))
+      return 1;
   }
 
   if (!arg.importtelegram().empty())

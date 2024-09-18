@@ -22,6 +22,7 @@
 long long int SignalBackup::getFreeDateForMessage(long long int targetdate, long long int thread_id,
                                                   long long int from_recipient_id) const
 {
+  //std::cout << "Getting free date for message: " << targetdate << " " << thread_id << " " << from_recipient_id << std::endl;
 
   // long long int freedate = d_database.getSingleResultAs<long long int>("SELECT min(unused_date) AS unused_date FROM "
   //                                                                      "(SELECT min(" + d_mms_date_sent + ") + 1 AS unused_date FROM " + d_mms_table + " AS t1 WHERE "

@@ -231,8 +231,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   }
 
   dtSetColumnNames(&dtdb->d_database);
-  std::string configdir = dtdb->getConfigDir();
-  std::string databasedir = dtdb->getDatabaseDir();
+  //std::string configdir = dtdb->getConfigDir();
+  std::string const &databasedir = dtdb->getDatabaseDir();
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)

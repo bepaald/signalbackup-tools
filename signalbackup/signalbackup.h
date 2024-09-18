@@ -50,6 +50,7 @@ struct GroupInfo;
 enum class IconType;
 class JsonDatabase;
 class DesktopDatabase;
+class SignalPlaintextBackupDatabase;
 
 class SignalBackup
 {
@@ -249,7 +250,10 @@ class SignalBackup
   //                        long long int dbversion, bool skipmessagereorder,
   //                        std::vector<std::string> const &dateranges, bool createmissingcontacts,
   //                        bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
-
+  bool importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
+                                 std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
+                                 std::vector<std::string> const &daterangelist, bool createmissingcontacts,
+                                 bool autodates, std::string const &selfphone);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,
@@ -339,6 +343,7 @@ class SignalBackup
   std::string decodeStatusMessage(std::pair<std::shared_ptr<unsigned char []>, size_t> const &body, long long int expiration,
                                   long long int type, std::string const &contactname, IconType *icon = nullptr) const;
   void escapeXmlString(std::string *s) const;
+  bool unescapeXmlString(std::string *s) const;
   void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const;
   void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const;
   inline std::string getStringOr(SqliteDB::QueryResults const &results, int i,
@@ -450,8 +455,7 @@ class SignalBackup
   inline int utf16CharSize(std::string const &body, int idx) const;
   inline int utf8Chars(std::string const &body) const;
   inline void resizeToNUtf8Chars(std::string &body, unsigned long size) const;
-  inline int bytesToUtf8CharSize(std::string const &body, int idx/*, int length = 1*/) const;
-  //inline int utf8CharsToByteSize() const;
+  inline int bytesToUtf8CharSize(std::string const &body, int idx) const;
   inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
@@ -490,6 +494,8 @@ class SignalBackup
   bool writeStickerToDisk(long long int id, std::string const &packid, std::string const &directory,
                           bool overwrite, bool append, std::string *extension) const;
   long long int getRecipientIdFromField(std::string const &field, std::string const &value, bool withthread) const;
+  std::string unicodeToUtf8(uint32_t unicode) const;
+  int utf16ToUnicodeCodepoint(uint16_t utf16, uint32_t *codepoint) const;
 };
 
 // ONLY FOR DUMMYBACKUP
@@ -918,7 +924,7 @@ inline void SignalBackup::resizeToNUtf8Chars(std::string &body, unsigned long si
     body.resize(idx);
 }
 
-inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx/*, int length*/) const
+inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx) const
 {
   if ((static_cast<uint8_t>(body[idx]) & 0b10000000) == 0b00000000)
     return 1;
@@ -930,29 +936,8 @@ inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx/*,
     return 4;
   else
     return 1;
-  /*
-  int ret = 0;
-  for (int i = idx; i < idx + length; ++i)
-  {
-    if ((static_cast<uint8_t>(body[i]) & 0b11111000) == 0b11110000) // 4 byte char
-      ret += 4;
-    else if ((static_cast<uint8_t>(body[i]) & 0b11110000) == 0b11100000) // 3 byte char
-      ret += 3;
-    else if ((static_cast<uint8_t>(body[i]) & 0b11100000) == 0b11000000) // 2 byte char
-      ret += 2;
-    else
-      ret += 1;
-  }
-  return ret;
-  */
 }
 
-/*
-inline int SignalBackup::utf8CharsToByteSize() const
-{
-  return 0;
-}
-*/
 inline std::string SignalBackup::utf8BytesToHexString(unsigned char const *const data, size_t data_size) const
 {
   // NOTE THIS IS NOT GENERIC UTF-8 CONVERSION, THIS

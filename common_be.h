@@ -72,6 +72,8 @@ namespace bepaald
 #endif
   template <typename T>
   T toNumber(std::string const &str, T def = 0);
+  template <typename T>
+  T toNumberFromHex(std::string const &str, T def = 0);
   std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
   std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
@@ -185,6 +187,16 @@ T bepaald::toNumber(std::string const &str, T def)
   std::istringstream s(str);
   T i = def;
   if (!(s >> i)) [[unlikely]]
+    return def;
+  return i;
+}
+
+template <typename T>
+T bepaald::toNumberFromHex(std::string const &str, T def)
+{
+  std::istringstream s(str);
+  T i = def;
+  if (!(s >> std::hex >> i >> std::dec)) [[unlikely]]
     return def;
   return i;
 }

@@ -99,6 +99,9 @@ Arg::Arg(int argc, char *argv[])
   d_interactive(false),
   d_exporthtml(std::string()),
   d_exportdesktophtml(std::string()),
+  d_exportplaintextbackuphtml_1(std::string()),
+  d_exportplaintextbackuphtml_2(std::string()),
+  d_importplaintextbackup(std::string()),
   d_addexportdetails(false),
   d_includecalllog(false),
   d_includeblockedlist(false),
@@ -133,6 +136,7 @@ Arg::Arg(int argc, char *argv[])
   d_truncate(true),
   d_skipmessagereorder(false),
   d_migrate_to_191(false),
+  d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1158,6 +1162,34 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "--exportplaintextbackuphtml")
+    {
+      if (i < arguments.size() - 2)
+      {
+        d_exportplaintextbackuphtml_1 = std::move(arguments[++i]);
+        d_exportplaintextbackuphtml_2 = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--importplaintextbackup")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_importplaintextbackup = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
     if (option == "--addexportdetails")
     {
       d_addexportdetails = true;
@@ -1559,6 +1591,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-migrate_to_191")
     {
       d_migrate_to_191 = false;
+      continue;
+    }
+    if (option == "--mapxmlcontacts")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapxmlcontacts, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option[0] != '-')

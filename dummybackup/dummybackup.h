@@ -26,16 +26,13 @@
 class DummyBackup : public SignalBackup
 {
  public:
-  inline DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
-                     /*std::string const &configdir, std::string const &databasedir,
-                     std::string const &hexkey, long long int cipherversion,
-                     bool ignorewal, */bool verbose, bool truncate, bool showprogress);
+  inline DummyBackup(std::string const &selfphone, bool verbose, bool truncate, bool showprogress); // for importing from plaintext
+  inline DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, bool verbose, bool truncate, bool showprogress); // for importing from desktop
+ private:
+  inline DummyBackup(bool verbose, bool truncate, bool showprogress);
 };
 
-inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
-                                /*std::string const &configdir, std::string const &databasedir,
-                                std::string const &hexkey, long long int cipherversion,
-                                bool ignorewal, */bool verbose, bool truncate, bool showprogress)
+inline DummyBackup::DummyBackup(bool verbose, bool truncate, bool showprogress)
   :
   SignalBackup(verbose, truncate, showprogress)
 {
@@ -84,16 +81,43 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
   // set database version
   d_databaseversion = 223;
   setColumnNames();
+  d_ok = true;
+}
+
+inline DummyBackup::DummyBackup(std::string const &selfphone, bool verbose, bool truncate, bool showprogress)
+  :
+  DummyBackup(verbose, truncate, showprogress)
+{
+  if (!d_ok)
+    return;
+  d_ok = false;
+
+  std::any new_rid;
+  if (!insertRow("recipient", {{d_recipient_e164, selfphone}}, "_id", &new_rid))
+    return;
+
+  d_selfid = std::any_cast<long long int>(new_rid);
+
+  d_ok = true;
+}
+
+inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, bool verbose, bool truncate, bool showprogress)
+  :
+  DummyBackup(verbose, truncate, showprogress)
+{
+  if (!d_ok)
+    return;
+  d_ok = false;
 
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
-  //DesktopDatabase ddb(configdir, databasedir, hexkey, verbose, ignorewal, cipherversion, truncate);
+  // DesktopDatabase ddb(configdir, databasedir, hexkey, verbose, ignorewal, cipherversion, truncate);
   if (!ddb->ok())
     Logger::error("DesktopDatabase was not ok");
   dtSetColumnNames(&ddb->d_database);
 
   // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
   std::string uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(" + d_dt_m_sourceuuid + ", '') FROM messages "
-                                                                   "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
+                                                                    "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
   if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
   {
     // a bit more complicated:
@@ -107,8 +131,8 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb,
 
   SqliteDB::QueryResults selfdata;
   if (!ddb->d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color "
-                           "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
-                           uuid, &selfdata) ||
+                            "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
+                            uuid, &selfdata) ||
       selfdata.rows() != 1)
     // warning
     return;

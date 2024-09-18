@@ -17,9 +17,4 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
-
-#define VERSIONDATE "20240918.211113"
-
-#endif
+#include "xmldocument.h"

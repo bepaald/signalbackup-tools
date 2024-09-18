@@ -57,30 +57,30 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {
-      case 1:
-      case 20:
+      case Types::INCOMING_CALL_TYPE:
+      case Types::BASE_INBOX_TYPE:
         type = 1;
         break;
-      case 2:
-      case 23:
+      case Types::OUTGOING_CALL_TYPE:
+      case Types::BASE_SENT_TYPE:
         type = 2;
         break;
-      case 3:
-      case 27:
+      case Types::MISSED_CALL_TYPE:
+      case Types::BASE_DRAFT_TYPE:
         type = 3;
         break;
-      case 4:
-      case 21:
+      case Types::JOINED_TYPE:
+      case Types::BASE_OUTBOX_TYPE:
         type = 4;
         break;
-      case 5:
-      case 24:
+      case Types::UNSUPPORTED_MESSAGE_TYPE:
+      case Types::BASE_SENT_FAILED_TYPE:
         type = 5;
         break;
-      case 6:
-      case 22:
-      case 25:
-      case 26:
+      case Types::INVALID_MESSAGE_TYPE:
+      case Types::BASE_SENDING_TYPE:
+      case Types::BASE_PENDING_SECURE_SMS_FALLBACK:
+      case Types::BASE_PENDING_INSECURE_SMS_FALLBACK:
         type = 6;
         break;
     }
