@@ -21,7 +21,7 @@
 
 bool SignalBackup::reorderMmsSmsIds() const
 {
-  Logger::message(__FUNCTION__);
+  Logger::message_overwrite(__FUNCTION__);
 
   bool adjustmention = d_database.containsTable("mention");
   bool adjustmsl_message = d_database.containsTable("msl_message");
@@ -40,8 +40,12 @@ bool SignalBackup::reorderMmsSmsIds() const
 
   // set all id's 'negatively ascending' (negative because of UNIQUE constraint)
   long long int negative_id_tmp = 0;
-  for (uint i = 0; i < res.rows(); ++i)
+  long long int total = res.rows();
+  for (uint i = 0; i < total; ++i)
   {
+    if (d_showprogress && i % 1000 == 0)
+      Logger::message_overwrite(__FUNCTION__, " (", i, "/", total, ")");
+
     std::any oldid = res.value(i, 0);
     ++negative_id_tmp;
     if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid}) ||
@@ -64,6 +68,7 @@ bool SignalBackup::reorderMmsSmsIds() const
     if (adjustlatest_revision_id && !d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = ? WHERE latest_revision_id = ?", {-1 * negative_id_tmp, oldid}))
       return false;
   }
+  Logger::message_overwrite(__FUNCTION__, Logger::Control::ENDOVERWRITE);
 
   // now make all id's positive again
   if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = _id * -1 WHERE _id < 0") ||

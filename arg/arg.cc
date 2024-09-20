@@ -130,6 +130,8 @@ Arg::Arg(int argc, char *argv[])
   d_jsonprependforward(false),
   d_jsonmarkdelivered(true),
   d_jsonmarkread(false),
+  d_xmlmarkdelivered(true),
+  d_xmlmarkread(false),
   d_fulldecode(false),
   d_logfile(std::string()),
   d_custom_hugogithubs(false),
@@ -137,6 +139,7 @@ Arg::Arg(int argc, char *argv[])
   d_skipmessagereorder(false),
   d_migrate_to_191(false),
   d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
+  d_listxmlcontacts(std::string()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1527,6 +1530,26 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_jsonmarkread = false;
       continue;
     }
+    if (option == "--xmlmarkdelivered")
+    {
+      d_xmlmarkdelivered = true;
+      continue;
+    }
+    if (option == "--no-xmlmarkdelivered")
+    {
+      d_xmlmarkdelivered = false;
+      continue;
+    }
+    if (option == "--xmlmarkread")
+    {
+      d_xmlmarkread = true;
+      continue;
+    }
+    if (option == "--no-xmlmarkread")
+    {
+      d_xmlmarkread = false;
+      continue;
+    }
     if (option == "--fulldecode")
     {
       d_fulldecode = true;
@@ -1603,6 +1626,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
         }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--listxmlcontacts")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_listxmlcontacts = std::move(arguments[++i]);
       }
       else
       {

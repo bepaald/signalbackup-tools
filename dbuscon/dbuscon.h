@@ -756,8 +756,7 @@ inline void DBusCon::set(T *ret, DBusMessageIter *iter, int current_type1)
 template <typename T>
 inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T def)
 {
-  T ret(def);
-
+  T ret{def};
   int i = 0;
   int current_type = dbus_message_iter_get_arg_type(iter);
   while (i < idx.front())
@@ -779,11 +778,12 @@ inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T def
     if (idx.size() < 2)
     {
       Logger::error("Missing next index");
-      return def;
+      return ret;
     }
     std::vector idx2 = idx;
     idx2.erase(idx2.begin());
-    return get2<T>(&iter_sub, idx2, def);
+    ret = get2<T>(&iter_sub, idx2, def);
+    return ret;
   }
 
   if (current_type == DBUS_TYPE_VARIANT)
@@ -791,9 +791,7 @@ inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T def
     DBusMessageIter iter_sub;
     dbus_message_iter_recurse(iter, &iter_sub);
     current_type = dbus_message_iter_get_arg_type(&iter_sub);
-
     set<T>(&ret, &iter_sub, current_type);
-
     return ret;
   }
 
@@ -804,14 +802,12 @@ inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T def
 template <typename T>
 inline T DBusCon::get(std::string const &sig, std::vector<int> const &idx, T def)
 {
-  T ret(def);
-
   if (!d_reply || dbus_message_get_signature(d_reply.get()) != sig)
   {
     if (/*verbose && */d_reply)
       Logger::warning("Unexpected reply signature (got '", dbus_message_get_signature(d_reply.get()),
                       "', expected '", sig, "')");
-    return ret;
+    return T{def};
   }
 
   // get iterator

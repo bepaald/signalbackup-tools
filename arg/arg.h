@@ -34,7 +34,7 @@
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 165> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--rundtsqlquery", "--rundtprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--desktopkey", "--showdesktopkey", "--no-showdesktopkey", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--dbusverbose", "--no-dbusverbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--exportplaintextbackuphtml", "--importplaintextbackup", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--includereceipts", "--no-includereceipts", "--allhtmlpages", "--split", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--mapxmlcontacts"};
+  std::array<std::string, 170> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--runsqlquery", "--runprettysqlquery", "--rundtsqlquery", "--rundtprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdirs", "--desktopkey", "--showdesktopkey", "--no-showdesktopkey", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--dbusverbose", "--no-dbusverbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--exportplaintextbackuphtml", "--importplaintextbackup", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--includereceipts", "--no-includereceipts", "--allhtmlpages", "--split", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--xmlmarkread", "--no-xmlmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--mapxmlcontacts", "--listxmlcontacts"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -143,6 +143,8 @@ class Arg
   bool d_jsonprependforward;
   bool d_jsonmarkdelivered;
   bool d_jsonmarkread;
+  bool d_xmlmarkdelivered;
+  bool d_xmlmarkread;
   bool d_fulldecode;
   std::string d_logfile;
   bool d_custom_hugogithubs;
@@ -150,6 +152,7 @@ class Arg
   bool d_skipmessagereorder;
   bool d_migrate_to_191;
   std::vector<std::pair<std::string,long long int>> d_mapxmlcontacts;
+  std::string d_listxmlcontacts;
   bool d_input_required;
  public:
   Arg(int argc, char *argv[]);
@@ -265,6 +268,8 @@ class Arg
   inline bool jsonprependforward() const;
   inline bool jsonmarkdelivered() const;
   inline bool jsonmarkread() const;
+  inline bool xmlmarkdelivered() const;
+  inline bool xmlmarkread() const;
   inline bool fulldecode() const;
   inline std::string const &logfile() const;
   inline bool custom_hugogithubs() const;
@@ -272,6 +277,7 @@ class Arg
   inline bool skipmessagereorder() const;
   inline bool migrate_to_191() const;
   inline std::vector<std::pair<std::string,long long int>> const &mapxmlcontacts() const;
+  inline std::string const &listxmlcontacts() const;
   inline bool input_required() const;
  private:
   template <typename T>
@@ -829,6 +835,16 @@ inline bool Arg::jsonmarkread() const
   return d_jsonmarkread;
 }
 
+inline bool Arg::xmlmarkdelivered() const
+{
+  return d_xmlmarkdelivered;
+}
+
+inline bool Arg::xmlmarkread() const
+{
+  return d_xmlmarkread;
+}
+
 inline bool Arg::fulldecode() const
 {
   return d_fulldecode;
@@ -862,6 +878,11 @@ inline bool Arg::migrate_to_191() const
 inline std::vector<std::pair<std::string,long long int>> const &Arg::mapxmlcontacts() const
 {
   return d_mapxmlcontacts;
+}
+
+inline std::string const &Arg::listxmlcontacts() const
+{
+  return d_listxmlcontacts;
 }
 
 inline bool Arg::input_required() const

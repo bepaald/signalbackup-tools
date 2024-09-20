@@ -164,15 +164,15 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                                    //{d_mms_viewed_receipts, (incoming ? 0 : 1)},
                                    {d_mms_recipient_id, incoming ? address : d_selfid},
                                    {"to_recipient_id", incoming ? d_selfid : address},
-                                   {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+                                   {"m_type", incoming ? 132 : 128}}, // dont know what this is, but these are the values...
                                    //{"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
                                    //{"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
                                    //{"quote_body", hasquote ? mmsquote_body : nullptr},
                                    //{"quote_missing", hasquote ? mmsquote_missing : 0},
                                    //{"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                    //{"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
-                                   {"remote_deleted", 0},
-                                   {"view_once", 0}}, // if !createrecipient -> this message was already skipped
+                                   //{"remote_deleted", 0},
+                                   //{"view_once", 0}}, // if !createrecipient -> this message was already skipped
                      "_id", &retval))
       {
         Logger::error("Failed to insert message");

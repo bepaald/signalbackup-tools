@@ -253,7 +253,7 @@ class SignalBackup
   bool importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
                                  std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                  std::vector<std::string> const &daterangelist, bool createmissingcontacts,
-                                 bool autodates, std::string const &selfphone);
+                                 bool markdelivered, bool markread, bool autodates, std::string const &selfphone);
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, long long int split, std::string const &selfid,

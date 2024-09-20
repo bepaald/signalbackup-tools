@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
   auto initPlaintextDatabase = [&](std::string const &xmlfile)
   {
     if (!ptdb)
-      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfile, arg.verbose()));
+      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfile, arg.truncate(), arg.verbose()));
     return ptdb->ok();
   };
 
@@ -143,6 +143,13 @@ int main(int argc, char *argv[])
     jdb.listChats();
   }
 
+  if (!arg.listxmlcontacts().empty())
+  {
+    if (!initPlaintextDatabase(arg.listxmlcontacts()))
+      return 1;
+    ptdb->listContacts();
+  }
+
   if (!arg.exportdesktophtml().empty() || !arg.exportdesktoptxt().empty())
   {
     if (!initDesktopDatabase())
@@ -181,7 +188,8 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.importFromPlaintextBackup(ptdb, true /*arg.skipmessagereorder()*/, arg.mapxmlcontacts(), arg.limittodates(),
-                                           true /*addincompletedata*/, false /*autolimittodates*/, arg.setselfid()))
+                                           true /*addincompletedata*/, arg.xmlmarkdelivered(), arg.xmlmarkread(),
+                                           false /*autolimittodates*/, arg.setselfid()))
       return 1;
 
     if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(),
@@ -401,7 +409,8 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!sb->importFromPlaintextBackup(ptdb, arg.skipmessagereorder(), arg.mapxmlcontacts(), arg.limittodates(),
-                                       arg.addincompletedataforhtmlexport(), arg.autolimitdates(), arg.setselfid()))
+                                       arg.addincompletedataforhtmlexport(), arg.xmlmarkdelivered(), arg.xmlmarkread(),
+                                       arg.autolimitdates(), arg.setselfid()))
       return 1;
   }
 

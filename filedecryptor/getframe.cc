@@ -39,8 +39,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
   if (d_headerframe)
   {
     file.seekg(4 + d_headerframe->dataSize());
-    std::unique_ptr<BackupFrame> frame(d_headerframe.release());
-    return frame;
+    return std::unique_ptr<BackupFrame>(d_headerframe.release());
   }
 
   uint32_t encrypted_encryptedframelength = 0;
@@ -94,7 +93,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
     Logger::error("CTX INIT FAILED");
-    return 0;
+    return nullptr;
   }
 
   uint32_t encryptedframelength = 0;
@@ -104,7 +103,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
                         sizeof(decltype(encrypted_encryptedframelength))) != 1) [[unlikely]]
   {
     Logger::error("Failed to decrypt data");
-    return 0;
+    return nullptr;
   }
 
   encryptedframelength = bepaald::swap_endian<uint32_t>(encryptedframelength);
@@ -118,7 +117,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
     if (d_framecount == 1)
       Logger::message(Logger::Control::BOLD, " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***", Logger::Control::NORMAL);
-      //std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
@@ -163,14 +161,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
     Logger::message("\n");
     Logger::warning("Bad MAC in frame: theirMac: ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE),
                     "\n                              ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
-    // std::cout << "" << std::endl;
-    // std::cout << bepaald::bold_on << "WARNING" << bepaald::bold_off << " : Bad MAC in frame: theirMac: "
-    //           << bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE) << std::endl;
-    // std::cout << "                              ourMac: " << bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH) << std::endl;
 
     if (d_framecount == 1) [[unlikely]]
       Logger::message(Logger::Control::BOLD, " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***", Logger::Control::NORMAL);
-      //std::cout << bepaald::bold_on << " *** NOTE : IT IS LIKELY AN INCORRECT PASSPHRASE WAS PROVIDED ***" << bepaald::bold_off << std::endl;
 
     d_badmac = true;
     return std::unique_ptr<BackupFrame>(nullptr);
@@ -213,13 +206,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
                         reinterpret_cast<AttachmentFrame *>(frame.get())->length(),
                         "\nFrame has _id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->rowId(),
                         ", unique_id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId());
-
-        // std::cout << "Editing attachment data size in AttachmentFrame "
-        //           << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
-        // reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
-        // std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
-        // std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
-        //           << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
         break;
       }
 
@@ -261,16 +247,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
     uintToFourBytes(d_iv, d_counter++);
 
-    //reinterpret_cast<FrameWithAttachment *>(frame.get())->setLazyData(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg());
     reinterpret_cast<FrameWithAttachment *>(frame.get())->setReader(new AndroidAttachmentReader(d_iv, d_iv_size, d_mackey, d_mackey_size, d_cipherkey, d_cipherkey_size, attsize, d_filename, file.tellg()));
 
     file.seekg(attsize + MACSIZE, std::ios_base::cur);
   }
-
   //std::cout << "FILEPOS: " << file.tellg() << std::endl;
-
-  //delete frame;
-
   return frame;
 }
 
@@ -291,8 +272,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
   if (d_headerframe)
   {
     file.seekg(4 + d_headerframe->dataSize());
-    std::unique_ptr<BackupFrame> frame(d_headerframe.release());
-    return frame;
+    return std::unique_ptr<BackupFrame>(d_headerframe.release());
   }
 
   uint32_t encryptedframelength = getNextFrameBlockSize(file);

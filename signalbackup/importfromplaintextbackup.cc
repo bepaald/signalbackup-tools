@@ -27,7 +27,7 @@
 bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
                                              std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                              std::vector<std::string> const &daterangelist, bool createmissingcontacts,
-                                             bool autodates, std::string const &selfphone)
+                                             bool markdelivered, bool markread, bool autodates, std::string const &selfphone)
 {
   if (d_selfid == -1)
   {
@@ -112,8 +112,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
   for (uint i = 0; i < pt_messages.rows(); ++i)
   {
-    if (i % 5 == 0)
-      Logger::message_overwrite("Importing messages into backup... ", i + 1, "/", pt_messages.rows());
+    if (i % 100 == 0)
+      Logger::message_overwrite("Importing messages into backup... ", i, "/", pt_messages.rows());
 
     std::string body = pt_messages(i, "body");
     if (body.empty())
@@ -248,22 +248,23 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     }
 
     if (!insertRow(d_mms_table,
-                   {{"body", body},
-                    {"thread_id", tid},
-
+                   {{"thread_id", tid},
+                    {d_mms_date_sent, freedate},
+                    {"date_received", freedate},
+                    {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                    {"body", body},
+                    {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+                    {d_mms_delivery_receipts, (incoming ? 0 : (markdelivered ? 1 : 0))},
+                    {d_mms_read_receipts, (incoming ? 0 : (markread ? 1 : 0))},
                     {d_mms_recipient_id, incoming ? rid : d_selfid}, // FROM_RECIPIENT_ID
                     {"to_recipient_id", incoming ? d_selfid : rid},
-
-                    {"read", 1}, // defaults to 0, but causes tons of unread message notifications
-                    {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                    {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                    {d_mms_date_sent, freedate},
-                    {"date_received", freedate}}))
+                    {"m_type", incoming ? 132 : 128}})) // dont know what this is, but these are the values...
       Logger::warning("Failed to insert message");
 
     // mark thread as active??
   }
-  Logger::message_end(" done.");
+  Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows());
+  Logger::message_end(" done!");
 
   //ptdb->d_database.exec("SELECT rowid,body,LENGTH(body) - LENGTH(REPLACE(body, '&', '')) AS entities FROM smses ORDER BY entities ASC");
   //ptdb->d_database.saveToFile("xmldb.sqlite");

@@ -122,7 +122,8 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   if (decryptedkey.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789") != std::string::npos)
   {
     Logger::error("Failed to decrypt key correctly");
-    return std::string();
+    decryptedkey.clear();
+    //return empty string...
   }
 
   return decryptedkey;

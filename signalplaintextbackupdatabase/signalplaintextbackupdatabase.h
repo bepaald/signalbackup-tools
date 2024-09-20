@@ -28,14 +28,16 @@ class SignalPlaintextBackupDatabase
 {
   MemSqliteDB d_database;
   bool d_ok;
+  bool d_truncate;
   bool d_verbose;
  public:
-  SignalPlaintextBackupDatabase(std::string const &sptbxml, bool verbose);
+  SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose);
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase &&other) = delete;
   SignalPlaintextBackupDatabase &operator=(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase &operator=(SignalPlaintextBackupDatabase &&other) = delete;
   inline bool ok() const;
+  inline bool listContacts() const;
 
   friend class SignalBackup;
   friend class DummyBackup;
@@ -44,6 +46,11 @@ class SignalPlaintextBackupDatabase
 inline bool SignalPlaintextBackupDatabase::ok() const
 {
   return d_ok;
+}
+
+inline bool SignalPlaintextBackupDatabase::listContacts() const
+{
+  return d_database.prettyPrint(d_truncate, "SELECT address AS phone, MAX(contact_name) AS contact_name FROM smses GROUP BY phone ORDER BY phone");
 }
 
 #endif

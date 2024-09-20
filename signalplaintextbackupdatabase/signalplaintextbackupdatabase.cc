@@ -21,9 +21,10 @@
 
 #include "../xmldocument/xmldocument.h"
 
-SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool verbose)
+SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose)
   :
   d_ok(false),
+  d_truncate(truncate),
   d_verbose(verbose)
 {
   // open and parse XML file
