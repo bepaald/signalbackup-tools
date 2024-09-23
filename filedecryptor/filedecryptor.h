@@ -26,12 +26,11 @@
 #include "../common_be.h"
 #include "../backupframe/backupframe.h"
 #include "../framewithattachment/framewithattachment.h"
-//#include "../basedecryptor/basedecryptor.h"
 #include "../cryptbase/cryptbase.h"
 #include "../invalidframe/invalidframe.h"
 #include "../logger/logger.h"
 
-class  FileDecryptor : public CryptBase //BaseDecryptor
+class  FileDecryptor : public CryptBase
 {
   std::unique_ptr<BackupFrame> d_headerframe;
   std::string d_filename;
@@ -49,7 +48,7 @@ class  FileDecryptor : public CryptBase //BaseDecryptor
   inline FileDecryptor &operator=(FileDecryptor const &other);
   inline FileDecryptor(FileDecryptor &&other);
   inline FileDecryptor &operator=(FileDecryptor &&other);
-  // inline bool ok() const;
+
   std::unique_ptr<BackupFrame> getFrameOld(std::ifstream &file);
   std::unique_ptr<BackupFrame> getFrame(std::ifstream &file);
   inline uint64_t total() const;
@@ -147,11 +146,6 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
   }
   return *this;
 }
-
-// inline bool FileDecryptor::ok() const
-// {
-//   return d_ok;
-// }
 
 inline uint64_t FileDecryptor::total() const
 {

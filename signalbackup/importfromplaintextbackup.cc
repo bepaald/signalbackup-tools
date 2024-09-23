@@ -19,15 +19,16 @@
 
 #include "signalbackup.ih"
 
+//#include <chrono>
+
 #include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 #include "../msgtypes/msgtypes.h"
 
-//#include <chrono>
-
 bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
                                              std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
-                                             std::vector<std::string> const &daterangelist, bool createmissingcontacts,
-                                             bool markdelivered, bool markread, bool autodates, std::string const &selfphone)
+                                             std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,
+                                             bool createmissingcontacts, bool markdelivered, bool markread, bool autodates,
+                                             std::string const &selfphone)
 {
   if (d_selfid == -1)
   {
@@ -74,7 +75,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   }
 
   std::string datewhereclause;
-  for (uint i = 0; i < dateranges.size(); ++i)
+  for (unsigned int i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
     long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
@@ -94,6 +95,14 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       datewhereclause += ')';
   }
 
+  std::string chatselectionclause;
+  if (!chats.empty())
+  {
+    chatselectionclause += (datewhereclause.empty() ? " WHERE address IN (" : " AND address IN (");
+    for (unsigned int i = 0; i < chats.size(); ++i)
+      chatselectionclause += "'" + chats[i] + (i < chats.size() - 1 ? "', " : "')");
+  }
+
   /*
     contactmap:
     SELECT address,max(contact_name) FROM smses GROUP BY address ORDER BY address;
@@ -105,11 +114,15 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   // in signal android backup, all messages are read as well, only old versions of edited are not...
 
   SqliteDB::QueryResults pt_messages;
-  if (!ptdb->d_database.exec("SELECT * FROM smses" + datewhereclause + " ORDER BY date", &pt_messages))
+  if (!ptdb->d_database.exec("SELECT * FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
     return false;
+
+  //pt_messages.prettyPrint(d_truncate);
 
   bool warned_createcontacts = false;
 
+  d_database.exec("BEGIN TRANSACTION");
+  //auto t1 = std::chrono::high_resolution_clock::now();
   for (uint i = 0; i < pt_messages.rows(); ++i)
   {
     if (i % 100 == 0)
@@ -263,20 +276,21 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
     // mark thread as active??
   }
-  Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows());
-  Logger::message_end(" done!");
+  // auto t2 = std::chrono::high_resolution_clock::now();
+  // auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+  // std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+  d_database.exec("COMMIT");
 
+  Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
+
+  // count entities still present...
   //ptdb->d_database.exec("SELECT rowid,body,LENGTH(body) - LENGTH(REPLACE(body, '&', '')) AS entities FROM smses ORDER BY entities ASC");
+
+  // sage to disk
   //ptdb->d_database.saveToFile("xmldb.sqlite");
 
   if (!skipmessagereorder) [[likely]]
-  {
-    //auto t1 = std::chrono::high_resolution_clock::now();
     reorderMmsSmsIds();
-    //auto t2 = std::chrono::high_resolution_clock::now();
-    //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-    //std::cout << ms_int.count() << "ms\n";
-  }
   updateThreadsEntries();
   return checkDbIntegrity();
 }

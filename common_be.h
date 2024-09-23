@@ -23,7 +23,6 @@
 #include <cstddef>
 #include <climits>
 #include <cstdint>
-#include <iostream>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -49,7 +48,6 @@
 #else
 #define DEBUGOUT2(...)
 #endif
-
 #define STRLEN( STR ) (bepaald::strlitLength(STR))
 
 #if __cpp_lib_starts_ends_with >= 201711L
@@ -95,10 +93,6 @@ namespace bepaald
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
   inline int numDigits(long long int num);
-  // inline bool supportsAnsi();
-  // inline bool isTerminal();
-  //inline std::ostream &bold_on(std::ostream &os);
-  //inline std::ostream &bold_off(std::ostream &os);
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
@@ -109,7 +103,7 @@ namespace bepaald
   class container_has_contains
   {
     template<typename> static std::false_type test(...);
-    template<typename U> static auto test(int) -> decltype(std::declval<U>().contains(std::declval<I>()), std::true_type());
+    template<typename U> static constexpr auto test(int) -> decltype(std::declval<U>().contains(std::declval<I>()), std::true_type());
    public:
     static constexpr bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
   };
@@ -118,13 +112,13 @@ namespace bepaald
   class container_has_find
   {
     template<typename> static std::false_type test(...);
-    template<typename U> static auto test(int) -> decltype(std::declval<U>().find(std::declval<I>()), std::true_type());
+    template<typename U> static constexpr auto test(int) -> decltype(std::declval<U>().find(std::declval<I>()), std::true_type());
    public:
     static constexpr bool value = std::is_same<decltype(test<T>(0)), std::true_type>::value;
   };
 
   template <typename T, typename I>
-  inline bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
+  inline constexpr bool contains(T const &container, I const &item, typename std::enable_if<!std::is_pointer<T>::value>::type *dummy [[maybe_unused]] = nullptr)
   {
     if constexpr (container_has_contains<T, I>::value)
       return container.contains(item);
@@ -135,7 +129,7 @@ namespace bepaald
   }
 
   template <typename T, typename I>
-  inline bool contains(T const *const container, I const &item)
+  inline constexpr bool contains(T const *const container, I const &item)
   {
     if constexpr (container_has_contains<T, I>::value)
       return container->contains(item);
@@ -429,6 +423,7 @@ inline int bepaald::findIdxOf(T const &container, U const &value)
 #include <unistd.h>
 #include <fstream>
 #include <string>
+#include <iostream>
 
 // code adapted from https://stackoverflow.com/questions/669438 by Don Wakefield
 template<typename ...Args>

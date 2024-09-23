@@ -140,6 +140,7 @@ Arg::Arg(int argc, char *argv[])
   d_migrate_to_191(false),
   d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
   d_listxmlcontacts(std::string()),
+  d_selectxmlchats(std::vector<std::string>()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1639,6 +1640,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         d_listxmlcontacts = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--selectxmlchats")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_selectxmlchats))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
       }
       else
       {

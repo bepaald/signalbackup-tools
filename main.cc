@@ -188,8 +188,8 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.importFromPlaintextBackup(ptdb, true /*arg.skipmessagereorder()*/, arg.mapxmlcontacts(), arg.limittodates(),
-                                           true /*addincompletedata*/, arg.xmlmarkdelivered(), arg.xmlmarkread(),
-                                           false /*autolimittodates*/, arg.setselfid()))
+                                           arg.selectxmlchats(), true /*addincompletedata*/, arg.xmlmarkdelivered(),
+                                           arg.xmlmarkread(), false /*autolimittodates*/, arg.setselfid()))
       return 1;
 
     if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(),
@@ -409,8 +409,8 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!sb->importFromPlaintextBackup(ptdb, arg.skipmessagereorder(), arg.mapxmlcontacts(), arg.limittodates(),
-                                       arg.addincompletedataforhtmlexport(), arg.xmlmarkdelivered(), arg.xmlmarkread(),
-                                       arg.autolimitdates(), arg.setselfid()))
+                                       arg.selectxmlchats(), arg.addincompletedataforhtmlexport(),
+                                       arg.xmlmarkdelivered(), arg.xmlmarkread(), arg.autolimitdates(), arg.setselfid()))
       return 1;
   }
 

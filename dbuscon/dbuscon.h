@@ -40,10 +40,11 @@
 #include <memory>
 #include <variant>
 #include <type_traits>
-#include <iostream>
 #include <iomanip>
 #include <vector>
 #include <map>
+
+#include "../logger/logger.h"
 
 template<typename>
 struct is_std_map : std::false_type {};

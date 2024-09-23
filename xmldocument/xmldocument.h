@@ -119,8 +119,8 @@ inline void XmlDocument::Node::print(int indent) const
   if (!is_text_node)
   {
     Logger::message_start(std::string(indent, ' '), "<", d_name);
-    for (auto const &a : d_attributes)
-      Logger::message_continue(" ", a.first, "=\"", a.second, "\""); // note, we should maybe scan for " and use ' if found
+    for (auto const &[key, value] : d_attributes)
+      Logger::message_continue(" ", key, "=\"", value, "\""); // note, we should maybe scan for " and use ' if found
     Logger::message_continue((d_children.empty() && d_value.empty()) ? " />" : ">");
     if (d_value.empty())
       Logger::message_end();

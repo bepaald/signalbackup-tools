@@ -24,6 +24,7 @@
 #include <memory>
 #include <set>
 
+#include "../logger/logger.h"
 #include "../common_be.h"
 #include "../memsqlitedb/memsqlitedb.h"
 #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
