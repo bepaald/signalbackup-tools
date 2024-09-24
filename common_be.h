@@ -21,7 +21,6 @@
 #define COMMON_BE_H_
 
 #include <cstddef>
-#include <climits>
 #include <cstdint>
 #include <iomanip>
 #include <memory>

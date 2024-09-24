@@ -20,6 +20,7 @@
 #ifndef COMMON_BYTES_H_
 #define COMMON_BYTES_H_
 
+#include <climits>
 #include <memory>
 #include <algorithm>
 #include <cstddef>
