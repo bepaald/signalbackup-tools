@@ -23,10 +23,10 @@
 #include <openssl/evp.h>
 #include <memory>
 #include <cstring>
-
 #include <string>
 
 #include "../logger/logger.h"
+#include "../common_bytes.h"
 
 struct Base64
 {
@@ -34,9 +34,6 @@ struct Base64
   inline static std::string bytesToBase64String(unsigned char const *data, size_t size);
   inline static std::pair<unsigned char*, size_t> base64StringToBytes(std::string const &str);
 };
-
-
-#include "../common_be.h"
 
 inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t size)
 {

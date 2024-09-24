@@ -58,4 +58,4 @@ jobs:
 
       - name: Build new script (legacy)
         run: |
-          CXXFLAGSEXTRA=-Wno-attributes bash BUILDSCRIPT.bash
+          CXXFLAGSEXTRA=-Wno-attributes CXXSTD="-std=c++2a" bash BUILDSCRIPT.bash

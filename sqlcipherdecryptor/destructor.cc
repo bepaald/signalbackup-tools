@@ -19,6 +19,8 @@
 
 #include "sqlcipherdecryptor.ih"
 
+#include "../common_be.h"
+
 SqlCipherDecryptor::~SqlCipherDecryptor()
 {
   bepaald::destroyPtr(&d_key, &d_keysize);

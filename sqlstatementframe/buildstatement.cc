@@ -19,6 +19,8 @@
 
 #include "sqlstatementframe.ih"
 
+#include "../common_bytes.h"
+
 void SqlStatementFrame::buildStatement()
 {
   for (auto const &p : d_framedata)

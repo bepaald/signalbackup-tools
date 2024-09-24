@@ -27,15 +27,12 @@
 #include <memory>
 #include <sstream>
 #include <vector>
-#include <filesystem>
 #include <cstring>
 #include <algorithm>
 #include <ctime>
-#if __cpp_lib_byteswap >= 202110L
-#include <bit>
+#if __cpp_lib_format >= 201907L
+#include <format>
 #endif
-
-#include "logger/logger.h"
 
 #ifdef DEBUGMSG
 #define DEBUGOUT(...) bepaald::log("[DEBUG] : ", __PRETTY_FUNCTION__," : ", __VA_ARGS__);
@@ -62,36 +59,25 @@ using std::literals::string_literals::operator""s;
 
 namespace bepaald
 {
-  template <typename T>
-  inline T swap_endian(T u);
 #if defined DEBUGMSG || DEBUGISSUE
   template<typename ...Args>
   inline void log(Args && ...args);
 #endif
   template <typename T>
-  T toNumber(std::string const &str, T def = 0);
+  T toNumber(std::string const &str, T def = 0, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  template <typename T>
+  T toNumber(std::string const &str, T def = 0, typename std::enable_if<!std::is_integral<T>::value>::type *dummy = nullptr);
   template <typename T>
   T toNumberFromHex(std::string const &str, T def = 0);
-  std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
-  std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
-  std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
-  std::string bytesToString(unsigned char const *data, unsigned int length);
-  std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
-  inline bool hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize);
-  inline bool hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize);
   template <typename P, typename T>
   void destroyPtr(P **p, T *psize);
   template <typename T>
-  inline std::string toString(T const &num, bool hex = false, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  template <typename T>
+  inline std::string toHexString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
   inline int strlitLength(std::string const &str);
-  inline bool fileOrDirExists(std::string const &path);
-  inline bool fileOrDirExists(std::filesystem::path const &path);
-  inline bool isDir(std::string const &path);
-  inline bool createDir(std::string const &path);
-  inline bool isEmpty(std::string const &path);
-  inline bool clearDirectory(std::string const &path);
   inline int numDigits(long long int num);
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
@@ -143,29 +129,6 @@ namespace bepaald
   inline int findIdxOf(T const &container, U const &value);
 }
 
-template <typename T>
-inline T bepaald::swap_endian(T u)
-{
-#if __cpp_lib_byteswap >= 202110L
-  return std::byteswap(u);
-#else
-  static_assert(CHAR_BIT == 8, "CHAR_BIT != 8");
-
-  union
-  {
-    T u;
-    unsigned char u8[sizeof(T)];
-  } source, dest;
-
-  source.u = u;
-
-  for (size_t k = 0; k < sizeof(T); ++k)
-    dest.u8[k] = source.u8[sizeof(T) - k - 1];
-
-  return dest.u;
-#endif
-}
-
 #if defined DEBUGMSG || DEBUGISSUE
 template<typename ...Args>
 inline void bepaald::log(Args && ...args)
@@ -175,8 +138,42 @@ inline void bepaald::log(Args && ...args)
 }
 #endif
 
+#include <iostream>
 template <typename T>
-T bepaald::toNumber(std::string const &str, T def)
+T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<std::is_integral<T>::value>::type *)
+{
+  if (str.empty()) [[unlikely]]
+    return def;
+
+  int sign = 1;
+  int lowestpos = 0;
+
+  if (str[0] == '-') [[unlikely]]
+  {
+    ++lowestpos;
+    sign = -1;
+  }
+
+  T value = 0;
+  T multi = 1;
+  for (int i = str.size() - 1; i >= lowestpos; --i)
+  {
+    value += static_cast<T>((str[i] - '0')) * multi;
+    multi *= 10;
+    if (str[i] > '9' || value < 0) [[unlikely]]
+      return def;
+  }
+  return value * sign;
+  // std::istringstream s(str);
+  // T i = def;
+  // if (!(s >> i)) [[unlikely]]
+  //   return def;
+  // return i;
+}
+
+// non-integral to number, not ever called I dont think
+template <typename T>
+T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<!std::is_integral<T>::value>::type *)
 {
   std::istringstream s(str);
   T i = def;
@@ -195,96 +192,6 @@ T bepaald::toNumberFromHex(std::string const &str, T def)
   return i;
 }
 
-inline std::string bepaald::bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
-{
-  return bytesToHexString(data.first.get(), data.second, unformatted);
-}
-
-inline std::string bepaald::bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted/* = false*/)
-{
-  return bytesToHexString(data.first, data.second, unformatted);
-}
-
-inline std::string bepaald::bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted/* = false*/)
-{
-  std::ostringstream oss;
-  if (!unformatted)
-    oss << "(hex:) ";
-  for (uint i = 0; i < length; ++i)
-    oss << std::hex << std::setfill('0') << std::setw(2)
-        << (static_cast<int32_t>(data[i]) & 0xFF)
-        << ((i == length - 1 || unformatted) ? "" : " ");
-  return oss.str();
-}
-
-inline std::string bepaald::bytesToString(unsigned char const *data, unsigned int length)
-{
-  std::ostringstream oss;
-  for (uint i = 0; i < length; ++i)
-    oss << static_cast<char>(data[i]);
-  return oss.str();
-}
-
-inline std::string bepaald::bytesToPrintableString(unsigned char const *data, unsigned int length)
-{
-  bool prevwashex = false;
-  std::ostringstream oss;
-  for (uint i = 0; i < length; ++i)
-  {
-    bool curishex = !std::isprint(static_cast<char>(data[i]));
-
-    if (curishex != prevwashex && i > 0)
-      oss << " ";
-
-    if (curishex)
-      oss << "0x" << std::hex << std::setfill('0') << std::setw(2)
-          << (static_cast<int32_t>(data[i]) & 0xFF)
-          << (i == length - 1 ? "" : " ");
-    else
-      oss << static_cast<char>(data[i]);
-
-    prevwashex = curishex;
-  }
-  return oss.str();
-}
-
-inline bool bepaald::hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize)
-{
-  if (insize % 2 ||
-      outsize != insize / 2)
-  {
-    Logger::error("Invalid size for hex string or output array too small");
-    return false;
-  }
-
-  auto charToInt = [] (char c)
-  {
-    if (c <= '9' && c >= '0')
-      return c - '0';
-    if (c <= 'F' && c >= 'A')
-      return c - 'A' + 10;
-    // if (c <= 'f' && c >= 'a') // lets assume input is valid...
-    return c - 'a' + 10;
-  };
-
-  uint64_t outpos = 0;
-  for (uint i = 0; i < insize - 1; i += 2)
-    out[outpos++] = charToInt(in[i]) * 16 + charToInt(in[i + 1]);
-
-  return true;
-}
-
-inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize)
-{
-  // sanitize input;
-  std::string input = in;
-  auto newend = std::remove_if(input.begin(), input.end(), [](char c) {
-    return (c > '9' || c < '0') && (c > 'F' || c < 'A') && (c > 'f' || c < 'a'); });
-  input.erase(newend, input.end());
-
-  return hexStringToBytes(reinterpret_cast<unsigned char const *>(input.c_str()), input.size(), out, outsize);
-}
-
 template <typename P, typename T>
 inline void bepaald::destroyPtr(P **p, T *psize)
 {
@@ -297,11 +204,24 @@ inline void bepaald::destroyPtr(P **p, T *psize)
 }
 
 template <typename T>
-inline std::string bepaald::toString(T const &num, bool hex, typename std::enable_if<std::is_integral<T>::value>::type *)
+inline std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
 {
+  return std::to_string(num);
+  //std::ostringstream oss;
+  //oss << std::dec << num;
+  //return oss.str();
+}
+
+template <typename T>
+inline std::string bepaald::toHexString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
+{
+#if __cpp_lib_format >= 201907L
+  return std::format("{:x}", num);
+#else
   std::ostringstream oss;
-  oss << (hex ? std::hex : std::dec) << num << std::dec;
+  oss << std::hex << num << std::dec;
   return oss.str();
+#endif
 }
 
 inline std::string bepaald::toString(double num)
@@ -319,48 +239,6 @@ inline constexpr int bepaald::strlitLength(char const *str, int pos)
 inline int bepaald::strlitLength(std::string const &str)
 {
   return str.size();
-}
-
-inline bool bepaald::fileOrDirExists(std::string const &path)
-{
-  std::error_code ec;
-  return std::filesystem::exists(path, ec);
-}
-
-inline bool bepaald::fileOrDirExists(std::filesystem::path const &path)
-{
-  std::error_code ec;
-  return std::filesystem::exists(path, ec);
-}
-
-inline bool bepaald::isDir(std::string const &path)
-{
-  std::error_code ec;
-  return std::filesystem::is_directory(path, ec);
-}
-
-inline bool bepaald::createDir(std::string const &path)
-{
-  std::error_code ec;
-  return std::filesystem::create_directory(path, ec);
-}
-
-inline bool bepaald::isEmpty(std::string const &path)
-{
-  std::error_code ec;
-  for (auto const &p: std::filesystem::directory_iterator(path))
-    if (p.exists(ec))
-      return false;
-  return true;
-}
-
-inline bool bepaald::clearDirectory(std::string const &path)
-{
-  std::error_code ec;
-  for (auto const &p: std::filesystem::directory_iterator(path))
-    if (std::filesystem::remove_all(p.path(), ec) == static_cast<std::uintmax_t>(-1))
-      return false;
-  return true;
 }
 
 inline int bepaald::numDigits(long long int num)

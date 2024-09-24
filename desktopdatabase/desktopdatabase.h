@@ -25,7 +25,7 @@
 #include <set>
 
 #include "../logger/logger.h"
-#include "../common_be.h"
+#include "../common_filesystem.h"
 #include "../memsqlitedb/memsqlitedb.h"
 #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
 

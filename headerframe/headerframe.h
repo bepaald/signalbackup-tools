@@ -23,6 +23,9 @@
 #include "../backupframe/backupframe.h"
 #include "../base64/base64.h"
 
+#include "../common_be.h"
+#include "../common_bytes.h"
+
 class HeaderFrame : public BackupFrame
 {
   enum FIELD : unsigned int

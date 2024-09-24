@@ -25,6 +25,7 @@
 #include <openssl/hmac.h>
 
 #include "../common_be.h"
+#include "../common_bytes.h"
 #include "../baseattachmentreader/baseattachmentreader.h"
 #include "../framewithattachment/framewithattachment.h"
 #include "../cryptbase/cryptbase.h"

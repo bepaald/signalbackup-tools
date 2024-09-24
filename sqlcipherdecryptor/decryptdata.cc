@@ -19,6 +19,8 @@
 
 #include "sqlcipherdecryptor.ih"
 
+#include "../common_bytes.h"
+
 bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
 {
   // decrypt data

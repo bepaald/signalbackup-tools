@@ -20,6 +20,7 @@
 #ifndef DATABASEVERSIONFRAME_H_
 #define DATABASEVERSIONFRAME_H_
 
+#include "../common_be.h"
 #include "../backupframe/backupframe.h"
 
 class DatabaseVersionFrame : public BackupFrame

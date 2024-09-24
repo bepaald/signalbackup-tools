@@ -269,7 +269,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM storage_key WHERE key = ?", res.getValueAs<std::string>(i, 0));
+      source->d_database.exec("DELETE FROM storage_key WHERE key = ?", res.value(i, 0));
       count += source->d_database.changed();
     }
     if (count)
@@ -285,7 +285,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.getValueAs<std::string>(i, 0));
+      source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.value(i, 0));
       count += source->d_database.changed();
     }
     if (count)
@@ -301,7 +301,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM remote_megaphone WHERE uuid = ?", res.getValueAs<std::string>(i, 0));
+      source->d_database.exec("DELETE FROM remote_megaphone WHERE uuid = ?", res.value(i, 0));
       count += source->d_database.changed();
     }
     if (count)
@@ -317,11 +317,33 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM cds WHERE e164 = ?", res.getValueAs<std::string>(i, 0));
+      source->d_database.exec("DELETE FROM cds WHERE e164 = ?", res.value(i, 0));
       count += source->d_database.changed();
     }
     if (count)
       Logger::message("  Deleted ", count, " existing cds's");
+  }
+
+  // UNTESTED
+  // remove double in app payment subscribers
+  // this table has unique string: subscriber_id_ID TEXT NOT NULL UNIQUE
+  // and combo: UNIQUE(currency_code, type)
+  if (d_database.containsTable("in_app_payment_subscriber"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT subscriber_id, currency_code, type FROM in_app_payment_subscriber", &res);
+
+    int count = 0;
+    for (uint i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM in_app_payment_subscriber WHERE subscriber_id = ?", res.value(i, "subscriber_id"));
+      count += source->d_database.changed();
+      source->d_database.exec("DELETE FROM in_app_payment_subscriber WHERE currency_code = ? AND type = ?", {res.value(i, "currency_code"), res.value(i, "type")});
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing cds's");
+
   }
 
   // remove any kyber_keys that are already in target...
@@ -333,7 +355,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     int count = 0;
     for (uint i = 0; i < res.rows(); ++i)
     {
-      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.getValueAs<long long int>(i, 0));
+      source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.value(i, 0));
       count += source->d_database.changed();
     }
     if (count)

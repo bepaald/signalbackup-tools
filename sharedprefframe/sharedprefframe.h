@@ -20,6 +20,7 @@
 #ifndef SHAREDPREFFRAME_H_
 #define SHAREDPREFFRAME_H_
 
+#include "../common_bytes.h"
 #include "../backupframe/backupframe.h"
 
 class SharedPrefFrame : public BackupFrame

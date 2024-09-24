@@ -19,6 +19,8 @@
 
 #include "backupframe.ih"
 
+#include "../common_bytes.h"
+
 bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
 {
 

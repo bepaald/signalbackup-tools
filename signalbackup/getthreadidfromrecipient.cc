@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../common_be.h"
+
 long long int SignalBackup::getThreadIdFromRecipient(std::string const &recipient) const
 {
 
@@ -31,4 +33,9 @@ long long int SignalBackup::getThreadIdFromRecipient(std::string const &recipien
   if (results.rows() == 1 && results.columns() == 1 && results.valueHasType<long long int>(0, 0))
     tid = results.getValueAs<long long int>(0, 0);
   return tid;
+}
+
+long long int SignalBackup::getThreadIdFromRecipient(long long int recipientid) const
+{
+  return getThreadIdFromRecipient(bepaald::toString(recipientid));
 }

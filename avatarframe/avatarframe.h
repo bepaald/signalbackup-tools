@@ -26,6 +26,9 @@
 #include "../framewithattachment/framewithattachment.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
+#include "../common_be.h"
+#include "../common_bytes.h"
+
 class AvatarFrame : public FrameWithAttachment
 {
   enum FIELD

@@ -38,6 +38,8 @@
 #include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
+#include "../common_bytes.h"
+
 #include <map>
 #include <set>
 #include <unordered_set>
@@ -198,15 +200,15 @@ class SignalBackup
  public:
   inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                       bool truncate, bool showprogress, bool replaceattachments);
-  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool truncate, bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
-                      std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode);
+  SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
+               bool truncate, bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
+               std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode);
   inline SignalBackup(SignalBackup const &other) = default;
   inline SignalBackup &operator=(SignalBackup const &other) = default;
   inline SignalBackup(SignalBackup &&other) = default;
   inline SignalBackup &operator=(SignalBackup &&other) = default;
-  [[nodiscard]] inline bool exportBackup(std::string const &filename, std::string const &passphrase,
-                                         bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
+  [[nodiscard]] bool exportBackup(std::string const &filename, std::string const &passphrase,
+                                  bool overwrite, bool keepattachmentdatainmemory, bool onlydb = false);
   bool exportXml(std::string const &filename, bool overwrite, std::string self, bool includemms = false, bool keepattachmentdatainmemory = true);
   bool exportCsv(std::string const &filename, std::string const &table, bool overwrite) const;
   void listThreads() const;
@@ -268,7 +270,7 @@ class SignalBackup
   long long int getRecipientIdFromPhone(std::string const &phone, bool withthread) const;
   long long int getRecipientIdFromUsername(std::string const &phone, bool withthread) const;
   long long int getThreadIdFromRecipient(std::string const &recipient) const;
-  inline long long int getThreadIdFromRecipient(long long int recipientid) const;
+  long long int getThreadIdFromRecipient(long long int recipientid) const;
   bool importTelegramJson(std::string const &file, std::vector<long long int> const &chatselection,
                           std::vector<std::pair<std::string, long long int>> contactmap,
                           std::vector<std::string> const &inhibitmapping, bool prependforwarded,
@@ -348,9 +350,9 @@ class SignalBackup
   void handleSms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self [[maybe_unused]], int i) const;
   void handleMms(SqliteDB::QueryResults const &results, std::ofstream &outputfile, std::string const &self, int i, bool keepattachmentdatainmemory) const;
   inline std::string getStringOr(SqliteDB::QueryResults const &results, int i,
-                                 std::string const &columnname, std::string const &def = std::string()) const;
+                          std::string const &columnname, std::string const &def = std::string()) const;
   inline long long int getIntOr(SqliteDB::QueryResults const &results, int i,
-                                std::string const &columnname, long long int def) const;
+                         std::string const &columnname, long long int def) const;
   //  bool handleWAMessage(long long int thread_id, long long int time, std::string const &chatname, std::string const &author,
   //                     std::string const &message, std::string const &selfid, bool isgroup,
   //                     std::map<std::string, std::string> const &name_to_recipientid);
@@ -457,7 +459,7 @@ class SignalBackup
   inline int utf8Chars(std::string const &body) const;
   inline void resizeToNUtf8Chars(std::string &body, unsigned long size) const;
   inline int bytesToUtf8CharSize(std::string const &body, int idx) const;
-  inline std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
+  std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
   RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
@@ -469,13 +471,13 @@ class SignalBackup
   bool dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
                    long long int rid, std::string const &databasedir);
   std::string dtSetSharedContactsJsonString(SqliteDB const &ddb, long long int rowid) const;
-  inline void warnOnce(std::string const &msg, bool error = false);
+  void warnOnce(std::string const &msg, bool error = false);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
-  inline std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
+  std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
-  inline void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
+  void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
   bool tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
                         std::string const &datapath, std::string const &threadname, long long int chat_idx,
                         bool prependforwarded, bool markdelivered, bool markread, bool isgroup);
@@ -520,54 +522,6 @@ inline SignalBackup::SignalBackup(std::string const &filename, std::string const
   SignalBackup(filename, passphrase, verbose, truncate, showprogress, replaceattachments, false, std::vector<long long int>(), false, false)
 {}
 
-inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                                  bool truncate, bool showprogress, bool replaceattachments, bool assumebadframesizeonbadmac,
-                                  std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode)
-  :
-  d_filename(filename),
-  d_passphrase(passphrase),
-  d_found_sqlite_sequence_in_backup(false),
-  d_ok(false),
-  d_databaseversion(-1),
-  d_backupfileversion(-1),
-  d_showprogress(showprogress),
-  d_stoponerror(stoponerror),
-  d_verbose(verbose),
-  d_truncate(truncate),
-  d_fulldecode(fulldecode),
-  d_selfid(-1)
-{
-  if (bepaald::isDir(filename))
-    initFromDir(filename, replaceattachments);
-  else // not directory
-  {
-    d_fd.reset(new FileDecryptor(d_filename, d_passphrase, d_verbose, d_stoponerror, assumebadframesizeonbadmac, editattachments));
-    if (!d_fd->ok())
-      return;
-    initFromFile();
-  }
-
-  if (!d_ok)
-    return;
-
-  Logger::message("Database version: ", d_databaseversion);
-
-  checkDbIntegrity(true);
-}
-
-inline bool SignalBackup::exportBackup(std::string const &filename, std::string const &passphrase, bool overwrite,
-                                       bool keepattachmentdatainmemory, bool onlydb)
-{
-  // if output is existing directory, or doesn't exist but ends in directory delim. -> output to dir
-  if ((bepaald::fileOrDirExists(filename) && bepaald::isDir(filename)) ||
-      (!bepaald::fileOrDirExists(filename) &&
-      (filename.back() == '/' || filename.back() == std::filesystem::path::preferred_separator)))
-    return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
-
-  // export to file
-  return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);
-}
-
 inline bool SignalBackup::ok() const
 {
   return d_ok;
@@ -605,7 +559,7 @@ inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
   return writeRawFrameDataToFile(outputfile, frame.get());
 }
 
-inline bool SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const
+bool SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const
 {
   uint32_t besize = bepaald::swap_endian(static_cast<uint32_t>(data.second));
   // write 4 byte size header
@@ -655,7 +609,8 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   std::string datastr = line.substr(pos2 + 1);
 
   if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
-  {                                              // (on windows stoul would be four bytes and the above if-clause would cause bad data
+  {
+    // (on windows stoul would be four bytes and the above if-clause would cause bad data
     std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
     if (!decdata.first) [[unlikely]]
       return false;
@@ -683,7 +638,8 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
     (*newframe)->setNewData(field, decdata.first, decdata.second);
   }
   else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
-  {                                            // (on windows stol would be four bytes and the above if-clause would cause bad data
+  {
+    // (on windows stol would be four bytes and the above if-clause would cause bad data
     std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoll(datastr)));
     if (!decdata.first) [[unlikely]]
       return false;
@@ -804,15 +760,10 @@ inline void SignalBackup::showDBInfo() const
   d_database.print("SELECT m.name as TABLE_NAME, p.name as COLUMN_NAME FROM sqlite_master m LEFT OUTER JOIN pragma_table_info((m.name)) p ON m.name <> p.name ORDER BY TABLE_NAME, COLUMN_NAME");
 }
 
-inline long long int SignalBackup::getThreadIdFromRecipient(long long int recipientid) const
-{
-  return getThreadIdFromRecipient(bepaald::toString(recipientid));
-}
-
 inline std::string SignalBackup::getStringOr(SqliteDB::QueryResults const &results, int i, std::string const &columnname, std::string const &def) const
 {
   std::string tmp(def);
-  if (bepaald::contains(results.headers(), columnname))    // to prevent warning in this case, we check the
+  if (results.hasColumn(columnname))                       // to prevent warning in this case, we check the
     if (results.valueHasType<std::string>(i, columnname))  // column name. This function expect it may fail
     {
       tmp = results.getValueAs<std::string>(i, columnname);
@@ -822,13 +773,13 @@ inline std::string SignalBackup::getStringOr(SqliteDB::QueryResults const &resul
 }
 
 inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &results, int i,
-                                     std::string const &columnname, long long int def) const
+                                            std::string const &columnname, long long int def) const
 {
-  long long int temp = def;
-  if (bepaald::contains(results.headers(), columnname))     // to prevent warning in this case, we check the
+  long long int tmp = def;
+  if (results.hasColumn(columnname))                        // to prevent warning in this case, we check the
     if (results.valueHasType<long long int>(i, columnname)) // column name. This function expect it may fail
-      temp = results.getValueAs<long long int>(i, columnname);
-  return temp;
+      tmp = results.getValueAs<long long int>(i, columnname);
+  return tmp;
 }
 
 inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &data, long long int id)
@@ -939,27 +890,6 @@ inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx) c
     return 1;
 }
 
-inline std::string SignalBackup::utf8BytesToHexString(unsigned char const *const data, size_t data_size) const
-{
-  // NOTE THIS IS NOT GENERIC UTF-8 CONVERSION, THIS
-  // DATA IS GUARANTEED TO HAVE ONLY SINGLE- AND TWO-BYTE
-  // CHARS (NO 3 OR 4-BYTE). THE TWO-BYTE CHARS NEVER
-  // CONTAIN MORE THAN TWO BITS OF DATA
-  unsigned char output[16]{0};
-  uint outputpos = 0;
-  for (uint i = 0; i < data_size; ++i)
-  {
-    if (outputpos >= 16) [[unlikely]]
-      return std::string();
-
-    if ((data[i] & 0b10000000) == 0) // single byte char
-      output[outputpos++] += data[i];
-    else // 2 byte char
-      output[outputpos++] = ((data[i] & 0b00000011) << 6) | (data[i + 1] & 0b00111111), ++i;
-  }
-  return bepaald::bytesToHexString(output, 16, true);
-}
-
 inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const
 {
   return utf8BytesToHexString(data.get(), data_size);
@@ -968,40 +898,6 @@ inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned c
 inline std::string SignalBackup::utf8BytesToHexString(std::string const &data) const
 {
   return utf8BytesToHexString(reinterpret_cast<unsigned char const *>(data.data()), data.size());
-}
-
-// the const here is supposed to be temporary (2024-19-08)
-inline void SignalBackup::warnOnce(std::string const &warning, bool error)
-{
-  if (!bepaald::contains(d_warningsgiven, warning))
-  {
-    if (error)
-      Logger::error(warning);
-    else
-      Logger::warning(warning);
-    d_warningsgiven.insert(warning);
-  }
-}
-
-inline std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string const &in) const
-{
-  // link preview can contain html, this is problematic for the export +
-  // in the app the tags are stripped, and underscores are replaced with spaces
-  // for some reason
-
-  std::string cleaned = in;
-
-  while (cleaned.find("<") != std::string::npos)
-  {
-    auto startpos = cleaned.find("<");
-    auto endpos = cleaned.find(">") + 1;
-
-    if (endpos != std::string::npos)
-      cleaned.erase(startpos, endpos - startpos);
-  }
-
-  bepaald::replaceAll(&cleaned, "_", " ");
-  return cleaned;
 }
 
 inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const
@@ -1020,28 +916,6 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
       *out << "; ";
   }
   *out << ")";
-}
-
-inline void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const
-{
-  for (uint ai = 0; ai < attachment_results->rows(); ++ai)
-  {
-    if (attachment_results->valueAsString(ai, d_part_ct) == "text/x-signal-plain") [[unlikely]]
-    {
-      //std::cout << "Got long message!" << std::endl;
-      SqliteDB::QueryResults longmessage = attachment_results->getRow(ai);
-      attachment_results->removeRow(ai);
-      // get message:
-      long long int rowid = longmessage.valueAsInt(0, "_id");
-      long long int uniqueid = longmessage.valueAsInt(0, "unique_id");
-      if (!bepaald::contains(d_attachments, std::pair{rowid, uniqueid})) [[unlikely]]
-        continue;
-      AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
-      *body = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
-      a->clearData();
-      break; // always max 1?
-    }
-  }
 }
 
 #endif

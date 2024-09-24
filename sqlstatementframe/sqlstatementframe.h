@@ -26,6 +26,8 @@
 #include <vector>
 #include <any>
 
+#include "../common_be.h"
+#include "../common_bytes.h"
 #include "../backupframe/backupframe.h"
 
 struct Period final : std::numpunct<char>

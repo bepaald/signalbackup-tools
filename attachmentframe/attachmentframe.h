@@ -22,6 +22,7 @@
 
 #include <cstring>
 
+#include "../common_bytes.h"
 #include "../framewithattachment/framewithattachment.h"
 
 class AttachmentFrame : public FrameWithAttachment

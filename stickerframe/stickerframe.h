@@ -25,6 +25,9 @@
 #include "../framewithattachment/framewithattachment.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
+#include "../common_be.h"
+#include "../common_bytes.h"
+
 class StickerFrame : public FrameWithAttachment
 {
   enum FIELD

@@ -450,6 +450,18 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "_id",
     {},
     0
+  },
+  {
+    "in_app_payment",
+    "_id",
+    {},
+    0
+  },
+  {
+    "in_app_payment_subscriber",
+    "_id",
+    {},
+    0
   }
 };
 

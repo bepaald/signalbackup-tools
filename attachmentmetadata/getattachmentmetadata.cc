@@ -22,6 +22,7 @@
 #include <openssl/sha.h>
 
 #include "../base64/base64.h"
+#include "../common_filesystem.h"
 
 AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size, bool skiphash) // static
 {

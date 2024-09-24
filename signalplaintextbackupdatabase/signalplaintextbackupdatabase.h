@@ -22,7 +22,6 @@
 
 #include "../memsqlitedb/memsqlitedb.h"
 #include "../logger/logger.h"
-#include "../common_be.h"
 
 class SignalPlaintextBackupDatabase
 {

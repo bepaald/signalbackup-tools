@@ -24,6 +24,7 @@
 #include <memory>
 #include <fstream>
 
+#include "../common_be.h"
 #include "../backupframe/backupframe.h"
 #include "../baseattachmentreader/baseattachmentreader.h"
 

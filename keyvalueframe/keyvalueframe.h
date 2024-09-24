@@ -22,6 +22,7 @@
 
 #include "../backupframe/backupframe.h"
 #include "../base64/base64.h"
+#include "../common_be.h"
 
 class KeyValueFrame : public BackupFrame
 {

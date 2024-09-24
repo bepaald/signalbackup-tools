@@ -27,7 +27,6 @@
 #include <unordered_map>
 #include <limits>
 
-#include "../common_be.h"
 #include "../logger/logger.h"
 
 class BackupFrame
@@ -65,7 +64,7 @@ class BackupFrame
   {
     Registrar(FRAMETYPE ft, BackupFrame *(*func)(unsigned char const *, size_t, uint64_t))
     {
-      DEBUGOUT("Registering class type: ", ft);
+      //Logger::message("Registering class type: ", ft);
       s_registry()[ft] = func;
     }
   };
@@ -141,8 +140,7 @@ inline BackupFrame::BackupFrame(unsigned char const *data, size_t l, uint64_t nu
   d_constructedsize(l)
 {
   //std::cout << "CREATING BACKUPFRAME!" << std::endl;
-  DEBUGOUT("CREATING BACKUPFRAME!");
-  DEBUGOUT("DATA: ", bepaald::bytesToHexString(data, l), " (", l, " bytes)");
+  //Logger::message("DATA: ", bepaald::bytesToHexString(data, l), " (", l, " bytes)");
   d_ok = init(data, l, &d_framedata);
 }
 

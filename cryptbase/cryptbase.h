@@ -24,6 +24,7 @@
 #include <cctype>
 
 #include "../common_be.h"
+#include "../common_bytes.h"
 
 class CryptBase
 {

@@ -34,7 +34,7 @@ void SignalBackup::HTMLescapeUrl(std::string *in) const
         (*in)[i] != '~')
     {
       // it is not an allowed character, escape it
-      std::string escape = "%" + bepaald::toString(static_cast<int>((*in)[i]) & 0xff, true);
+      std::string escape = "%" + bepaald::toHexString(static_cast<int>((*in)[i]) & 0xff);
       in->replace(i, 1, escape);
       i += escape.size() - 1;
     }

@@ -19,6 +19,9 @@
 
 #include "sqlcipherdecryptor.ih"
 
+#include "../common_be.h"
+#include "../common_bytes.h"
+
 /*
   SQLCipher 1,2,3    ->  4
   - KDF Algorithm: PBKDF2-HMAC-SHA1 -> PBKDF2-HMAC-SHA512

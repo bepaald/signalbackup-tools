@@ -21,6 +21,8 @@
 
 #include "desktopdatabase.ih"
 
+#include "../common_bytes.h"
+
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>

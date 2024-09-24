@@ -23,6 +23,8 @@
 #include "../baseattachmentreader/baseattachmentreader.h"
 #include "../framewithattachment/framewithattachment.h"
 
+#include "../common_filesystem.h"
+
 class RawFileAttachmentReader : public AttachmentReader<RawFileAttachmentReader>
 {
   std::string d_filename;

@@ -25,7 +25,6 @@
 #include <memory>
 
 #include "../cryptbase/cryptbase.h"
-#include "../common_be.h"
 
 class FileEncryptor : public CryptBase
 {
