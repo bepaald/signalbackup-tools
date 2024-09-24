@@ -54,7 +54,7 @@
 //                   bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
 //                   " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
 //   //results.prettyPrint();
-//   for (uint i = 0; i < results.rows(); ++i)
+//   for (unsigned int i = 0; i < results.rows(); ++i)
 //     if (results.valueHasType<long long int>(i, 0) &&
 //         (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
 //       d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
@@ -71,7 +71,7 @@
 //                     bepaald::toString(Types::BASE_PENDING_INSECURE_SMS_FALLBACK) +
 //                     " AND thread_id NOT IN (SELECT DISTINCT _id FROM thread)", &results);
 //     //results.prettyPrint();
-//     for (uint i = 0; i < results.rows(); ++i)
+//     for (unsigned int i = 0; i < results.rows(); ++i)
 //       if (results.valueHasType<long long int>(i, 0) &&
 //           (results.valueHasType<std::string>(i, 1) || results.valueHasType<long long int>(i, 1)))
 //         d_database.exec("INSERT INTO thread (_id, " + d_thread_recipient_id + ") VALUES (?, ?)", {results.value(i, 0), results.value(i, 1)});
@@ -88,7 +88,7 @@
 
 //   //std::cout << "Orphan threads in db: " << std::endl;
 //   //results.prettyPrint();
-//   for (uint i = 0; i < results.rows(); ++i)
+//   for (unsigned int i = 0; i < results.rows(); ++i)
 //   {
 //     long long int thread = std::any_cast<long long int>(results.value(i, "union_thread_id"));
 //     //std::cout << "Dealing with thread: " << thread << std::endl;
@@ -135,7 +135,7 @@
 //   std::string query = "SELECT DISTINCT _id, " + d_thread_recipient_id + " FROM thread WHERE SUBSTR(" + d_thread_recipient_id + ", 0, 22) == \"__textsecure_group__!\""; // maybe || SUBSTR == "__signal_mms_group__!"
 //   d_database.exec(query, &threadquery);
 
-//   for (uint i = 0; i < threadquery.rows(); ++i)
+//   for (unsigned int i = 0; i < threadquery.rows(); ++i)
 //   {
 
 //     std::set<std::string> groupmembers;
@@ -157,7 +157,7 @@
 //       //std::cout << "STATUS MSGS FROM THREAD: " << threadid << std::endl;
 //       //results.prettyPrint();
 
-//       for (uint j = 0; j < results.rows(); ++j)
+//       for (unsigned int j = 0; j < results.rows(); ++j)
 //       {
 //         std::string body   = std::any_cast<std::string>(results.value(j, "union_body"));
 //         long long int type = std::any_cast<long long int>(results.value(j, "union_type"));
@@ -169,7 +169,7 @@
 //           GroupContext statusmsg(body);
 
 //           auto field4 = statusmsg.getField<4>();
-//           for (uint k = 0; k < field4.size(); ++k)
+//           for (unsigned int k = 0; k < field4.size(); ++k)
 //           {
 //             //std::cout << j << " JOINED: " << field4[k] << std::endl;
 //             groupmembers.insert(field4[k]);

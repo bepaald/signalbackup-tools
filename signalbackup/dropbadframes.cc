@@ -37,8 +37,8 @@ bool SignalBackup::dropBadFrames()
 
     long long int mid = -1;
     d_database.exec(query, &results);
-    for (uint i = 0; i < results.rows(); ++i)
-      for (uint j = 0; j < results.columns(); ++j)
+    for (unsigned int i = 0; i < results.rows(); ++i)
+      for (unsigned int j = 0; j < results.columns(); ++j)
         if (results.valueHasType<long long int>(i, j))
           if (results.header(j) == d_part_mid)
           {

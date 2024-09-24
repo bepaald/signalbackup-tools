@@ -88,7 +88,7 @@ bool SignalBackup::tgSetQuote(long long int quoted_message_id, long long int new
       return false;
     }
 
-    for (uint i = 0; i < quote_att_res.rows(); ++i)
+    for (unsigned int i = 0; i < quote_att_res.rows(); ++i)
     {
       // set sql data
       std::any retval;

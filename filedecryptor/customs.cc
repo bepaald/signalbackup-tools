@@ -25,7 +25,7 @@
 // #include <openssl/sha.h>
 // void FileDecryptor::strugee(uint64_t pos)
 // {
-//   uint offset = 0;
+//   unsigned int offset = 0;
 
 //   d_file.seekg(pos, std::ios_base::beg);
 
@@ -65,7 +65,7 @@
 //   }
 
 //   // decode
-//   uint skipped = 0;
+//   unsigned int skipped = 0;
 //   std::unique_ptr<BackupFrame> frame(nullptr);
 //   while (!frame)
 //   {
@@ -393,7 +393,7 @@
 //   }
 
 //   Logger::message("Tables present in backup:");
-//   for (uint i = 0; i < tables.size(); ++i)
+//   for (unsigned int i = 0; i < tables.size(); ++i)
 //     Logger::message(tables[i], ((i == tables.size() - 1) && !endfound ? " (probably incomplete)" : ""));
 
 //   Logger::message("Last message: ", (lastmsg.empty() ? "(none)" : lastmsg));
@@ -596,10 +596,10 @@
 //   std::vector<std::pair<std::unique_ptr<unsigned char[]>, uint64_t>> macs_and_positions;
 //   strugee3Helper(&macs_and_positions);
 //   Logger::message("Got macs: ");
-//   //for (uint i = 0; i < macs_and_positions.size(); ++i)
+//   //for (unsigned int i = 0; i < macs_and_positions.size(); ++i)
 //   //  Logger::message(macs_and_positions[i].second, " : ", bepaald::bytesToHexString(macs_and_positions[i].first.get(), SHA256_DIGEST_LENGTH));
 
-//   uint offset = 0;
+//   unsigned int offset = 0;
 
 //   d_file.seekg(pos, std::ios_base::beg);
 
@@ -643,7 +643,7 @@
 
 
 //   Logger::message("Got GOOD MAC : ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
-//   for (uint i = 0; i < macs_and_positions.size(); ++i)
+//   for (unsigned int i = 0; i < macs_and_positions.size(); ++i)
 //   {
 //     if (std::memcmp(macs_and_positions[i].first.get(), hash, SHA256_DIGEST_LENGTH) == 0)
 //     {
@@ -665,7 +665,7 @@
 
 // void FileDecryptor::ashmorgan()
 // {
-//   uint offset = 0;
+//   unsigned int offset = 0;
 
 
 //   d_file.seekg(d_filesize - 100, std::ios_base::beg);
@@ -717,7 +717,7 @@
 //   }
 
 //   // decode
-//   uint skipped = 0;
+//   unsigned int skipped = 0;
 //   std::unique_ptr<BackupFrame> frame(nullptr);
 //   while (true)
 //   {

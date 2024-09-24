@@ -26,8 +26,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   // get recipient id for conversation
   auto find_in_contactmap = [&contactmap](std::string const &identifier) -> long long int
   {
-    for (uint i = 0; i < contactmap.size(); ++i)
-      for (uint j = 0; j < contactmap[i].first.size(); ++j)
+    for (unsigned int i = 0; i < contactmap.size(); ++i)
+      for (unsigned int j = 0; j < contactmap[i].first.size(); ++j)
         if (contactmap[i].first[j] == identifier)
           return contactmap[i].second;
     return -1;
@@ -78,7 +78,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   // save timestamp of previous message (to merge messages with multiple attachments)
   std::pair<long long int, long long int> prevtimestamp_to_id;
 
-  for (uint i = 0; i < message_data.rows(); ++i)
+  for (unsigned int i = 0; i < message_data.rows(); ++i)
   {
     Logger::message("Dealing with message ", i + 1, "/", message_data.rows());
 
@@ -104,7 +104,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         std::string fname = message_data(i, "forwarded_from");
         std::string tmp = db.getSingleResultAs<std::string>("SELECT json_array(json_object('type', 'italic', 'text', ?), json_object('type', 'plain', 'text', '\n'))",
                                                             "Forwarded from " + fname + ":", std::string());
-        for (uint nt = 0; nt < n_text_entities; ++nt)
+        for (unsigned int nt = 0; nt < n_text_entities; ++nt)
           tmp = db.getSingleResultAs<std::string>("SELECT json_insert(?, '$[#]', json_extract(?, '$[" + bepaald::toString(nt) + "]'))", {tmp, bodyjson}, std::string());
 
         if (!tmp.empty())

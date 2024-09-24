@@ -40,7 +40,7 @@ bool SignalBackup::importCSV(std::string const &file, std::map<std::string, std:
   std::vector<unsigned int> date_indeces;
 
   // get columns to set
-  for (uint i = 0; i < csvfile.fields(); ++i)
+  for (unsigned int i = 0; i < csvfile.fields(); ++i)
   {
     std::string fieldname = csvfile.getFieldName(i);
     if (fieldmap.find(fieldname) != fieldmap.end())// (fieldmap.contains(fieldname))
@@ -58,10 +58,10 @@ bool SignalBackup::importCSV(std::string const &file, std::map<std::string, std:
   statementstub += "thread_id) VALUES (";
 
   // build statement from each row
-  for (uint msg = 0; msg < csvfile.rows(); ++msg)
+  for (unsigned int msg = 0; msg < csvfile.rows(); ++msg)
   {
     std::string statement = statementstub;
-    for (uint f = 0; f < csvfile.fields(); ++f)
+    for (unsigned int f = 0; f < csvfile.fields(); ++f)
     {
       //if (f == idx_of_type)
       //  translate type?

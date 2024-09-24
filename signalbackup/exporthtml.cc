@@ -105,12 +105,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   // set where-clause for date requested
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
-    for (uint i = 0; i < daterangelist.size(); i += 2)
+    for (unsigned int i = 0; i < daterangelist.size(); i += 2)
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
   std::string datewhereclause;
   std::string datewhereclausecalllog;
   long long int maxdate = -1;
-  for (uint i = 0; i < dateranges.size(); ++i)
+  for (unsigned int i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
     long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
@@ -175,13 +175,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (!limittothreads.empty())
     {
       options += "<br>--limittothreads ";
-      for (uint i = 0; i < limittothreads.size(); ++i)
+      for (unsigned int i = 0; i < limittothreads.size(); ++i)
         options += bepaald::toString(limittothreads[i]) + (i < limittothreads.size() - 1  ? "," : "");
     }
     if (!daterangelist.empty())
     {
       options += "<br>--limittodates ";
-      for (uint i = 0; i < daterangelist.size(); i += 2)
+      for (unsigned int i = 0; i < daterangelist.size(); i += 2)
         options += daterangelist[i] + "&ndash;" + daterangelist[i + 1] + (i < daterangelist.size() - 1  ? "," : "");
     }
     if (split > -1)
@@ -230,7 +230,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       "    </div>\n";
   }
 
-  for (uint t_idx = 0; t_idx < threads.size(); ++t_idx)
+  for (unsigned int t_idx = 0; t_idx < threads.size(); ++t_idx)
   {
     int t = threads[t_idx];
 
@@ -475,7 +475,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         // prep body (scan emoji? -> in <span>) and handle mentions...
         // if (prepbody)
         std::vector<std::tuple<long long int, long long int, long long int>> mentions;
-        for (uint mi = 0; mi < mention_results.rows(); ++mi)
+        for (unsigned int mi = 0; mi < mention_results.rows(); ++mi)
           mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
                                                 mention_results.getValueAs<long long int>(mi, "range_start"),
                                                 mention_results.getValueAs<long long int>(mi, "range_length")));
@@ -624,7 +624,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         }
 
         // set daterangeidx (which range were we in for the just written message...)
-        for (uint dri = 0; dri < dateranges.size(); ++dri)
+        for (unsigned int dri = 0; dri < dateranges.size(); ++dri)
           if (messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[dri].first) &&
               messages.getValueAs<long long int>(messagecount, "date_received") <= bepaald::toNumber<long long int>(dateranges[dri].second))
           {

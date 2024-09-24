@@ -19,7 +19,7 @@
 
 #include "sqlitedb.ih"
 
-bool SqliteDB::QueryResults::renameColumn(uint idx, std::string const &name)
+bool SqliteDB::QueryResults::renameColumn(unsigned int idx, std::string const &name)
 {
   if (idx >= d_headers.size())
     return false;

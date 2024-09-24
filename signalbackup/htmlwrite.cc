@@ -1703,7 +1703,7 @@ file << R"(
     // group members
     file << "                  <span class=\"column-right-align\">Members:</span>\n";
     file << "                  <span class=\"column-left-align\">";
-    for (uint gm = 0; gm < groupmembers.size(); ++gm)
+    for (unsigned int gm = 0; gm < groupmembers.size(); ++gm)
       file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name)
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
     file << "</span>\n";
@@ -1716,7 +1716,7 @@ file << R"(
       if (groupinfo.pending_members.size() == 0)
         file << "(none)";
       else
-        for (uint pm = 0; pm < groupinfo.pending_members.size(); ++pm)
+        for (unsigned int pm = 0; pm < groupinfo.pending_members.size(); ++pm)
           file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name)
                << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
       file << "</span>\n";
@@ -1727,7 +1727,7 @@ file << R"(
       if (groupinfo.requesting_members.size() == 0)
         file << "(none)";
       else
-        for (uint rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
+        for (unsigned int rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
           file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name)
                << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
       file << "</span>\n";
@@ -1738,7 +1738,7 @@ file << R"(
       if (groupinfo.banned_members.size() == 0)
         file << "(none)";
       else
-        for (uint bm = 0; bm < groupinfo.banned_members.size(); ++bm)
+        for (unsigned int bm = 0; bm < groupinfo.banned_members.size(); ++bm)
           file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name)
                << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
       file << "</span>\n";
@@ -1834,7 +1834,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
                                           std::string const &directory, std::string const &threaddir,
                                           bool is_image_preview, bool overwrite, bool append) const
 {
-  for (uint a = 0; a < attachment_results.rows(); ++a)
+  for (unsigned int a = 0; a < attachment_results.rows(); ++a)
   {
 
     if (attachment_results(a, d_part_ct) == "text/x-signal-plain")
@@ -2260,7 +2260,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     if (msg_info.edit_revisions->rows())
     {
       htmloutput << "<div class=\"edited-info\">";
-      for (uint i = 0; i < msg_info.edit_revisions->rows() - 1; ++i) // -1, skip last one: it is current message
+      for (unsigned int i = 0; i < msg_info.edit_revisions->rows() - 1; ++i) // -1, skip last one: it is current message
       {
 
         if (i == 0)
@@ -2322,7 +2322,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
 
     std::set<std::string> skip;
-    for (uint r = 0; r < msg_info.reaction_results->rows(); ++r)
+    for (unsigned int r = 0; r < msg_info.reaction_results->rows(); ++r)
     {
 
       std::string emojireaction = msg_info.reaction_results->valueAsString(r, "emoji");
@@ -2335,7 +2335,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       // count occurences of this emoji, and set info
       int count = 0;
       std::string reaction_info;
-      for (uint r2 = r; r2 < msg_info.reaction_results->rows(); ++r2)
+      for (unsigned int r2 = r; r2 < msg_info.reaction_results->rows(); ++r2)
         if (emojireaction == msg_info.reaction_results->valueAsString(r2, "emoji"))
         {
           ++count;

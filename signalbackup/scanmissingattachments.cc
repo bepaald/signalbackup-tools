@@ -27,13 +27,13 @@ void SignalBackup::scanMissingAttachments() const
                   (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
                   " FROM " + d_part_table, &res);
   std::vector<std::pair<long long int, long long int>> missing;
-  for (uint i = 0; i < res.rows(); ++i)
+  for (unsigned int i = 0; i < res.rows(); ++i)
     if (/*true || */d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")}) == d_attachments.end())
       missing.emplace_back(std::make_pair(res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")));
 
   Logger::message("Got ", missing.size(), " attachments with data not found");
 
-  for (uint i = 0; i < missing.size(); ++i)
+  for (unsigned int i = 0; i < missing.size(); ++i)
   {
     Logger::message_start("Checking ", (i + 1), " of ", missing.size(), ": ",  missing[i].first, ",", missing[i].second, "... ");
 

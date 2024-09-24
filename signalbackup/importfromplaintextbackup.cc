@@ -53,7 +53,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
-    for (uint i = 0; i < daterangelist.size(); i += 2)
+    for (unsigned int i = 0; i < daterangelist.size(); i += 2)
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
 
   // set daterange automatically
@@ -123,7 +123,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
   d_database.exec("BEGIN TRANSACTION");
   //auto t1 = std::chrono::high_resolution_clock::now();
-  for (uint i = 0; i < pt_messages.rows(); ++i)
+  for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
     if (i % 100 == 0)
       Logger::message_overwrite("Importing messages into backup... ", i, "/", pt_messages.rows());

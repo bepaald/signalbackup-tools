@@ -537,7 +537,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     if (res == &res_known && res->rows())
       stickerhtml << "        <div class=\"pack-status\">Available</div>" << '\n';
 
-    for (uint i = 0; i < res->rows(); ++i)
+    for (unsigned int i = 0; i < res->rows(); ++i)
     {
       std::string packid = res->valueAsString(i, "pack_id");
       if (packid != prevpackid)  // output header!

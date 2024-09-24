@@ -150,7 +150,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   //res.prettyPrint();
   long long int numchanges = res.getValueAs<long long int>(0, "numchanges");
 
-  for (uint i = 0; i < numchanges; ++i)
+  for (unsigned int i = 0; i < numchanges; ++i)
   {
     if (!ddb.exec("SELECT "
                   "json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].type') AS type,"

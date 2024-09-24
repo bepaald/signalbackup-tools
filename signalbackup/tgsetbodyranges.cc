@@ -34,7 +34,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
   BodyRanges bodyrangelist;
 
   SqliteDB::QueryResults br;
-  for (uint i = 0; i < fragments; ++i)
+  for (unsigned int i = 0; i < fragments; ++i)
   {
     if (!d_database.exec("SELECT "
                          "json_extract(?1, '$[" + bepaald::toString(i) + "].text') AS text, "
@@ -48,7 +48,7 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
     BodyRange bodyrange;
     std::string bodyfrag = br("text");
     unsigned int fraglen = 0;
-    for (uint c = 0; c < bodyfrag.length(); c += bytesToUtf8CharSize(bodyfrag, c))
+    for (unsigned int c = 0; c < bodyfrag.length(); c += bytesToUtf8CharSize(bodyfrag, c))
       fraglen += utf16CharSize(bodyfrag, c);
 
     if (br("type") == "plain") [[likely]]

@@ -32,7 +32,7 @@ bool SignalBackup::cleanAttachments()
   for (auto it = d_attachments.begin(); it != d_attachments.end();)
   {
     bool found = false;
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       long long int rowid = INVALID_ID;
       if (results.valueHasType<long long int>(i, "_id"))

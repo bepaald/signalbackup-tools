@@ -19,7 +19,7 @@
 
 #include "cryptbase.ih"
 
-bool CryptBase::getCipherAndMac(uint hashoutputsize, size_t outputsize)
+bool CryptBase::getCipherAndMac(unsigned int hashoutputsize, size_t outputsize)
 {
   std::unique_ptr<EVP_PKEY_CTX, decltype(&::EVP_PKEY_CTX_free)> pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr), &::EVP_PKEY_CTX_free);
 

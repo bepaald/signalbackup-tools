@@ -483,7 +483,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id = ?", mid, &mention_results);
 
     std::vector<Range> ranges;
-    for (uint m = 0; m < mention_results.rows(); ++m)
+    for (unsigned int m = 0; m < mention_results.rows(); ++m)
     {
       std::string displayname = getNameFromRecipientId(mention_results.getValueAs<long long int>(m, "recipient_id"));
       if (displayname.empty())
@@ -553,7 +553,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                     d_part_cl +
                     " FROM " + d_part_table + " WHERE " + d_part_table + "." + d_part_mid + " = ?", mid, &part_results);
 
-  for (uint j = 0; j < part_results.rows(); ++j)
+  for (unsigned int j = 0; j < part_results.rows(); ++j)
   {
     long long int seq = getIntOr(part_results, j, "seq", 0);
     std::string ct = getStringOr(part_results, j, d_part_ct, "null");
@@ -738,8 +738,8 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
   outputfile << "<smses count=\"" << bepaald::toString(sms_results.rows() + mms_results.rows())
   //         << "\" backup_date=\"" << date << "\" type=\"full\">" << '\n';
              << "\">\n";
-  uint sms_row = 0;
-  uint mms_row = 0;
+  unsigned int sms_row = 0;
+  unsigned int mms_row = 0;
   while (sms_row < sms_results.rows() ||
          mms_row < mms_results.rows())
   {

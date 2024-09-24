@@ -177,10 +177,10 @@ void SignalBackup::cleanDatabaseByMessages()
     {
       SqliteDB::QueryResults reactionresults;
       d_database.exec("SELECT DISTINCT reactions FROM sms WHERE reactions IS NOT NULL", &reactionresults);
-      for (uint i = 0; i < reactionresults.rows(); ++i)
+      for (unsigned int i = 0; i < reactionresults.rows(); ++i)
       {
         ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-        for (uint j = 0; j < reactions.numReactions(); ++j)
+        for (unsigned int j = 0; j < reactions.numReactions(); ++j)
           referenced_recipients.insert(reactions.getAuthor(j));
       }
     }
@@ -188,10 +188,10 @@ void SignalBackup::cleanDatabaseByMessages()
     {
       SqliteDB::QueryResults reactionresults;
       d_database.exec("SELECT DISTINCT reactions FROM " + d_mms_table + " WHERE reactions IS NOT NULL", &reactionresults);
-      for (uint i = 0; i < reactionresults.rows(); ++i)
+      for (unsigned int i = 0; i < reactionresults.rows(); ++i)
       {
         ReactionList reactions(reactionresults.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-        for (uint j = 0; j < reactions.numReactions(); ++j)
+        for (unsigned int j = 0; j < reactions.numReactions(); ++j)
           referenced_recipients.insert(reactions.getAuthor(j));
       }
     }
@@ -211,7 +211,7 @@ void SignalBackup::cleanDatabaseByMessages()
         continue;
 
       d_database.exec("SELECT "s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         std::string membersstr = results.getValueAs<std::string>(i, members);
         std::stringstream ss(membersstr);
@@ -226,7 +226,7 @@ void SignalBackup::cleanDatabaseByMessages()
     }
     if (d_database.containsTable("group_membership"))
       if (d_database.exec("SELECT DISTINCT recipient_id FROM group_membership", &results))
-        for (uint i = 0; i < results.rows(); ++i)
+        for (unsigned int i = 0; i < results.rows(); ++i)
           referenced_recipients.insert(results.getValueAs<long long int>(i, "recipient_id"));
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from groupmemberships. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
@@ -295,7 +295,7 @@ void SignalBackup::cleanDatabaseByMessages()
       if (d_database.containsTable("distribution_list"))
       {
         int count = 0;
-        for (uint i = 0; i < deleted_recipients.rows(); ++i)
+        for (unsigned int i = 0; i < deleted_recipients.rows(); ++i)
         {
           if (!deleted_recipients.isNull(i, "distribution_list_id"))
           {

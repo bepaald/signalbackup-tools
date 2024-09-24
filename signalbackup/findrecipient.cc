@@ -68,7 +68,7 @@ bool SignalBackup::findRecipient(long long int id) const
     int count = 0;
     if (d_database.exec("SELECT DISTINCT quote_mentions FROM " + d_mms_table + " WHERE quote_mentions IS NOT NULL", &res))
     {
-      for (uint i = 0; i < res.rows(); ++i)
+      for (unsigned int i = 0; i < res.rows(); ++i)
       {
         auto brdata = res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "quote_mentions");
         BodyRanges brsproto(brdata);
@@ -106,7 +106,7 @@ bool SignalBackup::findRecipient(long long int id) const
       continue;
 
     d_database.exec("SELECT "s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       std::string membersstr = results.getValueAs<std::string>(i, members);
       std::stringstream ss(membersstr);

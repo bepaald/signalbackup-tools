@@ -81,7 +81,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
   SqliteDB::QueryResults results;
   d_database.exec("SELECT sql, name, type FROM sqlite_master WHERE sql NOT NULL", &results);
   std::vector<std::string> tables;
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     if (results.valueHasType<std::string>(i, 1) &&
         (results.getValueAs<std::string>(i, 1) != "sms_fts" &&
@@ -147,7 +147,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
     if (!d_showprogress)
       Logger::message_start("  Dealing with table '", table, "'... ");
 
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       if (d_showprogress)
         Logger::message_overwrite("  Dealing with table '", table, "'... ", i + 1, "/", results.rows(), " entries...");
@@ -162,7 +162,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
       {
         bool needuniqqueid = d_database.tableContainsColumn(d_part_table, "unique_id");
         long long int rowid = 0, uniqueid = needuniqqueid ? 0 : -1;
-        for (uint j = 0; j < results.columns(); ++j)
+        for (unsigned int j = 0; j < results.columns(); ++j)
         {
           if (results.header(j) == "_id" && results.valueHasType<long long int>(i, j))
           {
@@ -204,7 +204,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
       else if (table == "sticker") // find corresponding sticker
       {
         uint64_t rowid = 0;
-        for (uint j = 0; j < results.columns(); ++j)
+        for (unsigned int j = 0; j < results.columns(); ++j)
           if (results.header(j) == "_id" && results.valueHasType<long long int>(i, j))
           {
             rowid = results.getValueAs<long long int>(i, j);
@@ -234,13 +234,13 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
 
   Logger::message("Writing SharedPrefFrame(s)...");
   // SHAREDPREFS
-  for (uint i = 0; i < d_sharedpreferenceframes.size(); ++i)
+  for (unsigned int i = 0; i < d_sharedpreferenceframes.size(); ++i)
     if (!writeEncryptedFrame(outputfile, d_sharedpreferenceframes[i].get()))
       return false;
 
   Logger::message("Writing KeyValueFrame(s)...");
   // KEYVALUES
-  for (uint i = 0; i < d_keyvalueframes.size(); ++i)
+  for (unsigned int i = 0; i < d_keyvalueframes.size(); ++i)
     if (!writeEncryptedFrame(outputfile, d_keyvalueframes[i].get()))
       return false;
 

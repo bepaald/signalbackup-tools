@@ -748,7 +748,7 @@ inline std::vector<long long int> SignalBackup::threadIds() const
   SqliteDB::QueryResults results;
   d_database.exec("SELECT DISTINCT _id FROM thread ORDER BY _id ASC", &results);
   if (results.columns() == 1)
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
       if (results.valueHasType<long long int>(i, 0))
         res.push_back(results.getValueAs<long long int>(i, 0));
   return res;
@@ -853,7 +853,7 @@ inline int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsig
 inline int SignalBackup::utf8Chars(std::string const &body) const
 {
   int res = 0;
-  for (uint i = 0; i < body.size(); )
+  for (unsigned int i = 0; i < body.size(); )
   {
     ++res;
     i += bytesToUtf8CharSize(body, i);
@@ -864,7 +864,7 @@ inline int SignalBackup::utf8Chars(std::string const &body) const
 inline void SignalBackup::resizeToNUtf8Chars(std::string &body, unsigned long size) const
 {
   unsigned long res = 0;
-  uint idx = 0;
+  unsigned int idx = 0;
   while (idx < body.size())
   {
     ++res;
@@ -906,7 +906,7 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
     return;
 
   *out << " (";
-  for (uint r = 0; r < reaction_results->rows(); ++r)
+  for (unsigned int r = 0; r < reaction_results->rows(); ++r)
   {
     std::string emojireaction = reaction_results->valueAsString(r, "emoji");
     std::string authordisplayname = getNameFromRecipientId(reaction_results->getValueAs<long long int>(r, "author_id"));

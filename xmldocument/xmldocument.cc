@@ -50,7 +50,7 @@ XmlDocument::XmlDocument(std::string const &filename)
     //filepos = file.tellg();
     file.read(buffer.get(), buffer_size);
     available = file.gcount();
-    for (uint i = 0; i < available; ++i)
+    for (unsigned int i = 0; i < available; ++i)
     {
       switch (state) // order determined for SignalPlaintextBackup.xml
       {

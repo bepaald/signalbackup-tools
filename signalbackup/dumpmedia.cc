@@ -83,7 +83,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
   if (!threads.empty())
   {
     query += " AND thread._id IN (";
-    for (uint i = 0; i < threads.size(); ++i)
+    for (unsigned int i = 0; i < threads.size(); ++i)
       query += bepaald::toString(threads[i]) + ((i == threads.size() - 1) ? ")" : ",");
   }
 
@@ -92,12 +92,12 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     // create dateranges
     std::vector<std::pair<std::string, std::string>> dateranges;
     if (daterangelist.size() % 2 == 0)
-      for (uint i = 0; i < daterangelist.size(); i += 2)
+      for (unsigned int i = 0; i < daterangelist.size(); i += 2)
         dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
 
     std::string datewhereclause;
 
-    for (uint i = 0; i < dateranges.size(); ++i)
+    for (unsigned int i = 0; i < dateranges.size(); ++i)
     {
       bool needrounding = false;
       long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);

@@ -24,17 +24,17 @@ bool SignalBackup::scrambleHelper(std::string const &table, std::vector<std::str
   Logger::message("Scrambling ", table);
 
   std::string selectquery = "SELECT _id";
-  for (uint i = 0; i < columns.size(); ++i)
+  for (unsigned int i = 0; i < columns.size(); ++i)
     selectquery += "," + columns[i];
   selectquery += " FROM " + table;
 
   SqliteDB::QueryResults res;
   d_database.exec(selectquery, &res);
 
-  for (uint i = 0; i < res.rows(); ++i)
+  for (unsigned int i = 0; i < res.rows(); ++i)
   {
     std::vector<std::string> str;
-    for (uint j = 0; j < columns.size(); ++j)
+    for (unsigned int j = 0; j < columns.size(); ++j)
     {
       str.push_back(res.valueAsString(i, columns[j]));
       std::replace_if(str.back().begin(), str.back().end(), [](char c)
@@ -48,11 +48,11 @@ bool SignalBackup::scrambleHelper(std::string const &table, std::vector<std::str
     }
 
     std::string updatequery = "UPDATE " + table + " SET ";
-    for (uint j = 0; j < columns.size(); ++j)
+    for (unsigned int j = 0; j < columns.size(); ++j)
       updatequery += columns[j] + " = ?" + ((j == columns.size() - 1) ? " WHERE _id = ?" : ", ");
 
     std::vector<std::any> values;
-    for (uint j = 0; j < str.size(); ++j)
+    for (unsigned int j = 0; j < str.size(); ++j)
       values.push_back(str[j]);
     values.push_back(res.getValueAs<long long int>(i, "_id"));
 

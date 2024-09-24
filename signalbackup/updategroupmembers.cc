@@ -31,7 +31,7 @@ void SignalBackup::updateGroupMembers(long long int id1, long long int id2) cons
     bool changed = false;
     d_database.exec("SELECT _id,"s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
     //d_database.prettyPrint("SELECT _id,members FROM groups");
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       long long int gid = results.getValueAs<long long int>(i, "_id");
       std::string membersstr = results.getValueAs<std::string>(i, members);
@@ -45,7 +45,7 @@ void SignalBackup::updateGroupMembers(long long int id1, long long int id2) cons
       }
 
       std::string newmembers;
-      for (uint m = 0; m < membersvec.size(); ++m)
+      for (unsigned int m = 0; m < membersvec.size(); ++m)
       {
         if (m > 0)
           newmembers += ",";

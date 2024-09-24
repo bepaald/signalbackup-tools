@@ -43,7 +43,7 @@ std::set<long long int> SignalBackup::getAllThreadRecipients(long long int t) co
     return recipientlist;
 
   // put results in vector...
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
     if (!results.isNull(i, 0))
     {
       if (results.valueHasType<long long int>(i, 0))

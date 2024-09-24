@@ -43,9 +43,9 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
 
     long long int mid = -1;
     d_database.exec(query, &results);
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
-      for (uint j = 0; j < results.columns(); ++j)
+      for (unsigned int j = 0; j < results.columns(); ++j)
       {
         Logger::message_start(" - ", results.header(j), " : ");
         if (results.isNull(i, j))
@@ -71,8 +71,8 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
     query = "SELECT * FROM " + d_mms_table + " WHERE _id = " + bepaald::toString(mid);
     d_database.exec(query, &results);
 
-    for (uint i = 0; i < results.rows(); ++i)
-      for (uint j = 0; j < results.columns(); ++j)
+    for (unsigned int i = 0; i < results.rows(); ++i)
+      for (unsigned int j = 0; j < results.columns(); ++j)
       {
         Logger::message_start(" - ", results.header(j), " : ");
         if (results.isNull(i, j))
@@ -117,7 +117,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
 
 void SignalBackup::dumpInfoOnBadFrames() const
 {
-  for (uint a = 0; a < d_badattachments.size(); ++a)
+  for (unsigned int a = 0; a < d_badattachments.size(); ++a)
   {
     uint32_t rowid = d_badattachments[a].first;
     int64_t uniqueid = d_badattachments[a].second;
@@ -146,8 +146,8 @@ void SignalBackup::dumpInfoOnBadFrames() const
     std::string date;
     std::string date_received;
     long long int type = -1;
-    for (uint i = 0; i < results.rows(); ++i)
-      for (uint j = 0; j < results.columns(); ++j)
+    for (unsigned int i = 0; i < results.rows(); ++i)
+      for (unsigned int j = 0; j < results.columns(); ++j)
       {
         if (results.valueHasType<long long int>(i, j))
         {

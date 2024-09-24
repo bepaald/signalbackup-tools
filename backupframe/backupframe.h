@@ -159,7 +159,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame &&other)
   if (this != &other)
   {
     // properly delete any data this is holding
-    for (uint i = 0; i < d_framedata.size(); ++i)
+    for (unsigned int i = 0; i < d_framedata.size(); ++i)
       if (std::get<1>(d_framedata[i]))
         delete[] std::get<1>(d_framedata[i]);
     d_framedata.clear();
@@ -178,7 +178,7 @@ inline BackupFrame::BackupFrame(BackupFrame const &other)
   d_ok = other.d_ok;
   d_count = other.d_count;
   d_constructedsize = other.d_constructedsize;
-  for (uint i = 0; i < other.d_framedata.size(); ++i)
+  for (unsigned int i = 0; i < other.d_framedata.size(); ++i)
   {
     unsigned char *datacpy = nullptr;
     if (std::get<1>(other.d_framedata[i]))
@@ -195,7 +195,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame const &other)
   if (this != &other)
   {
     // properly delete any data this is holding
-    for (uint i = 0; i < d_framedata.size(); ++i)
+    for (unsigned int i = 0; i < d_framedata.size(); ++i)
       if (std::get<1>(d_framedata[i]))
         delete[] std::get<1>(d_framedata[i]);
     d_framedata.clear();
@@ -203,7 +203,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame const &other)
     d_ok = other.d_ok;
     d_count = other.d_count;
     d_constructedsize = other.d_constructedsize;
-    for (uint i = 0; i < other.d_framedata.size(); ++i)
+    for (unsigned int i = 0; i < other.d_framedata.size(); ++i)
     {
       unsigned char *datacpy = nullptr;
       if (std::get<1>(other.d_framedata[i]))
@@ -220,7 +220,7 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame const &other)
 inline BackupFrame::~BackupFrame()
 {
   //std::cout << "DESTROYING BACKUPFRAME!" << std::endl;
-  for (uint i = 0; i < d_framedata.size(); ++i)
+  for (unsigned int i = 0; i < d_framedata.size(); ++i)
     if (std::get<1>(d_framedata[i]))
       delete[] std::get<1>(d_framedata[i]);
   d_framedata.clear();

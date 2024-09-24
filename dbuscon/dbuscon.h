@@ -371,7 +371,7 @@ inline void DBusCon::passArg(DBusArg const &arg, DBusMessageIter *dbus_iter, boo
       return;
 
     dbus_message_iter_open_container(dbus_iter, DBUS_TYPE_ARRAY, arraytype, &dbus_array_iter);
-    for (uint i = 0; i < array->size(); ++i)
+    for (unsigned int i = 0; i < array->size(); ++i)
       passArg(array->at(i), &dbus_array_iter, isvar, isarray);
     dbus_message_iter_close_container(dbus_iter, &dbus_array_iter);
   }
@@ -426,7 +426,7 @@ inline void DBusCon::passArg(DBusArg const &arg, DBusMessageIter *dbus_iter, boo
     dictspec += DBUS_DICT_ENTRY_END_CHAR_AS_STRING;
 
     dbus_message_iter_open_container(dbus_iter, DBUS_TYPE_ARRAY, dictspec.c_str(), &dbus_array_iter);
-    for (uint i = 0; i < std::get<recursive_wrapper<DBusDict>>(arg)->size(); ++i)
+    for (unsigned int i = 0; i < std::get<recursive_wrapper<DBusDict>>(arg)->size(); ++i)
       passArg(std::get<recursive_wrapper<DBusDict>>(arg)->at(i), &dbus_array_iter);
     dbus_message_iter_close_container(dbus_iter, &dbus_array_iter);
   }

@@ -377,7 +377,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
   if (!d_editattachments.empty() && frame && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT) [[unlikely]]
-    for (uint i = 0; i < d_editattachments.size(); i += 2)
+    for (unsigned int i = 0; i < d_editattachments.size(); i += 2)
       if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
       {
         auto oldlength = reinterpret_cast<AttachmentFrame *>(frame.get())->length();

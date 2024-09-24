@@ -36,7 +36,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   // so convert to recipient._ids
   if (d_databaseversion >= 24)
   {
-    for (uint i = 0; i < r_ids.size(); ++i)
+    for (unsigned int i = 0; i < r_ids.size(); ++i)
     {
       SqliteDB::QueryResults res;
       d_database.exec("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", r_ids[i], &res);
@@ -58,7 +58,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   long long int tid = getThreadIdFromRecipient(target_rid);
 
   // update all messages from this r_ids[i] to belong to that same thread and change address in new number
-  for (uint i = 0; i < r_ids.size() - 1; ++i)
+  for (unsigned int i = 0; i < r_ids.size() - 1; ++i)
   {
     Logger::message("Dealing with recipient: ", r_ids[i]);
 
@@ -173,12 +173,12 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
       SqliteDB::QueryResults results;
       d_database.exec("SELECT _id, reactions FROM " + t + " WHERE reactions IS NOT NULL", &results);
       bool changed = false;
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-        for (uint k = 0; k < reactions.numReactions(); ++k)
+        for (unsigned int k = 0; k < reactions.numReactions(); ++k)
         {
-          for (uint j = 0; j < r_ids.size() - 1; ++j)
+          for (unsigned int j = 0; j < r_ids.size() - 1; ++j)
             if (reactions.getAuthor(k) == bepaald::toNumber<uint64_t>(r_ids[j]))
             {
               reactions.setAuthor(k, bepaald::toNumber<uint64_t>(target_rid));
@@ -196,7 +196,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   // // deal with groups
   // SqliteDB::QueryResults results;
   // d_database.exec("SELECT group_id,members,title FROM groups", &results); // get id,members and title from all groups
-  // for (uint i = 0; i < results.rows(); ++i)
+  // for (unsigned int i = 0; i < results.rows(); ++i)
   // {
   //   if (results.columns() != 3 ||
   //       !results.valueHasType<std::string>(i, 0) ||
@@ -236,7 +236,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   //   }
 
   //   // for all incoming messages of this group(= this thread), if the (originating) address = oldaddress, change it to target
-  //   for (uint j = 0; j < r_ids.size() - 1; ++j)
+  //   for (unsigned int j = 0; j < r_ids.size() - 1; ++j)
   //   {
   //     if (d_database.containsTable("sms"))
   //     {
@@ -252,7 +252,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   //   // if (editgroupmembers)
   //   // {
   //   //   // maybe former_v1_members needs to be adjusted similarly?
-  //   //   for (uint j = 0; j < r_ids.size() - 1; ++j)
+  //   //   for (unsigned int j = 0; j < r_ids.size() - 1; ++j)
   //   //   {
   //   //     // change current member list in group database:
   //   //     //std::cout << "  GROUP MEMBERS BEFORE: " << members << std::endl;
@@ -362,7 +362,7 @@ Field 4 (optional::protobuf):
       d_database.exec(d.second, &results2);
       if (d_verbose) [[unlikely]]
         results2.prettyPrint(d_truncate);
-      for (uint j = 0; j < results2.rows(); ++j)
+      for (unsigned int j = 0; j < results2.rows(); ++j)
       {
         std::string body = std::any_cast<std::string>(results2.value(j, "body"));
         long long int type = std::any_cast<long long int>(results2.value(j, "type"));
@@ -375,7 +375,7 @@ Field 4 (optional::protobuf):
 
         bool targetpresent = false;
         auto field4 = statusmsg.getField<4>();
-        for (uint k = 0; k < field4.size(); ++k)
+        for (unsigned int k = 0; k < field4.size(); ++k)
         {
           Logger::message("memberlist: ", field4[k]);
           if (field4[k] == targetphone)
@@ -383,7 +383,7 @@ Field 4 (optional::protobuf):
         }
 
         int removed = 0;
-        for (uint k = 0; k < phonenumbers.size() - 1; ++k)
+        for (unsigned int k = 0; k < phonenumbers.size() - 1; ++k)
         {
           removed = statusmsg.deleteFields(4, &phonenumbers[k]);
           Logger::message("deleted ", removed, " members from group update message");

@@ -50,7 +50,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       warnOnce("Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!");
       if (d_verbose) [[unlikely]]
       {
-        for (uint i = 0; i < r.rows(); ++i)
+        for (unsigned int i = 0; i < r.rows(); ++i)
         {
           long long int id = r.getValueAs<long long int>(i, "_id");
           long long int oldid = r.getValueAs<long long int>(i, "old_id");
@@ -236,7 +236,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT body, thread_id, " + d_mms_date_sent + ", " + d_mms_recipient_id + " FROM " + d_mms_table +
                     " WHERE thread_id = ?", targetthread, &existing);
     int count = 0;
-    for (uint i = 0; i < existing.rows(); ++i)
+    for (unsigned int i = 0; i < existing.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM " + d_mms_table +
                               " WHERE body = ? AND thread_id = ? AND " + d_mms_date_sent + " = ? AND " + d_mms_recipient_id + " = ?",
@@ -267,7 +267,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT key FROM storage_key", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM storage_key WHERE key = ?", res.value(i, 0));
       count += source->d_database.changed();
@@ -283,7 +283,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT event FROM megaphone", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM megaphone WHERE event = ?", res.value(i, 0));
       count += source->d_database.changed();
@@ -299,7 +299,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT uuid FROM remote_megaphone", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM remote_megaphone WHERE uuid = ?", res.value(i, 0));
       count += source->d_database.changed();
@@ -315,7 +315,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT e164 FROM cds", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM cds WHERE e164 = ?", res.value(i, 0));
       count += source->d_database.changed();
@@ -334,7 +334,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT subscriber_id, currency_code, type FROM in_app_payment_subscriber", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM in_app_payment_subscriber WHERE subscriber_id = ?", res.value(i, "subscriber_id"));
       count += source->d_database.changed();
@@ -353,7 +353,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT key_id FROM kyber_prekey", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM kyber_prekey WHERE key_id = ?", res.value(i, 0));
       count += source->d_database.changed();
@@ -370,7 +370,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT account_id, key_id FROM kyber_prekey", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM kyber_prekey WHERE account_id = ? AND key_id = ?", {res.value(i, "account_id"), res.value(i, "key_id")});
       count += source->d_database.changed();
@@ -387,7 +387,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     d_database.exec("SELECT key FROM key_value", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM key_value WHERE key = ?", res.getValueAs<std::string>(i, 0));
       count += source->d_database.changed();
@@ -441,7 +441,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     SqliteDB::QueryResults res;
     d_database.exec("SELECT ring_id FROM group_call_ring", &res);
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
       source->d_database.exec("DELETE FROM group_call_ring WHERE ring_id = ?", res.getValueAs<long long int>(i, 0));
   }
 
@@ -464,7 +464,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 
     std::cout << "  Deleting " << res.rows() << " existing payments" << std::endl;
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
       source->d_database.exec("DELETE FROM payments WHERE uuid = ?", res.getValueAs<std::string>(i, 0));
   }
   */
@@ -497,7 +497,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     SqliteDB::QueryResults res;
     source->d_database.exec("SELECT * FROM remapped_recipients", &res); // get all remapped recipients in source
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       long long int id = res.getValueAs<long long int>(i, "_id");
       long long int oldid = res.getValueAs<long long int>(i, "old_id");
@@ -552,7 +552,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       Logger::message("  updateRecipientIds");
       //results.prettyPrint(d_truncate);
 
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results(i, "distribution_id"), results(i, "storage_service")};
         //source->updateRecipientId(results.getValueAs<long long int>(i, "_id"), results.getValueAs<std::string>(i, "identifier"));
@@ -597,7 +597,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
       // for each of them, check if they are also in source, and delete
       int count = 0;
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {existing_rec(i, "uuid"), existing_rec(i, "phone"), existing_rec(i, "group_id"),
                                           existing_rec(i, "distribution_id"), existing_rec(i, "storage_service")};
@@ -643,7 +643,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     if (d_databaseversion < 24)
     {
       d_database.exec("SELECT address FROM identities", &results); // address == phonenumber/__text_secure_group
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
         if (results.header(0) == "address" && results.valueHasType<std::string>(i, 0))
           source->d_database.exec("DELETE FROM identities WHERE address = '" + results.getValueAs<std::string>(i, 0) + "'");
     }
@@ -669,7 +669,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                         "'' AS storage_service "
                         "FROM recipient "
                         "WHERE _id IN (SELECT address FROM identities)", &results);
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         RecipientIdentification rec_id = {results(i, "uuid"), results(i, "phone"), results(i, "group_id"), results(i, "distribution_id"), results(i, "storage_service")};
         // source->d_database.exec("DELETE FROM identities WHERE address IN (SELECT _id FROM recipient WHERE COALESCE(uuid,phone,group_id) = '" + results.getValueAs<std::string>(i, 0) + "')");
@@ -700,7 +700,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     if (d_databaseversion < 24)
     {
       d_database.exec("SELECT recipient_ids FROM recipient_preferences", &results);
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
         if (results.header(0) == "recipient_ids" && results.valueHasType<std::string>(i, 0))
           source->d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids = '" + results.getValueAs<std::string>(i, 0) + "'");
     }
@@ -728,7 +728,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //results.prettyPrint(d_truncate);
 
       int count = 0;
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         // if the recipient is already in target, we are going to delete it from
         // source, to prevent doubles. However, many tables refer to the recipient._id
@@ -797,7 +797,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     int count = 0;
     SqliteDB::QueryResults existing_groups;
     d_database.exec("SELECT group_id, recipient_id FROM groups", &existing_groups);
-    for (uint i = 0; i < existing_groups.rows(); ++i)
+    for (unsigned int i = 0; i < existing_groups.rows(); ++i)
     {
       SqliteDB::QueryResults removed_group_recipient_id;
       source->d_database.exec("DELETE FROM groups WHERE group_id = ? RETURNING recipient_id", existing_groups.value(i, "group_id"), &removed_group_recipient_id);
@@ -817,7 +817,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   {
     SqliteDB::QueryResults gm_results;
     d_database.exec("SELECT DISTINCT group_id, recipient_id FROM group_membership", &gm_results);
-    for (uint i = 0; i < gm_results.rows(); ++i)
+    for (unsigned int i = 0; i < gm_results.rows(); ++i)
       source->d_database.exec("DELETE FROM group_membership WHERE group_id = ? AND recipient_id = ?",
                               {gm_results.value(i, "group_id"), gm_results.value(i, "recipient_id")});
   }
@@ -828,7 +828,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   {
     SqliteDB::QueryResults call_results;
     d_database.exec("SELECT DISTINCT call_id FROM call", &call_results);
-    for (uint i = 0; i < call_results.rows(); ++i)
+    for (unsigned int i = 0; i < call_results.rows(); ++i)
       source->d_database.exec("DELETE FROM call WHERE call_id = ?",
                               call_results.value(i, "call_id"));
   }
@@ -839,7 +839,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     SqliteDB::QueryResults installed_stickers;
     d_database.exec("SELECT pack_id, sticker_id, cover FROM sticker", &installed_stickers);
     int count = 0;
-    for (uint i = 0; i < installed_stickers.rows(); ++i)
+    for (unsigned int i = 0; i < installed_stickers.rows(); ++i)
     {
       SqliteDB::QueryResults deleted_sticker_ids;
       source->d_database.exec("DELETE FROM sticker WHERE pack_id = ? AND sticker_id = ? AND cover = ? RETURNING _id",
@@ -848,7 +848,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       count += source->d_database.changed();
 
       // delete actual sticker image
-      for (uint j = 0; j < deleted_sticker_ids.rows(); ++j)
+      for (unsigned int j = 0; j < deleted_sticker_ids.rows(); ++j)
       {
         long long int erased = deleted_sticker_ids.valueAsInt(j, "_id");
         if (erased == -1)
@@ -869,7 +869,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     d_database.exec("SELECT recipient_id, sent_timestamp, device_id FROM pending_pni_signature_message", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM pending_pni_signature_message "
                               "WHERE recipient_id = ? AND sent_timestamp = ? AND devide_id = ?",
@@ -887,7 +887,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     d_database.exec("SELECT distribution_id FROM distribution_list", &res);
 
     int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       SqliteDB::QueryResults deleted_distribution_list_recipients;
       source->d_database.exec("DELETE FROM distribution_list WHERE distribution_id = ? RETURNING recipient_id", res.value(i, 0), &deleted_distribution_list_recipients);
@@ -896,7 +896,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //deleted_distribution_list_recipients.prettyPrint(d_truncate);
 
       // delete the corresponding recipient
-      for (uint j = 0; j < deleted_distribution_list_recipients.rows(); ++j)
+      for (unsigned int j = 0; j < deleted_distribution_list_recipients.rows(); ++j)
       {
         source->d_database.exec("DELETE FROM recipient WHERE _id = ?", deleted_distribution_list_recipients.value(j, "recipient_id"));
 
@@ -920,7 +920,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     SqliteDB::QueryResults res;
     d_database.exec("SELECT thread_id FROM name_collision", &res);
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
       source->d_database.exec("DELETE FROM name_collision WHERE thread_id = ?", res.value(i, 0));
 
     // delete corresponding collision_members
@@ -940,7 +940,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   std::string q("SELECT sql, name, type FROM sqlite_master");
   source->d_database.exec(q, &results);
   std::vector<std::string> tables;
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     if (!results.isNull(i, 0))
     {
@@ -1003,7 +1003,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     // even though target is newer, a fresh install would not have
     // created dropped columns that may still be present in
     // source database;
-    uint idx = 0;
+    unsigned int idx = 0;
     while (idx < results.headers().size())
     {
       if (!d_database.tableContainsColumn(table, results.headers()[idx]))
@@ -1036,12 +1036,12 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
     Logger::message_start("Importing statements from source table '", table, "'... (", results.rows(), " entries)");
 
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       // if (table == "identities")
       // {
       //   std::cout << "Trying to add: ";
-      //   for (uint j = 0; j < results.columns(); ++j)
+      //   for (unsigned int j = 0; j < results.columns(); ++j)
       //     std::cout << results.valueAsString(i, j) << " ";
       //   std::cout << std::endl;
       // }

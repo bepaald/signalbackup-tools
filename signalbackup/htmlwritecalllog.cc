@@ -45,7 +45,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
 
   // build string of requested threads
   std::string threadlist;
-  for (uint i = 0; i < threads.size(); ++i)
+  for (unsigned int i = 0; i < threads.size(); ++i)
   {
     threadlist += bepaald::toString(threads[i]);
     if (i < threads.size() - 1)
@@ -313,7 +313,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << '\n';
 
   std::set<long long int> peers;
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int peer = results.valueAsInt(i, "peer");
     if (peer > -1 && !bepaald::contains(peers, peer))
@@ -559,7 +559,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     << '\n'
     << "      <div class=\"conversation-list\">" << '\n'
     << '\n';
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int peer = results.valueAsInt(i, "peer");
     if (peer == -1)

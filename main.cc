@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
       Logger::message("Getting list of thread id's...");
       threads = src.threadIds();
       // std::cout << "Got: " << std::flush;
-      // for (uint i = 0; i < threads.size(); ++i)
+      // for (unsigned int i = 0; i < threads.size(); ++i)
       //   std::cout << threads[i] << ((i < threads.size() - 1) ? "," : "\n");
       Logger::message("Got: ", threads);
     }
@@ -362,7 +362,7 @@ int main(int argc, char *argv[])
       if (!addThreadIdsFromString(&src, arg.importthreadsbyname(), &threads))
         return 1;
 
-    for (uint i = 0; i < threads.size(); ++i)
+    for (unsigned int i = 0; i < threads.size(); ++i)
     {
 
       MEMINFO("Before reading source: ", i + 1, "/", threads.size());
@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
       return 1;
     }
     std::vector<std::pair<std::string, std::string>> dates;
-    for (uint i = 0; i < arg.croptodates().size(); i += 2)
+    for (unsigned int i = 0; i < arg.croptodates().size(); i += 2)
       dates.push_back({arg.croptodates()[i], arg.croptodates()[i + 1]});
     sb->cropToDates(dates);
     // e.g.: sb->cropToDates({{"2019-09-18 00:00:00", "2020-09-18 00:00:00"}});
@@ -477,11 +477,11 @@ int main(int argc, char *argv[])
   //     return 1;
 
   if (!arg.runsqlquery().empty())
-    for (uint i = 0; i < arg.runsqlquery().size(); ++i)
+    for (unsigned int i = 0; i < arg.runsqlquery().size(); ++i)
       sb->runQuery(arg.runsqlquery()[i], false);
 
   if (!arg.runprettysqlquery().empty())
-    for (uint i = 0; i < arg.runprettysqlquery().size(); ++i)
+    for (unsigned int i = 0; i < arg.runprettysqlquery().size(); ++i)
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
   if (!arg.exporthtml().empty())
@@ -498,7 +498,7 @@ int main(int argc, char *argv[])
       return 1;
 
   if (!arg.exportcsv().empty())
-    for (uint i = 0; i < arg.exportcsv().size(); ++i)
+    for (unsigned int i = 0; i < arg.exportcsv().size(); ++i)
       sb->exportCsv(arg.exportcsv()[i].second, arg.exportcsv()[i].first, arg.overwrite());
 
   if (!arg.exportxml().empty())
@@ -603,7 +603,7 @@ int main(int argc, char *argv[])
 
 bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::string> const &names, std::vector<long long int> *threads)
 {
-  for (uint i = 0; i < names.size(); ++i)
+  for (unsigned int i = 0; i < names.size(); ++i)
   {
 
     long long int r = backup->getRecipientIdFromName(names[i], true);

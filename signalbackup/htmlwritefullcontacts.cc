@@ -53,7 +53,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
   }
 
   std::vector<std::pair<std::string, long long int>> order;
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
     order.push_back({getRecipientInfoFromMap(recipient_info, results.valueAsInt(i, "_id")).display_name, i});
 
   std::sort(order.begin(), order.end());
@@ -280,7 +280,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     << "      }\n"
     << '\n';
 
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int rec_id = results.valueAsInt(i, "_id");
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
@@ -470,7 +470,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     << '\n';
 
   // write blocked list
-  for (uint ii = 0; ii < order.size(); ++ii)
+  for (unsigned int ii = 0; ii < order.size(); ++ii)
   {
     long long int rec_id = results.valueAsInt(order[ii].second, "_id");
     long long int registered = results.valueAsInt(order[ii].second, "registered");

@@ -126,7 +126,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
     // get group members:
     std::string oldstyle_members;
-    for (uint i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
+    for (unsigned int i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
     {
       SqliteDB::QueryResults mem;
       if (!ddb.exec("SELECT members,TOKEN(members, ?) AS member FROM conversations WHERE groupId = ?", {i, groupidb64}, &mem))
@@ -178,7 +178,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         d_database.tableContainsColumn("groups", "decrypted_group"))
     {
       std::map<std::string, long long int> memberroles;
-      for (uint i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
+      for (unsigned int i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
       {
       // get member role (0 = unknown, 1 = normal, 2 = admin)
         SqliteDB::QueryResults memberrole_results;
@@ -187,7 +187,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                      "FROM conversations WHERE groupId = ?", groupidb64, &memberrole_results))
         {
           //memberrole_results.prettyPrint();
-          for (uint mr = 0; mr < memberrole_results.rows(); ++mr)
+          for (unsigned int mr = 0; mr < memberrole_results.rows(); ++mr)
           {
             if (!memberrole_results.valueHasType<long long int>(mr, "role") ||
                 !memberrole_results.valueHasType<std::string>(mr, "uuid"))

@@ -1,3 +1,22 @@
+/*
+  Copyright (C) 2024  Selwin van Dijk
+
+  This file is part of signalbackup-tools.
+
+  signalbackup-tools is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  signalbackup-tools is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
+*/
+
 #ifndef COMMON_BYTES_H_
 #define COMMON_BYTES_H_
 
@@ -66,7 +85,7 @@ inline std::string bepaald::bytesToHexString(unsigned char const *data, unsigned
   std::ostringstream oss;
   if (!unformatted)
     oss << "(hex:) ";
-  for (uint i = 0; i < length; ++i)
+  for (unsigned int i = 0; i < length; ++i)
     oss << std::hex << std::setfill('0') << std::setw(2)
         << (static_cast<int32_t>(data[i]) & 0xFF)
         << ((i == length - 1 || unformatted) ? "" : " ");
@@ -76,7 +95,7 @@ inline std::string bepaald::bytesToHexString(unsigned char const *data, unsigned
 inline std::string bepaald::bytesToString(unsigned char const *data, unsigned int length)
 {
   std::ostringstream oss;
-  for (uint i = 0; i < length; ++i)
+  for (unsigned int i = 0; i < length; ++i)
     oss << static_cast<char>(data[i]);
   return oss.str();
 }
@@ -85,7 +104,7 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
 {
   bool prevwashex = false;
   std::ostringstream oss;
-  for (uint i = 0; i < length; ++i)
+  for (unsigned int i = 0; i < length; ++i)
   {
     bool curishex = !std::isprint(static_cast<char>(data[i]));
 
@@ -124,7 +143,7 @@ inline bool bepaald::hexStringToBytes(unsigned char const *in, uint64_t insize, 
   };
 
   uint64_t outpos = 0;
-  for (uint i = 0; i < insize - 1; i += 2)
+  for (unsigned int i = 0; i < insize - 1; i += 2)
     out[outpos++] = charToInt(in[i]) * 16 + charToInt(in[i + 1]);
 
   return true;

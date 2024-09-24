@@ -28,7 +28,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   if (d_verbose && contactmap->size()) [[unlikely]]
   {
     Logger::message("[INITIAL CONTACT MAP ]");
-    for (uint i = 0; i < contactmap->size(); ++i)
+    for (unsigned int i = 0; i < contactmap->size(); ++i)
     {
       std::string name = getNameFromRecipientId((*contactmap)[i].second);
       Logger::message(" * ", (*contactmap)[i].first, " -> ", (*contactmap)[i].second, "(", name, ")");
@@ -39,8 +39,8 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
   auto find_in_contactmap = [&realcontactmap](std::string const &identifier) -> long long int
   {
-    for (uint i = 0; i < realcontactmap.size(); ++i)
-      for (uint j = 0; j < realcontactmap[i].first.size(); ++j)
+    for (unsigned int i = 0; i < realcontactmap.size(); ++i)
+      for (unsigned int j = 0; j < realcontactmap[i].first.size(); ++j)
         if (realcontactmap[i].first[j] == identifier)
           return i;
     return -1;
@@ -52,7 +52,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     for (auto it = recipientsnotfound.begin(); it != recipientsnotfound.end(); ++it)
       if (contacts.valueAsString(it->first, "id") == identifyer)
       {
-        for (uint i = 0; i < it->second.size(); ++i)
+        for (unsigned int i = 0; i < it->second.size(); ++i)
           if (!bepaald::contains(realcontactmap.back().first, it->second[i]))
             realcontactmap.back().first.push_back(it->second[i]);
         recipientsnotfound.erase(it);
@@ -74,7 +74,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     json_contacts.prettyPrint(d_truncate);
   }
 
-  for (uint i = 0; i < json_contacts.rows(); ++i)
+  for (unsigned int i = 0; i < json_contacts.rows(); ++i)
   {
     std::string contact = json_contacts.valueAsString(i, "id");
 
@@ -92,7 +92,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     jsondb.d_database.exec("SELECT DISTINCT from_name AS name FROM messages WHERE from_id = ?1 "
                            "UNION "
                            "SELECT DISTINCT name FROM chats WHERE id = ?1", contact, &aliases);
-    for (uint j = 0; j < aliases.rows(); ++j)
+    for (unsigned int j = 0; j < aliases.rows(); ++j)
     {
       if (bepaald::contains(inhibitmappping, aliases(j, "name")))
         continue;
@@ -117,14 +117,14 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
       // we found this contact, add it (and all names) to map
       realcontactmap.push_back({{contact}, found_id});
-      for (uint j = 0; j < aliases.rows(); ++j)
+      for (unsigned int j = 0; j < aliases.rows(); ++j)
         realcontactmap.back().first.push_back(aliases(j, "name"));
       continue;
     }
     else
     {
       recipientsnotfound.emplace_back(std::make_pair(i, std::vector<std::string>()));
-      for (uint j = 0; j < aliases.rows(); ++j)
+      for (unsigned int j = 0; j < aliases.rows(); ++j)
         recipientsnotfound.back().second.push_back(aliases.isNull(j, "name") ? "null" : aliases(j, "name"));
     }
   }
@@ -132,7 +132,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   // now let's try to find self
   std::vector<std::string> self_json_id;
   // check if we have already (maybe passed in map, maybe matched by name)
-  for (uint i = 0; i < realcontactmap.size(); ++i)
+  for (unsigned int i = 0; i < realcontactmap.size(); ++i)
     if (realcontactmap[i].second == d_selfid)
     {
       self_json_id = realcontactmap[i].first;
@@ -201,7 +201,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
     //personal_chat_contacts.prettyPrint();
 
-    for (uint i = 0; i < personal_chat_contacts.rows(); ++i)
+    for (unsigned int i = 0; i < personal_chat_contacts.rows(); ++i)
     {
       if (bepaald::contains(self_json_id, personal_chat_contacts(i, "from_id")))
         continue;
@@ -269,7 +269,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
           {
             // the first of each of these should be guaranteed the json id?
             it->second.insert(it->second.begin(), json_contacts(tmp.first, "id"));
-            for (uint j = 1; j < tmp.second.size(); ++j)
+            for (unsigned int j = 1; j < tmp.second.size(); ++j)
               if (!bepaald::contains(it->second, tmp.second[j]))
                 it->second.push_back(tmp.second[j]);
             break;
@@ -282,7 +282,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   if (d_verbose) [[unlikely]]
   {
     Logger::message("[FINAL CONTACT MAP] ");
-    for (uint i = 0; i < realcontactmap.size(); ++i)
+    for (unsigned int i = 0; i < realcontactmap.size(); ++i)
     {
       std::string name = getNameFromRecipientId(realcontactmap[i].second);
       Logger::message(" * ", Logger::VECTOR(realcontactmap[i].first, ", "), " -> ", realcontactmap[i].second, " (", name, ")");

@@ -30,7 +30,7 @@ void SignalBackup::getGroupV1MigrationRecipients(std::set<long long int> *refere
                       bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
   {
     //results.prettyPrint();
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       if (results.valueHasType<std::string>(i, "body"))
       {

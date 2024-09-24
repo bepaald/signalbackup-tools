@@ -49,7 +49,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
   else
   {
     d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id = ?", targetgroup, &res);
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
       targetmembersvec.insert(res.valueAsString(i, 0));
   }
 
@@ -61,7 +61,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
   {
 
     // update all messages from this addresses[i] to belong to that same thread and change address in new number
-    for (uint i = 0; i < groupids.size() - 1; ++i)
+    for (unsigned int i = 0; i < groupids.size() - 1; ++i)
     {
       long long int oldtid = getThreadIdFromRecipient(groupids[i]);
       if (oldtid == -1)
@@ -132,7 +132,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       else
       {
         d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id = ?", groupids[i], &res);
-        for (uint g = 0; g < res.rows(); ++g)
+        for (unsigned int g = 0; g < res.rows(); ++g)
           d_database.exec("INSERT OR IGNORE INTO group_membership (group_id, recipient_id) VALUES (?, ?)", {targetgroup, res.getValueAs<long long int>(g, "recipient_id")});
       }
 

@@ -61,7 +61,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
   long long int deliveryreceiptcount = 0;
   long long int readreceiptcount = 0;
   long long int updatedtimestamp = -1;
-  for (uint i = 0; i < status_results.rows(); ++i)
+  for (unsigned int i = 0; i < status_results.rows(); ++i)
   {
     if (status_results.valueAsString(i, "status") == "Delivered")
     {

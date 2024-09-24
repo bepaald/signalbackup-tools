@@ -41,7 +41,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     else
       specification += " AND ";
 
-    for (uint i = 0; i < threadids.size(); ++i)
+    for (unsigned int i = 0; i < threadids.size(); ++i)
       specification += ((i == 0) ? "("s : ""s) + "thread_id IS " + bepaald::toString(threadids[i]) + ((i == threadids.size() - 1) ? ")" : " OR ");
   }
 
@@ -93,7 +93,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
       specification += " WHERE ";
     else
       specification += " AND ";
-    for (uint i = 0; i < mimetypes.size(); ++i)
+    for (unsigned int i = 0; i < mimetypes.size(); ++i)
       specification += ((i == 0) ? "("s : ""s) + d_part_ct + " LIKE \"" + mimetypes[i] + "%\"" + ((i == mimetypes.size() - 1) ? ")" : " OR ");
   }
 
@@ -125,7 +125,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     // if no attachments remain and body is empty -> delete mms -> cleanDatabaseByMessages()
     SqliteDB::QueryResults res2;
     long long int count = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       if (!append.empty() || !prepend.empty())
       {
@@ -210,7 +210,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
 
     // make sure the 'mms.previews' column does not reference non-existing attachments
     long long int maxlinkpreviews = d_database.getSingleResultAs<long long int>("SELECT MAX(json_array_length(" + d_mms_previews + ")) FROM " + d_mms_table, 0);
-    for (uint lp = 0; lp < maxlinkpreviews; ++lp)
+    for (unsigned int lp = 0; lp < maxlinkpreviews; ++lp)
     {
       //d_database.print("SELECT " + d_mms_previews + " FROM " + d_mms_table + " WHERE " + d_mms_previews + " IS NOT NULL");
       if (d_database.tableContainsColumn(d_part_table, "unique_id"))
@@ -235,14 +235,14 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
     return (lhs.first == "default" ? false : (rhs.first == "default" ? true : lhs.first.length() > rhs.first.length()));
   });
 
-  for (uint i = 0; i < res.rows(); ++i)
+  for (unsigned int i = 0; i < res.rows(); ++i)
   {
     // get ct (mimetype), if it matches replace[i].first -> replace with replace[i].second
     std::string mimetype = res.valueAsString(i, d_part_ct);
 
     Logger::message("Checking to replace attachment: ", mimetype);
 
-    for (uint j = 0; j < replace.size(); ++j)
+    for (unsigned int j = 0; j < replace.size(); ++j)
     {
       if (res.valueAsString(i, d_part_ct).find(replace[j].first) == 0 || replace[j].first == "default")
       {

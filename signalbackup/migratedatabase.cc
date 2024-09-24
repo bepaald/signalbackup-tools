@@ -135,7 +135,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       return false;
     }
 
-    for (uint i = 0; i < groupmembers.rows(); ++i)
+    for (unsigned int i = 0; i < groupmembers.rows(); ++i)
     {
       std::vector<std::string> individual_groupmembers;
 
@@ -167,7 +167,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       d_database.exec("ROLLBACK TRANSACTION");
       return false;
     }
-    for (uint i = 0; i < groupmembers.rows(); ++i)
+    for (unsigned int i = 0; i < groupmembers.rows(); ++i)
     {
       long long int gid = groupmembers.getValueAs<long long int>(i, "_id");
       std::vector<std::string> individual_groupmembers;
@@ -213,7 +213,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       return false;
     }
 
-    for (uint i = 0; i < recipient_preferences_contents.rows(); ++i)
+    for (unsigned int i = 0; i < recipient_preferences_contents.rows(); ++i)
     {
       std::string address = recipient_preferences_contents(i, "recipient_ids");
       bool isgroup = STRING_STARTS_WITH(address, "__textsecure_group__!");
@@ -295,10 +295,10 @@ bool SignalBackup::migrateDatabase(int from, int to) const
 
       SqliteDB::QueryResults results;
       d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-        for (uint j = 0; j < reactions.numReactions(); ++j)
+        for (unsigned int j = 0; j < reactions.numReactions(); ++j)
         {
           if (!insertRow("reaction",
                          {{"message_id", results.getValueAs<long long int>(i, "_id")},
@@ -425,7 +425,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   long long int min = minmax.getValueAs<long long int>(0, "min");
   long long int max = minmax.getValueAs<long long int>(0, "max");
 
-  for (uint i = min; i <= max; ++i)
+  for (unsigned int i = min; i <= max; ++i)
   {
     SqliteDB::QueryResults newmmsid;
     if (!d_database.exec("INSERT INTO mms "

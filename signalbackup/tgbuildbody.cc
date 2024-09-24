@@ -29,7 +29,7 @@ std::string SignalBackup::tgBuildBody(std::string const &bodyjson) const
     return body;
   }
 
-  for (uint i = 0; i < fragments; ++i)
+  for (unsigned int i = 0; i < fragments; ++i)
     body += d_database.getSingleResultAs<std::string>("SELECT json_extract(?, '$[" + bepaald::toString(i) + "].text')", bodyjson, std::string());
 
   return body;

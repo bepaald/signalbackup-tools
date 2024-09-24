@@ -271,7 +271,7 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     << "      }" << '\n'
     << '\n';
 
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int rec_id = results.valueAsInt(i, "_id");
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
@@ -447,7 +447,7 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
     << '\n';
 
   // write blocked list
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int rec_id = results.valueAsInt(i, "_id");
     bool hasavatar = getRecipientInfoFromMap(recipient_info, rec_id).hasavatar;

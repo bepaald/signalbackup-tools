@@ -98,7 +98,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   // prep body (scan emoji? -> in <span>) and handle mentions...
   // if (prepbody)
   std::vector<std::tuple<long long int, long long int, long long int>> mentions;
-  for (uint mi = 0; mi < mention_results.rows(); ++mi)
+  for (unsigned int mi = 0; mi < mention_results.rows(); ++mi)
     mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
                                           mention_results.getValueAs<long long int>(mi, "range_start"),
                                           mention_results.getValueAs<long long int>(mi, "range_length")));

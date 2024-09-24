@@ -24,8 +24,8 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
   // convert passwords digits to unsigned char *
   size_t const passlength = 30;
   unsigned char pass[passlength];
-  uint i = 0;
-  uint j = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
   while (i < passlength && j < passphrase.size())
   {
     if (!std::isdigit(passphrase[j])) // skip non digits

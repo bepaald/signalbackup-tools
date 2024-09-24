@@ -117,7 +117,7 @@ bool SqlCipherDecryptor::decryptData(std::ifstream *dbfile)
     {
       // note: a bad mac can occur if the page is empty (all 0x00). An empty page is not an error, and should simply be skipped.
       bool containsdata = false;
-      for (uint i = 0; i < page_data_to_hash_size; ++i)
+      for (unsigned int i = 0; i < page_data_to_hash_size; ++i)
       {
         if (page_data_to_hash[i] != 0x00)
         {

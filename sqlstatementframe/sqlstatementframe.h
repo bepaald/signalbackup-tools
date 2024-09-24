@@ -89,10 +89,10 @@ class SqlStatementFrame : public BackupFrame
   inline std::string bindStatement() const;
   inline std::vector<std::any> parameters() const;
 
-  // inline void setParameter(uint idx, unsigned char *data, uint32_t length);
-  // inline void getParameter(uint idx) const;
-  // inline std::string getParameterAsString(uint idx) const;
-  // inline uint64_t getParameterAsUint64(uint idx) const;
+  // inline void setParameter(unsigned int idx, unsigned char *data, uint32_t length);
+  // inline void getParameter(unsigned int idx) const;
+  // inline std::string getParameterAsString(unsigned int idx) const;
+  // inline uint64_t getParameterAsUint64(unsigned int idx) const;
 
   inline virtual bool validate() const override;
  private:
@@ -135,7 +135,7 @@ inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame &&other
   if (this != &other)
   {
     // properly delete any data this is holding
-    for (uint i = 0; i < d_parameterdata.size(); ++i)
+    for (unsigned int i = 0; i < d_parameterdata.size(); ++i)
       if (std::get<1>(d_parameterdata[i]))
         delete[] std::get<1>(d_parameterdata[i]);
     d_parameterdata.clear();
@@ -152,7 +152,7 @@ inline SqlStatementFrame::SqlStatementFrame(SqlStatementFrame const &other)
   BackupFrame(other),
   d_statement(other.d_statement)
 {
-  for (uint i = 0; i < other.d_parameterdata.size(); ++i)
+  for (unsigned int i = 0; i < other.d_parameterdata.size(); ++i)
   {
     unsigned char *datacpy = nullptr;
     if (std::get<1>(other.d_parameterdata[i]))
@@ -170,7 +170,7 @@ inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame const &
   {
     BackupFrame::operator=(other);
     d_statement = other.d_statement;
-    for (uint i = 0; i < other.d_parameterdata.size(); ++i)
+    for (unsigned int i = 0; i < other.d_parameterdata.size(); ++i)
     {
       unsigned char *datacpy = nullptr;
       if (std::get<1>(other.d_parameterdata[i]))
@@ -187,7 +187,7 @@ inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame const &
 inline SqlStatementFrame::~SqlStatementFrame()
 {
   //std::cout << "DESTROYING SQLSTATEMENTFRAME" << std::endl;
-  for (uint i = 0; i < d_parameterdata.size(); ++i)
+  for (unsigned int i = 0; i < d_parameterdata.size(); ++i)
     if (std::get<1>(d_parameterdata[i]))
       delete[] std::get<1>(d_parameterdata[i]);
   d_parameterdata.clear();
@@ -219,7 +219,7 @@ inline void SqlStatementFrame::printInfo() const
   Logger::message("Frame number: ", d_count);
   Logger::message("        Size: ", d_constructedsize);
   Logger::message("        Type: SQLSTATEMENT");
-  uint param_ctr = 0;
+  unsigned int param_ctr = 0;
 
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::STATEMENT)
@@ -272,7 +272,7 @@ inline void SqlStatementFrame::printInfo(std::vector<std::string> const &paramet
   //DEBUGOUT("TYPE: SQLSTATEMENTFRAME");
   Logger::message("Frame number: ", d_count);
   Logger::message("        Type: SQLSTATEMENT");
-  uint param_ctr = 0;
+  unsigned int param_ctr = 0;
 
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::STATEMENT)
@@ -400,7 +400,7 @@ inline std::pair<unsigned char *, uint64_t> SqlStatementFrame::getData() const
   datapos += setFieldAndWire(FRAMETYPE::SQLSTATEMENT, WIRETYPE::LENGTHDELIM, data + datapos);
   datapos += setFrameSize(size, data + datapos);
 
-  uint param_ctr = 0;
+  unsigned int param_ctr = 0;
 
   for (auto const &fd : d_framedata)
     if (std::get<0>(fd) == FIELD::STATEMENT)
@@ -545,7 +545,7 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
   }
 }
 
-// inline void SqlStatementFrame::setParameter(uint idx, unsigned char *data, uint32_t length)
+// inline void SqlStatementFrame::setParameter(unsigned int idx, unsigned char *data, uint32_t length)
 // {
 //   if (std::get<1>(d_parameterdata[idx]))
 //   {
@@ -556,7 +556,7 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
 //   }
 // }
 
-// inline void SqlStatementFrame::getParameter(uint idx) const
+// inline void SqlStatementFrame::getParameter(unsigned int idx) const
 // {
 //   if (std::get<1>(d_parameterdata[idx]))
 //   {
@@ -566,14 +566,14 @@ inline void SqlStatementFrame::addParameterField(PARAMETER_FIELD field, std::str
 //     std::cout << "nullptr" << std::endl;
 // }
 
-// inline std::string SqlStatementFrame::getParameterAsString(uint idx) const
+// inline std::string SqlStatementFrame::getParameterAsString(unsigned int idx) const
 // {
 //   if (std::get<1>(d_parameterdata[idx]))
 //     return bepaald::bytesToString(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx]));
 //   return "";
 // }
 
-// inline uint64_t SqlStatementFrame::getParameterAsUint64(uint idx) const
+// inline uint64_t SqlStatementFrame::getParameterAsUint64(unsigned int idx) const
 // {
 //   if (std::get<1>(d_parameterdata[idx]))
 //     return bytesToUint64(std::get<1>(d_parameterdata[idx]), std::get<2>(d_parameterdata[idx]));

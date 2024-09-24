@@ -187,7 +187,7 @@ bool SignalBackup::custom_hugogithubs()
 //     //message_data.prettyPrint();
 
 //     bool matched = false;
-//     for (uint j = 0; j < message_data.rows(); ++j)
+//     for (unsigned int j = 0; j < message_data.rows(); ++j)
 //     {
 //       SqliteDB::QueryResults r2;
 //       desktopdb.exec("SELECT conversationId FROM messages WHERE sent_at == ? AND body == ?", {message_data.value(j, d_mms_date_sent), message_data.value(j, "body")}, &r2);
@@ -205,7 +205,7 @@ bool SignalBackup::custom_hugogithubs()
 //       d_database.exec("SELECT body,date_sent," + d_sms_recipient_id + " FROM sms WHERE thread_id = ?",
 //                       list_of_threads.value(i, 0), &message_data);
 //       //message_data.prettyPrint();
-//       for (uint j = 0; j < static_cast<long long int>(message_data.rows()); ++j)
+//       for (unsigned int j = 0; j < static_cast<long long int>(message_data.rows()); ++j)
 //       {
 //         SqliteDB::QueryResults r2;
 //         desktopdb.exec("SELECT conversationId FROM messages WHERE sent_at == ? AND body == ?", {message_data.value(j, "date_sent"), message_data.value(j, "body")}, &r2);
@@ -317,7 +317,7 @@ bool SignalBackup::custom_hugogithubs()
 //      */
 
 //   // SKIP GROUPS FOR SECOND PASS
-//   for (uint t = 0; t < matches.size(); ++t)
+//   for (unsigned int t = 0; t < matches.size(); ++t)
 //   {
 //     SqliteDB::QueryResults r;
 //     desktopdb.exec("SELECT id,uuid,e164,groupId,type,name,profileName,profileFamilyName,profileFullName FROM conversations WHERE id == ?", std::get<2>(matches[t]), &r);
@@ -341,7 +341,7 @@ bool SignalBackup::custom_hugogithubs()
 
 //   }
 //   // GROUPS
-//   for (uint t = 0; t < matches.size(); ++t)
+//   for (unsigned int t = 0; t < matches.size(); ++t)
 //   {
 //     SqliteDB::QueryResults r;
 //     desktopdb.exec("SELECT id,uuid,e164,groupId,type,name,profileName,profileFamilyName,profileFullName FROM conversations WHERE id == ?", std::get<2>(matches[t]), &r);
@@ -380,7 +380,7 @@ bool SignalBackup::custom_hugogithubs()
 //       while (!done)
 //       {
 //         bool found = false;
-//         for (uint i = 0; i < list_of_addresses.rows(); ++i)
+//         for (unsigned int i = 0; i < list_of_addresses.rows(); ++i)
 //         {
 //           if (list_of_addresses.valueAsString(i, "union_rec_id") == bepaald::toString(free_address))
 //           {
@@ -489,7 +489,7 @@ bool SignalBackup::custom_hugogithubs()
 
 //   std::vector<long long int> ids_to_remove;
 
-//   for (uint i = 0; i < res.rows(); ++i)
+//   for (unsigned int i = 0; i < res.rows(); ++i)
 //   {
 //     long long int msgid = std::any_cast<long long int>(res.value(i, "_id"));
 
@@ -569,7 +569,7 @@ bool SignalBackup::custom_hugogithubs()
 //   }
 
 //   std::string ids_to_remove_str;
-//   for (uint i = 0; i < ids_to_remove.size(); ++i)
+//   for (unsigned int i = 0; i < ids_to_remove.size(); ++i)
 //     ids_to_remove_str += bepaald::toString(ids_to_remove[i]) + ((i < ids_to_remove.size() - 1) ? "," : "");
 
 //   std::cout << std::endl << std::endl << "About to remove messages from 'sms' table with _id's = " << std::endl;
@@ -609,7 +609,7 @@ bool SignalBackup::custom_hugogithubs()
 //   SqliteDB::QueryResults r;
 //   d_database.exec("SELECT _id FROM part", &r);
 //   std::string q = "DELETE FROM part WHERE _id IN (";
-//   for (uint i = 0; i < r.rows(); ++i)
+//   for (unsigned int i = 0; i < r.rows(); ++i)
 //     q += bepaald::toString(r.getValueAs<long long int>(i, 0)) + ((i == r.rows() - 1) ? ")" : ",");
 //   if (!tf->d_database.exec(q))
 //   {
@@ -623,7 +623,7 @@ bool SignalBackup::custom_hugogithubs()
 //   SqliteDB::QueryResults results;
 //   tf->d_database.exec("SELECT _id,unique_id FROM part", &results);
 //   std::vector<std::pair<long long int, long long int>> missingdata;
-//   for (uint i = 0; i < results.rows(); ++i)
+//   for (unsigned int i = 0; i < results.rows(); ++i)
 //   {
 //     uint64_t rowid = results.getValueAs<long long int>(i, "_id");
 //     uint64_t uniqid = results.getValueAs<long long int>(i, "unique_id");
@@ -648,7 +648,7 @@ bool SignalBackup::custom_hugogithubs()
 //     //SqliteDB::QueryResults results;
 //     tf->d_database.exec("SELECT * FROM " + table, &results);
 //     // check if tf (which is newer) contains columns not existing in target
-//     uint idx = 0;
+//     unsigned int idx = 0;
 //     while (idx < results.headers().size())
 //     {
 //       if (!d_database.tableContainsColumn(table, results.headers()[idx]))
@@ -662,7 +662,7 @@ bool SignalBackup::custom_hugogithubs()
 //     }
 //     // import
 //     std::cout << " " << results.rows() << " entries." << std::endl;
-//     for (uint i = 0; i < results.rows(); ++i)
+//     for (unsigned int i = 0; i < results.rows(); ++i)
 //     {
 //       SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
 //       if (!d_database.exec(newframe.bindStatement(), newframe.parameters()))
@@ -709,7 +709,7 @@ bool SignalBackup::custom_hugogithubs()
 //   if (results.rows() > 0)
 //   {
 //     std::cout << "WARNING" << " Mentions found! Probably a good idea to check these messages:" << std::endl;
-//     for (uint i = 0; i < results.rows(); ++i)
+//     for (unsigned int i = 0; i < results.rows(); ++i)
 //     {
 //       std::cout << " -  Group: " << results.valueAsString(i, "title") << std::endl;
 //       std::cout << "    Date : " << results.valueAsString(i, "date_sent") << std::endl;
@@ -831,7 +831,7 @@ bool SignalBackup::custom_hugogithubs()
 //     std::cout << minsmsid << " " << maxsmsid << std::endl;
 
 //     std::cout << "Switching sms entries..." << std::endl;
-//     for (uint i = minsmsid; i <= maxsmsid ; ++i)
+//     for (unsigned int i = minsmsid; i <= maxsmsid ; ++i)
 //     {
 //       if (!d_database.exec("SELECT * FROM sms WHERE _id = ?", i, &results))
 //       {
@@ -1161,7 +1161,7 @@ bool SignalBackup::custom_hugogithubs()
 //   std::cout << minmmsid << " " << maxmmsid << std::endl;
 
 //   std::cout << "Switching mms entries..." << std::endl;
-//   for (uint i = minmmsid; i <= maxmmsid ; ++i)
+//   for (unsigned int i = minmmsid; i <= maxmmsid ; ++i)
 //   {
 //     if (!d_database.exec("SELECT * FROM " + d_mms_table + " WHERE _id = ?", i, &results))
 //     {
@@ -1271,7 +1271,7 @@ bool SignalBackup::custom_hugogithubs()
 //     d_database.exec(q, {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT}, &res);
 
 
-//     for (uint i = 0; i < res.rows(); ++i)
+//     for (unsigned int i = 0; i < res.rows(); ++i)
 //     {
 //       DecryptedGroupV2Context sts2(res.valueAsString(i, "body"));
 //       //std::cout << "STATUS MSG " << i << std::endl;
@@ -1281,7 +1281,7 @@ bool SignalBackup::custom_hugogithubs()
 //       if (field3.has_value())
 //       {
 //         auto field3_7 = field3->getField<7>();
-//         for (uint j = 0; j < field3_7.size(); ++j)
+//         for (unsigned int j = 0; j < field3_7.size(); ++j)
 //         {
 //           auto field3_7_1 = field3_7[j].getField<1>();
 //           if (field3_7_1.has_value())
@@ -1309,7 +1309,7 @@ bool SignalBackup::custom_hugogithubs()
 //       if (field4.has_value())
 //       {
 //         auto field4_7 = field4->getField<7>();
-//         for (uint j = 0; j < field4_7.size(); ++j)
+//         for (unsigned int j = 0; j < field4_7.size(); ++j)
 //         {
 //           auto field4_7_1 = field4_7[j].getField<1>();
 //           if (field4_7_1.has_value())

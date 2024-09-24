@@ -26,7 +26,7 @@ bool SignalBackup::getGroupMembersModern(std::vector<long long int> *members, st
       !d_database.exec("SELECT DISTINCT recipient_id FROM group_membership WHERE group_id = ?", group_id, &r))
     return false;
 
-  for (uint i = 0; i < r.rows(); ++i)
+  for (unsigned int i = 0; i < r.rows(); ++i)
     members->push_back(r.getValueAs<long long int>(i, "recipient_id"));
 
   return true;

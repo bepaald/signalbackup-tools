@@ -46,7 +46,7 @@ void SignalBackup::HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<l
       htmloutput << std::string(indent, ' ') << "                <div class=\"msg-receipt-info\">\n"
                  << std::string(indent, ' ') << "                  <span class=\"columnview\">\n";
       long long int prevstatus = -10;
-      for (uint i = 0; i < group_receipts.rows(); ++i)
+      for (unsigned int i = 0; i < group_receipts.rows(); ++i)
       {
         long long int status = group_receipts.valueAsInt(i, "status", -10);
         if (status != prevstatus)

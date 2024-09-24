@@ -32,7 +32,7 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
 
   std::vector<std::pair<unsigned int, unsigned int>> results;
 
-  for (uint i = 0; i < std::max(static_cast<unsigned int>(str.size()), s_emoji_min_size) - s_emoji_min_size; ++i)
+  for (unsigned int i = 0; i < std::max(static_cast<unsigned int>(str.size()), s_emoji_min_size) - s_emoji_min_size; ++i)
   {
     //std::cout << "Checking byte " << std::dec << i << ": " << std::hex << static_cast<int>(str[i] & 0xff) << std::endl;
     if (bepaald::contains(s_emoji_first_bytes, str[i]))
@@ -45,7 +45,7 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
         {
 
           // std::cout << "matched emoji: ";
-          // for (uint c = 0; c < emoji_size; ++c)
+          // for (unsigned int c = 0; c < emoji_size; ++c)
           //   std::cout << std::hex << static_cast<int>(emoji_string[c] & 0xff);
           // std::cout << "" << std::endl;
 

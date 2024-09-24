@@ -74,7 +74,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
       return;
     long long int count = 0;
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       long long int timestamp = res.valueAsInt(i, d_mms_date_sent);
 
@@ -88,10 +88,10 @@ void SignalBackup::removeDoubles(long long int milliseconds)
       // remove deleted entries from res as well...
       if (res2.rows())
       {
-        for (uint j = 0; j < res2.rows(); ++j)
+        for (unsigned int j = 0; j < res2.rows(); ++j)
         {
           long long int id = res2.valueAsInt(j, "_id");
-          for (uint k = 0; k < res.rows(); )
+          for (unsigned int k = 0; k < res.rows(); )
           {
             if (res.valueAsInt(k, "_id") == id)
             {
@@ -127,7 +127,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   for (auto it = d_attachments.begin(); it != d_attachments.end();)
   {
     bool found = false;
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       long long int rowid = INVALID_ID;
       if (results.valueHasType<long long int>(i, "_id"))

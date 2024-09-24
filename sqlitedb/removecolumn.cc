@@ -19,7 +19,7 @@
 
 #include "sqlitedb.ih"
 
-bool SqliteDB::QueryResults::removeColumn(uint idx)
+bool SqliteDB::QueryResults::removeColumn(unsigned int idx)
 {
   if (idx >= d_headers.size())
     return false;

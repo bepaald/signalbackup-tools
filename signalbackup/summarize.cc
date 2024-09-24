@@ -46,7 +46,7 @@ bool SignalBackup::summarize() const
   if (d_database.exec("SELECT name FROM sqlite_master WHERE type = 'table'", &results))
   {
     Logger::message("Tables:");
-    for (uint i = 0; i < results.rows(); ++i)
+    for (unsigned int i = 0; i < results.rows(); ++i)
     {
       SqliteDB::QueryResults results2;
       if (d_database.exec("SELECT COUNT(*) FROM " + results.valueAsString(i, "name"), &results2))

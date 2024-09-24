@@ -48,7 +48,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   bool adjustlatest_revision_id = d_database.tableContainsColumn(d_mms_table, "latest_revision_id");
 
   // we purposefully do this in a dozen or so separate for-loops so SqliteDB can re-use its prepared statements!
-  for (uint i = 0; i < total; ++i)
+  for (unsigned int i = 0; i < total; ++i)
   {
     std::any oldid = res.value(i, 0);
     ++negative_id_tmp;
@@ -58,7 +58,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
   Logger::message_continue(".");
 
-  for (uint i = 0; i < total; ++i)
+  for (unsigned int i = 0; i < total; ++i)
   {
     std::any oldid = res.value(i, 0);
     ++negative_id_tmp;
@@ -67,7 +67,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   }
   negative_id_tmp = 0;
 
-  for (uint i = 0; i < total; ++i)
+  for (unsigned int i = 0; i < total; ++i)
   {
     std::any oldid = res.value(i, 0);
     ++negative_id_tmp;
@@ -77,7 +77,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
 
   if (adjustmention)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -87,7 +87,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
 
   if (adjustmsl_message)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -97,7 +97,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
 
   if (adjustreaction)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -107,7 +107,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
 
   if (adjuststorysends)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -117,7 +117,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
 
   if (adjustcall)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -127,7 +127,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   negative_id_tmp = 0;
 
   if (adjustoriginal_message_id)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -139,7 +139,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   Logger::message_continue(".");
 
   if (adjustlatest_revision_id)
-    for (uint i = 0; i < total; ++i)
+    for (unsigned int i = 0; i < total; ++i)
     {
       std::any oldid = res.value(i, 0);
       ++negative_id_tmp;
@@ -148,7 +148,7 @@ bool SignalBackup::reorderMmsSmsIds() const
     }
 
   /*
-  for (uint i = 0; i < total; ++i)
+  for (unsigned int i = 0; i < total; ++i)
   {
     if (d_showprogress && i % 1000 == 0)
       Logger::message_overwrite(__FUNCTION__, " (", i, "/", total, ")");
@@ -217,7 +217,7 @@ bool SignalBackup::reorderMmsSmsIds() const
       return false;
 
     negative_id_tmp = 0;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       long long int oldid = res.getValueAs<long long int>(i, 0);
     ++negative_id_tmp;

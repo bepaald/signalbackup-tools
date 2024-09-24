@@ -147,10 +147,10 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   // set where-clause for date requested
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
-    for (uint i = 0; i < daterangelist.size(); i += 2)
+    for (unsigned int i = 0; i < daterangelist.size(); i += 2)
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
   std::string datewhereclause;
-  for (uint i = 0; i < dateranges.size(); ++i)
+  for (unsigned int i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
     long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
@@ -264,7 +264,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       return false;
     }
 
-    for (uint i = 0; i < messages.rows(); ++i)
+    for (unsigned int i = 0; i < messages.rows(); ++i)
     {
       bool is_deleted = messages.getValueAs<long long int>(i, "remote_deleted") == 1;
       bool is_viewonce = messages.getValueAs<long long int>(i, "view_once") == 1;
@@ -327,7 +327,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
         // get originating username
         std::string user = getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name;
 
-        for (uint a = 0; a < attachment_results.rows(); ++a)
+        for (unsigned int a = 0; a < attachment_results.rows(); ++a)
         {
           std::string content_type = attachment_results.valueAsString(a, d_part_ct);
           if (content_type == "text/x-signal-plain") [[unlikely]]
@@ -349,7 +349,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
         {
           // prep body for mentions...
           std::vector<Range> ranges;
-          for (uint m = 0; m < mention_results.rows(); ++m)
+          for (unsigned int m = 0; m < mention_results.rows(); ++m)
           {
             std::string displayname = getNameFromRecipientId(mention_results.getValueAs<long long int>(m, "recipient_id"));
             if (displayname.empty())

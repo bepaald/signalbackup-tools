@@ -31,7 +31,7 @@ void SignalBackup::cropToThread(std::vector<long long int> const &threadids)
   std::string smsq;
   std::string mmsq;
   std::vector<std::any> tids;
-  for (uint i = 0; i < threadids.size(); ++i)
+  for (unsigned int i = 0; i < threadids.size(); ++i)
   {
     if (i == 0)
     {

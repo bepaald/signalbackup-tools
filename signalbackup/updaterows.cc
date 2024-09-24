@@ -43,13 +43,13 @@ bool SignalBackup::updateRows(std::string const &table,
   }
 
   std::string query = "UPDATE " + table + " SET ";
-  for (uint i = 0; i < data.size(); ++i)
+  for (unsigned int i = 0; i < data.size(); ++i)
     query += data[i].first + (i < data.size() -1 ? " = ?, " : " = ?");
 
   if (whereclause.size())
   {
     query += " WHERE ";
-    for (uint i = 0; i < whereclause.size(); ++i)
+    for (unsigned int i = 0; i < whereclause.size(); ++i)
       query += whereclause[i].first + (i < whereclause.size() -1 ? " = ? AND " : " = ?");
   }
   if (!returnfield.empty() && returnvalue)

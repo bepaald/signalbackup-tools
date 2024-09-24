@@ -27,7 +27,7 @@ bool SqlCipherDecryptor::getHmacKey()
   std::memcpy(hmac_salt.get(), d_salt, d_saltsize);
 
   // then switch it up by xoring with mask
-  for (uint i = 0; i < hmac_saltsize; ++i)
+  for (unsigned int i = 0; i < hmac_saltsize; ++i)
     hmac_salt[i] ^= s_saltmask;
 
   d_hmackeysize = 32;

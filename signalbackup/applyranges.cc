@@ -76,18 +76,18 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
 
       body->replace(bodyidx, length, pre + replacement + post);
 
-      for (uint i = 0; i < pre.size(); ++i)
+      for (unsigned int i = 0; i < pre.size(); ++i)
         if (pre[i] == '<' || pre[i] == '>' || pre[i] == '\'' || pre[i] == '"' || pre[i] == '&')
           if (positions_excluded_from_escape)
             positions_excluded_from_escape->insert(i + bodyidx);
-      for (uint i = 0; i < post.size(); ++i)
+      for (unsigned int i = 0; i < post.size(); ++i)
         if (post[i] == '<' || post[i] == '>' || post[i] == '\'' || post[i] == '"' || post[i] == '&')
           if (positions_excluded_from_escape)
             positions_excluded_from_escape->insert(i + bodyidx + pre.size() + replacement.size());
 
       //std::cout << "BODY: " << *body << std::endl;
 
-      for (uint i = rangesidx + 1; i < ranges->size(); ++i)
+      for (unsigned int i = rangesidx + 1; i < ranges->size(); ++i)
         (*ranges)[i].start += pre.size() + post.size() + (replacement.size() - (*ranges)[rangesidx].length);
 
       // skip the just inserted string
@@ -103,7 +103,7 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
     }
 
     // update all following ranges for multibyte char
-    for (uint i = rangesidx; i < ranges->size(); ++i)
+    for (unsigned int i = rangesidx; i < ranges->size(); ++i)
       (*ranges)[i].start += (charsizeinbytes - charsizeinutf16entities);
 
     // next char...
@@ -206,7 +206,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
 
   */
 
-  for (uint i = 1; i < ranges->size(); ++i)
+  for (unsigned int i = 1; i < ranges->size(); ++i)
   {
     if ((*ranges)[i].start == (*ranges)[i - 1].start)
     {

@@ -125,7 +125,7 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
   scd.name.empty = (!scd.name.givenName.has_value() && !scd.name.familyName.has_value() &&
                     !scd.name.displayName.has_value() && !scd.name.middleName.has_value());
 
-  for (uint i = 0; i < dtsc.valueAsInt(0, "numphones", 0); ++i)
+  for (unsigned int i = 0; i < dtsc.valueAsInt(0, "numphones", 0); ++i)
   {
     SqliteDB::QueryResults dtsc_array;
     ddb.exec("SELECT "
@@ -162,7 +162,7 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
   }
 
 
-  for (uint i = 0; i < dtsc.valueAsInt(0, "numemails", 0); ++i)
+  for (unsigned int i = 0; i < dtsc.valueAsInt(0, "numemails", 0); ++i)
   {
     SqliteDB::QueryResults dtsc_array;
     ddb.exec("SELECT "
@@ -233,7 +233,7 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
     return jsonstring;
 
   // add phonenumbers
-  for (uint p = 0; p < scd.phoneNumbers.size(); ++p)
+  for (unsigned int p = 0; p < scd.phoneNumbers.size(); ++p)
     jsonstring = ddb.getSingleResultAs<std::string>("SELECT json_insert(?, '$[0].phoneNumbers[#]', json_object('number', ?, 'type', ?, 'label', ?))",
                                                     {jsonstring,
                                                      scd.phoneNumbers[p].number,
@@ -244,7 +244,7 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
     return jsonstring;
 
   // add emails
-  for (uint p = 0; p < scd.emails.size(); ++p)
+  for (unsigned int p = 0; p < scd.emails.size(); ++p)
     jsonstring = ddb.getSingleResultAs<std::string>("SELECT json_insert(?, '$[0].emails[#]', json_object('email', ?, 'type', ?, 'label', ?))",
                                                     {jsonstring,
                                                      scd.emails[p].email,

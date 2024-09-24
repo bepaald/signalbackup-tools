@@ -80,7 +80,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, u
   }
 
   // decode
-  uint skipped = 0;
+  unsigned int skipped = 0;
   std::unique_ptr<BackupFrame> frame(nullptr);
   while (!frame)
   {

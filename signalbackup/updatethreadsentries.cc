@@ -29,7 +29,7 @@ void SignalBackup::updateThreadsEntries(long long int thread)
   if (thread > -1)
     query += " WHERE _id = " + bepaald::toString(thread);
   d_database.exec(query, &results);
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     if (results.valueHasType<long long int>(i, "_id"))
     {
@@ -141,7 +141,7 @@ ThreadTable::
             if (d_database.exec("SELECT * FROM mention WHERE message_id = ?", mid, &snippet_mentions))
             {
               std::vector<Range> ranges;
-              for (uint m = 0; m < snippet_mentions.rows(); ++m)
+              for (unsigned int m = 0; m < snippet_mentions.rows(); ++m)
               {
                 std::string displayname = getNameFromRecipientId(snippet_mentions.getValueAs<long long int>(m, "recipient_id"));
                 if (displayname.empty())

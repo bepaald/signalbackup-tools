@@ -29,7 +29,7 @@ void SignalBackup::remapRecipients()
   SqliteDB::QueryResults results;
   d_database.exec("SELECT * FROM remapped_recipients", &results);
 
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     updateRecipientId(results.getValueAs<long long int>(i, "new_id"),
                       results.getValueAs<long long int>(i, "old_id"));

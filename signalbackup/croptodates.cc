@@ -28,7 +28,7 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
   std::string megaphoneq;
   std::vector<std::any> params;
   std::vector<std::any> params2;
-  for (uint i = 0; i < dateranges.size(); ++i)
+  for (unsigned int i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
     long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);

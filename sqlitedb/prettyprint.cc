@@ -40,7 +40,7 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
   for (unsigned int i = startrow; i < endrow; ++i)
   {
     contents.resize(contents.size() + 1);
-    for (uint j = 0; j < columns(); ++j)
+    for (unsigned int j = 0; j < columns(); ++j)
     {
       if (valueHasType<long long int>(i, j))
         contents.back().emplace_back(bepaald::toString(getValueAs<long long int>(i, j)));
@@ -75,9 +75,9 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
   }
 
   // calculate widths
-  std::vector<uint> widths(contents[0].size(), 0);
-  for (uint col = 0; col < contents[0].size(); ++col)
-    for (uint row = 0; row < contents.size(); ++row)
+  std::vector<unsigned int> widths(contents[0].size(), 0);
+  for (unsigned int col = 0; col < contents[0].size(); ++col)
+    for (unsigned int row = 0; row < contents.size(); ++row)
       if (widths[col] < charCount(contents[row][col]))
         widths[col] = charCount(contents[row][col]);
 
@@ -88,16 +88,16 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 
   if (totalw > availablewidth)
   {
-    uint fairwidthpercol = (availablewidth - 1) / contents[0].size() - 3;
+    unsigned int fairwidthpercol = (availablewidth - 1) / contents[0].size() - 3;
     //std::cout << "cols: " << contents[0].size() << " size per col (adjusted for table space): " << fairwidthpercol << " LEFT: " << availableWidth - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1) << std::endl;
     int spaceleftbyshortcols = availablewidth - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1);
     std::vector<int> oversizedcols;
-    uint widestcol = 0;
-    uint maxwidth = 0;
+    unsigned int widestcol = 0;
+    unsigned int maxwidth = 0;
     // each column has availableWidth / nCols (- tableedges) available by fairness.
     // add to this all the space not needed by the columns that are
     // less wide than availableWidth / nCols anyway.
-    for (uint i = 0; i < widths.size(); ++i)
+    for (unsigned int i = 0; i < widths.size(); ++i)
     {
       if (widths[i] > maxwidth)
       {
@@ -116,7 +116,7 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
       }
     }
 
-    uint maxwidthpercol = std::max(static_cast<int>(fairwidthpercol + spaceleftbyshortcols / oversizedcols.size()), 5);
+    unsigned int maxwidthpercol = std::max(static_cast<int>(fairwidthpercol + spaceleftbyshortcols / oversizedcols.size()), 5);
     int leftforlongcols = spaceleftbyshortcols % oversizedcols.size();
     //std::cout << L"Real max width per col: " << maxwidthpercol << L" (left " << leftforlongcols << L")" << std::endl;
 
@@ -148,8 +148,8 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
     // update widths
     widths.clear();
     widths.resize(contents[0].size());
-    for (uint col = 0; col < contents[0].size(); ++col)
-      for (uint row = 0; row < contents.size(); ++row)
+    for (unsigned int col = 0; col < contents[0].size(); ++col)
+      for (unsigned int row = 0; row < contents.size(); ++row)
       {
         if (charCount(contents[row][col]) > maxwidthpercol + ((col == widestcol) ? leftforlongcols : 0))
         {
@@ -164,11 +164,11 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
   //std::cout << std::string(availableWidth(), '*') << std::endl;
   //bool ansi = useEscapeCodes();
   Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
-  for (uint row = 0; row < contents.size(); ++row)
+  for (unsigned int row = 0; row < contents.size(); ++row)
   {
     Logger::message_start();
     unsigned int pos = 1; // for seeking horizontal position with ANSI escape codes, this starts counting at 1
-    for (uint col = 0; col < contents[row].size(); ++col)
+    for (unsigned int col = 0; col < contents[row].size(); ++col)
     {
       Logger::message_continue(std::left, "| ", std::setw(widths[col]), std::setfill(' '), contents[row][col], std::setw(0), " ");
       //if (ansi) // if we support control codes, make 'sure' the cursor is at the right position
@@ -212,7 +212,7 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 //   for (unsigned int i = 0; i < rows(); ++i)
 //   {
 //     contents.resize(contents.size() + 1);
-//     for (uint j = 0; j < columns(); ++j)
+//     for (unsigned int j = 0; j < columns(); ++j)
 //     {
 //       if (valueHasType<std::string>(i, j))
 //       {
@@ -257,8 +257,8 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 
 //   // calculate widths
 //   std::vector<uint> widths(contents[0].size(), 0);
-//   for (uint col = 0; col < contents[0].size(); ++col)
-//     for (uint row = 0; row < contents.size(); ++row)
+//   for (unsigned int col = 0; col < contents[0].size(); ++col)
+//     for (unsigned int row = 0; row < contents.size(); ++row)
 //       if (widths[col] < contents[row][col].length())
 //         widths[col] = contents[row][col].length();
 
@@ -268,16 +268,16 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 
 //   if (totalw > availableWidth())
 //   {
-//     uint fairwidthpercol = (availableWidth() - 1) / contents[0].size() - 3;
+//     unsigned int fairwidthpercol = (availableWidth() - 1) / contents[0].size() - 3;
 //     //std::wcout << L"cols: " << contents[0].size() << L" size per col (adjusted for table space): " << fairwidthpercol << L" LEFT: " << availableWidth() - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1) << std::endl;
 //     int spaceleftbyshortcols = availableWidth() - (contents[0].size() * fairwidthpercol + 3 * contents[0].size() + 1);
 //     std::vector<int> oversizedcols;
-//     uint widestcol = 0;
-//     uint maxwidth = 0;
+//     unsigned int widestcol = 0;
+//     unsigned int maxwidth = 0;
 //     // each column has availableWidth() / nCols (- tableedges) available by fairness.
 //     // add to this all the space not needed by the columns that are
 //     // less wide than availableWidth() / nCols anyway.
-//     for (uint i = 0; i < widths.size(); ++i)
+//     for (unsigned int i = 0; i < widths.size(); ++i)
 //     {
 //       if (widths[i] > maxwidth)
 //       {
@@ -296,7 +296,7 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 //       }
 //     }
 
-//     uint maxwidthpercol = std::max(static_cast<int>(fairwidthpercol + spaceleftbyshortcols / oversizedcols.size()), 5);
+//     unsigned int maxwidthpercol = std::max(static_cast<int>(fairwidthpercol + spaceleftbyshortcols / oversizedcols.size()), 5);
 //     int leftforlongcols = spaceleftbyshortcols % oversizedcols.size();
 //     //std::wcout << L"Real max width per col: " << maxwidthpercol << L" (left " << leftforlongcols << L")" << std::endl;
 
@@ -328,8 +328,8 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 //     // update widths
 //     widths.clear();
 //     widths.resize(contents[0].size());
-//     for (uint col = 0; col < contents[0].size(); ++col)
-//       for (uint row = 0; row < contents.size(); ++row)
+//     for (unsigned int col = 0; col < contents[0].size(); ++col)
+//       for (unsigned int row = 0; row < contents.size(); ++row)
 //       {
 //         if (contents[row][col].length() > maxwidthpercol + ((col == widestcol) ? leftforlongcols : 0))
 //         {
@@ -346,11 +346,11 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 //   //std::wcout << std::wstring(availableWidth(), L'*') << std::endl;
 //   bool ansi = useEscapeCodes();
 //   std::wcout << std::wstring(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, L'-') << std::endl;
-//   for (uint row = 0; row < contents.size(); ++row)
+//   for (unsigned int row = 0; row < contents.size(); ++row)
 //   {
 //     std::wcout.setf(std::ios_base::left);
 //     unsigned int pos = 1; // for seeking horizontal position with ANSI escape codes, this starts counting at 1
-//     for (uint col = 0; col < contents[row].size(); ++col)
+//     for (unsigned int col = 0; col < contents[row].size(); ++col)
 //     {
 //       std::wcout << L"| " << std::setw(widths[col]) << std::setfill(L' ') << contents[row][col] << std::setw(0) << L" ";
 //       if (ansi)

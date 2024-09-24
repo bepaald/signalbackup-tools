@@ -35,7 +35,7 @@ bool ReactionList::setAuthor(unsigned int idx, uint64_t author)
                              protobuffer::optional::UINT64,
                              protobuffer::optional::UINT64,
                              protobuffer::optional::UINT64>> newreactions;
-  for (uint i = 0; i < reactions.size(); ++i)
+  for (unsigned int i = 0; i < reactions.size(); ++i)
   {
     if (i != idx)
       newreactions.push_back(reactions[i]); // just copy all unchanged
@@ -55,7 +55,7 @@ bool ReactionList::setAuthor(unsigned int idx, uint64_t author)
   // clear entire list
   clear();
   // set new data
-  for (uint i = 0; i < newreactions.size(); ++i)
+  for (unsigned int i = 0; i < newreactions.size(); ++i)
     if (!addField<1>(newreactions[i]))
       return false;
 

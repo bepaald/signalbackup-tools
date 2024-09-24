@@ -50,12 +50,12 @@ bool SignalBackup::exportCsv(std::string const &filename, std::string const &tab
   }
 
   // output header
-  for (uint i = 0; i < results.columns(); ++i)
+  for (unsigned int i = 0; i < results.columns(); ++i)
     outputfile << results.header(i) << ((i == results.columns() - 1) ? '\n' : ',');
 
   // output data
-  for (uint j = 0; j < results.rows(); ++j)
-    for (uint i = 0; i < results.columns(); ++i)
+  for (unsigned int j = 0; j < results.rows(); ++j)
+    for (unsigned int i = 0; i < results.columns(); ++i)
     {
       std::string vas = results.valueAsString(j, i);
       duplicateQuotes(&vas);

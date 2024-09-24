@@ -43,7 +43,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     auto field4 = statusmsg.getField<4>();
     if (field4.size())
     {
-      for (uint k = 0; k < field4.size(); ++k)
+      for (unsigned int k = 0; k < field4.size(); ++k)
       {
         // get name from members string
         SqliteDB::QueryResults res;
@@ -309,7 +309,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
         std::vector<std::string> promotedmemberuuids;
-        for (uint i = 0; i < groupchange.getField<9>().size(); ++i)
+        for (unsigned int i = 0; i < groupchange.getField<9>().size(); ++i)
         {
           DecryptedMember dm = groupchange.getField<9>()[i];
           if (dm.getField<1>().has_value())
@@ -476,7 +476,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         }
 
         auto newmembers = groupchange.getField<3>();
-        for (uint i = 0; i < newmembers.size(); ++i)
+        for (unsigned int i = 0; i < newmembers.size(); ++i)
         {
           auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
           std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
@@ -500,7 +500,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
       // check members left:
       auto deletedmembers = groupchange.getField<4>();
-      for (uint i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
+      for (unsigned int i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
       {
         auto [uuid, uuid_size] = deletedmembers[i]; // bytes
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
@@ -512,7 +512,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
       // check memberrole change
       auto memberrolechanges = groupchange.getField<5>();
-      for (uint i = 0; i < memberrolechanges.size(); ++i) // I dont know how this can be more than size() == 1
+      for (unsigned int i = 0; i < memberrolechanges.size(); ++i) // I dont know how this can be more than size() == 1
       {
         DecryptedModifyMemberRole mr = memberrolechanges[i];
 
@@ -542,7 +542,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
       // // check members left:
       // auto deletedmembers = groupchange.getField<4>();
-      // for (uint i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
+      // for (unsigned int i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
       // {
       //   auto [uuid, uuid_size] = deletedmembers[i]; // bytes
       //   std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
@@ -695,7 +695,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           *icon = IconType::MEMBER_APPROVED;
 
         auto const &approved_members = groupchange.getField<18>();
-        for (uint i = 0; i < approved_members.size(); ++i)
+        for (unsigned int i = 0; i < approved_members.size(); ++i)
         {
           if (!approved_members[i].getField<1>().has_value())
             continue;
@@ -791,7 +791,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     {
       std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
 
-      for (uint i = 0; i < groupv2ctx.getField<3>().value().getField<8>().size(); ++i)
+      for (unsigned int i = 0; i < groupv2ctx.getField<3>().value().getField<8>().size(); ++i)
       {
         DecryptedPendingMember pm(groupv2ctx.getField<3>().value().getField<8>()[i]);
         //pm.print();

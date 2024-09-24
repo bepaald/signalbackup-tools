@@ -32,7 +32,7 @@ CSVReader::CSVState CSVReader::readRow(std::string const &row, CSVReader::CSVSta
   else
     i = d_results.back().size() - 1;
 
-  for (uint c = 0; c < row.size(); ++c)
+  for (unsigned int c = 0; c < row.size(); ++c)
   {
     switch (state)
     {

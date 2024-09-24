@@ -29,7 +29,7 @@
 class CryptBase
 {
  public:
-  uint static constexpr MACSIZE = 10;
+  unsigned int static constexpr MACSIZE = 10;
  protected:
   bool d_ok;
   bool d_verbose;
@@ -53,7 +53,7 @@ class CryptBase
   inline ~CryptBase();
   inline bool ok() const;
  protected:
-  bool getCipherAndMac(uint hashoutputsize, size_t outputsize);
+  bool getCipherAndMac(unsigned int hashoutputsize, size_t outputsize);
   bool getBackupKey(std::string const &passphrase);
   inline void uintToFourBytes(unsigned char *bytes, uint32_t val) const;
   inline uint32_t fourBytesToUint(unsigned char const *b) const;

@@ -31,11 +31,11 @@ void SignalBackup::updateReactionAuthors(long long int id1, long long int id2) c
       int changedcount = 0;
       SqliteDB::QueryResults results;
       d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &results);
-      for (uint i = 0; i < results.rows(); ++i)
+      for (unsigned int i = 0; i < results.rows(); ++i)
       {
         bool changed = false;
         ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-        for (uint j = 0; j < reactions.numReactions(); ++j)
+        for (unsigned int j = 0; j < reactions.numReactions(); ++j)
         {
           //std::cout << "Updating reaction author (" << msgtable << ") : " << reactions.getAuthor(j) << "..." << std::endl;
           if (id2 == -1)

@@ -45,7 +45,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
 
   // build string of requested threads
   std::string threadlist;
-  for (uint i = 0; i < threads.size(); ++i)
+  for (unsigned int i = 0; i < threads.size(); ++i)
   {
     threadlist += bepaald::toString(threads[i]);
     if (i < threads.size() - 1)
@@ -327,7 +327,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
     << "      }\n"
     << "\n";
 
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int rec_id = results.valueAsInt(i, d_thread_recipient_id);
     if (rec_id == -1) [[unlikely]]
@@ -750,7 +750,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
   bool pinnedheader = false;
   bool archivedheader = false;
   bool chatsheader = false;
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     bool archived = false;
     if (d_database.tableContainsColumn("thread", "archived"))

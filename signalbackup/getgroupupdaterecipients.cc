@@ -37,7 +37,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
     //d_database.exec("SELECT body FROM sms WHERE (type & ?) != 0 AND (type & ?) != 0",
     d_database.exec(q, {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT}, &res);
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       // std::cout << "GROUPCTX: " << "\"" << res.valueAsString(i, "groupctx") << "\"" << std::endl;
       if (res.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupctx"))
@@ -95,7 +95,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 
     d_database.exec(q, &res);
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
       ids.push_back(res.getValueAs<long long int>(i, "_id"));
 
   }
@@ -109,7 +109,7 @@ void SignalBackup::getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Contex
   if (field3.has_value())
   {
     auto field3_7 = field3->getField<7>();
-    for (uint j = 0; j < field3_7.size(); ++j)
+    for (unsigned int j = 0; j < field3_7.size(); ++j)
     {
       auto field3_7_1 = field3_7[j].getField<1>();
       if (field3_7_1.has_value())
@@ -137,7 +137,7 @@ void SignalBackup::getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Contex
   if (field4.has_value())
   {
     auto field4_7 = field4->getField<7>();
-    for (uint j = 0; j < field4_7.size(); ++j)
+    for (unsigned int j = 0; j < field4_7.size(); ++j)
     {
       auto field4_7_1 = field4_7[j].getField<1>();
       if (field4_7_1.has_value())

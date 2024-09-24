@@ -80,7 +80,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
 
   // make sure all json-contacts are mapped to Signal contacts
   std::vector<std::pair<std::vector<std::string>, long long int>> finalcontactmap;
-  for (uint i = 0; i < contactmap.size(); ++i)
+  for (unsigned int i = 0; i < contactmap.size(); ++i)
     finalcontactmap.push_back({{contactmap[i].first}, contactmap[i].second});
   if (!tgMapContacts(jsondb, chatlist, &finalcontactmap, inhibitmapping))
     return false;
@@ -90,7 +90,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
     return false;
 
   // for each chat, get the messages and insert
-  for (uint i = 0; i < chats.rows(); ++i)
+  for (unsigned int i = 0; i < chats.rows(); ++i)
   {
     Logger::message("Dealing with conversation ", i + 1, "/", chats.rows());
 

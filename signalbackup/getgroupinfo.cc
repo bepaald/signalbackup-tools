@@ -153,7 +153,7 @@ message AccessControl {
   {
     //std::cout << "=== MEMBERS:" << std::endl;
     auto newmembers = group_info.getField<7>();
-    for (uint i = 0; i < newmembers.size(); ++i)
+    for (unsigned int i = 0; i < newmembers.size(); ++i)
     {
       /*
         message DecryptedMember {
@@ -199,7 +199,7 @@ message AccessControl {
   {
     //std::cout << "=== PENDING MEMBERS:" << std::endl;
     auto pendingmembers = group_info.getField<8>();
-    for (uint i = 0; i < pendingmembers.size(); ++i)
+    for (unsigned int i = 0; i < pendingmembers.size(); ++i)
     {
       /*
         message DecryptedPendingMember {
@@ -237,7 +237,7 @@ message AccessControl {
   {
     //std::cout << "=== REQUESTING MEMBERS:" << std::endl;
     auto requestingmembers = group_info.getField<9>();
-    for (uint i = 0; i < requestingmembers.size(); ++i)
+    for (unsigned int i = 0; i < requestingmembers.size(); ++i)
     {
       /*
         message DecryptedRequestingMember {
@@ -269,7 +269,7 @@ message AccessControl {
   {
     //std::cout << "=== BANNED MEMBERS:" << std::endl;
     auto bannedmembers = group_info.getField<13>();
-    for (uint i = 0; i < bannedmembers.size(); ++i)
+    for (unsigned int i = 0; i < bannedmembers.size(); ++i)
     {
       /*
         message DecryptedBannedMember {

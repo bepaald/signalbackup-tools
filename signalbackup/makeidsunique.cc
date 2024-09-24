@@ -144,7 +144,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
   SqliteDB::QueryResults results;
   source->d_database.exec(q, &results);
   std::vector<std::string> tables;
-  for (uint i = 0; i < results.rows(); ++i)
+  for (unsigned int i = 0; i < results.rows(); ++i)
   {
     if (!results.isNull(i, 0))
     {

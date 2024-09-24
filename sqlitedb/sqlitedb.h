@@ -74,10 +74,10 @@ class SqliteDB
     inline std::string operator()(std::string const &header) const;
     template <typename T>
     inline bool contains(T const &value) const;
-    bool removeColumn(uint idx);
-    bool renameColumn(uint idx, std::string const &name);
-    inline bool removeRow(uint idx);
-    inline QueryResults getRow(uint idx);
+    bool removeColumn(unsigned int idx);
+    bool renameColumn(unsigned int idx, std::string const &name);
+    inline bool removeRow(unsigned int idx);
+    inline QueryResults getRow(unsigned int idx);
 
    private:
     //std::wstring wideString(std::string const &narrow) const;
@@ -815,7 +815,7 @@ inline std::any const &SqliteDB::QueryResults::value(size_t row, size_t idx) con
 
 inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
 {
-  for (uint i = 0; i < d_headers.size(); ++i)
+  for (unsigned int i = 0; i < d_headers.size(); ++i)
     if (d_headers[i] == header)
       return i;
   [[unlikely]] return -1;
@@ -919,8 +919,8 @@ inline std::string SqliteDB::QueryResults::operator()(std::string const &header)
 template <typename T>
 inline bool SqliteDB::QueryResults::contains(T const &value) const
 {
-  for (uint i = 0; i < d_values.size(); ++i)
-    for (uint j = 0; j < d_values[i].size(); ++j)
+  for (unsigned int i = 0; i < d_values.size(); ++i)
+    for (unsigned int j = 0; j < d_values[i].size(); ++j)
       if (d_values[i][j].type() == typeid(T))
         if (std::any_cast<T>(d_values[i][j]) == value)
           return true;
@@ -953,7 +953,7 @@ inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) cons
 inline uint64_t SqliteDB::QueryResults::charCount(std::string const &utf8) const
 {
   uint64_t ret = utf8.length();
-  for (uint i = 0; i < utf8.size(); ++i)
+  for (unsigned int i = 0; i < utf8.size(); ++i)
     if ((utf8[i] & 0b11111000) == 0b11110000)
       ret -= 3;
     else if ((utf8[i] & 0b11110000) == 0b11100000)
@@ -963,7 +963,7 @@ inline uint64_t SqliteDB::QueryResults::charCount(std::string const &utf8) const
   return ret;
 }
 
-inline bool SqliteDB::QueryResults::removeRow(uint idx)
+inline bool SqliteDB::QueryResults::removeRow(unsigned int idx)
 {
   if (idx >= d_values.size())
     return false;
@@ -972,7 +972,7 @@ inline bool SqliteDB::QueryResults::removeRow(uint idx)
   return true;
 }
 
-inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(uint idx)
+inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(unsigned int idx)
 {
   QueryResults tmp;
   tmp.d_headers = d_headers;

@@ -1215,7 +1215,7 @@ template<std::size_t idx, typename T>
 inline void ProtoBufParser<Spec...>::printRepeated(int indent, std::string const &typestring) const
 {
   std::vector<T> tmp = getField<idx + 1>();
-  for (uint i = 0; i < tmp.size(); ++i)
+  for (unsigned int i = 0; i < tmp.size(); ++i)
     Logger::message(std::string(indent, ' '), "Field ", idx + 1, " ", typestring, " (", i + 1 , "/", tmp.size(), "): ", tmp[i]);
   return;
 }
@@ -1358,7 +1358,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BOOL>::value)
   {
     std::vector<bool> tmp = getField<idx + 1>();
-    for (uint i = 0; i < tmp.size(); ++i)
+    for (unsigned int i = 0; i < tmp.size(); ++i)
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bool) (", i + 1 , "/", tmp.size(), "): ", std::boolalpha, tmp[i]);
     return;
   }
@@ -1367,7 +1367,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value)
   {
     std::vector<std::pair<unsigned char *, uint64_t>> tmp = getField<idx + 1>();
-    for (uint i = 0; i < tmp.size(); ++i)
+    for (unsigned int i = 0; i < tmp.size(); ++i)
     {
       std::pair<unsigned char *, size_t> tmp2 = tmp[i];
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bytes) (", i + 1 , "/", tmp.size(), "): ",
@@ -1382,7 +1382,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
     if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type::value_type>{})
     {
       auto tmp = getField<idx + 1>();
-      for (uint i = 0; i < tmp.size(); ++i)
+      for (unsigned int i = 0; i < tmp.size(); ++i)
       {
         Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::protobuf) (", i + 1 , "/", tmp.size(), "): ");
         tmp.at(i).print(indent + 2);

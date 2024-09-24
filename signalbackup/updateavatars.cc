@@ -21,7 +21,7 @@
 
 void SignalBackup::updateAvatars(long long int id1, long long int id2) // if id2 == -1, id1 is an offset
 {                                                                      // else, change id1 into id2
-  for (uint i = 0; i < d_avatars.size(); ++i)
+  for (unsigned int i = 0; i < d_avatars.size(); ++i)
   {
     int oldrid = bepaald::toNumber<int>(d_avatars[i].first);
 

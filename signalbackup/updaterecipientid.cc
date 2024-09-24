@@ -139,7 +139,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 //   if (d_database.exec("SELECT _id,body FROM sms WHERE type == ?", bepaald::toString(Types::GV1_MIGRATION_TYPE), &results))
 //   {
 //     //results.prettyPrint();
-//     for (uint i = 0; i < results.rows(); ++i)
+//     for (unsigned int i = 0; i < results.rows(); ++i)
 //     {
 //       if (results.valueHasType<std::string>(i, "body"))
 //       {
@@ -202,7 +202,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 //     d_database.exec("SELECT _id, "s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results2);
 //     //std::cout << "RESULTS:" << std::endl;
 //     //results2.prettyPrint();
-//     for (uint i = 0; i < results2.rows(); ++i)
+//     for (unsigned int i = 0; i < results2.rows(); ++i)
 //     {
 //       long long int gid = results2.getValueAs<long long int>(i, "_id");
 //       std::string membersstr = results2.getValueAs<std::string>(i, members);
@@ -216,7 +216,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 //       }
 
 //       std::string newmembers;
-//       for (uint m = 0; m < membersvec.size(); ++m)
+//       for (unsigned int m = 0; m < membersvec.size(); ++m)
 //         newmembers += (m == 0) ?
 //           bepaald::toString((membersvec[m] == sourceid) ? targetid : membersvec[m]) :
 //           ("," + bepaald::toString((membersvec[m] == sourceid) ? targetid : membersvec[m]));
@@ -241,11 +241,11 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
 //     {
 //       SqliteDB::QueryResults res;
 //       d_database.exec("SELECT _id, reactions FROM "s + msgtable + " WHERE reactions IS NOT NULL", &res);
-//       for (uint i = 0; i < res.rows(); ++i)
+//       for (unsigned int i = 0; i < res.rows(); ++i)
 //       {
 //         changedsomething = false;
 //         ReactionList reactions(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-//         for (uint j = 0; j < reactions.numReactions(); ++j)
+//         for (unsigned int j = 0; j < reactions.numReactions(); ++j)
 //         {
 //           //std::cout << "Dealing with " << msgtable << " reaction author: " << reactions.getAuthor(j) << std::endl;
 //           if (reactions.getAuthor(j) == static_cast<uint64_t>(sourceid))

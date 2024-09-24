@@ -24,7 +24,7 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
   SqliteDB::QueryResults results_emoji_reactions;
   //if (numreactions)
   //  std::cout << "  " << numreactions << " reactions." << std::endl;
-  for (uint k = 0; k < numreactions; ++k)
+  for (unsigned int k = 0; k < numreactions; ++k)
   {
     if (!ddb.exec("SELECT "
                   "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].emoji') AS emoji,"

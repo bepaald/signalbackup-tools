@@ -30,7 +30,7 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
 {
   // escape special html chars second, so the span's added by emojifinder (next) aren't escaped
   int positions_added = 0;
-  for (uint i = 0; i < body->length(); ++i)
+  for (unsigned int i = 0; i < body->length(); ++i)
   {
     //std::cout << "I, POSITIONS_ADDED: " << i << "," << positions_added << std::endl;
     switch ((*body)[i])

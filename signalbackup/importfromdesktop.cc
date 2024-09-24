@@ -236,7 +236,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
-    for (uint i = 0; i < daterangelist.size(); i += 2)
+    for (unsigned int i = 0; i < daterangelist.size(); i += 2)
       dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
 
   // set daterange automatically
@@ -258,7 +258,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   }
 
   std::string datewhereclause;
-  for (uint i = 0; i < dateranges.size(); ++i)
+  for (unsigned int i = 0; i < dateranges.size(); ++i)
   {
     bool needrounding = false;
     long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
@@ -311,7 +311,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   std::map<std::string, long long int> recipientmap;
 
   // for each conversation
-  for (uint i = 0; i < results_all_conversations.rows(); ++i)
+  for (unsigned int i = 0; i < results_all_conversations.rows(); ++i)
   {
     // skip convo's with no messages...
     SqliteDB::QueryResults messagecount;
@@ -521,7 +521,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     //results_all_messages_from_conversation.printLineMode();
 
     Logger::message(" - Importing ", results_all_messages_from_conversation.rows(), " messages into thread._id ", ttid);
-    for (uint j = 0; j < results_all_messages_from_conversation.rows(); ++j)
+    for (unsigned int j = 0; j < results_all_messages_from_conversation.rows(); ++j)
     {
       std::string type = results_all_messages_from_conversation.valueAsString(j, "type");
       if (d_verbose) [[unlikely]]
@@ -1375,7 +1375,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // }
 
             BodyRanges bodyrangelist;
-            for (uint qbr = 0; qbr < quote_results.getValueAs<long long int>(0, "num_quote_bodyranges"); ++qbr)
+            for (unsigned int qbr = 0; qbr < quote_results.getValueAs<long long int>(0, "num_quote_bodyranges"); ++qbr)
             {
               SqliteDB::QueryResults qbrres;
               if (!dtdb->d_database.exec("SELECT "
@@ -1541,7 +1541,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           //dtdb->d_database.prettyPrint("SELECT json_extract(json, '$.bodyRanges') FROM messages WHERE rowid IS ?", rowid);
           BodyRanges bodyrangelist;
           SqliteDB::QueryResults ranges_results;
-          for (uint r = 0; r < hasranges; ++r)
+          for (unsigned int r = 0; r < hasranges; ++r)
           {
             if (dtdb->d_database.exec("SELECT "
                                      "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].start') AS range_start,"
@@ -1598,7 +1598,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
         // insert into mentions
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting mentions...");
-        for (uint k = 0; k < nummentions; ++k)
+        for (unsigned int k = 0; k < nummentions; ++k)
         {
           SqliteDB::QueryResults results_mentions;
           if (!dtdb->d_database.exec("SELECT "

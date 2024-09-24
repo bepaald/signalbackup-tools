@@ -33,7 +33,7 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
   SqliteDB::QueryResults dtstickerpacks;
   ddb.exec("SELECT id, key, author, coverStickerId, title, status FROM sticker_packs", &dtstickerpacks);
 
-  for (uint i = 0; i < dtstickerpacks.rows(); ++i)
+  for (unsigned int i = 0; i < dtstickerpacks.rows(); ++i)
   {
 
     // check if this pack is already installed in the backup...
@@ -83,7 +83,7 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     if (d_verbose) [[unlikely]]
       Logger::message("Importing ", dtstickers.rows(), " stickers from stickerpack ", dtpackid, " (key: ", dtkey, ")");
 
-    for (uint j = 0; j < dtstickers.rows(); ++j)
+    for (unsigned int j = 0; j < dtstickers.rows(); ++j)
     {
       long long int dtcoveronly = dtstickers.valueAsInt(j, "isCoverOnly");
       long long int dtstickerid = dtstickers.valueAsInt(j, "id");

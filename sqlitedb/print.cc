@@ -41,7 +41,7 @@ void SqliteDB::QueryResults::print(long long int row, bool printheader) const
   for (unsigned int i = startrow; i < endrow; ++i)
   {
     Logger::message_start();
-    for (uint j = 0; j < columns(); ++j)
+    for (unsigned int j = 0; j < columns(); ++j)
     {
       if (valueHasType<long long int>(i, j))
         Logger::message_continue(bepaald::toString(getValueAs<long long int>(i, j)));

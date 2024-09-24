@@ -402,7 +402,7 @@ bool SignalBackup::migrate_to_191()
       SqliteDB::QueryResults res;
       if (!d_database.exec("SELECT thread_recipient_id, COUNT(*) AS thread_count FROM thread GROUP BY thread_recipient_id HAVING thread_count > 1", &res))
         return false;
-      for (uint i = 0; i < res.rows(); ++i)
+      for (unsigned int i = 0; i < res.rows(); ++i)
       {
         long long int rid = res.valueAsInt(i, "recipient_id", -1);
         if (rid == -1)
@@ -416,7 +416,7 @@ bool SignalBackup::migrate_to_191()
         if (mainthread == -1)
           return false;
 
-        for (uint j = 1; j < res2.rows(); ++j)
+        for (unsigned int j = 1; j < res2.rows(); ++j)
         {
           // merge into mainthread
           if (!d_database.exec("UPDATE drafts SET thread_id = ? WHERE thread_id = ?", {mainthread, res2.value(j, "_id")}) ||
@@ -612,7 +612,7 @@ bool SignalBackup::migrate_to_191()
     if (!d_database.exec("SELECT recipient_id, COUNT(*) AS thread_count FROM thread GROUP BY recipient_id HAVING thread_count > 1", &res))
       return false;
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       long long int rid = res.valueAsInt(i, "recipient_id", -1);
       if (rid == -1)
@@ -627,7 +627,7 @@ bool SignalBackup::migrate_to_191()
       if (mainthread == -1)
         return false;
 
-      for (uint j = 1; j < res2.rows(); ++j)
+      for (unsigned int j = 1; j < res2.rows(); ++j)
       {
         // merge into mainthread
         if (!d_database.exec("UPDATE drafts SET thread_id = ? WHERE thread_id = ?", {mainthread, res2.value(j, "_id")}) ||
@@ -670,7 +670,7 @@ bool SignalBackup::migrate_to_191()
     if (!d_database.exec("SELECT members, group_id FROM groups", &res))
       return false;
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       std::string group_id(res(i, "group_id"));
       if (group_id.empty())
@@ -683,7 +683,7 @@ bool SignalBackup::migrate_to_191()
       std::transform(iter, std::sregex_token_iterator(), std::back_inserter(members_list),
                      [](std::string const &m) -> long long int { return bepaald::toNumber<long long int>(m); });
 
-      for (uint j = 0; j < members_list.size(); ++j)
+      for (unsigned int j = 0; j < members_list.size(); ++j)
         if (!d_database.exec("INSERT INTO group_membership (group_id, recipient_id) VALUES (?, ?)", {group_id, members_list[j]}))
           return false;
     }
@@ -890,7 +890,7 @@ bool SignalBackup::migrate_to_191()
     SqliteDB::QueryResults res;
     if (!d_database.exec("SELECT type, name, sql FROM sqlite_schema WHERE tbl_name = 'message' AND type != 'table'", &res))
       return false;
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
       if (!d_database.exec("DROP " + res(i, "type") + " IF EXISTS " + res(i, "name")))
         return false;
 
@@ -908,7 +908,7 @@ bool SignalBackup::migrate_to_191()
         !d_database.exec("ALTER TABLE message_tmp RENAME TO message"))
       return false;
 
-    for (uint i = 0; i < res.rows(); ++i)
+    for (unsigned int i = 0; i < res.rows(); ++i)
     {
       if (res(i, "name") == "mms_thread_story_parent_story_scheduled_date_index")
       {
@@ -1083,8 +1083,8 @@ bool SignalBackup::migrate_to_191()
     // SqliteDB::QueryResults res2;
     // if (d_database.exec("SELECT type, date_received, date_sent, from_recipient_id, to_recipient_id, thread_id, body FROM message WHERE _id IN (6851,6852,6853,6867,6868,6869,6803,6804,6805)", &res2))
     // {
-    //   for (uint i = 0; i < 5; ++i)
-    //     for (uint j = 0; j < res2.rows(); ++j)
+    //   for (unsigned int i = 0; i < 5; ++i)
+    //     for (unsigned int j = 0; j < res2.rows(); ++j)
     //       if (d_database.exec("INSERT INTO message (type, date_received, date_sent, from_recipient_id, to_recipient_id, thread_id, body) VALUES (?, ?, ?, ?, ?, ?, ?)",
     //                           {res2.value(j, "type"), res2.value(j, "date_received"), res2.value(0, "date_sent"), res2.value(j, "from_recipient_id"), res2.value(j, "to_recipient_id"), res2.value(j, "thread_id"), res2.valueAsString(j, "body") + " " + bepaald::toString(i + 1)}))
     //         ;//std::cout << "added some dupes" << std::endl;
@@ -1128,7 +1128,7 @@ bool SignalBackup::migrate_to_191()
         }
       };
       std::map<DupeKey, std::vector<long long int>> dupemap;
-      for (uint i = 0; i < res.rows(); ++i)
+      for (unsigned int i = 0; i < res.rows(); ++i)
         dupemap[{res.valueAsInt(i, "date_sent"), res.valueAsInt(i, "thread_id"), res.valueAsInt(i, "from_recipient_id")}].push_back(res.valueAsInt(i, "_id"));
 
       auto dateTaken = [&](long long int date, long long int frid, long long int tid)

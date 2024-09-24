@@ -82,7 +82,7 @@ long long int SignalBackup::scanSelf() const
 
   std::set<long long int> options;
 
-  for (uint i = 0; i < res.rows(); ++i)
+  for (unsigned int i = 0; i < res.rows(); ++i)
   {
     // try to find another recipient in this one-on-one thread
 
@@ -100,7 +100,7 @@ long long int SignalBackup::scanSelf() const
                          "AND (quote_id IN (SELECT " + d_mms_date_sent + " FROM " + d_mms_table + " WHERE thread_id = ?)" +
                          (d_database.containsTable("sms") ? " OR quote_id IN (SELECT date_sent FROM sms WHERE thread_id = " + bepaald::toString(tid) + "))" : ")"), {tid, rid, tid}, &res2))
       continue;
-    for (uint j = 0; j < res2.rows(); ++j)
+    for (unsigned int j = 0; j < res2.rows(); ++j)
     {
       //std::cout << "  From quote:" << res2.valueAsString(j, "quote_author") << std::endl;
       options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "quote_author")));
@@ -112,10 +112,10 @@ long long int SignalBackup::scanSelf() const
       {
         if (!d_database.exec("SELECT reactions FROM " + t + " WHERE thread_id IS ? AND reactions IS NOT NULL", tid, &res2))
           continue;
-        for (uint j = 0; j < res2.rows(); ++j)
+        for (unsigned int j = 0; j < res2.rows(); ++j)
         {
           ReactionList reactions(res2.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(j, "reactions"));
-          for (uint k = 0; k < reactions.numReactions(); ++k)
+          for (unsigned int k = 0; k < reactions.numReactions(); ++k)
           {
             if (reactions.getAuthor(k) != static_cast<uint64_t>(rid))
             {
@@ -133,7 +133,7 @@ long long int SignalBackup::scanSelf() const
         if (!d_database.exec("SELECT DISTINCT author_id FROM reaction WHERE is_mms IS 0 AND "s +
                              "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM sms WHERE thread_id = ?)", {rid, tid}, &res2))
           continue;
-        for (uint j = 0; j < res2.rows(); ++j)
+        for (unsigned int j = 0; j < res2.rows(); ++j)
         {
           //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
           options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
@@ -144,7 +144,7 @@ long long int SignalBackup::scanSelf() const
                            (d_database.tableContainsColumn("reaction", "is_mms") ? "is_mms IS 1 AND " : "") +
                            "author_id IS NOT ? AND message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id = ?)", {rid, tid} , &res2))
           continue;
-      for (uint j = 0; j < res2.rows(); ++j)
+      for (unsigned int j = 0; j < res2.rows(); ++j)
       {
         //std::cout << "  From reaction (new):" << res2.valueAsString(j, "author_id") << std::endl;
         options.insert(bepaald::toNumber<long long int>(res2.valueAsString(j, "author_id")));
@@ -158,7 +158,7 @@ long long int SignalBackup::scanSelf() const
   //res.prettyPrint();
 
   // for each group-thread
-  for (uint i = 0; i < res.rows(); ++i)
+  for (unsigned int i = 0; i < res.rows(); ++i)
   {
     long long int gid = res.getValueAs<long long int>(i, "_id");
 
@@ -188,7 +188,7 @@ long long int SignalBackup::scanSelf() const
         if (!d_database.exec("WITH split(word, str) AS (SELECT '',members||',' FROM groups WHERE _id IS ?1 UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT word FROM split WHERE word!='' AND word NOT IN (SELECT DISTINCT " + d_mms_recipient_id +" FROM " + d_mms_table + " WHERE thread_id IS (SELECT _id FROM thread WHERE " + d_thread_recipient_id + " IS (SELECT _id FROM recipient WHERE group_id IS (SELECT group_id FROM groups WHERE _id IS ?1))))", gid, &res3))
           continue;
 
-      for (uint j = 0; j < res3.rows(); ++j)
+      for (unsigned int j = 0; j < res3.rows(); ++j)
       {
         //std::cout << "  From group membership:" << res3.valueAsString(j, "word") << std::endl;
         options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "word")));
@@ -205,7 +205,7 @@ long long int SignalBackup::scanSelf() const
           continue;
         else
         {
-          for (uint j = 0; j < res3.rows(); ++j)
+          for (unsigned int j = 0; j < res3.rows(); ++j)
           {
             //std::cout << "  From group membership (<185):" << res3.valueAsString(j, "recipient_id") << std::endl;
             options.insert(bepaald::toNumber<long long int>(res3.valueAsString(j, "recipient_id")));
@@ -226,7 +226,7 @@ long long int SignalBackup::scanSelf() const
         //                      {gid, tid,
         //                       Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
         //                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
-        //   for (uint j = 0; j < res3.rows(); ++j)
+        //   for (unsigned int j = 0; j < res3.rows(); ++j)
         //   {
         //     std::cout << "  From group membership (NEW):" << res3(j, "recipeint_id") << std::endl;
         //     options.insert(bepaald::toNumber<long long int>(res3(j, "recipient_id")));
@@ -243,7 +243,7 @@ long long int SignalBackup::scanSelf() const
           continue;
         else
         {
-          for (uint j = 0; j < res3.rows(); ++j)
+          for (unsigned int j = 0; j < res3.rows(); ++j)
           {
             //std::cout << "  From group membership (NEW):" << res3(j, "recipient_id") << std::endl;
             options.insert(res3.valueAsInt(j, "recipient_id"));

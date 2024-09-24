@@ -29,7 +29,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
   SqliteDB::QueryResults results_droppedmembers;
   if (ddb.exec("SELECT value AS droppedmember FROM messages, json_each(messages.json, '$.groupMigration.droppedMemberIds') WHERE messages.rowid = ?", rowid, &results_droppedmembers))
   {
-    for (uint dm = 0; dm < results_droppedmembers.rows(); ++dm)
+    for (unsigned int dm = 0; dm < results_droppedmembers.rows(); ++dm)
     {
       std::string convuuid = results_droppedmembers.valueAsString(dm, "droppedmember");
       SqliteDB::QueryResults dm_id;
@@ -78,7 +78,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
                "json_extract(value, '$.conversationId') IS NULL AS is_uuid " // just to remember if this was gotten from "conversationId' or 'uuid' for testing
                "FROM messages, json_each(messages.json, '$.groupMigration.invitedMembers') AS TREE WHERE messages.rowid = ?", rowid, &results_invitedmembers))
   {
-    for (uint im = 0; im < results_invitedmembers.rows(); ++im)
+    for (unsigned int im = 0; im < results_invitedmembers.rows(); ++im)
     {
       std::string convuuid = results_invitedmembers.valueAsString(im, "convuuid");
       if (!convuuid.empty())

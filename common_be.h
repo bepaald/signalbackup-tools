@@ -53,8 +53,6 @@
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
 #endif
 
-typedef unsigned int uint;
-
 using std::literals::string_literals::operator""s;
 
 namespace bepaald

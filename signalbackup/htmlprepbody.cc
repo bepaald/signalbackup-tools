@@ -145,7 +145,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
     all_emoji = false; // could technically still be only emoji, but it gets a bubble in html
   else
   {
-    for (uint i = 0, posidx = 0; i < body->size(); ++i)
+    for (unsigned int i = 0, posidx = 0; i < body->size(); ++i)
     {
       if (posidx >= pos.size() || i != pos[posidx].first)
       {

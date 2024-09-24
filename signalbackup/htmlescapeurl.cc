@@ -21,7 +21,7 @@
 
 void SignalBackup::HTMLescapeUrl(std::string *in) const
 {
-  for (uint i = 0; i < in->size(); ++i)
+  for (unsigned int i = 0; i < in->size(); ++i)
   {
     if (!((*in)[i] >= 'A' && (*in)[i] <= 'Z') &&  // A-Z
         !((*in)[i] >= 'a' && (*in)[i] <= 'z') &&  // a-z

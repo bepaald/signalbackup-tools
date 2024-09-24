@@ -28,7 +28,7 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
 
   std::string newstatement = "INSERT INTO " + table + " (";
 
-  for (uint i = 0; i < headers.size(); ++i)
+  for (unsigned int i = 0; i < headers.size(); ++i)
   {
     newstatement.append(headers[i]);
     if (i < headers.size() - 1)
@@ -39,7 +39,7 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
 
   newstatement += " VALUES (";
 
-  for (uint j = 0; j < result.size(); ++j)
+  for (unsigned int j = 0; j < result.size(); ++j)
   {
     if (j < result.size() - 1)
       newstatement.append("?,");
@@ -73,7 +73,7 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
 
   SqlStatementFrame newframe;
   std::string newstatement = "INSERT INTO " + table + " VALUES (";
-  for (uint j = 0; j < result.size(); ++j)
+  for (unsigned int j = 0; j < result.size(); ++j)
   {
     if (j < result.size() - 1)
       newstatement.append("?,");

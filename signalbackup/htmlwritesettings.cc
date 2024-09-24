@@ -411,7 +411,7 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
 
       if (valuetype == "STRING" || valuetype == "STRINGSET")
       {
-        for (uint i = 0; i < values.size(); ++i)
+        for (unsigned int i = 0; i < values.size(); ++i)
         {
           values[i] = "\"" + values[i] + "\"";
           HTMLescapeString(&values[i]);
@@ -430,7 +430,7 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
         << "        <div class=\"keyvalue-item\">" << '\n'
         << "          <div class=\"keyvalue\">" << '\n'
         << "            <div class=\"key\">" << key << "</div>" << '\n';
-      for (uint i = 0; i < values.size(); ++i)
+      for (unsigned int i = 0; i < values.size(); ++i)
         outputfile
           << "            <span class=\"value\">" << values[i] << "</span>" << '\n';
       outputfile
