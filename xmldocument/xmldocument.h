@@ -112,7 +112,7 @@ inline XmlDocument::Node::Node(Node *parent)
   d_parent(parent),
   is_closed(false),
   is_text_node(false)
-{};
+{}
 
 inline void XmlDocument::Node::print(int indent) const
 {

@@ -28,7 +28,6 @@ if [ "$CONFIG" = "default" ] ; then
   fi
 fi
 
-
 CXX="${CXX:-g++}"
 CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -O3 -flto $PKG_CONFIG___CFLAGS_DBUS__}"
 CXXARCH="${CXXARCH:--march=native}"
