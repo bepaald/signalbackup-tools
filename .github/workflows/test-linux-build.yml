@@ -30,7 +30,7 @@ jobs:
 
       - name: Build default
         run: |
-          g++ --std=c++2a -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include */*.cc *.cc -o signalbackup-tools -lcrypto -lsqlite3 -ldbus-1
+          g++ --std=c++2b -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include */*.cc *.cc -o signalbackup-tools -lcrypto -lsqlite3 -ldbus-1
 
   do-build-tests-parallel-script:
     runs-on: ubuntu-latest
