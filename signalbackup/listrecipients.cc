@@ -63,7 +63,14 @@ void SignalBackup::listRecipients() const
                          "      END "
                          "    END "
                          "  END "
-                         "END AS 'type' "
+                         "END AS 'type', "
+
+                         "CASE WHEN " + d_recipient_type + " IS NOT 0 THEN '(n/a)' ELSE "
+                         "  CASE registered WHEN 1 THEN 'Yes' ELSE "
+                         "    CASE registered WHEN 1 THEN 'No' ELSE 'Unknown' "
+                         "    END "
+                         "  END "
+                         "END AS 'registered' "
 
                          "FROM recipient "
                          "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
