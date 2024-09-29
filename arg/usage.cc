@@ -118,7 +118,10 @@ R"*(
    --split [N]                           Optional modifier for `--exporthtml'. Splits the generated HTML
                                          files to a maximum of N messages per page. By default, the pages
                                          are not split. When this option is given without a value for N,
-                                         N is 1000.
+                                         N is 1000. Can not be combined with `--split-by`.
+   --split-by [PERIOD]                   Optional modifier for `--exporthtml'. Splits the generated HTML
+                                         files by calendar PERIOD. Supported values for PERIOD are 'year',
+                                         'month', 'week', and 'day'. Can not be combined with `--split`.
    --light                               By default a dark theme is used for the rendered HTML. Add this
                                          option to output in a light theme instead.
    --includereceipts                     Optional modifier for `--exporthtml'. Adds available info from

@@ -164,12 +164,11 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!arg.exportdesktophtml().empty())
-      if (!dummydb.exportHtml(arg.exportdesktophtml(), {} /*limittothreads*/, arg.limittodates(),
-                              (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(),
-                              arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
-                              arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(),
-                              arg.includeblockedlist(), arg.includefullcontactlist(),
-                              false /*arg.includesettings()*/, arg.includereceipts()))
+      if (!dummydb.exportHtml(arg.exportdesktophtml(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
+                              (arg.split_bool() ? arg.split() : -1), arg.setselfid(),  arg.includecalllog(), arg.searchpage(),
+                              arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
+                              arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
+                              arg.includereceipts()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
@@ -192,12 +191,11 @@ int main(int argc, char *argv[])
                                            arg.xmlmarkread(), false /*autolimittodates*/, arg.setselfid()))
       return 1;
 
-    if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(),
-                            (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(),
-                            arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
-                            arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(),
-                            arg.includeblockedlist(), arg.includefullcontactlist(),
-                            false /*arg.includesettings()*/, arg.includereceipts()))
+    if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
+                            (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
+                            arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
+                            arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
+                            arg.includereceipts()))
       return 1;
   }
 
@@ -468,7 +466,8 @@ int main(int argc, char *argv[])
 
   if (arg.deleteattachments() || !arg.replaceattachments().empty())
   {
-    if (!sb->deleteAttachments(arg.onlyinthreads(), arg.onlyolderthan(), arg.onlynewerthan(), arg.onlylargerthan(), arg.onlytype(), arg.appendbody(), arg.prependbody(), arg.replaceattachments()))
+    if (!sb->deleteAttachments(arg.onlyinthreads(), arg.onlyolderthan(), arg.onlynewerthan(), arg.onlylargerthan(), arg.onlytype(),
+                               arg.appendbody(), arg.prependbody(), arg.replaceattachments()))
       return 1;
   }
 
@@ -485,11 +484,10 @@ int main(int argc, char *argv[])
       sb->runQuery(arg.runprettysqlquery()[i], true);
 
   if (!arg.exporthtml().empty())
-    if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), (arg.split_bool() ? arg.split() : -1),
-                        arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(),
-                        arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
-                        arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(),
-                        arg.includesettings(), arg.includereceipts()))
+    if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), arg.split_by(), (arg.split_bool() ? arg.split() : -1),
+                        arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
+                        arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
+                        arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts()))
       return 1;
 
   if (!arg.exporttxt().empty())

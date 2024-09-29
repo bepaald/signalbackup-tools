@@ -28,11 +28,11 @@
 #include <cerrno>
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
-                              std::vector<std::string> const &daterangelist, long long int split,
-                              std::string const &selfphone, bool calllog, bool searchpage, bool stickerpacks,
-                              bool migrate, bool overwrite, bool append, bool lighttheme, bool themeswitching,
-                              bool addexportdetails, bool blocked, bool fullcontacts, bool settings,
-                              bool receipts)
+                              std::vector<std::string> const &daterangelist, std::string const &splitby,
+                              long long int split, std::string const &selfphone, bool calllog, bool searchpage,
+                              bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
+                              bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
+                              bool settings, bool receipts)
 {
   bool databasemigrated = false;
   MemSqliteDB backup_database;
@@ -186,6 +186,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
     if (split > -1)
       options += "<br>--split " + bepaald::toString(split);
+    if (!splitby.empty())
+      options += "<br>--split-by " + splitby;
     if (receipts)
       options += "<br>--includereceipts";
     if (calllog)
@@ -230,6 +232,26 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       "    </div>\n";
   }
 
+  std::string periodsplitformat;
+  if (!splitby.empty())
+  {
+    auto icasecompare = [](std::string const &a, std::string const &b)
+    {
+      return std::equal(a.begin(), a.end(), b.begin(), b.end(), [](char ca, char cb) { return std::tolower(ca) == std::tolower(cb); });
+    };
+
+    if (icasecompare(splitby, "year"))
+      periodsplitformat = "%Y";
+    else if (icasecompare(splitby, "month"))
+      periodsplitformat = "%Y%m";
+    else if (icasecompare(splitby, "week"))
+      periodsplitformat = "%Y%W";
+    else if (icasecompare(splitby, "day"))
+      periodsplitformat = "%Y%j";
+    else
+      Logger::warning("Ignoring invalid 'split-by'-value ('", splitby, "')");
+  }
+
   for (unsigned int t_idx = 0; t_idx < threads.size(); ++t_idx)
   {
     int t = threads[t_idx];
@@ -266,6 +288,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     d_database.exec("SELECT "s
                     "_id, " + d_mms_recipient_id + ", body, "
                     "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
+                    + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', ROUND(IFNULL(date_received, 0) / 1000), 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
                     + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "IFNULL(view_once, 0) AS view_once, expires_in, " + d_mms_ranges + ", shared_contacts, "
@@ -350,24 +373,29 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     // now append messages to html
     std::map<long long int, std::string> written_avatars; // maps recipient_ids to the path of a written avatar file.
-    unsigned int messagecount = 0;
+    unsigned int messagecount = 0; // current message
     unsigned int max_msg_per_page = messages.rows();
-    int pagenumber = 0;
+    int pagenumber = 0; // current page
     int totalpages = 1;
     if (split > 0)
     {
       totalpages = (messages.rows() / split) + (messages.rows() % split > 0 ? 1 : 0);
       max_msg_per_page = messages.rows() / totalpages + (messages.rows() % totalpages ? 1 : 0);
     }
+    if (!periodsplitformat.empty())
+      totalpages = d_database.getSingleResultAs<long long int>("SELECT COUNT(DISTINCT strftime('" + periodsplitformat +  "', ROUND(IFNULL(date_received, 0) / 1000), 'unixepoch', 'localtime')) "
+                                                               "FROM message WHERE thread_id = ?" + datewhereclause, t, 1);
 
     // std::cout << "Split: " << split << std::endl;
     // std::cout << "N MSG: " << messages.rows() << std::endl;
     // std::cout << "MAX PER PAGE: " << max_msg_per_page << std::endl;
     // std::cout << "N PAGES: " << totalpages << std::endl;
+
     unsigned int daterangeidx = 0;
 
     while (true)
     {
+      std::string previous_period_split_string(messages(messagecount, "periodsplit"));
       std::string previous_day_change;
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to self" : recipient_info[thread_recipient_id].display_name);
@@ -385,9 +413,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
                      all_recipients_ids, &recipient_info, &written_avatars, overwrite, append,
                      lighttheme, themeswitching, searchpage, addexportdetails);
-      while (messagecount < (max_msg_per_page * (pagenumber + 1)))
+      while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
+             messages(messagecount, "periodsplit") == previous_period_split_string)
       {
-
         long long int msg_id = messages.getValueAs<long long int>(messagecount, "_id");
         long long int msg_recipient_id = messages.valueAsInt(messagecount, d_mms_recipient_id);
         if (msg_recipient_id == -1) [[unlikely]]
@@ -400,10 +428,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                              -1);
         std::string readable_date =
           bepaald::toDateString(messages.getValueAs<long long int>(messagecount, (/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
-                                                          "%b %d, %Y %H:%M:%S");
+                                "%b %d, %Y %H:%M:%S");
         std::string readable_date_day =
           bepaald::toDateString(messages.getValueAs<long long int>(messagecount, (/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
-                                                              "%b %d, %Y");
+                                "%b %d, %Y");
         bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));
         bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;
         bool is_viewonce = messages.getValueAs<long long int>(messagecount, "view_once") == 1;
@@ -507,7 +535,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           </div>)" << std::endl << std::endl;
         }
         previous_day_change = readable_date_day;
-
+        previous_period_split_string = messages(messagecount, "periodsplit");
 
         /*
 
@@ -635,7 +663,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (++messagecount >= messages.rows())
           break;
 
-        // // BREAK THE CONVERSATION BOX BETWEEN SEPARATE DATE RANGES
+        // // BREAK THE CONVERSATION BOX BETWEEN SEPARATE DATE RANGES ON THE SAME PAGE
 
         // std::cout << daterangeidx << std::endl;
         // std::cout << "curm: " << messages.getValueAs<long long int>(messagecount, "date_received") << std::endl;
@@ -657,7 +685,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             htmloutput << std::endl;
           }
         }
-
       }
 
       htmloutput << "        </div>" << '\n'; // closes conversation-box

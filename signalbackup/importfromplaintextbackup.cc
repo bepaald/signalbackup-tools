@@ -121,8 +121,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
   bool warned_createcontacts = false;
 
-  d_database.exec("BEGIN TRANSACTION");
   //auto t1 = std::chrono::high_resolution_clock::now();
+  d_database.exec("BEGIN TRANSACTION");
   for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
     if (i % 100 == 0)
@@ -276,9 +276,9 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
     // mark thread as active??
   }
-  // auto t2 = std::chrono::high_resolution_clock::now();
-  // auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
-  // std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+  //auto t2 = std::chrono::high_resolution_clock::now();
+  //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+  //std::cout << " *** TIME: " << ms_int.count() << "ms\n";
   d_database.exec("COMMIT");
 
   Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);

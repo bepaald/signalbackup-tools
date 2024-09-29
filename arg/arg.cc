@@ -113,6 +113,7 @@ Arg::Arg(int argc, char *argv[])
   d_includereceipts(false),
   d_split(1000),
   d_split_bool(false),
+  d_split_by(std::string()),
   d_addincompletedataforhtmlexport(false),
   d_light(false),
   d_exporttxt(std::string()),
@@ -583,7 +584,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        std::regex validator("^[0-9a-fA-F]{64}$");
+        std::regex validator("^[0-9a-fA-F]{64}$", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
@@ -756,6 +757,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--removedoubles")
     {
+      d_removedoubles_bool = true;
       if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
       {
         if (!ston(&d_removedoubles, arguments[++i]))
@@ -763,10 +765,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
         }
-        d_removedoubles_bool = true;
       }
-      else
-        d_removedoubles_bool = true;
       d_input_required = true;
       continue;
     }
@@ -897,7 +896,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)$");
+        std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)$", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
@@ -917,7 +916,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
-        std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)$");
+        std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)$", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
@@ -1298,6 +1297,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--split")
     {
+      d_split_bool = true;
       if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
       {
         if (!ston(&d_split, arguments[++i]))
@@ -1305,10 +1305,30 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
         }
-        d_split_bool = true;
+      }
+      d_split_by.clear();
+      continue;
+    }
+    if (option == "--split-by")
+    {
+      if (i < arguments.size() - 1)
+      {
+        std::regex validator("year|month|week|day", std::regex::icase);
+        if (!std::regex_match(arguments[i + 1], validator))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+          continue;
+        }
+        d_split_by = std::move(arguments[++i]);
+        d_split_bool = false;
+        d_split = -1;
       }
       else
-        d_split_bool = true;
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--addincompletedataforhtmlexport")

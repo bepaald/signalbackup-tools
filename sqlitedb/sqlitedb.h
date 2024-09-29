@@ -22,6 +22,8 @@
 
 #include <sqlite3.h>
 #include <memory>
+#include <map>
+#include <set>
 #include <vector>
 #include <any>
 #if __cpp_lib_ranges >= 201911L
@@ -80,11 +82,7 @@ class SqliteDB
     inline QueryResults getRow(unsigned int idx);
 
    private:
-    //std::wstring wideString(std::string const &narrow) const;
     inline int idxOfHeader(std::string const &header) const;
-    //bool supportsAnsi() const;
-    //bool isTerminal() const;
-    //inline bool useEscapeCodes() const;
     int availableWidth() const;
     inline uint64_t charCount(std::string const &utf8) const;
   };
@@ -110,6 +108,9 @@ class SqliteDB
   std::pair<unsigned char *, uint64_t> *d_data;
   bool d_readonly;
   bool d_ok;
+  mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
+  mutable std::map<std::string, std::map<std::string, bool>> d_columns;
+  mutable std::string d_previous_schema_version;
 
  protected:
   inline explicit SqliteDB();
@@ -151,6 +152,7 @@ class SqliteDB
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
   template <typename... columnnames>
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const;
+  inline void clearTableCache() const;
   inline void freeMemory();
 
  private:
@@ -173,6 +175,7 @@ class SqliteDB
   inline int execParamFiller(int count, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
+  inline bool schemaVersionChanged() const;
 
   inline bool registerCustoms() const;
   static inline void tokencount(sqlite3_context *context, int argc, sqlite3_value **argv);
@@ -547,12 +550,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     return false;
   }
 
-  // if (sqlite3_finalize(d_stmt) != SQLITE_OK)
-  // {
-  //   Logger::error("After sqlite3_finalize(): ", sqlite3_errmsg(d_db));
-  //   Logger::error_indent("-> Query: \"", q, "\"");
-  //   return false;
-  // }
+  if (schemaVersionChanged()) [[unlikely]]
+    clearTableCache();
 
   return true;
 }
@@ -755,17 +754,41 @@ inline long long int SqliteDB::lastInsertRowid() const
 
 inline bool SqliteDB::containsTable(std::string const &tablename) const
 {
+  if (bepaald::contains(d_tables, tablename))
+    return d_tables[tablename];
+
   QueryResults tmp;
-  if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = '" + tablename + "'", &tmp))
-    return (tmp.rows() > 0);
+  if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = '" + tablename + "'", &tmp) &&
+      tmp.rows() > 0)
+  {
+    d_tables[tablename] = true;
+    return true;
+  }
+
+  d_tables[tablename] = false;
   return false;
 }
 
 inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname) const
 {
+  if (bepaald::contains(d_columns, tablename) &&
+      bepaald::contains(d_columns[tablename], columnname))
+    return d_columns[tablename][columnname];
+
   QueryResults tmp;
-  if (exec("SELECT 1 FROM PRAGMA_TABLE_XINFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp))
-    return (tmp.rows() > 0);
+  if (exec("SELECT 1 FROM PRAGMA_TABLE_XINFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp) &&
+      tmp.rows() > 0)
+  {
+    if (bepaald::contains(d_columns, tablename))
+      d_columns[tablename][columnname] = true;
+    else
+      d_columns[tablename].emplace(std::make_pair(columnname, true));
+    return true;
+  }
+  if (bepaald::contains(d_columns, tablename))
+    d_columns[tablename][columnname] = false;
+  else
+    d_columns[tablename].emplace(std::make_pair(columnname, false));
   return false;
 }
 
@@ -773,6 +796,12 @@ template <typename... columnnames>
 inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const
 {
   return tableContainsColumn(tablename, columnname) && tableContainsColumn(tablename, list...);
+}
+
+inline void SqliteDB::clearTableCache() const
+{
+  d_tables.clear();
+  d_columns.clear();
 }
 
 inline void SqliteDB::freeMemory()
@@ -932,11 +961,6 @@ inline std::vector<std::any> const &SqliteDB::QueryResults::row(size_t row) cons
   return d_values[row];
 }
 
-// bool SqliteDB::QueryResults::useEscapeCodes() const
-// {
-//   return bepaald::supportsAnsi() && bepaald::isTerminal();
-// }
-
 /*
   If you know that the data is UTF-8, then you just have to check the high bit:
 
@@ -956,10 +980,10 @@ inline uint64_t SqliteDB::QueryResults::charCount(std::string const &utf8) const
   for (unsigned int i = 0; i < utf8.size(); ++i)
     if ((utf8[i] & 0b11111000) == 0b11110000)
       ret -= 3;
-    else if ((utf8[i] & 0b11110000) == 0b11100000)
-      ret -= 2;
     else if ((utf8[i] & 0b11100000) == 0b11000000)
       --ret;
+    else if ((utf8[i] & 0b11110000) == 0b11100000)
+      ret -= 2;
   return ret;
 }
 
@@ -978,6 +1002,23 @@ inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(unsigned int idx)
   tmp.d_headers = d_headers;
   tmp.d_values.push_back(d_values[idx]);
   return tmp;
+}
+
+inline bool SqliteDB::schemaVersionChanged() const
+{
+  std::string schema_version;
+  sqlite3_exec(d_db, "SELECT schema_version FROM PRAGMA_SCHEMA_VERSION;",
+               [](void *sv, int /*count*/, char **data, char **)
+               {
+                 *reinterpret_cast<std::string *>(sv) = data[0];
+                 return 0;
+               }, &schema_version, nullptr);
+  if (schema_version != d_previous_schema_version) [[unlikely]]
+  {
+    d_previous_schema_version = std::move(schema_version);
+    return true;
+  }
+  return false;
 }
 
 inline bool SqliteDB::registerCustoms() const

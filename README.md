@@ -414,7 +414,7 @@ To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the ou
 signalbackup-tools [input] [passphrase] --exporthtml [directory]
 ```
 
-Because browsers may have difficulty loading an entire conversation if it consists of a large number of messages, the option `--split [N]` can be added to split the output HTML in multiple pages. The optional number `N` is the maximum number of messages on each generated page (default: 1000).
+Because browsers may have difficulty loading an entire conversation if it consists of a large number of messages, the option `--split [N]` can be added to split the output HTML in multiple pages. The optional number `N` is the maximum number of messages on each generated page (default: 1000). Alternatively the option `--split-by [period]` will generate separate pages for each calender `[period]`. Currently supported periods are 'year', 'month', 'week', and 'day'. Note the `-split` and `--split-by` options are mutually exclusive.
 
 By default, the function will create a HTML page resembling Signal's dark mode. If you prefer a light theme, add the `--light` option. If you want to be able to switch between the two modes without generating a new HTML page, you could add the `--themeswitching` option to the command. This will add a button to switch themes. Be aware this causes the page to use JavaScript and cookies.
 

@@ -259,7 +259,6 @@ bool SignalBackup::migrate_to_191()
       }
     }
 
-
     // setDBV 153
   }
 
@@ -1164,7 +1163,6 @@ bool SignalBackup::migrate_to_191()
       //d_database.prettyPrint(d_truncate, "SELECT _id, date_sent, from_recipient_id, thread_id, type, body FROM message WHERE _id = 6803 OR _id BETWEEN 73817 AND 73861 ORDER BY from_recipient_id ASC, thread_id ASC, date_sent ASC");
 
     }
-
 
     // setDBV
   }

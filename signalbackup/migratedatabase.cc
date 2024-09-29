@@ -251,13 +251,13 @@ bool SignalBackup::migrateDatabase(int from, int to) const
     // drop old
     d_database.exec("DROP TABLE recipient_preferences");
 
-
     // -> 25
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN system_phone_type INTEGER DEFAULT -1"))
     {
       d_database.exec("ROLLBACK TRANSACTION");
       return false;
     }
+
     // then it makes sure own phone number is in recipient table and
     // sets phone/registered/profile_sharing/signal_profile_name columns
     // but we can't do that because we cant know own phone number...
