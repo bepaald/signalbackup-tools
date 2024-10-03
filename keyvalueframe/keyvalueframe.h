@@ -20,6 +20,8 @@
 #ifndef KEYVALUEFRAME_H_
 #define KEYVALUEFRAME_H_
 
+#include <string_view>
+
 #include "../backupframe/backupframe.h"
 #include "../base64/base64.h"
 #include "../common_be.h"
@@ -51,7 +53,7 @@ class KeyValueFrame : public BackupFrame
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string const &str) const;
+  inline unsigned int getField(std::string_view const &str) const;
   inline std::string key() const;
   inline std::string value() const;
   inline std::string valueType() const;
@@ -238,7 +240,7 @@ inline std::string KeyValueFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int KeyValueFrame::getField(std::string const &str) const
+inline unsigned int KeyValueFrame::getField(std::string_view const &str) const
 {
   if (str == "KEY")
     return FIELD::KEY;

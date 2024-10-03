@@ -592,7 +592,8 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
     Logger::error("Failed to read frame data line '", line, "'");
     return false;
   }
-  unsigned int field = (*newframe)->getField(line.substr(0, pos));
+
+  unsigned int field = (*newframe)->getField(std::string_view(line.data(), pos));
   if (!field) [[unlikely]]
   {
     Logger::error("Failed to get field number");
@@ -606,13 +607,14 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
     Logger::error("Failed to read frame data from line '", line, "'");
     return false;
   }
-  std::string type = line.substr(pos, pos2 - pos);
-  std::string datastr = line.substr(pos2 + 1);
+
+  std::string_view type(line.data() + pos, pos2 - pos);
+  std::string_view datastr(line.data() + pos2 + 1);
 
   if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
   {
     // (on windows stoul would be four bytes and the above if-clause would cause bad data
-    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoull(datastr)));
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(bepaald::toNumber<unsigned long long>(datastr)));
     if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
@@ -641,7 +643,7 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
   {
     // (on windows stol would be four bytes and the above if-clause would cause bad data
-    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(std::stoll(datastr)));
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(bepaald::toNumber<long long>(datastr)));
     if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);

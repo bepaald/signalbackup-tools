@@ -110,7 +110,7 @@ class SqliteDB
   bool d_ok;
   mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
   mutable std::map<std::string, std::map<std::string, bool>> d_columns;
-  mutable std::string d_previous_schema_version;
+  mutable char d_previous_schema_version[11]; // 11 = maximum chars in string representing 4 byte number (+ '\0')
 
  protected:
   inline explicit SqliteDB();
@@ -196,7 +196,8 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_name(name),
   d_data(nullptr),
   d_readonly(readonly),
-  d_ok(false)
+  d_ok(false),
+  d_previous_schema_version{}
 {
   d_ok = initFromFile();
 }
@@ -208,7 +209,8 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   d_stmt(nullptr),
   d_data(data),
   d_readonly(true),
-  d_ok(false)
+  d_ok(false),
+  d_previous_schema_version{}
 {
   d_ok = initFromMemory();
 }
@@ -236,6 +238,7 @@ inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
     d_data = nullptr;
     d_readonly = other.d_readonly;
     d_ok = initFromFile();
+    std::strncpy(d_previous_schema_version, other.d_previous_schema_version, 11);
     if (d_ok)
       d_ok = copyDb(other, *this);
   }
@@ -978,11 +981,11 @@ inline uint64_t SqliteDB::QueryResults::charCount(std::string const &utf8) const
 {
   uint64_t ret = utf8.length();
   for (unsigned int i = 0; i < utf8.size(); ++i)
-    if ((utf8[i] & 0b11111000) == 0b11110000)
+    if ((utf8[i] & 0b11111000) == 0b11110000) [[unlikely]]
       ret -= 3;
-    else if ((utf8[i] & 0b11100000) == 0b11000000)
+    else if ((utf8[i] & 0b11100000) == 0b11000000) [[unlikely]]
       --ret;
-    else if ((utf8[i] & 0b11110000) == 0b11100000)
+    else if ((utf8[i] & 0b11110000) == 0b11100000) [[unlikely]]
       ret -= 2;
   return ret;
 }
@@ -1006,19 +1009,22 @@ inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(unsigned int idx)
 
 inline bool SqliteDB::schemaVersionChanged() const
 {
-  std::string schema_version;
+  std::pair<bool, char *> sv_data = {false, d_previous_schema_version};
   sqlite3_exec(d_db, "SELECT schema_version FROM PRAGMA_SCHEMA_VERSION;",
                [](void *sv, int /*count*/, char **data, char **)
                {
-                 *reinterpret_cast<std::string *>(sv) = data[0];
+                 // assert(count == 1);
+
+                 // compare the new schema_version (data[0]) with the old one (passed through sv_data.second)
+                 if (strncmp(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11) != 0) [[unlikely]]
+                 {
+                   // if not equal, set changed and copy the new version
+                   reinterpret_cast<std::pair<bool, char *> *>(sv)->first = true;
+                   std::strncpy(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11);
+                 }
                  return 0;
-               }, &schema_version, nullptr);
-  if (schema_version != d_previous_schema_version) [[unlikely]]
-  {
-    d_previous_schema_version = std::move(schema_version);
-    return true;
-  }
-  return false;
+               }, &sv_data, nullptr);
+  return sv_data.first;
 }
 
 inline bool SqliteDB::registerCustoms() const

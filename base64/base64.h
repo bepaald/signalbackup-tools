@@ -32,7 +32,9 @@ struct Base64
 {
  public:
   inline static std::string bytesToBase64String(unsigned char const *data, size_t size);
-  inline static std::pair<unsigned char*, size_t> base64StringToBytes(std::string const &str);
+  template <typename T>
+  inline static std::pair<unsigned char*, size_t> base64StringToBytes(T const &str,
+                                                                      typename std::enable_if<std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>>::type *dummy = nullptr);
 };
 
 inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t size)
@@ -47,7 +49,9 @@ inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t
   return std::string(reinterpret_cast<char *>(output.get()), base64length);
 }
 
-inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(std::string const &str)
+template <typename T>
+inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(T const &str,
+                                                                     typename std::enable_if<std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>>::type *)
 {
   int binarylength = str.size() / 4 * 3;
   std::unique_ptr<unsigned char[]> output(new unsigned char[binarylength]);

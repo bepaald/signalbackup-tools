@@ -21,6 +21,7 @@
 #define STICKERFRAME_H_
 
 #include <optional>
+#include <string_view>
 
 #include "../framewithattachment/framewithattachment.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
@@ -59,7 +60,7 @@ class StickerFrame : public FrameWithAttachment
   inline virtual std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string const &str) const;
+  inline unsigned int getField(std::string_view const &str) const;
   inline std::optional<std::string> mimetype() const;
   inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
  private:
@@ -236,7 +237,7 @@ inline std::string StickerFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int StickerFrame::getField(std::string const &str) const
+inline unsigned int StickerFrame::getField(std::string_view const &str) const
 {
   if (str == "ROWID")
     return FIELD::ROWID;

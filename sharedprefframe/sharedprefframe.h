@@ -20,6 +20,8 @@
 #ifndef SHAREDPREFFRAME_H_
 #define SHAREDPREFFRAME_H_
 
+#include <string_view>
+
 #include "../common_bytes.h"
 #include "../backupframe/backupframe.h"
 
@@ -49,7 +51,7 @@ class SharedPrefFrame : public BackupFrame
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string const &str) const;
+  inline unsigned int getField(std::string_view const &str) const;
   inline std::string key() const;
   inline std::vector<std::string> value() const;
   inline std::string valueType() const;
@@ -231,7 +233,7 @@ inline std::string SharedPrefFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int SharedPrefFrame::getField(std::string const &str) const
+inline unsigned int SharedPrefFrame::getField(std::string_view const &str) const
 {
   if (str == "FILE")
     return FIELD::FILE;

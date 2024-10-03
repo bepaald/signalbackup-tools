@@ -60,8 +60,8 @@ namespace bepaald
   template<typename ...Args>
   inline void log(Args && ...args);
 #endif
-  template <typename T>
-  T toNumber(std::string const &str, T def = 0, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  template <typename T, typename S>
+  T toNumber(S const &str, T def = 0, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *dummy = nullptr);
   template <typename T>
   T toNumber(std::string const &str, T def = 0, typename std::enable_if<!std::is_integral<T>::value>::type *dummy = nullptr);
   template <typename T>
@@ -135,9 +135,9 @@ inline void bepaald::log(Args && ...args)
 }
 #endif
 
-#include <iostream>
-template <typename T>
-T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<std::is_integral<T>::value>::type *)
+//#include <iostream>
+template <typename T, typename S>
+T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *)
 {
   if (str.empty()) [[unlikely]]
     return def;

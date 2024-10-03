@@ -21,6 +21,7 @@
 #define ATTACHMENTFRAME_H_
 
 #include <cstring>
+#include <string_view>
 
 #include "../common_bytes.h"
 #include "../framewithattachment/framewithattachment.h"
@@ -59,7 +60,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate() const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string const &str) const;
+  inline unsigned int getField(std::string_view const &str) const;
   inline void setLengthField(uint32_t newlength);
  private:
   inline uint64_t dataSize() const override;
@@ -269,7 +270,7 @@ inline std::string AttachmentFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int AttachmentFrame::getField(std::string const &str) const
+inline unsigned int AttachmentFrame::getField(std::string_view const &str) const
 {
   if (str == "ROWID")
     return FIELD::ROWID;

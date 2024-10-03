@@ -21,7 +21,8 @@
 #define MSGTYPES_H_
 
 // see /src/org/thoughtcrime/securesms/database/MmsSmsColumns.java
-// /app/src/main/java/org/thoughtcrime/securesms/database/MmsSmsColumns.java
+// app/src/main/java/org/thoughtcrime/securesms/database/MmsSmsColumns.java
+// app/src/main/java/org/thoughtcrime/securesms/database/MessageTypes.java
 
 struct Types
 {

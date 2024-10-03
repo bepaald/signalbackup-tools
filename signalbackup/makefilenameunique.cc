@@ -34,7 +34,7 @@ bool SignalBackup::makeFilenameUnique(std::string const &path, std::string *file
     if (regex_match(filestem, sm, numberedfile) && sm.size() >= 3 && sm[2].matched)
     {
       // increase the counter
-      counter = bepaald::toNumber<int>(sm[2]) + 1;
+      counter = bepaald::toNumber<int>(sm[2].str()) + 1;
       // remove " (xx)" part from stem
       filestem.erase(sm[1].first, sm[1].second);
     }

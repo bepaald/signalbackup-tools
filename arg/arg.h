@@ -927,7 +927,7 @@ inline bool Arg::parseStringList(std::string const &strlist, std::vector<std::st
     list->emplace_back(tr.substr(start, pos - start));
     start = pos + 1;
   }
-  list->push_back(tr.substr(start));
+  list->emplace_back(tr.substr(start));
   return true;
 }
 

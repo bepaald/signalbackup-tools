@@ -1890,12 +1890,12 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
              STRING_STARTS_WITH(content_type, "audio/"))
     {
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">\n";
-      htmloutput << std::string(indent, ' ') << "    <" << content_type.substr(0, 5) << " controls>\n";
+      htmloutput << std::string(indent, ' ') << "    <" << std::string_view(content_type.data(), 5) << " controls>\n";
       htmloutput << std::string(indent, ' ') << "      <source src=\"media/Attachment_" << rowid
                  << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">\n";
       htmloutput << std::string(indent, ' ') << "      Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
                  << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
-      htmloutput << std::string(indent, ' ') << "    </" << content_type.substr(0, 5) << ">\n";
+      htmloutput << std::string(indent, ' ') << "    </" << std::string_view(content_type.data(), 5) << ">\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
         htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>\n";

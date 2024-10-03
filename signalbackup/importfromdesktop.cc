@@ -1119,7 +1119,46 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         if (d_verbose) [[unlikely]]
           Logger::message_start("Dealing with ", type, " message... ");
 
-        long long message_request_accepted_type = Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED | Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (outgoing ? Types::BASE_SENDING_TYPE : Types::BASE_INBOX_TYPE);
+        /*
+          message MessageRequestResponse {
+          enum Type {
+          UNKNOWN          = 0;
+          ACCEPT           = 1;
+          DELETE           = 2;
+          BLOCK            = 3;
+          BLOCK_AND_DELETE = 4;
+          SPAM             = 5;
+          BLOCK_AND_SPAM   = 6;
+        }*/
+        std::string request_response(dtdb->d_database.getSingleResultAs<std::string>("SELECT json_extract(json, '$.messageRequestResponseEvent') FROM messages WHERE rowid = ?", rowid, std::string()));
+        uint64_t response_type = 0;
+        if (request_response == "ACCEPT")
+          response_type = Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED;
+        //else if (request_response == "DELETE")
+        //  ;
+        //else if (request_response == "BLOCK")
+        //  ;
+        //else if (request_response == "BLOCK_AND_DELETE")
+        //  ;
+        //else if (request_response == "SPAM")
+        //  response_type = Types::SPECIAL_TYPE_REPORTED_SPAM;
+        //else if (request_response == "BLOCK_AND_SPAM")
+        //  response_type = Types::SPECIAL_TYPE_REPORTED_SPAM;
+        //else if (request_response == "")
+        //  ;
+        else
+        {
+          // unupported (yet?)
+          // im not sure any of the other response options are actually saved in the android message table.
+          // possibly a 'SPAM' response gets inserted with the SPECIAL_TYPE_REPORTED_SPAM type, but this is not
+          // confirmed.
+          if (d_verbose) [[unlikely]] Logger::message_end();
+          Logger::warning("Unsupported message type 'message-request-response-event' WITH "
+                          "messageRequestResponseEvent='", request_response, ". Skipping message");
+          continue;
+        }
+
+        long long message_request_accepted_type = response_type | Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (outgoing ? Types::BASE_SENDING_TYPE : Types::BASE_INBOX_TYPE);
 
         if (d_database.containsTable("sms"))
         {
