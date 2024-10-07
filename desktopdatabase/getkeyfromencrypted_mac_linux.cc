@@ -32,9 +32,9 @@ bool DesktopDatabase::getKeyFromEncrypted_mac_linux()
   std::set<std::string> secrets;
   auto tryDecrypt = [&]()
   {
-    for (auto const &s : secrets)
+    for (auto s = secrets.begin(); s != secrets.end(); ++s)
     {
-      d_hexkey = decryptKey_linux_mac(s, keystr);
+      d_hexkey = decryptKey_linux_mac(*s, keystr, s == std::prev(secrets.end()));
       if (!d_hexkey.empty())
         return true;
     }

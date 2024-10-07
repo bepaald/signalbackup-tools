@@ -290,6 +290,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
                     + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', ROUND(IFNULL(date_received, 0) / 1000), 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
+                    "attcount, reactioncount, mentioncount, "
                     + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                     "IFNULL(view_once, 0) AS view_once, expires_in, " + d_mms_ranges + ", shared_contacts, "
                     + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
@@ -300,6 +301,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
+                    // get attachment count for message:
+                    "LEFT JOIN (SELECT " + d_part_mid + " AS message_id, COUNT(*) AS attcount FROM " + d_part_table + " GROUP BY message_id) AS attmnts ON " + d_mms_table + "._id = attmnts.message_id "
+                    // get reaction count for message:
+                    "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON " + d_mms_table + "._id = rctns.message_id "
+                    // get mention count for message:
+                    "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id "
                     "WHERE thread_id = ?"
                     + datewhereclause +
                     + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " ") +
@@ -443,41 +450,49 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
         bool quote_missing = messages.valueAsInt(messagecount, "quote_missing", 0) != 0;
         bool story_reply = (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? messages.valueAsInt(messagecount, "parent_story_id", 0) : 0);
+        long long int attachmentcount = messages.valueAsInt(messagecount, "attcount", 0);
+        long long int reactioncount = messages.valueAsInt(messagecount, "reactioncount", 0);
+        long long int mentioncount = messages.valueAsInt(messagecount, "mentioncount", 0);
 
         SqliteDB::QueryResults attachment_results;
-        d_database.exec("SELECT "
-                        "_id, " +
-                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
-                        d_part_ct + ", "
-                        "file_name, "
-                        + d_part_pending + ", " +
-                        (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                        "sticker_pack_id "
-                        "FROM " + d_part_table + " "
-                        "WHERE " + d_part_mid + " IS ? "
-                        "AND quote IS 0", msg_id, &attachment_results);
+        if (attachmentcount > 0)
+          d_database.exec("SELECT "
+                          "_id, " +
+                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                          d_part_ct + ", "
+                          "file_name, "
+                          + d_part_pending + ", " +
+                          (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
+                          "sticker_pack_id "
+                          "FROM " + d_part_table + " "
+                          "WHERE " + d_part_mid + " IS ? "
+                          "AND quote IS ?", {msg_id, 0}, &attachment_results);
         // check attachments for long message body -> replace cropped body & remove from attachment results
         setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
-        d_database.exec("SELECT "
-                        "_id," +
-                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
-                        d_part_ct + ", "
-                        "file_name,"
-                        + d_part_pending + ", "
-                        "sticker_pack_id "
-                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+        if (attachmentcount > 0)
+          d_database.exec("SELECT "
+                          "_id, " +
+                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                          d_part_ct + ", "
+                          "file_name, "
+                          + d_part_pending + ", " +
+                          (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
+                          "sticker_pack_id "
+                          "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS ?", {msg_id, 1}, &quote_attachment_results);
 
         SqliteDB::QueryResults mention_results;
-        d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
+        if (mentioncount > 0)
+          d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
 
         SqliteDB::QueryResults reaction_results;
-        d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received'"
-                        "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+        if (reactioncount > 0)
+          d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received' "
+                          "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
         SqliteDB::QueryResults edit_revisions;
-        if (d_database.tableContainsColumn(d_mms_table, "revision_number"))
+        if (original_message_id != -1 && d_database.tableContainsColumn(d_mms_table, "revision_number"))
           d_database.exec("SELECT _id,body,date_received," + d_mms_date_sent + ",revision_number FROM " + d_mms_table +
                           " WHERE _id = ?1 OR original_message_id = ?1 ORDER BY " + d_mms_date_sent + " ASC", // skip actual current message
                           original_message_id, &edit_revisions);

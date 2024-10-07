@@ -69,7 +69,7 @@ class DesktopDatabase
   bool getKeyFromEncrypted_win();
 #else
   bool getKeyFromEncrypted_mac_linux();
-  std::string decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr) const;
+  std::string decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr, bool last = true) const;
 #endif
 #if defined(__APPLE__) && defined(__MACH__) // if apple...
   void getSecrets_mac(std::set<std::string> *secrets) const;

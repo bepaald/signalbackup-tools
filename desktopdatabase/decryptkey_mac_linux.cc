@@ -28,7 +28,7 @@
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
-std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr) const
+std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr, bool last) const
 {
   std::string decryptedkey;
 
@@ -116,14 +116,20 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   for (int i = 0; i < (padding ? padding : 16); ++i)
     if (static_cast<int>(output[realsize + i]) != (padding ? padding : 16))
     {
-      Logger::error("Decryption appears to have failed (padding bytes have unexpected value)");
+      if (last)
+        Logger::error("Decryption appears to have failed (padding bytes have unexpected value). No more secrets to try.");
+      else
+        Logger::warning("Decryption appears to have failed (padding bytes have unexpected value), attempting next secret...");
       return decryptedkey;
     }
 
   decryptedkey = bepaald::bytesToPrintableString(output.get(), realsize);
   if (decryptedkey.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789") != std::string::npos)
   {
-    Logger::error("Failed to decrypt key correctly");
+    if (last)
+      Logger::error("Failed to decrypt key correctly. No more secrets to try.");
+    else
+      Logger::warning("Failed to decrypt key correctly, attempting next secret...");
     decryptedkey.clear();
     //return empty string...
   }
