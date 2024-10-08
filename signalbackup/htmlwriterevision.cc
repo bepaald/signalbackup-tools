@@ -25,6 +25,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   SqliteDB::QueryResults revision;
   if (!d_database.exec("SELECT " +
                        d_mms_recipient_id + ", " +
+                       "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, " +
                        d_mms_date_sent + ", " +
                        d_mms_type + ", "
                        "body, quote_missing, quote_author, quote_body, " + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
@@ -39,7 +40,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
 
   long long int msg_recipient_id = revision.valueAsInt(0, d_mms_recipient_id);
   std::string readable_date =
-    bepaald::toDateString(revision.getValueAs<long long int>(0, d_mms_date_sent) / 1000, "%b %d, %Y %H:%M:%S");
+    bepaald::toDateString(revision.getValueAs<long long int>(0, "bubble_date"/*d_mms_date_sent*/) / 1000, "%b %d, %Y %H:%M:%S");
 
   bool incoming = !Types::isOutgoing(revision.getValueAs<long long int>(0, d_mms_type));
   std::string body = revision.valueAsString(0, "body");

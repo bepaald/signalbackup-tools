@@ -287,6 +287,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
                     "_id, " + d_mms_recipient_id + ", body, "
+                    "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, "
                     "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
                     + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', ROUND(IFNULL(date_received, 0) / 1000), 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
@@ -434,10 +435,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                              messages.valueAsInt(messagecount, "original_message_id") :
                                              -1);
         std::string readable_date =
-          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, (/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
+          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "bubble_date") / 1000, //(/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
                                 "%b %d, %Y %H:%M:%S");
         std::string readable_date_day =
-          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, (/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
+          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "bubble_date") / 1000, //(/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
                                 "%b %d, %Y");
         bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));
         bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;

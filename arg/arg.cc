@@ -50,6 +50,7 @@ Arg::Arg(int argc, char *argv[])
   d_assumebadframesizeonbadmac(false),
   d_editattachmentsize(std::vector<long long int>()),
   d_dumpdesktopdb(std::string()),
+  d_desktopdir(std::string()),
   d_desktopdirs_1(std::string()),
   d_desktopdirs_2(std::string()),
   d_desktopkey(std::string()),
@@ -558,6 +559,21 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < arguments.size() - 1)
       {
         d_dumpdesktopdb = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--desktopdir")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_desktopdir = std::move(arguments[++i]);
+        d_desktopdirs_1 = d_desktopdir;
+        d_desktopdirs_2 = d_desktopdir;
       }
       else
       {

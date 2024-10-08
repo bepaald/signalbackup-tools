@@ -181,10 +181,10 @@ R"*(
                                          the optional [DIR1] and [DIR2] can be provided. See the README for
                                          more information.
 --dumpdesktopdb <OUTPUT>                 Decrypt the Signal Desktop database and saves it to <OUTPUT>.
-   --desktopdir <DIR1> <DIR2>            Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
+   --desktopdir <DIR>                    Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
                                          If the program fails to find your Signal-Desktop installation or it
-                                         is in a non-standard location, the optional [DIR1] and [DIR2] can be
-                                         provided. See the README for more information.
+                                         is in a non-standard location <DIR> can be provided. See the README
+                                         for more information about default locations.
    --ignorewal                           Optional modifier for `--importfromdesktop' and `--dumpdesktopdb`.
                                          Ignores an existing WAL file when opening Signal Desktop database.
    --limittodates <LIST_OF_DATES>        Optional modifier for `--importfromdesktop'. Limit the messages

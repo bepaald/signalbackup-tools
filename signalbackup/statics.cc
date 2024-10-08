@@ -465,6 +465,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
   }
 };
 
+
+// in table FIRST, SECOND[n] used to be known as SECOND[n+1]
 std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup::s_columnaliases //static
 {
   std::make_pair("thread",
@@ -479,7 +481,9 @@ std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup:
                                                        {"avatar_color", "color"},
                                                        {"system_joined_name", "system_display_name"},
                                                        {"profile_given_name", "signal_profile_name"},
-                                                       {"storage_service_id", "storage_service_key"}}),
+                                                       {"storage_service_id", "storage_service_key"},
+                                                       {"type", "group_type"},
+                                                       {"profile_avatar", "signal_profile_avatar"}}),
 
   std::make_pair("sms",
                  std::vector<std::vector<std::string>>{{"date_received", "date"},
@@ -491,6 +495,7 @@ std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup:
                                                        {"has_read_receipt", "read_receipt_count"},
                                                        {"viewed", "viewed_receipt_count"},
                                                        {"date_sent", "date"},
+                                                       {"message_ranges", "ranges"},
                                                        {"from_recipient_id", "recipient_id", "address"},
                                                        {"from_device_id", "recipient_device_id", "address_device_id"},
                                                        {"type", "msg_box"},
@@ -508,5 +513,12 @@ std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup:
 
   std::make_pair("groups",
                  std::vector<std::vector<std::string>>{{"unmigrated_v1_members", "former_v1_members"},
-                                                       {"display_as_story", "show_as_story_state"}})
+                                                       {"display_as_story", "show_as_story_state"}}),
+
+  std::make_pair("attachment",
+                 std::vector<std::vector<std::string>>{{"message_id", "mid"},
+                                                       {"content_type", "ct"},
+                                                       {"transfer_state", "pending_push"},
+                                                       {"remote_key", "cd"},
+                                                       {"remote_location", "cl"}})
 };
