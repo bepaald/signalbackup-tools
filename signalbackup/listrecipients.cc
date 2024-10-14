@@ -33,6 +33,12 @@ void SignalBackup::listRecipients() const
 
    */
 
+  /* Note on registration status:
+
+     0 = Unknown
+     1 = Yes
+     2 = No
+  */
 
   d_database.prettyPrint(d_truncate,
                          "SELECT recipient._id, "
@@ -67,7 +73,7 @@ void SignalBackup::listRecipients() const
 
                          "CASE WHEN recipient." + d_recipient_type + " IS NOT 0 THEN '(n/a)' ELSE "
                          "  CASE registered WHEN 1 THEN 'Yes' ELSE "
-                         "    CASE registered WHEN 1 THEN 'No' ELSE 'Unknown' "
+                         "    CASE registered WHEN 2 THEN 'No' ELSE 'Unknown' "
                          "    END "
                          "  END "
                          "END AS 'registered', "

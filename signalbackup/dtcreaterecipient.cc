@@ -44,6 +44,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "json_extract(conversations.json, '$.storageID') AS 'storageId', "
                 "json_extract(conversations.json, '$.pni') AS 'pni', "
                 "IFNULL(json_extract(conversations.json, '$.profileSharing'), 'false') AS 'profileSharing', "
+                "json_extract(conversations.json, '$.firstUnregisteredAt') AS 'firstUnregisteredAt', "
 
                 "json_extract(identityKeys.json, '$.publicKey') AS 'publicKey', "
                 "IFNULL(json_extract(identityKeys.json, '$.verified'), 0) AS 'verified', "
@@ -327,6 +328,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                   {"message_expiration_time", res.value(0, "expireTimer")},
                   {"storage_service_id", res.value(0, "storageId")},
                   {"profile_sharing", res(0, "profileSharing") == "true" ? 1 : 0},
+                  {"registered", res.isNull(0, "firstUnregisteredAt") ? 1 : 0},   // registered if no Unregister-timestamp is found, unknown otherwise
 
                   // {d_database.tableContainsColumn("recipient", "blocked") ? // blocked recipients do not exist in Desktop?
                   //  "blocked" : "", res.value(0, "blocked")},

@@ -74,8 +74,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       databasemigrated = true;
   }
 
+  //if (originalfilenames && append)
+  //  Logger::warning("Options 'originalfilenames' and 'append' are incompatible");
+
   // // check if dir exists, create if not
-  if (!prepareOutputDirectory(directory, overwrite, true, append))
+  if (!prepareOutputDirectory(directory, overwrite, true/*!originalfilenames*/ /*allowappend*/, append))
   {
     if (databasemigrated)
       SqliteDB::copyDb(backup_database, d_database);
