@@ -24,7 +24,7 @@
 #include "../base64/base64.h"
 #include "../common_filesystem.h"
 
-AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &file, unsigned char *data, long long int data_size, bool skiphash) // static
+AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &file, unsigned char *data, uint64_t data_size, bool skiphash) // static
 {
   //struct AttachmentMetadata
   //{
@@ -67,7 +67,7 @@ AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &
   }
 
   // set buffer for file header
-  int bufsize = std::min(data_size, 30ll);
+  int bufsize = std::min(data_size, uint64_t(30));
   unsigned char *buf = data;
 
 
@@ -290,11 +290,17 @@ AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &
     return AttachmentMetadata{-1, -1, std::string(), 0, std::string(), std::string()};
   }
 
-  filestream.seekg(0, std::ios_base::end);
-  long long int file_size = filestream.tellg();
-  filestream.seekg(0, std::ios_base::beg);
+  //filestream.seekg(0, std::ios_base::end);
+  //long long int file_size = filestream.tellg();
+  //filestream.seekg(0, std::ios_base::beg);
+  uint64_t file_size = bepaald::fileSize(file);
+  if (file_size == static_cast<std::uintmax_t>(-1)) [[unlikely]]
+  {
+    Logger::warning("Failed to get filesize for attachment '", file, "'");
+    return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};
+  }
 
-  if (file_size == 0)
+  if (file_size == 0) [[unlikely]]
   {
     Logger::warning("Attachment '", file, "' is zero bytes");
     return AttachmentMetadata{-1, -1, std::string(), file_size, std::string(), file};

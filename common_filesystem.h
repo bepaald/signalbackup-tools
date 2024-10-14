@@ -32,6 +32,7 @@ namespace bepaald
   inline bool createDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
+  inline uint64_t fileSize(std::string const &path);
 }
 
 inline bool bepaald::fileOrDirExists(std::string const &path)
@@ -74,6 +75,12 @@ inline bool bepaald::clearDirectory(std::string const &path)
     if (std::filesystem::remove_all(p.path(), ec) == static_cast<std::uintmax_t>(-1))
       return false;
   return true;
+}
+
+inline uint64_t bepaald::fileSize(std::string const &path)
+{
+  std::error_code ec;
+  return std::filesystem::file_size(std::filesystem::path(path), ec);
 }
 
 #endif

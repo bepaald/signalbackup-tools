@@ -19,6 +19,8 @@
 
 #include "desktopattachmentreader.h"
 
+#include "../common_filesystem.h"
+
 int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool verbose [[maybe_unused]])
 {
   // set AES+MAC key
@@ -30,7 +32,7 @@ int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool ver
   unsigned char *mackey = key_data.get() + 32;
 
   // open file
-  std::ifstream file(d_path, std::ios_base::in | std::ios_base::binary);
+  std::ifstream file(std::filesystem::path(d_path), std::ios_base::in | std::ios_base::binary);
   if (!file.is_open())
   {
     Logger::error("Failed to open file '", d_path, "'");
@@ -39,9 +41,10 @@ int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool ver
 
   // set iv/data length.
   int64_t iv_length = 16;
-  file.seekg(0, std::ios_base::end);
-  int64_t data_length = file.tellg() - static_cast<int64_t>(iv_length + mackey_length);
-  file.seekg(0, std::ios_base::beg);
+  //file.seekg(0, std::ios_base::end);
+  //int64_t data_length = file.tellg() - static_cast<int64_t>(iv_length + mackey_length);
+  //file.seekg(0, std::ios_base::beg);
+  int64_t data_length = bepaald::fileSize(d_path) - static_cast<int64_t>(iv_length + mackey_length);
 
   // set iv
   std::unique_ptr<unsigned char[]> iv(new unsigned char[iv_length]);

@@ -52,27 +52,39 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   bool quote_missing = revision.valueAsInt(0, "quote_missing", 0) != 0;
 
   SqliteDB::QueryResults attachment_results;
-  d_database.exec("SELECT "
-                  "_id, " +
+  d_database.exec("SELECT " +
+                  d_part_table + "._id, " +
                   (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
                   d_part_ct + ", "
                   "file_name, "
                   + d_part_pending + ", " +
                   (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                  "sticker_pack_id "
-                  "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
+                  "sticker_pack_id, " +
+                  d_mms_table + ".date_received AS date_received "
+                  "FROM " + d_part_table + " "
+                  "LEFT JOIN " + d_mms_table + " ON " + d_mms_table + "._id = " + d_part_table + "." + d_part_mid + " "
+                  "WHERE " + d_part_mid + " IS ? "
+                  "AND quote IS ? "
+                  " ORDER BY display_order ASC, " + d_part_table + "._id ASC", {msg_id, 0}, &attachment_results);
+
   // check attachments for long message body -> replace cropped body & remove from attachment results
   setLongMessageBody(&body, &attachment_results);
 
   SqliteDB::QueryResults quote_attachment_results;
-        d_database.exec("SELECT "
-                        "_id," +
-                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
-                        d_part_ct + ", "
-                        "file_name,"
-                        + d_part_pending + ", "
-                        "sticker_pack_id "
-                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 1", msg_id, &quote_attachment_results);
+  d_database.exec("SELECT " +
+                  d_part_table + "._id, " +
+                  (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                  d_part_ct + ", "
+                  "file_name, "
+                  + d_part_pending + ", " +
+                  (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
+                  "sticker_pack_id, " +
+                  d_mms_table + ".date_received AS date_received "
+                  "FROM " + d_part_table + " "
+                  "LEFT JOIN " + d_mms_table + " ON " + d_mms_table + "._id = " + d_part_table + "." + d_part_mid + " "
+                  "WHERE " + d_part_mid + " IS ? "
+                  "AND quote IS ? "
+                  " ORDER BY display_order ASC, " + d_part_table + "._id ASC", {msg_id, 1}, &quote_attachment_results);
 
   SqliteDB::QueryResults mention_results;
   d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
@@ -129,6 +141,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             nobackground,
                             hasquote,
                             quote_missing,
+                            parent_info.orig_filename,
                             parent_info.overwrite, // ?
                             parent_info.append,    // ?
                             parent_info.story_reply,

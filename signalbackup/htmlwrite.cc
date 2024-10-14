@@ -699,6 +699,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         align-items: flex-start;
       }
 
+      .msg-quote-attach label {
+        align-items: flex-end;
+      }
+
       .caption {
         font-size: small;
       }
@@ -1831,12 +1835,13 @@ file << R"(
 }
 
 void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
-                                          std::string const &directory, std::string const &threaddir,
+                                          std::string const &directory, std::string const &threaddir, bool use_original_filenames,
                                           bool is_image_preview, bool overwrite, bool append) const
 {
   for (unsigned int a = 0; a < attachment_results.rows(); ++a)
   {
 
+    // long text body
     if (attachment_results(a, d_part_ct) == "text/x-signal-plain")
       continue;
 
@@ -1863,10 +1868,37 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     }
 
     std::string extension(MimeTypes::getExtension(content_type, "bin"));
+    std::string attachment_filename_on_disk = "Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + "." + extension;
+    if (use_original_filenames)
+    {
+      attachment_filename_on_disk = sanitizeFilename(attachment_results(a, "file_name"));
+      if (attachment_filename_on_disk.empty())    // filename was not set in database or was not impossible
+      {                                           // to sanitize (eg reserved name in windows 'COM1')
+        long long int datum = attachment_results.valueAsInt(a, "date_received", -1);
+        std::ostringstream tmp;
+        if (datum != -1)
+        {
+          // get datestring
+          std::time_t epoch = datum / 1000;
+          tmp << std::put_time(std::localtime(&epoch), "signal-%Y-%m-%d-%H%M%S");
+        }
+        else
+          tmp << "signal";
+        attachment_filename_on_disk = tmp.str() + "." + extension;
+      }
+      if (!makeFilenameUnique(directory + "/" + threaddir + "/media", &attachment_filename_on_disk))
+      {
+        Logger::error("Getting unique filename for '", directory, "/", threaddir, "/media/", attachment_filename_on_disk, "'");
+        continue;
+      }
+    }
 
     // write the attachment data
-    if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, extension, overwrite, append))
+    if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, attachment_filename_on_disk, overwrite, append))
       continue;
+
+    if (use_original_filenames)
+      HTMLescapeUrl(&attachment_filename_on_disk);
 
     htmloutput << std::string(indent, ' ') << "<div class=\"attachment"
                << ((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) ?
@@ -1878,8 +1910,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
-      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << "." << extension << "\" alt=\"Image attachment\" loading=\"lazy\">\n";
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/" << attachment_filename_on_disk << "\" alt=\"Image attachment\" loading=\"lazy\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
@@ -1891,10 +1922,9 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     {
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <" << std::string_view(content_type.data(), 5) << " controls>\n";
-      htmloutput << std::string(indent, ' ') << "      <source src=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">\n";
-      htmloutput << std::string(indent, ' ') << "      Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                 << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
+      htmloutput << std::string(indent, ' ') << "      <source src=\"media/" << attachment_filename_on_disk << "\" type=\"" << content_type << "\">\n";
+      //htmloutput << std::string(indent, ' ') << "      Media of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
+      //           << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
       htmloutput << std::string(indent, ' ') << "    </" << std::string_view(content_type.data(), 5) << ">\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
@@ -1904,22 +1934,22 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     else if (content_type.empty())
     {
       if (original_filename.empty())
-        htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                   << "_" << uniqueid << "." << extension << "\">&#129055;</a></span>\n";
+        htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/"
+                   << attachment_filename_on_disk << "\">&#129055;</a></span>\n";
       else
-        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "' <span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-          //<< "_" << uniqueid << ".bin\" download=\"" << original_filename << "\">&#129055;</a></span>\n"; // does not work
-                   << "_" << uniqueid << "." << extension << "\">&#129055;</a></span>\n";
+        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "' <span class=\"msg-dl-link\"><a href=\"media/"
+                   << attachment_filename_on_disk << "\">&#129055;</a></span>\n";
+                // the following does not work, because URIs on file:// are cross-origin
+                // << attachment_filename_on_disk << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n";
     }
-    else // other
+    else // content-type not empty, but not 'image/', 'audio/' or 'video/'
     {
       if (original_filename.empty())
-        htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-                   << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
+        htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/"
+                   << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
       else
-        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "'<span class=\"msg-dl-link\"><a href=\"media/Attachment_" << rowid
-          //<< "_" << uniqueid << ".bin\" type=\"" << content_type << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n"; // does not work
-                   << "_" << uniqueid << "." << extension << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
+        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "'<span class=\"msg-dl-link\"><a href=\"media/"
+                   << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
     }
 
     htmloutput << std::string(indent, ' ') << "</div>\n";
@@ -2099,7 +2129,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     {
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">\n";
       HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 16 + extraindent,
-                             msg_info.directory, msg_info.threaddir, false, msg_info.overwrite, msg_info.append);
+                             msg_info.directory, msg_info.threaddir, msg_info.orig_filename, false,
+                             msg_info.overwrite, msg_info.append);
       htmloutput << "                </div>\n";
     }
 
@@ -2109,7 +2140,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   // insert attachment?
   if (msg_info.shared_contacts.empty()) [[likely]] // if we have an attachment with a shared contact, it's an avatar
     HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
-                           msg_info.directory, msg_info.threaddir,
+                           msg_info.directory, msg_info.threaddir, msg_info.orig_filename,
                            (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
                            msg_info.overwrite, msg_info.append);
 

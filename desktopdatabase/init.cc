@@ -23,7 +23,15 @@ bool DesktopDatabase::init()
 {
   // get directories
   if (d_configdir.empty() || d_databasedir.empty())
+  {
     std::tie(d_configdir, d_databasedir) = getDesktopDir();
+    if (d_configdir.empty() || d_databasedir.empty()) [[unlikely]]
+    {
+      Logger::warning("Failed to set default location of Signal Desktop data.");
+      Logger::warning_indent("Consider using `--desktopdir <DIR>' to specify manually.");
+      Logger::warning_indent("Attempting to continue, but this will likely cause errors.");
+    }
+  }
 
   // check if a wal (Write-Ahead Logging) file is present in path, and warn user to (cleanly) shut Signal Desktop down
   if (!d_ignorewal &&

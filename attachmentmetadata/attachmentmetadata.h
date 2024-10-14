@@ -21,13 +21,14 @@
 #define ATTACHMENTMETADATA_H_
 
 #include <string>
+#include <cstdint>
 
 struct AttachmentMetadata
 {
   int width;
   int height;
   std::string filetype;
-  long long int filesize;
+  uint64_t filesize;
   std::string hash;
   std::string filename;
   operator bool() const
@@ -37,7 +38,7 @@ struct AttachmentMetadata
 
   static AttachmentMetadata getAttachmentMetaData(std::string const &filename, bool skiphash = false);
   static AttachmentMetadata getAttachmentMetaData(std::string const &filename, unsigned char *data,
-                                                  long long int data_size, bool skiphash = false);
+                                                  uint64_t data_size, bool skiphash = false);
 };
 
 #endif

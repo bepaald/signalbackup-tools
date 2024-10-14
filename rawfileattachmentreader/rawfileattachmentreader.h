@@ -54,9 +54,10 @@ int RawFileAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verb
     Logger::error("Failed to open file '", d_filename, "' for reading attachment");
     return 1;
   }
-  file.seekg(0, std::ios_base::end);
-  int64_t attachmentdata_size = file.tellg();
-  file.seekg(0, std::ios_base::beg);
+  //file.seekg(0, std::ios_base::end);
+  //int64_t attachmentdata_size = file.tellg();
+  //file.seekg(0, std::ios_base::beg);
+  uint64_t attachmentdata_size = bepaald::fileSize(d_filename);
 
   if (attachmentdata_size == 0) [[unlikely]]
     Logger::warning("Asked to read 0-byte attachment");

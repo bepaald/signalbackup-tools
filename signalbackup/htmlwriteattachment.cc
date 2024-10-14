@@ -22,7 +22,8 @@
 #include <cerrno>
 
 bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string const &threaddir,
-                                       long long int rowid, long long int uniqueid, std::string const &ext,
+                                       long long int rowid, long long int uniqueid, //std::string const &ext,
+                                       std::string const &attachment_filename,
                                        bool overwrite, bool append) const
 {
   if (!bepaald::contains(d_attachments, std::pair{rowid, uniqueid}))
@@ -44,14 +45,19 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   }
 
   // check actual attachmentfile file
-  std::string attachment_filename = directory + "/" + threaddir +
-    "/media/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + "." + ext;
-  if (bepaald::fileOrDirExists(attachment_filename))
+  std::string attachment_filename_full = directory + "/" + threaddir + "/media/" +
+    attachment_filename;
+  // "/media/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + "." + ext;
+
+  if (bepaald::fileOrDirExists(attachment_filename_full))
   {
     if (append) // file already exists, but we were asked to just use the existing file, so we're done
       return true;
     if (!overwrite) // file already exists, but we were no asked to overwrite -> error!
     {
+
+      std::cout << attachment_filename << std::endl;
+
       Logger::error("Attachment file exists. Not overwriting");
       return false;
     }
@@ -59,34 +65,15 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
 
   AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
 
-  // migrate .bin files if they exist -> this could be temporary (2024-19-08)
-  std::string old_attachment_filename = directory + "/" + threaddir +
-    "/media/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + ".bin";
-  std::error_code error;
-  if (bepaald::fileOrDirExists(old_attachment_filename) && append && !overwrite &&
-      a->attachmentSize() == std::filesystem::file_size(old_attachment_filename, error))
-  {
-    if (d_verbose) [[unlikely]]
-      Logger::message("Migrating file: ", old_attachment_filename, " -> ", attachment_filename);
-    std::filesystem::rename(old_attachment_filename, attachment_filename, error);
-    if (!error)
-      return true;
-    else [[unlikely]]
-    {
-      Logger::error("Failed to rename existing attachment (", old_attachment_filename, " -> ",
-                    attachment_filename, ")");
-      return false;
-    }
-  }
-
   // write actual attachment:
-  std::ofstream attachmentstream(attachment_filename, std::ios_base::binary);
+  std::ofstream attachmentstream(attachment_filename_full, std::ios_base::binary);
   if (!attachmentstream.is_open())
   {
-    Logger::error("Failed to open file for writing: '", attachment_filename, "'",
+    Logger::error("Failed to open file for writing: '", attachment_filename_full, "'",
                   " (errno: ", std::strerror(errno), ")"); // note: errno is not required to be set by std
     // temporary !!
     {
+      std::error_code error;
       std::filesystem::space_info const si = std::filesystem::space(directory, error);
       if (!error)
       {

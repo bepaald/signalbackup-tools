@@ -71,10 +71,11 @@ SqlCipherDecryptor::SqlCipherDecryptor(std::string const &databasepath, std::str
     return;
   }
 
-  // get file size (this will also be the output file size
-  dbfile.seekg(0, std::ios_base::end);
-  d_decrypteddatasize = dbfile.tellg();
-  dbfile.seekg(0, std::ios_base::beg);
+  // get file size (this will also be the output file size)
+  //dbfile.seekg(0, std::ios_base::end);
+  //d_decrypteddatasize = dbfile.tellg();
+  //dbfile.seekg(0, std::ios_base::beg);
+  d_decrypteddatasize = bepaald::fileSize(d_databasepath);
 
   if (d_verbose) [[unlikely]]
     Logger::message("Opening Desktop database `", d_databasepath, "' (", d_decrypteddatasize, " bytes)");

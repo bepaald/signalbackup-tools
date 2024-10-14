@@ -22,7 +22,7 @@
 void SignalBackup::dtSetColumnNames(SqliteDB *ddb)
 {
 
-  // conversations.uuid -> conversations.sourceid
+  // conversations.uuid -> conversations.serviceid
   if (ddb->tableContainsColumn("conversations", "serviceId"))
     d_dt_c_uuid = "serviceId";
   else if (ddb->tableContainsColumn("conversations", "uuid"))

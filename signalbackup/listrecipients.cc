@@ -52,12 +52,12 @@ void SignalBackup::listRecipients() const
                          (d_database.tableContainsColumn("recipient", "hidden") ? "hidden, " : "") +
                          "IFNULL(COALESCE(" + d_recipient_profile_avatar + ", groups.avatar_id), 0) IS NOT 0 AS 'has_avatar', "
 
-                         "CASE " + d_recipient_type + " WHEN 0 THEN 'Individual' ELSE "
-                         "  CASE " + d_recipient_type + " WHEN 3 THEN 'Group (v2)' ELSE "
-                         "    CASE " + d_recipient_type + " WHEN 4 THEN 'Group (story)' ELSE "
-                         "      CASE " + d_recipient_type + " WHEN 1 THEN 'Group (mms)' ELSE "
-                         "        CASE " + d_recipient_type + " WHEN 2 THEN 'Group (v1)' ELSE "
-                         "          CASE " + d_recipient_type + " WHEN 5 THEN 'Group (call)' ELSE 'unknown' "
+                         "CASE recipient." + d_recipient_type + " WHEN 0 THEN 'Individual' ELSE "
+                         "  CASE recipient." + d_recipient_type + " WHEN 3 THEN 'Group (v2)' ELSE "
+                         "    CASE recipient." + d_recipient_type + " WHEN 4 THEN 'Group (story)' ELSE "
+                         "      CASE recipient." + d_recipient_type + " WHEN 1 THEN 'Group (mms)' ELSE "
+                         "        CASE recipient." + d_recipient_type + " WHEN 2 THEN 'Group (v1)' ELSE "
+                         "          CASE recipient." + d_recipient_type + " WHEN 5 THEN 'Group (call)' ELSE 'unknown' "
                          "          END "
                          "        END "
                          "      END "
@@ -65,15 +65,20 @@ void SignalBackup::listRecipients() const
                          "  END "
                          "END AS 'type', "
 
-                         "CASE WHEN " + d_recipient_type + " IS NOT 0 THEN '(n/a)' ELSE "
+                         "CASE WHEN recipient." + d_recipient_type + " IS NOT 0 THEN '(n/a)' ELSE "
                          "  CASE registered WHEN 1 THEN 'Yes' ELSE "
                          "    CASE registered WHEN 1 THEN 'No' ELSE 'Unknown' "
                          "    END "
                          "  END "
-                         "END AS 'registered' "
+                         "END AS 'registered', "
+
+                         "COALESCE (recipient.group_id, " + d_recipient_aci + ") IS NOT NULL AS has_id, "
+
+                         "thread._id IS NOT NULL as has_thread "
 
                          "FROM recipient "
                          "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
+                         "LEFT JOIN thread ON recipient._id = thread.recipient_id " +
                          (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : " ") +
                          "ORDER BY display_name");
 }

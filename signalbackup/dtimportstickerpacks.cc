@@ -88,24 +88,25 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       long long int dtcoveronly = dtstickers.valueAsInt(j, "isCoverOnly");
       long long int dtstickerid = dtstickers.valueAsInt(j, "id");
       std::string dtemoji = dtstickers(j, "emoji");
-      long long int filelength = dtstickers.valueAsInt(j, "size");
+      uint64_t filelength = dtstickers.valueAsInt(j, "size");
       long long int version = dtstickers.valueAsInt(j, "version");
       std::string localkey = dtstickers(j, "localKey");
       std::string fullpath(databasedir + "/stickers.noindex/" + dtstickers(j, "path"));
 
       // get filelength if not in database
       if (filelength <= 0)
-      {
-        std::ifstream dtstickerfile(fullpath, std::ios_base::binary | std::ios_base::in);
-        if (!dtstickerfile.is_open())
-        {
-          Logger::error("Error opening Desktop sticker at path '", fullpath, "'. Skipping...");
-          continue;
-        }
-        dtstickerfile.seekg(0, std::ios_base::end);
-        filelength = dtstickerfile.tellg();
-      }
-      if (filelength == -1)
+        //{
+        //std::ifstream dtstickerfile(fullpath, std::ios_base::binary | std::ios_base::in);
+        //if (!dtstickerfile.is_open())
+        //{
+        //  Logger::error("Error opening Desktop sticker at path '", fullpath, "'. Skipping...");
+        //  continue;
+        //}
+        //dtstickerfile.seekg(0, std::ios_base::end);
+        //filelength = dtstickerfile.tellg();
+        filelength = bepaald::fileSize(fullpath);
+        //}
+      if (filelength == 0 || filelength == static_cast<std::uintmax_t>(-1)) [[unlikely]]
       {
         Logger::error("Failed to get Sticker filesize. Skipping...");
         return false;

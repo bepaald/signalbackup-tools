@@ -34,6 +34,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts)
 {
+  Logger::message("Starting HTML export to '", directory, "'");
+
   bool databasemigrated = false;
   MemSqliteDB backup_database;
 
@@ -457,31 +459,40 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults attachment_results;
         if (attachmentcount > 0)
-          d_database.exec("SELECT "
-                          "_id, " +
+          d_database.exec("SELECT " +
+                          d_part_table + "._id, " +
                           (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
                           d_part_ct + ", "
                           "file_name, "
                           + d_part_pending + ", " +
                           (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                          "sticker_pack_id "
+                          "sticker_pack_id, " +
+                          d_mms_table + ".date_received AS date_received "
                           "FROM " + d_part_table + " "
+                          "LEFT JOIN " + d_mms_table + " ON " + d_mms_table + "._id = " + d_part_table + "." + d_part_mid + " "
                           "WHERE " + d_part_mid + " IS ? "
-                          "AND quote IS ?", {msg_id, 0}, &attachment_results);
+                          "AND quote IS ? "
+                          " ORDER BY display_order ASC, " + d_part_table + "._id ASC", {msg_id, 0}, &attachment_results);
+
         // check attachments for long message body -> replace cropped body & remove from attachment results
         setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
         if (attachmentcount > 0)
-          d_database.exec("SELECT "
-                          "_id, " +
+          d_database.exec("SELECT " +
+                          d_part_table + "._id, " +
                           (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
                           d_part_ct + ", "
                           "file_name, "
                           + d_part_pending + ", " +
                           (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                          "sticker_pack_id "
-                          "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS ?", {msg_id, 1}, &quote_attachment_results);
+                          "sticker_pack_id, " +
+                          d_mms_table + ".date_received AS date_received "
+                          "FROM " + d_part_table + " "
+                          "LEFT JOIN " + d_mms_table + " ON " + d_mms_table + "._id = " + d_part_table + "." + d_part_mid + " "
+                          "WHERE " + d_part_mid + " IS ? "
+                          "AND quote IS ? "
+                          " ORDER BY display_order ASC, " + d_part_table + "._id ASC", {msg_id, 1}, &quote_attachment_results);
 
         SqliteDB::QueryResults mention_results;
         if (mentioncount > 0)
@@ -582,6 +593,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   nobackground,
                                   hasquote,
                                   quote_missing,
+                                  false,//use_original_filenames,
                                   overwrite,
                                   append,
                                   story_reply,
@@ -621,8 +633,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "'f', " + d_mms_table + "." + d_mms_recipient_id + ", "
                                "'tr', thread." + d_thread_recipient_id + ", "
                                "'o', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
-                               "'d', " + d_mms_table + ".date_received, "
-                               "'p', " + "\"" + msg_info.threaddir + "/" + msg_info.filename + "\"" + ") AS line, "
+                               "'d', (" + d_mms_table + ".date_received / 1000 - 1404165600), " // loose the last three digits (miliseconds, they are never displayed anyway).
+                                                                                                // subtract "2014-07-01". Signals initial release was 2014-07-29, negative numebrs should work otherwise anyway.
+                               "'p', " + "SUBSTR(\"" + msg_info.threaddir + "/" + msg_info.filename + "\", 1, LENGTH(\"" + msg_info.threaddir + "/" + msg_info.filename + "\") - 5)" + ") AS line, " // all pages end in ".html", slice it off
                                + d_part_table + "._id AS rowid, " +
                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") +

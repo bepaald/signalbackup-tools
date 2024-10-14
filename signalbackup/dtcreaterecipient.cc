@@ -29,18 +29,35 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   //std::cout << "Creating new recipient for id: " << id << ", phone: " << phone << std::endl;
 
   SqliteDB::QueryResults res;
-  if (!ddb.exec("SELECT type, TRIM(name) AS name, profileName, profileFamilyName, "
-                "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(json,'$.color') AS color, "
-                "COALESCE(json_extract(json, '$.profileAvatar.path'), json_extract(json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
-                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.localKey'), json_extract(json, '$.avatar.localKey')), '') AS localKey, "
-                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.size'), json_extract(json, '$.avatar.size')), 0) AS size, "
-                "IFNULL(COALESCE(json_extract(json, '$.profileAvatar.version'), json_extract(json, '$.avatar.version')), 0) AS version, "
-                "groupId, IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId', "
-                "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion, "
-                "NULLIF(json_extract(json,'$.nicknameGivenName'), '') AS nick_first, "
-                "NULLIF(json_extract(json,'$.nicknameFamilyName'), '') AS nick_last, "
-                "TOKENCOUNT(members) AS nummembers, json_extract(json, '$.masterKey') AS masterKey "
-                "FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
+  if (!ddb.exec("SELECT "
+
+                "type, TRIM(name) AS name, profileName, profileFamilyName, "
+                "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(conversations.json,'$.color') AS color, "
+                "COALESCE(json_extract(conversations.json, '$.profileAvatar.path'), json_extract(conversations.json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
+                "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.localKey'), json_extract(conversations.json, '$.avatar.localKey')), '') AS localKey, "
+                "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.size'), json_extract(conversations.json, '$.avatar.size')), 0) AS size, "
+                "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.version'), json_extract(conversations.json, '$.avatar.version')), 0) AS version, "
+                "groupId, IFNULL(json_extract(conversations.json,'$.groupId'),'') AS 'json_groupId', "
+
+                "IFNULL(json_extract(conversations.json, '$.expireTimer'), 0) AS 'expireTimer', "
+                "IFNULL(json_extract(conversations.json, '$.expireTimerVersion'), 1) AS 'expireTimerVersion', "
+                "json_extract(conversations.json, '$.storageID') AS 'storageId', "
+                "json_extract(conversations.json, '$.pni') AS 'pni', "
+                "IFNULL(json_extract(conversations.json, '$.profileSharing'), 'false') AS 'profileSharing', "
+
+                "json_extract(identityKeys.json, '$.publicKey') AS 'publicKey', "
+                "IFNULL(json_extract(identityKeys.json, '$.verified'), 0) AS 'verified', "
+                "IFNULL(json_extract(identityKeys.json, '$.firstUse'), 'false') AS 'firstUse', "
+                "IFNULL(json_extract(identityKeys.json, '$.timestamp'), 0) AS 'timestamp', "
+                "IFNULL(json_extract(identityKeys.json, '$.nonblockingApproval'), 'false') AS 'nonblockingApproval', "
+
+                "IFNULL(json_extract(conversations.json,'$.groupVersion'), 1) AS groupVersion, "
+                "NULLIF(json_extract(conversations.json,'$.nicknameGivenName'), '') AS nick_first, "
+                "NULLIF(json_extract(conversations.json,'$.nicknameFamilyName'), '') AS nick_last, "
+                "TOKENCOUNT(members) AS nummembers, json_extract(conversations.json, '$.masterKey') AS masterKey "
+                "FROM conversations "
+                "LEFT JOIN identityKeys ON conversations. " + d_dt_c_uuid + " = identityKeys.id "
+                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
                 {id, phone, groupidb64}, &res))
   {
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
@@ -94,6 +111,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     std::any new_rid;
     if (!insertRow("recipient",
                    {{"group_id", group_id},
+                    {d_recipient_type, 3}, // group type
+                    {"storage_service_id", res.value(0, "storageId")},
+                    {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
+                    {"message_expiration_time", res.value(0, "expireTimer")},
                     {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
     {
       Logger::error("Failed to insert new (group) recipient into database.");
@@ -300,6 +321,13 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                          res(0, "nick_first") + " " + res(0, "nick_last")))},
                   {d_recipient_e164, res.value(0, "e164")},
                   {d_recipient_aci, res.value(0, "uuid")},
+
+                  {"pni", res.value(0, "pni")},
+                  {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
+                  {"message_expiration_time", res.value(0, "expireTimer")},
+                  {"storage_service_id", res.value(0, "storageId")},
+                  {"profile_sharing", res(0, "profileSharing") == "true" ? 1 : 0},
+
                   // {d_database.tableContainsColumn("recipient", "blocked") ? // blocked recipients do not exist in Desktop?
                   //  "blocked" : "", res.value(0, "blocked")},
                   {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
@@ -317,6 +345,21 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   // set avatar
   dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
+
+  // set identity info
+  if (!res.isNull(0, "uuid"))
+  {
+    if (!insertRow("identities",
+                   {{"address", res.value(0, "uuid")},
+                    {"identity_key", res.value(0, "publicKey")},
+                    {"first_use", res("firstUse") == "true" ? 1 : 0},
+                    {"timestamp", res.value(0, "timestamp")},
+                    {"verified", res.value(0, "verified")},
+                    {"nonblocking_approval", res("nonblockingApproval") == "true" ? 1 : 0}}))
+      Logger::warning("Failed to insert identity key for newly created recipient entry.");
+  }
+  else
+    Logger::warning("Newly created contact has no UUID");
 
   Logger::message("Succesfully created new recipient (id: ", new_rec_id, ").");
   //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);

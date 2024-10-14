@@ -30,6 +30,7 @@ struct HTMLMessageInfo
   bool nobackground;
   bool hasquote;
   bool quote_missing;
+  bool orig_filename;
   bool overwrite;
   bool append;
   bool story_reply;

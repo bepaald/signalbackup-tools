@@ -688,9 +688,9 @@ body {
       if (document.getElementById('enable_date').checked)
       {
         var d = new Date(document.getElementById("mindate").value);
-        mindate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+        mindate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000 - 1404165600;
         var d = new Date(document.getElementById("maxdate").value);
-        maxdate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+        maxdate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000 - 1404165600;;
       }
 
       var recipient = -1;
@@ -709,16 +709,16 @@ body {
 
         return obj.filter(element => regex.test(element.b) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.tr == recipient))).sort((r1, r2) => r1.d - r2.d);
       }
       if (case_sensitive == false)
         return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.d - r2.d);
       else
         return obj.filter(element => element.b.includes(term) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.date - r2.date);
+                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.d - r2.d);
     }
 
     function stringinsert(str, index, value)
@@ -786,7 +786,7 @@ body {
           elem.classList.add("msg-outgoing");
         else
           elem.classList.add("msg-incoming");
-        elem.setAttribute('href', encodeURI(global_results[i].p + '#' + global_results[i].id));
+        elem.setAttribute('href', encodeURI(global_results[i].p + '.html#' + global_results[i].id));
 
         var linkdiv = document.createElement('div');
 
@@ -830,7 +830,7 @@ body {
         msgbody.append(prebody);
         linkdiv.append(msgbody);
 
-        var d = new Date(global_results[i].d);
+        var d = new Date(global_results[i].d * 1000 + 1404165600;);
 
         var msgdate = document.createElement('div');
         msgdate.classList.add("footer");

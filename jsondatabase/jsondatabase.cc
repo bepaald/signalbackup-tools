@@ -19,6 +19,8 @@
 
 #include "jsondatabase.ih"
 
+#include "../common_filesystem.h"
+
 JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool truncate)
   :
   d_ok(false),
@@ -33,15 +35,16 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
     return;
   }
 
-  sourcefile.seekg(0, std::ios_base::end);
-  long long int datasize = sourcefile.tellg();
-  if (datasize <= 0)
+  //sourcefile.seekg(0, std::ios_base::end);
+  //long long int datasize = sourcefile.tellg();
+  //sourcefile.seekg(0, std::ios_base::beg);
+  uint64_t datasize = bepaald::fileSize(jsonfile);
+  if (datasize == 0 || datasize == static_cast<std::uintmax_t>(-1)) [[unlikely]]
   {
     Logger::error("Bad filesize (", datasize, ")");
     return;
   }
 
-  sourcefile.seekg(0, std::ios_base::beg);
   std::unique_ptr<char []> data(new char[datasize]);
 
   if (!sourcefile.read(data.get(), datasize))

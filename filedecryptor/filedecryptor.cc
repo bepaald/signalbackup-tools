@@ -19,6 +19,8 @@
 
 #include "filedecryptor.ih"
 
+#include "../common_filesystem.h"
+
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror, bool assumebadframesize, std::vector<long long int> const &editattachments)
   :
   CryptBase(verbose),
@@ -39,9 +41,10 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
     return;
   }
 
-  file.seekg(0, std::ios_base::end);
-  d_filesize = file.tellg();
-  file.seekg(0);
+  //file.seekg(0, std::ios_base::end);
+  //d_filesize = file.tellg();
+  //file.seekg(0);
+  d_filesize = bepaald::fileSize(d_filename);
 
   // read first four bytes, they are the header size of the file:
   int32_t headerlength = getNextFrameBlockSize(file);

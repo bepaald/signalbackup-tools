@@ -190,7 +190,7 @@ class SignalBackup
 
   static std::vector<DatabaseLink> const s_databaselinks;
   static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
-  static char const *const s_emoji_unicode_list[3773];
+  static char const *const s_emoji_unicode_list[3781];
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
@@ -406,13 +406,13 @@ class SignalBackup
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append,
                       bool light, bool themeswitching, bool searchpage, bool exportdetails) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
-                              std::string const &directory, std::string const &threaddir, bool is_image_preview,
-                              bool overwrite, bool append) const;
+                              std::string const &directory, std::string const &threaddir, bool use_original_filenames,
+                              bool is_image_preview, bool overwrite, bool append) const;
   void HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
                                  std::string const &directory, std::string const &threaddir,
                                  bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
-                           long long int uniqueid, std::string const &ext, bool overwrite, bool append) const;
+                           long long int uniqueid, std::string const &attachment_filename, bool overwrite, bool append) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
