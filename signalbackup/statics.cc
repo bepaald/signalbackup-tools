@@ -483,6 +483,7 @@ std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup:
                                                        {"profile_given_name", "signal_profile_name"},
                                                        {"storage_service_id", "storage_service_key"},
                                                        {"type", "group_type"},
+                                                       {"sealed_sender_mode", "unidentified_access_mode"},
                                                        {"profile_avatar", "signal_profile_avatar"}}),
 
   std::make_pair("sms",

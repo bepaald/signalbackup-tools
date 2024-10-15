@@ -43,14 +43,15 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "IFNULL(json_extract(conversations.json, '$.expireTimerVersion'), 1) AS 'expireTimerVersion', "
                 "json_extract(conversations.json, '$.storageID') AS 'storageId', "
                 "json_extract(conversations.json, '$.pni') AS 'pni', "
-                "IFNULL(json_extract(conversations.json, '$.profileSharing'), 'false') AS 'profileSharing', "
+                "IFNULL(json_extract(conversations.json, '$.profileSharing'), '0') AS 'profileSharing', "
                 "json_extract(conversations.json, '$.firstUnregisteredAt') AS 'firstUnregisteredAt', "
+                "IFNULL(json_extract(conversations.json, '$.sealedSender'), 0) AS 'sealedSender', "
 
                 "json_extract(identityKeys.json, '$.publicKey') AS 'publicKey', "
                 "IFNULL(json_extract(identityKeys.json, '$.verified'), 0) AS 'verified', "
-                "IFNULL(json_extract(identityKeys.json, '$.firstUse'), 'false') AS 'firstUse', "
+                "IFNULL(json_extract(identityKeys.json, '$.firstUse'), 0) AS 'firstUse', "
                 "IFNULL(json_extract(identityKeys.json, '$.timestamp'), 0) AS 'timestamp', "
-                "IFNULL(json_extract(identityKeys.json, '$.nonblockingApproval'), 'false') AS 'nonblockingApproval', "
+                "IFNULL(json_extract(identityKeys.json, '$.nonblockingApproval'), 0) AS 'nonblockingApproval', "
 
                 "IFNULL(json_extract(conversations.json,'$.groupVersion'), 1) AS groupVersion, "
                 "NULLIF(json_extract(conversations.json,'$.nicknameGivenName'), '') AS nick_first, "
@@ -327,8 +328,9 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                   {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
                   {"message_expiration_time", res.value(0, "expireTimer")},
                   {"storage_service_id", res.value(0, "storageId")},
-                  {"profile_sharing", res(0, "profileSharing") == "true" ? 1 : 0},
+                  {"profile_sharing", res.value(0, "profileSharing")},
                   {"registered", res.isNull(0, "firstUnregisteredAt") ? 1 : 0},   // registered if no Unregister-timestamp is found, unknown otherwise
+                  {d_recipient_sealed_sender, res.value(0, "sealedSender")},
 
                   // {d_database.tableContainsColumn("recipient", "blocked") ? // blocked recipients do not exist in Desktop?
                   //  "blocked" : "", res.value(0, "blocked")},
@@ -354,10 +356,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (!insertRow("identities",
                    {{"address", res.value(0, "uuid")},
                     {"identity_key", res.value(0, "publicKey")},
-                    {"first_use", res("firstUse") == "true" ? 1 : 0},
+                    {"first_use", res("firstUse")},
                     {"timestamp", res.value(0, "timestamp")},
                     {"verified", res.value(0, "verified")},
-                    {"nonblocking_approval", res("nonblockingApproval") == "true" ? 1 : 0}}))
+                    {"nonblocking_approval", res("nonblockingApproval")}}))
       Logger::warning("Failed to insert identity key for newly created recipient entry.");
   }
   else

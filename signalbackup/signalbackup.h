@@ -96,6 +96,7 @@ class SignalBackup
   std::string d_recipient_storage_service;
   std::string d_recipient_type;
   std::string d_recipient_profile_avatar;
+  std::string d_recipient_sealed_sender;
   std::string d_groups_v1_members;
   std::string d_part_mid;
   std::string d_part_ct;

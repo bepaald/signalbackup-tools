@@ -206,18 +206,18 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     if (!d_database.exec("SELECT "s
                          "_id, " + d_mms_recipient_id + ", body, "
                          "date_received, " + d_mms_type + ", "
-                         //"quote_id, quote_author, quote_body, quote_mentions, "
-                         // + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
+                         "attcount, reactioncount, mentioncount, "
                          "IFNULL(remote_deleted, 0) AS remote_deleted, "
                          "IFNULL(view_once, 0) AS view_once, " +
                          (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                          "expires_in"
-                         //, message_ranges, "
-                         //+ (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
-                         //+ (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
-                         //"json_extract(link_previews, '$[0].title') AS link_preview_title, "
-                         //"json_extract(link_previews, '$[0].description') AS link_preview_description "
                          " FROM " + d_mms_table + " "
+                         // get attachment count for message:
+                         "LEFT JOIN (SELECT " + d_part_mid + " AS message_id, COUNT(*) AS attcount FROM " + d_part_table + " GROUP BY message_id) AS attmnts ON " + d_mms_table + "._id = attmnts.message_id "
+                         // get reaction count for message:
+                         "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON " + d_mms_table + "._id = rctns.message_id "
+                         // get mention count for message:
+                         "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id "
                          "WHERE thread_id = ?"
                          + datewhereclause +
                          + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
@@ -285,26 +285,28 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       std::string readable_date = bepaald::toDateString(messages.getValueAs<long long int>(i, "date_received") / 1000,
                                                           "%b %d, %Y %H:%M:%S");
       SqliteDB::QueryResults attachment_results;
-      d_database.exec("SELECT "
-                      "_id, " +
-                      (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
-                      d_part_ct + ", "
-                      "file_name, "
-                      + d_part_pending + ", " +
-                      (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                      "sticker_pack_id "
-                      "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
+      if (messages.valueAsInt(i, "attcount", 0) > 0)
+        d_database.exec("SELECT "
+                        "_id, " +
+                        (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
+                        d_part_ct + ", "
+                        "file_name, "
+                        + d_part_pending + ", " +
+                        (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
+                        "sticker_pack_id "
+                        "FROM " + d_part_table + " WHERE " + d_part_mid + " IS ? AND quote IS 0", msg_id, &attachment_results);
       // check attachments for long message body -> replace cropped body & remove from attachment results
       setLongMessageBody(&body, &attachment_results);
 
       SqliteDB::QueryResults mention_results;
-      if (d_database.containsTable("mention"))
+      if (messages.valueAsInt(i, "mentioncount", 0) > 0)
         d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
 
       SqliteDB::QueryResults reaction_results;
-      d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', "
-                      "DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received' "
-                      "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+      if (messages.valueAsInt(i, "reactioncount", 0) > 0)
+        d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', "
+                        "DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received' "
+                        "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {

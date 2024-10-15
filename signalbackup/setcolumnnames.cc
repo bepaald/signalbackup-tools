@@ -70,6 +70,11 @@ bool SignalBackup::setColumnNames()
       d_database.tableContainsColumn("recipient", "signal_profile_avatar"))
     d_recipient_profile_avatar = "signal_profile_avatar";
 
+  d_recipient_sealed_sender = "sealed_sender_mode";
+  if (!d_database.tableContainsColumn("recipient", "sealed_sender_mode") &&    // before dbv201
+      d_database.tableContainsColumn("recipient", "unidentified_access_mode"))
+    d_recipient_sealed_sender = "unidentified_access_mode";
+
 
 
   // started at dbv166
