@@ -304,8 +304,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
       SqliteDB::QueryResults reaction_results;
       if (messages.valueAsInt(i, "reactioncount", 0) > 0)
-        d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', "
-                        "DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received' "
+        d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', "
+                        "DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
                         "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
       if (Types::isStatusMessage(type) || Types::isCallType(type))

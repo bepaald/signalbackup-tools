@@ -115,6 +115,7 @@ Arg::Arg(int argc, char *argv[])
   d_split(1000),
   d_split_bool(false),
   d_split_by(std::string()),
+  d_originalfilenames(false),
   d_addincompletedataforhtmlexport(false),
   d_light(false),
   d_exporttxt(std::string()),
@@ -1345,6 +1346,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--originalfilenames")
+    {
+      d_originalfilenames = true;
+      continue;
+    }
+    if (option == "--no-originalfilenames")
+    {
+      d_originalfilenames = false;
       continue;
     }
     if (option == "--addincompletedataforhtmlexport")

@@ -33,12 +33,12 @@ bool SignalBackup::summarize() const
   // daterange
   if (d_database.containsTable("sms"))
   {
-    if (d_database.exec("SELECT DATETIME(ROUND((MIN(mindate)) / 1000), 'unixepoch', 'localtime') AS 'Min Date', DATETIME(ROUND(MAX((maxdate) / 1000)), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms UNION ALL SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results))
+    if (d_database.exec("SELECT DATETIME((MIN(mindate)) / 1000, 'unixepoch', 'localtime') AS 'Min Date', DATETIME(MAX((maxdate) / 1000), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(sms." + d_sms_date_received + ") AS mindate, MAX(sms." + d_sms_date_received + ") AS maxdate FROM sms UNION ALL SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results))
       Logger::message("Period: ", results.valueAsString(0, "Min Date"), " - ", results.valueAsString(0, "Max Date"));
   }
   else
   {
-    if (d_database.exec("SELECT DATETIME(ROUND(mindate / 1000), 'unixepoch', 'localtime') AS 'Min Date', DATETIME(ROUND(maxdate / 1000), 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results))
+    if (d_database.exec("SELECT DATETIME(mindate / 1000, 'unixepoch', 'localtime') AS 'Min Date', DATETIME(maxdate / 1000, 'unixepoch', 'localtime') AS 'Max Date' FROM (SELECT MIN(" + d_mms_table + ".date_received) AS mindate, MAX(" + d_mms_table + ".date_received) AS maxdate FROM " + d_mms_table + ")", &results))
       Logger::message("Period: ", results.valueAsString(0, "Min Date"), " - ", results.valueAsString(0, "Max Date"));
   }
 

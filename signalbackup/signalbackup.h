@@ -264,7 +264,7 @@ class SignalBackup
                   long long int split, std::string const &selfid, bool calllog, bool searchpage,
                   bool stickerpacks, bool migrate, bool overwrite, bool append, bool theme,
                   bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                  bool settings, bool receipts);
+                  bool settings, bool receipts, bool use_original_filenames);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;

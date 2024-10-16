@@ -32,7 +32,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               long long int split, std::string const &selfphone, bool calllog, bool searchpage,
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                              bool settings, bool receipts)
+                              bool settings, bool receipts, bool originalfilenames)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -74,11 +74,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       databasemigrated = true;
   }
 
-  //if (originalfilenames && append)
-  //  Logger::warning("Options 'originalfilenames' and 'append' are incompatible");
+  if (originalfilenames && append) [[unlikely]]
+    Logger::warning("Options 'originalfilenames' and 'append' are incompatible");
 
   // // check if dir exists, create if not
-  if (!prepareOutputDirectory(directory, overwrite, true/*!originalfilenames*/ /*allowappend*/, append))
+  if (!prepareOutputDirectory(directory, overwrite, !originalfilenames /*allowappend only allowed when not using original filenames*/, append))
   {
     if (databasemigrated)
       SqliteDB::copyDb(backup_database, d_database);
@@ -294,7 +294,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     "_id, " + d_mms_recipient_id + ", body, "
                     "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, "
                     "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
-                    + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', ROUND(IFNULL(date_received, 0) / 1000), 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
+                    + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
                     "attcount, reactioncount, mentioncount, "
                     + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
@@ -396,7 +396,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       max_msg_per_page = messages.rows() / totalpages + (messages.rows() % totalpages ? 1 : 0);
     }
     if (!periodsplitformat.empty())
-      totalpages = d_database.getSingleResultAs<long long int>("SELECT COUNT(DISTINCT strftime('" + periodsplitformat +  "', ROUND(IFNULL(date_received, 0) / 1000), 'unixepoch', 'localtime')) "
+      totalpages = d_database.getSingleResultAs<long long int>("SELECT COUNT(DISTINCT strftime('" + periodsplitformat +  "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')) "
                                                                "FROM message WHERE thread_id = ?" + datewhereclause, t, 1);
 
     // std::cout << "Split: " << split << std::endl;
@@ -503,7 +503,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults reaction_results;
         if (reactioncount > 0)
-          d_database.exec("SELECT emoji, author_id, DATETIME(ROUND(date_sent / 1000), 'unixepoch', 'localtime') AS 'date_sent', DATETIME(ROUND(date_received / 1000), 'unixepoch', 'localtime') AS 'date_received' "
+          d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
                           "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
         SqliteDB::QueryResults edit_revisions;
@@ -596,7 +596,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   nobackground,
                                   hasquote,
                                   quote_missing,
-                                  false,//use_original_filenames,
+                                  originalfilenames,
                                   overwrite,
                                   append,
                                   story_reply,
