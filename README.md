@@ -520,7 +520,7 @@ Make sure your Signal-Desktop instance is cleanly shut down before running, if t
 
 To limit the message import to a certain time frame, the option `--limittodates <LIST OF DATES>` can be added. The format of the list of dates is identical to that of the [croptodates function](#crop-to-dates). In most cases, the option `--autolimitdates` can be used to automatically only import messages from the Desktop database before the first, or after the last message in the input backup.
 
-This function has some limitations, most notably the contacts referenced in the data that is to be imported must be present in the Android backup. If a message is found that is sent by/to an unknown contact, it is skipped. For other limitations see [here](https://github.com/bepaald/signalbackup-tools/issues/57#issuecomment-1329475240).
+This function has some limitations, most notably the contacts referenced in the data that is to be imported must be present in the Android backup. If a message is found that is sent by/to an unknown contact, it is skipped. A possible solution could be, to restore your backup with skipped contacts/chats, import it into your android phone, then make a new backup, use it again with signalbackup-tools and enrich it again (this time with the up-to-date contacts) and restore your phone again with this newly created backup. For other limitations see [here](https://github.com/bepaald/signalbackup-tools/issues/57#issuecomment-1329475240).
 
 **<span id="json">Importing conversations from Telegram / JSON file</span>**
 
