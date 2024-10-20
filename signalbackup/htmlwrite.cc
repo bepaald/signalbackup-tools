@@ -1910,7 +1910,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
-      htmloutput << std::string(indent, ' ') << "      <img src=\"media/" << attachment_filename_on_disk << "\" alt=\"Image attachment\" loading=\"lazy\">\n";
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/" << attachment_filename_on_disk << "\" alt=\"Image attachment\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       if (attachment_results.hasColumn("caption") &&
           !attachment_results.isNull(a, "caption"))
@@ -2041,7 +2041,7 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
       htmloutput << std::string(indent, ' ') << "  <div class=\"shared-contact-avatar\" style=\"background-image: url('" << "media/Attachment_" << rowid << "_" << uniqueid << "." << extension << "');\">\n";
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
-      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << "." << extension << "\" alt=\"Shared avatar\" loading=\"lazy\">\n";
+      htmloutput << std::string(indent, ' ') << "      <img src=\"media/Attachment_" << rowid << "_" << uniqueid << "." << extension << "\" alt=\"Shared avatar\">\n";
       htmloutput << std::string(indent, ' ') << "    </label>\n";
       htmloutput << std::string(indent, ' ') << "  </div>\n";
     }
@@ -2298,7 +2298,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
           htmloutput << "<div class=\"history-header\">Edit history</div>";
 
         // add earlier revision
-        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, recipient_info);
+        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, recipient_info, false);
 
         if (i < msg_info.edit_revisions->rows() - 2)
           htmloutput << "<hr>";

@@ -234,15 +234,6 @@ body {
   color: var(--msgoutgoing-c);
 }
 
-.styled-link:link,
-.styled-link:visited,
-.styled-link:hover,
-.styled-link:active
-{
-  color: #315FF4;
-  text-decoration: none;
-}
-
 .footer {
   display: flex;
   flex-direction: row;
@@ -690,7 +681,7 @@ body {
         var d = new Date(document.getElementById("mindate").value);
         mindate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000 - 1404165600;
         var d = new Date(document.getElementById("maxdate").value);
-        maxdate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000 - 1404165600;;
+        maxdate = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 1000 - 1404165600;
       }
 
       var recipient = -1;
@@ -830,7 +821,7 @@ body {
         msgbody.append(prebody);
         linkdiv.append(msgbody);
 
-        var d = new Date(global_results[i].d * 1000 + 1404165600;);
+        var d = new Date(global_results[i].d * 1000 + 1404165600);
 
         var msgdate = document.createElement('div');
         msgdate.classList.add("footer");

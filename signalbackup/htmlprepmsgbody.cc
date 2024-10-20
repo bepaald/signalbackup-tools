@@ -22,7 +22,8 @@
 
 bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                                    std::map<long long int, RecipientInfo> *recipient_info, bool incoming,
-                                   std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const
+                                   std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
+                                   bool linkify, bool isquote) const
 {
   if (body->empty())
     return false;
@@ -45,6 +46,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   }
 
   // now do other stylings?
+  bool hasstyledlinks = false;
   if (brdata.second)
   {
     BodyRanges brsproto(brdata);
@@ -116,20 +118,17 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       }
       if (!link.empty())
       {
-        //std::cout << "Adding link to range [" << start << "-" << start+length << link << "'" << std::endl;
-        //std::string bodydouble = *body;
-        //std::cout << *body << std::endl;
-        //applyRange(body, start, length, "<a href=\"" + link + "\">", "", "</a>", -1, &positions_added, &positions_excluded_from_escape);
+        //std::cout << "Adding link to range [" << start << "-" << start+length << "] '" << link << "'" << std::endl;
         ranges.emplace_back(Range{start, length, "<a class=\"styled-link\" href=\"" + link + "\">", "", "</a>", true});
-        //std::cout << *body << std::endl;
-        //for (auto n : positions_excluded_from_escape)
-        //  std::cout << n << std::endl;
-        //*body = bodydouble;
+        hasstyledlinks = true;
       }
-      // if (!mentionuuid.empty())
-      //   std::cout << "Adding mention to range [" << start << "-" << start+length << "] : '" << mentionuuid << "'" << std::endl;
     }
   }
+
+  // scan for links (somehow skipping the styled links above!), then
+  // ranges.emplace_back(Range{start, length, <a href=\"" + link + "\">", "", "</a>", true});
+  if (linkify && !hasstyledlinks)
+    HTMLLinkify(*body, &ranges);
 
   std::set<int> positions_excluded_from_escape;
   applyRanges(body, &ranges, &positions_excluded_from_escape);
@@ -137,17 +136,17 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   HTMLescapeString(body, &positions_excluded_from_escape);
 
   // now do the emoji
-  std::vector<std::pair<unsigned int, unsigned int>> pos = HTMLgetEmojiPos(*body);
+  std::vector<std::pair<unsigned int, unsigned int>> emoji_pos = HTMLgetEmojiPos(*body);
 
   // check if body is only emoji
   bool all_emoji = true;
-  if (pos.size() > 5)
+  if (emoji_pos.size() > 5)
     all_emoji = false; // could technically still be only emoji, but it gets a bubble in html
   else
   {
     for (unsigned int i = 0, posidx = 0; i < body->size(); ++i)
     {
-      if (posidx >= pos.size() || i != pos[posidx].first)
+      if (posidx >= emoji_pos.size() || i != emoji_pos[posidx].first)
       {
         if ((*body)[i] == ' ') // spaces dont count
           continue;
@@ -155,7 +154,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
         break;
       }
       else // body[i] == pos[posidx].first
-        i += pos[posidx++].second - 1; // minus 1 for the ++i in loop
+        i += emoji_pos[posidx++].second - 1; // minus 1 for the ++i in loop
     }
   }
 
@@ -163,11 +162,14 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   std::string pre = "<span class=\"msg-emoji\">";
   std::string post = "</span>";
   int moved = 0;
-  for (auto const &p : pos)
+  for (auto const &p : emoji_pos)
   {
-    body->insert(p.first + moved, pre);
-    body->insert(p.first + p.second + pre.size() + moved, post);
-    moved += pre.size() + post.size();
+    if (!positions_excluded_from_escape.contains(p.first)) [[likely]]
+    {
+      body->insert(p.first + moved, pre);
+      body->insert(p.first + p.second + pre.size() + moved, post);
+      moved += pre.size() + post.size();
+    }
   }
 
   return all_emoji;

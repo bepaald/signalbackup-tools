@@ -45,6 +45,7 @@
 #include <unordered_set>
 #include <string>
 #include <algorithm>
+#include <regex>
 
 struct HTMLMessageInfo;
 struct Range;
@@ -195,6 +196,7 @@ class SignalBackup
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
+  static std::regex const s_linkify_pattern;
 
  protected:
   inline SignalBackup(bool verbose, bool truncate, bool showprogress);
@@ -264,7 +266,7 @@ class SignalBackup
                   long long int split, std::string const &selfid, bool calllog, bool searchpage,
                   bool stickerpacks, bool migrate, bool overwrite, bool append, bool theme,
                   bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                  bool settings, bool receipts, bool use_original_filenames);
+                  bool settings, bool receipts, bool use_original_filenames, bool linkify);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
@@ -416,13 +418,14 @@ class SignalBackup
                            long long int uniqueid, std::string const &attachment_filename, bool overwrite, bool append) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
-                       std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata, bool isquote) const;
+                       std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
+                       bool linkify, bool isquote) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo,
                         bool searchpage, bool writereceipts) const;
   void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
-                         std::map<long long int, RecipientInfo> *recipientinfo) const;
+                         std::map<long long int, RecipientInfo> *recipientinfo, bool linkify) const;
   void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,
                                long long int message_id, bool isgroup, long long int read_count,
                                long long int delivered_count, long long int timestamp, int indent) const;
@@ -447,11 +450,11 @@ class SignalBackup
   void HTMLescapeString(std::string *in, std::set<int> const *const positions_excluded_from_escape = nullptr) const;
   std::string HTMLescapeString(std::string const &in) const;
   void HTMLescapeUrl(std::string *in) const;
+  void HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
   void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
   std::string getAvatarExtension(long long int recipient_id) const;
-  //void prepRanges(std::vector<Range> *ranges) const;
-  void prepRanges2(std::vector<Range> *ranges) const;
+  void prepRanges(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;

@@ -810,12 +810,14 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       {
         auto [data, length] = Base64::base64StringToBytes(snippet_ranges);
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(data, length);
-        HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info, !Types::isOutgoing(snippet_type), brdata, false);
+        HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info,
+                        !Types::isOutgoing(snippet_type), brdata, false /*linkify*/, false);
       }
       else // range from message, here range is in binary format
       {
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata = results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_ranges");
-        HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info, !Types::isOutgoing(snippet_type), brdata, false);
+        HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info,
+                        !Types::isOutgoing(snippet_type), brdata, false /*linkify*/, false);
       }
     }
 

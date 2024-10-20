@@ -20,7 +20,7 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
-                                     std::map<long long int, RecipientInfo> *recipient_info) const
+                                     std::map<long long int, RecipientInfo> *recipient_info, bool linkify) const
 {
   SqliteDB::QueryResults revision;
   if (!d_database.exec("SELECT " +
@@ -119,7 +119,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   if (!revision.isNull(0, d_mms_ranges))
     brdata = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, d_mms_ranges);
 
-  bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, false /*isquote*/);
+  bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, linkify, false /*isquote*/);
 
   bool nobackground = false;
   if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
@@ -131,7 +131,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
   if (!revision.isNull(0, "quote_mentions"))
     quote_mentions = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "quote_mentions");
-  HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, true);
+  HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, linkify, true /*isquote*/);
 
   HTMLMessageInfo msg_info({only_emoji,
                             false, //is_deleted,

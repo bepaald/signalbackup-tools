@@ -144,6 +144,7 @@ Arg::Arg(int argc, char *argv[])
   d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
   d_listxmlcontacts(std::string()),
   d_selectxmlchats(std::vector<std::string>()),
+  d_linkify(false),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1710,6 +1711,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--linkify")
+    {
+      d_linkify = true;
+      continue;
+    }
+    if (option == "--no-linkify")
+    {
+      d_linkify = false;
       continue;
     }
     if (option[0] != '-')

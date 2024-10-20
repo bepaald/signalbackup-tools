@@ -17,9 +17,10 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#include "signalbackup.ih"
+/*
+void SignalBackup::linkify()
+{
 
-#define VERSIONDATE "20241020.211000"
-
-#endif
+}
+*/

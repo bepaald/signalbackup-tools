@@ -32,7 +32,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               long long int split, std::string const &selfphone, bool calllog, bool searchpage,
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                              bool settings, bool receipts, bool originalfilenames)
+                              bool settings, bool receipts, bool originalfilenames, bool linkify)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -217,6 +217,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--light";
     if (themeswitching)
       options += "<br>--themeswitching";
+    if (originalfilenames)
+      options += "<br>--originalfilenames";
+    if (linkify)
+      options += "<br>--linkify";
 
     SqliteDB::QueryResults res;
     d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS 'mindate', MAX(" + d_mms_table + ".date_received) AS 'maxdate' FROM " + d_mms_table, &res);
@@ -541,7 +545,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (!messages.isNull(messagecount, d_mms_ranges))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
 
-        bool only_emoji = HTMLprepMsgBody(&body, mentions, &recipient_info, incoming, brdata, false /*isquote*/);
+        bool only_emoji = HTMLprepMsgBody(&body, mentions, &recipient_info, incoming, brdata, linkify, false /*isquote*/);
 
         bool nobackground = false;
         if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
@@ -553,7 +557,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
         if (!messages.isNull(messagecount, "quote_mentions"))
           quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
-        HTMLprepMsgBody(&quote_body, mentions, &recipient_info, incoming, quote_mentions, true);
+        HTMLprepMsgBody(&quote_body, mentions, &recipient_info, incoming, quote_mentions, linkify, true);
 
         // insert date-change message
         if (readable_date_day != previous_day_change)

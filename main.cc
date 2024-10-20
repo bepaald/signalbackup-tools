@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
                               (arg.split_bool() ? arg.split() : -1), arg.setselfid(),  arg.includecalllog(), arg.searchpage(),
                               arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
-                              arg.includereceipts(), arg.originalfilenames()))
+                              arg.includereceipts(), arg.originalfilenames(), arg.linkify()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
                             (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
-                            arg.includereceipts(), arg.originalfilenames()))
+                            arg.includereceipts(), arg.originalfilenames(), arg.linkify()))
       return 1;
   }
 
@@ -487,7 +487,7 @@ int main(int argc, char *argv[])
     if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), arg.split_by(), (arg.split_bool() ? arg.split() : -1),
                         arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
                         arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
-                        arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames()))
+                        arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames(), arg.linkify()))
       return 1;
 
   if (!arg.exporttxt().empty())

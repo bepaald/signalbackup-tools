@@ -49,7 +49,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"message", "thread_id"},//       /
       {"drafts", "thread_id"},
       {"mention", "thread_id"},
-      {"name_collision", "thread_id"}
+      {"name_collision", "thread_id"},
+      {"chat_folder_membership", "thread_id"}
     },
     NO_COMPACT
   },
@@ -459,6 +460,20 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
   },
   {
     "in_app_payment_subscriber",
+    "_id",
+    {},
+    0
+  },
+  {
+    "chat_folder",
+    "_id",
+    {
+      {"chat_folder_membership", "chat_folder_id"}
+    },
+    0
+  },
+  {
+    "chat_folder_membership",
     "_id",
     {},
     0

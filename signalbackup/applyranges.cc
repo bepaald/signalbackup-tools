@@ -50,8 +50,12 @@
 
 void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const
 {
-  prepRanges2(ranges);
+  // sort the ranges and adjust them
+  // to deal with overlaps
+  prepRanges(ranges);
 
+
+  // then, apply the ranges:
   unsigned int rangesidx = 0;
   unsigned int bodyidx = 0;
   while (bodyidx < body->size() && rangesidx < ranges->size())
@@ -77,13 +81,11 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
       body->replace(bodyidx, length, pre + replacement + post);
 
       for (unsigned int i = 0; i < pre.size(); ++i)
-        if (pre[i] == '<' || pre[i] == '>' || pre[i] == '\'' || pre[i] == '"' || pre[i] == '&')
-          if (positions_excluded_from_escape)
-            positions_excluded_from_escape->insert(i + bodyidx);
+        if (positions_excluded_from_escape)
+          positions_excluded_from_escape->insert(i + bodyidx);
       for (unsigned int i = 0; i < post.size(); ++i)
-        if (post[i] == '<' || post[i] == '>' || post[i] == '\'' || post[i] == '"' || post[i] == '&')
-          if (positions_excluded_from_escape)
-            positions_excluded_from_escape->insert(i + bodyidx + pre.size() + replacement.size());
+        if (positions_excluded_from_escape)
+          positions_excluded_from_escape->insert(i + bodyidx + pre.size() + replacement.size());
 
       //std::cout << "BODY: " << *body << std::endl;
 
@@ -115,7 +117,7 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
   This should work for (possible) overlapping ranges
   depending on how html renders certain things.
 */
-void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
+void SignalBackup::prepRanges(std::vector<Range> *ranges) const
 {
   std::sort(ranges->begin(), ranges->end());
 
@@ -225,7 +227,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
         if (!(*ranges)[i].replacement.empty()) // only one can have replacement, if it's i-1 its already kept...
           (*ranges)[i - 1].replacement = (*ranges)[i].replacement;
         ranges->erase(ranges->begin() + i);
-        return prepRanges2(ranges);
+        return prepRanges(ranges);
       }
       // (2) SAME START, LATER FINISH
       // else -> i.length > (i - 1).length
@@ -240,7 +242,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       (*ranges)[i].pre = "";
       (*ranges)[i].start = (*ranges)[i - 1].start + (*ranges)[i - 1].length;
       (*ranges)[i].length -= (*ranges)[i - 1].length;
-      return prepRanges2(ranges);
+      return prepRanges(ranges);
     }
     // else (i].start > (i - 1).start)
     if ((*ranges)[i].start + (*ranges)[i].length == (*ranges)[i - 1].start + (*ranges)[i - 1].length) // same end pos
@@ -256,7 +258,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
       (*ranges)[i].post = (*ranges)[i].post + (*ranges)[i - 1].post;
       (*ranges)[i - 1].post = "";
       (*ranges)[i - 1].length = (*ranges)[i].start - (*ranges)[i - 1].start;
-      return prepRanges2(ranges);
+      return prepRanges(ranges);
     }
     if ((*ranges)[i].start < (*ranges)[i - 1].start + (*ranges)[i - 1].length)
     {
@@ -290,6 +292,21 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
         }
         else
         {
+          if ((*ranges)[i].nobreak && (*ranges)[i - 1].nobreak) [[unlikely]]
+          {
+            Logger::warning("Illegal ranges: overlapping but unbreakable");
+            // std::cout << i << std::endl;
+            // std::cout << (*ranges)[i].start << std::endl;
+            // std::cout << (*ranges)[i].length << std::endl;
+            // std::cout << (*ranges)[i].pre << std::endl;
+            // std::cout << (*ranges)[i].post << std::endl;
+            // std::cout << i - 1 << std::endl;
+            // std::cout << (*ranges)[i-1].start << std::endl;
+            // std::cout << (*ranges)[i-1].length << std::endl;
+            // std::cout << (*ranges)[i-1].pre << std::endl;
+            // std::cout << (*ranges)[i-1].post << std::endl;
+          }
+
           //std::cout << "CASE 4a" << std::endl;
           Range newrange = {(*ranges)[i].start,
                             (*ranges)[i - 1].length - ((*ranges)[i].start - (*ranges)[i - 1].start),
@@ -305,7 +322,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
           (*ranges)[i].start = newrange.start + newrange.length; // N3
           (*ranges)[i].length -= newrange.length;
         }
-        return prepRanges2(ranges);
+        return prepRanges(ranges);
       }
       //if ((*ranges)[i].start + (*ranges)[i].length < (*ranges)[i - 1].start + (*ranges)[i - 1].length) // end sooner
       // (5) LATER START, EARLIER FINISH
@@ -328,7 +345,7 @@ void SignalBackup::prepRanges2(std::vector<Range> *ranges) const
 
       // (*ranges)[i].replacement is automatically kept if it has one
       // O2 == N2
-      return prepRanges2(ranges);
+      return prepRanges(ranges);
     }
   }
   // std::cout << "DONE!" << std::endl;
