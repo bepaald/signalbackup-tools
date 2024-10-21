@@ -127,6 +127,9 @@ R"*(
    --includereceipts                     Optional modifier for `--exporthtml'. Adds available info from
                                          message receipts to the HTML page. Note, this potentionally slows
                                          down page loading for large conversations significantly.
+   --originalfilenames                   Optional modifier for `--exporthtml'. Use the original filenames
+                                         for attached media when available. This option can not be used
+                                         together with `--append'.
    --allhtmlpages                        Optional modifier for `--exporthtml'. Convenience option that
                                          enables all the modifying options for `--exporthtml' listed below.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML

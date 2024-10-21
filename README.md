@@ -429,6 +429,7 @@ Other options that can be used together with `--exporthtml`:
 - `--includefullcontactlist` Generates a page showing _all_ contacts present in the database, including contacts with whom no thread exists, who are blocked or hidden, or who appear in your system contact list and may not have Signal installed.
 - `--allhtmlpages` Enables all of the above options, plus `--themeswitching`. Any specific option can be excluded by adding `--no-(option)` after this option on the command line.
 - `--includereceipts` Adds available information from read/delivery receipts to outgoing messages as a popup when hovering the checkmarks. Be aware this has the potential to significantly slow down page loading for larger conversations. In this case it is recommended to also use the `--split [N]` option to limit the page size.
+- `--originalfilenames` By default, this tool uses a custom naming scheme for message attachments when exporting to HTML. With this option, the original filenames are used (if available). This option can not be used together with `--append`, and will only work with an empty output directory (or with `--overwrite`).
 
 > [!NOTE]
 > A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.
