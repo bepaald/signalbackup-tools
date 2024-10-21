@@ -17,6 +17,9 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+// Modified (slightly) from The Android Open Source Project
+// (https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/util/Patterns.java)
+
 #include "signalbackup.ih"
 
 #define IANA_TOP_LEVEL_DOMAINS "(?:"                                    \
