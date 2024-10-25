@@ -43,7 +43,7 @@ long long int SignalBackup::getRecipientIdFromUuidMapped(std::string const &uuid
         res.rows() != 1 ||
         !res.valueHasType<long long int>(0, 0))
     {
-      if (!suppresswarning)
+      if (!suppresswarning) // we can suppress this warning, if we are creating the contact after not finding it...
         Logger::warning("Failed to find recipient for uuid: ", printable_uuid);
       return -1;
     }

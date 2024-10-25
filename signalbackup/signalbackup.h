@@ -250,11 +250,8 @@ class SignalBackup
   //std::pair<std::string, std::string> getDesktopDir() const;
   bool importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
-                         bool autodates, bool importstickers, std::string const &selfphone);
-  // bool importFromDesktop(std::string configdir, std::string appdir, std::string const &hexkey,
-  //                        long long int dbversion, bool skipmessagereorder,
-  //                        std::vector<std::string> const &dateranges, bool createmissingcontacts,
-  //                        bool autodates, bool importstickers, bool ignorewal, std::string const &selfphone);
+                         bool createcontacts_nowarn, bool autodates, bool importstickers,
+                         std::string const &selfphone);
   bool importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
                                  std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                  std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,

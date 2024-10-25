@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.importFromDesktop(ddb, true /*arg.skipmessagereorder()*/, arg.limittodates(), true /*addincompletedata*/,
-                                   false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
+                                   true /*importcontacts*/, false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
       return 1;
 
     if (!arg.exportdesktophtml().empty())
@@ -395,8 +395,9 @@ int main(int argc, char *argv[])
       return 1;
 
     MEMINFO("Before importfromdesktop");
-    if (!sb->importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(), arg.addincompletedataforhtmlexport(),
-                               arg.autolimitdates(),  arg.importstickers(), arg.setselfid()))
+    if (!sb->importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(),
+                               (arg.addincompletedataforhtmlexport() | arg.importdesktopcontacts()),
+                               arg.importdesktopcontacts(), arg.autolimitdates(),  arg.importstickers(), arg.setselfid()))
       return 1;
     MEMINFO("After importfromdesktop");
   }

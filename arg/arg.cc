@@ -117,6 +117,7 @@ Arg::Arg(int argc, char *argv[])
   d_split_by(std::string()),
   d_originalfilenames(false),
   d_addincompletedataforhtmlexport(false),
+  d_importdesktopcontacts(false),
   d_light(false),
   d_exporttxt(std::string()),
   d_exportdesktoptxt(std::string()),
@@ -1367,6 +1368,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-addincompletedataforhtmlexport")
     {
       d_addincompletedataforhtmlexport = false;
+      continue;
+    }
+    if (option == "--importdesktopcontacts")
+    {
+      d_importdesktopcontacts = true;
+      continue;
+    }
+    if (option == "--no-importdesktopcontacts")
+    {
+      d_importdesktopcontacts = false;
       continue;
     }
     if (option == "--light")

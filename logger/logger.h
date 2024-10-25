@@ -353,7 +353,7 @@ template <typename First, typename... Rest>
 inline void Logger::warning_start(First const &f, Rest... r) // static
 {
   messagePre();
-  s_instance->outputHead("       ", false, {" ", "   "});
+  s_instance->outputHead("Warning", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
@@ -378,7 +378,7 @@ template <typename First, typename... Rest>
 inline void Logger::error_start(First const &f, Rest... r) // static
 {
   messagePre();
-  s_instance->outputHead("     ", false, {" ", "   "});
+  s_instance->outputHead("Error", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 

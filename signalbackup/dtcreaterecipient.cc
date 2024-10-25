@@ -23,7 +23,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               std::string const &id, std::string const &phone, std::string const &groupidb64,
                                               std::string const &databasedir,
                                               std::map<std::string, long long int> *recipient_info,
-                                              bool *warn)
+                                              bool *was_warned)
 {
 
   //std::cout << "Creating new recipient for id: " << id << ", phone: " << phone << std::endl;
@@ -76,12 +76,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     return -1;
   }
 
-  if (*warn == false)
+  if (*was_warned == false)
   {
     Logger::warning("Chat partner was not found in recipient-table. Attempting to create.");
     Logger::warning_indent(Logger::Control::BOLD, "NOTE THE RESULTING BACKUP CAN MOST LIKELY NOT BE RESTORED");
     Logger::warning_indent("ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML.", Logger::Control::NORMAL);
-    *warn = true;
+    *was_warned = true;
   }
 
   if (res("type") == "group")
@@ -157,11 +157,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
       //std::cout << "Got members: " << mem("member") << std::endl;
 
-      long long int member_rid = getRecipientIdFromUuidMapped(mem("member"), recipient_info);
+      long long int member_rid = getRecipientIdFromUuidMapped(mem("member"), recipient_info, was_warned);
       if (member_rid == -1)
       {
-        Logger::message("Trying to create");
-        member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info, warn);
+        if (d_verbose) [[unlikely]]
+          Logger::message("Creating group member...");
+        member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info, was_warned);
         if (member_rid == -1)
         {
           Logger::error("Failed to get new groups members uuid.");

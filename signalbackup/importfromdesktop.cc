@@ -200,13 +200,8 @@
 
 bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                                      std::vector<std::string> const &daterangelist, bool createmissingcontacts,
-                                     bool autodates, bool importstickers, std::string const &selfphone)
-
-// bool SignalBackup::importFromDesktop(std::string configdir_hint, std::string databasedir_hint,
-//                                      std::string const &hexkey, long long int sqlcipherversion,
-//                                      bool skipmessagereorder, std::vector<std::string> const &daterangelist,
-//                                      bool createmissingcontacts, bool autodates, bool importstickers,
-//                                      bool ignorewal, std::string const &selfphone)
+                                     bool createmissingcontacts_nowarn, bool autodates, bool importstickers,
+                                     std::string const &selfphone)
 {
   if (d_selfid == -1)
   {
@@ -278,7 +273,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       datewhereclause += ')';
   }
 
-  bool warned_createcontacts = false;
+  bool warned_createcontacts = createmissingcontacts_nowarn;
 
   // find out which database is newer
   long long int maxdate_desktop_db = dtdb->d_database.getSingleResultAs<long long int>("SELECT MAX(MAX(json_extract(json, '$.received_at_ms')),MAX(received_at)) FROM messages", 0);
@@ -324,7 +319,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         continue;
       }
 
-    Logger::message("Trying to match conversation (", i + 1, "/", results_all_conversations.rows(), ") (type: ", results_all_conversations.valueAsString(i, "type"), ")");
+    Logger::message("Trying to match conversation "
+                    "(", Logger::Control::BOLD, i + 1, "/", results_all_conversations.rows(), Logger::Control::NORMAL, ")"
+                    " (type: ", results_all_conversations.valueAsString(i, "type"), ")");
 
     //long long int conversation_rowid = results_all_conversations.getValueAs<long long int>(i, "rowid");
 
