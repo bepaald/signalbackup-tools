@@ -824,6 +824,7 @@ This program supports a small number of other options, most of which are of litt
 - `--scanmissingattachments` If you see _"warning attachment data not found"_ messages, feel free to use this option and provide the 
 output to the developer.
 - `--migrate214to215` Changes in the database prevent v214 and v215 from being compatible for merging. This function attempts to migrate the older database so it can be used as a source for `--importthreads`. See also https://github.com/bepaald/signalbackup-tools/issues/184.
+- `--migrate_to_191` Work-around for [Signal issue 13034](https://github.com/signalapp/Signal-Android/issues/13034). If you are trying to restore an older backup (before daabase version 191), and Signal crashes right after the restore, try this. ([ref](https://github.com/signalapp/Signal-Android/issues/13034#issuecomment-2351447616), [ref](https://github.com/bepaald/signalbackup-tools/issues/233#issuecomment-2343769016)).
 
 **<span id="advanced">Advanced options</span>**
 
