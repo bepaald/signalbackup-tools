@@ -518,14 +518,17 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   {
     Logger::message("  Found existing thread for this recipient in target database, merging into thread ", targetthread);
 
-    if (source->d_database.containsTable("sms"))
-      source->d_database.exec("UPDATE sms SET thread_id = ?", targetthread);
-    source->d_database.exec("UPDATE " + source->d_mms_table + " SET thread_id = ?", targetthread);
-    source->d_database.exec("UPDATE drafts SET thread_id = ?", targetthread);
-    if (source->d_database.containsTable("mention"))
-      source->d_database.exec("UPDATE mention SET thread_id = ?", targetthread);
-    if (source->d_database.containsTable("name_collision"))
-      source->d_database.exec("UPDATE name_collision SET thread_id = ?", targetthread);
+    // set thread_ids to found targetthread
+    for (auto const &dbl : s_databaselinks)
+      if (dbl.table == "thread")
+      {
+        for (auto const &c : dbl.connections)
+        {
+          if (source->d_database.containsTable(c.table))
+            source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ?", targetthread);
+        }
+        break;
+      }
 
     // see below for comment explaining this function
     if (d_databaseversion >= 24)
@@ -915,7 +918,8 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   }
 
   // delete exisiting name_collisions (only possible if targetthread is an existing thread)
-  if (source->d_database.containsTable("name_collision"))
+  if (source->d_database.containsTable("name_collision") &&
+      d_database.containsTable("name_collision"))
   {
     SqliteDB::QueryResults res;
     d_database.exec("SELECT thread_id FROM name_collision", &res);
@@ -925,6 +929,18 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
 
     // delete corresponding collision_members
     source->d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
+  }
+
+  // delete existing chat_folder_memberships
+  if (source->d_database.containsTable("chat_folder_membership") &&
+      d_database.containsTable("chat_folder_membership"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT chat_folder_id, thread_id FROM chat_folder_membership", &res);
+
+    for (unsigned int i = 0; i < res.rows(); ++i)
+      source->d_database.exec("DELETE FROM chat_folder_membership WHERE chat_folder_id = ? AND thread_id = ?",
+                              {res.value(i, "chat_folder_id"), res.value(i, "thread_id")});
   }
 
   // // export database

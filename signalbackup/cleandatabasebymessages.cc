@@ -391,6 +391,20 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM remapped_recipients WHERE new_id NOT IN (SELECT DISTINCT _id FROM recipient)");
   }
 
+  if (d_database.containsTable("chat_folder_membership"))
+  {
+    Logger::message_start("  Deleting non-existent chat_folder_memberships");
+    d_database.exec("DELETE FROM chat_folder_membership WHERE thread_id NOT IN (SELECT _id FROM thread)");
+    Logger::message_end(" (", d_database.changed(), ")");
+  }
+
+  if (d_database.containsTable("chat_folder"))
+  {
+    Logger::message_start("  Deleting empty chat_folders");
+    d_database.exec("DELETE FROM chat_folder WHERE _id NOT IN (SELECT chat_folder_id FROM chat_folder_membership)");
+    Logger::message_end(" (", d_database.changed(), ")");
+  }
+
   Logger::message("  Vacuuming database");
   d_database.exec("VACUUM");
   d_database.freeMemory();
