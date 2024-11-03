@@ -168,26 +168,26 @@
 #define DOMAIN_NAME "(" HOST_NAME "|" IP_ADDRESS ")"
 #define PROTOCOL "(?:http|https|rtsp|ftp):\\/\\/" // NOTE originally started with (?i:  -> non capturing group with i (case insensitive flag) not valid ECMAScript (its PCRE) (we add icase to std::regex object)
 #define WORD_BOUNDARY "(?:\\b|$|^)"
-#define USER_INFO "(?:[a-zA-Z0-9\\$\\-\\_\\.\\+\\!\\*\\'\\(\\)"         \
-    "\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,64}(?:\\:(?:[a-zA-Z0-9\\$\\-\\_" \
-    "\\.\\+\\!\\*\\'\\(\\)\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,25})?\\@"
+#define USER_INFO "(?:[a-zA-Z0-9\\$\\-_\\.\\+\\!\\*\\'\\(\\)"           \
+  "\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,64}(?:\\:(?:[a-zA-Z0-9\\$\\-_" \
+  "\\.\\+\\!\\*\\'\\(\\)\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,25})?\\@"
 #define PORT_NUMBER "\\:\\d{1,5}"
 #define PATH_AND_QUERY "\\/(?:(?:["                             \
-    LABEL_CHAR                                                  \
-    "\\;\\/\\?\\:\\@\\&\\=\\#\\~"                               \
-    "\\-\\.\\+\\!\\*\\'\\(\\)\\,\\_])|(?:\\%[a-fA-F0-9]{2}))*"
+  LABEL_CHAR                                                    \
+  "\\;\\/\\?\\:\\@\\&\\=\\#\\~"                                 \
+  "\\-\\.\\+\\!\\*\\'\\(\\)\\,_])|(?:\\%[a-fA-F0-9]{2}))*"
 #define STRICT_TLD "(?:" IANA_TOP_LEVEL_DOMAINS "|" PUNYCODE_TLD ")"
 #define STRICT_HOST_NAME "(?:(?:" IRI_LABEL "\\.)+" STRICT_TLD ")"
 #define STRICT_DOMAIN_NAME "(?:" STRICT_HOST_NAME "|" IP_ADDRESS ")"
 #define RELAXED_DOMAIN_NAME "(?:(?:" IRI_LABEL "(?:\\.(?=\\S))?)+|" IP_ADDRESS ")"
 
-#define EMAIL_PATTERN "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}"            \
+#define EMAIL_PATTERN "[a-zA-Z0-9\\+\\._\\%\\-\\+]{1,256}"              \
   "\\@"                                                                 \
-    "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}"                                   \
-    "("                                                                 \
-    "\\."                                                               \
-    "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}"                                   \
-    ")+"
+  "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}"                                     \
+  "("                                                                   \
+  "\\."                                                                 \
+  "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}"                                     \
+  ")+"
 
 #define  WEB_URL_WITHOUT_PROTOCOL "("                                   \
     WORD_BOUNDARY                                                       \
