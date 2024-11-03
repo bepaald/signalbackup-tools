@@ -864,7 +864,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         << "          <span class=\"columnview\">\n"
         << "            <span class=\"column-right-align\">Included chats:</span>\n"
         << "            <span class=\"column-left-align\">";
-      for (uint i = 0; i < cf_details_members_included.rows(); ++i)
+      for (unsigned int i = 0; i < cf_details_members_included.rows(); ++i)
       {
         if (i > 0)
           outputfile << ", ";
@@ -874,7 +874,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         << "</span>\n"
         << "            <span class=\"column-right-align\">Excluded chats:</span>\n"
         << "            <span class=\"column-left-align\">";
-      for (uint i = 0; i < cf_details_members_excluded.rows(); ++i)
+      for (unsigned int i = 0; i < cf_details_members_excluded.rows(); ++i)
       {
         if (i > 0)
           outputfile << ", ";

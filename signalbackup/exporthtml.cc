@@ -885,7 +885,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (d_database.exec("SELECT _id, name, show_individual, show_groups"/*, position, folder_type*/" FROM chat_folder WHERE folder_type IS NOT 0",
                         &cf_results)) [[likely]]
     {
-      for (uint i = 0; i < cf_results.rows(); ++i)
+      for (unsigned int i = 0; i < cf_results.rows(); ++i)
       {
         /* membership_type
         // Chat that should be included in the chat folder
@@ -901,7 +901,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::vector<long long int> chatfolder_threads;
 
         // add threads manually included
-        for (uint j = 0; j < cft_results.rows(); ++j)
+        for (unsigned int j = 0; j < cft_results.rows(); ++j)
           chatfolder_threads.push_back(cft_results.valueAsInt(j, "thread_id"));
 
         // add 1-on-1 if added
@@ -911,7 +911,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           if (!d_database.exec("SELECT _id FROM thread WHERE recipient_id IN "
                                "(SELECT _id FROM recipient WHERE type = 0)", &individual_threads)) [[unlikely]]
             continue;
-          for (uint j = 0; j < individual_threads.rows(); ++j)
+          for (unsigned int j = 0; j < individual_threads.rows(); ++j)
             chatfolder_threads.push_back(individual_threads.valueAsInt(j, "_id"));
         }
 
@@ -922,7 +922,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           if (!d_database.exec("SELECT _id FROM thread WHERE recipient_id IN "
                                "(SELECT _id FROM recipient WHERE type = 3)", &group_threads)) [[unlikely]] // consider type = 1,2,3 ?
             continue;
-          for (uint j = 0; j < group_threads.rows(); ++j)
+          for (unsigned int j = 0; j < group_threads.rows(); ++j)
             chatfolder_threads.push_back(group_threads.valueAsInt(j, "_id"));
         }
 
