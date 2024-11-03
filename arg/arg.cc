@@ -112,6 +112,7 @@ Arg::Arg(int argc, char *argv[])
   d_searchpage(false),
   d_stickerpacks(false),
   d_includereceipts(false),
+  d_chatfolders(false),
   d_split(1000),
   d_split_bool(false),
   d_split_by(std::string()),
@@ -1300,6 +1301,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-includereceipts")
     {
       d_includereceipts = false;
+      continue;
+    }
+    if (option == "--chatfolders")
+    {
+      d_chatfolders = true;
+      continue;
+    }
+    if (option == "--no-chatfolders")
+    {
+      d_chatfolders = false;
       continue;
     }
     if (option == "--allhtmlpages")

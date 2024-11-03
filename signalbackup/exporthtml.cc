@@ -32,7 +32,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               long long int split, std::string const &selfphone, bool calllog, bool searchpage,
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                              bool settings, bool receipts, bool originalfilenames, bool linkify)
+                              bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -221,6 +221,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--originalfilenames";
     if (linkify)
       options += "<br>--linkify";
+    if (chatfolders)
+      options += "<br>--chatfolders";
 
     SqliteDB::QueryResults res;
     d_database.exec("SELECT MIN(" + d_mms_table + ".date_received) AS 'mindate', MAX(" + d_mms_table + ".date_received) AS 'maxdate' FROM " + d_mms_table, &res);
@@ -863,13 +865,84 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
   }
 
+  // write chat folders
+  std::map<std::string, std::string> chatfolders_written; // {chatfolder name, filename(link)}
+  if (chatfolders && d_database.containsTable("chat_folder"))
+  {
+    // get all folders
+    /* FolderType:
+       ALL(0),
+       // Folder containing all 1:1 chats
+       INDIVIDUAL(1),
+       // Folder containing group chats
+       GROUP(2),
+       // Folder containing unread chats.
+       UNREAD(3),
+       // Folder containing custom chosen chats
+       CUSTOM(4);
+    */
+    SqliteDB::QueryResults cf_results;
+    if (d_database.exec("SELECT _id, name, show_individual, show_groups"/*, position, folder_type*/" FROM chat_folder WHERE folder_type IS NOT 0",
+                        &cf_results)) [[likely]]
+    {
+      for (uint i = 0; i < cf_results.rows(); ++i)
+      {
+        /* membership_type
+        // Chat that should be included in the chat folder
+        INCLUDED(0),
+        // Chat that should be excluded from the chat folder
+        EXCLUDED(1)
+        */
+        SqliteDB::QueryResults cft_results;
+        if (!d_database.exec("SELECT thread_id FROM chat_folder_membership WHERE chat_folder_id = ? AND membership_type = 0",
+                             cf_results.value(i, "_id"), &cft_results)) [[unlikely]]
+          continue;
+
+        std::vector<long long int> chatfolder_threads;
+
+        // add threads manually included
+        for (uint j = 0; j < cft_results.rows(); ++j)
+          chatfolder_threads.push_back(cft_results.valueAsInt(j, "thread_id"));
+
+        // add 1-on-1 if added
+        if (cf_results.valueAsInt(i, "show_individual"))
+        {
+          SqliteDB::QueryResults individual_threads;
+          if (!d_database.exec("SELECT _id FROM thread WHERE recipient_id IN "
+                               "(SELECT _id FROM recipient WHERE type = 0)", &individual_threads)) [[unlikely]]
+            continue;
+          for (uint j = 0; j < individual_threads.rows(); ++j)
+            chatfolder_threads.push_back(individual_threads.valueAsInt(j, "_id"));
+        }
+
+        // add groups if added
+        if (cf_results.valueAsInt(i, "show_groups"))
+        {
+          SqliteDB::QueryResults group_threads;
+          if (!d_database.exec("SELECT _id FROM thread WHERE recipient_id IN "
+                               "(SELECT _id FROM recipient WHERE type = 3)", &group_threads)) [[unlikely]] // consider type = 1,2,3 ?
+            continue;
+          for (uint j = 0; j < group_threads.rows(); ++j)
+            chatfolder_threads.push_back(group_threads.valueAsInt(j, "_id"));
+        }
+
+        std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
+
+        if (HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
+                                calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
+                                append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"))) [[likely]]
+          chatfolders_written.emplace(cf_results(i, "name"), filename);
+      }
+    }
+  }
+
   std::vector<long long int> indexedthreads;
   std::set_difference(threads.begin(), threads.end(),
                       excludethreads.begin(), excludethreads.end(),
                       std::back_inserter(indexedthreads));
   HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                 append, lighttheme, themeswitching, exportdetails_html);
+                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_written);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,

@@ -19,28 +19,29 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                                  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
-                                  bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts,
-                                  bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
-                                  std::string const &exportdetails) const
+bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
+                                      std::string const &basename, std::map<long long int, RecipientInfo> *recipient_info,
+                                      long long int note_to_self_tid, bool calllog, bool searchpage, bool stickerpacks, bool blocked,
+                                      bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
+                                      std::string const &exportdetails, long long int chatfolder_idx,
+                                      std::map<std::string, std::string> const &chatfolders) const
 {
+  std::string filename(sanitizeFilename(basename) + ".html");
 
-  Logger::message("Writing index.html...");
-
-  if (bepaald::fileOrDirExists(directory + "/index.html"))
+  Logger::message("Writing ", filename, "...");
+  if (bepaald::fileOrDirExists(directory + "/" + filename))
   {
     if (!overwrite && !append)
     {
-      Logger::error("'", directory, "/index.html' exists. Use --overwrite to overwrite.");
-      return;
+      Logger::error("'", directory, "/", filename, "' exists. Use --overwrite to overwrite.");
+      return false;
     }
   }
-  std::ofstream outputfile(directory + "/index.html", std::ios_base::binary);
+  std::ofstream outputfile(directory + "/" + filename, std::ios_base::binary);
   if (!outputfile.is_open())
   {
-    Logger::error("Failed to open '", directory, "/index.html' for writing.");
-    return;
+    Logger::error("Failed to open '", directory, "/", filename, "' for writing.");
+    return false;
   }
 
   // build string of requested threads
@@ -53,7 +54,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
   }
 
   int menuitems = 0;
-  for (auto const &o : {blocked, stickerpacks, calllog, settings, fullcontacts})
+  for (bool o : {calllog, stickerpacks, blocked, fullcontacts, settings})
     if (o)
       ++menuitems;
 
@@ -81,7 +82,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
                        "date DESC", &results))
   {
     Logger::error("Failed to query database for thread snippets.");
-    return;
+    return false;
   }
   //results.prettyPrint(true);
 
@@ -154,7 +155,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
                          &results))
     {
       Logger::error("Failed to query database for thread snippets.");
-      return;
+      return false;
     }
     //results.prettyPrint(true);
   }
@@ -246,7 +247,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       << "        text-align: right;\n"
       << "        font-style: italic;\n"
       << "      }\n"
-    << '\n';
+      << '\n';
 
   outputfile
     << "      .conversation-list-header {\n"
@@ -348,7 +349,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       outputfile
         << "      .avatar-" << rec_id << " {\n"
         << "        background-image: url(\"" << avatar_path << "/media/Avatar_" << rec_id << "." << avatar_extension << "\");\n"
-//        << "        background-image: url(\"" << avatar_path << "/" << avatar << "\");\n"
+        //        << "        background-image: url(\"" << avatar_path << "/" << avatar << "\");\n"
         << "        background-position: center;\n"
         << "        background-repeat: no-repeat;\n"
         << "        background-size: cover;\n"
@@ -459,7 +460,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
     << "        margin-right: 5px;\n"
     << "      }\n"
     << '\n';
-  if (menuitems > 0)
+  if (menuitems > 0 ||
+      chatfolders.size() > 0 ||
+      chatfolder_idx >= 0)
   {
     outputfile
       << "      #menu {\n"
@@ -499,7 +502,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
     << "      }\n"
     << '\n';
 
-  if (menuitems > 1) // we need an expandable menu
+  if (menuitems > 1 ||
+      chatfolders.size() > 0 ||
+      (chatfolder_idx >= 0 && menuitems > 0)) // we need an expandable menu
   {
     outputfile
       << "       #searchmenu {\n"
@@ -532,7 +537,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       << "      }\n"
       << '\n'
       << "     .searchmenu:checked + .searchmenulabel + .expandedsearchmenu {\n"
-      << "       max-height: " << menuitems * 35 << "px;\n"
+      << "       max-height: " << (menuitems + (chatfolder_idx >= 0 ? 1 : 0)) * 35 << "px;\n"
       << "       padding-top: 10px;\n"
       << "       opacity: 100%;\n"
       << "       transition: max-height .3s ease-out, padding .3s ease-out, opacity .15s ease-out;\n"
@@ -565,6 +570,79 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       << "         vertical-align: middle;\n"
       << "       }\n"
       << '\n';
+  }
+
+  if (chatfolder_idx >= 0)
+  {
+    outputfile
+      << "    #chatfolder-name {\n"
+      << "      font-size: large;\n"
+      << "    }\n"
+      << "\n"
+      << "    #chatfolder-name input[type=checkbox] {\n"
+      << "      display: none;\n"
+      << "    }\n"
+      << "\n"
+      << "    #chatfolder-name input[type=checkbox]:checked ~ label > .chatfolder-details {\n"
+      << "      max-height: none;\n"
+      << "      padding-top: 5px;\n"
+      << "      padding-bottom: 5px;\n"
+      << "      overflow: visible;\n"
+      << "      transition: padding-top 0.2s ease, padding-bottom 0.2s ease, max-height 0.4s ease;\n"
+      << "    }\n"
+      << "\n"
+      << "    #chatfolder-name input[type=checkbox] ~ label > small::before {\n"
+      << "      content: '(show';\n"
+      << "    }\n"
+      << "\n"
+      << "    #chatfolder-name input[type=checkbox]:checked ~ label >  small::before {\n"
+      << "      content: '(hide';\n"
+      << "    }\n"
+      << "\n"
+      << "    .chatfolder-details {\n"
+      << "      display: block;\n"
+      << "      font-size: small;\n"
+      << "      max-height: 0px;\n"
+      << "      max-width: 90%;\n"
+      << "      margin-left: auto;\n"
+      << "      margin-right: auto;\n"
+      << "      overflow: hidden;\n"
+      << "      padding-top: 0px;\n"
+      << "      padding-bottom: 0px;\n"
+      << "      transition: padding-top 0.05s ease, padding-bottom 0.05s ease, max-height 0.25s ease;\n"
+      << "    }\n"
+      << "\n"
+      << "    .columnview {\n"
+      << "      display: flex;\n"
+      << "      flex-flow: row wrap;\n"
+      << "      justify-content: space-between;\n"
+      << "      overflow-wrap: anywhere;\n"
+      << "    }\n"
+      << "\n"
+      << "    .column-left-align,\n"
+      << "    .column-right-align {\n"
+      << "      flex: 0 0 49%;\n"
+      << "    }\n"
+      << "\n"
+      << "    .column-right-align {\n"
+      << "      padding-right: 1%;\n"
+      << "      text-align: right;\n"
+      << "    }\n"
+      << "\n"
+      << "    .column-left-align {\n"
+      << "      padding-left: 1%;\n"
+      << "      text-align: left;\n"
+      << "    }\n"
+      << "\n"
+      << "    .columnview-header {\n"
+      << "      flex: 0 0 100%;\n"
+      << "      text-align: center;\n"
+      << "    }\n"
+      << "\n"
+      << "    .chatfolder-details .columnview-header {\n"
+      << "      font-style: italic;\n"
+      << "    }\n"
+      << "\n";
   }
 
   outputfile
@@ -642,6 +720,26 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
     outputfile
       << "      .settings-icon {\n"
       << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M12 8.5A3.5 3.5 0 1 1 8.5 12 3.5 3.5 0 0 1 12 8.5M12 7a5 5 0 1 0 5 5 5 5 0 0 0-5-5zm0-4.49a9.83 9.83 0 0 1 1.21.08l.21 2.49.91.33a5.72 5.72 0 0 1 .68.28l.88.42 1.91-1.62a9.23 9.23 0 0 1 1.71 1.71l-1.62 1.91.42.88a5.72 5.72 0 0 1 .28.68l.33.91 2.49.21a8.91 8.91 0 0 1 0 2.42l-2.49.21-.33.91a5.72 5.72 0 0 1-.28.68l-.42.88 1.62 1.91a9.23 9.23 0 0 1-1.71 1.71l-1.91-1.62-.88.42a5.72 5.72 0 0 1-.68.28l-.91.33-.21 2.49a9.19 9.19 0 0 1-2.42 0l-.21-2.49-.91-.33a5.72 5.72 0 0 1-.67-.28l-.88-.42-1.92 1.62a9.23 9.23 0 0 1-1.71-1.71l1.62-1.91-.42-.89a5.72 5.72 0 0 1-.28-.68l-.33-.91-2.49-.21a8.91 8.91 0 0 1 0-2.42l2.49-.21.33-.91A5.72 5.72 0 0 1 5.69 9l.42-.88L4.49 6.2A9.23 9.23 0 0 1 6.2 4.49l1.91 1.62.89-.42a5.72 5.72 0 0 1 .68-.28l.91-.33.21-2.49a9.83 9.83 0 0 1 1.2-.08h0M12 1a10.93 10.93 0 0 0-1.88.16 1 1 0 0 0-.79.9L9.17 4a7.64 7.64 0 0 0-.83.35L6.87 3.09a1 1 0 0 0-.66-.24 1 1 0 0 0-.54.15 11 11 0 0 0-2.62 2.62 1 1 0 0 0 0 1.25l1.29 1.47a7.64 7.64 0 0 0-.34.83l-1.92.16a1 1 0 0 0-.9.79 11 11 0 0 0 0 3.76 1 1 0 0 0 .9.79l1.92.16a7.64 7.64 0 0 0 .35.83l-1.26 1.47a1 1 0 0 0-.09 1.2A11 11 0 0 0 5.62 21a1 1 0 0 0 .61.19 1 1 0 0 0 .64-.23l1.47-1.25a7.64 7.64 0 0 0 .83.35l.16 1.92a1 1 0 0 0 .79.9A11.83 11.83 0 0 0 12 23a10.93 10.93 0 0 0 1.88-.16 1 1 0 0 0 .79-.9l.16-1.94a7.64 7.64 0 0 0 .83-.35l1.47 1.25a1 1 0 0 0 .66.24 1 1 0 0 0 .54-.16 11 11 0 0 0 2.67-2.6 1 1 0 0 0 0-1.25l-1.25-1.47a7.64 7.64 0 0 0 .35-.83l1.92-.16a1 1 0 0 0 .9-.79 11 11 0 0 0 0-3.76 1 1 0 0 0-.9-.79L20 9.17a7.64 7.64 0 0 0-.35-.83l1.25-1.47a1 1 0 0 0 .1-1.2 11 11 0 0 0-2.61-2.62 1 1 0 0 0-.61-.19 1 1 0 0 0-.64.23l-1.48 1.25a7.64 7.64 0 0 0-.83-.34l-.16-1.92a1 1 0 0 0-.79-.9A11.83 11.83 0 0 0 12 1z\"></path></svg>');\n"
+      << "        filter: var(--icon-f);\n"
+      << "    }\n"
+      << '\n';
+  }
+
+  if (chatfolders.size() > 0)
+  {
+    outputfile
+      << "      .chatfolders-icon {\n"
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"white\"><path d=\"M4.063 20.397C2.046 20.397 1 19.361 1 17.362V5.979C1 4.018 2.027 3 3.773 3h2.643c.971 0 1.457.177 2.111.719l.541.43c.514.42.906.579 1.578.579h8.685c2.017 0 3.063 1.036 3.063 3.035v9.599c0 1.999-1.036 3.035-2.82 3.035H4.063zM2.83 6.138v2.325h17.734v-.542c0-.915-.476-1.363-1.335-1.363h-9.068c-.971 0-1.476-.178-2.12-.71L7.5 5.409c-.523-.429-.906-.579-1.569-.579H4.138c-.841 0-1.308.449-1.308 1.308zm1.345 12.429h15.054c.859 0 1.335-.448 1.335-1.354v-7.135H2.83v7.135c0 .906.477 1.354 1.345 1.354z\"></path></svg>');\n"
+      << "        filter: var(--icon-f);\n"
+      << "    }\n"
+      << '\n';
+  }
+
+  if (chatfolder_idx >= 0)
+  {
+    outputfile
+      << "      .nav-up {\n"
+      << "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"white\" stroke=\"white\"><path d=\"M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z\"></path></svg>');\n"
       << "        filter: var(--icon-f);\n"
       << "    }\n"
       << '\n';
@@ -740,7 +838,67 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
     << '\n'
 
     << "    <div class=\"conversation-list-header\">\n"
-    << "      Signal conversation list\n"
+    << "      Signal conversation list\n";
+  if (chatfolder_idx >= 0)
+  {
+    SqliteDB::QueryResults cf_details;
+    SqliteDB::QueryResults cf_details_members_included;
+    SqliteDB::QueryResults cf_details_members_excluded;
+    if (d_database.exec("SELECT name, show_unread, show_muted, show_individual, show_groups, is_muted, folder_type FROM chat_folder WHERE _id = ?", chatfolder_idx, &cf_details) &&
+        d_database.exec("SELECT thread.recipient_id FROM chat_folder_membership "
+                        "LEFT JOIN thread ON thread._id = chat_folder_membership.thread_id "
+                        "WHERE chat_folder_id = ? AND membership_type = 0", chatfolder_idx, &cf_details_members_included) &&
+        d_database.exec("SELECT thread.recipient_id FROM chat_folder_membership "
+                        "LEFT JOIN thread ON thread._id = chat_folder_membership.thread_id "
+                        "WHERE chat_folder_id = ? AND membership_type = 1", chatfolder_idx, &cf_details_members_excluded))
+    {
+      outputfile
+        << "      <div id=\"chatfolder-name\">\n";
+      outputfile
+        << "        " << HTMLescapeString(cf_details("name")) << "\n";
+      outputfile
+        << "        <input type=\"checkbox\" id=\"show-chatfolder-details\">\n"
+        << "        <label for=\"show-chatfolder-details\">\n"
+        << "        <small> details)</small>\n"
+        << "        <span class=\"chatfolder-details\">\n"
+        << "          <span class=\"columnview\">\n"
+        << "            <span class=\"column-right-align\">Included chats:</span>\n"
+        << "            <span class=\"column-left-align\">";
+      for (uint i = 0; i < cf_details_members_included.rows(); ++i)
+      {
+        if (i > 0)
+          outputfile << ", ";
+        outputfile << HTMLescapeString(getRecipientInfoFromMap(recipient_info, cf_details_members_included.valueAsInt(i, "recipient_id")).display_name);
+      }
+      outputfile
+        << "</span>\n"
+        << "            <span class=\"column-right-align\">Excluded chats:</span>\n"
+        << "            <span class=\"column-left-align\">";
+      for (uint i = 0; i < cf_details_members_excluded.rows(); ++i)
+      {
+        if (i > 0)
+          outputfile << ", ";
+        outputfile << HTMLescapeString(getRecipientInfoFromMap(recipient_info, cf_details_members_excluded.valueAsInt(i, "recipient_id")).display_name);
+      }
+      outputfile
+        << "</span>\n"
+        << "            <span class=\"column-right-align\">Show 1:1 chats:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_individual") ? "true" : "false") << "</span>\n"
+        << "            <span class=\"column-right-align\">Show group chats:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_groups") ? "true" : "false") << "</span>\n"
+        << "            <span class=\"column-right-align\">Show only unread:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_unread") ? "true" : "false") << "</span>\n"
+        << "            <span class=\"column-right-align\">Include muted chats:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_muted") ? "true" : "false") << "</span>\n"
+        << "            <span class=\"column-right-align\">Muted:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "is_muted") ? "true" : "false") << "</span>\n"
+        << "          </span>\n"
+        << "        </span>\n"
+        << "        </label>\n"
+        << "      </div>\n";
+    }
+  }
+  outputfile
     << "    </div>\n"
     << "\n"
     << "    <div class=\"conversation-list\">\n"
@@ -861,7 +1019,7 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
     {
       Logger::error("Sanitized+url encoded name was empty. This should never happen. Original display_name: '",
                     getRecipientInfoFromMap(recipient_info, rec_id).display_name, "'");
-      return;
+      return false;
     }
 
 
@@ -906,11 +1064,15 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       << '\n';
   }
 
-  if (menuitems > 0)
+  if (menuitems > 0 ||
+      //chatfolderlist.size() > 0 ||
+      chatfolder_idx >= 0)
     outputfile
       << "    <div id=\"menu\">\n";
 
-  if (menuitems > 1) // collapsible menu
+  if (menuitems > 1 ||
+      //chatfolderlist.size() > 0 ||
+      (chatfolder_idx >= 0 && menuitems > 0)) // collapsible menu
     outputfile
       << "         <div class=\"menu-item\">\n"
       << "           <div class=\"expandable-menu-item\">\n"
@@ -920,6 +1082,21 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       << "             </label>\n"
       << "             <div class=\"expandedsearchmenu\">\n"
       << '\n';
+
+  if (chatfolder_idx >= 0)
+  {
+    outputfile
+      << "      <a href=\"index.html\">\n"
+      << "        <div class=\"menu-item\">\n"
+      << "          <div class=\"menu-icon nav-up\">\n"
+      << "          </div>\n"
+      << "          <div>\n"
+      << "            index\n"
+      << "          </div>\n"
+      << "        </div>\n"
+      << "      </a>\n"
+      << '\n';
+  }
 
   if (calllog)
   {
@@ -995,13 +1172,17 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
       << '\n';
   }
 
-  if (menuitems > 1) // collapsible menu closing tags
+  if (menuitems > 1 ||
+      //  chatfolderlist.sizE() ||
+      (chatfolder_idx >= 0 && menuitems > 0)) // collapsible menu closing tags
     outputfile
       << "             </div>\n"
       << "           </div>\n"
       << "         </div>\n";
 
-  if (menuitems > 0)
+  if (menuitems > 0 ||
+      // chatfolderlist.size() ||
+      chatfolder_idx >= 0)
     outputfile
       << "    </div>\n";
 
@@ -1062,4 +1243,9 @@ void SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, lon
   outputfile
     << "  </body>\n"
     << "</html>\n";
+
+  //for (auto const &[k, v] : chatfolders)
+  //  std::cout << "'" << k << "' : " << (sanitizeFilename(v) + ".html") << std::endl;
+
+  return true;
 }
