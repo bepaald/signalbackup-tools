@@ -151,6 +151,9 @@ R"*(
                                          Signal at all.
    --addexportdetails                    Optional modifier for `--exporthtml'. Adds some metadata about this
                                          tools and the backup to the pages when printing.
+   --linkify                             Optional modifier for `--exporthtml'. Attempts to turn URLs in
+                                         messages actual clickable links. This option is enabled by deault,
+                                         and can be disabled by `--no-linkify'.
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
                                          This option also supports the `--limittothreads',
                                          `--limittothreadbybame', `--limittodates', and `--migratedb'

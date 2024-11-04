@@ -54,7 +54,7 @@ Note for Windows users: this is a command line application. This means you can n
 
 **<span id="macos">macOS</span>**
 
-A homebrew formula is provided in [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). On modern macOS versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD --formula [path/to/signalbackup-tools.rb]`. Once installed, the program can be upgraded by running `brew upgrade --fetch-HEAD`.
+A homebrew formula is provided in [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). On modern macOS versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD --formula [path/to/signalbackup-tools.rb]`. Once installed, the program can be upgraded by running `brew upgrade --fetch-HEAD --formula signalbackup-tools`.
 
 Manually compiling should also be possible assuming the dependencies are installed, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9), or more recently [here](https://github.com/bepaald/signalbackup-tools/issues/85). macOS users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
 
