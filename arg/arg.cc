@@ -146,7 +146,7 @@ Arg::Arg(int argc, char *argv[])
   d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
   d_listxmlcontacts(std::string()),
   d_selectxmlchats(std::vector<std::string>()),
-  d_linkify(false),
+  d_linkify(true),
   d_input_required(false)
 {
   // vector to hold arguments

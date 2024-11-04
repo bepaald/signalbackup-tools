@@ -24,7 +24,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       long long int note_to_self_tid, bool calllog, bool searchpage, bool stickerpacks, bool blocked,
                                       bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
                                       std::string const &exportdetails, long long int chatfolder_idx,
-                                      std::map<std::string, std::string> const &chatfolders) const
+                                      std::vector<std::pair<std::string, std::string>> const &chatfolders) const
 {
   std::string filename(sanitizeFilename(basename) + ".html");
 
@@ -471,6 +471,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "        position: fixed;\n"
       << "        top: 20px;\n"
       << "        left: 20px;\n"
+      << "        background: var(--body-bgc);\n"
+      << "        cursor: pointer;\n"
       << "      }\n"
       << '\n'
       << "      #menu a:link,\n"
@@ -507,11 +509,16 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       (chatfolder_idx >= 0 && menuitems > 0)) // we need an expandable menu
   {
     outputfile
-      << "       #searchmenu {\n"
-      << "         display: none;\n"
+      << "       .menu-separator {\n"
+      << "         width: 90%;\n"
+      << "         height: 5px;\n"
       << "       }\n"
       << '\n'
-      << "       .expandedsearchmenu .menu-item {\n"
+      << "       .menu-separator hr {\n"
+      << "         width: 100%;\n"
+      << "       }\n"
+      << '\n'
+      << "       #expandedmenu .menu-item {\n"
       << "         padding-left: 0px;\n"
       << "         padding-bottom: 0px;\n"
       << "       }\n"
@@ -523,31 +530,35 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "         cursor: pointer;\n"
       << "       }  \n"
       << '\n'
-      << "      .expandedsearchmenu {\n"
+      << "      #expandedmenu {\n"
       << "        display: flex;\n"
       << "        flex-direction: column;\n"
       << "        align-items: flex-start;\n"
+      << "        width: 0px;\n"
       << "        max-height: 0px;\n"
       << "        overflow: hidden;\n"
       << "        padding: 0px;\n"
       << "        opacity: 0%;\n"
       << "        border: none; \n"
-      << "        background: var(--conversationbox-bc);\n"
-      << "        transition: max-height .3s ease-out, padding .3s ease-out, opacity .3s ease-out;\n"
+      << "        background: var(--body-bgc);\n"
+      << "        transition: max-height .25s ease-out, padding .25s ease-out, opacity .25s ease-out, width 0s 0.25s, overflow 0s 0.25s;\n"
       << "      }\n"
       << '\n'
-      << "     .searchmenu:checked + .searchmenulabel + .expandedsearchmenu {\n"
-      << "       max-height: " << (menuitems + (chatfolder_idx >= 0 ? 1 : 0)) * 35 << "px;\n"
+      << "     #menu:hover #expandedmenu {\n"
+      << "       max-height: " << (menuitems + (chatfolder_idx >= 0 ? 1 : 0)) * 35 + chatfolders.size() * 35 + (chatfolders.size() ? 5 : 0) << "px;\n"
+      << "       width: 100%;\n"
       << "       padding-top: 10px;\n"
       << "       opacity: 100%;\n"
-      << "       transition: max-height .3s ease-out, padding .3s ease-out, opacity .15s ease-out;\n"
+      << "       transition: max-height .25s ease-out, padding .25s ease-out, opacity .15s ease-out;\n"
       << "     }\n"
       << '\n'
-      << "     .searchmenulabel {\n"
-      << "       cursor: pointer;\n"
+      << "     .menu-header .label-text {\n"
+      << "       display: inline-block;\n"
+      << "       height: 100%;\n"
+      << "       vertical-align: middle;\n"
       << "     }\n"
       << '\n'
-      << "     .searchmenulabel .hamburger-icon {\n"
+      << "     #menu #hamburger-icon {\n"
       << "       display: inline-block;\n"
       << "       width:30px;\n"
       << "       height: 30px;\n"
@@ -555,20 +566,14 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "       vertical-align: middle;\n"
       << "       background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"none\"><path d=\"M13.5 5.5A1.5 1.5 0 1 1 12 4a1.5 1.5 0 0 1 1.5 1.5zm-1.5 5a1.5 1.5 0 1 0 1.5 1.5 1.5 1.5 0 0 0-1.5-1.5zm0 6.5a1.5 1.5 0 1 0 1.5 1.5A1.5 1.5 0 0 0 12 17z\"></path></svg>');\n"
       << "       filter: var(--icon-f);\n"
-      << "       transition: background 0.3s ease-out, transform 0.3s ease-out;\n"
-      << "      }\n"
+      << "       transition: background 0.25s ease-out, transform 0.25s ease-out;\n"
+      << "     }\n"
       << '\n'
-      << "       .searchmenu:checked + .searchmenulabel .hamburger-icon {\n"
-      << "         background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"30\" height=\"30\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g><path d=\"M21 11.25h-8.25V3h-1.5v8.25H3v1.5h8.25V21h1.5v-8.25H21v-1.5z\"></path></g></svg>');\n"
-      << "         transform: rotate(45deg);\n"
-      << "         transition: background 0.3s ease-out, transform 0.3s ease-out;\n"
-      << "       }\n"
-      << '\n'
-      << "       .searchmenulabel .label-text {\n"
-      << "         display: inline-block;\n"
-      << "         height: 100%;\n"
-      << "         vertical-align: middle;\n"
-      << "       }\n"
+      << "     #menu:hover #hamburger-icon {\n"
+      << "       background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\" width=\"30\" height=\"30\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><g><path d=\"M21 11.25h-8.25V3h-1.5v8.25H3v1.5h8.25V21h1.5v-8.25H21v-1.5z\"></path></g></svg>');\n"
+      << "       transform: rotate(45deg);\n"
+      << "       transition: background 0.25s ease-out, transform 0.25s ease-out;\n"
+      << "     }\n"
       << '\n';
   }
 
@@ -577,13 +582,16 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile
       << "    #chatfolder-name {\n"
       << "      font-size: large;\n"
+      << "      max-width: 50%;\n"
+      << "      margin-left: auto;\n"
+      << "      margin-right: auto;\n"
       << "    }\n"
       << "\n"
       << "    #chatfolder-name input[type=checkbox] {\n"
       << "      display: none;\n"
       << "    }\n"
       << "\n"
-      << "    #chatfolder-name input[type=checkbox]:checked ~ label > .chatfolder-details {\n"
+      << "    #chatfolder-name input[type=checkbox]:checked ~ label > #chatfolder-details {\n"
       << "      max-height: none;\n"
       << "      padding-top: 5px;\n"
       << "      padding-bottom: 5px;\n"
@@ -599,7 +607,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "      content: '(hide';\n"
       << "    }\n"
       << "\n"
-      << "    .chatfolder-details {\n"
+      << "    #chatfolder-details {\n"
       << "      display: block;\n"
       << "      font-size: small;\n"
       << "      max-height: 0px;\n"
@@ -639,7 +647,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "      text-align: center;\n"
       << "    }\n"
       << "\n"
-      << "    .chatfolder-details .columnview-header {\n"
+      << "    #chatfolder-details .columnview-header {\n"
       << "      font-style: italic;\n"
       << "    }\n"
       << "\n";
@@ -776,6 +784,16 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "        }\n"
       << '\n';
 
+  if (chatfolder_idx >= 0)
+    outputfile
+      << "        #chatfolder-details {\n"
+      << "          max-height: none;\n"
+      << "          padding-top: 5px;\n"
+      << "          padding-bottom: 5px;\n"
+      << "          overflow: visible;\n"
+      << "        }\n"
+      << "\n";
+
   outputfile
     << "        #menu {\n"
     << "          display: none;\n"
@@ -860,26 +878,32 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         << "        <input type=\"checkbox\" id=\"show-chatfolder-details\">\n"
         << "        <label for=\"show-chatfolder-details\">\n"
         << "        <small> details)</small>\n"
-        << "        <span class=\"chatfolder-details\">\n"
+        << "        <span id=\"chatfolder-details\">\n"
         << "          <span class=\"columnview\">\n"
         << "            <span class=\"column-right-align\">Included chats:</span>\n"
         << "            <span class=\"column-left-align\">";
-      for (unsigned int i = 0; i < cf_details_members_included.rows(); ++i)
-      {
-        if (i > 0)
-          outputfile << ", ";
-        outputfile << HTMLescapeString(getRecipientInfoFromMap(recipient_info, cf_details_members_included.valueAsInt(i, "recipient_id")).display_name);
-      }
+      if (cf_details_members_included.rows() == 0)
+        outputfile << "(none)";
+      else
+        for (unsigned int i = 0; i < cf_details_members_included.rows(); ++i)
+        {
+          if (i > 0)
+            outputfile << ", ";
+          outputfile << HTMLescapeString(getRecipientInfoFromMap(recipient_info, cf_details_members_included.valueAsInt(i, "recipient_id")).display_name);
+        }
       outputfile
         << "</span>\n"
         << "            <span class=\"column-right-align\">Excluded chats:</span>\n"
         << "            <span class=\"column-left-align\">";
-      for (unsigned int i = 0; i < cf_details_members_excluded.rows(); ++i)
-      {
-        if (i > 0)
-          outputfile << ", ";
-        outputfile << HTMLescapeString(getRecipientInfoFromMap(recipient_info, cf_details_members_excluded.valueAsInt(i, "recipient_id")).display_name);
-      }
+      if (cf_details_members_excluded.rows() == 0)
+        outputfile << "(none)";
+      else
+        for (unsigned int i = 0; i < cf_details_members_excluded.rows(); ++i)
+        {
+          if (i > 0)
+            outputfile << ", ";
+          outputfile << HTMLescapeString(getRecipientInfoFromMap(recipient_info, cf_details_members_excluded.valueAsInt(i, "recipient_id")).display_name);
+        }
       outputfile
         << "</span>\n"
         << "            <span class=\"column-right-align\">Show 1:1 chats:</span>\n"
@@ -1065,31 +1089,29 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
   }
 
   if (menuitems > 0 ||
-      //chatfolderlist.size() > 0 ||
+      chatfolders.size() > 0 ||
       chatfolder_idx >= 0)
     outputfile
       << "    <div id=\"menu\">\n";
 
   if (menuitems > 1 ||
-      //chatfolderlist.size() > 0 ||
+      chatfolders.size() > 0 ||
       (chatfolder_idx >= 0 && menuitems > 0)) // collapsible menu
     outputfile
       << "         <div class=\"menu-item\">\n"
       << "           <div class=\"expandable-menu-item\">\n"
-      << "             <input id=\"searchmenu\" class=\"searchmenu\" type=\"checkbox\">\n"
-      << "             <label for=\"searchmenu\" class=\"searchmenulabel\">\n"
-      << "               <span class=\"hamburger-icon\"></span><span class=\"label-text\">menu</span>\n"
-      << "             </label>\n"
-      << "             <div class=\"expandedsearchmenu\">\n"
+      << "             <div class=\"menu-header\">\n"
+      << "               <span id=\"hamburger-icon\"></span><span class=\"label-text\">menu</span>\n"
+      << "             </div>\n"
+      << "             <div id=\"expandedmenu\">\n"
       << '\n';
 
-  if (chatfolder_idx >= 0)
+  if (chatfolder_idx >= 0) // back to index if current page is a chatfolder
   {
     outputfile
       << "      <a href=\"index.html\">\n"
       << "        <div class=\"menu-item\">\n"
-      << "          <div class=\"menu-icon nav-up\">\n"
-      << "          </div>\n"
+      << "          <div class=\"menu-icon nav-up\"></div>\n"
       << "          <div>\n"
       << "            index\n"
       << "          </div>\n"
@@ -1103,8 +1125,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile
       << "      <a href=\"calllog.html\">\n"
       << "        <div class=\"menu-item\">\n"
-      << "          <div class=\"menu-icon calllog-icon\">\n"
-      << "          </div>\n"
+      << "          <div class=\"menu-icon calllog-icon\"></div>\n"
       << "          <div>\n"
       << "            call log\n"
       << "          </div>\n"
@@ -1117,8 +1138,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile
       << "      <a href=\"stickerpacks.html\">\n"
       << "        <div class=\"menu-item\">\n"
-      << "          <div class=\"menu-icon stickerpacks-icon\">\n"
-      << "          </div>\n"
+      << "          <div class=\"menu-icon stickerpacks-icon\"></div>\n"
       << "          <div>\n"
       << "            stickerpacks\n"
       << "          </div>\n"
@@ -1132,8 +1152,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile
       << "      <a href=\"blockedlist.html\">\n"
       << "        <div class=\"menu-item\">\n"
-      << "          <div class=\"menu-icon blocked-icon\">\n"
-      << "          </div>\n"
+      << "          <div class=\"menu-icon blocked-icon\"></div>\n"
       << "          <div>\n"
       << "            blocked contacts\n"
       << "          </div>\n"
@@ -1147,8 +1166,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile
       << "      <a href=\"fullcontactslist.html\">\n"
       << "        <div class=\"menu-item\">\n"
-      << "          <div class=\"menu-icon fullcontacts-icon\">\n"
-      << "          </div>\n"
+      << "          <div class=\"menu-icon fullcontacts-icon\"></div>\n"
       << "          <div>\n"
       << "            all known contacts\n"
       << "          </div>\n"
@@ -1162,8 +1180,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile
       << "      <a href=\"settings.html\">\n"
       << "        <div class=\"menu-item\">\n"
-      << "          <div class=\"menu-icon settings-icon\">\n"
-      << "          </div>\n"
+      << "          <div class=\"menu-icon settings-icon\"></div>\n"
       << "          <div>\n"
       << "            settings\n"
       << "          </div>\n"
@@ -1172,8 +1189,26 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << '\n';
   }
 
+  if (menuitems && chatfolders.size())
+    outputfile << "      <div class=\"menu-item menu-separator\">\n"
+               << "        <hr>\n"
+               << "      </div>\n"
+               << "\n";
+
+  if (chatfolders.size())
+    for (auto const &cf : chatfolders)
+      outputfile << "      <a href=\"" << HTMLescapeUrl(cf.second) << ".html\">\n"
+                 << "        <div class=\"menu-item\">\n"
+                 << "          <div class=\"menu-icon chatfolders-icon\"></div>\n"
+                 << "          <div>\n"
+                 << "            " << HTMLescapeString(cf.first) << "\n"
+                 << "          </div>\n"
+                 << "        </div>\n"
+                 << "      </a>\n"
+                 << "\n";
+
   if (menuitems > 1 ||
-      //  chatfolderlist.sizE() ||
+      chatfolders.size() ||
       (chatfolder_idx >= 0 && menuitems > 0)) // collapsible menu closing tags
     outputfile
       << "             </div>\n"
@@ -1181,7 +1216,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "         </div>\n";
 
   if (menuitems > 0 ||
-      // chatfolderlist.size() ||
+      chatfolders.size() ||
       chatfolder_idx >= 0)
     outputfile
       << "    </div>\n";

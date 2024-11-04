@@ -866,7 +866,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   // write chat folders
-  std::map<std::string, std::string> chatfolders_written; // {chatfolder name, filename(link)}
+  std::vector<std::pair<std::string, std::string>> chatfolders_list; // {chatfolder name, filename(link)}
   if (chatfolders && d_database.containsTable("chat_folder"))
   {
     // get all folders
@@ -882,9 +882,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
        CUSTOM(4);
     */
     SqliteDB::QueryResults cf_results;
-    if (d_database.exec("SELECT _id, name, show_individual, show_groups"/*, position, folder_type*/" FROM chat_folder WHERE folder_type IS NOT 0",
+    if (d_database.exec("SELECT _id, name, show_individual, show_groups FROM chat_folder "
+                        "WHERE folder_type IS NOT 0 ORDER BY position ASC",
                         &cf_results)) [[likely]]
     {
+      for (unsigned int i = 0; i < cf_results.rows(); ++i)
+      {
+        std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
+        chatfolders_list.emplace_back(cf_results(i, "name"), filename);
+      }
+
       for (unsigned int i = 0; i < cf_results.rows(); ++i)
       {
         /* membership_type
@@ -925,13 +932,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           for (unsigned int j = 0; j < group_threads.rows(); ++j)
             chatfolder_threads.push_back(group_threads.valueAsInt(j, "_id"));
         }
-
         std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
-
-        if (HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
-                                calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                                append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"))) [[likely]]
-          chatfolders_written.emplace(cf_results(i, "name"), filename);
+        HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
+                            calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
+                            append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"));
       }
     }
   }
@@ -942,7 +946,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                       std::back_inserter(indexedthreads));
   HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_written);
+                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_list);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,

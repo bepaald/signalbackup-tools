@@ -19,6 +19,13 @@
 
 #include "signalbackup.ih"
 
+std::string SignalBackup::HTMLescapeUrl(std::string const &in) const
+{
+  std::string result(in);
+  HTMLescapeUrl(&result);
+  return result;
+}
+
 void SignalBackup::HTMLescapeUrl(std::string *in) const
 {
   for (unsigned int i = 0; i < in->size(); ++i)
