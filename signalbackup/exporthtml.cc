@@ -953,10 +953,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           continue;
         // remove threads manually excluded
 #if __cpp_lib_erase_if >= 202002L
-        #warning >=c++20
         std::erase_if(chatfolder_threads, [&](long long int tid) { return membership_results.contains<long long int>(tid); });
 #else // I think I support c++17...
-        #warning <c++20
         auto it = std::remove_if(chatfolder_threads.begin(), chatfolder_threads.end(),
                                  [&](long long int tid) { return membership_results.contains<long long int>(tid); });
         chatfolder_threads.erase(it, chatfolder_threads.end());

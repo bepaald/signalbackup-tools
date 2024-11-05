@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
+#include "main.h"
 #include "arg/arg.h"
 #include "common_be.h"
-#include "main.h"
 #include "signalbackup/signalbackup.h"
 #include "logger/logger.h"
 #include "desktopdatabase/desktopdatabase.h"
@@ -32,10 +32,6 @@
 
 #if __has_include("autoversion.h")
 #include "autoversion.h"
-#endif
-
-#if defined(_WIN32) || defined(__MINGW64__)
-#include <windows.h>
 #endif
 
 int main(int argc, char *argv[])
