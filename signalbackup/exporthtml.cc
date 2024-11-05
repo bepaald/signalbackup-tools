@@ -866,6 +866,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   // write chat folders
+  std::vector<long long int> indexedthreads;
+  std::set_difference(threads.begin(), threads.end(),
+                      excludethreads.begin(), excludethreads.end(),
+                      std::back_inserter(indexedthreads));
   std::vector<std::pair<std::string, std::string>> chatfolders_list; // {chatfolder name, filename(link)}
   if (chatfolders && d_database.containsTable("chat_folder"))
   {
@@ -894,24 +898,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       for (unsigned int i = 0; i < cf_results.rows(); ++i)
       {
-        /* membership_type
-        // Chat that should be included in the chat folder
-        INCLUDED(0),
-        // Chat that should be excluded from the chat folder
-        EXCLUDED(1)
-        */
-        SqliteDB::QueryResults cft_results;
-        if (!d_database.exec("SELECT thread_id FROM chat_folder_membership WHERE chat_folder_id = ? AND membership_type = 0",
-                             cf_results.value(i, "_id"), &cft_results)) [[unlikely]]
-          continue;
-
         std::vector<long long int> chatfolder_threads;
 
-        // add threads manually included
-        for (unsigned int j = 0; j < cft_results.rows(); ++j)
-          chatfolder_threads.push_back(cft_results.valueAsInt(j, "thread_id"));
-
-        // add 1-on-1 if added
+        // add 1-on-1
         if (cf_results.valueAsInt(i, "show_individual"))
         {
           SqliteDB::QueryResults individual_threads;
@@ -919,10 +908,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "(SELECT _id FROM recipient WHERE type = 0)", &individual_threads)) [[unlikely]]
             continue;
           for (unsigned int j = 0; j < individual_threads.rows(); ++j)
-            chatfolder_threads.push_back(individual_threads.valueAsInt(j, "_id"));
+          {
+            long long int individual_thread_id = individual_threads.valueAsInt(j, "_id");
+            if (bepaald::contains(indexedthreads, individual_thread_id))
+              chatfolder_threads.push_back(individual_thread_id);
+          }
         }
 
-        // add groups if added
+        // add groups
         if (cf_results.valueAsInt(i, "show_groups"))
         {
           SqliteDB::QueryResults group_threads;
@@ -930,8 +923,45 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "(SELECT _id FROM recipient WHERE type = 3)", &group_threads)) [[unlikely]] // consider type = 1,2,3 ?
             continue;
           for (unsigned int j = 0; j < group_threads.rows(); ++j)
-            chatfolder_threads.push_back(group_threads.valueAsInt(j, "_id"));
+          {
+            long long int group_thread_id = group_threads.valueAsInt(j, "_id");
+            if (bepaald::contains(indexedthreads, group_thread_id))
+              chatfolder_threads.push_back(group_thread_id);
+          }
         }
+
+        /* membership_type
+        // Chat that should be included in the chat folder
+        INCLUDED(0),
+        // Chat that should be excluded from the chat folder
+        EXCLUDED(1)
+        */
+        SqliteDB::QueryResults membership_results;
+        if (!d_database.exec("SELECT thread_id FROM chat_folder_membership WHERE chat_folder_id = ? AND membership_type = 0",
+                             cf_results.value(i, "_id"), &membership_results)) [[unlikely]]
+          continue;
+        // add threads manually included
+        for (unsigned int j = 0; j < membership_results.rows(); ++j)
+        {
+          long long int cf_thread_id = membership_results.valueAsInt(j, "thread_id");
+          if (bepaald::contains(indexedthreads, cf_thread_id))
+            chatfolder_threads.push_back(cf_thread_id);
+        }
+
+        if (!d_database.exec("SELECT thread_id FROM chat_folder_membership WHERE chat_folder_id = ? AND membership_type = 1",
+                             cf_results.value(i, "_id"), &membership_results)) [[unlikely]]
+          continue;
+        // remove threads manually excluded
+#if __cpp_lib_erase_if >= 202002L
+        std::erase_if(chatfolder_threads, [&](long long int tid) { return membership_results.contains<long long int>(tid); });
+#else // I think I support c++17...
+        for (unsigned int j = 0; j < membership_results.rows(); ++j)
+        {
+          auto it = std::remove(chatfolder_threads.begin(), chatfolder_threads.end(), value);
+          chatfolder_threads.erase(it, chatfolder_threads.end());
+        }
+#endif
+
         std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
         HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
                             calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
@@ -939,11 +969,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       }
     }
   }
-
-  std::vector<long long int> indexedthreads;
-  std::set_difference(threads.begin(), threads.end(),
-                      excludethreads.begin(), excludethreads.end(),
-                      std::back_inserter(indexedthreads));
   HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
                  append, lighttheme, themeswitching, exportdetails_html, chatfolders_list);

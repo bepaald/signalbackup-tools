@@ -880,6 +880,10 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         << "        <small> details)</small>\n"
         << "        <span id=\"chatfolder-details\">\n"
         << "          <span class=\"columnview\">\n"
+        << "            <span class=\"column-right-align\">Show 1:1 chats:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_individual") ? "true" : "false") << "</span>\n"
+        << "            <span class=\"column-right-align\">Show group chats:</span>\n"
+        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_groups") ? "true" : "false") << "</span>\n"
         << "            <span class=\"column-right-align\">Included chats:</span>\n"
         << "            <span class=\"column-left-align\">";
       if (cf_details_members_included.rows() == 0)
@@ -906,10 +910,6 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         }
       outputfile
         << "</span>\n"
-        << "            <span class=\"column-right-align\">Show 1:1 chats:</span>\n"
-        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_individual") ? "true" : "false") << "</span>\n"
-        << "            <span class=\"column-right-align\">Show group chats:</span>\n"
-        << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_groups") ? "true" : "false") << "</span>\n"
         << "            <span class=\"column-right-align\">Show only unread:</span>\n"
         << "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_unread") ? "true" : "false") << "</span>\n"
         << "            <span class=\"column-right-align\">Include muted chats:</span>\n"
