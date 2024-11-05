@@ -73,7 +73,7 @@ bool SignalBackup::custom_hugogithubs()
     std::string line;
     while (std::getline(old_attachment_frame, line))
     {
-      if (line.starts_with("ATTACHMENTID")) // = uniqueid
+      if (STRING_STARTS_WITH(line, "ATTACHMENTID")) // = uniqueid
         continue;
       new_attachment_frame_strings.emplace_back(line);
     }

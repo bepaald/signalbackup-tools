@@ -164,7 +164,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   int moved = 0;
   for (auto const &p : emoji_pos)
   {
-    if (!positions_excluded_from_escape.contains(p.first)) [[likely]]
+    if (!bepaald::contains(positions_excluded_from_escape, p.first)) [[likely]]
     {
       body->insert(p.first + moved, pre);
       body->insert(p.first + p.second + pre.size() + moved, post);
