@@ -432,17 +432,18 @@ class SignalBackup
                              std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid, bool calllog,
                              bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                              bool append, bool light, bool themeswitching, std::string const &exportdetails,
-                             std::vector<std::pair<std::string, std::string>> const &chatfolders) const;
+                             std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const;
   inline bool HTMLwriteChatFolder(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                   std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                                   bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
-                                  bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx) const;
+                                  bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx,
+                                  std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const;
 
   bool HTMLwriteIndexImpl(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                           std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                           bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                           bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx,
-                          std::vector<std::pair<std::string, std::string>> const &chatfolders) const;
+                          std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const;
 
 
   void HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const;
@@ -826,7 +827,7 @@ inline bool SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threa
                                          std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                                          bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                                          bool append, bool light, bool themeswitching, std::string const &exportdetails,
-                                         std::vector<std::pair<std::string, std::string>> const &chatfolders) const
+                                         std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const
 {
   return HTMLwriteIndexImpl(threads, maxtimestamp, directory, "index", recipient_info, note_to_self_tid, calllog, searchpage, stickerpacks, blocked,
                             fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, -1, chatfolders);
@@ -835,11 +836,11 @@ inline bool SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threa
 inline bool SignalBackup::HTMLwriteChatFolder(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                               std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
                                               bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
-                                              bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx) const
+                                              bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx,
+                                              std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const
 {
   return HTMLwriteIndexImpl(threads, maxtimestamp, directory, basename, recipient_info, note_to_self_tid, calllog, searchpage, stickerpacks, blocked,
-                            fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, chatfolderidx,
-                            std::vector<std::pair<std::string, std::string>>());
+                            fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, chatfolderidx, chatfolders);
 }
 
 inline int SignalBackup::utf16CharSize(std::string const &body, int idx) const

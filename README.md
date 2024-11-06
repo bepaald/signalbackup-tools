@@ -54,7 +54,7 @@ Note for Windows users: this is a command line application. This means you can n
 
 **<span id="macos">macOS</span>**
 
-A homebrew formula is provided in [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). On modern macOS versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD --formula [path/to/signalbackup-tools.rb]`. Once installed, the program can be upgraded by running `brew upgrade --fetch-HEAD --formula signalbackup-tools`.
+A homebrew formula is provided in [homebrew/signalbackup-tools.rb](https://raw.githubusercontent.com/bepaald/signalbackup-tools/master/homebrew/signalbackup-tools.rb). Download this file to your machine. Then, on modern macOS versions, with [homebrew set up](https://brew.sh/), compiling should be as simple as running `brew install --HEAD --formula [path/to/signalbackup-tools.rb]`. Once installed, the program can be upgraded by running `brew upgrade --fetch-HEAD --formula signalbackup-tools`.
 
 Manually compiling should also be possible assuming the dependencies are installed, for more info see [here](https://github.com/bepaald/signalbackup-tools/issues/9), or more recently [here](https://github.com/bepaald/signalbackup-tools/issues/85). macOS users might also consider the aforementioned [Nix package](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools).
 
@@ -430,6 +430,7 @@ Other options that can be used together with `--exporthtml`:
 - `--allhtmlpages` Enables all of the above options, plus `--themeswitching`. Any specific option can be excluded by adding `--no-(option)` after this option on the command line.
 - `--includereceipts` Adds available information from read/delivery receipts to outgoing messages as a popup when hovering the checkmarks. Be aware this has the potential to significantly slow down page loading for larger conversations. In this case it is recommended to also use the `--split [N]` option to limit the page size.
 - `--originalfilenames` By default, this tool uses a custom naming scheme for message attachments when exporting to HTML. With this option, the original filenames are used (if available). This option can not be used together with `--append`, and will only work with an empty output directory (or with `--overwrite`).
+- `--chatfolders` Generates a page for each chat folder in the input file. This option may interact poorly with the `--limittodates` and `--limittothreads` options.
 
 > [!NOTE]
 > A big thanks to [Gertjan van der Burg](https://github.com/GjjvdBurg)! While HTML export was always a planned feature of this program, it would not have happened this quickly without his project [signal2html](https://github.com/GjjvdBurg/signal2html). The HTML this function generates is modified from the template from his original project.

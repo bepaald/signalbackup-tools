@@ -154,6 +154,8 @@ R"*(
    --linkify                             Optional modifier for `--exporthtml'. Attempts to turn URLs in
                                          messages actual clickable links. This option is enabled by deault,
                                          and can be disabled by `--no-linkify'.
+   --chatfolders                         Optional modifier for `--exporthtml'. Exports chat folders. This
+                                         option may interact poorly with the `--limitto[xxx]' options.
 --exporttxt <DIRECTORY>                  Export the messages to plain text file. Attachments are omitted.
                                          This option also supports the `--limittothreads',
                                          `--limittothreadbybame', `--limittodates', and `--migratedb'

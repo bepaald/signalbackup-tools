@@ -1,5 +1,5 @@
-# Documentation: https://docs.brew.sh/Formula-Cookbook                                               
-#                https://rubydoc.brew.sh/Formula                                                     
+# Documentation: https://docs.brew.sh/Formula-Cookbook
+#                https://rubydoc.brew.sh/Formula
 class SignalbackupTools < Formula
   desc "A tool to work with Signal backup files"
   homepage "https://github.com/bepaald/signalbackup-tools"
@@ -17,9 +17,9 @@ class SignalbackupTools < Formula
   end
 
   test do
-    # not a 'good' test, but not sure what else is possible here                                     
+    # not a 'good' test, but not sure what else is possible here
     `#{bin}/signalbackup-tools --help`
     result=$?.success?
-    return result
+    assert *result
   end
 end

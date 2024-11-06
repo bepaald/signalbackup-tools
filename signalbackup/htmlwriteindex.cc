@@ -24,7 +24,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       long long int note_to_self_tid, bool calllog, bool searchpage, bool stickerpacks, bool blocked,
                                       bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
                                       std::string const &exportdetails, long long int chatfolder_idx,
-                                      std::vector<std::pair<std::string, std::string>> const &chatfolders) const
+                                      std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const
 {
   std::string filename(sanitizeFilename(basename) + ".html");
 
@@ -501,6 +501,12 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     << "        align-items: center;\n"
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
     << "        padding: 5px;\n"
+    << "      }\n"
+    << '\n';
+  if (chatfolder_idx >= 0)
+    outputfile
+    << "      .current-menu-item {\n"
+    << "        filter: brightness(0.5);\n"
     << "      }\n"
     << '\n';
 
@@ -1197,11 +1203,11 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
 
   if (chatfolders.size())
     for (auto const &cf : chatfolders)
-      outputfile << "      <a href=\"" << HTMLescapeUrl(cf.second) << ".html\">\n"
-                 << "        <div class=\"menu-item\">\n"
+      outputfile << "      <a href=\"" << HTMLescapeUrl(std::get<2>(cf)) << ".html\">\n"
+                 << "        <div class=\"menu-item" << (std::get<0>(cf) == chatfolder_idx ? " current-menu-item" : "") <<  "\">\n"
                  << "          <div class=\"menu-icon chatfolders-icon\"></div>\n"
                  << "          <div>\n"
-                 << "            " << HTMLescapeString(cf.first) << "\n"
+                 << "            " << HTMLescapeString(std::get<1>(cf)) << "\n"
                  << "          </div>\n"
                  << "        </div>\n"
                  << "      </a>\n"

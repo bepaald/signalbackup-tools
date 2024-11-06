@@ -755,6 +755,9 @@ body {
       else
         summary.innerHTML = "Results " + (global_page * max_per_page + 1) + " - " + Math.min(global_page * max_per_page + max_per_page, global_results.length) + " out of " + global_results.length;
 
+      var dateformatter_month_year = new Intl.DateTimeFormat('en-us', {month:"short", day:"numeric", year:"numeric"});
+      var dateformatter_time = new Intl.DateTimeFormat('en-us', {hour:"numeric", minute:"numeric", second:"numeric", hour12: false});
+
       for (i = global_page * max_per_page; i < Math.min(global_page * max_per_page + max_per_page, global_results.length); ++i)
       {
         // get displayname of 'from' id
@@ -821,13 +824,13 @@ body {
         msgbody.append(prebody);
         linkdiv.append(msgbody);
 
-        var d = new Date(global_results[i].d * 1000 + 1404165600);
+        var d = new Date((global_results[i].d + 1404165600) * 1000);
 
         var msgdate = document.createElement('div');
         msgdate.classList.add("footer");
         var msgdatespan = document.createElement('span');
         msgdatespan.classList.add("msg-data");
-        var date = document.createTextNode(d.toLocaleTimeString('en-us', {hour12: false, year:"numeric", month:"short", day:"numeric"}));
+        var date = document.createTextNode(dateformatter_month_year.format(d) + " " + dateformatter_time.format(d));
         msgdatespan.append(date);
         msgdate.append(msgdatespan);
         linkdiv.append(msgdate);

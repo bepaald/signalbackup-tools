@@ -30,3 +30,4 @@ jobs:
       - name: Build
         run: |
           brew install --HEAD --formula homebrew/signalbackup-tools.rb
+          brew test homebrew/signalbackup-tools.rb

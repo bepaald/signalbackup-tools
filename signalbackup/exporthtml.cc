@@ -643,7 +643,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "'tr', thread." + d_thread_recipient_id + ", "
                                "'o', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
                                "'d', (" + d_mms_table + ".date_received / 1000 - 1404165600), " // loose the last three digits (miliseconds, they are never displayed anyway).
-                                                                                                // subtract "2014-07-01". Signals initial release was 2014-07-29, negative numebrs should work otherwise anyway.
+                                                                                                // subtract "2014-07-01". Signals initial release was 2014-07-29, negative numbers should work otherwise anyway.
                                "'p', " + "SUBSTR(\"" + msg_info.threaddir + "/" + msg_info.filename + "\", 1, LENGTH(\"" + msg_info.threaddir + "/" + msg_info.filename + "\") - 5)" + ") AS line, " // all pages end in ".html", slice it off
                                + d_part_table + "._id AS rowid, " +
                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
@@ -870,7 +870,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   std::set_difference(threads.begin(), threads.end(),
                       excludethreads.begin(), excludethreads.end(),
                       std::back_inserter(indexedthreads));
-  std::vector<std::pair<std::string, std::string>> chatfolders_list; // {chatfolder name, filename(link)}
+  std::vector<std::tuple<long long int, std::string, std::string>> chatfolders_list; // {_id, chatfolder name, filename(link)}
   if (chatfolders && d_database.containsTable("chat_folder"))
   {
     // get all folders
@@ -893,7 +893,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       for (unsigned int i = 0; i < cf_results.rows(); ++i)
       {
         std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
-        chatfolders_list.emplace_back(cf_results(i, "name"), filename);
+        chatfolders_list.emplace_back(cf_results.valueAsInt(i, "_id"), cf_results(i, "name"), filename);
       }
 
       for (unsigned int i = 0; i < cf_results.rows(); ++i)
@@ -963,7 +963,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
         HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
                             calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                            append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"));
+                            append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"),
+                            chatfolders_list);
       }
     }
   }
