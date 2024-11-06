@@ -506,7 +506,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
   if (chatfolder_idx >= 0)
     outputfile
     << "      .current-menu-item {\n"
-    << "        filter: brightness(0.5);\n"
+    << "        filter: opacity(0.5);\n"
     << "      }\n"
     << '\n';
 
