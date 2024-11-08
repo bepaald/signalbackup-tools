@@ -23,10 +23,16 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               std::string const &id, std::string const &phone, std::string const &groupidb64,
                                               std::string const &databasedir,
                                               std::map<std::string, long long int> *recipient_info,
-                                              bool *was_warned)
+                                              bool create_valid_contacts, bool *was_warned)
 {
-
-  //std::cout << "Creating new recipient for id: " << id << ", phone: " << phone << std::endl;
+  std::string printable_uuid(id);
+  unsigned int offset = (STRING_STARTS_WITH(id, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
+                         (STRING_STARTS_WITH(id, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
+  if (offset < id.size()) [[likely]]
+    std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
+  else
+    printable_uuid = "xxx";
+  Logger::message("Creating new recipient for id: ", printable_uuid);
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
@@ -162,7 +168,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       {
         if (d_verbose) [[unlikely]]
           Logger::message("Creating group member...");
-        member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info, was_warned);
+        member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info, create_valid_contacts, was_warned);
         if (member_rid == -1)
         {
           Logger::error("Failed to get new groups members uuid.");
@@ -293,7 +299,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (!dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir))
       Logger::warning("Failed to set avatar for new recipient.");
 
-    Logger::message("Succesfully created new recipient for group (id: ", new_rec_id, ").");
+    Logger::message("Successfully created new recipient for group (id: ", new_rec_id, ").");
     return new_rec_id; //-1;
   }
 
@@ -343,6 +349,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   if (new_rid.type() != typeid(long long int))
   {
     Logger::error("New recipient _id has unexpected type.");
+    d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
     return -1;
   }
   long long int new_rec_id = std::any_cast<long long int>(new_rid);
@@ -361,12 +368,30 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                     {"timestamp", res.value(0, "timestamp")},
                     {"verified", res.value(0, "verified")},
                     {"nonblocking_approval", res("nonblockingApproval")}}))
-      Logger::warning("Failed to insert identity key for newly created recipient entry.");
+    {
+      if (create_valid_contacts)
+      {
+        Logger::error("Failed to insert identity key for newly created recipient entry.");
+        d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
+        return -1;
+      }
+      else
+        Logger::warning("Failed to insert identity key for newly created recipient entry.");
+    }
   }
   else
-    Logger::warning("Newly created contact has no UUID");
+  {
+    if (create_valid_contacts)
+    {
+      Logger::error("Newly created contact has no UUID");
+      d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
+      return -1;
+    }
+    else
+      Logger::warning("Newly created contact has no UUID");
+  }
 
-  Logger::message("Succesfully created new recipient (id: ", new_rec_id, ").");
+  Logger::message("Successfully created new recipient (id: ", new_rec_id, ").");
   //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);
   return new_rec_id;
 }

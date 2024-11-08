@@ -388,7 +388,7 @@ class SignalBackup
   bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int sent_at, long long int address) const;
   bool handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int timestamp,
                                 long long int address, std::map<std::string, long long int> *savedmap,
-                                bool createcontacts, std::string const &databasedir, bool *warn);
+                                bool createcontacts, std::string const &databasedir, bool create_valid_contacts, bool *warn);
   void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
                       std::vector<std::vector<std::string>> *reactions) const;
   void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
@@ -400,7 +400,8 @@ class SignalBackup
   inline std::string getNameFromUuid(std::string const &uuid) const;
   std::string getNameFromRecipientId(long long int id) const;
   void dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
-                                    std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup, bool *warn);
+                                    std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup,
+                                    bool create_valid_contacts, bool *warn);
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, bool isnotetoself, std::set<long long int> const &recipients,
                       std::map<long long int, RecipientInfo> *recipientinfo,
@@ -484,7 +485,7 @@ class SignalBackup
   bool migrateDatabase(int from, int to) const;
   long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &gidb64,
                                   std::string const &databasedir, std::map<std::string, long long int> *recipient_info,
-                                  bool *warn);
+                                  bool create_valid_contacts, bool *warn);
   bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
   bool dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
                    long long int rid, std::string const &databasedir);

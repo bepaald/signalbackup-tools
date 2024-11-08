@@ -200,7 +200,7 @@
 
 bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                                      std::vector<std::string> const &daterangelist, bool createmissingcontacts,
-                                     bool createmissingcontacts_nowarn, bool autodates, bool importstickers,
+                                     bool createmissingcontacts_valid, bool autodates, bool importstickers,
                                      std::string const &selfphone)
 {
   if (d_selfid == -1)
@@ -273,7 +273,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       datewhereclause += ')';
   }
 
-  bool warned_createcontacts = createmissingcontacts_nowarn;
+  bool warned_createcontacts = createmissingcontacts_valid; // no warning if explicitly requesting this...
 
   // find out which database is newer
   long long int maxdate_desktop_db = dtdb->d_database.getSingleResultAs<long long int>("SELECT MAX(MAX(json_extract(json, '$.received_at_ms')),MAX(received_at)) FROM messages", 0);
@@ -414,7 +414,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       {
         recipientid_for_thread = dtCreateRecipient(dtdb->d_database, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
                                                    results_all_conversations.valueAsString(i, "groupId"), databasedir, &recipientmap,
-                                                   &warned_createcontacts);
+                                                   createmissingcontacts_valid,  &warned_createcontacts);
         if (recipientid_for_thread == -1)
         {
           Logger::warning("Failed to create missing recipient. Skipping.");
@@ -613,8 +613,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           if (createmissingcontacts)
           {
             if ((address = dtCreateRecipient(dtdb->d_database, source_uuid, source_phone,
-                                             std::string(), databasedir,
-                                             &recipientmap, &warned_createcontacts)) == -1)
+                                             std::string(), databasedir, &recipientmap,
+                                             createmissingcontacts_valid, &warned_createcontacts)) == -1)
             {
               Logger::error("Failed to create contact for incoming group message. Skipping");
               continue;
@@ -672,7 +672,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         if (!handleDTGroupV1Migration(dtdb->d_database, rowid, ttid,
                                       results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"),
                                       recipientid_for_thread, &recipientmap, createmissingcontacts, databasedir,
-                                      &warned_createcontacts))
+                                      createmissingcontacts_valid, &warned_createcontacts))
           return false;
 
       }
@@ -1444,7 +1444,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                   if (createmissingcontacts)
                   {
                     if (dtCreateRecipient(dtdb->d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
-                                          databasedir, &recipientmap, &warned_createcontacts) == -1)
+                                          databasedir, &recipientmap, createmissingcontacts_valid, &warned_createcontacts) == -1)
                     {
                       if (d_verbose) [[unlikely]] Logger::message_end();
                       Logger::warning("Failed to create recipient for quote-mention. Skipping.");
@@ -1625,7 +1625,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
         if (outgoing)
           dtSetMessageDeliveryReceipts(dtdb->d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
-                                       new_mms_id, true/*mms*/, isgroupconversation, &warned_createcontacts);
+                                       new_mms_id, true/*mms*/, isgroupconversation, createmissingcontacts_valid,
+                                       &warned_createcontacts);
 
         // insert into reactions
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting reactions...");
@@ -1659,7 +1660,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           {
             if (createmissingcontacts)
             {
-              if ((rec_id = dtCreateRecipient(dtdb->d_database, results_mentions("mention_uuid"), std::string(), std::string(), databasedir, &recipientmap, &warned_createcontacts)) == -1)
+              if ((rec_id = dtCreateRecipient(dtdb->d_database, results_mentions("mention_uuid"), std::string(), std::string(),
+                                              databasedir, &recipientmap, createmissingcontacts_valid, &warned_createcontacts)) == -1)
               {
                 if (d_verbose) [[unlikely]] Logger::message_end();
                 Logger::warning("Failed to create recipient for mention. Skipping.");
@@ -1721,7 +1723,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         // set delivery/read counts
         if (outgoing)
           dtSetMessageDeliveryReceipts(dtdb->d_database, rowid, &recipientmap, databasedir, createmissingcontacts,
-                                       new_sms_id, false/*mms*/, isgroupconversation, &warned_createcontacts);
+                                       new_sms_id, false/*mms*/, isgroupconversation, createmissingcontacts_valid,
+                                       &warned_createcontacts);
 
         // insert into reactions
         insertReactions(new_sms_id, reactions, false, &recipientmap);

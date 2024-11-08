@@ -156,7 +156,7 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.importFromDesktop(ddb, true /*arg.skipmessagereorder()*/, arg.limittodates(), true /*addincompletedata*/,
-                                   true /*importcontacts*/, false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
+                                   false /*importcontacts*/, false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
       return 1;
 
     if (!arg.exportdesktophtml().empty())

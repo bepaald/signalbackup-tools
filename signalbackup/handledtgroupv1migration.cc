@@ -22,7 +22,7 @@
 bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid,
                                             long long int thread_id, long long int timestamp, long long int address,
                                             std::map<std::string, long long int> *recipientmap, bool createcontacts,
-                                            std::string const &databasedir, bool *warned_createcontacts)
+                                            std::string const &databasedir, bool create_valid_contacts,  bool *warned_createcontacts)
 {
   // get a list of dropped members (I _think_ these are not recipient uuid's but conversationUuid's...)
   std::string dropped_members;
@@ -50,7 +50,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
 
         if (createcontacts)
           recid = dtCreateRecipient(ddb, dm_id.valueAsString(0, "rid"), dm_id.valueAsString(0, "rid"), std::string(),
-                                    databasedir, recipientmap, warned_createcontacts);
+                                    databasedir, recipientmap, create_valid_contacts, warned_createcontacts);
         if (recid < 0)
           continue;
       }
@@ -102,7 +102,7 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
 
           if (createcontacts)
             recid = dtCreateRecipient(ddb, im_id.valueAsString(0, "rid"), im_id.valueAsString(0, "rid"), std::string(),
-                                      databasedir, recipientmap, warned_createcontacts);
+                                      databasedir, recipientmap, create_valid_contacts, warned_createcontacts);
           if (recid < 0)
             continue;
         }
