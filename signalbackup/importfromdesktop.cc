@@ -215,7 +215,11 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       return false;
     }
     if (d_selfuuid.empty())
+    {
       d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+      if (d_selfuuid.empty())
+        Logger::warning("Failed to set self-uuid");
+    }
   }
 
   // DesktopDatabase dtdb(configdir_hint, databasedir_hint, hexkey, d_verbose, ignorewal, sqlcipherversion, d_truncate);

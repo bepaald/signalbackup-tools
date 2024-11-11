@@ -32,6 +32,9 @@ bool DesktopDatabase::getKeyFromEncrypted_win()
 
   // 1. get the encrypted key from config.json
   std::string keystr = readEncryptedKey();
+  if (keystr.empty())
+    return false;
+
   unsigned long encryptedkey_data_length = keystr.size() / 2;
   std::unique_ptr<unsigned char []> encryptedkey_data(new unsigned char[encryptedkey_data_length]);
   bepaald::hexStringToBytes(keystr, encryptedkey_data.get(), encryptedkey_data_length);
