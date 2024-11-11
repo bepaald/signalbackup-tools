@@ -57,7 +57,7 @@ class DesktopDatabase
   inline bool dumpDb(std::string const &file, bool overwrite) const;
   inline std::string const &getConfigDir() const;
   inline std::string const &getDatabaseDir() const;
-  inline void runQuery(std::string const &q, bool pretty = true) const;
+  inline void runQuery(std::string const &q, std::string const &mode = std::string()) const;
 
  private:
   bool init();
@@ -183,7 +183,7 @@ inline std::string const &DesktopDatabase::getDatabaseDir() const
   return d_databasedir;
 }
 
-inline void DesktopDatabase::runQuery(std::string const &q, bool pretty) const
+inline void DesktopDatabase::runQuery(std::string const &q, std::string const &mode) const
 {
   Logger::message(" * Executing query: ", q);
   SqliteDB::QueryResults res;
@@ -200,8 +200,10 @@ inline void DesktopDatabase::runQuery(std::string const &q, bool pretty) const
       return;
   }
 
-  if (pretty)
+  if (mode == "pretty")
     res.prettyPrint(d_truncate);
+  else if (mode == "line")
+    res.printLineMode();
   else
     res.print();
 }

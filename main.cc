@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
       return 1;
 
     for (auto const &q : arg.rundtsqlquery())
-      ddb->runQuery(q, false);
+      ddb->runQuery(q, arg.querymode());
   }
   if (!arg.rundtprettysqlquery().empty())
   {
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
       return 1;
 
     for (auto const &q : arg.rundtprettysqlquery())
-      ddb->runQuery(q, true);
+      ddb->runQuery(q, "pretty");
   }
 
   if (!arg.dumpdesktopdb().empty())
@@ -474,11 +474,11 @@ int main(int argc, char *argv[])
 
   if (!arg.runsqlquery().empty())
     for (unsigned int i = 0; i < arg.runsqlquery().size(); ++i)
-      sb->runQuery(arg.runsqlquery()[i], false);
+      sb->runQuery(arg.runsqlquery()[i], arg.querymode());
 
   if (!arg.runprettysqlquery().empty())
     for (unsigned int i = 0; i < arg.runprettysqlquery().size(); ++i)
-      sb->runQuery(arg.runprettysqlquery()[i], true);
+      sb->runQuery(arg.runprettysqlquery()[i], "pretty");
 
   if (!arg.exporthtml().empty())
     if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), arg.split_by(), (arg.split_bool() ? arg.split() : -1),

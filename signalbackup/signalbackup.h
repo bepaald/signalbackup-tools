@@ -231,7 +231,7 @@ class SignalBackup
   inline void addEndFrame();
   bool mergeRecipients(std::vector<std::string> const &addresses);
   void mergeGroups(std::vector<std::string> const &groups);
-  inline void runQuery(std::string const &q, bool pretty = true) const;
+  inline void runQuery(std::string const &q, std::string const &mode = std::string()) const;
   void removeDoubles(long long int milliseconds = 0);
   inline std::vector<long long int> threadIds() const;
   bool importCSV(std::string const &file, std::map<std::string, std::string> const &fieldmap);
@@ -735,7 +735,7 @@ inline void SignalBackup::addEndFrame()
   d_endframe.reset(new EndFrame(nullptr, 1ull));
 }
 
-inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
+inline void SignalBackup::runQuery(std::string const &q, std::string const &mode) const
 {
   Logger::message(" * Executing query: ", q);
   SqliteDB::QueryResults res;
@@ -752,8 +752,10 @@ inline void SignalBackup::runQuery(std::string const &q, bool pretty) const
       return;
   }
 
-  if (pretty)
+  if (mode == "pretty")
     res.prettyPrint(d_truncate);
+  else if (mode == "line")
+    res.printLineMode();
   else
     res.print();
 }

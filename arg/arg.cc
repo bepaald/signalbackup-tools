@@ -42,6 +42,7 @@ Arg::Arg(int argc, char *argv[])
   d_mergegroups(std::vector<std::string>()),
   d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_exportxml(std::string()),
+  d_querymode(std::string()),
   d_runsqlquery(std::vector<std::string>()),
   d_runprettysqlquery(std::vector<std::string>()),
   d_rundtsqlquery(std::vector<std::string>()),
@@ -458,6 +459,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
+      continue;
+    }
+    if (option == "--querymode")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_querymode = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--runsqlquery")
