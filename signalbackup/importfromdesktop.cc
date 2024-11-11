@@ -1417,6 +1417,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             BodyRanges bodyrangelist;
             for (unsigned int qbr = 0; qbr < quote_results.getValueAs<long long int>(0, "num_quote_bodyranges"); ++qbr)
             {
+              std::string qbr_uuid;
               SqliteDB::QueryResults qbrres;
               if (!dtdb->d_database.exec("SELECT "
                                         "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
@@ -1447,8 +1448,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                 {
                   if (createmissingcontacts)
                   {
-                    if (dtCreateRecipient(dtdb->d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
-                                          databasedir, &recipientmap, createmissingcontacts_valid, &warned_createcontacts) == -1)
+                    if ((rec_id = dtCreateRecipient(dtdb->d_database, qbrres.valueAsString(0, "qbr_uuid"), std::string(), std::string(),
+                                                    databasedir, &recipientmap, createmissingcontacts_valid, &warned_createcontacts)) == -1)
                     {
                       if (d_verbose) [[unlikely]] Logger::message_end();
                       Logger::warning("Failed to create recipient for quote-mention. Skipping.");
@@ -1462,6 +1463,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                     continue;
                   }
                 }
+                qbr_uuid = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", rec_id, std::string());
               }
 
               BodyRange bodyrange;
@@ -1469,7 +1471,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
               bodyrange.addField<2>(qbrres.getValueAs<long long int>(0, "qbr_length"));
 
               if (qbrres.isNull(0, "qbr_style"))
-                bodyrange.addField<3>(qbrres.valueAsString(0, "qbr_uuid"));
+                bodyrange.addField<3>(qbr_uuid);
               else
                 bodyrange.addField<4>(qbrres.getValueAs<long long int>(0, "qbr_style") - 1); // NOTE desktop style enum starts at 1 (android at 0)
 

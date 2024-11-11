@@ -36,7 +36,6 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
-
                 "type, TRIM(name) AS name, profileName, profileFamilyName, "
                 "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(conversations.json,'$.color') AS color, "
                 "COALESCE(json_extract(conversations.json, '$.profileAvatar.path'), json_extract(conversations.json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
@@ -155,6 +154,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
     // get group members:
     std::string oldstyle_members;
+    std::set<std::string> members_processed; // I suspect members can occur double in the list? or maybe my tokenizer is no good?, this is just to check
+
     for (unsigned int i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
     {
       SqliteDB::QueryResults mem;
@@ -162,6 +163,14 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         continue;
 
       //std::cout << "Got members: " << mem("member") << std::endl;
+      if (bepaald::contains(members_processed, mem("member")))
+      {
+        Logger::warning("Asked to process same member again. Skipping.");
+        Logger::warning_indent("Here is is raw members-list:");
+        Logger::warning_indent("'", mem("members"), "'");
+        continue;
+      }
+      members_processed.insert(mem("member"));
 
       long long int member_rid = getRecipientIdFromUuidMapped(mem("member"), recipient_info, was_warned);
       if (member_rid == -1)
@@ -306,7 +315,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
 
 
-  // type != group
+
+
+
+  // type != group :
+
+  long long int new_rec_id = -1;
 
   if (res("profileName").empty() && res("profileFamilyName").empty() &&
       res("profileFullName").empty() && res("e164").empty() &&
@@ -316,47 +330,91 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
   }
 
-  std::any new_rid;
-  if (!insertRow("recipient",
-                 {{d_recipient_profile_given_name, res.value(0, "profileName")},
-                  {"profile_family_name", res.value(0, "profileFamilyName")},
-                  {"profile_joined_name", res.value(0, "profileFullName")},
-                  {"nickname_given_name", res.value(0, "nick_first")},
-                  {"nickname_family_name", res.value(0, "nick_last")},
-                  {(!res.isNull(0, "nick_first") || !res.isNull(0, "nick_last")) ?
-                   "nickname_joined_name" :
-                   "", (res(0, "nick_first").empty() ? res(0, "nick_last") :
-                        (res(0, "nick_last").empty() ? res(0, "nick_first") :
-                         res(0, "nick_first") + " " + res(0, "nick_last")))},
-                  {d_recipient_e164, res.value(0, "e164")},
-                  {d_recipient_aci, res.value(0, "uuid")},
+  // it is possible the contacts exists already, but not as a valid Signal contact (with uuid and keys)
+  long long int existing_rec_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE pni = ? OR " + d_recipient_e164 + " = ?",
+                                                                              {res.value(0, "pni"), res.value(0, "e164")}, -1);
+  // (maybe the above should check for username and email as well, both are also unique in the recipient table)
 
-                  {"pni", res.value(0, "pni")},
-                  {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
-                  {"message_expiration_time", res.value(0, "expireTimer")},
-                  {"storage_service_id", res.value(0, "storageId")},
-                  {"profile_sharing", res.value(0, "profileSharing")},
-                  {"registered", res.isNull(0, "firstUnregisteredAt") ? 1 : 0},   // registered if no Unregister-timestamp is found, unknown otherwise
-                  {d_recipient_sealed_sender, res.value(0, "sealedSender")},
-
-                  // {d_database.tableContainsColumn("recipient", "blocked") ? // blocked recipients do not exist in Desktop?
-                  //  "blocked" : "", res.value(0, "blocked")},
-                  {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
+  if (existing_rec_id != -1) // update existing recipient
   {
-    Logger::error("Failed to insert new recipient into database.");
-    return -1;
-  }
-  if (new_rid.type() != typeid(long long int))
-  {
-    Logger::error("New recipient _id has unexpected type.");
-    d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
-    return -1;
-  }
-  long long int new_rec_id = std::any_cast<long long int>(new_rid);
-  (*recipient_info)[id.empty() ? phone : id] = new_rec_id;
+    // if the existing recipient already has a uuid and a indentity key, just use it???
+    SqliteDB::QueryResults existing_uuid;
+    if (!d_database.exec("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", existing_rec_id, &existing_uuid))
+      return -1;
 
-  // set avatar
-  dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
+    if (!existing_uuid.isNull(0, d_recipient_aci))
+    {
+      if (d_database.getSingleResultAs<long long int>("SELECT _id FROM identities WHERE address = ?", existing_uuid.value(0, d_recipient_aci), -1) != -1)
+      {
+        Logger::message("Found existing valid contact under different uuid (id: ", existing_rec_id, ").");
+
+        (*recipient_info)[id.empty() ? phone : id] = existing_rec_id;
+        return existing_rec_id;
+      }
+      else
+      {
+        Logger::error("Contact already exists with a different uuid, but no valid identiy key. not sure what to do here yet");
+        return -1;
+      }
+    }
+    else // contact uuid == NULL, lets update it
+    {
+      if (!d_database.exec("UPDATE recipient SET " +
+                           d_recipient_aci  + " = ?, " +
+                           d_recipient_e164 + " = COALESCE(" + d_recipient_e164 + ", ?), " +
+                           "pni = COALESCE(pni, ?), "
+                           "storage_service_id = COALESCE(storage_service_id, ?), "
+                           "registered = ? "
+                           "WHERE _id = ?",
+                           {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"), res.value(0, "storageId"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_rec_id}))
+        return -1;
+      Logger::message("Found existing contact under without uuid, Updating... (id: ", existing_rec_id, ").");
+      new_rec_id = existing_rec_id;
+    }
+  }
+  else // insert new recipient
+  {
+    std::any new_rid;
+    if (!insertRow("recipient",
+                   {{d_recipient_profile_given_name, res.value(0, "profileName")},
+                    {"profile_family_name", res.value(0, "profileFamilyName")},
+                    {"profile_joined_name", res.value(0, "profileFullName")},
+                    {"nickname_given_name", res.value(0, "nick_first")},
+                    {"nickname_family_name", res.value(0, "nick_last")},
+                    {(!res.isNull(0, "nick_first") || !res.isNull(0, "nick_last")) ?
+                     "nickname_joined_name" :
+                     "", (res(0, "nick_first").empty() ? res(0, "nick_last") :
+                          (res(0, "nick_last").empty() ? res(0, "nick_first") :
+                           res(0, "nick_first") + " " + res(0, "nick_last")))},
+                    {d_recipient_e164, res.value(0, "e164")},
+                    {d_recipient_aci, res.value(0, "uuid")},
+
+                    {"pni", res.value(0, "pni")},
+                    {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
+                    {"message_expiration_time", res.value(0, "expireTimer")},
+                    {"storage_service_id", res.value(0, "storageId")},
+                    {"profile_sharing", res.value(0, "profileSharing")},
+                    {"registered", res.isNull(0, "firstUnregisteredAt") ? 1 : 0},   // registered if no Unregister-timestamp is found, unknown otherwise
+                    {d_recipient_sealed_sender, res.value(0, "sealedSender")},
+
+                    // {d_database.tableContainsColumn("recipient", "blocked") ? // blocked recipients do not exist in Desktop?
+                    //  "blocked" : "", res.value(0, "blocked")},
+                    {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
+    {
+      Logger::error("Failed to insert new recipient into database.");
+      return -1;
+    }
+    if (new_rid.type() != typeid(long long int))
+    {
+      Logger::error("New recipient _id has unexpected type.");
+      d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
+      return -1;
+    }
+    new_rec_id = std::any_cast<long long int>(new_rid);
+
+    // set avatar
+    dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
+  }
 
   // set identity info
   if (!res.isNull(0, "uuid"))
@@ -372,7 +430,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       if (create_valid_contacts)
       {
         Logger::error("Failed to insert identity key for newly created recipient entry.");
-        d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
+        d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
         return -1;
       }
       else
@@ -384,7 +442,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (create_valid_contacts)
     {
       Logger::error("Newly created contact has no UUID");
-      d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rid);
+      d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
       return -1;
     }
     else
@@ -393,6 +451,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
   Logger::message("Successfully created new recipient (id: ", new_rec_id, ").");
   //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);
+
+  (*recipient_info)[id.empty() ? phone : id] = new_rec_id;
   return new_rec_id;
 }
 
