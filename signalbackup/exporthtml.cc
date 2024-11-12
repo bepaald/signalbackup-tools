@@ -277,6 +277,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     bool is_note_to_self = (t == note_to_self_thread_id);
 
+    // check if this is releasechannel:
+    bool is_releasechannel = false;
+    for (auto const &skv : d_keyvalueframes)
+      if (skv->key() == "releasechannel.recipient_id")
+        is_releasechannel =
+          (t == d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?",
+                                                            bepaald::toNumber<int>(skv->value()), -1));
+
     // get recipient_id for thread;
     SqliteDB::QueryResults recid;
     long long int thread_recipient_id = -1;
@@ -348,7 +356,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       continue;
     }
 
-    std::string threaddir = (is_note_to_self ? "Note to self (_id"s + bepaald::toString(thread_id) + ")"
+    std::string threaddir = (is_note_to_self ? "Note to Self (_id"s + bepaald::toString(thread_id) + ")"
                              : sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ")"));
 
     //if (!append)
@@ -417,7 +425,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::string previous_period_split_string(messages(messagecount, "periodsplit"));
       std::string previous_day_change;
       // create output-file
-      std::string raw_base_filename = (is_note_to_self ? "Note to self" : recipient_info[thread_recipient_id].display_name);
+      std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
       std::string filename = sanitizeFilename(raw_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
       std::ofstream htmloutput(directory + "/" + threaddir + "/" + filename, std::ios_base::binary);
       if (!htmloutput.is_open())
@@ -430,8 +438,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
-                     all_recipients_ids, &recipient_info, &written_avatars, overwrite, append,
-                     lighttheme, themeswitching, searchpage, addexportdetails);
+                     is_releasechannel, all_recipients_ids, &recipient_info, &written_avatars, overwrite,
+                     append, lighttheme, themeswitching, searchpage, addexportdetails);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
              messages(messagecount, "periodsplit") == previous_period_split_string)
       {

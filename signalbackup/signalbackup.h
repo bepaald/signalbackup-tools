@@ -403,8 +403,8 @@ class SignalBackup
                                     std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup,
                                     bool create_valid_contacts, bool *warn);
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
-                      std::string const &threaddir, bool isgroup, bool isnotetoself, std::set<long long int> const &recipients,
-                      std::map<long long int, RecipientInfo> *recipientinfo,
+                      std::string const &threaddir, bool isgroup, bool isnotetoself, bool isreleasechannel,
+                      std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo,
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append,
                       bool light, bool themeswitching, bool searchpage, bool exportdetails) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
