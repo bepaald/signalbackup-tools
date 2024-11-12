@@ -518,6 +518,7 @@ class SignalBackup
   long long int getRecipientIdFromField(std::string const &field, std::string const &value, bool withthread) const;
   std::string unicodeToUtf8(uint32_t unicode) const;
   int utf16ToUnicodeCodepoint(uint16_t utf16, uint32_t *codepoint) const;
+  std::string makePrintable(std::string const &in) const;
 };
 
 // ONLY FOR DUMMYBACKUP

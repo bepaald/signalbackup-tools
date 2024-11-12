@@ -25,13 +25,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               std::map<std::string, long long int> *recipient_info,
                                               bool create_valid_contacts, bool *was_warned)
 {
-  std::string printable_uuid(id);
-  unsigned int offset = (STRING_STARTS_WITH(id, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
-                         (STRING_STARTS_WITH(id, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
-  if (offset < id.size()) [[likely]]
-    std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
-  else
-    printable_uuid = "xxx";
+  std::string printable_uuid(makePrintable(id));
   Logger::message("Creating new recipient for id: ", printable_uuid);
 
   SqliteDB::QueryResults res;
@@ -154,7 +148,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
     // get group members:
     std::string oldstyle_members;
-    std::set<std::string> members_processed; // I suspect members can occur double in the list? or maybe my tokenizer is no good?, this is just to check
+    // I suspect members can occur double in the list? or maybe my tokenizer is no good?, this is just to check
+    std::set<std::string> members_processed;
+    // the actual UUID of the member returned by getRecipientIdFromUuidMapped may differ from the input id, since it may
+    // exist in the Android database under a different uuid. Normally the database only referes to recipient._id so it's
+    // no problem, but member roles use the uuid, so we need the correct one...
+    std::map<std::string, std::string> member_uuids; // [ ddb_uuid -> android_uuid ]
 
     for (unsigned int i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
     {
@@ -173,6 +172,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       members_processed.insert(mem("member"));
 
       long long int member_rid = getRecipientIdFromUuidMapped(mem("member"), recipient_info, was_warned);
+
       if (member_rid == -1)
       {
         if (d_verbose) [[unlikely]]
@@ -185,6 +185,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
           return -1;
         }
       }
+
+      // save the actual uuid of this recipient in map
+      std::string android_uuid = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", member_rid, std::string());
+      if (!android_uuid.empty())
+        member_uuids[mem("member")] = android_uuid;
 
       if (d_database.containsTable("group_membership"))
       {
@@ -216,7 +221,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (d_database.containsTable("group_membership") &&
         d_database.tableContainsColumn("groups", "decrypted_group"))
     {
-      std::map<std::string, long long int> memberroles;
+      std::map<std::string, long long int> memberroles; // [ uuid -> Role ]
       for (unsigned int i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
       {
       // get member role (0 = unknown, 1 = normal, 2 = admin)
@@ -232,12 +237,16 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 !memberrole_results.valueHasType<std::string>(mr, "uuid"))
               continue;
 
+            std::string uuid = bepaald::contains(member_uuids, memberrole_results(mr, "uuid")) ?
+              member_uuids[memberrole_results(mr, "uuid")] :
+              memberrole_results(mr, "uuid");
+
             // check if uuid is an actual member:
             long long int uuidpresent = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM group_membership WHERE "
                                                                                     "recipient_id IS (SELECT _id FROM recipient WHERE " + d_recipient_aci + " = ?) AND "
-                                                                                    "group_id = ?", {memberrole_results(mr, "uuid"), group_id}, 0);
+                                                                                    "group_id = ?", {uuid, group_id}, 0);
             if (uuidpresent)
-              memberroles[memberrole_results(mr, "uuid")] = memberrole_results.getValueAs<long long int>(mr, "role");
+              memberroles[uuid] = memberrole_results.getValueAs<long long int>(mr, "role");
           }
         }
       }
@@ -346,7 +355,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     {
       if (d_database.getSingleResultAs<long long int>("SELECT _id FROM identities WHERE address = ?", existing_uuid.value(0, d_recipient_aci), -1) != -1)
       {
-        Logger::message("Found existing valid contact under different uuid (id: ", existing_rec_id, ").");
+        Logger::message("Found existing valid contact under different uuid [", printable_uuid, " -> ", makePrintable(existing_uuid(d_recipient_aci)), "] (id: ", existing_rec_id, ").");
 
         (*recipient_info)[id.empty() ? phone : id] = existing_rec_id;
         return existing_rec_id;

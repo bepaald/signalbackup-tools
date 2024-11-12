@@ -30,13 +30,7 @@ long long int SignalBackup::getRecipientIdFromUuidMapped(std::string const &uuid
 
   if (!savedmap || savedmap->find(uuid) == savedmap->end())
   {
-    std::string printable_uuid(uuid);
-    unsigned int offset = (STRING_STARTS_WITH(uuid, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
-                           (STRING_STARTS_WITH(uuid, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
-    if (offset < uuid.size()) [[likely]]
-      std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
-    else
-      printable_uuid = "xxx";
+    std::string printable_uuid(makePrintable(uuid));
 
     SqliteDB::QueryResults res;
     if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_aci + " = ?1 COLLATE NOCASE OR group_id = ?1 COLLATE NOCASE", uuid, &res) ||
