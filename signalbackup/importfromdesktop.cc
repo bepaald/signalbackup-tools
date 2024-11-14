@@ -1770,6 +1770,19 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   if (!skipmessagereorder) [[likely]]
     reorderMmsSmsIds();
   updateThreadsEntries();
+
+  // check if identitykeys are all not-NULL
+  if (createmissingcontacts_valid)
+  {
+    long long int null_keys = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM identities WHERE identity_key IS NULL", -1);
+    if (null_keys == -1) [[unlikely]]
+      Logger::warning("Failed to get count of NULL identity_keys");
+    else if (null_keys == 0)
+      Logger::message("All identity_keys appear OK");
+    else
+      Logger::warning("Found ", null_keys, " NULL identity_keys. This will likely cause problems when restoring the backup.");
+  }
+
   return checkDbIntegrity();
 }
 

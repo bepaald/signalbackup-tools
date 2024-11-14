@@ -340,29 +340,36 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   }
 
   // it is possible the contacts exists already, but not as a valid Signal contact (with uuid and keys)
-  long long int existing_rec_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE pni = ? OR " + d_recipient_e164 + " = ?",
-                                                                              {res.value(0, "pni"), res.value(0, "e164")}, -1);
-  // (maybe the above should check for username and email as well, both are also unique in the recipient table)
+  // (maybe should check for username and email as well, both are also unique in the recipient table)
+  SqliteDB::QueryResults existing_recipient;
+  if (!d_database.exec("SELECT _id, " + d_recipient_aci + " FROM recipient WHERE pni = ? OR " + d_recipient_e164 + " = ?",
+                       {res.value(0, "pni"), res.value(0, "e164")}, &existing_recipient))
+    return -1;
 
-  if (existing_rec_id != -1) // update existing recipient
+  if (existing_recipient.rows() > 1)
   {
+    Logger::error("Unexpected number of results for query (existing_recipient");
+    return -1;
+  }
+
+  if (existing_recipient.rows() == 1) // update existing recipient
+  {
+    long long int existing_recipient_id = existing_recipient.getValueAs<long long int>(0, "_id");
+    std::string existing_recipient_uuid = existing_recipient(d_recipient_aci);
+
     // if the existing recipient already has a uuid and a indentity key, just use it???
-    SqliteDB::QueryResults existing_uuid;
-    if (!d_database.exec("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", existing_rec_id, &existing_uuid))
-      return -1;
-
-    if (!existing_uuid.isNull(0, d_recipient_aci))
+    if (!existing_recipient_uuid.empty())
     {
-      if (d_database.getSingleResultAs<long long int>("SELECT _id FROM identities WHERE address = ?", existing_uuid.value(0, d_recipient_aci), -1) != -1)
+      if (d_database.getSingleResultAs<long long int>("SELECT _id FROM identities WHERE address = ? AND identity_key IS NOT NULL", existing_recipient_uuid, -1) != -1)
       {
-        Logger::message("Found existing valid contact under different uuid [", printable_uuid, " -> ", makePrintable(existing_uuid(d_recipient_aci)), "] (id: ", existing_rec_id, ").");
+        Logger::message("Found existing valid contact under different uuid [", printable_uuid, " -> ", makePrintable(existing_recipient_uuid), "] (id: ", existing_recipient_id, ").");
 
-        (*recipient_info)[id.empty() ? phone : id] = existing_rec_id;
-        return existing_rec_id;
+        (*recipient_info)[id.empty() ? phone : id] = existing_recipient_id;
+        return existing_recipient_id;
       }
       else
       {
-        Logger::error("Contact already exists with a different uuid, but no valid identiy key. not sure what to do here yet");
+        Logger::error("Contact already exists with a different uuid, but no valid identity key. not sure what to do here yet...");
         return -1;
       }
     }
@@ -375,10 +382,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                            "storage_service_id = COALESCE(storage_service_id, ?), "
                            "registered = ? "
                            "WHERE _id = ?",
-                           {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"), res.value(0, "storageId"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_rec_id}))
+                           {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"), res.value(0, "storageId"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
         return -1;
-      Logger::message("Found existing contact under without uuid, Updating... (id: ", existing_rec_id, ").");
-      new_rec_id = existing_rec_id;
+      Logger::message("Found existing contact without uuid, Updating... (id: ", existing_recipient_id, ").");
+      new_rec_id = existing_recipient_id;
     }
   }
   else // insert new recipient
@@ -423,6 +430,26 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
     // set avatar
     dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
+  }
+
+  if ((res.isNull(0, "publicKey") || res("publicKey").empty()) &&
+      create_valid_contacts)
+  {
+    Logger::error("Unable to find publicKey for recipient: ", res(0, "uuid"));
+    Logger::error_indent("Data from the desktop database:");
+    d_database.printLineMode("SELECT * FROM identityKeys WHERE id = ?", res.value(0, "uuid"));
+
+    d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
+    return -1;
+
+    /*
+      what will happen if we just use a fake key here? we know the key can not be null,
+      but what if it is incorrect? Just a 'safety number changed' message, or a broken
+      contact/broken app?
+
+      all keys appear to be \x05 followed by 32 more random bytes (eg: 05a1c3c61878ff32f0d89828a3013cf3a384c346730d8cd24a2365d92ada823f79)
+    */
+
   }
 
   // set identity info
