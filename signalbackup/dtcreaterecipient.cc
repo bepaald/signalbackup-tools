@@ -57,7 +57,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "NULLIF(json_extract(conversations.json,'$.nicknameFamilyName'), '') AS nick_last, "
                 "TOKENCOUNT(members) AS nummembers, json_extract(conversations.json, '$.masterKey') AS masterKey "
                 "FROM conversations "
-                "LEFT JOIN identityKeys ON conversations. " + d_dt_c_uuid + " = identityKeys.id "
+                "LEFT JOIN identityKeys ON conversations." + d_dt_c_uuid + " = identityKeys.id "
                 "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
                 {id, phone, groupidb64}, &res))
   {
@@ -362,7 +362,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     {
       if (d_database.getSingleResultAs<long long int>("SELECT _id FROM identities WHERE address = ? AND identity_key IS NOT NULL", existing_recipient_uuid, -1) != -1)
       {
-        Logger::message("Found existing valid contact under different uuid [", printable_uuid, " -> ", makePrintable(existing_recipient_uuid), "] (id: ", existing_recipient_id, ").");
+        Logger::message("Found existing valid contact under different uuid [", printable_uuid, " -> ", makePrintable(existing_recipient_uuid), "] "
+                        "(id: ", existing_recipient_id, ").");
 
         (*recipient_info)[id.empty() ? phone : id] = existing_recipient_id;
         return existing_recipient_id;
@@ -373,7 +374,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         return -1;
       }
     }
-    else // contact uuid == NULL, lets update it
+    else // contact uuid == NULL in Android db, lets update it with Desktop data
     {
       if (!d_database.exec("UPDATE recipient SET " +
                            d_recipient_aci  + " = ?, " +
@@ -382,7 +383,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                            "storage_service_id = COALESCE(storage_service_id, ?), "
                            "registered = ? "
                            "WHERE _id = ?",
-                           {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"), res.value(0, "storageId"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
+                           {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"),
+                            res.value(0, "storageId"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
         return -1;
       Logger::message("Found existing contact without uuid, Updating... (id: ", existing_recipient_id, ").");
       new_rec_id = existing_recipient_id;
@@ -437,19 +439,23 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     Logger::error("Unable to find publicKey for recipient: ", res(0, "uuid"));
     Logger::error_indent("Data from the desktop database:");
-    d_database.printLineMode("SELECT * FROM identityKeys WHERE id = ?", res.value(0, "uuid"));
+    ddb.printLineMode("SELECT * FROM identityKeys WHERE id = ?", res.value(0, "uuid"));
 
     d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
     return -1;
 
     /*
-      what will happen if we just use a fake key here? we know the key can not be null,
-      but what if it is incorrect? Just a 'safety number changed' message, or a broken
-      contact/broken app?
+      what will happen if we just use a fake key here? we know the key
+      can not be null, but what if it is incorrect? Just a 'safety number
+      changed' message, or a broken contact/broken app?
 
-      all keys appear to be \x05 followed by 32 more random bytes (eg: 05a1c3c61878ff32f0d89828a3013cf3a384c346730d8cd24a2365d92ada823f79)
+      all keys appear to be \x05 followed by 32 more random bytes (in base64)
+
+      SEEMS TO WORK (just key change messages), fake key used:
+      "UPDATE identities SET identity_key = 'BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF';"
+       ( = 0x5FAKEYKEYFAKEKEYFFAKEKEYF....)
+
     */
-
   }
 
   // set identity info
@@ -472,6 +478,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       else
         Logger::warning("Failed to insert identity key for newly created recipient entry.");
     }
+    else
+      Logger::message("Successfully updated identity-key for contact (", new_rec_id, ", ", makePrintable(res("uuid")), ")");
   }
   else
   {
