@@ -288,7 +288,7 @@ class SignalBackup
   bool custom_hugogithubs();
 
   // for bug 233/13034
-  bool migrate_to_191();
+  bool migrate_to_191(std::string const &selfphone);
   /* CUSTOMS */
 
  protected:

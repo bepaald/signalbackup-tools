@@ -20,13 +20,306 @@
 #include "signalbackup.ih"
 
 #include <regex>
+#include <openssl/rand.h>
 
-bool SignalBackup::migrate_to_191()
+bool SignalBackup::migrate_to_191(std::string const &selfphone)
 {
-  if (d_databaseversion < 132)
+  if (d_databaseversion < 121)
   {
     std::cout << "Sorry, db version too old. Not supported (yet?)" << std::endl;
     return false;
+  }
+
+  if (selfphone.empty())
+  {
+    Logger::error("Please provide phone of self with the `--setselfid' option (eg.: `--setself \"+31612345678\"')");
+    return false;
+  }
+
+  /*
+  if (d_databaseversion < )
+  {
+    std::cout << "To " << std::endl;
+
+    if (!d_database.exec())
+      return false;
+  }
+  */
+
+  if (d_databaseversion < 122)
+  {
+    std::cout << "To 122" << std::endl;
+
+    if (!d_database.exec("ALTER TABLE recipient ADD COLUMN pni TEXT DEFAULT NULL") ||
+        !d_database.exec("CREATE UNIQUE INDEX IF NOT EXISTS recipient_pni_index ON recipient (pni)"))
+      return false;
+  }
+
+  if (d_databaseversion < 123)
+  {
+    std::cout << "To 123" << std::endl;
+
+    if (!d_database.exec("CREATE TABLE notification_profile ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                         "name TEXT NOT NULL UNIQUE,"
+                         "emoji TEXT NOT NULL,"
+                         "color TEXT NOT NULL,"
+                         "created_at INTEGER NOT NULL,"
+                         "allow_all_calls INTEGER NOT NULL DEFAULT 0,"
+                         "allow_all_mentions INTEGER NOT NULL DEFAULT 0)"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE notification_profile_schedule ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "notification_profile_id INTEGER NOT NULL REFERENCES notification_profile (_id) ON DELETE CASCADE,"
+                         "enabled INTEGER NOT NULL DEFAULT 0,"
+                         "start INTEGER NOT NULL,"
+                         "end INTEGER NOT NULL,"
+                         "days_enabled TEXT NOT NULL)"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE notification_profile_allowed_members ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "notification_profile_id INTEGER NOT NULL REFERENCES notification_profile (_id) ON DELETE CASCADE,"
+                         "recipient_id INTEGER NOT NULL,"
+                         "UNIQUE(notification_profile_id, recipient_id) ON CONFLICT REPLACE)"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX notification_profile_schedule_profile_index ON notification_profile_schedule (notification_profile_id)") ||
+        !d_database.exec("CREATE INDEX notification_profile_allowed_members_profile_index ON notification_profile_allowed_members (notification_profile_id)"))
+      return false;
+  }
+
+  if (d_databaseversion < 124)
+  {
+    std::cout << "To 124" << std::endl;
+
+    if (!d_database.exec("UPDATE notification_profile_schedule SET end = 2400 WHERE end = 0"))
+      return false;
+  }
+
+  if (d_databaseversion < 125)
+  {
+    std::cout << "To 125" << std::endl;
+
+    if (!d_database.exec("DELETE FROM reaction "
+                         "WHERE "
+                         "(is_mms = 0 AND message_id NOT IN (SELECT _id FROM sms)) "
+                         "OR "
+                         "(is_mms = 1 AND message_id NOT IN (SELECT _id FROM mms))"))
+      return false;
+  }
+
+  if (d_databaseversion < 126)
+  {
+    std::cout << "To 126" << std::endl;
+
+    if (!d_database.exec("DELETE FROM reaction "
+                         "WHERE "
+                         "(is_mms = 0 AND message_id IN (SELECT _id from sms WHERE remote_deleted = 1)) "
+                         "OR "
+                         "(is_mms = 1 AND message_id IN (SELECT _id from mms WHERE remote_deleted = 1))"))
+      return false;
+  }
+
+  if (d_databaseversion < 127)
+  {
+    std::cout << "To 127" << std::endl;
+
+    if (!d_database.exec("UPDATE recipient SET pni = NULL WHERE phone IS NULL"))
+      return false;
+  }
+
+  if (d_databaseversion < 128)
+  {
+    std::cout << "To 128" << std::endl;
+
+    if (!d_database.exec("ALTER TABLE mms ADD COLUMN ranges BLOB DEFAULT NULL"))
+      return false;
+  }
+
+  if (d_databaseversion < 129)
+  {
+    std::cout << "To 129" << std::endl;
+
+    if (!d_database.exec("DROP TRIGGER reactions_mms_delete") ||
+        !d_database.exec("CREATE TRIGGER reactions_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM reaction WHERE message_id = old._id AND is_mms = 1; END"))
+      return false;
+
+    if (!d_database.exec("DELETE FROM reaction "
+                         "WHERE "
+                         "(is_mms = 0 AND message_id NOT IN (SELECT _id from sms)) "
+                         "OR "
+                         "(is_mms = 1 AND message_id NOT IN (SELECT _id from mms))"))
+      return false;
+  }
+
+  // THIS ONE IS QUESTIONABLE
+  if (d_databaseversion < 130)
+  {
+    std::cout << "To 130" << std::endl;
+
+    if (!d_database.exec("CREATE TABLE one_time_prekeys_tmp ("
+                         "_id INTEGER PRIMARY KEY,"
+                         "account_id TEXT NOT NULL,"
+                         "key_id INTEGER,"
+                         "public_key TEXT NOT NULL,"
+                         "private_key TEXT NOT NULL,"
+                         "UNIQUE(account_id, key_id))"))
+      return false;
+
+    // localAci should (probably) be set to UUID (aci) of self. Normally it is retrieved from a
+    // separate table (not exported to the backup). Not sure if skipping these next three migrations
+    // even if localACI _IS_ set is harmful
+    // Otherwise, try to use scanself and d_selfuuid;
+
+    // if localAci != null
+    //   migrateExistingOneTimePreKeys
+    // else
+    //   warn("no local aci, not migrating any existing one-time prekeys...")
+
+    if (!d_database.exec("DROP TABLE one_time_prekeys") ||
+        !d_database.exec("ALTER TABLE one_time_prekeys_tmp RENAME TO one_time_prekeys"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE signed_prekeys_tmp ("
+                         "_id INTEGER PRIMARY KEY,"
+                         "account_id TEXT NOT NULL,"
+                         "key_id INTEGER,"
+                         "public_key TEXT NOT NULL,"
+                         "private_key TEXT NOT NULL,"
+                         "signature TEXT NOT NULL,"
+                         "timestamp INTEGER DEFAULT 0,"
+                         "UNIQUE(account_id, key_id))"))
+      return false;
+
+    // if localAci != null
+    //   migrateExistingSignedPreKeys
+    // else
+    //   warn("no local aci, not migrating any existing signed prekeys...")
+
+    if (!d_database.exec("DROP TABLE signed_prekeys") ||
+        !d_database.exec("ALTER TABLE signed_prekeys_tmp RENAME TO signed_prekeys"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE sessions_tmp ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "account_id TEXT NOT NULL,"
+                         "address TEXT NOT NULL,"
+                         "device INTEGER NOT NULL,"
+                         "record BLOB NOT NULL,"
+                         "UNIQUE(account_id, address, device))"))
+      return false;
+
+    // if localAci != null
+    //   migrateExistingSessions
+    // else
+    //   warn("no local aci, not migrating any existing sessions...")
+
+    if (!d_database.exec("DROP TABLE sessions") ||
+        !d_database.exec("ALTER TABLE sessions_tmp RENAME TO sessions"))
+      return false;
+  }
+
+  if (d_databaseversion < 131)
+  {
+    std::cout << "To 131" << std::endl;
+
+    if (!d_database.exec("CREATE TABLE donation_receipt ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "receipt_type TEXT NOT NULL,"
+                         "receipt_date INTEGER NOT NULL,"
+                         "amount TEXT NOT NULL,"
+                         "currency TEXT NOT NULL,"
+                         "subscription_level INTEGER NOT NULL)"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX IF NOT EXISTS donation_receipt_type_index ON donation_receipt (receipt_type);") ||
+        !d_database.exec("CREATE INDEX IF NOT EXISTS donation_receipt_date_index ON donation_receipt (receipt_date);"))
+      return false;
+  }
+
+  // THIS ONE IS QUESTIONABLE
+  if (d_databaseversion < 132)
+  {
+    std::cout << "To 132" << std::endl;
+
+    if (!d_database.exec("ALTER TABLE mms ADD COLUMN is_story INTEGER DEFAULT 0") ||
+        !d_database.exec("ALTER TABLE mms ADD COLUMN parent_story_id INTEGER DEFAULT 0") ||
+        !d_database.exec("CREATE INDEX IF NOT EXISTS mms_is_story_index ON mms (is_story)") ||
+        !d_database.exec("CREATE INDEX IF NOT EXISTS mms_parent_story_id_index ON mms (parent_story_id)") ||
+        !d_database.exec("ALTER TABLE recipient ADD COLUMN distribution_list_id INTEGER DEFAULT NULL"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE distribution_list ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "name TEXT UNIQUE NOT NULL,"
+                         "distribution_id TEXT UNIQUE NOT NULL,"
+                         "recipient_id INTEGER UNIQUE REFERENCES recipient (_id) ON DELETE CASCADE)"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE distribution_list_member ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "list_id INTEGER NOT NULL REFERENCES distribution_list (_id) ON DELETE CASCADE,"
+                         "recipient_id INTEGER NOT NULL,"
+                         "UNIQUE(list_id, recipient_id) ON CONFLICT IGNORE)"))
+      return false;
+
+    /* THIS IS AN UNKNOWN! */
+    unsigned char ssk_buffer[16];
+    if (RAND_bytes(ssk_buffer, 16) != 1)
+    {
+      Logger::error("Failed to generate 16 random bytes");
+      return false;
+    }
+
+    SqliteDB::QueryResults new_id;
+    if (!d_database.exec("INSERT INTO recipient (distribution_list_id, storage_service_key, profile_sharing) VALUES (?, ?, ?) "
+                         "RETURNING _id",
+                         {1L, Base64::bytesToBase64String(ssk_buffer, 16), 1}, &new_id) ||
+        new_id.rows() != 1)
+      return false;
+
+    long long int new_id_val = new_id.valueAsInt(0, 0, -1);
+    if (new_id_val == -1)
+      return false;
+
+    union
+    {
+      struct
+      {
+        uint32_t time_low;
+        uint16_t time_mid;
+        uint16_t time_hi_and_version;
+        uint8_t  clk_seq_hi_res;
+        uint8_t  clk_seq_low;
+        uint8_t  node[6];
+      } uuidstruct;
+      uint8_t rnd[16];
+    } uuid;
+
+    if (RAND_bytes(uuid.rnd, sizeof(uuid)) != 1)
+    {
+      Logger::error("Failed to generate 16 random bytes (2)");
+      return false;
+    }
+
+    // Refer Section 4.2 of RFC-4122
+    // https://tools.ietf.org/html/rfc4122#section-4.2
+    uuid.uuidstruct.clk_seq_hi_res = (uint8_t) ((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
+    uuid.uuidstruct.time_hi_and_version = (uint16_t) ((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
+
+    char uuid_cstr[38];
+    snprintf(uuid_cstr, 38, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+             uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+             uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+             uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+             uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]);
+    std::string uuid_str(uuid_cstr, 38);
+
+    if (!d_database.exec("INSERT INTO distribution_list (_id, name, distribution_id, recipient_id) VALUES (?, ?, ?, ?)",
+                         {1L, uuid_str, uuid_str, new_id_val}))
+      return false;
   }
 
   if (d_databaseversion < 133)
@@ -875,15 +1168,13 @@ bool SignalBackup::migrate_to_191()
   if (d_databaseversion < 185)
   {
     std::cout << "To 185" << std::endl;
-
-    // first part gets selfid
-    if (d_selfid == -1)
-      d_selfid = scanSelf();
+    d_selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
     if (d_selfid == -1)
     {
-      std::cout << "Need self id, use `--setselfid'" << std::endl;
+      Logger::error("Failed to get _id of self. This will probably end badly...");
       return false;
     }
+    d_selfuuid = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string());
 
     //getdeps
     SqliteDB::QueryResults res;

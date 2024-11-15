@@ -567,7 +567,7 @@ int main(int argc, char *argv[])
     }
 
   if (arg.migrate_to_191())
-    if (!sb->migrate_to_191())
+    if (!sb->migrate_to_191(arg.setselfid()))
     {
       Logger::error("Migration failed");
       return 1;
