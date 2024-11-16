@@ -22,11 +22,18 @@
 #include <regex>
 #include <openssl/rand.h>
 
+#if __cpp_lib_format >= 201907L
+#include <format>
+#else
+#include <memory>
+#include <cstdio>
+#endif
+
 bool SignalBackup::migrate_to_191(std::string const &selfphone)
 {
-  if (d_databaseversion < 121)
+  if (d_databaseversion < 109)
   {
-    std::cout << "Sorry, db version too old. Not supported (yet?)" << std::endl;
+    Logger::error("Sorry, db version too old. Not supported (yet?)");
     return false;
   }
 
@@ -39,16 +46,241 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   /*
   if (d_databaseversion < )
   {
-    std::cout << "To " << std::endl;
+    Logger::message("To ");
 
     if (!d_database.exec())
       return false;
   }
   */
+  if (d_databaseversion < 110)
+  {
+    Logger::message("To 110");
+
+    if (!d_database.exec("DELETE FROM part WHERE mid != -8675309 AND mid NOT IN (SELECT _id FROM mms)"))
+      return false;
+  }
+
+  if (d_databaseversion < 111)
+  {
+    Logger::message("To 111");
+
+    if (!d_database.exec("CREATE TABLE avatar_picker ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "last_used INTEGER DEFAULT 0,"
+                         "group_id TEXT DEFAULT NULL,"
+                         "avatar BLOB NOT NULL)"))
+      return false;
+
+    SqliteDB::QueryResults recipients_without_color;
+    if (!d_database.exec("SELECT _id FROM recipient WHERE color IS NULL", &recipients_without_color))
+      return false;
+
+    std::vector<std::string> avatar_color_options{"C000", "C010", "C020", "C030", "C040", "C050", "C060", "C070", "C080", "C090", "C100", "C110", "C120", "C130", "C140", "C150", "C160", "C170", "C180", "C190", "C200", "C210", "C220", "C230", "C240", "C250", "C260", "C270", "C280", "C290", "C300", "C310", "C320", "C330", "C340", "C350"};
+
+    uint8_t random_idx = 0;
+    if (RAND_bytes(&random_idx, 1) != 1)
+      Logger::warning("failed to generate random number");
+    random_idx = (static_cast<double>(random_idx) / (255 + 1)) * ((avatar_color_options.size() - 1) - 0 + 1) + 0;
+
+    for (unsigned int i = 0; i < recipients_without_color.rows(); ++i)
+      if (!d_database.exec("UPDATE recipient SET color = ? WHERE _id = ?",
+                           {avatar_color_options[random_idx], recipients_without_color.value(i, "_id")}))
+        return false;
+  }
+
+  if (d_databaseversion < 112)
+  {
+    Logger::message("To 112");
+
+    if (!d_database.exec("DELETE FROM mms WHERE thread_id NOT IN (SELECT _id FROM thread)") ||
+        !d_database.exec("DELETE FROM part WHERE mid != -8675309 AND mid NOT IN (SELECT _id FROM mms)"))
+      return false;
+  }
+
+  if (d_databaseversion < 113)
+  {
+    Logger::message("To 113");
+
+    if (!d_database.exec("CREATE TABLE sessions_tmp ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "address TEXT NOT NULL,"
+                         "device INTEGER NOT NULL,"
+                         "record BLOB NOT NULL,"
+                         "UNIQUE(address, device))"))
+      return false;
+
+    if (!d_database.exec("INSERT INTO sessions_tmp (address, device, record) "
+                         "SELECT "
+                         "COALESCE(recipient.uuid, recipient.phone) AS new_address, "
+                         "sessions.device, "
+                         "sessions.record "
+                         "FROM sessions INNER JOIN recipient ON sessions.address = recipient._id "
+                         "WHERE new_address NOT NULL"))
+      return false;
+
+    if (!d_database.exec("DROP TABLE sessions") ||
+        !d_database.exec("ALTER TABLE sessions_tmp RENAME TO sessions"))
+      return false;
+  }
+
+  if (d_databaseversion < 114)
+  {
+    Logger::message("To 114");
+
+    if (!d_database.exec("CREATE TABLE identities_tmp ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "address TEXT UNIQUE NOT NULL,"
+                         "identity_key TEXT,"
+                         "first_use INTEGER DEFAULT 0,"
+                         "timestamp INTEGER DEFAULT 0,"
+                         "verified INTEGER DEFAULT 0,"
+                         "nonblocking_approval INTEGER DEFAULT 0)"))
+      return false;
+
+    if (!d_database.exec("INSERT INTO identities_tmp (address, identity_key, first_use, timestamp, verified, nonblocking_approval)"
+                         "SELECT "
+                         "COALESCE(recipient.uuid, recipient.phone) AS new_address,"
+                         "identities.key,"
+                         "identities.first_use,"
+                         "identities.timestamp,"
+                         "identities.verified,"
+                         "identities.nonblocking_approval"
+                         "FROM identities INNER JOIN recipient ON identities.address = recipient._id "
+                         "WHERE new_address NOT NULL"))
+      return false;
+
+    if (!d_database.exec("DROP TABLE identities") ||
+        !d_database.exec("ALTER TABLE identities_tmp RENAME TO identities"))
+      return false;
+  }
+
+  if (d_databaseversion < 115)
+  {
+    Logger::message("To 115");
+
+    if (!d_database.exec("CREATE TABLE group_call_ring (_id INTEGER PRIMARY KEY, ring_id INTEGER UNIQUE, date_received INTEGER, ring_state INTEGER)") ||
+        !d_database.exec("CREATE INDEX date_received_index on group_call_ring (date_received)"))
+      return false;
+  }
+
+  if (d_databaseversion < 116)
+  {
+    Logger::message("To 116");
+
+    if (!d_database.exec("DELETE FROM sessions WHERE address LIKE '+%'"))
+      return false;
+
+    // NOT SURE IF THIS IS WHATS INTENDED
+    if (!d_database.exec("UPDATE recipient SET storage_service_key = NULL WHERE "
+                         "storage_service_key NOT NULL AND group_id IS NULL AND uuid IS NULL"))
+      return false;
+
+  }
+
+  if (d_databaseversion < 117)
+  {
+    Logger::message("To 117");
+
+    if (!d_database.exec("ALTER TABLE sms ADD COLUMN receipt_timestamp INTEGER DEFAULT -1") ||
+        !d_database.exec("ALTER TABLE mms ADD COLUMN receipt_timestamp INTEGER DEFAULT -1"))
+      return false;
+  }
+
+  if (d_databaseversion < 118)
+  {
+    Logger::message("To 118");
+
+    if (!d_database.exec("ALTER TABLE recipient ADD COLUMN badges BLOB DEFAULT NULL"))
+      return false;
+  }
+
+  if (d_databaseversion < 119)
+  {
+    Logger::message("To 119");
+
+    if (!d_database.exec("CREATE TABLE sender_keys_tmp ("
+                         "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                         "address TEXT NOT NULL,"
+                         "device INTEGER NOT NULL,"
+                         "distribution_id TEXT NOT NULL,"
+                         "record BLOB NOT NULL,"
+                         "created_at INTEGER NOT NULL,"
+                         "UNIQUE(address, device, distribution_id) ON CONFLICT REPLACE)"))
+      return false;
+
+    if (!d_database.exec("INSERT INTO sender_keys_tmp (address, device, distribution_id, record, created_at) "
+                         "SELECT "
+                         "recipient.uuid AS new_address,"
+                         "sender_keys.device,"
+                         "sender_keys.distribution_id,"
+                         "sender_keys.record,"
+                         "sender_keys.created_at"
+                         "FROM sender_keys INNER JOIN recipient ON sender_keys.recipient_id = recipient._id"
+                         "WHERE new_address NOT NULL"))
+      return false;
+
+    if (!d_database.exec("DROP TABLE sender_keys") ||
+        !d_database.exec("ALTER TABLE sender_keys_tmp RENAME TO sender_keys"))
+      return false;
+  }
+
+  if (d_databaseversion < 120)
+  {
+    Logger::message("To 120");
+
+    if (!d_database.exec("ALTER TABLE sender_key_shared ADD COLUMN timestamp INTEGER DEFAULT 0"))
+      return false;
+  }
+
+  if (d_databaseversion < 121)
+  {
+    Logger::message("To 121");
+
+    if (!d_database.exec("CREATE TABLE reaction ("
+                         "_id INTEGER PRIMARY KEY,"
+                         "message_id INTEGER NOT NULL,"
+                         "is_mms INTEGER NOT NULL,"
+                         "author_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE,"
+                         "emoji TEXT NOT NULL,"
+                         "date_sent INTEGER NOT NULL,"
+                         "date_received INTEGER NOT NULL,"
+                         "UNIQUE(message_id, is_mms, author_id) ON CONFLICT REPLACE)"))
+      return false;
+
+    SqliteDB::QueryResults msg_reactions;
+    for (auto const &table : {"sms"s, "mms"s})
+    {
+      if (!d_database.exec("SELECT _id, reactions FROM "s + table + " WHERE reactions NOT NULL", &msg_reactions))
+        return false;
+
+      for (unsigned int i = 0; i < msg_reactions.rows(); ++i)
+      {
+        ReactionList reactions(msg_reactions.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
+        for (unsigned int j = 0; j < reactions.numReactions(); ++j)
+        {
+          if (!insertRow("reaction",
+                         {{"message_id", msg_reactions.value(i, "_id")},
+                          {"is_mms", (table == "sms" ? 0 : 1)},
+                          {"author_id", reactions.getAuthor(j)},
+                          {"emoji", reactions.getEmoji(j)},
+                          {"date_sent", reactions.getSentTime(j)},
+                          {"date_received", reactions.getReceivedTime(j)}}))
+            return false;
+        }
+      }
+    }
+
+    if (!d_database.exec("UPDATE reaction SET author_id = IFNULL((SELECT new_id FROM remapped_recipients WHERE author_id = old_id), author_id)") ||
+        !d_database.exec("CREATE TRIGGER reactions_sms_delete AFTER DELETE ON sms BEGIN DELETE FROM reaction WHERE message_id = old._id AND is_mms = 0; END") ||
+        !d_database.exec("CREATE TRIGGER reactions_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM reaction WHERE message_id = old._id AND is_mms = 0; END") ||
+        !d_database.exec("UPDATE sms SET reactions = NULL WHERE reactions NOT NULL") ||
+        !d_database.exec("UPDATE mms SET reactions = NULL WHERE reactions NOT NULL"))
+      return false;
+  }
 
   if (d_databaseversion < 122)
   {
-    std::cout << "To 122" << std::endl;
+    Logger::message("To 122");
 
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN pni TEXT DEFAULT NULL") ||
         !d_database.exec("CREATE UNIQUE INDEX IF NOT EXISTS recipient_pni_index ON recipient (pni)"))
@@ -57,7 +289,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 123)
   {
-    std::cout << "To 123" << std::endl;
+    Logger::message("To 123");
 
     if (!d_database.exec("CREATE TABLE notification_profile ("
                          "_id INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -92,7 +324,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 124)
   {
-    std::cout << "To 124" << std::endl;
+    Logger::message("To 124");
 
     if (!d_database.exec("UPDATE notification_profile_schedule SET end = 2400 WHERE end = 0"))
       return false;
@@ -100,7 +332,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 125)
   {
-    std::cout << "To 125" << std::endl;
+    Logger::message("To 125");
 
     if (!d_database.exec("DELETE FROM reaction "
                          "WHERE "
@@ -112,7 +344,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 126)
   {
-    std::cout << "To 126" << std::endl;
+    Logger::message("To 126");
 
     if (!d_database.exec("DELETE FROM reaction "
                          "WHERE "
@@ -124,7 +356,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 127)
   {
-    std::cout << "To 127" << std::endl;
+    Logger::message("To 127");
 
     if (!d_database.exec("UPDATE recipient SET pni = NULL WHERE phone IS NULL"))
       return false;
@@ -132,7 +364,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 128)
   {
-    std::cout << "To 128" << std::endl;
+    Logger::message("To 128");
 
     if (!d_database.exec("ALTER TABLE mms ADD COLUMN ranges BLOB DEFAULT NULL"))
       return false;
@@ -140,7 +372,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 129)
   {
-    std::cout << "To 129" << std::endl;
+    Logger::message("To 129");
 
     if (!d_database.exec("DROP TRIGGER reactions_mms_delete") ||
         !d_database.exec("CREATE TRIGGER reactions_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM reaction WHERE message_id = old._id AND is_mms = 1; END"))
@@ -157,7 +389,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   // THIS ONE IS QUESTIONABLE
   if (d_databaseversion < 130)
   {
-    std::cout << "To 130" << std::endl;
+    Logger::message("To 130");
 
     if (!d_database.exec("CREATE TABLE one_time_prekeys_tmp ("
                          "_id INTEGER PRIMARY KEY,"
@@ -223,7 +455,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 131)
   {
-    std::cout << "To 131" << std::endl;
+    Logger::message("To 131");
 
     if (!d_database.exec("CREATE TABLE donation_receipt ("
                          "_id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -242,7 +474,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   // THIS ONE IS QUESTIONABLE
   if (d_databaseversion < 132)
   {
-    std::cout << "To 132" << std::endl;
+    Logger::message("To 132");
 
     if (!d_database.exec("ALTER TABLE mms ADD COLUMN is_story INTEGER DEFAULT 0") ||
         !d_database.exec("ALTER TABLE mms ADD COLUMN parent_story_id INTEGER DEFAULT 0") ||
@@ -266,6 +498,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
       return false;
 
     /* THIS IS AN UNKNOWN! */
+    // inserts a storage_service_key (random 16 bytes) into the newly created my-story recipient
     unsigned char ssk_buffer[16];
     if (RAND_bytes(ssk_buffer, 16) != 1)
     {
@@ -283,6 +516,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
     long long int new_id_val = new_id.valueAsInt(0, 0, -1);
     if (new_id_val == -1)
       return false;
+
 
     union
     {
@@ -309,14 +543,36 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
     uuid.uuidstruct.clk_seq_hi_res = (uint8_t) ((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
     uuid.uuidstruct.time_hi_and_version = (uint16_t) ((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
 
-    char uuid_cstr[38];
-    snprintf(uuid_cstr, 38, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-             uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
-             uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
-             uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
-             uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]);
-    std::string uuid_str(uuid_cstr, 38);
+#if __cpp_lib_format >= 201907L
+    std::string uuid_str = std::format("{:0>8x}-{:0>4x}-{:0>4x}-{:0>2x}{:0>2x}-{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}",
+                                       uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+                                       uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+                                       uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+                                       uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]);
+#else
+    int size = 1 + std::snprintf(nullptr, 0, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                                 uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+                                 uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+                                 uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+                                 uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]);
+    if (size <= 0)
+    {
+      Logger::error("Failed to get size of uuid");
+      return false;
+    }
 
+    std::unique_ptr<char[]> uuid_char(new char[size]);
+    if (std::snprintf(uuid_char.get(), size, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                      uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+                      uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+                      uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+                      uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]) < 0)
+    {
+      Logger::error("failed to format UUID");
+      return false;
+    }
+    std::string uuid_str(uuid_char.get(), uuid_char.get() + size - 1);
+#endif
     if (!d_database.exec("INSERT INTO distribution_list (_id, name, distribution_id, recipient_id) VALUES (?, ?, ?, ?)",
                          {1L, uuid_str, uuid_str, new_id_val}))
       return false;
@@ -324,28 +580,28 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 133)
   {
-    std::cout << "To 133" << std::endl;
+    Logger::message("To 133");
     if (!d_database.exec("ALTER TABLE distribution_list ADD COLUMN allows_replies INTEGER DEFAULT 1"))
       return false;
   }
 
   if (d_databaseversion < 134)
   {
-    std::cout << "To 134" << std::endl;
+    Logger::message("To 134");
     if (!d_database.exec("ALTER TABLE groups ADD COLUMN display_as_story INTEGER DEFAULT 0"))
       return false;
   }
 
   if (d_databaseversion < 135)
   {
-    std::cout << "To 135" << std::endl;
+    Logger::message("To 135");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS mms_thread_story_parent_story_index ON mms (thread_id, date_received, is_story, parent_story_id)"))
       return false;
   }
 
   if (d_databaseversion < 136)
   {
-    std::cout << "To 136" << std::endl;
+    Logger::message("To 136");
     if (!d_database.exec("CREATE TABLE story_sends ( _id INTEGER PRIMARY KEY, message_id INTEGER NOT NULL REFERENCES mms (_id) ON DELETE CASCADE, recipient_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE, sent_timestamp INTEGER NOT NULL, allows_replies INTEGER NOT NULL )") ||
         !d_database.exec("CREATE INDEX story_sends_recipient_id_sent_timestamp_allows_replies_index ON story_sends (recipient_id, sent_timestamp, allows_replies)"))
       return false;
@@ -353,7 +609,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 137)
   {
-    std::cout << "To 137" << std::endl;
+    Logger::message("To 137");
     if (!d_database.exec("ALTER TABLE distribution_list ADD COLUMN deletion_timestamp INTEGER DEFAULT 0") ||
         !d_database.exec("UPDATE recipient SET group_type = 4 WHERE distribution_list_id IS NOT NULL") ||
         !d_database.exec("UPDATE distribution_list SET name = '00000000-0000-0000-0000-000000000000', distribution_id = '00000000-0000-0000-0000-000000000000' WHERE _id = 1"))
@@ -362,21 +618,21 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 138)
   {
-    std::cout << "To 138" << std::endl;
+    Logger::message("To 138");
     if (!d_database.exec("UPDATE recipient SET storage_service_key = NULL WHERE distribution_list_id IS NOT NULL AND NOT EXISTS(SELECT _id from distribution_list WHERE _id = distribution_list_id)"))
       return false;
   }
 
   if (d_databaseversion < 139)
   {
-    std::cout << "To 139" << std::endl;
+    Logger::message("To 139");
     if (!d_database.exec("DELETE FROM storage_key WHERE type <= 4"))
       return false;
   }
 
   if (d_databaseversion < 140)
   {
-    std::cout << "To 140" << std::endl;
+    Logger::message("To 140");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS recipient_service_id_profile_key ON recipient (uuid, profile_key) WHERE uuid NOT NULL AND profile_key NOT NULL") ||
         !d_database.exec("CREATE TABLE cds ( _id INTEGER PRIMARY KEY, e164 TEXT NOT NULL UNIQUE ON CONFLICT IGNORE, last_seen_at INTEGER DEFAULT 0)"))
       return false;
@@ -384,21 +640,21 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 141)
   {
-    std::cout << "To 141" << std::endl;
+    Logger::message("To 141");
     if (!d_database.exec("ALTER TABLE groups ADD COLUMN auth_service_id TEXT DEFAULT NULL"))
       return false;
   }
 
   if (d_databaseversion < 142)
   {
-    std::cout << "To 142" << std::endl;
+    Logger::message("To 142");
     if (!d_database.exec("ALTER TABLE mms ADD COLUMN quote_type INTEGER DEFAULT 0"))
       return false;
   }
 
   if (d_databaseversion < 143)
   {
-    std::cout << "To 143" << std::endl;
+    Logger::message("To 143");
     if (!d_database.exec("ALTER TABLE distribution_list ADD COLUMN is_unknown INTEGER DEFAULT 0"))
       return false;
 
@@ -417,35 +673,35 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 144)
   {
-    std::cout << "To 144" << std::endl;
+    Logger::message("To 144");
     if (!d_database.exec("UPDATE mms SET read = 1 WHERE parent_story_id > 0"))
       return false;
   }
 
   if (d_databaseversion < 145)
   {
-    std::cout << "To 145" << std::endl;
+    Logger::message("To 145");
     if (!d_database.exec("DELETE FROM mms WHERE parent_story_id > 0 AND parent_story_id NOT IN (SELECT _id FROM mms WHERE remote_deleted = 0)"))
       return false;
   }
 
   if (d_databaseversion < 146)
   {
-    std::cout << "To 146" << std::endl;
+    Logger::message("To 146");
     if (!d_database.exec("CREATE TABLE remote_megaphone ( _id INTEGER PRIMARY KEY, uuid TEXT UNIQUE NOT NULL, priority INTEGER NOT NULL, countries TEXT, minimum_version INTEGER NOT NULL, dont_show_before INTEGER NOT NULL, dont_show_after INTEGER NOT NULL, show_for_days INTEGER NOT NULL, conditional_id TEXT, primary_action_id TEXT, secondary_action_id TEXT, image_url TEXT, image_uri TEXT DEFAULT NULL, title TEXT NOT NULL, body TEXT NOT NULL, primary_action_text TEXT, secondary_action_text TEXT, shown_at INTEGER DEFAULT 0, finished_at INTEGER DEFAULT 0)"))
       return false;
   }
 
   if (d_databaseversion < 147)
   {
-    std::cout << "To 147" << std::endl;
+    Logger::message("To 147");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS mms_quote_id_quote_author_index ON mms (quote_id, quote_author)"))
       return false;
   }
 
   if (d_databaseversion < 148)
   {
-    std::cout << "To 148" << std::endl;
+    Logger::message("To 148");
     if (!d_database.exec("ALTER TABLE distribution_list ADD COLUMN privacy_mode INTEGER DEFAULT 0") ||
         !d_database.exec("UPDATE distribution_list SET privacy_mode = 1 WHERE _id = 1"))
       return false;
@@ -461,14 +717,14 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 149)
   {
-    std::cout << "To 149" << std::endl;
+    Logger::message("To 149");
     if (!d_database.exec("UPDATE recipient SET profile_key_credential = NULL"))
       return false;
   }
 
   if (d_databaseversion < 150)
   {
-    std::cout << "To 150" << std::endl;
+    Logger::message("To 150");
     if (!d_database.exec("ALTER TABLE msl_payload ADD COLUMN urgent INTEGER NOT NULL DEFAULT 1"))
       return false;
 
@@ -478,7 +734,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   // NOTE THIS IS A DUPLICATE OF 153 FOR SOME REASON
   if (d_databaseversion < 151)
   {
-    std::cout << "To 151" << std::endl;
+    Logger::message("To 151");
     std::string mystory_dist_id = d_database.getSingleResultAs<std::string>("SELECT distribution_id FROM distribution_list WHERE _id = 1", std::string());
 
     if (mystory_dist_id == "00000000-0000-0000-0000-000000000000") // ok!
@@ -491,7 +747,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         long long int mystory_rid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE distribution_list_id = 1", -1);
         if (mystory_rid == -1) // create
         {
-          std::cout << "Unable to create new recipient" << std::endl;
+          Logger::error("Unable to create new recipient");
           return false;
         }
         if (!d_database.exec("INSERT INTO distribution_list (_id, name, distribution_id, recipient_id, privacy_mode) "
@@ -512,7 +768,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 152)
   {
-    std::cout << "To 152" << std::endl;
+    Logger::message("To 152");
     if (!d_database.exec("UPDATE recipient SET group_type = 4 WHERE  distribution_list_id IS NOT NULL"))
       return false;
 
@@ -523,7 +779,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   // NOTE THIS IS A DUPLICATE OF 151 FOR SOME REASON
   if (d_databaseversion < 153)
   {
-    std::cout << "To 153" << std::endl;
+    Logger::message("To 153");
     std::string mystory_dist_id = d_database.getSingleResultAs<std::string>("SELECT distribution_id FROM distribution_list WHERE _id = 1", std::string());
 
     if (mystory_dist_id == "00000000-0000-0000-0000-000000000000") // ok!
@@ -536,7 +792,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         long long int mystory_rid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE distribution_list_id = 1", -1);
         if (mystory_rid == -1) // create
         {
-          std::cout << "Unable to create new recipient" << std::endl;
+          Logger::error("Unable to create new recipient");
           return false;
         }
         if (!d_database.exec("INSERT INTO distribution_list (_id, name, distribution_id, recipient_id, privacy_mode) "
@@ -557,7 +813,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 154)
   {
-    std::cout << "To 154" << std::endl;
+    Logger::message("To 154");
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN needs_pni_signature") ||
         !d_database.exec("CREATE TABLE pending_pni_signature_message (_id INTEGER PRIMARY KEY, recipient_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE, sent_timestamp INTEGER NOT NULL, device_id INTEGER NOT NULL)") ||
         !d_database.exec("CREATE UNIQUE INDEX pending_pni_recipient_sent_device_index ON pending_pni_signature_message (recipient_id, sent_timestamp, device_id)"))
@@ -569,7 +825,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 155)
   {
-    std::cout << "To 155" << std::endl;
+    Logger::message("To 155");
     if (!d_database.exec("ALTER TABLE mms ADD COLUMN export_state BLOB DEFAULT NULL") ||
         !d_database.exec("ALTER TABLE mms ADD COLUMN exported INTEGER DEFAULT 0") ||
         !d_database.exec("ALTER TABLE sms ADD COLUMN export_state BLOB DEFAULT NULL") ||
@@ -581,7 +837,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 156)
   {
-    std::cout << "To 156" << std::endl;
+    Logger::message("To 156");
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN unregistered_timestamp INTEGER DEFAULT 0"))
       return false;
 
@@ -594,7 +850,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 157)
   {
-    std::cout << "To 157" << std::endl;
+    Logger::message("To 157");
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN hidden INTEGER DEFAULT 0"))
       return false;
 
@@ -603,7 +859,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 158)
   {
-    std::cout << "To 158" << std::endl;
+    Logger::message("To 158");
     if (!d_database.exec("ALTER TABLE groups ADD COLUMN last_force_update_timestamp INTEGER DEFAULT 0"))
       return false;
 
@@ -612,7 +868,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 159)
   {
-    std::cout << "To 159" << std::endl;
+    Logger::message("To 159");
     if (!d_database.exec("ALTER TABLE thread ADD COLUMN unread_self_mention_count INTEGER DEFAULT 0"))
       return false;
 
@@ -621,7 +877,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 160)
   {
-    std::cout << "To 160" << std::endl;
+    Logger::message("To 160");
 
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS sms_exported_index ON sms (exported)") ||
         !d_database.exec("CREATE INDEX IF NOT EXISTS mms_exported_index ON mms (exported)"))
@@ -631,7 +887,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 161)
   {
-    std::cout << "To 161" << std::endl;
+    Logger::message("To 161");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS story_sends_message_id_distribution_id_index ON story_sends (message_id, distribution_id)"))
       return false;
 
@@ -640,7 +896,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 162)
   {
-    std::cout << "To 162" << std::endl;
+    Logger::message("To 162");
     if (!d_database.tableContainsColumn("thread", "unread_self_mention_count"))
       if (!d_database.exec("ALTER TABLE thread ADD COLUMN unread_self_mention_count INTEGER DEFAULT 0"))
         return false;
@@ -650,7 +906,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 163)
   {
-    std::cout << "To 163" << std::endl;
+    Logger::message("To 163");
     if (!d_database.tableContainsColumn("remote_megaphone", "primary_action_data"))
       if (!d_database.exec("ALTER TABLE remote_megaphone ADD COLUMN primary_action_data TEXT DEFAULT NULL"))
         return false;
@@ -669,7 +925,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 164)
   {
-    std::cout << "To 164" << std::endl;
+    Logger::message("To 164");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS thread_read ON thread (read)"))
       return false;
 
@@ -678,7 +934,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 165)
   {
-    std::cout << "To 165" << std::endl;
+    Logger::message("To 165");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS mms_id_msg_box_payment_transactions_index ON mms (_id, msg_box) WHERE msg_box & 0x300000000 != 0"))
       return false;
 
@@ -687,7 +943,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 166)
   {
-    std::cout << "To 166" << std::endl;
+    Logger::message("To 166");
     if (d_database.tableContainsColumn("thread", "thread_recipient_id"))
     {
       // removeDuplicateThreadEntries(db)
@@ -800,7 +1056,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 167)
   {
-    std::cout << "To 167" << std::endl;
+    Logger::message("To 167");
     if (!d_database.exec("DELETE FROM reaction  WHERE (is_mms = 0 AND message_id NOT IN (SELECT _id FROM sms)) OR(is_mms = 1 AND message_id NOT IN (SELECT _id FROM mms))") ||
         !d_database.exec("CREATE TRIGGER IF NOT EXISTS reactions_sms_delete AFTER DELETE ON sms BEGIN DELETE FROM reaction WHERE message_id = old._id AND is_mms = 0; END") ||
         !d_database.exec("CREATE TRIGGER IF NOT EXISTS reactions_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM reaction WHERE message_id = old._id AND is_mms = 1; END"))
@@ -811,7 +1067,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 168)
   {
-    std::cout << "To 168" << std::endl;
+    Logger::message("To 168");
 
     if (!d_database.exec("DROP TRIGGER msl_sms_delete") ||
         !d_database.exec("DROP TRIGGER reactions_sms_delete") ||
@@ -875,7 +1131,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 169)
   {
-    std::cout << "To 169" << std::endl;
+    Logger::message("To 169");
     if (!d_database.exec("CREATE TABLE emoji_search_tmp ( _id INTEGER PRIMARY KEY, label TEXT NOT NULL, emoji TEXT NOT NULL, rank INTEGER DEFAULT 2147483647)" /*int.MAX_VALUE*/) ||
         !d_database.exec("INSERT INTO emoji_search_tmp (label, emoji) SELECT label, emoji from emoji_search") ||
         !d_database.exec("DROP TABLE emoji_search") ||
@@ -887,7 +1143,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 170)
   {
-    std::cout << "To 170" << std::endl;
+    Logger::message("To 170");
     if (!d_database.exec("CREATE TABLE call ( _id INTEGER PRIMARY KEY, call_id INTEGER NOT NULL UNIQUE, message_id INTEGER NOT NULL REFERENCES mms (_id) ON DELETE CASCADE, peer INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE, type INTEGER NOT NULL, direction INTEGER NOT NULL, event INTEGER NOT NULL)") ||
         !d_database.exec("CREATE INDEX call_call_id_index ON call (call_id)") ||
         !d_database.exec("CREATE INDEX call_message_id_index ON call (message_id)"))
@@ -897,7 +1153,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 171)
   {
-    std::cout << "To 171" << std::endl;
+    Logger::message("To 171");
 
     // removeDuplicateThreadEntries // almost (no sms) duplicates 166
     SqliteDB::QueryResults res;
@@ -954,7 +1210,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 172)
   {
-    std::cout << "To 172" << std::endl;
+    Logger::message("To 172");
     if (!d_database.exec("CREATE TABLE group_membership (_id INTEGER PRIMARY KEY,group_id TEXT NOT NULL,recipient_id INTEGER NOT NULL,UNIQUE(group_id, recipient_id))"))
       return false;
 
@@ -987,7 +1243,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 173)
   {
-    std::cout << "To 173" << std::endl;
+    Logger::message("To 173");
 
     if (!d_database.exec("ALTER TABLE mms ADD COLUMN scheduled_date INTEGER DEFAULT -1") ||
         !d_database.exec("DROP INDEX mms_thread_story_parent_story_index") ||
@@ -998,7 +1254,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 174)
   {
-    std::cout << "To 174" << std::endl;
+    Logger::message("To 174");
     if (!d_database.exec("CREATE TABLE reaction_tmp ( _id INTEGER PRIMARY KEY, message_id INTEGER NOT NULL REFERENCES mms (_id) ON DELETE CASCADE, author_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE, emoji TEXT NOT NULL, date_sent INTEGER NOT NULL, date_received INTEGER NOT NULL, UNIQUE(message_id, author_id) ON CONFLICT REPLACE )"))
       return false;
     if (!d_database.exec("INSERT INTO reaction_tmp SELECT _id, message_id, author_id, emoji, date_sent, date_received FROM reaction WHERE message_id IN (SELECT _id FROM mms)"))
@@ -1015,7 +1271,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 175)
   {
-    std::cout << "To 175" << std::endl;
+    Logger::message("To 175");
 
     if (!d_database.exec("DROP TABLE mms_fts") ||
         !d_database.exec("DROP TRIGGER IF EXISTS mms_ai") ||
@@ -1032,7 +1288,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 176)
   {
-    std::cout << "To 176" << std::endl;
+    Logger::message("To 176");
     if (!d_database.exec("DROP INDEX IF EXISTS mms_quote_id_quote_author_index") ||
         !d_database.exec("CREATE INDEX IF NOT EXISTS message_quote_id_quote_author_scheduled_date_index ON message (quote_id, quote_author, scheduled_date);"))
       return false;
@@ -1042,7 +1298,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 177)
   {
-    std::cout << "To 177" << std::endl;
+    Logger::message("To 177");
     if (!d_database.exec("DROP TRIGGER IF EXISTS msl_mms_delete") ||
         !d_database.exec("DROP TRIGGER IF EXISTS msl_attachment_delete") ||
         !d_database.exec("DROP INDEX IF EXISTS msl_message_message_index"))
@@ -1063,7 +1319,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 178)
   {
-    std::cout << "To 178" << std::endl;
+    Logger::message("To 178");
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN reporting_token BLOB DEFAULT NULL"))
       return false;
 
@@ -1072,7 +1328,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 179)
   {
-    std::cout << "To 179" << std::endl;
+    Logger::message("To 179");
     if (!d_database.exec("DELETE FROM msl_message WHERE payload_id NOT IN (SELECT _id FROM msl_payload)") ||
         !d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT _id FROM msl_payload)"))
       return false;
@@ -1082,7 +1338,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 180)
   {
-    std::cout << "To 180" << std::endl;
+    Logger::message("To 180");
     if (!d_database.exec("ALTER TABLE recipient ADD COLUMN system_nickname TEXT DEFAULT NULL"))
       return false;
 
@@ -1091,7 +1347,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 181)
   {
-    std::cout << "To 181" << std::endl;
+    Logger::message("To 181");
     if (!d_database.exec("DELETE FROM thread WHERE recipient_id NOT IN (SELECT _id FROM recipient)"))
       return false;
     if (d_database.changed())
@@ -1112,7 +1368,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 182)
   {
-    std::cout << "To 182" << std::endl;
+    Logger::message("To 182");
     if (!d_database.exec("CREATE TABLE call_tmp ( _id INTEGER PRIMARY KEY, call_id INTEGER NOT NULL UNIQUE, message_id INTEGER DEFAULT NULL REFERENCES message (_id) ON DELETE SET NULL, peer INTEGER DEFAULT NULL REFERENCES recipient (_id) ON DELETE CASCADE, type INTEGER NOT NULL, direction INTEGER NOT NULL, event INTEGER NOT NULL, timestamp INTEGER NOT NULL, ringer INTEGER DEFAULT NULL, deletion_timestamp INTEGER DEFAULT 0 )"))
       return false;
 
@@ -1129,7 +1385,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 183)
   {
-    std::cout << "To 183" << std::endl;
+    Logger::message("To 183");
 
     if (!d_database.exec("CREATE TABLE call_link (_id INTEGER PRIMARY KEY)"))
       return false;
@@ -1148,7 +1404,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 184)
   {
-    std::cout << "To 184" << std::endl;
+    Logger::message("To 184");
     if (!d_database.exec("CREATE TABLE call_tmp ( _id INTEGER PRIMARY KEY, call_id INTEGER NOT NULL, message_id INTEGER DEFAULT NULL REFERENCES message (_id) ON DELETE SET NULL, peer INTEGER DEFAULT NULL REFERENCES recipient (_id) ON DELETE CASCADE, call_link INTEGER DEFAULT NULL REFERENCES call_link (_id) ON DELETE CASCADE, type INTEGER NOT NULL, direction INTEGER NOT NULL, event INTEGER NOT NULL, timestamp INTEGER NOT NULL, ringer INTEGER DEFAULT NULL, deletion_timestamp INTEGER DEFAULT 0, UNIQUE (call_id, peer, call_link) ON CONFLICT FAIL, CHECK ((peer IS NULL AND call_link IS NOT NULL) OR (peer IS NOT NULL AND call_link IS NULL)) )"))
       return false;
 
@@ -1167,7 +1423,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 185)
   {
-    std::cout << "To 185" << std::endl;
+    Logger::message("To 185");
     d_selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
     if (d_selfid == -1)
     {
@@ -1237,7 +1493,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 186)
   {
-    std::cout << "To 186" << std::endl;
+    Logger::message("To 186");
     if (d_database.tableContainsColumn("message", "from_recipient_id"))
     {
       if (!d_database.exec("CREATE INDEX IF NOT EXISTS message_original_message_id_index ON message (original_message_id)") ||
@@ -1257,7 +1513,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 187)
   {
-    std::cout << "To 187" << std::endl;
+    Logger::message("To 187");
     if (!d_database.exec("CREATE INDEX IF NOT EXISTS call_call_link_index ON call (call_link)") ||
         !d_database.exec("CREATE INDEX IF NOT EXISTS call_peer_index ON call (peer)") ||
         !d_database.exec("CREATE INDEX IF NOT EXISTS distribution_list_member_recipient_id ON distribution_list_member (recipient_id)") ||
@@ -1269,10 +1525,10 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 188)
   {
-    std::cout << "To 188" << std::endl;
+    Logger::message("To 188");
     if (!d_database.tableContainsColumn("message", "from_recipient_id"))
     {
-      std::cout << "This should not happen... " << std::endl;
+      Logger::error("This should not happen... ");
       return false;
     }
 
@@ -1291,7 +1547,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 189)
   {
-    std::cout << "To 189" << std::endl;
+    Logger::message("To 189");
     if (!d_database.exec("CREATE TABLE call_link_tmp ( _id INTEGER PRIMARY KEY, root_key BLOB NOT NULL, room_id TEXT NOT NULL UNIQUE, admin_key BLOB, name TEXT NOT NULL, restrictions INTEGER NOT NULL, revoked INTEGER NOT NULL, expiration INTEGER NOT NULL, avatar_color TEXT NOT NULL )"))
       return false;
 
@@ -1317,14 +1573,14 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
   if (d_databaseversion < 190)
   {
-    std::cout << "To 190" << std::endl;
+    Logger::message("To 190");
     // (yes this one's empty, it was buggy and replaced by 191
     // setDBV
   }
 
   if (d_databaseversion < 191)
   {
-    std::cout << "To 191" << std::endl;
+    Logger::message("To 191");
 
     if (!d_database.exec("DROP INDEX IF EXISTS message_unique_sent_from_thread"))
       return false;
@@ -1377,7 +1633,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
     //     for (unsigned int j = 0; j < res2.rows(); ++j)
     //       if (d_database.exec("INSERT INTO message (type, date_received, date_sent, from_recipient_id, to_recipient_id, thread_id, body) VALUES (?, ?, ?, ?, ?, ?, ?)",
     //                           {res2.value(j, "type"), res2.value(j, "date_received"), res2.value(0, "date_sent"), res2.value(j, "from_recipient_id"), res2.value(j, "to_recipient_id"), res2.value(j, "thread_id"), res2.valueAsString(j, "body") + " " + bepaald::toString(i + 1)}))
-    //         ;//std::cout << "added some dupes" << std::endl;
+    //         ;//std::cout << "added some dupes");
     // }
 
 
@@ -1399,7 +1655,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
     if (!res.empty())
     {
-      //std::cout << "DUPES REMAINING: " << res.rows() << std::endl;
+      //std::cout << "DUPES REMAINING: " << res.rows());
       //res.prettyPrint(d_truncate);
 
       struct DupeKey
