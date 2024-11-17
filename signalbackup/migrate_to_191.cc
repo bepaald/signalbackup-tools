@@ -31,7 +31,7 @@
 
 bool SignalBackup::migrate_to_191(std::string const &selfphone)
 {
-  if (d_databaseversion < 109)
+  if (d_databaseversion < 98)
   {
     Logger::error("Sorry, db version too old. Not supported (yet?)");
     return false;
@@ -52,6 +52,314 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
       return false;
   }
   */
+
+  if (d_databaseversion < 98)
+  {
+    Logger::message("To 98");
+
+    if (!d_database.exec("UPDATE recipient SET storage_service_key = NULL WHERE storage_service_key IS NOT NULL AND (group_type = 1 OR (group_type = 0 AND phone IS NULL AND uuid IS NULL))"))
+      return false;
+  }
+
+  if (d_databaseversion < 99)
+  {
+    Logger::message("To 99");
+
+    if (!d_database.exec("ALTER TABLE sms ADD COLUMN server_guid TEXT DEFAULT NULL") ||
+        !d_database.exec("ALTER TABLE mms ADD COLUMN server_guid TEXT DEFAULT NULL"))
+      return false;
+  }
+
+  if (d_databaseversion < 100)
+  {
+    Logger::message("To 100");
+
+    if (!d_database.exec("ALTER TABLE recipient ADD COLUMN chat_colors BLOB DEFAULT NULL") ||
+        !d_database.exec("ALTER TABLE recipient ADD COLUMN custom_chat_colors_id INTEGER DEFAULT 0") ||
+        !d_database.exec("CREATE TABLE chat_colors (_id INTEGER PRIMARY KEY AUTOINCREMENT,chat_colors BLOB)"))
+      return false;
+
+    // NOTE skipping the rest here, people can just set new chat_colors if they want...
+  }
+
+  if (d_databaseversion < 101)
+  {
+    Logger::message("To 101");
+
+    SqliteDB::QueryResults recipients_without_color;
+    if (!d_database.exec("SELECT _id FROM recipient WHERE color IS NULL", &recipients_without_color))
+      return false;
+
+    std::vector<std::string> avatar_color_options{"C000", "C010", "C020", "C030", "C040", "C050", "C060", "C070", "C080", "C090", "C100", "C110", "C120", "C130", "C140", "C150", "C160", "C170", "C180", "C190", "C200", "C210", "C220", "C230", "C240", "C250", "C260", "C270", "C280", "C290", "C300", "C310", "C320", "C330", "C340", "C350"};
+
+    for (unsigned int i = 0; i < recipients_without_color.rows(); ++i)
+    {
+      uint8_t random_idx = 0;
+      if (RAND_bytes(&random_idx, 1) != 1)
+        Logger::warning("failed to generate random number");
+      random_idx = (static_cast<double>(random_idx) / (255 + 1)) * ((avatar_color_options.size() - 1) - 0 + 1) + 0;
+
+      if (!d_database.exec("UPDATE recipient SET color = ? WHERE _id = ?",
+                           {avatar_color_options[random_idx], recipients_without_color.value(i, "_id")}))
+        return false;
+    }
+  }
+
+  if (d_databaseversion < 102)
+  {
+    Logger::message("To 102");
+
+    if (!d_database.exec("CREATE VIRTUAL TABLE emoji_search USING fts5(label, emoji UNINDEXED)"))
+      return false;
+  }
+
+  // QUESTIONABLE
+  if (d_databaseversion < 103)
+  {
+    Logger::message_start("To 103");
+    if (!d_database.containsTable("sender_keys"))
+    {
+      Logger::message_end(" (really)");
+
+      if (!d_database.exec("CREATE TABLE sender_keys ( _id INTEGER PRIMARY KEY AUTOINCREMENT, recipient_id INTEGER NOT NULL, device INTEGER NOT NULL, distribution_id TEXT NOT NULL, record BLOB NOT NULL, created_at INTEGER NOT NULL, UNIQUE(recipient_id, device, distribution_id) ON CONFLICT REPLACE)"))
+        return false;
+
+      if (!d_database.exec("CREATE TABLE sender_key_shared ( _id INTEGER PRIMARY KEY AUTOINCREMENT, distribution_id TEXT NOT NULL, address TEXT NOT NULL, device INTEGER NOT NULL, UNIQUE(distribution_id, address, device) ON CONFLICT REPLACE )"))
+        return false;
+
+      if (!d_database.exec("CREATE TABLE pending_retry_receipts ( _id INTEGER PRIMARY KEY AUTOINCREMENT, author TEXT NOT NULL, device INTEGER NOT NULL, sent_timestamp INTEGER NOT NULL, received_timestamp TEXT NOT NULL, thread_id INTEGER NOT NULL, UNIQUE(author, sent_timestamp) ON CONFLICT REPLACE );"))
+        return false;
+
+      if (!d_database.exec("ALTER TABLE groups ADD COLUMN distribution_id TEXT DEFAULT NULL") ||
+          !d_database.exec("CREATE UNIQUE INDEX IF NOT EXISTS group_distribution_id_index ON groups (distribution_id)"))
+        return false;
+
+      union
+      {
+        struct
+        {
+          uint32_t time_low;
+          uint16_t time_mid;
+          uint16_t time_hi_and_version;
+          uint8_t  clk_seq_hi_res;
+          uint8_t  clk_seq_low;
+          uint8_t  node[6];
+        } uuidstruct;
+        uint8_t rnd[16];
+      } uuid;
+
+      SqliteDB::QueryResults group_results;
+      if (!d_database.exec("SELECT group_id FROM groups WHERE LENGTH(group_id) = 85", &group_results))
+        return false;
+      for (unsigned int i = 0; i < group_results.rows(); ++i)
+      {
+        // generate a new uuid to use as distribution_id
+        if (RAND_bytes(uuid.rnd, sizeof(uuid)) != 1)
+        {
+          Logger::error("Failed to generate 16 random bytes (2)");
+          return false;
+        }
+
+        // Refer Section 4.2 of RFC-4122
+        // https://tools.ietf.org/html/rfc4122#section-4.2
+        uuid.uuidstruct.clk_seq_hi_res = (uint8_t) ((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
+        uuid.uuidstruct.time_hi_and_version = (uint16_t) ((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
+
+#if __cpp_lib_format >= 201907L
+        std::string distribution_id = std::format("{:0>8x}-{:0>4x}-{:0>4x}-{:0>2x}{:0>2x}-{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}",
+                                                  uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+                                                  uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+                                                  uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+                                                  uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]);
+#else
+        int size = 1 + std::snprintf(nullptr, 0, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                                     uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+                                     uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+                                     uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+                                     uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]);
+        if (size <= 0)
+        {
+          Logger::error("Failed to get size of uuid");
+          return false;
+        }
+
+        std::unique_ptr<char[]> uuid_char(new char[size]);
+        if (std::snprintf(uuid_char.get(), size, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                          uuid.uuidstruct.time_low, uuid.uuidstruct.time_mid, uuid.uuidstruct.time_hi_and_version,
+                          uuid.uuidstruct.clk_seq_hi_res, uuid.uuidstruct.clk_seq_low,
+                          uuid.uuidstruct.node[0], uuid.uuidstruct.node[1], uuid.uuidstruct.node[2],
+                          uuid.uuidstruct.node[3], uuid.uuidstruct.node[4], uuid.uuidstruct.node[5]) < 0)
+        {
+          Logger::error("failed to format UUID");
+          return false;
+        }
+        std::string distribution_id(uuid_char.get(), uuid_char.get() + size - 1);
+#endif
+        if (!d_database.exec("UPDATE groups SET distribution_id = ? WHERE group_id = ?", {distribution_id, group_results.value(i, "group_id")}))
+          return false;
+      }
+    }
+    else
+      Logger::message_end("... (not)");
+  }
+
+  if (d_databaseversion < 104)
+  {
+    Logger::message("To 104");
+
+    if (!d_database.exec("DROP INDEX sms_date_sent_index") ||
+        !d_database.exec("CREATE INDEX sms_date_sent_index on sms(date_sent, address, thread_id)") ||
+        !d_database.exec("DROP INDEX mms_date_sent_index") ||
+        !d_database.exec("CREATE INDEX mms_date_sent_index on mms(date, address, thread_id)"))
+      return false;
+  }
+
+  if (d_databaseversion < 105)
+  {
+    Logger::message("To 105");
+
+    if (!d_database.exec("CREATE TABLE message_send_log ( _id INTEGER PRIMARY KEY, date_sent INTEGER NOT NULL, content BLOB NOT NULL, related_message_id INTEGER DEFAULT -1, is_related_message_mms INTEGER DEFAULT 0, content_hint INTEGER NOT NULL, group_id BLOB DEFAULT NULL )"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX message_log_date_sent_index ON message_send_log (date_sent)") ||
+        !d_database.exec("CREATE INDEX message_log_related_message_index ON message_send_log (related_message_id, is_related_message_mms)") ||
+        !d_database.exec("CREATE TRIGGER msl_sms_delete AFTER DELETE ON sms BEGIN DELETE FROM message_send_log WHERE related_message_id = old._id AND is_related_message_mms = 0; END") ||
+        !d_database.exec("CREATE TRIGGER msl_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM message_send_log WHERE related_message_id = old._id AND is_related_message_mms = 1; END"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE message_send_log_recipients ( _id INTEGER PRIMARY KEY, message_send_log_id INTEGER NOT NULL REFERENCES message_send_log (_id) ON DELETE CASCADE, recipient_id INTEGER NOT NULL, device INTEGER NOT NULL )"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX message_send_log_recipients_recipient_index ON message_send_log_recipients (recipient_id, device)"))
+      return false;
+  }
+
+  if (d_databaseversion < 106)
+  {
+    Logger::message("To 106");
+
+    if (!d_database.exec("DROP TABLE message_send_log") ||
+        !d_database.exec("DROP INDEX IF EXISTS message_log_date_sent_index") ||
+        !d_database.exec("DROP INDEX IF EXISTS message_log_related_message_index") ||
+        !d_database.exec("DROP TRIGGER msl_sms_delete") ||
+        !d_database.exec("DROP TRIGGER msl_mms_delete") ||
+        !d_database.exec("DROP TABLE message_send_log_recipients") ||
+        !d_database.exec("DROP INDEX IF EXISTS message_send_log_recipients_recipient_index"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE msl_payload ( _id INTEGER PRIMARY KEY, date_sent INTEGER NOT NULL, content BLOB NOT NULL, content_hint INTEGER NOT NULL )"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX msl_payload_date_sent_index ON msl_payload (date_sent)"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE msl_recipient ( _id INTEGER PRIMARY KEY, payload_id INTEGER NOT NULL REFERENCES msl_payload (_id) ON DELETE CASCADE, recipient_id INTEGER NOT NULL, device INTEGER NOT NULL)"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX msl_recipient_recipient_index ON msl_recipient (recipient_id, device, payload_id)") ||
+        !d_database.exec("CREATE INDEX msl_recipient_payload_index ON msl_recipient (payload_id)"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE msl_message ( _id INTEGER PRIMARY KEY, payload_id INTEGER NOT NULL REFERENCES msl_payload (_id) ON DELETE CASCADE, message_id INTEGER NOT NULL, is_mms INTEGER NOT NULL )"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX msl_message_message_index ON msl_message (message_id, is_mms, payload_id)") ||
+        !d_database.exec("CREATE TRIGGER msl_sms_delete AFTER DELETE ON sms BEGIN DELETE FROM msl_payload WHERE _id IN (SELECT payload_id FROM msl_message WHERE message_id = old._id AND is_mms = 0); END") ||
+        !d_database.exec("CREATE TRIGGER msl_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM msl_payload WHERE _id IN (SELECT payload_id FROM msl_message WHERE message_id = old._id AND is_mms = 1); END") ||
+        !d_database.exec("CREATE TRIGGER msl_attachment_delete AFTER DELETE ON part BEGIN DELETE FROM msl_payload WHERE _id IN (SELECT payload_id FROM msl_message WHERE message_id = old.mid AND is_mms = 1); END"))
+      return false;
+  }
+
+  if (d_databaseversion < 107)
+  {
+    Logger::message("To 107");
+
+    if (!d_database.exec("DELETE FROM sms WHERE thread_id NOT IN (SELECT _id FROM thread)"))
+      return false;
+
+    if (!d_database.exec("DELETE FROM mms WHERE thread_id NOT IN (SELECT _id FROM thread)"))
+      return false;
+  }
+
+  if (d_databaseversion < 108)
+  {
+    Logger::message("To 108");
+
+    if (!d_database.exec("CREATE TABLE thread_tmp ( _id INTEGER PRIMARY KEY AUTOINCREMENT, date INTEGER DEFAULT 0, thread_recipient_id INTEGER, message_count INTEGER DEFAULT 0, snippet TEXT, snippet_charset INTEGER DEFAULT 0, snippet_type INTEGER DEFAULT 0, snippet_uri TEXT DEFAULT NULL, snippet_content_type INTEGER DEFAULT NULL, snippet_extras TEXT DEFAULT NULL, read INTEGER DEFAULT 1, type INTEGER DEFAULT 0, error INTEGER DEFAULT 0, archived INTEGER DEFAULT 0, status INTEGER DEFAULT 0, expires_in INTEGER DEFAULT 0, last_seen INTEGER DEFAULT 0, has_sent INTEGER DEFAULT 0, delivery_receipt_count INTEGER DEFAULT 0, read_receipt_count INTEGER DEFAULT 0, unread_count INTEGER DEFAULT 0, last_scrolled INTEGER DEFAULT 0, pinned INTEGER DEFAULT 0 )"))
+      return false;
+
+    if (!d_database.exec("INSERT INTO thread_tmp SELECT _id, date, recipient_ids, message_count, snippet, snippet_cs, snippet_type, snippet_uri, snippet_content_type, snippet_extras, read, type, error, archived, status, expires_in, last_seen, has_sent, delivery_receipt_count, read_receipt_count, unread_count, last_scrolled, pinned FROM thread "))
+      return false;
+
+
+    if (!d_database.exec("DROP TABLE thread") ||
+        !d_database.exec("ALTER TABLE thread_tmp RENAME TO thread"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX thread_recipient_id_index ON thread (thread_recipient_id)") ||
+        !d_database.exec("CREATE INDEX archived_count_index ON thread (archived, message_count)") ||
+        !d_database.exec("CREATE INDEX thread_pinned_index ON thread (pinned)"))
+      return false;
+
+    if (!d_database.exec("DELETE FROM remapped_threads"))
+      return false;
+  }
+
+  if (d_databaseversion < 109)
+  {
+    Logger::message("To 109");
+
+    if (!d_database.exec("CREATE TABLE mms_tmp ( _id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER, date INTEGER, date_received INTEGER, date_server INTEGER DEFAULT -1, msg_box INTEGER, read INTEGER DEFAULT 0, body TEXT, part_count INTEGER, ct_l TEXT, address INTEGER, address_device_id INTEGER, exp INTEGER, m_type INTEGER, m_size INTEGER, st INTEGER, tr_id TEXT, delivery_receipt_count INTEGER DEFAULT 0, mismatched_identities TEXT DEFAULT NULL, network_failures TEXT DEFAULT NULL, subscription_id INTEGER DEFAULT -1, expires_in INTEGER DEFAULT 0, expire_started INTEGER DEFAULT 0, notified INTEGER DEFAULT 0, read_receipt_count INTEGER DEFAULT 0, quote_id INTEGER DEFAULT 0, quote_author TEXT, quote_body TEXT, quote_attachment INTEGER DEFAULT -1, quote_missing INTEGER DEFAULT 0, quote_mentions BLOB DEFAULT NULL, shared_contacts TEXT, unidentified INTEGER DEFAULT 0, previews TEXT, reveal_duration INTEGER DEFAULT 0, reactions BLOB DEFAULT NULL, reactions_unread INTEGER DEFAULT 0, reactions_last_seen INTEGER DEFAULT -1, remote_deleted INTEGER DEFAULT 0, mentions_self INTEGER DEFAULT 0, notified_timestamp INTEGER DEFAULT 0, viewed_receipt_count INTEGER DEFAULT 0, server_guid TEXT DEFAULT NULL );"))
+      return false;
+
+    if (!d_database.exec("INSERT INTO mms_tmp SELECT _id, thread_id, date, date_received, date_server, msg_box, read, body, part_count, ct_l, address, address_device_id, exp, m_type, m_size, st, tr_id, delivery_receipt_count, mismatched_identities, network_failures, subscription_id, expires_in, expire_started, notified, read_receipt_count, quote_id, quote_author, quote_body, quote_attachment, quote_missing, quote_mentions, shared_contacts, unidentified, previews, reveal_duration, reactions, reactions_unread, reactions_last_seen, remote_deleted, mentions_self, notified_timestamp, viewed_receipt_count, server_guid FROM mms"))
+      return false;
+
+
+    if (!d_database.exec("DROP TABLE mms") ||
+        !d_database.exec("ALTER TABLE mms_tmp RENAME TO mms"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX mms_read_and_notified_and_thread_id_index ON mms(read, notified, thread_id)") ||
+        !d_database.exec("CREATE INDEX mms_message_box_index ON mms (msg_box)") ||
+        !d_database.exec("CREATE INDEX mms_date_sent_index ON mms (date, address, thread_id)") ||
+        !d_database.exec("CREATE INDEX mms_date_server_index ON mms (date_server)") ||
+        !d_database.exec("CREATE INDEX mms_thread_date_index ON mms (thread_id, date_received)") ||
+        !d_database.exec("CREATE INDEX mms_reactions_unread_index ON mms (reactions_unread)"))
+      return false;
+
+    if (!d_database.exec("CREATE TRIGGER mms_ai AFTER INSERT ON mms BEGIN INSERT INTO mms_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END") ||
+        !d_database.exec("CREATE TRIGGER mms_ad AFTER DELETE ON mms BEGIN INSERT INTO mms_fts(mms_fts, rowid, body, thread_id) VALUES('delete', old._id, old.body, old.thread_id); END") ||
+        !d_database.exec("CREATE TRIGGER mms_au AFTER UPDATE ON mms BEGIN INSERT INTO mms_fts(mms_fts, rowid, body, thread_id) VALUES('delete', old._id, old.body, old.thread_id); INSERT INTO mms_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END") ||
+        !d_database.exec("CREATE TRIGGER msl_mms_delete AFTER DELETE ON mms BEGIN DELETE FROM msl_payload WHERE _id IN (SELECT payload_id FROM msl_message WHERE message_id = old._id AND is_mms = 1); END"))
+      return false;
+
+    if (!d_database.exec("CREATE TABLE sms_tmp ( _id INTEGER PRIMARY KEY AUTOINCREMENT, thread_id INTEGER, address INTEGER, address_device_id INTEGER DEFAULT 1, person INTEGER, date INTEGER, date_sent INTEGER, date_server INTEGER DEFAULT -1, protocol INTEGER, read INTEGER DEFAULT 0, status INTEGER DEFAULT -1, type INTEGER, reply_path_present INTEGER, delivery_receipt_count INTEGER DEFAULT 0, subject TEXT, body TEXT, mismatched_identities TEXT DEFAULT NULL, service_center TEXT, subscription_id INTEGER DEFAULT -1, expires_in INTEGER DEFAULT 0, expire_started INTEGER DEFAULT 0, notified DEFAULT 0, read_receipt_count INTEGER DEFAULT 0, unidentified INTEGER DEFAULT 0, reactions BLOB DEFAULT NULL, reactions_unread INTEGER DEFAULT 0, reactions_last_seen INTEGER DEFAULT -1, remote_deleted INTEGER DEFAULT 0, notified_timestamp INTEGER DEFAULT 0, server_guid TEXT DEFAULT NULL )"))
+      return false;
+
+    if (!d_database.exec("INSERT INTO sms_tmp SELECT _id, thread_id, address, address_device_id, person, date, date_sent, date_server , protocol, read, status , type, reply_path_present, delivery_receipt_count, subject, body, mismatched_identities, service_center, subscription_id , expires_in, expire_started, notified, read_receipt_count, unidentified, reactions BLOB, reactions_unread, reactions_last_seen , remote_deleted, notified_timestamp, server_guid FROM sms"))
+      return false;
+
+    if (!d_database.exec("DROP TABLE sms") ||
+        !d_database.exec("ALTER TABLE sms_tmp RENAME TO sms"))
+      return false;
+
+    if (!d_database.exec("CREATE INDEX sms_read_and_notified_and_thread_id_index ON sms(read, notified, thread_id)") ||
+        !d_database.exec("CREATE INDEX sms_type_index ON sms (type)") ||
+        !d_database.exec("CREATE INDEX sms_date_sent_index ON sms (date_sent, address, thread_id)") ||
+        !d_database.exec("CREATE INDEX sms_date_server_index ON sms (date_server)") ||
+        !d_database.exec("CREATE INDEX sms_thread_date_index ON sms (thread_id, date)") ||
+        !d_database.exec("CREATE INDEX sms_reactions_unread_index ON sms (reactions_unread)"))
+      return false;
+
+
+    if (!d_database.exec("CREATE TRIGGER sms_ai AFTER INSERT ON sms BEGIN INSERT INTO sms_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END;") ||
+        !d_database.exec("CREATE TRIGGER sms_ad AFTER DELETE ON sms BEGIN INSERT INTO sms_fts(sms_fts, rowid, body, thread_id) VALUES('delete', old._id, old.body, old.thread_id); END;") ||
+        !d_database.exec("CREATE TRIGGER sms_au AFTER UPDATE ON sms BEGIN INSERT INTO sms_fts(sms_fts, rowid, body, thread_id) VALUES('delete', old._id, old.body, old.thread_id); INSERT INTO sms_fts(rowid, body, thread_id) VALUES(new._id, new.body, new.thread_id); END;") ||
+        !d_database.exec("CREATE TRIGGER msl_sms_delete AFTER DELETE ON sms BEGIN DELETE FROM msl_payload WHERE _id IN (SELECT payload_id FROM msl_message WHERE message_id = old._id AND is_mms = 0); END"))
+      return false;
+  }
+
   if (d_databaseversion < 110)
   {
     Logger::message("To 110");
@@ -77,15 +385,17 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
     std::vector<std::string> avatar_color_options{"C000", "C010", "C020", "C030", "C040", "C050", "C060", "C070", "C080", "C090", "C100", "C110", "C120", "C130", "C140", "C150", "C160", "C170", "C180", "C190", "C200", "C210", "C220", "C230", "C240", "C250", "C260", "C270", "C280", "C290", "C300", "C310", "C320", "C330", "C340", "C350"};
 
-    uint8_t random_idx = 0;
-    if (RAND_bytes(&random_idx, 1) != 1)
-      Logger::warning("failed to generate random number");
-    random_idx = (static_cast<double>(random_idx) / (255 + 1)) * ((avatar_color_options.size() - 1) - 0 + 1) + 0;
-
     for (unsigned int i = 0; i < recipients_without_color.rows(); ++i)
+    {
+      uint8_t random_idx = 0;
+      if (RAND_bytes(&random_idx, 1) != 1)
+        Logger::warning("failed to generate random number");
+      random_idx = (static_cast<double>(random_idx) / (255 + 1)) * ((avatar_color_options.size() - 1) - 0 + 1) + 0;
+
       if (!d_database.exec("UPDATE recipient SET color = ? WHERE _id = ?",
                            {avatar_color_options[random_idx], recipients_without_color.value(i, "_id")}))
         return false;
+    }
   }
 
   if (d_databaseversion < 112)
@@ -137,14 +447,14 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
                          "nonblocking_approval INTEGER DEFAULT 0)"))
       return false;
 
-    if (!d_database.exec("INSERT INTO identities_tmp (address, identity_key, first_use, timestamp, verified, nonblocking_approval)"
+    if (!d_database.exec("INSERT INTO identities_tmp (address, identity_key, first_use, timestamp, verified, nonblocking_approval) "
                          "SELECT "
                          "COALESCE(recipient.uuid, recipient.phone) AS new_address,"
                          "identities.key,"
                          "identities.first_use,"
                          "identities.timestamp,"
                          "identities.verified,"
-                         "identities.nonblocking_approval"
+                         "identities.nonblocking_approval "
                          "FROM identities INNER JOIN recipient ON identities.address = recipient._id "
                          "WHERE new_address NOT NULL"))
       return false;
@@ -214,8 +524,8 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
                          "sender_keys.device,"
                          "sender_keys.distribution_id,"
                          "sender_keys.record,"
-                         "sender_keys.created_at"
-                         "FROM sender_keys INNER JOIN recipient ON sender_keys.recipient_id = recipient._id"
+                         "sender_keys.created_at "
+                         "FROM sender_keys INNER JOIN recipient ON sender_keys.recipient_id = recipient._id "
                          "WHERE new_address NOT NULL"))
       return false;
 
@@ -516,7 +826,6 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
     long long int new_id_val = new_id.valueAsInt(0, 0, -1);
     if (new_id_val == -1)
       return false;
-
 
     union
     {
