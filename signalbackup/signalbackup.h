@@ -391,8 +391,9 @@ class SignalBackup
                                 bool createcontacts, std::string const &databasedir, bool create_valid_contacts, bool *warn);
   void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
                       std::vector<std::vector<std::string>> *reactions) const;
-  void insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
-                       std::map<std::string, long long int> *savedmap) const;
+  void dtInsertReactions(SqliteDB const &ddb, long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
+                         std::map<std::string, long long int> *savedmap, std::string const &databasedir, bool createcontacts,
+                         bool create_valid_contacts);
   long long int getRecipientIdFromUuidMapped(std::string const &uuid, std::map<std::string, long long int> *savedmap,
                                              bool suppresswarning = false) const;
   long long int getRecipientIdFromPhoneMapped(std::string const &phone, std::map<std::string, long long int> *savedmap,

@@ -412,19 +412,17 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         recipientid_for_thread = getRecipientIdFromPhoneMapped(phone, &recipientmap, createmissingcontacts);
     }
 
-    if (recipientid_for_thread == -1)
+    if (recipientid_for_thread == -1 &&
+        (createmissingcontacts || createmissingcontacts_valid))
     {
-      if (createmissingcontacts)
+      recipientid_for_thread = dtCreateRecipient(dtdb->d_database, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
+                                                 results_all_conversations.valueAsString(i, "groupId"), databasedir, &recipientmap,
+                                                 createmissingcontacts_valid,  &warned_createcontacts);
+      if (recipientid_for_thread == -1)
       {
-        recipientid_for_thread = dtCreateRecipient(dtdb->d_database, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
-                                                   results_all_conversations.valueAsString(i, "groupId"), databasedir, &recipientmap,
-                                                   createmissingcontacts_valid,  &warned_createcontacts);
-        if (recipientid_for_thread == -1)
-        {
-          Logger::warning("Failed to create missing recipient. Skipping.");
-          continue;
+        Logger::warning("Failed to create missing recipient. Skipping.");
+        continue;
         }
-      }
     }
 
     if (recipientid_for_thread == -1)
@@ -1347,7 +1345,13 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           if (mmsquote_author_uuid.empty()) // failed to get uuid from desktopdatabase, try matching on phone number
             mmsquote_author = getRecipientIdFromPhoneMapped(quote_results.valueAsString(0, "quote_author_phone"), &recipientmap, createmissingcontacts);
           else
+          {
             mmsquote_author = getRecipientIdFromUuidMapped(mmsquote_author_uuid, &recipientmap, createmissingcontacts);
+            if (mmsquote_author == -1 && (createmissingcontacts || createmissingcontacts_valid))
+              mmsquote_author = dtCreateRecipient(dtdb->d_database, mmsquote_author_uuid, quote_results.valueAsString(0, "quote_author_phone"),
+                                                  std::string(), databasedir, &recipientmap, createmissingcontacts_valid,  &warned_createcontacts);
+          }
+
           if (mmsquote_author == -1)
           {
             if (d_verbose) [[unlikely]] Logger::message_end();
@@ -1477,11 +1481,12 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
               bodyrangelist.addField<1>(bodyrange);
             }
-#if __cpp_lib_shared_ptr_arrays >= 201707L
+#if __cpp_lib_smart_ptr_for_overwrite >= 202002L
+            mmsquote_mentions.first = std::make_shared_for_overwrite<unsigned char []>(bodyrangelist.size());
+#elif __cpp_lib_shared_ptr_arrays >= 201707L
             mmsquote_mentions.first = std::make_shared<unsigned char []>(bodyrangelist.size());
 #else
-            mmsquote_mentions.first = std::shared_ptr<unsigned char []>(new unsigned char[bodyrangelist.size()],
-                                                                        [](unsigned char *p) { delete[] p; } );
+            mmsquote_mentions.first = std::shared_ptr<unsigned char []>(new unsigned char[bodyrangelist.size()], [](unsigned char *p) { delete[] p; } );
 #endif
             mmsquote_mentions.second = bodyrangelist.size();
             std::memcpy(mmsquote_mentions.first.get(), bodyrangelist.data(), bodyrangelist.size());
@@ -1636,7 +1641,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
         // insert into reactions
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting reactions...");
-        insertReactions(new_mms_id, reactions, true, &recipientmap);
+        dtInsertReactions(dtdb->d_database, new_mms_id, reactions, true, &recipientmap, databasedir, createmissingcontacts, createmissingcontacts_valid);
         if (d_verbose) [[unlikely]] Logger::message_end("done");
 
         // insert into mentions
@@ -1733,7 +1738,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                        &warned_createcontacts);
 
         // insert into reactions
-        insertReactions(new_sms_id, reactions, false, &recipientmap);
+        dtInsertReactions(dtdb->d_database, new_sms_id, reactions, false, &recipientmap, databasedir, createmissingcontacts, createmissingcontacts_valid);
       }
     }
     //updateThreadsEntries(ttid);

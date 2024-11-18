@@ -440,6 +440,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     Logger::warning("No publicKey found for new recipient, inserting fake key...");
     identity_key = "BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF";
+
+    // $ echo "BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF" | base64 -d | xxd
+    // 00000000: 0546 414b 454b 4559 4641 4b45 4b45 5946  .FAKEKEYFAKEKEYF
+    // 00000010: 414b 454b 4559 4641 4b45 4b45 5946 414b  AKEKEYFAKEKEYFAK
+    // 00000020: 45                                       E
+
   }
 
   // set identity info

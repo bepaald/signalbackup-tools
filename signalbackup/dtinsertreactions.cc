@@ -19,8 +19,9 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::insertReactions(long long int message_id, std::vector<std::vector<std::string>> const &reactions,
-                                   bool mms, std::map<std::string, long long int> *savedmap) const
+void SignalBackup::dtInsertReactions(SqliteDB const &ddb, long long int message_id, std::vector<std::vector<std::string>> const &reactions,
+                                     bool mms, std::map<std::string, long long int> *savedmap, std::string const &databasedir,
+                                     bool createcontacts, bool createcontacts_valid)
 {
   if (d_verbose && reactions.size()) [[unlikely]]
     Logger::message("Inserting ", reactions.size(), " message reactions.");
@@ -38,6 +39,11 @@ void SignalBackup::insertReactions(long long int message_id, std::vector<std::ve
       author = getRecipientIdFromUuidMapped(r[2], savedmap);
     if (author == -1)
       author = getRecipientIdFromPhoneMapped(r[3], savedmap);
+    if (author == -1 &&
+        !r[2].empty() &&
+        (createcontacts || createcontacts_valid))
+      author = dtCreateRecipient(ddb, r[2], r[3], std::string(), databasedir, savedmap,
+                                 createcontacts_valid,  &createcontacts);
 
     if (author == -1)
     {

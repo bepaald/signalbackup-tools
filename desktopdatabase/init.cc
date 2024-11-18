@@ -44,7 +44,8 @@ bool DesktopDatabase::init(std::string const &rawdb)
     }
 
     uint64_t size = bepaald::fileSize(rawdb);
-    d_rawdb = std::make_unique<unsigned char []>(size);
+    d_rawdb.reset(new unsigned char[size]);
+
     if (!(database.read(reinterpret_cast<char *>(d_rawdb.get()), size)))
     {
       Logger::error("Failed to read database data from raw file");
