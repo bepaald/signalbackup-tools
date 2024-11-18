@@ -19,7 +19,7 @@
 
 #include "desktopdatabase.ih"
 
-bool DesktopDatabase::init()
+bool DesktopDatabase::init(std::string const &rawdb)
 {
   // get directories
   if (d_configdir.empty() || d_databasedir.empty())
@@ -31,6 +31,35 @@ bool DesktopDatabase::init()
       Logger::warning_indent("Consider using `--desktopdir <DIR>' to specify manually.");
       Logger::warning_indent("Attempting to continue, but this will likely cause errors.");
     }
+  }
+
+  // open pre-decrypted desktop database
+  if (!rawdb.empty()) [[unlikely]]
+  {
+    std::ifstream database(rawdb, std::ios_base::in | std::ios_base::binary);
+    if (!database.is_open())
+    {
+      Logger::error("failed to open database file '", rawdb, "'");
+      return false;
+    }
+
+    uint64_t size = bepaald::fileSize(rawdb);
+    d_rawdb = std::make_unique<unsigned char []>(size);
+    if (!(database.read(reinterpret_cast<char *>(d_rawdb.get()), size)))
+    {
+      Logger::error("Failed to read database data from raw file");
+      return false;
+    }
+    std::pair<unsigned char *, uint64_t> desktopdata = {d_rawdb.get(), size};
+    d_database = MemSqliteDB(&desktopdata);
+
+    if (!d_database.ok())
+    {
+      Logger::error("Failed to open database");
+      return false;
+    }
+
+    return true;
   }
 
   // check if a wal (Write-Ahead Logging) file is present in path, and warn user to (cleanly) shut Signal Desktop down

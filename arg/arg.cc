@@ -54,6 +54,7 @@ Arg::Arg(int argc, char *argv[])
   d_desktopdir(std::string()),
   d_desktopdirs_1(std::string()),
   d_desktopdirs_2(std::string()),
+  d_rawdesktopdb(std::string()),
   d_desktopkey(std::string()),
   d_showdesktopkey(false),
   d_dumpmedia(std::string()),
@@ -606,6 +607,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         d_desktopdirs_1 = std::move(arguments[++i]);
         d_desktopdirs_2 = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--rawdesktopdb")
+    {
+      if (i < arguments.size() - 1)
+      {
+        d_rawdesktopdb = std::move(arguments[++i]);
       }
       else
       {

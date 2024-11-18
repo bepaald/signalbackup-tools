@@ -87,9 +87,9 @@ int main(int argc, char *argv[])
   auto initDesktopDatabase = [&]()
   {
     if (!ddb)
-      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.desktopkey(), arg.verbose(),
-                                    arg.ignorewal(), arg.desktopdbversion(), arg.truncate(), arg.showdesktopkey(),
-                                    arg.dbusverbose()));
+      ddb.reset(new DesktopDatabase(arg.desktopdirs_1(), arg.desktopdirs_2(), arg.rawdesktopdb(), arg.desktopkey(),
+                                    arg.verbose(), arg.ignorewal(), arg.desktopdbversion(), arg.truncate(),
+                                    arg.showdesktopkey(), arg.dbusverbose()));
     return ddb->ok();
   };
   auto initPlaintextDatabase = [&](std::string const &xmlfile)

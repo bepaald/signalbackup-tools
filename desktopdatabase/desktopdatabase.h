@@ -32,6 +32,7 @@
 class DesktopDatabase
 {
   std::unique_ptr<SqlCipherDecryptor> d_cipherdb;
+  std::unique_ptr<unsigned char []> d_rawdb;
   MemSqliteDB d_database;
   std::string d_configdir;
   std::string d_databasedir;
@@ -46,9 +47,9 @@ class DesktopDatabase
  public:
   inline DesktopDatabase(std::string const &hexkey, bool verbose, bool ignorewal, long long int cipherversion,
                          bool truncate, bool showkey, bool dbus_verbose);
-  inline DesktopDatabase(std::string const &configdir, std::string const &databasedir, std::string const &hexkey,
-                         bool verbose, bool ignorewal, long long int cipherversion, bool truncate, bool showkey,
-                         bool dbus_verbose);
+  inline DesktopDatabase(std::string const &configdir, std::string const &databasedir, std::string const &rawdb,
+                         std::string const &hexkey, bool verbose, bool ignorewal, long long int cipherversion,
+                         bool truncate, bool showkey, bool dbus_verbose);
   DesktopDatabase(DesktopDatabase const &other) = delete;
   DesktopDatabase(DesktopDatabase &&other) = delete;
   DesktopDatabase &operator=(DesktopDatabase const &other) = delete;
@@ -60,7 +61,7 @@ class DesktopDatabase
   inline void runQuery(std::string const &q, std::string const &mode = std::string()) const;
 
  private:
-  bool init();
+  bool init(std::string const &rawdb = std::string());
   inline std::pair<std::string, std::string> getDesktopDir() const;
   std::string readEncryptedKey() const;
   bool getKey();
@@ -86,13 +87,12 @@ inline DesktopDatabase::DesktopDatabase(std::string const &hexkey, bool verbose,
                                         long long int cipherversion, bool truncate, bool showkey,
                                         bool dbus_verbose)
   :
-  DesktopDatabase(std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate, showkey, dbus_verbose)
+  DesktopDatabase(std::string(), std::string(), std::string(), hexkey, verbose, ignorewal, cipherversion, truncate, showkey, dbus_verbose)
 {}
 
-inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir,
-                                        std::string const &hexkey, bool verbose, bool ignorewal,
-                                        long long int cipherversion, bool truncate, bool showkey,
-                                        bool dbus_verbose)
+inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::string const &databasedir, std::string const &rawdb,
+                                        std::string const &hexkey, bool verbose, bool ignorewal, long long int cipherversion,
+                                        bool truncate, bool showkey, bool dbus_verbose)
   :
   d_configdir(configdir),
   d_databasedir(databasedir),
@@ -105,7 +105,7 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   d_truncate(truncate),
   d_showkey(showkey)
 {
-  d_ok = init();
+  d_ok = init(rawdb);
 }
 
 inline bool DesktopDatabase::ok() const

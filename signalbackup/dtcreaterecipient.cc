@@ -434,28 +434,12 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
   }
 
-  if ((res.isNull(0, "publicKey") || res("publicKey").empty()) &&
-      create_valid_contacts)
+  std::string identity_key = res(0, "publicKey");
+
+  if (identity_key.empty() && create_valid_contacts)
   {
-    Logger::error("Unable to find publicKey for recipient: ", res(0, "uuid"));
-    Logger::error_indent("Data from the desktop database:");
-    ddb.printLineMode("SELECT * FROM identityKeys WHERE id = ?", res.value(0, "uuid"));
-
-    d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
-    return -1;
-
-    /*
-      what will happen if we just use a fake key here? we know the key
-      can not be null, but what if it is incorrect? Just a 'safety number
-      changed' message, or a broken contact/broken app?
-
-      all keys appear to be \x05 followed by 32 more random bytes (in base64)
-
-      SEEMS TO WORK (just key change messages), fake key used:
-      "UPDATE identities SET identity_key = 'BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF';"
-       ( = 0x5FAKEYKEYFAKEKEYFFAKEKEYF....)
-
-    */
+    Logger::warning("No publicKey found for new recipient, inserting fake key...");
+    identity_key = "BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF";
   }
 
   // set identity info
@@ -463,7 +447,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     if (!insertRow("identities",
                    {{"address", res.value(0, "uuid")},
-                    {"identity_key", res.value(0, "publicKey")},
+                    {"identity_key", identity_key},
                     {"first_use", res("firstUse")},
                     {"timestamp", res.value(0, "timestamp")},
                     {"verified", res.value(0, "verified")},
