@@ -190,7 +190,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
         bepaald::replaceAll(&url, '\b', R"(\b)");
         bepaald::replaceAll(&url, '\f', R"(\f)");
         bepaald::replaceAll(&url, '\r', R"(\r)");
-        bepaald::replaceAll(&url, '\x0B', R"(\n)");
+        bepaald::replaceAll(&url, '\x0B', R"( )");
         bepaald::replaceAll(&url, '\v', R"(\v)");
         std::string title = linkpreview_results("title");
         bepaald::replaceAll(&title, '\\', R"(\\)");
@@ -202,7 +202,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
         bepaald::replaceAll(&title, '\b', R"(\b)");
         bepaald::replaceAll(&title, '\f', R"(\f)");
         bepaald::replaceAll(&title, '\r', R"(\r)");
-        bepaald::replaceAll(&title, '\x0B', R"(\n)");
+        bepaald::replaceAll(&title, '\x0B', R"( )");
         bepaald::replaceAll(&title, '\v', R"(\v)");
         std::string description = linkpreview_results("description");
         bepaald::replaceAll(&description, '\\', R"(\\)");
@@ -214,7 +214,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
         bepaald::replaceAll(&description, '\b', R"(\b)");
         bepaald::replaceAll(&description, '\f', R"(\f)");
         bepaald::replaceAll(&description, '\r', R"(\r)");
-        bepaald::replaceAll(&description, '\x0B', R"(\n)");
+        bepaald::replaceAll(&description, '\x0B', R"( )");
         bepaald::replaceAll(&description, '\v', R"(\v)");
 
         SqliteDB::QueryResults jsonstring;
@@ -396,7 +396,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       bepaald::replaceAll(&url, '\b', R"(\b)");
       bepaald::replaceAll(&url, '\f', R"(\f)");
       bepaald::replaceAll(&url, '\r', R"(\r)");
-      bepaald::replaceAll(&url, '\x0B', R"(\n)");
+      bepaald::replaceAll(&url, '\x0B', R"( )");
       bepaald::replaceAll(&url, '\v', R"(\v)");
       std::string title = linkpreview_results("title");
       bepaald::replaceAll(&title, '\\', R"(\\)");
@@ -408,7 +408,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       bepaald::replaceAll(&title, '\b', R"(\b)");
       bepaald::replaceAll(&title, '\f', R"(\f)");
       bepaald::replaceAll(&title, '\r', R"(\r)");
-      bepaald::replaceAll(&title, '\x0B', R"(\n)");
+      bepaald::replaceAll(&title, '\x0B', R"( )");
       bepaald::replaceAll(&title, '\v', R"(\v)");
       std::string description = linkpreview_results("description");
       bepaald::replaceAll(&description, '\\', R"(\\)");
@@ -420,7 +420,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       bepaald::replaceAll(&description, '\b', R"(\b)");
       bepaald::replaceAll(&description, '\f', R"(\f)");
       bepaald::replaceAll(&description, '\r', R"(\r)");
-      bepaald::replaceAll(&description, '\x0B', R"(\n)");
+      bepaald::replaceAll(&description, '\x0B', R"( )");
       bepaald::replaceAll(&description, '\v', R"(\v)");
 
       SqliteDB::QueryResults jsonstring;
