@@ -290,6 +290,7 @@ class SignalBackup
   // for bug 233/13034
   bool migrate_to_191(std::string const &selfphone);
   /* CUSTOMS */
+  //bool migrate_to_191_CUSTOM(std::string const &selfphone);
 
  protected:
   [[nodiscard]] bool exportBackupToFile(std::string const &filename, std::string const &passphrase,

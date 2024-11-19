@@ -566,6 +566,13 @@ int main(int argc, char *argv[])
       return 1;
     }
 
+  // if (arg.migrate_to_191_CUSTOM())
+  //   if (!sb->migrate_to_191_CUSTOM(arg.setselfid()))
+  //   {
+  //     Logger::error("Migration failed");
+  //     return 1;
+  //   }
+
   if (arg.migrate_to_191())
     if (!sb->migrate_to_191(arg.setselfid()))
     {

@@ -1399,19 +1399,23 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         !d_database.exec("DROP TRIGGER mms_ai"))
       return false;
 
-    // copySmsToMms(db, nextMmsId)
-    SqliteDB::QueryResults minmax;
-    if (!d_database.exec("SELECT MIN(_id) AS min, MAX(_id) AS max FROM sms", &minmax))
-      return false;
-    long long int minsms = minmax.getValueAs<long long int>(0, "min");
-    if (!d_database.exec("SELECT MIN(_id) AS min, MAX(_id) AS max FROM mms", &minmax))
-      return false;
-    long long int maxmms = minmax.getValueAs<long long int>(0, "max");
+    long long int id_offset = 0;
+    if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM sms", 0) > 0)
+    {
+      // copySmsToMms(db, nextMmsId)
+      SqliteDB::QueryResults minmax;
+      if (!d_database.exec("SELECT MIN(_id) AS min, MAX(_id) AS max FROM sms", &minmax))
+        return false;
+      long long int minsms = minmax.getValueAs<long long int>(0, "min");
+      if (!d_database.exec("SELECT MIN(_id) AS min, MAX(_id) AS max FROM mms", &minmax))
+        return false;
+      long long int maxmms = minmax.getValueAs<long long int>(0, "max");
 
-    long long int id_offset = (maxmms - minsms) + 1;
+      id_offset = (maxmms - minsms) + 1;
 
-    if (!d_database.exec("INSERT INTO mms SELECT _id + ?, date_sent, date_received, date_server, thread_id, recipient_id, recipient_device_id, type, body, read, null, 0, 0, 0, status, null, subscription_id, receipt_timestamp, delivery_receipt_count, read_receipt_count, 0, mismatched_identities, null, expires_in, expire_started, notified, 0, 0, null, 0, null, 0, null, unidentified, null, 0, reactions_unread, reactions_last_seen, remote_deleted, 0, notified_timestamp, server_guid, null, 0, 0, export_state, exported FROM sms", id_offset))
-      return false;
+      if (!d_database.exec("INSERT INTO mms SELECT _id + ?, date_sent, date_received, date_server, thread_id, recipient_id, recipient_device_id, type, body, read, null, 0, 0, 0, status, null, subscription_id, receipt_timestamp, delivery_receipt_count, read_receipt_count, 0, mismatched_identities, null, expires_in, expire_started, notified, 0, 0, null, 0, null, 0, null, unidentified, null, 0, reactions_unread, reactions_last_seen, remote_deleted, 0, notified_timestamp, server_guid, null, 0, 0, export_state, exported FROM sms", id_offset))
+        return false;
+    }
 
     if (!d_database.exec("DROP TABLE sms"))
       return false;
@@ -1585,13 +1589,18 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
     if (!d_database.exec("DROP TABLE mms_fts") ||
         !d_database.exec("DROP TRIGGER IF EXISTS mms_ai") ||
         !d_database.exec("DROP TRIGGER IF EXISTS mms_ad") ||
-        !d_database.exec("DROP TRIGGER IF EXISTS mms_au") ||
-        !d_database.exec("CREATE VIRTUAL TABLE message_fts USING fts5(body, thread_id UNINDEXED, content=message, content_rowid=_id)") ||
-        !d_database.exec("CREATE TRIGGER message_ai AFTER INSERT ON message BEGIN INSERT INTO message_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END;") ||
-        !d_database.exec("CREATE TRIGGER message_ad AFTER DELETE ON message BEGIN INSERT INTO message_fts(message_fts, rowid, body, thread_id) VALUES ('delete', old._id, old.body, old.thread_id); END;") ||
-        !d_database.exec("CREATE TRIGGER message_au AFTER UPDATE ON message BEGIN INSERT INTO message_fts(message_fts, rowid, body, thread_id) VALUES('delete', old._id, old.body, old.thread_id); INSERT INTO message_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END;"))
+        !d_database.exec("DROP TRIGGER IF EXISTS mms_au"))
       return false;
 
+    if (!d_database.containsTable("message_fts"))
+    {
+      if (!d_database.exec("CREATE VIRTUAL TABLE message_fts USING fts5(body, thread_id UNINDEXED, content=message, content_rowid=_id)") ||
+          !d_database.exec("INSERT INTO message_fts(message_fts) VALUES('rebuild')") ||
+          !d_database.exec("CREATE TRIGGER message_ai AFTER INSERT ON message BEGIN INSERT INTO message_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END;") ||
+          !d_database.exec("CREATE TRIGGER message_ad AFTER DELETE ON message BEGIN INSERT INTO message_fts(message_fts, rowid, body, thread_id) VALUES ('delete', old._id, old.body, old.thread_id); END;") ||
+          !d_database.exec("CREATE TRIGGER message_au AFTER UPDATE ON message BEGIN INSERT INTO message_fts(message_fts, rowid, body, thread_id) VALUES('delete', old._id, old.body, old.thread_id); INSERT INTO message_fts(rowid, body, thread_id) VALUES (new._id, new.body, new.thread_id); END;"))
+        return false;
+    }
     // setDBV
   }
 
@@ -1786,8 +1795,6 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         if (!statement.empty())
         {
           statement = std::regex_replace(statement, std::regex("CREATE INDEX mms_"), "CREATE INDEX message_");
-
-          // dont actually see the altered statements being executed...
           if (!d_database.exec(statement))
             return false;
         }
@@ -1913,6 +1920,13 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
                          ") "
                          "UPDATE message SET date_sent = date_sent - 1 WHERE _id IN needs_update"))
       return false;
+    int changed = d_database.changed();
+    if (changed)
+      Logger::message("Updated ", changed, " doubled messages");
+
+    if (d_database.exec("SELECT COUNT(*) FROM message") &&
+        d_database.exec("PRAGMA quick_check"))
+      Logger::message("Database still appears ok");
 
     // delete other duplicates if body is identical and type = groupupdate
     if (!d_database.exec("WITH needs_delete AS "
@@ -1933,6 +1947,13 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
                          "DELETE FROM message WHERE _id IN needs_delete"))
       return false;
 
+    changed = d_database.changed();
+    if (changed)
+      Logger::message("Updated ", changed, " doubled messages");
+
+    if (d_database.exec("SELECT COUNT(*) FROM message") &&
+        d_database.exec("PRAGMA quick_check"))
+      Logger::message("Database still appears ok");
 
     // #warning !!! REMOVE THIS !!!
     // SqliteDB::QueryResults res2;
