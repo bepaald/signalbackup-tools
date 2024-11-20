@@ -1683,7 +1683,6 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
     // setDBV
   }
 
-
   if (d_databaseversion < 182)
   {
     Logger::message("To 182");
@@ -2043,6 +2042,14 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
     // setDBV
   }
+
+  // if (d_databaseversion < 229)
+  // {
+  //   Logger::message("To 229");
+
+  //   if (!d_database.exec("UPDATE message SET notified = 1 WHERE (type = 3) OR (type = 8)"))
+  //     return false;
+  // }
 
   // adjust DatabaseVersionFrame
   DeepCopyingUniquePtr<DatabaseVersionFrame> d_new_dbvframe;

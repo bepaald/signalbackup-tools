@@ -70,7 +70,7 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
 
   if (ret && !returnfield.empty() && returnvalue && res.rows() && res.columns())
   {
-    if (res.rows() > 1 || res.columns() > 1)
+    if (res.rows() > 1 || res.columns() > 1) [[unlikely]]
       Logger::warning("Requested return of '", returnfield, "', "
                       "but query returned multiple results. Returning first.");
     *returnvalue = res.value(0, 0);
