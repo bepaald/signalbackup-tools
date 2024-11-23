@@ -79,7 +79,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       return;
     }
 
-    //std::cout << "Got timer message: " << timer << std::endl;
+    std::cout << "Got timer message: " << timer << std::endl;
 
     DecryptedTimer dt;
     dt.addField<1>(timer);
@@ -88,7 +88,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     DecryptedGroupV2Context groupv2ctx;
     groupv2ctx.addField<2>(groupchange);
     std::pair<unsigned char *, size_t> groupchange_data(groupv2ctx.data(), groupv2ctx.size());
-
+    std::string groupchange_data_b64 = Base64::bytesToBase64String(groupchange_data);
     // add message to database
     // if (d_database.containsTable("sms"))
     //   not going through the trouble
@@ -99,7 +99,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       if (!insertRow(d_mms_table, {{"thread_id", thread_id},
                                    {d_mms_date_sent, date},
                                    {"date_received", date},
-                                   {"body", groupchange_data},
+                                   {"body", groupchange_data_b64},
                                    {d_mms_type, groupv2type},
                                    {d_mms_recipient_id, address},
                                    {"m_type", incoming ? 132 : 128},
@@ -126,7 +126,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       if (!insertRow(d_mms_table, {{"thread_id", thread_id},
                                    {d_mms_date_sent, freedate},
                                    {"date_received", freedate},
-                                   {"body", groupchange_data},
+                                   {"body", groupchange_data_b64},
                                    {d_mms_type, groupv2type},
                                    {d_mms_recipient_id, incoming ? address : d_selfid},
                                    {"to_recipient_id", incoming ? d_selfid : address},
@@ -139,6 +139,8 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     }
     return;
   }
+
+  // !istimermessage
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "

@@ -653,7 +653,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       else if (type == "group-v2-change")
       {
         //if (d_verbose) [[unlikely]] std::cout << "Dealing with " << type << " message... " << std::flush;
-        handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, false);
+        // this function does nothing (yet?) when istimermessage = false;
+        //handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, false);
 
         warnOnce("Unsupported message type 'group-v2-change'. Skipping..."
                  " (this warning will be shown only once)");
@@ -685,7 +686,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         if (isgroupconversation) // in groups these are groupv2updates (not handled (yet))
         {
-          if (createmissingcontacts)
+          // the created groupchange is interpreted by exporthtml correctly, but is not a normal, valid groupchange message
+          // so it shouldnt be used when outputting to a ready-to-restore backup file
+          if (createmissingcontacts && !createmissingcontacts_valid)
             handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, true);
           else
           {
