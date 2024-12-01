@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP AS INPUT ****//
+  //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP  INPUT ****//
   std::unique_ptr<DesktopDatabase> ddb;
   std::unique_ptr<SignalPlaintextBackupDatabase> ptdb;
   auto initDesktopDatabase = [&]()
@@ -527,6 +527,16 @@ int main(int argc, char *argv[])
   //     return 1;
   //   }
   // }
+
+  // temporary,
+  if (arg.arc() != -1)
+  {
+    if (!sb->arc(arg.arc(), arg.setselfid()))
+    {
+      Logger::error("Failed somehow");
+      return 1;
+    }
+  }
 
   // // temporary, to investigate #95
   // if (!arg.carowit_1().empty())

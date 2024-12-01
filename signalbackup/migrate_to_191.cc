@@ -1927,7 +1927,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         d_database.exec("PRAGMA quick_check"))
       Logger::message("Database still appears ok");
 
-    // delete other duplicates if body is identical and type = groupupdate
+    // delete other duplicates if (body is identical or type = groupupdate)
     if (!d_database.exec("WITH needs_delete AS "
                          "("
                          "  SELECT _id FROM message M WHERE "

@@ -79,6 +79,7 @@ Arg::Arg(int argc, char *argv[])
   d_strugee3(-1),
   d_ashmorgan(false),
   d_strugee2(false),
+  d_arc(-1),
   d_deleteattachments(false),
   d_onlyinthreads(std::vector<long long int>()),
   d_onlyolderthan(std::string()),
@@ -910,6 +911,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-strugee2")
     {
       d_strugee2 = false;
+      continue;
+    }
+    if (option == "--arc")
+    {
+      if (i < arguments.size() - 1)
+      {
+        if (!ston(&d_arc, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option == "--deleteattachments")

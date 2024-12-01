@@ -23,88 +23,46 @@ void SignalBackup::removeDoubles(long long int milliseconds)
 {
   Logger::message(__FUNCTION__ );
 
-  if (milliseconds == 0)
+  SqliteDB::QueryResults threads;
+  if (!d_database.exec("SELECT _id FROM thread ORDER BY _id ASC", &threads))
+    return;
+
+  // note: doing this per thread is not needed, but this gives some sense of progress as
+  // the query is slow as ....
+  for (unsigned int i = 0; i < threads.rows(); ++i)
   {
-    if (d_database.containsTable("sms"))
-    {
-      Logger::message("  Removing duplicate entries from sms table...");
+    long long int tid = threads.valueAsInt(i, "_id");
 
-      // if (d_database.tableContainsColumn("sms", "protocol")) // removed in dbv166
-      //   d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND (t1.protocol = t2.protocol OR (t1.protocol IS NULL AND t2.protocol IS NULL)) AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, protocol ASC,_id ASC) t WHERE RNum%2 = 0)");
-      // else
-      //   d_database.exec("DELETE FROM sms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM sms AS t1 INNER JOIN sms AS t2 ON t1." + d_sms_date_received + " = t2." + d_sms_date_received + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_sms_recipient_id +" = t2." + d_sms_recipient_id +" AND t1.read = t2.read AND t1.type = t2.type AND t1.date_sent = t2.date_sent AND t1._id <> t2._id) AS doubles ORDER BY " + d_sms_date_received + " ASC, date_sent ASC, body ASC, thread_id ASC, " + d_sms_recipient_id + " ASC, read ASC, type ASC, _id ASC) t WHERE RNum%2 = 0)");
+    /*
+    // show duplicates:
+    d_database.printLineMode("SELECT _id FROM " + d_mms_table + " M WHERE "
+                             "  _id > "
+                             "  (SELECT min(_id) FROM " + d_mms_table + " WHERE "
+                             "      " + d_mms_recipient_id + " = M." + d_mms_recipient_id + " AND "
+                             "      thread_id = ? AND "
+                             "      COALESCE(body, '') = COALESCE(M.body, '') AND "
+                             "      " + d_mms_type + " = M." + d_mms_type + " AND "
+                             "      ABS(date_sent - M.date_sent) <= ?) AND thread_id = ?", {tid, milliseconds, tid});
+    */
 
-      d_database.exec("DELETE FROM sms WHERE _id IN "
-                      "(SELECT _id FROM sms GROUP BY " + d_sms_date_received + ", body, thread_id, CAST(" + d_sms_recipient_id + " AS text), read, type, " +
-                      (d_database.tableContainsColumn("sms", "protocol") ? "protocol, " : "") + "date_sent HAVING COUNT(*) IS 2)");
-
-      Logger::message("  Removed ", d_database.changed(), " entries.");
-    }
-
-    Logger::message("  Removing duplicate entries from mms table...");
-    //d_database.exec("DELETE FROM mms WHERE _id IN (SELECT _id FROM (SELECT ROW_NUMBER() OVER () RNum,* FROM (SELECT DISTINCT t1.* FROM mms AS t1 INNER JOIN mms AS t2 ON t1." + d_mms_date_sent + " = t2." + d_mms_date_sent + " AND (t1.body = t2.body OR (t1.body IS NULL AND t2.body IS NULL)) AND t1.thread_id = t2.thread_id AND t1." + d_mms_recipient_id + " = t2." +d_mms_recipient_id + " AND t1.read = t2.read AND t1." + d_mms_type + " = t2." + d_mms_type + " AND t1.date_received = t2.date_received AND t1._id <> t2._id) AS doubles ORDER BY " + d_mms_date_sent +" ASC, date_received ASC, body ASC, thread_id ASC, " + d_mms_recipient_id + " ASC, read ASC, " + d_mms_type + " ASC, _id ASC) t WHERE RNum%2 = 0)");
-
-    if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
-    {
-      d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
-                      "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, CAST(" + d_mms_recipient_id + " AS text), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
-      Logger::message("  Removed ", d_database.changed(), " entries.");
-    }
-    else
-    {
-      d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id IN "
-                      "(SELECT _id FROM " + d_mms_table + " GROUP BY body, " + d_mms_date_sent + ", thread_id, "
-                      "CAST(from_recipient_id AS text), CAST(to_recipient_id AS text), read, " + d_mms_type + ", date_received HAVING COUNT(*) IS 2)");
-      Logger::message("  Removed ", d_database.changed(), " entries.");
-    }
-  }
-  else
-  {
-    if (d_database.containsTable("sms"))
-    {
-      //Logger::message("  Removing duplicate entries from sms table...");
-      //
-      //Logger::message("  Removed ", d_database.changed(), " entries.");
-    }
-
-    Logger::message("  Removing duplicate entries from mms table...");
-    SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT _id, body, thread_id, CAST(" + d_mms_recipient_id + " AS text) AS " + d_mms_recipient_id + ", " + d_mms_date_sent + ", " + d_mms_type +
-                         " FROM " + d_mms_table + " ORDER BY " + d_mms_date_sent + " ASC", &res))
+    // delete duplicates
+    if (!d_database.exec("WITH to_delete AS "
+                         "("
+                         "  SELECT _id FROM " + d_mms_table + " M WHERE "
+                         "  _id > "
+                         "  ("
+                         "    SELECT min(_id) FROM " + d_mms_table + " WHERE "
+                         "      " + d_mms_recipient_id + " = M." + d_mms_recipient_id + " AND "
+                         "      thread_id = ? AND "
+                         "      COALESCE(body, '') = COALESCE(M.body, '') AND "
+                         "      " + d_mms_type + " = M." + d_mms_type + " AND "
+                         "      ABS(date_sent - M.date_sent) <= ?"
+                         "  ) AND "
+                         "  thread_id = ?"
+                         ") "
+                         "DELETE FROM " + d_mms_table + " WHERE _id IN to_delete", {tid, milliseconds, tid}))
       return;
-    long long int count = 0;
-
-    for (unsigned int i = 0; i < res.rows(); ++i)
-    {
-      long long int timestamp = res.valueAsInt(i, d_mms_date_sent);
-
-      SqliteDB::QueryResults res2;
-      d_database.exec("DELETE FROM " + d_mms_table + " WHERE body IS ? AND thread_id IS ? AND CAST(" + d_mms_recipient_id + " AS text) IS ? AND " +
-                      d_mms_type + " IS ? AND " + d_mms_date_sent + " != ? AND " + d_mms_date_sent + " BETWEEN ? AND ? RETURNING _id",
-                      {res.value(i, "body"), res.value(i, "thread_id"), res.value(i, d_mms_recipient_id), res.value(i, d_mms_type),
-                       timestamp, timestamp, timestamp + milliseconds}, &res2);
-      count += d_database.changed();
-
-      // remove deleted entries from res as well...
-      if (res2.rows())
-      {
-        for (unsigned int j = 0; j < res2.rows(); ++j)
-        {
-          long long int id = res2.valueAsInt(j, "_id");
-          for (unsigned int k = 0; k < res.rows(); )
-          {
-            if (res.valueAsInt(k, "_id") == id)
-            {
-              res.removeRow(k);
-              break;
-            }
-            else
-              ++k;
-          }
-        }
-      }
-    }
-    Logger::message("  Removed ", count, " ", d_mms_table, "-entries.");
+    Logger::message("Deleted ", d_database.changed(), " duplicate entries from thread ", tid, " (", i + 1, "/", threads.rows(), ")");
   }
 
   //cleanDatabaseByMessages();
@@ -112,7 +70,7 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   // theoretically, removing doubled messages should not affect the recipient table
   // here we duplicate the relevant parts of cleanDatabaseByMessages()
 
-  // remove doubled parts
+  // remove dangling parts
   Logger::message("  Deleting attachment entries from '", d_part_table, "' not belonging to remaining mms entries");
   d_database.exec("DELETE FROM " + d_part_table + " WHERE " + d_part_mid + " NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
   Logger::message("  Removed ", d_database.changed(), " ", d_part_table, "-entries.");
@@ -157,15 +115,17 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   // remove unused mentions
   if (d_database.containsTable("mention"))
   {
-    Logger::message("  Deleting entries from 'mention' not belonging to remaining mms entries");
+    Logger::message_start("  Deleting entries from 'mention' not belonging to remaining mms entries");
     d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
+    Logger::message_end(" (", d_database.changed(), ")");
   }
 
   // remove unused call details
   if (d_database.containsTable("call"))
   {
-    Logger::message("  Deleting entries from 'call' not belonging to remaining message entries");
+    Logger::message_start("  Deleting entries from 'call' not belonging to remaining message entries");
     d_database.exec("DELETE FROM call WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
+    Logger::message_end(" (", d_database.changed(), ")");
   }
 
   // remove unreferencing reactions
@@ -173,12 +133,14 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   {
     if (d_database.containsTable("sms"))
     {
-      Logger::message("  Deleting entries from 'reaction' not belonging to remaining sms entries");
+      Logger::message_start("  Deleting entries from 'reaction' not belonging to remaining sms entries");
       d_database.exec("DELETE FROM reaction WHERE is_mms IS NOT 1 AND message_id NOT IN (SELECT DISTINCT _id FROM sms)");
+      Logger::message_end(" (", d_database.changed(), ")");
     }
-    Logger::message("  Deleting entries from 'reaction' not belonging to remaining mms entries");
+    Logger::message_start("  Deleting entries from 'reaction' not belonging to remaining mms entries");
     d_database.exec("DELETE FROM reaction WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")" +
                     (d_database.tableContainsColumn("reaction", "is_mms") ? " AND is_mms IS 1" : ""));
+    Logger::message_end(" (", d_database.changed(), ")");
   }
 
   // remove msl_message
@@ -207,4 +169,12 @@ void SignalBackup::removeDoubles(long long int milliseconds)
     // now delete msl_recipients from non existing payloads?
     d_database.exec("DELETE FROM msl_recipient WHERE payload_id NOT IN (SELECT DISTINCT _id FROM msl_payload)");
   }
+
+  if (d_database.containsTable("story_sends"))
+  {
+    Logger::message_start("  Deleting entries from 'story_sends' not belonging to remaining message entries");
+    d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
+    Logger::message_end(" (", d_database.changed(), ")");
+  }
+
 }
