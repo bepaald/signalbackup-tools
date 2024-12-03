@@ -47,9 +47,11 @@ bool SignalBackup::arc(long long int tid, std::string const &selfphone)
 
   Logger::message("Using self-id: ", d_selfid, ", with thread ", note_to_self_thread_id);
   Logger::message("Initially in note-to-self-thread:");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message WHERE thread_id = ?", note_to_self_thread_id);
+  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", note_to_self_thread_id);
   Logger::message("Initially in thread ", tid, ":");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message WHERE thread_id = ?", tid);
+  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", tid);
 
   // check if any of the date_sents in tid match any of those in nts-thread
   long long int doublemsgs = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ? AND date_sent IN (SELECT date_sent FROM message WHERE thread_id = ?)", {tid, note_to_self_thread_id}, -1);
@@ -59,6 +61,15 @@ bool SignalBackup::arc(long long int tid, std::string const &selfphone)
     Logger::warning("Found duplicate timestamps between threads. Expecting at least ", doublemsgs, " will fail to import...");
   else // doublemsg == 0
     Logger::message("Found no duplicate timestamps between thread.");
+
+  long long int non_outgoing_messages = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ? AND (type & 0x1f) != 23", tid, 1);
+  if (non_outgoing_messages > 0)
+  {
+    Logger::warning("Found ", non_outgoing_messages, " messages in thread ", tid, " that have a type not normally found in note-to-self");
+    Logger::warning_indent("threads (for example, incoming message, calls, or profile changes). Summary of");
+    Logger::warning_indent("message types found:");
+    d_database.prettyPrint(d_truncate, "SELECT DISTINCT type, (type & 0x1f) FROM message WHERE thread_id = ? ORDER BY (type & 0x1f)", tid);
+  }
 
   SqliteDB::QueryResults message_ids;
   if (!d_database.exec("SELECT _id FROM message WHERE thread_id = ?", tid, &message_ids))
@@ -98,9 +109,11 @@ bool SignalBackup::arc(long long int tid, std::string const &selfphone)
       Logger::error("Failed to update note-to-self thread");
 
   Logger::message("Finally in note-to-self-thread:");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message WHERE thread_id = ?", note_to_self_thread_id);
+  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", note_to_self_thread_id);
   Logger::message("Finally in thread ", tid, ":");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message WHERE thread_id = ?", tid);
+  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", tid);
 
   return true;
 }
