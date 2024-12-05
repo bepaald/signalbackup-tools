@@ -825,7 +825,41 @@ This program supports a small number of other options, most of which are of litt
 - `--scanmissingattachments` If you see _"warning attachment data not found"_ messages, feel free to use this option and provide the 
 output to the developer.
 - `--migrate214to215` Changes in the database prevent v214 and v215 from being compatible for merging. This function attempts to migrate the older database so it can be used as a source for `--importthreads`. See also https://github.com/bepaald/signalbackup-tools/issues/184.
-- `--migrate_to_191` Work-around for [Signal issue 13034](https://github.com/signalapp/Signal-Android/issues/13034). If you are trying to restore an older backup (before daabase version 191), and Signal crashes right after the restore, try this. ([ref](https://github.com/signalapp/Signal-Android/issues/13034#issuecomment-2351447616), [ref](https://github.com/bepaald/signalbackup-tools/issues/233#issuecomment-2343769016)).
+- `--migrate_to_191` _**DEPRECATED** This option should not be needed anymore since the Signal bug is fixed._ Work-around for [Signal issue 13034](https://github.com/signalapp/Signal-Android/issues/13034). If you are trying to restore an older backup (before daabase version 191), and Signal crashes right after the restore, try this. ([ref](https://github.com/signalapp/Signal-Android/issues/13034#issuecomment-2351447616), [ref](https://github.com/bepaald/signalbackup-tools/issues/233#issuecomment-2343769016)).
+- `--setchatcolors [rid=RRGGBB,rid2=RRGGBB,...]` A way to set a chats colors to any RGB value, even those not available in Signal's color picker. Here `rid` is a recipient-id as reported by the `--listrecipients` option. Use at your own risk. <details><summary>Example (click to show)</summary><p>
+
+```Shell
+$ ./signalbackup-tools DEV2signal-2024-12-05-14-08-16.backup 000000000000000000000000000000 --listrecipients
+ *** Starting log: 2024-12-05 15:57:28 ***
+signalbackup-tools (./signalbackup-tools) source version 20241203.085751 (SQlite: 3.47.1, OpenSSL: OpenSSL 3.4.0 22 Oct 2024)
+BACKUPFILE VERSION: 1
+BACKUPFILE SIZE: 10940289
+COUNTER: 1335720069
+Reading backup file: 100.0%... done!
+Database version: 256
+------------------------------------------------------------------------------------------------------------------------------------------------
+| _id | display_name                         | e164         | blocked | hidden | has_avatar | type          | registered | has_id | has_thread |
+------------------------------------------------------------------------------------------------------------------------------------------------
+[...]
+| 10  | colorgroup_yellow                    | (NULL)       | 0       | 0      | 1          | Group (v2)    | (n/a)      | 1      | 1          |
+| 11  | group color black                    | (NULL)       | 0       | 0      | 1          | Group (v2)    | (n/a)      | 1      | 1          |
+------------------------------------------------------------------------------------------------------------------------------------------------
+$ ./signalbackup-tools DEV2signal-2024-12-05-14-08-16.backup 000000000000000000000000000000 --setchatcolors 10=ffff00,11=000000 --output BAD_COLORS.backup
+ *** Starting log: 2024-12-05 15:57:35 ***
+signalbackup-tools (./signalbackup-tools) source version 20241203.085751 (SQlite: 3.47.1, OpenSSL: OpenSSL 3.4.0 22 Oct 2024)
+BACKUPFILE VERSION: 1
+BACKUPFILE SIZE: 10940289
+COUNTER: 1335720069
+Reading backup file: 100.0%... done!
+Database version: 256
+
+Exporting backup to 'BAD_COLORS.backup'
+[...]
+Done! Wrote 10940302 bytes.
+```
+</p>
+</details>
+
 
 **<span id="advanced">Advanced options</span>**
 

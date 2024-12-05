@@ -218,8 +218,8 @@ inline void Logger::firstUse() // static
     std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     if (s_instance->d_currentoutput)
-      *(s_instance->d_currentoutput) << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " *** " << "\n";
-    std::cout << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " *** " << std::endl;
+      *(s_instance->d_currentoutput) << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " ***" << "\n";
+    std::cout << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " ***" << std::endl;
   }
 }
 

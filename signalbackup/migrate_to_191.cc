@@ -17,6 +17,18 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+/********************
+ *                  *
+ *    DEPRECATED    *
+ *                  *
+ * the issue this   *
+ * option exists to *
+ * work around has  *
+ * been fixed in    *
+ * Signal           *
+ *                  *
+ ********************/
+
 #include "signalbackup.ih"
 
 #include <regex>

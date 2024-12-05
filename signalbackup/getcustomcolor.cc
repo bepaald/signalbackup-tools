@@ -26,45 +26,47 @@
 
 std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colordata) const
 {
-  std::pair<std::string, std::string> custom_colors;
+  //std::cout << bepaald::bytesToHexString(colordata) << std::endl;
 
   /*
     message chatcolor/wallpaper {
-    message SingleColor {
-    int32 color = 1;
-    }
+      message SingleColor {
+        int32 color = 1;
+      }
 
-    message LinearGradient {
-    float rotation  = 1;
-    repeated int32 colors    = 2;
-    repeated float positions = 3;
-    }
+      message LinearGradient {
+        float rotation  = 1;
+        repeated int32 colors    = 2;
+        repeated float positions = 3;
+      }
 
-    message File {
-    string uri = 1;
-    }
+      message File {
+        string uri = 1;
+      }
 
-    oneof wallpaper {
-    SingleColor    singleColor    = 1;
-    LinearGradient linearGradient = 2;
-    File           file           = 3; // ONLY IN WALLPAPER
-    }
+      oneof wallpaper {
+        SingleColor    singleColor    = 1;
+        LinearGradient linearGradient = 2;
+        File           file           = 3; // ONLY IN WALLPAPER
+      }
 
-    float dimLevelInDarkTheme = 4; // ONLY IN WALLPAPER
+      float dimLevelInDarkTheme = 4; // ONLY IN WALLPAPER
     }
   */
-
   ProtoBufParser<
     ProtoBufParser<protobuffer::optional::INT32>,
     ProtoBufParser<protobuffer::optional::FLOAT, protobuffer::repeated::INT32, protobuffer::repeated::FLOAT>,
     ProtoBufParser<protobuffer::optional::STRING>,
     protobuffer::optional::FLOAT> color_proto(colordata);
 
+  std::pair<std::string, std::string> custom_colors;
   if (color_proto.getField<1>().has_value() &&
       color_proto.getField<1>().value().getField<1>().has_value())
   {
     uint32_t c = color_proto.getField<1>().value().getField<1>().value();
+    //std::cout << "Color value: " << c << std::endl;
 
+    //uint8_t a = (c >> (3 * 8)) & 0xFF);
     uint8_t r = (c >> (2 * 8)) & 0xFF;
     uint8_t g = (c >> (1 * 8)) & 0xFF;
     uint8_t b = (c >> (0 * 8)) & 0xFF;

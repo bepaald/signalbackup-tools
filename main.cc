@@ -472,6 +472,11 @@ int main(int argc, char *argv[])
   //   if (!sb->importWAChat(arg.importwachat(), arg.setwatimefmt(), arg.setselfid()))
   //     return 1;
 
+  if (!arg.setchatcolors().empty())
+    if (!sb->setChatColors(arg.setchatcolors()))
+      return 1;
+
+
   if (!arg.runsqlquery().empty())
     for (unsigned int i = 0; i < arg.runsqlquery().size(); ++i)
       sb->runQuery(arg.runsqlquery()[i], arg.querymode());
