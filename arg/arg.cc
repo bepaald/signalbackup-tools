@@ -468,6 +468,13 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < arguments.size() - 1)
       {
+        std::regex validator("line|pretty|single", std::regex::icase);
+        if (!std::regex_match(arguments[i + 1], validator))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+          continue;
+        }
         d_querymode = std::move(arguments[++i]);
       }
       else
