@@ -36,9 +36,9 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
                   //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetAuthorUuid') AS target_author_uuid,"
 
                   //timestamp of message that reaction belongs to, dont know why this exists
-                  //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetTimestamp') AS target_timestamp,"
+                  //"JSONLONG(json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetTimestamp')) AS target_timestamp,"
 
-                  "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].timestamp') AS timestamp,"
+                  "JSONLONG(json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].timestamp')) AS timestamp,"
 
                   // THE ID OF THE CONVERSATION OF THE REACTION AUTHOR (conversation somewhat doubles android's recipient table)
                   // ON OLDER DATABASES THIS IS PHONE NUMBER OF THE ACTUAL AUTHOR

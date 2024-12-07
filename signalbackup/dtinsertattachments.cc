@@ -115,7 +115,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
 
                   // not when sticker
                   "json_extract(json, '" + jsonpath + ".fileName') AS file_name,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".uploadTimestamp'), 0) AS upload_timestamp,"
+                  "IFNULL(JSONLONG(json_extract(json, '" + jsonpath + ".uploadTimestamp')), 0) AS upload_timestamp,"
                   "IFNULL(json_extract(json, '" + jsonpath + ".flags'), 0) AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
                   "IFNULL(json_extract(json, '" + jsonpath + ".pending'), 0) AS pending,"
                   "IFNULL(json_extract(json, '" + jsonpath + ".cdnNumber'), 0) AS cdn_number"

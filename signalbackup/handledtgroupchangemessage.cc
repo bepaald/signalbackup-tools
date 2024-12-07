@@ -79,7 +79,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       return;
     }
 
-    std::cout << "Got timer message: " << timer << std::endl;
+    //std::cout << "Got timer message: " << timer << std::endl;
 
     DecryptedTimer dt;
     dt.addField<1>(timer);

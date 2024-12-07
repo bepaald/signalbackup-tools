@@ -761,6 +761,8 @@ inline void SignalBackup::runQuery(std::string const &q, std::string const &mode
     res.prettyPrint(d_truncate);
   else if (mode == "line")
     res.printLineMode();
+  else if (mode == "single")
+    res.printSingleLine();
   else
     res.print();
 }
