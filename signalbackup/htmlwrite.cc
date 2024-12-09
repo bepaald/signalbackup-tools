@@ -615,17 +615,46 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         width: max-content;
       }
 
-      .shared-contact-avatar-default {
-        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="256" height="256" fill="white"><path d="M174.1 188.5c-13.6 7.7-29.4 12.2-46.1 12.2s-32.5-4.4-46.1-12.2C45.7 199.6 18.1 224 10 256h236c-8.1-32-35.7-56.5-71.9-67.5zM128 20c-44.8 0-81.1 36.3-81.1 81.1s36.3 81.1 81.1 81.1 81.1-36.3 81.1-81.1S172.8 20 128 20zm0 142c-25.8 0-47.8-16-56.7-38.7h113.4C175.8 146 153.8 162 128 162z"/></svg>');
+      .call-link {
+        border-top-left-radius: 0.6em;
+        border-top-right-radius: 0.6em;
+        border-bottom-left-radius: 0em;
+        border-bottom-right-radius: 0em;
+        padding: 7px;
+        margin-bottom: 5px;
       }
 
+      .call-link-avatar-container {
+        aspect-ratio: 1 / 1;
+        height: 70px;
+        border-radius: 50%;
+      }
+
+      .call-link-avatar,
       .shared-contact-avatar {
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
         aspect-ratio: 1 / 1;
         height: 50px;
+      }
+
+      .shared-contact-avatar {
         border-radius: 50%;
+      }
+
+      .call-link-avatar {
+        position: relative;
+        top: 10px;
+        left:10px;
+      }
+
+      .shared-contact-avatar-default {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="256" height="256" fill="white"><path d="M174.1 188.5c-13.6 7.7-29.4 12.2-46.1 12.2s-32.5-4.4-46.1-12.2C45.7 199.6 18.1 224 10 256h236c-8.1-32-35.7-56.5-71.9-67.5zM128 20c-44.8 0-81.1 36.3-81.1 81.1s36.3 81.1 81.1 81.1 81.1-36.3 81.1-81.1S172.8 20 128 20zm0 142c-25.8 0-47.8-16-56.7-38.7h113.4C175.8 146 153.8 162 128 162z"/></svg>');
+      }
+
+      .call-link-avatar {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="%23086DA0"><path d="M6.76 3.63h4.98l2 .04c.56.04 1.05.14 1.52.38a3.88 3.88 0 0 1 1.7 1.7c.23.46.33.95.37 1.5.04.46.04 1 .04 1.64l2.8-2.8c1.19-1.18 3.2-.35 3.2 1.32v9.18c0 1.67-2.01 2.5-3.2 1.32l-2.8-2.8-.04 1.63c-.04.56-.14 1.05-.38 1.52a3.88 3.88 0 0 1-1.7 1.7c-.46.23-.95.33-1.5.37-.54.05-1.2.05-2.01.05H6.76c-.8 0-1.47 0-2-.05-.56-.03-1.06-.13-1.52-.38a3.88 3.88 0 0 1-1.7-1.7c-.23-.46-.33-.95-.37-1.5-.05-.54-.05-1.2-.04-2.01V9.26l.04-2c.03-.56.13-1.06.38-1.52a3.88 3.88 0 0 1 1.7-1.7c.46-.23.95-.33 1.5-.37.54-.05 1.2-.05 2.01-.04zm8.86 5.67l-.03-1.9c-.04-.45-.1-.69-.2-.86a2.09 2.09 0 0 0-.93-.93c-.17-.1-.41-.16-.86-.2l-1.9-.04H6.8l-1.9.04c-.45.04-.69.1-.86.2-.4.19-.74.53-.94.93-.1.16-.15.41-.2.86l-.03 1.9v5.4l.04 1.9c.04.45.1.69.2.86a2.09 2.09 0 0 0 .93.93c.17.1.41.16.86.2l1.9.04h4.9l1.9-.04c.45-.04.69-.1.86-.2a2.09 2.09 0 0 0 .93-.93c.1-.17.16-.41.2-.86l.04-1.9V9.3zm1.76 2.7c0 .4.16.8.45 1.09l3.58 3.58.06.04h.08l.06-.05c0-.01.02-.03.02-.07V7.4c0-.04-.02-.06-.02-.07l-.06-.03-.08-.01s-.03 0-.06.04l-3.58 3.58c-.3.29-.45.68-.45 1.09z"/></svg>');
       }
 
       .msg-incoming .shared-contact-avatar-default {
@@ -636,21 +665,25 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--shared-contact-outgoing-f);
       }
 
+      .call-link-info,
       .shared-contact-info {
         margin-left: 5px;
       }
 
+      .call-link,
       .shared-contact {
         display: flex;
         flex-direction: row;
       }
 
+      .call-link-title,
       .shared-contact-name {
         font-weight: bold;
         margin-bottom: 5px;
         display: block;
       }
 
+      .call-link pre,
       .shared-contact pre {
         font-size: small;
       }
@@ -920,12 +953,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .msg-incoming .msg-quote,
       .msg-incoming .msg-linkpreview-img-container,
+      .msg-incoming .call-link,
       .msg-incoming .linkpreview {
         background-color: var(--incominglinkpreview-bc);
       }
 
       .msg-outgoing .msg-quote,
       .msg-outgoing .msg-linkpreview-img-container,
+      .msg-outgoing .call-link,
       .msg-outgoing .linkpreview {
         background-color: var(--outgoinglinkpreview-bc);
         color: #000000;
@@ -2155,8 +2190,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     {
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">\n";
       HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 16 + extraindent,
-                             msg_info.directory, msg_info.threaddir, msg_info.orig_filename, false,
-                             msg_info.overwrite, msg_info.append);
+                             msg_info.directory, msg_info.threaddir, msg_info.orig_filename,
+                             false, msg_info.overwrite, msg_info.append);
       htmloutput << "                </div>\n";
     }
 
@@ -2164,18 +2199,23 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   }
 
   // insert attachment?
-  if (msg_info.shared_contacts.empty()) [[likely]] // if we have an attachment with a shared contact, it's an avatar
+  if (!msg_info.shared_contacts.empty()) [[unlikely]] // if we have an attachment with a shared contact, it's an avatar
+    HTMLwriteSharedContactDiv(htmloutput, msg_info.shared_contacts, 12 + extraindent,
+                              msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
+  else if (STRING_STARTS_WITH(msg_info.link_preview_url, "https://signal.link/call/#key=")) [[unlikely]]
+    HTMLwriteCallLinkDiv(htmloutput, 12 + extraindent, msg_info.link_preview_url, msg_info.link_preview_title,
+                         msg_info.link_preview_description/*, msg_info.directory, msg_info.threaddir, msg_info.overwrite,
+                                                              msg_info.append*/);
+  else
     HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
                            msg_info.directory, msg_info.threaddir, msg_info.orig_filename,
                            (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
                            msg_info.overwrite, msg_info.append);
 
-  if (!msg_info.shared_contacts.empty()) [[unlikely]]
-    HTMLwriteSharedContactDiv(htmloutput, msg_info.shared_contacts, 12 + extraindent,
-                           msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
 
-  // insert link_preview data?
-  if (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty())
+  // insert link_preview data? (if not call link)
+  if ((!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()) &&
+      !STRING_STARTS_WITH(msg_info.link_preview_url, "https://signal.link/call/#key="))
   {
     htmloutput << "            <div class=\"linkpreview\">\n";
     if (!msg_info.link_preview_title.empty())

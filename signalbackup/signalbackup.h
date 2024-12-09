@@ -196,6 +196,7 @@ class SignalBackup
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
+  static std::array<std::string, 12> const s_html_random_colors;
   static std::regex const s_linkify_pattern;
 
  protected:
@@ -414,6 +415,9 @@ class SignalBackup
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool use_original_filenames,
                               bool is_image_preview, bool overwrite, bool append) const;
+  void HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, std::string const &url, std::string const &title,
+                            std::string const &description/*, std::string const &directory, std::string const &threaddir,
+                                                              bool overwrite, bool append*/) const;
   void HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
                                  std::string const &directory, std::string const &threaddir,
                                  bool overwrite, bool append) const;

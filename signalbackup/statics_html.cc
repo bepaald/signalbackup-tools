@@ -189,3 +189,32 @@ std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red"
                                                                           {"C350", "F6D8EC"},
                                                                           */
                                                                           };
+/*
+  app/src/main/java/org/thoughtcrime/securesms/conversation/colors/AvatarColor.java
+  A100("A100", 0xFFE3E3FE),
+  A110("A110", 0xFFDDE7FC),
+  A120("A120", 0xFFD8E8F0),
+  A130("A130", 0xFFCDE4CD),
+  A140("A140", 0xFFEAE0F8),
+  A150("A150", 0xFFF5E3FE),
+  A160("A160", 0xFFF6D8EC),
+  A170("A170", 0xFFF5D7D7),
+  A180("A180", 0xFFFEF5D0),
+  A190("A190", 0xFFEAE6D5),
+  A200("A200", 0xFFD2D2DC),
+  A210("A210", 0xFFD7D7D9),
+  UNKNOWN("UNKNOWN", 0x00000000),
+  ON_SURFACE_VARIANT("ON_SURFACE_VARIANT", 0x00000000);
+*/
+std::array<std::string, 12> const SignalBackup::s_html_random_colors{"E3E3FE",  // A100
+                                                                     "DDE7FC",  // A110
+                                                                     "D8E8F0",  // A120
+                                                                     "CDE4CD",  // A130
+                                                                     "EAE0F8",  // A140
+                                                                     "F5E3FE",  // A150
+                                                                     "F6D8EC",  // A160
+                                                                     "F5D7D7",  // A170
+                                                                     "FEF5D0",  // A180
+                                                                     "EAE6D5",  // A190
+                                                                     "D2D2DC",  // A200
+                                                                     "D7D7D9"}; // A210

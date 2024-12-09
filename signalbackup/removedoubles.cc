@@ -21,7 +21,128 @@
 
 void SignalBackup::removeDoubles(long long int milliseconds)
 {
-  Logger::message(__FUNCTION__ );
+  Logger::message(__FUNCTION__);
+
+
+
+  // show duplicates:
+
+  std::cout << "all messages" << std::endl;
+  d_database.printLineMode("SELECT COUNT(*) FROM " + d_mms_table);
+
+  std::cout << "candidates" << std::endl;
+  d_database.printLineMode("WITH candidates AS ("
+                           "  SELECT M._id, M." + d_mms_recipient_id + ", M.thread_id, M.date_sent, M.body FROM ("
+                           "    SELECT _id, " + d_mms_recipient_id + ",thread_id, date_sent, body FROM " + d_mms_table + " GROUP BY " + d_mms_recipient_id + ",thread_id, body HAVING COUNT(*) > 1"
+                           "  ) AS D "
+                           "  JOIN " + d_mms_table + " AS M ON "
+                           "    COALESCE(M.body, '') = COALESCE(D.body, '') AND "
+                           "    M.thread_id = D.thread_id AND "
+                           "    M." + d_mms_recipient_id + " = D." + d_mms_recipient_id + " "
+                           "  ORDER BY M._id"
+                           ") "
+                           "SELECT COUNT(*) FROM candidates");
+
+  std::cout << "candidates2" << std::endl;
+  d_database.prettyPrint(false,
+                         "SELECT M._id, M." + d_mms_recipient_id + ", M.thread_id, M.date_sent, M.body FROM ("
+                         "  SELECT _id, " + d_mms_recipient_id + ",thread_id, date_sent, body FROM " + d_mms_table + " GROUP BY " + d_mms_recipient_id + ",thread_id,  body HAVING COUNT(*) > 1"
+                         ") AS D "
+                         "JOIN " + d_mms_table + " AS M ON "
+                         "  COALESCE(M.body, '') = COALESCE(D.body, '') AND "
+                         "  M.thread_id = D.thread_id AND "
+                         "  M." + d_mms_recipient_id + " = D." + d_mms_recipient_id + " "
+                         "ORDER BY M._id");
+
+
+  std::cout << "REMOVED (OLD):" << std::endl;
+  // original
+  {
+  auto t1 = std::chrono::high_resolution_clock::now();
+  d_database.printSingleLine("SELECT _id FROM " + d_mms_table + " M WHERE "
+                             "  _id > "
+                             "  (SELECT min(_id) FROM " + d_mms_table + " WHERE "
+                             "      " + d_mms_recipient_id + " = M." + d_mms_recipient_id + " AND "
+                             "      thread_id = M.thread_id AND "
+                             "      COALESCE(body, '') = COALESCE(M.body, '') AND "
+                             "      " + d_mms_type + " = M." + d_mms_type + " AND "
+                             "      ABS(date_sent - M.date_sent) <= ?)", milliseconds);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+  std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+  }
+
+  std::cout << "REMOVED (NEW):" << std::endl;
+  // new
+  {
+  auto t1 = std::chrono::high_resolution_clock::now();
+  d_database.printSingleLine("WITH candidates AS ("
+                             "  SELECT M._id, M." + d_mms_recipient_id + ", M.thread_id, M.date_sent, M.body FROM ("
+                             "    SELECT _id, " + d_mms_recipient_id + ",thread_id, date_sent, body FROM " + d_mms_table + " GROUP BY " + d_mms_recipient_id + ",thread_id, body HAVING COUNT(*) > 1"
+                             "  ) AS D "
+                             "  JOIN " + d_mms_table + " AS M ON "
+                             "    M.body = D.body AND "
+                             "    M.thread_id = D.thread_id AND "
+                             "    M." + d_mms_recipient_id + " = D." + d_mms_recipient_id + " "
+                             "  ORDER BY M._id"
+                             "), "
+                             "to_delete AS "
+                             "("
+                             "  SELECT _id FROM candidates C WHERE "
+                             "  _id > "
+                             "  ("
+                             "    SELECT min(_id) FROM candidates WHERE "
+                             "      " + d_mms_recipient_id + " = C." + d_mms_recipient_id + " AND "
+                             "      thread_id = C.thread_id AND "
+                             "      COALESCE(body, '') = COALESCE(C.body, '') AND "
+                             "      ABS(date_sent - C.date_sent) <= ?"
+                             "  )"
+                             ") "
+                             "SELECT _id FROM to_delete", milliseconds);
+                             //"DELETE FROM " + d_mms_table + " WHERE _id IN to_delete", {tid, milliseconds, tid}))
+  auto t2 = std::chrono::high_resolution_clock::now();
+  auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+  std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+  }
+
+  return;
+
+  // new
+  {
+  auto t1 = std::chrono::high_resolution_clock::now();
+  d_database.printSingleLine("WITH candidates AS ("
+                             "  SELECT _id, date_sent, thread_id, body, " + d_mms_type + ", " + d_mms_recipient_id + " FROM " + d_mms_table + " M WHERE "
+                             "  _id > ("
+                             "    SELECT MIN(_id) FROM " + d_mms_table + " WHERE "
+                             "    " + d_mms_recipient_id + " = M." + d_mms_recipient_id + " AND "
+                             "    thread_id = M.thread_id AND "
+                             "    COALESCE(body, '') = COALESCE(M.body, '') AND "
+                             "    " + d_mms_type + " = M." + d_mms_type +
+                             "  )"
+                             "), "
+                             "to_delete AS ("
+                             "  SELECT _id FROM candidates M2 WHERE "
+                             "  _id IN ("
+                             "    SELECT _id FROM candidates WHERE "
+                             "      " + d_mms_recipient_id + " = M2." + d_mms_recipient_id + " AND "
+                             "      thread_id = M2.thread_id AND "
+                             "      COALESCE(body, '') = COALESCE(M2.body, '') AND "
+                             "      " + d_mms_type + " = M2." + d_mms_type + " AND "
+                             "    ABS(date_sent - M2.date_sent) <= ?"
+                             "  )"
+                             ") "
+                             "SELECT _id FROM to_delete", milliseconds);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+  std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+  }
+
+
+
+
+
+
+
 
   SqliteDB::QueryResults threads;
   if (!d_database.exec("SELECT _id FROM thread ORDER BY _id ASC", &threads))

@@ -29,6 +29,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                        d_mms_date_sent + ", " +
                        d_mms_type + ", "
                        "body, quote_missing, quote_author, quote_body, " + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", "
+                       "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                        "json_extract(link_previews, '$[0].description') AS link_preview_description, " +
                        (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, ") +
@@ -164,6 +165,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             parent_info.directory,
                             parent_info.threaddir,
                             parent_info.filename,
+                            revision(0, "link_preview_url"),
                             revision(0, "link_preview_title"),
                             revision(0, "link_preview_description"),
                             shared_contacts,

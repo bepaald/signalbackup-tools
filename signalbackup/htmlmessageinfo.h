@@ -53,6 +53,7 @@ struct HTMLMessageInfo
   std::string directory;
   std::string threaddir;
   std::string filename;
+  std::string link_preview_url;
   std::string link_preview_title;
   std::string link_preview_description;
   std::string shared_contacts;

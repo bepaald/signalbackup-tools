@@ -318,6 +318,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                     + (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                     + (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, ") + // introduced in 117
+                    "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
                     "FROM " + d_mms_table + " "
@@ -633,7 +634,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   directory,
                                   threaddir,
                                   filename,
-                                  messages(messagecount, "link_preview_title"),
+                                  messages(messagecount, "link_preview_url"),
+                                  messages(messagecount, "link_preview_title") ,
                                   messages(messagecount, "link_preview_description"),
                                   shared_contacts,
 
