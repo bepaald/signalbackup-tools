@@ -73,7 +73,7 @@ To compile the program, three main options are available:
   ```Shell
   $ ./BUILDSCRIPT.bash
   ```
-    To build without `dbus`, add `--config without_dbus` to the above command. the script can of course be edited at will to change compilation behavior. The flags can also be changed on the command line when running, for example to build with `clang++` instead of `g++`, simply run `$ CXX=clang++ ./BUILDSCRIPT.bash`.
+    To build without `dbus`, add `--config without_dbus` to the above command. The script can of course be edited at will to change compilation behavior. The flags can also be changed on the command line when running, for example to build with `clang++` instead of `g++`, simply run `$ CXX=clang++ ./BUILDSCRIPT.bash`.
 
 - Manually. The program can be manually compiled simply by running `g++ -std=c++20 */*.cc *.cc -lcrypto -lsqlite3`. On linux, by default one needs to add the location of the dbus headers and libraries (simplest way, add: `$(pkg-config --cflags --libs dbus-1)`). Alternatively, to build on Linux without `dbus`, add `-DWITHOUT_DBUS=1`. On macOS, the program must be linked to the Security and CoreFoundation frameworks by adding `-framework Security -framework CoreFoundation` to the build command. Any compiler flags you feel useful can be added, personally I use at least `-O3 -Wall -Wextra`. When compiling with an old compiler version (gcc 8.x or clang <= 7), also add the -lstdc++fs flag and replace -std=c++20 with -std=c++17.
 

@@ -37,47 +37,6 @@ LDFLAGS="${LDFLAGS:--Wall -Wextra -Wl,--as-needed -Wl,-z,now -O3 -flto=auto -s}"
 LDLIBS="${LDLIBS:-$PKG_CONFIG___LIBS_DBUS__ -lcrypto -lsqlite3}"
 BIN="${BIN:-signalbackup-tools}"
 
-# CONFIG: brew
-if [ "$CONFIG" = "brew" ] ; then
-  CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -O3 -flto"
-  LDFLAGS="-Wall -Wextra -O3 -flto=auto"
-  LDLIBS="-lcrypto -lsqlite3"
-fi
-
-# CONFIG: darwin
-if [ "$CONFIG" = "darwin" ] ; then
-  CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -O3 -flto"
-  LDFLAGS="-Wall -Wextra -Wl,-framework,CoreFoundation -Wl,-framework,Security -flto -O3"
-  LDLIBS="-lcrypto -lsqlite3"
-fi
-
-# CONFIG: nixpkgs-darwin
-if [ "$CONFIG" = "nixpkgs-darwin" ] ; then
-  CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -O3"
-  LDFLAGS="-Wall -Wextra -Wl,-framework,CoreFoundation -Wl,-framework,Security -O3"
-  LDLIBS="-lcrypto -lsqlite3"
-fi
-
-# CONFIG: windows
-if [ "$CONFIG" = "windows" ] ; then
-  CXX="x86_64-w64-mingw32-g++"
-  CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -D_WIN32_WINNT=0x600 -I/usr/x86_64-w64-mingw32/include/ -O3 -flto"
-  CXXARCH=""
-  LDFLAGS="-Wall -Wextra -Wl,--as-needed -L/usr/x86_64-w64-mingw32/lib/ -static -static-libgcc -static-libstdc++ -O3 -flto=auto -s"
-  LDLIBS="-ladvapi32 -lcrypt32 -lcrypto -lgdi32 -lsqlite3 -lssp -luser32 -lws2_32"
-  BIN="signalbackup-tools_win.exe"
-fi
-
-# CONFIG: windows32
-if [ "$CONFIG" = "windows32" ] ; then
-  CXX="i686-w64-mingw32-g++"
-  CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -D_WIN32_WINNT=0x600 -I/usr/i686-w64-mingw32/include/ -O3 -flto"
-  CXXARCH=""
-  LDFLAGS="-Wall -Wextra -Wl,--as-needed -L/usr/i686-w64-mingw32/lib/ -static -static-libgcc -static-libstdc++ -O3 -flto=auto -s"
-  LDLIBS="-ladvapi32 -lcrypt32 -lcrypto -lgdi32 -lsqlite3 -lssp -luser32 -lws2_32"
-  BIN="signalbackup-tools_win.exe"
-fi
-
 # CONFIG: without_dbus
 if [ "$CONFIG" = "without_dbus" ] ; then
   CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -DWITHOUT_DBUS -O3 -flto"

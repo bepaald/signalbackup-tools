@@ -56,49 +56,49 @@ void SignalBackup::HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, s
           high = 0;
           break;
         case 'c':
-          high = 1;
+          high = 16;
           break;
         case 'd':
-          high = 2;
+          high = 32;
           break;
         case 'f':
-          high = 3;
+          high = 48;
           break;
         case 'g':
-          high = 4;
+          high = 64;
           break;
         case 'h':
-          high = 5;
+          high = 80;
           break;
         case 'k':
-          high = 6;
+          high = 96;
           break;
         case 'm':
-          high = 7;
+          high = 112;
           break;
         case 'n':
-          high = 8;
+          high = 128;
           break;
         case 'p':
-          high = 9;
+          high = 144;
           break;
         case 'q':
-          high = 10;
+          high = 160;
           break;
         case 'r':
-          high = 11;
+          high = 176;
           break;
         case 's':
-          high = 12;
+          high = 192;
           break;
         case 't':
-          high = 13;
+          high = 208;
           break;
         case 'x':
-          high = 14;
+          high = 224;
           break;
         case 'z':
-          high = 15;
+          high = 240;
           break;
       }
       switch (second)
@@ -156,7 +156,7 @@ void SignalBackup::HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, s
       if (high < 0 || low < 0) [[unlikely]]
         return -1;
 
-      return (high << 4) + low;
+      return high + low;
     };
     /*
       // old version, the switch lookup is faster...
