@@ -305,7 +305,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     // now get all messages
     SqliteDB::QueryResults messages;
     d_database.exec("SELECT "s
-                    "_id, " + d_mms_recipient_id + ", body, "
+                    "_id, " + d_mms_recipient_id + ", "
+                    + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
                     "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, "
                     "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
                     + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
@@ -532,17 +533,31 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         IconType icon = IconType::NONE;
         if (Types::isStatusMessage(type))
         {
+          // identityVerified and identityDefault ("You marked your safety number with XXX (un)verified") are
+          // a little different from other (nongroup) statusmessages, in that the name to be filled in is not
+          // the FROM_recipient_id (as is the case with others: "XXX reset the secure session", "XXX set the
+          // disappearing message timer to ..."), but the TO_recipient. For these message FROM is always self
+          // ("YOU set YOUR safety number..."), but we need the TO_id to fill in the name.
+          // Note this is even true in group threads, where outgoing messages are usually always from you and
+          // to the group, but not for these two status messages.
+          // But all of the above is only true for (newer) databases that _have_ from_ and to_recipient_ids,
+          // in older databases the target-name is recipient_id in all cases...
+          long long int target_rid = msg_recipient_id;
+          if ((Types::isIdentityVerified(type) || Types::isIdentityDefault(type)) &&
+              messages.valueAsInt(messagecount, "to_recipient_id") != -1) [[unlikely]]
+            target_rid = messages.valueAsInt(messagecount, "to_recipient_id");
+
           // decode from body if (body not empty) OR (message_extras not available)
           if (!body.empty() ||
               !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                 messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras")))
             body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
-                                       type, getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
+                                       type, getRecipientInfoFromMap(&recipient_info, target_rid).display_name, &icon);
           else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                    messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))
             body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
                                        messages.getValueAs<long long int>(messagecount, "expires_in"), type,
-                                       getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name, &icon);
+                                       getRecipientInfoFromMap(&recipient_info, target_rid).display_name, &icon);
         }
 
         // prep body (scan emoji? -> in <span>) and handle mentions...

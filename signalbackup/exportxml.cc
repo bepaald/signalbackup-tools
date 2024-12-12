@@ -51,6 +51,10 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
   {
     realtype = results.getValueAs<long long int>(i, "type");
 
+    // skip status messages for now...
+    if (Types::isStatusMessage(realtype))
+      return;
+
     // skip 'This group was updated to a New Group'
     if (realtype == Types::GV1_MIGRATION_TYPE)
       return;
@@ -202,6 +206,10 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   if (results.valueHasType<long long int>(i, d_mms_type))
   {
     realtype = results.getValueAs<long long int>(i, d_mms_type);
+
+    // skip status messages for now...
+    if (Types::isStatusMessage(realtype))
+      return;
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {

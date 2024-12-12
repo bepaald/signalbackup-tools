@@ -25,6 +25,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   SqliteDB::QueryResults revision;
   if (!d_database.exec("SELECT " +
                        d_mms_recipient_id + ", " +
+                       + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, "
                        "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, " +
                        d_mms_date_sent + ", " +
                        d_mms_type + ", "
@@ -101,12 +102,18 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   IconType icon = IconType::NONE;
   if (Types::isStatusMessage(type))
   {
+    // see note in exporthtml
+    long long int target_rid = msg_recipient_id;
+    if ((Types::isIdentityVerified(type) || Types::isIdentityDefault(type)) &&
+        revision.valueAsInt(0, "to_recipient_id") != -1) [[unlikely]]
+      target_rid = revision.valueAsInt(0, "to_recipient_id");
+
     if (!body.empty())
-      body = decodeStatusMessage(body, revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, msg_recipient_id).display_name, &icon);
+      body = decodeStatusMessage(body, revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, target_rid).display_name, &icon);
     else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
              revision.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"))
       body = decodeStatusMessage(revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"),
-                                 revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, msg_recipient_id).display_name, &icon);
+                                 revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, target_rid).display_name, &icon);
   }
 
   // prep body (scan emoji? -> in <span>) and handle mentions...

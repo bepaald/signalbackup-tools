@@ -52,19 +52,28 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       threadlist += ",";
   }
   SqliteDB::QueryResults results;
-  if (d_database.containsTable("call") &&
-      !d_database.exec("SELECT "
-                       //"_id, "
-                       "message_id, peer, type, direction, event, timestamp "
-                       //", ringer, deletion_timestamp, "
-                       //"datetime((timestamp / 1000), 'unixepoch', 'localtime') "
-                       "FROM call WHERE "
-                       "message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id IN (" + threadlist + ")) " +
-                       datewhereclause + " "
-                       "ORDER BY timestamp DESC",
-                       &results))
+  if (d_database.containsTable("call"))
   {
-    Logger::error("Failed to query database for call data.");
+    if (!d_database.exec("SELECT "
+                         //"_id, "
+                         "message_id, peer, type, direction, event, "
+                         + (d_database.tableContainsColumn("call", "timestamp") ? "timestamp" :
+                            "(SELECT " + d_mms_date_sent + " FROM " + d_mms_table + " WHERE " + d_mms_table + "._id = call.message_id)") + " AS timestamp "
+                         //", ringer, deletion_timestamp, "
+                         //"datetime((timestamp / 1000), 'unixepoch', 'localtime') "
+                         "FROM call WHERE "
+                         "message_id IN (SELECT DISTINCT _id FROM " + d_mms_table + " WHERE thread_id IN (" + threadlist + ")) " +
+                         datewhereclause + " "
+                         "ORDER BY timestamp DESC",
+                         &results))
+    {
+      Logger::error("Failed to query database for call data.");
+      return;
+    }
+  }
+  else
+  {
+    Logger::warning("Call table not found in database");
     return;
   }
 

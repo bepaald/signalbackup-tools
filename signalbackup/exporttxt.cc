@@ -204,7 +204,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     // now get all messages
     SqliteDB::QueryResults messages;
     if (!d_database.exec("SELECT "s
-                         "_id, " + d_mms_recipient_id + ", body, "
+                         "_id, " + d_mms_recipient_id + ", "
+                         + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
                          "date_received, " + d_mms_type + ", "
                          "attcount, reactioncount, mentioncount, "
                          "IFNULL(remote_deleted, 0) AS remote_deleted, "
@@ -310,17 +311,23 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {
+        // see note in exporthtml
+        long long int target_rid = msg_recipient_id;
+        if ((Types::isIdentityVerified(type) || Types::isIdentityDefault(type)) &&
+            messages.valueAsInt(i, "to_recipient_id") != -1) [[unlikely]]
+          target_rid = messages.valueAsInt(i, "to_recipient_id");
+
         std::string statusmsg;
         if (!body.empty() ||
             !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
               messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras")))
           statusmsg = decodeStatusMessage(body, messages.getValueAs<long long int>(i, "expires_in"), type,
-                                          getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+                                          getRecipientInfoFromMap(&recipient_info, target_rid).display_name);
         else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                  messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
           statusmsg = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
                                           messages.getValueAs<long long int>(i, "expires_in"), type,
-                                          getRecipientInfoFromMap(&recipient_info, msg_recipient_id).display_name);
+                                          getRecipientInfoFromMap(&recipient_info, target_rid).display_name);
 
         txtoutput << "[" << readable_date << "] " << "***" << " " << statusmsg <<  '\n';
       }
