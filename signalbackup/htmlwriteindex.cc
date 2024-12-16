@@ -79,6 +79,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
+                       "IFNULL(recipient.mute_until, 0) AS mute_until, " // dont think this is ever NULL
                        "recipient.group_id, "
                        "recipient.blocked "
                        //"(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
@@ -135,6 +136,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          + (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ")
                          + (d_database.tableContainsColumn("thread", "pinned") ? "thread.pinned, " : "") +
                          + (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
+                         "IFNULL(recipient.mute_until, 0) AS mute_until, "
                          "recipient.group_id, "
                          "recipient.blocked "
                          //"-1 AS message_count "
@@ -407,6 +409,19 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     << "        aspect-ratio: 1 / 1;\n"
     << "        margin-left: 8px;\n"
     << "        margin-top: 3px;\n"
+    << "      }\n"
+    << '\n'
+    // only showing the muted icon for threads muted 'forever', for others it gets a bit
+    // difficult since the mute_until is never cleared (contains past timestamps) and the
+    // value is check against 'current time' normally.
+    << "      .muted {\n"
+    << "         background-image: url('data:image/svg+xml;utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 1 16 16\" fill=\"white\"><path d=\"M6.163 14h3.674a1.875 1.875 0 0 1-3.674 0zM8 2a3.233 3.233 0 0 1 3.041 2.171l.113.322L3.5 10.507a8.079 8.079 0 0 0 .335-1.136L4.84 4.548A3.25 3.25 0 0 1 8 2m0-1a4.236 4.236 0 0 0-4.138 3.337l-1.007 4.83a5.83 5.83 0 0 1-1.785 3.25l-.879.69.618.786 14-11-.618-.786-2.206 1.734A4.225 4.225 0 0 0 8 1zm6.54 10.035a2.846 2.846 0 0 1-1.395-1.868l-.662-3.176h0l-.878.689.564 2.7a3.954 3.954 0 0 0 1.89 2.558A.059.059 0 0 1 14 12H4.834l-1.272 1H14a1.056 1.056 0 0 0 .54-1.965z\"/></svg>');\n"
+    << "        display: inline-block;\n"
+    << "        height: 18px;\n"
+    << "        aspect-ratio: 1 / 1;\n"
+    << "        margin-left: 8px;\n"
+    << "        margin-top: 4px;\n"
+    << "        filter: var(--icon-f);\n"
     << "      }\n"
     << '\n'
     << "      .name {\n"
@@ -997,6 +1012,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     long long int snippet_type = results.getValueAs<long long int>(i, "snippet_type");
 
     bool isblocked = (results.getValueAs<long long int>(i, "blocked") == 1);
+    bool ismuted = (results.getValueAs<long long int>(i, "mute_until") == 0x7FFFFFFFFFFFFFFF);
     bool isgroup = !results.isNull(i, "group_id");
     bool isnotetoself = (t_id == note_to_self_tid);
     bool emoji_initial = getRecipientInfoFromMap(recipient_info, rec_id).initial_is_emoji;
@@ -1100,6 +1116,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       << "            <pre class=\"name\">" << (isnotetoself ? "Note to Self" : HTMLescapeString(getRecipientInfoFromMap(recipient_info, rec_id).display_name)) << "</pre>\n";
     if (isreleasechannel || isnotetoself)
       outputfile << "            <div class=\"official\"></div>\n";
+    if (ismuted)
+      outputfile << "            <div class=\"muted\"></div>\n";
     outputfile
       << "          </div>\n"
       << "          <span class=\"snippet\">"

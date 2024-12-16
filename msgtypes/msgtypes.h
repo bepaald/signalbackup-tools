@@ -97,7 +97,6 @@ struct Types
   static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_ACTIVATED        = 0x800000000L;
   static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_TOMBSTONE        = 0x900000000L;
 
- public:
   inline static bool isGroupUpdate(uint64_t type)
   {
     return (type & GROUP_UPDATE_BIT) != 0;
@@ -237,7 +236,6 @@ struct Types
       isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE ||
       isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type);
   }
-
 };
 
 #endif
