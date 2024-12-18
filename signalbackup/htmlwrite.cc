@@ -80,6 +80,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   std::string title = (isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name);
   HTMLescapeString(&title);
 
+  bool ismuted = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until == 0x7FFFFFFFFFFFFFFF;
+  bool isblocked = getRecipientInfoFromMap(recipient_info, thread_recipient_id).blocked;
+
   file << R"(<!DOCTYPE html>
 <html>
   <head>
@@ -1281,6 +1284,32 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 )";
   }
 
+  if (isblocked)
+  {
+    file << '\n'
+         << "    .blocked {\n"
+         << "      background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"/></svg>');\n"
+         << "      height: 24px;\n"
+         << "      aspect-ratio: 1 / 1;\n"
+         << "      margin-right: 6px;\n"
+         << "      filter: var(--icon-f);\n"
+         << "    }\n";
+  }
+
+  if (ismuted && !isblocked)
+  {
+    file << '\n'
+         << "    .muted {\n"
+         << "      display: inline-block;\n"
+         << "      background-image: url('data:image/svg+xml;utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" fill=\"white\"><path d=\"M6.163 14h3.674a1.875 1.875 0 0 1-3.674 0zM8 2a3.233 3.233 0 0 1 3.041 2.171l.113.322L3.5 10.507a8.079 8.079 0 0 0 .335-1.136L4.84 4.548A3.25 3.25 0 0 1 8 2m0-1a4.236 4.236 0 0 0-4.138 3.337l-1.007 4.83a5.83 5.83 0 0 1-1.785 3.25l-.879.69.618.786 14-11-.618-.786-2.206 1.734A4.225 4.225 0 0 0 8 1zm6.54 10.035a2.846 2.846 0 0 1-1.395-1.868l-.662-3.176h0l-.878.689.564 2.7a3.954 3.954 0 0 0 1.89 2.558A.059.059 0 0 1 14 12H4.834l-1.272 1H14a1.056 1.056 0 0 0 .54-1.965z\"/></svg>');\n"
+         << "      height: 24px;\n"
+         << "      aspect-ratio: 1 / 1;\n"
+         << "      margin-top: 3px;\n"
+         << "      margin-right: 8px;\n"
+         << "      filter: var(--icon-f);\n"
+         << "    }\n";
+  }
+
   if (themeswitch)
   {
     file << R"(
@@ -1670,39 +1699,42 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   // set expiration timer string
   std::string exptimer = "Off";
   std::string exptimer_short;
-  if (groupinfo.expiration_timer)
+  long long int expiration_timer = isgroup ? groupinfo.expiration_timer : getRecipientInfoFromMap(recipient_info, thread_recipient_id).message_expiration_time;
+  if (expiration_timer)
   {
-    if (groupinfo.expiration_timer < 60) // less than full minute
+    if (expiration_timer < 60) // less than full minute
     {
-      exptimer = bepaald::toString(groupinfo.expiration_timer) + " second"
-        + (groupinfo.expiration_timer == 1 ? "" : "s");
-      exptimer_short = bepaald::toString(groupinfo.expiration_timer) + "s";
+      exptimer = bepaald::toString(expiration_timer) + " second"
+        + (expiration_timer == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(expiration_timer) + "s";
     }
-    else if (groupinfo.expiration_timer < 60 * 60) // less than full hour
+    else if (expiration_timer < 60 * 60) // less than full hour
     {
-      exptimer = bepaald::toString(groupinfo.expiration_timer / 60) + " minute"
-        + (groupinfo.expiration_timer / 60 == 1 ? "" : "s");
-      exptimer_short = bepaald::toString(groupinfo.expiration_timer / 60) + "m";
+      exptimer = bepaald::toString(expiration_timer / 60) + " minute"
+        + (expiration_timer / 60 == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(expiration_timer / 60) + "m";
     }
-    else if (groupinfo.expiration_timer < 24 * 60 * 60) // less than full day
+    else if (expiration_timer < 24 * 60 * 60) // less than full day
     {
-      exptimer = bepaald::toString(groupinfo.expiration_timer / (60 * 60)) + " hour"
-        + (groupinfo.expiration_timer / (60 * 60) == 1 ? "" : "s");
-      exptimer_short = bepaald::toString(groupinfo.expiration_timer / (60 * 60)) + "h";
+      exptimer = bepaald::toString(expiration_timer / (60 * 60)) + " hour"
+        + (expiration_timer / (60 * 60) == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(expiration_timer / (60 * 60)) + "h";
     }
-    else if (groupinfo.expiration_timer < 7 * 24 * 60 * 60) // less than full week
+    else if (expiration_timer < 7 * 24 * 60 * 60) // less than full week
     {
-      exptimer = bepaald::toString(groupinfo.expiration_timer / (24 * 60 * 60)) + " day"
-        + (groupinfo.expiration_timer / (24 * 60 * 60) == 1 ? "" : "s");
-      exptimer_short = bepaald::toString(groupinfo.expiration_timer / (24 * 60 * 60)) + "d";
+      exptimer = bepaald::toString(expiration_timer / (24 * 60 * 60)) + " day"
+        + (expiration_timer / (24 * 60 * 60) == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(expiration_timer / (24 * 60 * 60)) + "d";
     }
-    else // show groupinfo.expiration_timer in number of weeks
+    else // show expiration_timer in number of weeks
     {
-      exptimer = bepaald::toString(groupinfo.expiration_timer / (7 * 24 * 60 * 60)) + " week"
-        + (groupinfo.expiration_timer / (7 * 24 * 60 * 60) == 1 ? "" : "s");
-      exptimer_short = bepaald::toString(groupinfo.expiration_timer / (7 * 24 * 60 * 60)) + "w";
+      exptimer = bepaald::toString(expiration_timer / (7 * 24 * 60 * 60)) + " week"
+        + (expiration_timer / (7 * 24 * 60 * 60) == 1 ? "" : "s");
+      exptimer_short = bepaald::toString(expiration_timer / (7 * 24 * 60 * 60)) + "w";
     }
   }
+
+
 
 file << R"(
   <input type="checkbox" id="theme-switch">
@@ -1740,10 +1772,16 @@ file << R"(
             <img class="avatar avatar-)" << thread_recipient_id << " header-avatar msg-sender-" << thread_recipient_id << "\" src=\"" << thread_avatar << R"(" alt=")" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial + R"(">
           </label>)";
   }
-  file << R"(
-          <div id="thread-title"><pre class="threadtitle">)"
-       << title << (groupinfo.expiration_timer ? "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>" : "")
-       << R"(</pre>)";
+  file << '\n'
+       << "          <div id=\"thread-title\">";
+  if (isblocked)
+    file << "<div class=\"blocked\"></div>";
+  else if (ismuted)
+    file << "<div class=\"muted\"></div>";
+  file << "<pre class=\"threadtitle\">" << title;
+  if (expiration_timer)
+    file << "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>";
+  file << "</pre>";
   if (isnotetoself || isreleasechannel)
     file << "<div class=\"official\"></div>";
   file << R"(</div>

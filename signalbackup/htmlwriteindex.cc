@@ -79,10 +79,10 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', "
                        + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
-                       "IFNULL(recipient.mute_until, 0) AS mute_until, " // dont think this is ever NULL
-                       "recipient.group_id, "
-                       "recipient.blocked "
-                       //"(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count "
+                       //"IFNULL(recipient.mute_until, 0) AS mute_until, " // dont think this is ever NULL
+                       //"recipient.blocked, "
+                       //"(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count, "
+                       "recipient.group_id "
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
                        "WHERE thread._id IN (" + threadlist + ") AND " + d_thread_message_count + " > 0 ORDER BY "
@@ -96,7 +96,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
   //results.prettyPrint(true);
 
   //maxtimestamp = 9999999999999;
-  if (maxtimestamp != -1)
+  if (maxtimestamp != -1) [[unlikely]]
   {
     if (!d_database.exec("WITH partitioned_messages AS ("
                          "SELECT "
@@ -136,10 +136,10 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          + (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ")
                          + (d_database.tableContainsColumn("thread", "pinned") ? "thread.pinned, " : "") +
                          + (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
-                         "IFNULL(recipient.mute_until, 0) AS mute_until, "
-                         "recipient.group_id, "
-                         "recipient.blocked "
-                         //"-1 AS message_count "
+                         //"IFNULL(recipient.mute_until, 0) AS mute_until, "
+                         //"recipient.blocked, "
+                         //"-1 AS message_count, "
+                         "recipient.group_id "
                          "FROM " + d_mms_table + " "
                          "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
                          "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
@@ -1011,8 +1011,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       continue;
     long long int snippet_type = results.getValueAs<long long int>(i, "snippet_type");
 
-    bool isblocked = (results.getValueAs<long long int>(i, "blocked") == 1);
-    bool ismuted = (results.getValueAs<long long int>(i, "mute_until") == 0x7FFFFFFFFFFFFFFF);
+    bool isblocked = getRecipientInfoFromMap(recipient_info, rec_id).blocked;
+    bool ismuted = getRecipientInfoFromMap(recipient_info, rec_id).mute_until == 0x7FFFFFFFFFFFFFFF;
     bool isgroup = !results.isNull(i, "group_id");
     bool isnotetoself = (t_id == note_to_self_tid);
     bool emoji_initial = getRecipientInfoFromMap(recipient_info, rec_id).initial_is_emoji;

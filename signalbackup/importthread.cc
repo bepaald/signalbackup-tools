@@ -396,6 +396,27 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
       Logger::message("  Deleted ", count, " existing key values");
   }
 
+  // delete double backup_media_snapshot (v257)
+  // UNTESTED not sure what this does, but if it is going
+  // to be used for incremental backups (backup v2), and
+  // the  media_id is used to determine if an attachment
+  // was already backed up, this needs to be correct to
+  // prevent data loss..
+  if (d_database.containsTable("backup_media_snapshot") && source->d_database.containsTable("backup_media_snapshot"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT media_id FROM backup_media_snapshot", &res);
+
+    int count = 0;
+    for (unsigned int i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM backup_media_snapshot WHERE media_id = ?", res.value(i, "media_id"));
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing backup_media_snapshot entries");
+  }
+
   // the target will have its own job_spec etc...
   if (source->d_database.containsTable("job_spec"))
     source->d_database.exec("DELETE FROM job_spec");

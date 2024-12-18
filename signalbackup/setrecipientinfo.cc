@@ -52,7 +52,9 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     "recipient.group_id, recipient." + d_recipient_avatar_color + ", " +
                     (d_database.tableContainsColumn("recipient", "notification_channel") ? "notification_channel, " : "") +
                     (d_database.tableContainsColumn("recipient", "mute_until") ? "mute_until, " : "") +
+                    (d_database.tableContainsColumn("recipient", "blocked") ? "blocked, " : "") +
                     (d_database.tableContainsColumn("recipient", "mention_setting") ? "mention_setting, " : "") +
+                    (d_database.tableContainsColumn("recipient", "message_expiration_time") ? "message_expiration_time, " : "") +
                     "recipient.wallpaper "
                     "FROM recipient "
                     "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
@@ -135,6 +137,14 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (d_database.tableContainsColumn("recipient", "mute_until"))
       mute_until = results.valueAsInt(0, "mute_until");
 
+    bool blocked = false;
+    if (d_database.tableContainsColumn("recipient", "blocked"))
+      blocked = (results.valueAsInt(0, "blocked") != 0);
+
+    long long int message_expiration_time = 0;
+    if (d_database.tableContainsColumn("recipient", "message_expiration_time"))
+      message_expiration_time = results.valueAsInt(0, "message_expiration_time");
+
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
@@ -145,7 +155,9 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                              results.valueAsString(0, d_recipient_e164),
                              results.valueAsString(0, "username"),
                              mute_until,
+                             blocked,
                              mention_setting,
+                             message_expiration_time,
                              custom_notifications,
                              color,
                              wall_light,

@@ -477,6 +477,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "_id",
     {},
     0
+  },
+  {
+    "backup_media_snapshot",
+    "_id",
+    {},
+    0
   }
 };
 
