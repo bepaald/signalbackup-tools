@@ -896,7 +896,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     for (unsigned int i = 0; i < res.rows(); ++i)
     {
       source->d_database.exec("DELETE FROM pending_pni_signature_message "
-                              "WHERE recipient_id = ? AND sent_timestamp = ? AND devide_id = ?",
+                              "WHERE recipient_id = ? AND sent_timestamp = ? AND device_id = ?",
                               {res.value(i, "recipient_id"), res.value(i, "sent_timestamp"), res.value(i, "device_id")});
       count += source->d_database.changed();
     }
