@@ -24,32 +24,13 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                              std::vector<std::string> const &daterangelist, std::string const &selfphone [[maybe_unused]],
                              bool migrate, bool overwrite)
 {
+  Logger::message("Starting plaintext export to '", directory, "'");
+
+  // v170 and above should work. Anything below will first migrate (I believe anything down to ~23 should more or less work)
   bool databasemigrated = false;
   MemSqliteDB backup_database;
-
-  // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
-  if (d_databaseversion == 167)
+  if (d_databaseversion < 170 || migrate)
   {
-    SqliteDB::copyDb(d_database, backup_database);
-    if (!migrateDatabase(167, 170))
-    {
-      Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
-                    " Please upgrade your database");
-      SqliteDB::copyDb(backup_database, d_database);
-      return false;
-    }
-    else
-      databasemigrated = true;
-  }
-  else if (d_databaseversion < 167)
-  {
-    if (!migrate)
-    {
-      Logger::error("Currently unsupported database version (", d_databaseversion, ").");
-      Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
-      Logger::error_indent("migrate this database to a supported version.");
-      return false;
-    }
     SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
     {
@@ -58,9 +39,43 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
-    else
-      databasemigrated = true;
+    databasemigrated = true;
   }
+
+  // // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
+  // if (d_databaseversion == 167)
+  // {
+  //   SqliteDB::copyDb(d_database, backup_database);
+  //   if (!migrateDatabase(167, 170))
+  //   {
+  //     Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+  //                   " Please upgrade your database");
+  //     SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  //   else
+  //     databasemigrated = true;
+  // }
+  // else if (d_databaseversion < 167)
+  // {
+  //   if (!migrate)
+  //   {
+  //     Logger::error("Currently unsupported database version (", d_databaseversion, ").");
+  //     Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
+  //     Logger::error_indent("migrate this database to a supported version.");
+  //     return false;
+  //   }
+  //   SqliteDB::copyDb(d_database, backup_database);
+  //   if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
+  //   {
+  //     Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+  //                   " Please upgrade your database");
+  //     SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  //   else
+  //     databasemigrated = true;
+  // }
 
   // check if dir exists, create if not
   if (!prepareOutputDirectory(directory, overwrite))
@@ -69,63 +84,6 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       SqliteDB::copyDb(backup_database, d_database);
     return false;
   }
-
-  // if (!bepaald::fileOrDirExists(directory))
-  // {
-  //   // try to create
-  //   if (!bepaald::createDir(directory))
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Failed to create directory `" << directory << "'"
-  //               << " (errno: " << std::strerror(errno) << ")" << std::endl; // note: errno is not required to be set by std
-  //     // temporary !!
-  //     {
-  //       std::error_code ec;
-  //       std::filesystem::space_info const si = std::filesystem::space(directory, ec);
-  //       if (!ec)
-  //       {
-  //         std::cout << "Available  : " << static_cast<std::intmax_t>(si.available) << std::endl;
-  //         std::cout << "Backup size: " << d_fd->total() << std::endl;
-  //       }
-  //     }
-  //     if (databasemigrated)
-  //       SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  // }
-
-  // // directory exists, but
-  // // is it a dir?
-  // if (!bepaald::isDir(directory))
-  // {
-  //   std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //             << ": `" << directory << "' is not a directory." << std::endl;
-  //   if (databasemigrated)
-  //     SqliteDB::copyDb(backup_database, d_database);
-  //   return false;
-  // }
-
-  // // and is it empty?
-  // if (!bepaald::isEmpty(directory))
-  // {
-  //   if (!overwrite)
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Directory '" << directory << "' is not empty. Use --overwrite to clear directory before export." << std::endl;
-  //     if (databasemigrated)
-  //       SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  //   std::cout << "Clearing contents of directory '" << directory << "'..." << std::endl;
-  //   if (!bepaald::clearDirectory(directory))
-  //   {
-  //     std::cout << bepaald::bold_on << "Error" << bepaald::bold_off
-  //               << ": Failed to empty directory '" << directory << "'" << std::endl;
-  //     if (databasemigrated)
-  //       SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  // }
 
   // check and warn about selfid & note-to-self thread
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
@@ -179,7 +137,6 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
   // handle each thread
   for (int t : threads)
   {
-
     Logger::message("Dealing with thread ", t);
 
     //bool is_note_to_self = false;//(t == note_to_self_thread_id);
