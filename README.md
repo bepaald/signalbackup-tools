@@ -406,7 +406,7 @@ Done!
 
 ##### Export to HTML
 
-_NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation). It is possible that some (very) old backups are not supported. If there is demand, support for older databases may be added in the future._
+_NOTE: Note that while the the generated HTML is heavily inspired by Signal's look it does not aim to be a perfect reproduction of it. The generated HTML and CSS are only tested on Firefox (but both pass W3C validation).
 
 To export your messages to HTML, use `--exporthtml [DIRECTORY]`. To limit the output to certain threads the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by a string representing the display name, phone number or username of the recipient: `--limittothreadsbyname "Alice","Family Group","+14255550123"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to messages within the time periods listed. For the format of the date list, see the [crop to dates](#crop) option. Because writing out all media files can be a long process, the option `--append` can be added to reuse any existing media files, only new media and the HTML-files will be rewritten. Example:
 

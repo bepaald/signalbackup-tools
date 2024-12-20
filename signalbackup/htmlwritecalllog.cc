@@ -72,10 +72,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     }
   }
   else
-  {
     Logger::warning("Call table not found in database");
-    return;
-  }
 
   bool listempty = false;
   if (results.rows() == 0)

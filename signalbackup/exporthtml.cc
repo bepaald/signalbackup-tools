@@ -36,32 +36,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
+  // v170 and above should work. Anything below will first migrate (I believe anything down to ~23 should more or less work)
   bool databasemigrated = false;
   MemSqliteDB backup_database;
-
-  // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
-  if (d_databaseversion == 167)
+  if (d_databaseversion < 170 || migrate)
   {
-    SqliteDB::copyDb(d_database, backup_database);
-    if (!migrateDatabase(167, 170))
-    {
-      Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
-                    " Please upgrade your database");
-      SqliteDB::copyDb(backup_database, d_database);
-      return false;
-    }
-    else
-      databasemigrated = true;
-  }
-  else if (d_databaseversion < 167)
-  {
-    if (!migrate)
-    {
-      Logger::error("Currently unsupported database version (", d_databaseversion, ").");
-      Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
-      Logger::error_indent("migrate this database to a supported version.");
-      return false;
-    }
     SqliteDB::copyDb(d_database, backup_database);
     if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
     {
@@ -70,9 +49,43 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
-    else
-      databasemigrated = true;
+    databasemigrated = true;
   }
+
+  // // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
+  // if (d_databaseversion == 167)
+  // {
+  //   SqliteDB::copyDb(d_database, backup_database);
+  //   if (!migrateDatabase(167, 170))
+  //   {
+  //     Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+  //                   " Please upgrade your database");
+  //     SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  //   else
+  //     databasemigrated = true;
+  // }
+  // else if (d_databaseversion < 167)
+  // {
+  //   if (!migrate)
+  //   {
+  //     Logger::error("Currently unsupported database version (", d_databaseversion, ").");
+  //     Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
+  //     Logger::error_indent("migrate this database to a supported version.");
+  //     return false;
+  //   }
+  //   SqliteDB::copyDb(d_database, backup_database);
+  //   if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
+  //   {
+  //     Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
+  //                   " Please upgrade your database");
+  //     SqliteDB::copyDb(backup_database, d_database);
+  //     return false;
+  //   }
+  //   else
+  //     databasemigrated = true;
+  // }
 
   if (originalfilenames && append) [[unlikely]]
     Logger::warning("Options 'originalfilenames' and 'append' are incompatible");
