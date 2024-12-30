@@ -60,6 +60,8 @@ bool DesktopDatabase::init(std::string const &rawdb)
       return false;
     }
 
+    d_database.checkDatabaseWriteVersion();
+
     return true;
   }
 
@@ -108,6 +110,8 @@ bool DesktopDatabase::init(std::string const &rawdb)
     Logger::error("Failed to open database");
     return false;
   }
+
+  d_database.checkDatabaseWriteVersion();
 
   return true;
 }

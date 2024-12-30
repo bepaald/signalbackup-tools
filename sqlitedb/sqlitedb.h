@@ -107,6 +107,7 @@ class SqliteDB
   std::string d_name;
   // non-owning pointer!
   std::pair<unsigned char *, uint64_t> *d_data;
+  uint32_t d_databasewriteversion;
   bool d_readonly;
   bool d_ok;
   mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
@@ -158,6 +159,7 @@ class SqliteDB
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const;
   inline void clearTableCache() const;
   inline void freeMemory();
+  void checkDatabaseWriteVersion() const;
 
  private:
   inline bool initFromFile();
@@ -180,6 +182,7 @@ class SqliteDB
   template <typename T>
   inline bool isType(std::any const &a) const;
   inline bool schemaVersionChanged() const;
+  void setDatabaseWriteVersion();
 
   inline bool registerCustoms() const;
   static inline void tokencount(sqlite3_context *context, int argc, sqlite3_value **argv);
@@ -199,6 +202,7 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_stmt(nullptr),
   d_name(name),
   d_data(nullptr),
+  d_databasewriteversion(0),
   d_readonly(readonly),
   d_ok(false),
   d_previous_schema_version{}
@@ -212,6 +216,7 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   d_vfs(MemFileDB::sqlite3_memfilevfs(data)),
   d_stmt(nullptr),
   d_data(data),
+  d_databasewriteversion(0),
   d_readonly(true),
   d_ok(false),
   d_previous_schema_version{}
@@ -240,6 +245,7 @@ inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
     d_stmt = nullptr;
     d_name = ":memory:";
     d_data = nullptr;
+    d_databasewriteversion = other.d_databasewriteversion;
     d_readonly = other.d_readonly;
     d_ok = initFromFile();
     std::strncpy(d_previous_schema_version, other.d_previous_schema_version, 11);
@@ -265,6 +271,8 @@ inline bool SqliteDB::initFromFile()
   if (!initok)
     return false;
 
+  setDatabaseWriteVersion();
+
   return registerCustoms();
 }
 
@@ -276,6 +284,8 @@ inline bool SqliteDB::initFromMemory()
 
   if (!initok)
     return false;
+
+  setDatabaseWriteVersion();
 
   return registerCustoms();
 }
