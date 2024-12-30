@@ -33,10 +33,10 @@ Signal is an actively developed application and consequently, the database forma
 ### Requirements
 
 To compile this project, current stable released versions of the following are needed:
-- A C++ compiler supporting at least the C++17 standard (tested with [GCC](https://gcc.gnu.org) 14.1.1 and [Clang](https://clang.llvm.org) 17.0.6, also tested and working with a few older compiler versions)
+- A C++ compiler supporting at least the C++17 standard (tested with [GCC](https://gcc.gnu.org) 14.2.1 and [Clang](https://clang.llvm.org) 18.1.8, also tested and working with a few older compiler versions)
 - [OpenSSL](https://www.openssl.org/) (any reasonably recent version from either the 3.X or 1.1x series)
 - [SQLite3](https://www.sqlite.org/) (any reasonably recent version)
-- Only on Linux: dbus. Optional, but required by default. See the [compiling](#compiling) section to build without `dbus`. If the program is compiled without `dbus`, operations that need to open the Signal Desktop client database will not work unless manually provided with the decrypted encryption key.
+- Only on Linux: [dbus](https://www.freedesktop.org/wiki/Software/dbus/). Optional, but required by default. See the [compiling](#compiling) section to build without `dbus`. If the program is compiled without `dbus`, operations that need to open the Signal Desktop client database will not work unless the decrypted encryption key is manually provided.
 
 ### Obtaining
 
@@ -507,9 +507,9 @@ If you use this option and read this line, I would really appreciate it if you l
 
 **<span id="desktop">Importing conversations from Signal-Desktop</span>**
 
-_NOTE: This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated_
+> [!IMPORTANT] This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated
 
-_NOTE 2: While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is at least as new as the one used by the Signal Desktop client. Older versions will likely not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is older than the one used by Signal Desktop. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it)._
+> [!NOTE] While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is not too far behind the one used by the Signal Desktop client. Older versions may not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is too old to read Signal Desktop's database. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it).
 
 To import conversations from a Signal-Desktop installation, run:
 ```
@@ -809,6 +809,8 @@ Running with these options does not require an input file to be provided. These 
 - `--exportdesktoptxt [OUTPUTDIR]` Export the Signal Desktop database to plain text. Works as the above function, except the internal Android backup is [exported to TXT](#export-to-txt) instead.
 - `--desktopkey [HEXSTRING]` This is a modifying option for all desktop functions. Manually set the cipher key to use for decrypting the Signal Desktop database (see above note).
 - `--showdesktopkey` Shows the key used to decrypt the Signal Desktop database.
+
+> [!NOTE] While this program will compile and work with almost any version of SQLite3, these features require that the SQLite3 version used is not too far behind the one used by the Signal Desktop client. Older versions will may not be able to read Signal Desktop's database. For example, the version available in Ubuntu is regularly too old to read Signal Desktop's database. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it).
 
 **<span id="various">Various</span>**
 

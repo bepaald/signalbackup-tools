@@ -47,7 +47,7 @@ std::string DesktopDatabase::readEncryptedKey() const
 
   if (!found)
   {
-    Logger::error("Failed to read (encrypted) key from config.json");
+    Logger::warning("Failed to read encrypted key from config.json, trying plaintext key...");
     return encrypted_key;
   }
   encrypted_key = m[1].str();
