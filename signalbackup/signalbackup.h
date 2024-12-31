@@ -46,6 +46,7 @@
 #include <string>
 #include <algorithm>
 #include <regex>
+#include <array>
 
 struct HTMLMessageInfo;
 struct Range;
