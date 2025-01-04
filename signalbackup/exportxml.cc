@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -53,7 +53,10 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
     // skip status messages for now...
     if (Types::isStatusMessage(realtype))
+    {
+      //std::cout << "Skipping status message " << realtype << std::endl;
       return;
+    }
 
     // skip 'This group was updated to a New Group'
     if (realtype == Types::GV1_MIGRATION_TYPE)
@@ -209,7 +212,10 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
 
     // skip status messages for now...
     if (Types::isStatusMessage(realtype))
+    {
+      //std::cout << "Skipping status message " << realtype << std::endl;
       return;
+    }
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {
@@ -692,7 +698,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
 
   // output header
   std::ofstream outputfile(filename, std::ios_base::binary);
-  outputfile << "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" << '\n';
+  outputfile << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>" << '\n';
   outputfile << "<?xml-stylesheet type=\"text/xsl\" href=\"sms.xsl\" ?>" << '\n';
 
   SqliteDB::QueryResults sms_results;
@@ -701,14 +707,18 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
     if (d_database.tableContainsColumn("sms", "protocol") &&
         d_database.tableContainsColumn("sms", "service_center") &&
         d_database.tableContainsColumn("sms", "subject")) // removed in dbv166
-      d_database.exec("SELECT _id,thread_id,protocol,subject,service_center,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms WHERE "
-                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND "
+      d_database.exec("SELECT _id,thread_id,protocol,subject,service_center,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms "
+                      "WHERE "
+                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) "
+                      "AND "
                       "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
     else
-      d_database.exec("SELECT _id,thread_id,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms WHERE "
-                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND "
+      d_database.exec("SELECT _id,thread_id,read,status,date_sent," + d_sms_date_received + "," + d_sms_recipient_id + ",type,body,expires_in FROM sms "
+                      "WHERE "
+                      + d_sms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) "
+                      "AND "
                       "(type & ?) == 0 AND ((type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ? OR (type & 0x1F) == ?)",
                       {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
                        Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &sms_results);
@@ -725,21 +735,43 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                       (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                       "read, ct_l, m_type, m_size, exp, tr_id, st FROM " + d_mms_table +
                       " WHERE "
-                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND " +
+                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) "
+                      "AND " +
                       (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND " : "") +
-                      "(" + d_mms_type + " & ?) == 0 AND "
-                      "(base_type IN (?, ?, ?, ?, ?, ?, ?, ?))",
-                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                       Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
+                      "(" + d_mms_type + " & ?) == 0 AND (" + d_mms_type + " & ?) == 0 AND (" + d_mms_type + " & ?) == 0  AND (" + d_mms_type + " & ?) == 0 AND (" + d_mms_type + " & ?) == 0 AND "
+                      "(base_type IN (?, ?, ?, ?, ?, ?, ?, ?)) AND "
+                      "((" + d_mms_type + " & ?) NOT IN (?, ?, ?)) AND "
+                      "((" + d_mms_type + " & ?) NOT IN (?)) AND "
+                      //"((" + d_mms_type + " & ?) != 0) AND "
+                      "(base_type NOT IN (?, ?)) AND "
+                      "(" + d_mms_type + " NOT IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?))",
+                      {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT, Types::GROUP_QUIT_BIT, Types::END_SESSION_BIT, Types::EXPIRATION_TIMER_UPDATE_BIT,
+                       Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE,
+                       Types::KEY_EXCHANGE_MASK, Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT, Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT, Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
+                       Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,
+                       Types::PROFILE_CHANGE_TYPE, Types::JOINED_TYPE,
+                       Types::GROUP_CALL_TYPE, Types::INCOMING_CALL_TYPE, Types::OUTGOING_CALL_TYPE, Types::MISSED_CALL_TYPE, Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE, Types::MISSED_VIDEO_CALL_TYPE, Types::GV1_MIGRATION_TYPE, Types::CHANGE_NUMBER_TYPE, Types::BOOST_REQUEST_TYPE},
+                      &mms_results);
     else
       d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
                       "(" + d_mms_type + " & " + bepaald::toString(Types::BASE_TYPE_MASK) + ") AS base_type,body,expires_in,read,m_id,sub,ct_t,ct_l,m_type,m_size,rr,read_status,"
                       "m_cls, sub_cs, ct_cls, v, pri, retr_st, retr_txt, retr_txt_cs, d_tm, d_rpt, exp, resp_txt, tr_id, st, resp_st, rpt_a FROM " + d_mms_table + " WHERE "
-                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) AND "
-                      "(" + d_mms_type + " & ?) == 0 AND "
-                      "(base_type IN (?, ?, ?, ?, ?, ?, ?, ?))",
-                      {Types::GROUP_UPDATE_BIT, Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                       Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE}, &mms_results);
+                      + d_mms_recipient_id + " IN (SELECT _id FROM recipient WHERE " + d_recipient_e164 + " IS NOT NULL OR group_id IS NOT NULL) "
+                      "AND "
+                      "(" + d_mms_type + " & ?) == 0 AND (" + d_mms_type + " & ?) == 0  AND (" + d_mms_type + " & ?) == 0 AND (" + d_mms_type + " & ?) == 0 AND (" + d_mms_type + " & ?) == 0 AND "
+                      "(base_type IN (?, ?, ?, ?, ?, ?, ?, ?)) AND "
+                      "((" + d_mms_type + " & ?) NOT IN (?, ?, ?)) AND "
+                      "((" + d_mms_type + " & ?) NOT IN (?)) AND "
+                      //"((" + d_mms_type + " & ?) != 0) AND "
+                      "(base_type NOT IN (?, ?)) AND "
+                      "(" + d_mms_type + " NOT IN (?, ?, ?, ?, ?, ?, ?, ?, ?, ?))",
+                      {Types::GROUP_UPDATE_BIT, Types::GROUP_V2_BIT, Types::GROUP_QUIT_BIT, Types::END_SESSION_BIT, Types::EXPIRATION_TIMER_UPDATE_BIT,
+                       Types::BASE_INBOX_TYPE, Types::BASE_OUTBOX_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENT_FAILED_TYPE, Types::BASE_PENDING_SECURE_SMS_FALLBACK, Types::BASE_PENDING_INSECURE_SMS_FALLBACK,  Types::BASE_DRAFT_TYPE,
+                       Types::KEY_EXCHANGE_MASK, Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT, Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT, Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
+                       Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,
+                       Types::PROFILE_CHANGE_TYPE, Types::JOINED_TYPE,
+                       Types::GROUP_CALL_TYPE, Types::INCOMING_CALL_TYPE, Types::OUTGOING_CALL_TYPE, Types::MISSED_CALL_TYPE, Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE, Types::MISSED_VIDEO_CALL_TYPE, Types::GV1_MIGRATION_TYPE, Types::CHANGE_NUMBER_TYPE, Types::BOOST_REQUEST_TYPE},
+                      &mms_results);
   }
 
   //std::string date;

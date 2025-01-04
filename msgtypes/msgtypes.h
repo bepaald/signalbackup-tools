@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -233,7 +233,7 @@ struct Types
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
-      isProfileChange(type) || isEndSession(type) || type == Types::GV1_MIGRATION_TYPE ||
+      isProfileChange(type) || isEndSession(type) || type == GV1_MIGRATION_TYPE ||
       isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type);
   }
 };
