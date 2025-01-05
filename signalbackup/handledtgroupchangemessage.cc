@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,7 +36,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                               long long int thread_id, long long int address, long long int date,
                                               std::map<long long int, long long int> *adjusted_timestamps,
                                               std::map<std::string, long long int> *savedmap,
-                                              bool istimermessage) const
+                                              bool istimermessage)
 {
   if (date == -1)
   {
@@ -144,24 +144,146 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
-                "json_extract(json, '$.groupV2Change.from') AS source,"
+                "LOWER(json_extract(json, '$.groupV2Change.from')) AS source,"
                 "IFNULL(json_array_length(json, '$.groupV2Change.details'), 0) AS numchanges"
                 " FROM messages WHERE rowid = ?", rowid, &res))
     return;
 
   //res.prettyPrint();
   long long int numchanges = res.getValueAs<long long int>(0, "numchanges");
+  if (numchanges == 0)
+    return;
 
+  bool incoming = res("source") != d_selfuuid;
+  long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
+    Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
+  if (incoming)
+    address = getRecipientIdFromUuidMapped(res("source"), savedmap);
+
+  DecryptedGroupChange groupchange;
+  bool addchange = false;
+
+  // add each group change...
   for (unsigned int i = 0; i < numchanges; ++i)
   {
     if (!ddb.exec("SELECT "
-                  "json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].type') AS type,"
-                  "COALESCE(json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].aci'), json_extract(json, '$.groupV2Change.details[" + bepaald::toString(i) + "].uuid')) AS uuid"
-                  " FROM messages WHERE rowid = ?", rowid, &res))
+                  "json_extract(json, '$.groupV2Change.details[' || ? || '].type') AS type,"
+                  "COALESCE(json_extract(json, '$.groupV2Change.details[' || ? || '].aci'), json_extract(json, '$.groupV2Change.details[' || ? || '].uuid')) AS uuid,"
+                  "json_extract(json, '$.groupV2Change.details[' || ? || '].newTitle') AS title,"
+                  "json_extract(json, '$.groupV2Change.details[' || ? || '].description') AS description,"
+                  "json_extract(json, '$.groupV2Change.details[' || ? || '].avatar') AS avatar,"
+                  "json_extract(json, '$.groupV2Change.details[' || ? || '].removed') AS removed"
+                  " FROM messages WHERE rowid = ?", {i, i, i, i, i, i, i, rowid}, &res))
       continue;
 
-    //res.prettyPrint();
+    std::string changetype = res("type");
+
+    if (changetype == "title")
+    {
+      DecryptedString newtitle;
+      newtitle.addField<1>(res("title"));
+      groupchange.addField<10>(newtitle);
+      addchange = true;
+      //Logger::message("new title '", title, "'");
+    }
+    else if (changetype == "description")
+    {
+      //bool removed [[maybe_unused]] = res.valueAsInt(0, "removed");
+      DecryptedString newdescription;
+      newdescription.addField<1>(res("description"));
+      groupchange.addField<20>(newdescription);
+      addchange = true;
+      //Logger::message("new description: '", description, "' (", removed, ")");
+    }
+    else if (changetype == "avatar")
+    {
+      //bool removed [[maybe_unused]] = res.valueAsInt(0, "removed");
+      DecryptedString newavatar;
+      newavatar.addField<1>("new_avatar");
+      groupchange.addField<11>(newavatar);
+      addchange = true;
+      //Logger::message("new avatar (", removed, ")");
+    }
+    else if (changetype == "member-add")
+    {
+      std::string uuid [[maybe_unused]] = res("uuid");
+
+      //Logger::message("member add: ", uuid);
+    }
+    else if (changetype == "member-remove")
+    {
+      std::string uuid [[maybe_unused]] = res("uuid");
+
+      //Logger::message("member remove: ", uuid);
+    }
+    else
+    {
+      //warnOnce("Unhandled groupv2-update-type: '" + changetype + "' (this warning will be shown only once)");
+      continue;
+    }
+
+    //res.prettyPrint(d_truncate);
+
   }
+
+  if (addchange)
+  {
+    DecryptedGroupV2Context groupv2ctx;
+    groupv2ctx.addField<2>(groupchange);
+    std::pair<unsigned char *, size_t> groupchange_data(groupv2ctx.data(), groupv2ctx.size());
+    std::string groupchange_data_b64 = Base64::bytesToBase64String(groupchange_data);
+    // add message to database
+    // if (d_database.containsTable("sms"))
+    //   not going through the trouble
+    // else
+    // {
+    if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+    {
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, date},
+                                   {"date_received", date},
+                                   {"body", groupchange_data_b64},
+                                   {d_mms_type, groupv2type},
+                                   {d_mms_recipient_id, address},
+                                   {"m_type", incoming ? 132 : 128},
+                                   {"read", 1}}))              // hardcoded to 1 in Signal Android
+      {
+        Logger::error("Inserting verified-change into mms");
+        return;
+      }
+    }
+    else
+    {
+      //newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      //we try to get the first free date_sent
+      long long int freedate = getFreeDateForMessage(date, thread_id, Types::isOutgoing(groupv2type) ? d_selfid : address);
+      if (freedate == -1)
+      {
+        Logger::error("Getting free date for inserting verified-change message into mms");
+        return;
+      }
+      if (date != freedate)
+        (*adjusted_timestamps)[date] = freedate;
+
+      std::cout << "ADDING NEW GROUPV2 MESSAGE AT DATE: " << bepaald::toDateString(freedate / 1000, "%Y-%m-%d %H:%M:%S") << std::endl;
+
+      std::any newmms_id;
+      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+                                   {d_mms_date_sent, freedate},
+                                   {"date_received", freedate},
+                                   {"body", groupchange_data_b64},
+                                   {d_mms_type, groupv2type},
+                                   {d_mms_recipient_id, incoming ? address : d_selfid},
+                                   {"to_recipient_id", incoming ? d_selfid : address},
+                                   {"m_type", incoming ? 132 : 128},
+                                   {"read", 1}}, "_id", &newmms_id))              // hardcoded to 1 in Signal Android
+      {
+        Logger::error("Inserting verified-change into mms");
+        return;
+      }
+    }
+  }
+  return;
 }
 
 

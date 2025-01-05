@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -26,6 +26,7 @@
 #include <set>
 #include <vector>
 #include <any>
+#include <iterator>
 #if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
@@ -104,6 +105,7 @@ class SqliteDB
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
   mutable sqlite3_stmt *d_stmt; // cache a (prepared) statement for reuse in subsequent transactions
+  mutable char const *d_error_tail;
   std::string d_name;
   // non-owning pointer!
   std::pair<unsigned char *, uint64_t> *d_data;
@@ -200,6 +202,7 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_db(nullptr),
   d_vfs(nullptr),
   d_stmt(nullptr),
+  d_error_tail(nullptr),
   d_name(name),
   d_data(nullptr),
   d_databasewriteversion(0),
@@ -215,6 +218,7 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   d_db(nullptr),
   d_vfs(MemFileDB::sqlite3_memfilevfs(data)),
   d_stmt(nullptr),
+  d_error_tail(nullptr),
   d_data(data),
   d_databasewriteversion(0),
   d_readonly(true),
@@ -243,6 +247,7 @@ inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
     d_db = nullptr;
     d_vfs = nullptr;
     d_stmt = nullptr;
+    d_error_tail = nullptr;
     d_name = ":memory:";
     d_data = nullptr;
     d_databasewriteversion = other.d_databasewriteversion;
@@ -347,10 +352,20 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     sqlite3_finalize(d_stmt);
 
     // create new statement
-    if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &d_stmt, nullptr) != SQLITE_OK) [[unlikely]]
+    if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &d_stmt, &d_error_tail) != SQLITE_OK) [[unlikely]]
     {
       Logger::error("During sqlite3_prepare_v2(): ", sqlite3_errmsg(d_db));
-      Logger::error_indent("-> Query: \"", q, "\"");
+      //Logger::error_indent("\"", q, "\"");
+      long long int error_pos = std::distance(q.c_str(), d_error_tail);
+      long long int error_start = std::max(0ll, error_pos - 2);
+      long long int error_end = std::min(error_pos + 2, static_cast<long long int>(q.size()));
+      Logger::error_indent("-> Query: \"",
+                           q.substr(0, error_start),
+                           Logger::Control::BOLD,
+                           q.substr(error_start, error_end - error_start),
+                           Logger::Control::NORMAL,
+                           q.substr(error_end),
+                           "\"");
       return false;
     }
   }
