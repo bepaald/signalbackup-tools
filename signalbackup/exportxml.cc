@@ -444,7 +444,26 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
   long long int seen = 0;
   long long int locked = 0;
 
-  long long int text_only = 1;
+  long long int text_only = 0;
+
+  // attachment data
+  long long int mid = getIntOr(results, i, "_id", -1);
+  SqliteDB::QueryResults part_results;
+  if (mid >= 0)
+    d_database.exec("SELECT _id," +
+                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) + ", " +
+                    (d_database.tableContainsColumn(d_part_table, "seq") ? "seq"s : "0 AS seq"s) + ", " +   // seq was removed in dbv215
+                    d_part_ct + ", file_name, " +
+                    d_part_cd + ", " +
+                    //"chset, " +   // chset was removed in dbv215 (always null in earlier dbs)
+                    //"fn, " +      // idem
+                    //"cid, " +     // idem
+                    //"ctt_s, " +   // idem
+                    //"ctt_t "      // idem
+                    d_part_cl +
+                    " FROM " + d_part_table + " WHERE " + d_part_table + "." + d_part_mid + " = ?", mid, &part_results);
+  if (part_results.rows() == 0)
+    text_only = 1;
 
   outputfile << "  <mms "
              << "msg_box=\"" << msg_box << "\" "
@@ -480,12 +499,11 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
              << "retr_txt_cs=\"" << retr_txt_cs << "\" "
              << "resp_txt=\"" << resp_txt << "\" "
              << "resp_st=\"" << resp_st << "\" "
-             << "text_only=\"" << text_only << "\">" << '\n';
+             << "text_only=\"" << text_only << "\">"
+             << '\n';
   // << "=\"" <<  << "\" "
 
   /* PART */
-
-  long long int mid = getIntOr(results, i, "_id", -1);
   /* text - The content of the message. */
   long long int expiration = getIntOr(results, i, "expires_in", -1);
   std::string text;
@@ -551,22 +569,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                << "></part>" << '\n';
   }
 
-
-  SqliteDB::QueryResults part_results;
-  if (mid >= 0)
-    d_database.exec("SELECT _id," +
-                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) + ", " +
-                    (d_database.tableContainsColumn(d_part_table, "seq") ? "seq"s : "0 AS seq"s) + ", " +   // seq was removed in dbv215
-                    d_part_ct + ", file_name, " +
-                    d_part_cd + ", " +
-                    //"chset, " +   // chset was removed in dbv215 (always null in earlier dbs)
-                    //"fn, " +      // idem
-                    //"cid, " +     // idem
-                    //"ctt_s, " +   // idem
-                    //"ctt_t "      // idem
-                    d_part_cl +
-                    " FROM " + d_part_table + " WHERE " + d_part_table + "." + d_part_mid + " = ?", mid, &part_results);
-
+  // attachments...
   for (unsigned int j = 0; j < part_results.rows(); ++j)
   {
     long long int seq = getIntOr(part_results, j, "seq", 0);

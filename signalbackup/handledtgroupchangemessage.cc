@@ -154,11 +154,12 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   if (numchanges == 0)
     return;
 
-  bool incoming = res("source") != d_selfuuid;
+  std::string source_uuid = res("source");
+  bool incoming = source_uuid != d_selfuuid;
   long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
     Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
   if (incoming)
-    address = getRecipientIdFromUuidMapped(res("source"), savedmap);
+    address = getRecipientIdFromUuidMapped(source_uuid, savedmap);
 
   DecryptedGroupChange groupchange;
   bool addchange = false;
@@ -206,14 +207,43 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     }
     else if (changetype == "member-add")
     {
-      std::string uuid [[maybe_unused]] = res("uuid");
+      std::string uuid = res("uuid");
+      if (static_cast<int>(uuid.size()) != STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") ||
+          static_cast<int>(source_uuid.size()) != STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"))
+        continue;
+
+      unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
+      std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
+      bepaald::hexStringToBytes(source_uuid, uuid_bytes.get(), uuid_bytes_size);
+      groupchange.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+
+      DecryptedMember newmember;
+      uuid_bytes.reset(new unsigned char[uuid_bytes_size]);
+      bepaald::hexStringToBytes(uuid, uuid_bytes.get(), uuid_bytes_size);
+      newmember.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      groupchange.addField<3>(newmember);
+
+      addchange = true;
 
       //Logger::message("member add: ", uuid);
     }
     else if (changetype == "member-remove")
     {
-      std::string uuid [[maybe_unused]] = res("uuid");
+      std::string uuid = res("uuid");
 
+      if (uuid == source_uuid) // xxx left the group
+        groupv2type |= Types::GROUP_QUIT_BIT;
+      //else // xxx removed yyy
+
+      if (static_cast<int>(uuid.size()) != STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"))
+        continue;
+
+      unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
+      std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
+      bepaald::hexStringToBytes(uuid, uuid_bytes.get(), uuid_bytes_size);
+      groupchange.addField<4>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+
+      addchange = true;
       //Logger::message("member remove: ", uuid);
     }
     else
@@ -265,7 +295,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       if (date != freedate)
         (*adjusted_timestamps)[date] = freedate;
 
-      std::cout << "ADDING NEW GROUPV2 MESSAGE AT DATE: " << bepaald::toDateString(freedate / 1000, "%Y-%m-%d %H:%M:%S") << std::endl;
+      //std::cout << "ADDING NEW GROUPV2 MESSAGE AT DATE: " << bepaald::toDateString(freedate / 1000, "%Y-%m-%d %H:%M:%S") << std::endl;
 
       std::any newmms_id;
       if (!insertRow(d_mms_table, {{"thread_id", thread_id},
@@ -285,186 +315,3 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   }
   return;
 }
-
-
-/*
-  IN MMS:
-  CREATE!
-
-                   _id = 15
-             thread_id = 4
-                  date = 1668710597007
-         date_received = 1668710597010
-           date_server = -1
-               msg_box = 11075607
-                  read = 1
-                  body = CiQKIGRjL3ssfpiGCUIJYuhuKQq2t9V3lTF8++oKdHVcM8PfEAASlgEKEA1wt/T+SkGvn9XnQmjRP24aNgoQDXC39P5KQa+f1edCaNE/bhACGiCrcRhBUNNqqwmJk4gGMZ7uMfnPS0/nUvcBDFDQDL2bDxo2ChCTciJzeONBNoZAyCYZaXFMEAEaIPY/j3uppGuBSiGCOwJCCEioNDmq2eH6dBYbPx4odt1uUgsKCVRlc3Rncm91cGgCcAKoAQIahQESCVRlc3Rncm91cCIAKgQIAhACOjYKEA1wt/T+SkGvn9XnQmjRP24QAhogq3EYQVDTaqsJiZOIBjGe7jH5z0tP51L3AQxQ0Ay9mw86NgoQk3Iic3jjQTaGQMgmGWlxTBABGiD2P497qaRrgUohgjsCQghIqDQ5qtnh+nQWGz8eKHbdbmAC
-
-                  Field #1: 0A String Length = 36, Hex = 24, UTF8 = " dc/{,~�� B b�n ..." (total 36 chars)                           // GroupContextV2
-                  |  As sub-object :
-                  |  Field #1: 0A String Length = 32, Hex = 20, UTF8 = "dc/{,~�� B b�n) ..." (total 32 chars)                        //   masterKey (bytes)
-                  \  Field #2: 10 Varint Value = 0, Hex = 00                                                                         //   revision (uint32)
-                  Field #2: 12 String Length = 150, Hex = 96-01, UTF8 = "  p���JA����Bh� ..." (total 150 chars)                    // DecryptedGroupChange
-                  |  As sub-object :
-                  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = " p���JA����Bh�?n"                                            //   editor (bytes)
-                  |  Field #3: 1A String Length = 54, Hex = 36, UTF8 = "  p���JA����Bh� ..." (total 54 chars)                      //   DecryptedMember
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = " p���JA����Bh�?n"                                         //     uuid (bytes)
-                  |  |  Field #2: 10 Varint Value = 2, Hex = 02                                                                      //     role (enum?)
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�qAP�j� ���1�� ..." (total 32 chars)                  //     profilekey (bytes)
-                  |  Field #3: 1A String Length = 54, Hex = 36, UTF8 = " �r"sx�A6�@�&i ..." (total 54 chars)                     //   DecryptedMember
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = "�r"sx�A6�@�&iqL"                                        //     uuid (bytes)
-                  |  |  Field #2: 10 Varint Value = 1, Hex = 01                                                                      //     role (enum?)
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�?�{��k�J!�;BH ..." (total 32 chars)                  //     profilekey (bytes)
-                  |  Field #10: 52 String Length = 11, Hex = 0B, UTF8 = " Testgroup"                                                 //   DecrytedString
-                  |  |  As sub-object :
-                  |  \  Field #1: 0A String Length = 9, Hex = 09, UTF8 = "Testgroup"                                                 //     title (string)
-                  |  Field #13: 68 Varint Value = 2, Hex = 02                                                                        //   AccessControl (enum)
-                  |  Field #14: 70 Varint Value = 2, Hex = 02                                                                        //   AccessControl (enum)
-                  \  Field #21: A8-01 Varint Value = 2, Hex = 02                                                                     //   EnabledState (enum)
-                  Field #3: 1A String Length = 133, Hex = 85-01, UTF8 = " Testgroup"* ..." (total 133 chars)                 // DecryptedGroup
-                  |  As sub-object :
-                  |  Field #2: 12 String Length = 9, Hex = 09, UTF8 = "Testgroup"                                                    //   title (string)
-                  |  Field #4: 22 String Length = 0, Hex = 00, UTF8 = ""                                                             //   DecryptedTimer
-                  |  Field #5: 2A String Length = 4, Hex = 04, UTF8 = ""                                                     //   AccessControl
-                  |  |  As sub-object :
-                  |  |  Field #1: 08 Varint Value = 2, Hex = 02                                                                      //     AccessRequired (enum)
-                  |  \  Field #2: 10 Varint Value = 2, Hex = 02                                                                      //     AccessRequired (enum)
-                  |  Field #7: 3A String Length = 54, Hex = 36, UTF8 = "  p���JA����Bh� ..." (total 54 chars)                      //   DecryptedMember
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = " p���JA����Bh�?n"                                         //     uuid (bytes)
-                  |  |  Field #2: 10 Varint Value = 2, Hex = 02                                                                      //     role (enum?)
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�qAP�j� ���1�� ..." (total 32 chars)                  //     profilekey (bytes)
-                  |  Field #7: 3A String Length = 54, Hex = 36, UTF8 = " �r"sx�A6�@�&i ..." (total 54 chars)                     //   DecryptedMember
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = "�r"sx�A6�@�&iqL"                                        //     uuid (bytes)
-                  |  |  Field #2: 10 Varint Value = 1, Hex = 01                                                                      //     role (enum?)
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�?�{��k�J!�;BH ..." (total 32 chars)                  //     profilekey (bytes)
-                  \  Field #12: 60 Varint Value = 2, Hex = 02                                                                        //   EnabledState (enum)
-
-            part_count = 0
-                  ct_l =
-               address = 6 // == group!
-     address_device_id =
-                   exp =
-                m_type = 128
-                m_size =
-                    st =
-                 tr_id =
-delivery_receipt_count = 0
- mismatched_identities =
-      network_failures =
-       subscription_id = -1
-            expires_in = 0
-        expire_started = 0
-              notified = 0
-    read_receipt_count = 0
-              quote_id = 0
-          quote_author =
-            quote_body =
-      quote_attachment = -1
-         quote_missing = 0
-        quote_mentions =
-            quote_type = 0
-       shared_contacts =
-          unidentified = 0
-              previews =
-       reveal_duration = 0
-      reactions_unread = 0
-   reactions_last_seen = -1
-        remote_deleted = 0
-         mentions_self = 0
-    notified_timestamp = 0
-  viewed_receipt_count = 0
-           server_guid =
-     receipt_timestamp = -1
-                ranges =
-              is_story = 0
-       parent_story_id = 0
-          export_state =
-              exported = 0
-
-
-  IN SMS:
-  OTHER REMOVES THEMSELVES AS MEMBER
-
-                   _id = 7
-             thread_id = 4
-               address = 4 // = MAINPHONE
-     address_device_id = -1
-                person =
-                  date = 1668710722642
-             date_sent = 1668710722642
-           date_server = 1668710722642
-              protocol = 31337
-                  read = 1
-                status = -1
-                  type = 11206676
-    reply_path_present = 1
-delivery_receipt_count = 0
-               subject =
-                  body = CiQKIGRjL3ssfpiGCUIJYuhuKQq2t9V3lTF8++oKdHVcM8PfEAESJgoQk3Iic3jjQTaGQMgmGWlxTBABIhCTciJzeONBNoZAyCYZaXFMGk8SCVRlc3Rncm91cCIAKgQIAhACMAE6NgoQDXC39P5KQa+f1edCaNE/bhACGiCrcRhBUNNqqwmJk4gGMZ7uMfnPS0/nUvcBDFDQDL2bD2ACIoUBEglUZXN0Z3JvdXAiACoECAIQAjo2ChANcLf0/kpBr5/V50Jo0T9uEAIaIKtxGEFQ02qrCYmTiAYxnu4x+c9LT+dS9wEMUNAMvZsPOjYKEJNyInN440E2hkDIJhlpcUwQARog9j+Pe6mka4FKIYI7AkIISKg0OarZ4fp0Fhs/Hih23W5gAg==
-
-                  Field #1: 0A String Length = 36, Hex = 24, UTF8 = " dc/{,~�� B b�n ..." (total 36 chars)
-                  |  As sub-object :
-                  |  Field #1: 0A String Length = 32, Hex = 20, UTF8 = "dc/{,~�� B b�n) ..." (total 32 chars)
-                  \  Field #2: 10 Varint Value = 1, Hex = 01
-                  Field #2: 12 String Length = 38, Hex = 26, UTF8 = " �r"sx�A6�@�&i ..." (total 38 chars)
-                  |  As sub-object :
-                  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = "�r"sx�A6�@�&iqL"
-                  |  Field #2: 10 Varint Value = 1, Hex = 01
-                  \  Field #4: 22 String Length = 16, Hex = 10, UTF8 = "�r"sx�A6�@�&iqL"
-                  Field #3: 1A String Length = 79, Hex = 4F, UTF8 = " Testgroup"* ..." (total 79 chars)
-                  |  As sub-object :
-                  |  Field #2: 12 String Length = 9, Hex = 09, UTF8 = "Testgroup"
-                  |  Field #4: 22 String Length = 0, Hex = 00, UTF8 = ""
-                  |  Field #5: 2A String Length = 4, Hex = 04, UTF8 = ""
-                  |  |  As sub-object :
-                  |  |  Field #1: 08 Varint Value = 2, Hex = 02
-                  |  \  Field #2: 10 Varint Value = 2, Hex = 02
-                  |  Field #6: 30 Varint Value = 1, Hex = 01
-                  |  Field #7: 3A String Length = 54, Hex = 36, UTF8 = "  p���JA����Bh� ..." (total 54 chars)
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = " p���JA����Bh�?n"
-                  |  |  Field #2: 10 Varint Value = 2, Hex = 02
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�qAP�j� ���1�� ..." (total 32 chars)
-                  \  Field #12: 60 Varint Value = 2, Hex = 02
-                  Field #4: 22 String Length = 133, Hex = 85-01, UTF8 = " Testgroup"* ..." (total 133 chars)
-                  |  As sub-object :
-                  |  Field #2: 12 String Length = 9, Hex = 09, UTF8 = "Testgroup"
-                  |  Field #4: 22 String Length = 0, Hex = 00, UTF8 = ""
-                  |  Field #5: 2A String Length = 4, Hex = 04, UTF8 = ""
-                  |  |  As sub-object :
-                  |  |  Field #1: 08 Varint Value = 2, Hex = 02
-                  |  \  Field #2: 10 Varint Value = 2, Hex = 02
-                  |  Field #7: 3A String Length = 54, Hex = 36, UTF8 = "  p���JA����Bh� ..." (total 54 chars)
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = " p���JA����Bh�?n"
-                  |  |  Field #2: 10 Varint Value = 2, Hex = 02
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�qAP�j� ���1�� ..." (total 32 chars)
-                  |  Field #7: 3A String Length = 54, Hex = 36, UTF8 = " �r"sx�A6�@�&i ..." (total 54 chars)
-                  |  |  As sub-object :
-                  |  |  Field #1: 0A String Length = 16, Hex = 10, UTF8 = "�r"sx�A6�@�&iqL"
-                  |  |  Field #2: 10 Varint Value = 1, Hex = 01
-                  |  \  Field #3: 1A String Length = 32, Hex = 20, UTF8 = "�?�{��k�J!�;BH ..." (total 32 chars)
-                  \  Field #12: 60 Varint Value = 2, Hex = 02
-
-
- mismatched_identities =
-        service_center = GCM
-       subscription_id = -1
-            expires_in = 0
-        expire_started = 0
-              notified = 0
-    read_receipt_count = 0
-          unidentified = 0
-      reactions_unread = 0
-   reactions_last_seen = -1
-        remote_deleted = 0
-    notified_timestamp = 0
-           server_guid =
-     receipt_timestamp = -1
-          export_state =
-              exported = 0
-*/

@@ -440,7 +440,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       ttid = results2.getValueAs<long long int>(0, "_id"); // ttid : target thread id
     else if (results2.rows() == 0) // the query was succesful, but yielded no results -> create thread
     {
-      Logger::warning_start("Failed to find matching thread for conversation, creating. (",
+      Logger::message_start("Failed to find matching thread for conversation, creating. (",
                             (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)));
       std::any new_thread_id;
       if (!insertRow("thread",
@@ -457,7 +457,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       }
       //std::cout << "Raw any_cast 1" << std::endl;
       ttid = std::any_cast<long long int>(new_thread_id);
-      Logger::message(", thread_id: ", ttid, ")");
+      Logger::message_end(", thread_id: ", ttid, ")");
     }
     if (ttid < 0)
     {

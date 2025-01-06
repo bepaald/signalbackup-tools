@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -127,9 +127,10 @@ inline std::string bepaald::bytesToPrintableString(unsigned char const *data, un
 inline bool bepaald::hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize)
 {
   if (insize % 2 ||
-      outsize != insize / 2)
+      outsize != insize / 2) [[unlikely]]
   {
     Logger::error("Invalid size for hex string or output array too small");
+    out = nullptr;
     return false;
   }
 
