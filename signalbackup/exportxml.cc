@@ -602,24 +602,23 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
     //                         <xs:attribute name="text" type="xs:string" use="required" />
     //                         <xs:attribute name="data" type="xs:string" use="optional" />
 
-    outputfile << "      <part "
-               << "seq=\"" << seq << "\" "
-               << "ct=\"" << ct << "\" "
-               << "name=\"" << name << "\" "
-               << "chset=\"" << chset << "\" "
-               << "cd=\"" << cd << "\" "
-               << "fn=\"" << fn << "\" "
-               << "cid=\"" << cid << "\" "
-               << "cl=\"" << cl << "\" "
-               << "ctt_s=\"" << ctt_s << "\" "
-               << "ctt_t=\"" << ctt_t << "\" "
-               << "text=\"" << "null" << "\"";
-    // getAttachmentData
     long long int rowid = getIntOr(part_results, j, "_id", -1);
     long long int uniqueid = getIntOr(part_results, j, "unique_id", -1);
     auto attachment = d_attachments.find({rowid, uniqueid});
     if (attachment != d_attachments.end())
     {
+      outputfile << "      <part "
+                 << "seq=\"" << seq << "\" "
+                 << "ct=\"" << ct << "\" "
+                 << "name=\"" << name << "\" "
+                 << "chset=\"" << chset << "\" "
+                 << "cd=\"" << cd << "\" "
+                 << "fn=\"" << fn << "\" "
+                 << "cid=\"" << cid << "\" "
+                 << "cl=\"" << cl << "\" "
+                 << "ctt_s=\"" << ctt_s << "\" "
+                 << "ctt_t=\"" << ctt_t << "\" "
+                 << "text=\"" << "null" << "\"";
       // add this for testing, or your xml file will be huge
       outputfile << " data=\"" << Base64::bytesToBase64String(attachment->second->attachmentData(), attachment->second->attachmentSize())/*.substr(0, 50)*/ << "\" ";
       if (!keepattachmentdatainmemory)
@@ -648,7 +647,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       if (msg_box == 1) // incoming message
       {
         SqliteDB::QueryResults r2;
-        if (d_database.exec("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", results.valueAsString(i, d_mms_recipient_id), &r2) && // should be ok to use d_mms_recipient_id, since msb_box = incoming
+        if (d_database.exec("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", results.valueAsString(i, d_mms_recipient_id), &r2) && // should be ok to use d_mms_recipient_id, since msg_box = incoming
             r2.rows() == 1)
           sender = r2.valueAsString(0, d_recipient_e164);
       }
