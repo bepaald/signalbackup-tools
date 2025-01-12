@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -88,6 +88,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (res.getValueAs<long long int>(0, "groupVersion") < 2)
     {
       // group v1 not yet....
+      Logger::error("Old style groups (v1) not supported for creation...");
       return -1;
     }
     std::pair<unsigned char *, size_t> groupid_data = Base64::base64StringToBytes(res("json_groupId"));
@@ -96,6 +97,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (!groupid_data.first || groupid_data.second == 0)
     {
       // maybe, just create out own id here? we don't care
+      Logger::error("Failed to get group_id");
       return -1;
     }
     std::string group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);

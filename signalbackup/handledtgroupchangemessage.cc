@@ -81,12 +81,15 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
         {
           if ((address = dtCreateRecipient(ddb, timer_results("sourceuuid"), std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
           {
-            Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
+            Logger::error("Failed to create group-v2-expiration-timer contact (1), skipping");
             return;
           }
         }
-        Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
-        return;
+        else
+        {
+          Logger::error("Failed to create group-v2-expiration-timer contact (2), skipping");
+          return;
+        }
       }
     }
     //std::cout << "Got timer message: " << timer << std::endl;
@@ -177,15 +180,19 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       {
         if ((address = dtCreateRecipient(ddb, source_uuid, std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
         {
-          Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
+          Logger::error("Failed to create group-v2-update contact (1), skipping");
           return;
         }
       }
-      Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
-      return;
+      else
+      {
+        Logger::error("Failed to create group-v2-update contact (2), skipping");
+        return;
+      }
     }
   }
 
+  DecryptedGroupV2Context groupv2ctx;
   DecryptedGroupChange groupchange;
   bool addchange = false;
 
@@ -271,6 +278,31 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       addchange = true;
       //Logger::message("member remove: ", uuid);
     }
+    else if (changetype == "create")
+    {
+      if (static_cast<int>(source_uuid.size()) != STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"))
+        continue;
+
+      // set source = source_uuid
+      unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
+      std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
+      bepaald::hexStringToBytes(source_uuid, uuid_bytes.get(), uuid_bytes_size);
+      groupchange.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+
+      // set new member = also source_uuid
+      DecryptedMember newmember;
+      newmember.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      groupchange.addField<3>(newmember);
+
+      // explicitly set revision 0
+      GroupContextV2 groupctx;
+      groupctx.addField<2>(0);
+      groupv2ctx.addField<1>(groupctx);
+
+      addchange = true;
+
+      //Logger::message("member add: ", uuid);
+    }
     else
     {
       //warnOnce("Unhandled groupv2-update-type: '" + changetype + "' (this warning will be shown only once)");
@@ -283,7 +315,6 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
 
   if (addchange)
   {
-    DecryptedGroupV2Context groupv2ctx;
     groupv2ctx.addField<2>(groupchange);
     std::pair<unsigned char *, size_t> groupchange_data(groupv2ctx.data(), groupv2ctx.size());
     std::string groupchange_data_b64 = Base64::bytesToBase64String(groupchange_data);
