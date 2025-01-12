@@ -36,7 +36,8 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                               long long int thread_id, long long int address, long long int date,
                                               std::map<long long int, long long int> *adjusted_timestamps,
                                               std::map<std::string, long long int> *savedmap,
-                                              bool istimermessage)
+                                              std::string const &databasedir, bool istimermessage, bool createcontacts,
+                                              bool createvalidcontacts, bool *warn)
 {
   if (date == -1)
   {
@@ -71,14 +72,23 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     if (timer_results("sourceuuid").empty())
       return;
     if (incoming)
+    {
       address = getRecipientIdFromUuidMapped(timer_results("sourceuuid"), savedmap);
 
-    if (address == -1)
-    {
-      // print wrn
-      return;
+      if (address == -1)
+      {
+        if (createcontacts)
+        {
+          if ((address = dtCreateRecipient(ddb, timer_results("sourceuuid"), std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
+          {
+            Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
+            return;
+          }
+        }
+        Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
+        return;
+      }
     }
-
     //std::cout << "Got timer message: " << timer << std::endl;
 
     DecryptedTimer dt;
@@ -159,7 +169,22 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
     Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
   if (incoming)
+  {
     address = getRecipientIdFromUuidMapped(source_uuid, savedmap);
+    if (address == -1)
+    {
+      if (createcontacts)
+      {
+        if ((address = dtCreateRecipient(ddb, source_uuid, std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
+        {
+          Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
+          return;
+        }
+      }
+      Logger::error("Failed to create groupv2-expiration-timer contact, skipping");
+      return;
+    }
+  }
 
   DecryptedGroupChange groupchange;
   bool addchange = false;

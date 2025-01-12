@@ -656,7 +656,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         // this function does nothing (yet?) when istimermessage = false;
 
         if (createmissingcontacts && !createmissingcontacts_valid)
-          handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, false);
+          handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, databasedir, false, createmissingcontacts, createmissingcontacts_valid, &warned_createcontacts);
 
         warnOnce("Unsupported message type 'group-v2-change'. Skipping..."
                  " (this warning will be shown only once)");
@@ -691,7 +691,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           // the created groupchange is interpreted by exporthtml correctly, but is not a normal, valid groupchange message
           // so it shouldnt be used when outputting to a ready-to-restore backup file
           if (createmissingcontacts && !createmissingcontacts_valid)
-            handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, true);
+            handleDTGroupChangeMessage(dtdb->d_database, rowid, ttid, address, results_all_messages_from_conversation.valueAsInt(j, "sent_at"), &adjusted_timestamps, &recipientmap, databasedir, true, createmissingcontacts, createmissingcontacts_valid, &warned_createcontacts);
           else
           {
             warnOnce("Unsupported message type 'timer-notification (in group)'. Skipping... "
