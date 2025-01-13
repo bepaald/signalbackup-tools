@@ -41,7 +41,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "IFNULL(json_extract(conversations.json, '$.expireTimer'), 0) AS 'expireTimer', "
                 "IFNULL(json_extract(conversations.json, '$.expireTimerVersion'), 1) AS 'expireTimerVersion', "
                 "json_extract(conversations.json, '$.storageID') AS 'storageId', "
-                "json_extract(conversations.json, '$.pni') AS 'pni', "
+                "LOWER(json_extract(conversations.json, '$.pni')) AS 'pni', "
                 "IFNULL(json_extract(conversations.json, '$.profileSharing'), '0') AS 'profileSharing', "
                 "json_extract(conversations.json, '$.firstUnregisteredAt') AS 'firstUnregisteredAt', "
                 "IFNULL(json_extract(conversations.json, '$.sealedSender'), 0) AS 'sealedSender', "
@@ -58,7 +58,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "TOKENCOUNT(members) AS nummembers, json_extract(conversations.json, '$.masterKey') AS masterKey "
                 "FROM conversations "
                 "LEFT JOIN identityKeys ON conversations." + d_dt_c_uuid + " = identityKeys.id "
-                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ? OR (SUBSTR(?, 1, 3) == 'PNI' AND pni = ?)",
+                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ? OR (SUBSTR(?, 1, 3) == 'pni' AND pni = ?)",
                 {id, phone, groupidb64, id, id}, &res))
   {
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
@@ -370,10 +370,18 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         (*recipient_info)[id.empty() ? phone : id] = existing_recipient_id;
         return existing_recipient_id;
       }
-      else
+      else // the existing contact does not have a valid identity_key
       {
-        Logger::error("Contact already exists with a different uuid, but no valid identity key. not sure what to do here yet...");
-        return -1;
+        if (!create_valid_contacts) // ...but we don't care
+        {
+          (*recipient_info)[id.empty() ? phone : id] = existing_recipient_id;
+          return existing_recipient_id;
+        }
+        else
+        {
+          Logger::error("Contact already exists with a different uuid, but no valid identity key. not sure what to do here yet...");
+          return -1;
+        }
       }
     }
     else // contact uuid == NULL in Android db, lets update it with Desktop data

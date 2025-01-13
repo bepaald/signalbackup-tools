@@ -62,7 +62,6 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       Logger::error("Querying database");
       return false;
     }
-
     bool incoming = bepaald::toLower(timer_results("sourceuuid")) != d_selfuuid;
     long long int timer = timer_results.getValueAs<long long int>(0, "expiretimer");
     long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
@@ -168,6 +167,12 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     return false;
 
   std::string source_uuid = res("source");
+  if (STRING_STARTS_WITH(source_uuid, "pni"))
+  {
+    std::string realuuid = ddb.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE LOWER(json_extract(json, '$.pni')) IS ?", source_uuid, std::string());
+    if (!realuuid.empty())
+      source_uuid = std::move(realuuid);
+  }
   bool incoming = source_uuid != d_selfuuid;
   long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
     Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
@@ -300,7 +305,6 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       groupv2ctx.addField<1>(groupctx);
 
       addchange = true;
-
       //Logger::message("member add: ", uuid);
     }
     else
