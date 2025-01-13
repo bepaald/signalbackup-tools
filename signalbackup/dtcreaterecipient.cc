@@ -58,8 +58,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "TOKENCOUNT(members) AS nummembers, json_extract(conversations.json, '$.masterKey') AS masterKey "
                 "FROM conversations "
                 "LEFT JOIN identityKeys ON conversations." + d_dt_c_uuid + " = identityKeys.id "
-                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?",
-                {id, phone, groupidb64}, &res))
+                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ? OR (SUBSTR(?, 1, 3) == 'PNI' AND pni = ?)",
+                {id, phone, groupidb64, id, id}, &res))
   {
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
     return -1;

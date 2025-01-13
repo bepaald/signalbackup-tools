@@ -32,7 +32,7 @@
 
 */
 
-void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid,
+bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid,
                                               long long int thread_id, long long int address, long long int date,
                                               std::map<long long int, long long int> *adjusted_timestamps,
                                               std::map<std::string, long long int> *savedmap,
@@ -42,7 +42,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   if (date == -1)
   {
     // print wrn
-    return;
+    return false;
   }
 
   if (istimermessage)
@@ -60,7 +60,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                   "FROM messages WHERE rowid = ?", rowid, &timer_results))
     {
       Logger::error("Querying database");
-      return;
+      return false;
     }
 
     bool incoming = bepaald::toLower(timer_results("sourceuuid")) != d_selfuuid;
@@ -70,7 +70,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     // at this point address is the group_recipient. This is good for outgoing messages,
     // but incoming should have individual_recipient
     if (timer_results("sourceuuid").empty())
-      return;
+      return false;
     if (incoming)
     {
       address = getRecipientIdFromUuidMapped(timer_results("sourceuuid"), savedmap);
@@ -82,13 +82,13 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
           if ((address = dtCreateRecipient(ddb, timer_results("sourceuuid"), std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
           {
             Logger::error("Failed to create group-v2-expiration-timer contact (1), skipping");
-            return;
+            return false;
           }
         }
         else
         {
           Logger::error("Failed to create group-v2-expiration-timer contact (2), skipping");
-          return;
+          return false;
         }
       }
     }
@@ -119,7 +119,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                    {"read", 1}}))              // hardcoded to 1 in Signal Android
       {
         Logger::error("Inserting verified-change into mms");
-        return;
+        return false;
       }
     }
     else
@@ -130,7 +130,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       if (freedate == -1)
       {
         Logger::error("Getting free date for inserting verified-change message into mms");
-        return;
+        return false;
       }
       if (date != freedate)
         (*adjusted_timestamps)[date] = freedate;
@@ -147,10 +147,10 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                    {"read", 1}}, "_id", &newmms_id))              // hardcoded to 1 in Signal Android
       {
         Logger::error("Inserting verified-change into mms");
-        return;
+        return false;
       }
     }
-    return;
+    return true;
   }
 
   // !istimermessage
@@ -160,12 +160,12 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                 "LOWER(json_extract(json, '$.groupV2Change.from')) AS source,"
                 "IFNULL(json_array_length(json, '$.groupV2Change.details'), 0) AS numchanges"
                 " FROM messages WHERE rowid = ?", rowid, &res))
-    return;
+    return false;
 
   //res.prettyPrint();
   long long int numchanges = res.getValueAs<long long int>(0, "numchanges");
   if (numchanges == 0)
-    return;
+    return false;
 
   std::string source_uuid = res("source");
   bool incoming = source_uuid != d_selfuuid;
@@ -181,13 +181,13 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
         if ((address = dtCreateRecipient(ddb, source_uuid, std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
         {
           Logger::error("Failed to create group-v2-update contact (1), skipping");
-          return;
+          return false;
         }
       }
       else
       {
         Logger::error("Failed to create group-v2-update contact (2), skipping");
-        return;
+        return false;
       }
     }
   }
@@ -305,7 +305,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     }
     else
     {
-      //warnOnce("Unhandled groupv2-update-type: '" + changetype + "' (this warning will be shown only once)");
+      warnOnce("Unsupported message type 'group-v2-change:" + changetype + "'. Skipping... (this warning will be shown only once)");
       continue;
     }
 
@@ -335,7 +335,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                    {"read", 1}}))              // hardcoded to 1 in Signal Android
       {
         Logger::error("Inserting verified-change into mms");
-        return;
+        return false;
       }
     }
     else
@@ -346,7 +346,7 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       if (freedate == -1)
       {
         Logger::error("Getting free date for inserting verified-change message into mms");
-        return;
+        return false;
       }
       if (date != freedate)
         (*adjusted_timestamps)[date] = freedate;
@@ -365,9 +365,9 @@ void SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                    {"read", 1}}, "_id", &newmms_id))              // hardcoded to 1 in Signal Android
       {
         Logger::error("Inserting verified-change into mms");
-        return;
+        return false;
       }
     }
   }
-  return;
+  return true;
 }

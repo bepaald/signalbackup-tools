@@ -807,7 +807,7 @@ Done!
 
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 
-Running with these options does not require an input file to be provided. These options support some of the same  modifying options as `--importfromdesktop`, namely: `--desktopdirs`, and `--ignorewal`.
+Running with these options does not require an Android backup file to be provided as input (for example `signalbackup-tools --exportdesktophtml [TARGETDIR]`). These options support some of the same  modifying options as `--importfromdesktop`, namely: `--desktopdirs`, and `--ignorewal`.
 
 - `--dumpdesktopdb [OUTPUTFILE]` Save the Desktop database to `[OUTPUTFILE]` without encryption.
 - `--rundtsqlquery [QUERY]` Run a query on the Desktop SQL database. Note that the database only resides in memory and any changes are _not_ saved to disk.
