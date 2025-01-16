@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -28,26 +28,26 @@ long long int SignalBackup::getRecipientIdFromUuidMapped(std::string const &uuid
     return -1;
   }
 
-  if (!savedmap || savedmap->find(uuid) == savedmap->end())
+  if (savedmap)
+    if (auto found = savedmap->find(uuid); found != savedmap->end())
+      return found->second;
+
+  // either savedmap does not exist, or uuid is not in there:
+  std::string printable_uuid(makePrintable(uuid));
+  SqliteDB::QueryResults res;
+  if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_aci + " = ?1 COLLATE NOCASE OR group_id = ?1 COLLATE NOCASE", uuid, &res) ||
+      res.rows() != 1 ||
+      !res.valueHasType<long long int>(0, 0))
   {
-    std::string printable_uuid(makePrintable(uuid));
-
-    SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_aci + " = ?1 COLLATE NOCASE OR group_id = ?1 COLLATE NOCASE", uuid, &res) ||
-        res.rows() != 1 ||
-        !res.valueHasType<long long int>(0, 0))
-    {
-      if (!suppresswarning) // we can suppress this warning, if we are creating the contact after not finding it...
-        Logger::warning("Failed to find recipient for uuid: ", printable_uuid);
-      return -1;
-    }
-    //res.prettyPrint();
-    if (savedmap)
-      (*savedmap)[uuid] = res.getValueAs<long long int>(0, 0);
-
-    return res.getValueAs<long long int>(0, 0);
+    if (!suppresswarning) // we can suppress this warning, if we are creating the contact after not finding it...
+      Logger::warning("Failed to find recipient for uuid: ", printable_uuid);
+    return -1;
   }
-  return (*savedmap)[uuid];
+  //res.prettyPrint();
+  if (savedmap)
+    (*savedmap)[uuid] = res.getValueAs<long long int>(0, 0);
+
+  return res.getValueAs<long long int>(0, 0);
 }
 
 long long int SignalBackup::getRecipientIdFromPhoneMapped(std::string const &phone, std::map<std::string, long long int> *savedmap,
@@ -59,29 +59,30 @@ long long int SignalBackup::getRecipientIdFromPhoneMapped(std::string const &pho
     return -1;
   }
 
-  if (!savedmap || savedmap->find(phone) == savedmap->end())
+  if (savedmap)
+    if (auto found = savedmap->find(phone); found != savedmap->end())
+      return found->second;
+
+  // either savedmap does not exist, or phone is not in there:
+  std::string printable_phone(phone);
+  unsigned int offset = 3;
+  if (offset < phone.size()) [[likely]]
+    std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c){ return std::isdigit(c); }, 'x');
+  else
+    printable_phone = "xxx";
+
+  SqliteDB::QueryResults res;
+  if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_e164 + " = ? COLLATE NOCASE", phone, &res) ||
+      res.rows() != 1 ||
+      !res.valueHasType<long long int>(0, 0))
   {
-    std::string printable_phone(phone);
-    unsigned int offset = 3;
-    if (offset < phone.size()) [[likely]]
-      std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c){ return std::isdigit(c); }, 'x');
-    else
-      printable_phone = "xxx";
-
-    SqliteDB::QueryResults res;
-    if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_e164 + " = ? COLLATE NOCASE", phone, &res) ||
-        res.rows() != 1 ||
-        !res.valueHasType<long long int>(0, 0))
-    {
-      if (!suppresswarning)
-        Logger::warning("Failed to find recipient for phone: ", printable_phone);
-      return -1;
-    }
-    //res.prettyPrint();
-    if (savedmap)
-      (*savedmap)[phone] = res.getValueAs<long long int>(0, 0);
-
-    return res.getValueAs<long long int>(0, 0);
+    if (!suppresswarning)
+      Logger::warning("Failed to find recipient for phone: ", printable_phone);
+    return -1;
   }
-  return (*savedmap)[phone];
+  //res.prettyPrint();
+  if (savedmap)
+    (*savedmap)[phone] = res.getValueAs<long long int>(0, 0);
+
+  return res.getValueAs<long long int>(0, 0);
 }

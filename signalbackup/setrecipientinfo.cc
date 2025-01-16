@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -148,21 +148,21 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
-    (*recipientinfo)[rid] = {display_name,
-                             initial,
-                             initial_is_emoji,
-                             results.valueAsString(0, d_recipient_aci),
-                             results.valueAsString(0, d_recipient_e164),
-                             results.valueAsString(0, "username"),
-                             mute_until,
-                             blocked,
-                             mention_setting,
-                             message_expiration_time,
-                             custom_notifications,
-                             color,
-                             wall_light,
-                             wall_dark,
-                             hasavatar};
+    recipientinfo->emplace(rid, RecipientInfo{display_name,
+                                              initial,
+                                              initial_is_emoji,
+                                              results.valueAsString(0, d_recipient_aci),
+                                              results.valueAsString(0, d_recipient_e164),
+                                              results.valueAsString(0, "username"),
+                                              mute_until,
+                                              blocked,
+                                              mention_setting,
+                                              message_expiration_time,
+                                              custom_notifications,
+                                              color,
+                                              wall_light,
+                                              wall_dark,
+                                              hasavatar});
   }
 }
 

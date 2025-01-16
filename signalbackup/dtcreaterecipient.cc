@@ -449,13 +449,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   if (identity_key.empty() && create_valid_contacts)
   {
     Logger::warning("No publicKey found for new recipient, inserting fake key...");
-    identity_key = "BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF";
+    identity_key = "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh";
 
-    // $ echo "BUZBS0VLRVlGQUtFS0VZRkFLRUtFWUZBS0VLRVlGQUtF" | base64 -d | xxd
-    // 00000000: 0546 414b 454b 4559 4641 4b45 4b45 5946  .FAKEKEYFAKEKEYF
-    // 00000010: 414b 454b 4559 4641 4b45 4b45 5946 414b  AKEKEYFAKEKEYFAK
-    // 00000020: 45                                       E
-
+    /// keys always start with 0x05 for some reason...
+    // $ echo "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh" | base64 -d | xxd -g 1 -c 33
+    // 00000000: 05 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 21  .FAKEKEY FAKEKEY FAKEKEY FAKEKEY!
   }
 
   // set identity info

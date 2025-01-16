@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -180,7 +180,7 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
           }
         }
         auto attachment = d_attachments.find({rowid, uniqueid});
-        if (attachment != d_attachments.end())
+        if (attachment != d_attachments.end()) [[likely]]
         {
           if (!writeEncryptedFrame(outputfile, attachment->second.get()))
             return false;

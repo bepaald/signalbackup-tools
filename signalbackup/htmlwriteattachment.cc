@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -26,7 +26,8 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
                                        std::string const &attachment_filename,
                                        bool overwrite, bool append) const
 {
-  if (!bepaald::contains(d_attachments, std::pair{rowid, uniqueid}))
+  auto attachmentfound = d_attachments.find({rowid, uniqueid});
+  if (attachmentfound == d_attachments.end()) [[unlikely]]
     return false;
 
   // directory + threaddir is guaranteed to exist at this point, check/create 'media'
@@ -63,7 +64,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
     }
   }
 
-  AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
+  AttachmentFrame *a = attachmentfound->second.get();
 
   // write actual attachment:
   std::ofstream attachmentstream(attachment_filename_full, std::ios_base::binary);

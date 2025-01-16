@@ -167,7 +167,7 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     return false;
 
   std::string source_uuid = res("source");
-  if (STRING_STARTS_WITH(source_uuid, "pni"))
+  if (STRING_STARTS_WITH(source_uuid, "pni")) // get real uuid if source was a "PNI:" type id...?
   {
     std::string realuuid = ddb.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE LOWER(json_extract(json, '$.pni')) IS ?", source_uuid, std::string());
     if (!realuuid.empty())

@@ -493,7 +493,7 @@ class SignalBackup
   std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
-  RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
+  inline RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
   bool migrateDatabase(int from, int to) const;
   long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &gidb64,
                                   std::string const &databasedir, std::map<std::string, long long int> *recipient_info,
@@ -956,6 +956,19 @@ inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned c
 inline std::string SignalBackup::utf8BytesToHexString(std::string const &data) const
 {
   return utf8BytesToHexString(reinterpret_cast<unsigned char const *>(data.data()), data.size());
+}
+
+inline SignalBackup::RecipientInfo const &SignalBackup::getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info,
+                                                                                long long int rid) const
+{
+  if (auto found = recipient_info->find(rid); found != recipient_info->end()) [[likely]]
+    return found->second;
+
+  // if (bepaald::contains(recipient_info, rid))
+  //   return (*recipient_info)[rid];
+
+  setRecipientInfo({rid}, recipient_info);
+  return (*recipient_info)[rid];
 }
 
 inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const

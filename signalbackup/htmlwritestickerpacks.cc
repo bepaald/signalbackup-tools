@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -699,7 +699,8 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
   // write actual file to disk
 
   // find the sticker with id
-  auto it = std::find_if(d_stickers.begin(), d_stickers.end(), [id](auto const &s) { return s.first == static_cast<uint64_t>(id); });
+  auto it = d_stickers.find(id);
+
   if (it == d_stickers.end()) [[unlikely]]
   {
     Logger::warning("Failed to find sticker (id: ", id, ")");
