@@ -41,7 +41,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "IFNULL(json_extract(conversations.json, '$.expireTimer'), 0) AS 'expireTimer', "
                 "IFNULL(json_extract(conversations.json, '$.expireTimerVersion'), 1) AS 'expireTimerVersion', "
                 "json_extract(conversations.json, '$.storageID') AS 'storageId', "
-                "LOWER(json_extract(conversations.json, '$.pni')) AS 'pni', "
+                "json_extract(conversations.json, '$.pni') AS 'pni', "
                 "IFNULL(json_extract(conversations.json, '$.profileSharing'), '0') AS 'profileSharing', "
                 "json_extract(conversations.json, '$.firstUnregisteredAt') AS 'firstUnregisteredAt', "
                 "IFNULL(json_extract(conversations.json, '$.sealedSender'), 0) AS 'sealedSender', "
@@ -344,7 +344,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   // it is possible the contacts exists already, but not as a valid Signal contact (with uuid and keys)
   // (maybe should check for username and email as well, both are also unique in the recipient table)
   SqliteDB::QueryResults existing_recipient;
-  if (!d_database.exec("SELECT _id, " + d_recipient_aci + " FROM recipient WHERE pni = ? OR " + d_recipient_e164 + " = ?",
+  if (!d_database.exec("SELECT _id, " + d_recipient_aci + " FROM recipient WHERE pni = ? COLLATE NOCASE OR " + d_recipient_e164 + " = ?",
                        {res.value(0, "pni"), res.value(0, "e164")}, &existing_recipient))
     return -1;
 

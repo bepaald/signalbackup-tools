@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -30,12 +30,18 @@ void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults 
       //std::cout << "Got long message!" << std::endl;
       SqliteDB::QueryResults longmessage = attachment_results->getRow(ai);
       attachment_results->removeRow(ai);
+
       // get message:
       long long int rowid = longmessage.valueAsInt(0, "_id");
       long long int uniqueid = longmessage.valueAsInt(0, "unique_id");
-      if (!bepaald::contains(d_attachments, std::pair{rowid, uniqueid})) [[unlikely]]
+
+      // get attachment:
+      auto ait = d_attachments.find({rowid, uniqueid});
+      if (ait == d_attachments.end()) [[unlikely]]
         continue;
-      AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
+      AttachmentFrame *a = ait->second.get();
+
+      // set body
       *body = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
       a->clearData();
       break; // always max 1?

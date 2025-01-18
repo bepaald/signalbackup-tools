@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -80,20 +80,20 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, u
   }
 
   // decode
-  unsigned int skipped = 0;
+  unsigned int skippedframes = 0;
   std::unique_ptr<BackupFrame> frame(nullptr);
   while (!frame)
   {
 
-    if (skipped > offset / 10) // a frame is at least 10 bytes? -> could probably safely set this higher. MAC alone is 10 bytes, there is also actual data
+    if (skippedframes > offset / 10) // a frame is at least 10 bytes? -> could probably safely set this higher. MAC alone is 10 bytes, there is also actual data
     {
       Logger::message("\nNo valid frame found at maximum frameskip for this offset...");
       return std::unique_ptr<BackupFrame>(nullptr);
     }
 
-    Logger::message_overwrite("Checking if we skipped ", skipped, " frames... ");
+    Logger::message_overwrite("Checking if we skipped ", skippedframes, " frames... ");
 
-    uintToFourBytes(d_iv, d_counter + skipped);
+    uintToFourBytes(d_iv, d_counter + skippedframes);
 
     // create context
     std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
@@ -119,15 +119,15 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, u
 
     DEBUGOUT("Decoded hex      : ", bepaald::bytesToHexString(decodedframe, decodedframelength));
 
-    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount + skipped));
+    frame.reset(initBackupFrame(decodedframe, decodedframelength, d_framecount + skippedframes));
 
     delete[] decodedframe;
 
-    ++skipped;
+    ++skippedframes;
 
     if (!frame)
     {
-      Logger::message_overwrite("Checking if we skipped ", skipped, " frames... nope! :(");
+      Logger::message_overwrite("Checking if we skipped ", skippedframes, " frames... nope! :(");
       //if (skipped >
     }
     else
@@ -136,20 +136,20 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, u
           frame->frameType() != BackupFrame::FRAMETYPE::HEADER && // it is impossible to get in this function without the headerframe, and there is only one
           (frame->frameType() != BackupFrame::FRAMETYPE::END || static_cast<uint64_t>(file.tellg()) == d_filesize))
       {
-        d_counter += skipped;
-        d_framecount += skipped;
-        Logger::message_overwrite("Checking if we skipped ", skipped, " frames... YEAH! :)", Logger::Control::ENDOVERWRITE);
-        if (d_assumebadframesize && skipped == 1 /*NOTE, skipped was already upped*/)
+        d_counter += skippedframes;
+        d_framecount += skippedframes;
+        Logger::message_overwrite("Checking if we skipped ", skippedframes, " frames... YEAH! :)", Logger::Control::ENDOVERWRITE);
+        if (d_assumebadframesize && skippedframes == 1 /*NOTE, skippedframes was already upped*/)
         {
           Logger::message("\n ! CORRECT FRAME_NUMBER:SIZE = ", frame->frameNumber() - 1, ":",
                           offset - previousframelength - MACSIZE - 4, "\n");
         }
-        Logger::message("Good frame: ", frame->frameNumber(), " (", frame->frameTypeString(), ")");
+        Logger::message("Good frame at offset ", offset, ". Frame number: ", frame->frameNumber(), " (Type: ", frame->frameTypeString(), ")");
         frame->printInfo();
         delete[] encryptedframe.release();
         break;
       }
-      Logger::message_overwrite("Checking if we skipped ", skipped, " frames... nope! :(");
+      Logger::message_overwrite("Checking if we skipped ", skippedframes, " frames... nope! :(");
       frame.reset();
     }
   }

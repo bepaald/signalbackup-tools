@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -210,6 +210,7 @@ inline bool StickerFrame::validate() const
 
   int foundrowid = 0;
   int foundlength = 0;
+  int length = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
@@ -219,9 +220,15 @@ inline bool StickerFrame::validate() const
     if (std::get<0>(p) == FIELD::ROWID)
       ++foundrowid;
     else if (std::get<0>(p) == FIELD::LENGTH)
+    {
       ++foundlength;
+      length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+    }
   }
-  return foundlength == 1 && foundrowid == 1;
+  return foundlength == 1 && foundrowid == 1 &&
+    length < 1 * 1024 * 1024; // If size is more than 1MB, it's not right... From
+                              // https://support.signal.org/hc/en-us/articles/360031836512-Stickers :
+                              // "Each sticker has a size limit of 300kb"
 }
 
 inline std::string StickerFrame::getHumanData() const

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -26,17 +26,25 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
   if (!prepareOutputDirectory(directory, overwrite))
     return false;
 
+  bool exportok = true;
+
   // export headerframe:
   if (!onlydb)
   {
     Logger::message("Writing HeaderFrame...");
-    if (!writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe))
-      return false;
+    if (!writeRawFrameDataToFile(directory + "/Header.sbf", d_headerframe)) [[unlikely]]
+    {
+      Logger::error("Failed to write headerframe");
+      exportok = false;
+    }
 
     // export databaseversionframe
     Logger::message("Writing DatabaseVersionFrame...");
-    if (!writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe))
-      return false;
+    if (!writeRawFrameDataToFile(directory + "/DatabaseVersion.sbf", d_databaseversionframe)) [[unlikely]]
+    {
+      Logger::error("Failed to write databaseversionframe");
+      exportok = false;
+    }
 
     // export attachments
     Logger::message("Writing Attachments...");
@@ -50,29 +58,39 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       std::string attachment_basefilename = directory + "/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid);
 
       // write frame
-      if (!writeRawFrameDataToFile(attachment_basefilename + ".sbf", a))
-        return false;
+      if (!writeRawFrameDataToFile(attachment_basefilename + ".sbf", a)) [[unlikely]]
+      {
+        Logger::error("Failed to write attachmentframe");
+        exportok = false;
+        continue;
+      }
 
       // write actual attachment:
       std::ofstream attachmentstream(attachment_basefilename + ".bin", std::ios_base::binary);
-      if (!attachmentstream.is_open())
+      if (!attachmentstream.is_open()) [[unlikely]]
       {
         Logger::error("Failed to open file for writing: ", directory, attachment_basefilename, ".bin");
-        return false;
+        exportok = false;
+        continue;
       }
       else
       {
         unsigned char const *data = a->attachmentData();
-        if (!data)
+        if (!data) [[unlikely]]
         {
           Logger::error("Failed to retrieve attachment data for attachment (rowid: ", rowid, " uniqueid: ", uniqueid, ")");
-          return false;
+          exportok = false;
+          continue;
         }
-        if (!attachmentstream.write(reinterpret_cast<char const *>(data), a->attachmentSize()))
-          return false;
+        if (!attachmentstream.write(reinterpret_cast<char const *>(data), a->attachmentSize())) [[unlikely]]
+        {
+          Logger::error("Failed write attachmentdata");
+          exportok = false;
+          continue;
+        }
       }
 
-      if (!keepattachmentdatainmemory)
+      if (!keepattachmentdatainmemory && a)
       {
         MEMINFO("BEFORE DROPPING ATTACHMENT DATA");
         a->clearData();
@@ -96,19 +114,28 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       ++count;
 
       // write frame
-      if (!writeRawFrameDataToFile(avatar_basefilename + ".sbf", a))
-        return false;
+      if (!writeRawFrameDataToFile(avatar_basefilename + ".sbf", a)) [[unlikely]]
+      {
+        Logger::error("Failed to write avatarframe");
+        exportok = false;
+        continue;
+      }
 
       // write actual avatar:
       std::ofstream avatarstream(avatar_basefilename + ".bin", std::ios_base::binary);
-      if (!avatarstream.is_open())
+      if (!avatarstream.is_open()) [[unlikely]]
       {
         Logger::error("Failed to open file for writing: ", directory, avatar_basefilename, ".bin");
-        return false;
+        exportok = false;
+        continue;
       }
       else
-        if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
-          return false;
+        if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize())) [[unlikely]]
+        {
+          Logger::error("Failed to write avatar data");
+          exportok = false;
+          continue;
+        }
     }
 
     // export sharedpreferences
@@ -119,8 +146,12 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       count = 1;
     for (auto const &spframe : d_sharedpreferenceframes)
 #endif
-      if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe))
-        return false;
+      if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe)) [[unlikely]]
+      {
+        Logger::error("Failed to write sharedpreferenceframe");
+        exportok = false;
+        continue;
+      }
 
     // export keyvalues
     Logger::message("Writing KeyValueFrame(s)...");
@@ -130,8 +161,12 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       count = 1;
     for (auto const &kvframe : d_keyvalueframes)
 #endif
-      if (!writeRawFrameDataToFile(directory + "/KeyValue_" + bepaald::toString(count++) + ".sbf", kvframe))
-        return false;
+      if (!writeRawFrameDataToFile(directory + "/KeyValue_" + bepaald::toString(count++) + ".sbf", kvframe)) [[unlikely]]
+      {
+        Logger::error("Failed to write keyvalueframe");
+        exportok = false;
+        continue;
+      }
 
     // export stickers
     Logger::message("Writing StickerFrames...");
@@ -146,31 +181,46 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       std::string sticker_basefilename = directory + "/Sticker_" + bepaald::toString(count++) + "_" + bepaald::toString(s->rowId());
 
       // write frame
-      if (!writeRawFrameDataToFile(sticker_basefilename + ".sbf", s))
-        return false;
+      if (!writeRawFrameDataToFile(sticker_basefilename + ".sbf", s)) [[unlikely]]
+      {
+        Logger::error("Failed to write stickerframe");
+        exportok = false;
+        continue;
+      }
 
       // write actual sticker data
       std::ofstream stickerstream(sticker_basefilename + ".bin", std::ios_base::binary);
-      if (!stickerstream.is_open())
+      if (!stickerstream.is_open()) [[unlikely]]
       {
         Logger::error("Failed to open file for writing: ", directory, sticker_basefilename, ".bin");
-        return false;
+        exportok = false;
+        continue;
       }
       else
-        if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize()))
-          return false;
+        if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize())) [[unlikely]]
+        {
+          Logger::error("Failed to write sticker data");
+          exportok = false;
+          continue;
+        }
     }
 
     // export endframe
     Logger::message("Writing EndFrame...");
-    if (!writeRawFrameDataToFile(directory + "/End.sbf", d_endframe))
-      return false;
+    if (!writeRawFrameDataToFile(directory + "/End.sbf", d_endframe)) [[unlikely]]
+    {
+      Logger::error("Failed to write endframe");
+      exportok = false;
+    }
   }
 
   // export database
   Logger::message("Writing database...");
   if (!d_database.saveToFile(directory + "/database.sqlite")) [[unlikely]]
-    return false;
+  {
+    Logger::error("Failed to write SQLite database");
+    exportok = false;
+  }
 
 #ifdef BUILT_FOR_TESTING
   // if d_found_sqlite_sequence_in_database
@@ -183,5 +233,5 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 #endif
 
   Logger::message("Done!");
-  return true;
+  return exportok;
 }

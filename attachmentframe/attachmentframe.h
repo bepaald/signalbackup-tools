@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -238,6 +238,7 @@ inline bool AttachmentFrame::validate() const
   int foundrowid = 0;
   int foundlength = 0;
   int foundattachmentid = 0;
+  int length = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
@@ -250,9 +251,20 @@ inline bool AttachmentFrame::validate() const
     else if (std::get<0>(p) == FIELD::ATTACHMENTID)
       ++foundattachmentid;
     else if (std::get<0>(p) == FIELD::LENGTH)
+    {
       ++foundlength;
+      length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+    }
   }
-  return foundlength == 1 && foundattachmentid == 1 && foundrowid == 1;
+  return foundlength == 1 && foundattachmentid == 1 && foundrowid == 1 &&
+    length < 1 * 1024 * 1024 * 1024; // lets cap a valid attachment size at 1 gigabyte.
+  // From what I've found, the current (theoretical) maximum is 500Mb for video on
+  // Android.
+  // From reading the source, the real maximum 100Mb (even less, as this is the
+  // length of the padded ciphertext), and 500Mb video is only allowed _to be transcoded
+  // to a smaller size_. (https://github.com/signalapp/Signal-Android/blob/28c280947fd75c48268200638bb80117647ce5cf/app/src/main/java/org/thoughtcrime/securesms/util/RemoteConfig.kt#L867)
+  // Obviously these values have changed in the past, and will likely change in the future.
+  // But this frame validation is only relevant to older databases (with even older limits) anyway
 }
 
 inline std::string AttachmentFrame::getHumanData() const

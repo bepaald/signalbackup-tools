@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,8 +21,8 @@
 
 std::string SignalBackup::getTranslatedName(std::string const &table, std::string const &old_column_name) const
 {
-  if (bepaald::contains(s_columnaliases, table))
-    for (auto const &v : s_columnaliases.at(table))
+  if (auto it = s_columnaliases.find(table); it != s_columnaliases.end())
+    for (auto const &v : it->second)
       if (bepaald::contains(v, old_column_name))
         for (auto const &col_name : v)
           if (d_database.tableContainsColumn(table, col_name))

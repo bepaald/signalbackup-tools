@@ -804,41 +804,42 @@ inline long long int SqliteDB::lastInsertRowid() const
 
 inline bool SqliteDB::containsTable(std::string const &tablename) const
 {
-  if (bepaald::contains(d_tables, tablename))
-    return d_tables[tablename];
+  if (auto it = d_tables.find(tablename); it != d_tables.end())
+    return it->second;
 
   QueryResults tmp;
   if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = '" + tablename + "'", &tmp) &&
       tmp.rows() > 0)
   {
-    d_tables[tablename] = true;
+    d_tables.emplace(tablename, true);
     return true;
   }
 
-  d_tables[tablename] = false;
+  d_tables.emplace(tablename, false);
   return false;
 }
 
 inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname) const
 {
-  if (bepaald::contains(d_columns, tablename) &&
-      bepaald::contains(d_columns[tablename], columnname))
-    return d_columns[tablename][columnname];
+  auto it1 = d_columns.find(tablename);
+  if (it1 != d_columns.end())
+    if (auto it2 = it1->second.find(columnname); it2 != it1->second.end())
+      return it2->second;
 
   QueryResults tmp;
   if (exec("SELECT 1 FROM PRAGMA_TABLE_XINFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp) &&
       tmp.rows() > 0)
   {
-    if (bepaald::contains(d_columns, tablename))
-      d_columns[tablename][columnname] = true;
+    if (it1 != d_columns.end())
+      it1->second.emplace(columnname, true);
     else
-      d_columns[tablename].emplace(std::make_pair(columnname, true));
+      d_columns[tablename].emplace(columnname, true);
     return true;
   }
-  if (bepaald::contains(d_columns, tablename))
-    d_columns[tablename][columnname] = false;
+  if (it1 != d_columns.end())
+    it1->second.emplace(columnname, false);
   else
-    d_columns[tablename].emplace(std::make_pair(columnname, false));
+    d_columns[tablename].emplace(columnname, false);
   return false;
 }
 
