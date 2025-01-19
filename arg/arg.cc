@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -167,13 +167,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
 
   bool ok = true;
 
-  for (size_t i = 0; i < arguments.size(); ++i)
+  int argsize = arguments.size();
+  for (int i = 0; i < argsize; ++i)
   {
     std::string option = arguments[i];
 
     if (option == "-i" || option == "--input")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_input = std::move(arguments[++i]);
       }
@@ -186,7 +187,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "-p" || option == "--passphrase" || option == "--password")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_passphrase = std::move(arguments[++i]);
       }
@@ -199,7 +200,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importthreads")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (arguments[i + 1] == "all" || arguments[i + 1] == "ALL")
         {
@@ -231,7 +232,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importthreadsbyname")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_importthreadsbyname))
         {
@@ -249,7 +250,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--limittothreads")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseNumberList(arguments[++i], &d_limittothreads, true))
         {
@@ -266,7 +267,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--limittothreadsbyname")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_limittothreadsbyname))
         {
@@ -283,7 +284,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "-o" || option == "--output")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_output = std::move(arguments[++i]);
       }
@@ -297,7 +298,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "-op" || option == "--opassphrase" || option == "--opassword")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_opassphrase = std::move(arguments[++i]);
       }
@@ -310,7 +311,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "-s" || option == "--source")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_source = std::move(arguments[++i]);
       }
@@ -323,7 +324,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "-sp" || option == "--sourcepassphrase" || option == "--sourcepassword")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_sourcepassphrase = std::move(arguments[++i]);
       }
@@ -336,7 +337,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--croptothreads")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseNumberList(arguments[++i], &d_croptothreads, true))
         {
@@ -354,7 +355,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--croptothreadsbyname")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_croptothreadsbyname))
         {
@@ -372,7 +373,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--croptodates")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+), *(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)(?:, *(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+), *(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+))*$");
         if (!std::regex_match(arguments[i + 1], validator))
@@ -397,7 +398,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--mergerecipients")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_mergerecipients))
         {
@@ -415,7 +416,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--mergegroups")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_mergegroups))
         {
@@ -433,7 +434,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exportcsv")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_exportcsv, &error))
@@ -452,7 +453,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exportxml")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_exportxml = std::move(arguments[++i]);
       }
@@ -466,7 +467,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--querymode")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("line|pretty|single", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
@@ -486,7 +487,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--runsqlquery")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
           d_runsqlquery.emplace_back(std::move(arguments[++i]));
       }
@@ -500,7 +501,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--runprettysqlquery")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
           d_runprettysqlquery.emplace_back(std::move(arguments[++i]));
       }
@@ -514,7 +515,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--rundtsqlquery")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
           d_rundtsqlquery.emplace_back(std::move(arguments[++i]));
       }
@@ -527,7 +528,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--rundtprettysqlquery")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
           d_rundtprettysqlquery.emplace_back(std::move(arguments[++i]));
       }
@@ -540,7 +541,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--limitcontacts")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_limitcontacts))
         {
@@ -567,7 +568,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--editattachmentsize")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseNumberList(arguments[++i], &d_editattachmentsize, false))
         {
@@ -584,7 +585,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--dumpdesktopdb")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_dumpdesktopdb = std::move(arguments[++i]);
       }
@@ -597,7 +598,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--desktopdir")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_desktopdir = std::move(arguments[++i]);
         d_desktopdirs_1 = d_desktopdir;
@@ -612,7 +613,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--desktopdirs")
     {
-      if (i < arguments.size() - 2)
+      if (i < argsize - 2)
       {
         d_desktopdirs_1 = std::move(arguments[++i]);
         d_desktopdirs_2 = std::move(arguments[++i]);
@@ -626,7 +627,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--rawdesktopdb")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_rawdesktopdb = std::move(arguments[++i]);
       }
@@ -639,7 +640,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--desktopkey")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("^[0-9a-fA-F]{64}$", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
@@ -669,7 +670,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--dumpmedia")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_dumpmedia = std::move(arguments[++i]);
       }
@@ -693,7 +694,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--dumpavatars")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_dumpavatars = std::move(arguments[++i]);
       }
@@ -717,7 +718,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importcsv")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_importcsv = std::move(arguments[++i]);
       }
@@ -731,7 +732,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--mapcsvfields")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_mapcsvfields, &error))
@@ -749,7 +750,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--setselfid")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_setselfid = std::move(arguments[++i]);
       }
@@ -815,7 +816,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--removedoubles")
     {
       d_removedoubles_bool = true;
-      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      if (i < argsize - 1 && !isOption(arguments[i + 1]))
       {
         if (!ston(&d_removedoubles, arguments[++i]))
         {
@@ -869,7 +870,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--strugee")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!ston(&d_strugee, arguments[++i]))
         {
@@ -886,7 +887,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--strugee3")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!ston(&d_strugee3, arguments[++i]))
         {
@@ -923,7 +924,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--arc")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!ston(&d_arc, arguments[++i]))
         {
@@ -951,7 +952,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--onlyinthreads")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseNumberList(arguments[++i], &d_onlyinthreads, true))
         {
@@ -968,7 +969,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--onlyolderthan")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)$", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
@@ -988,7 +989,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--onlynewerthan")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)$", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
@@ -1008,7 +1009,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--onlylargerthan")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!ston(&d_onlylargerthan, arguments[++i]))
         {
@@ -1025,7 +1026,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--onlytype")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_onlytype))
         {
@@ -1042,7 +1043,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--appendbody")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_appendbody = std::move(arguments[++i]);
       }
@@ -1055,7 +1056,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--prependbody")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_prependbody = std::move(arguments[++i]);
       }
@@ -1068,7 +1069,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--replaceattachments")
     {
-      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      if (i < argsize - 1 && !isOption(arguments[i + 1]))
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_replaceattachments, &error))
@@ -1139,7 +1140,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--limittodates")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("^(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+), *(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+)(?:, *(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+), *(?:(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})|[0-9]+))*$");
         if (!std::regex_match(arguments[i + 1], validator))
@@ -1214,7 +1215,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exporthtml")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_exporthtml = std::move(arguments[++i]);
       }
@@ -1228,7 +1229,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exportdesktophtml")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_exportdesktophtml = std::move(arguments[++i]);
       }
@@ -1241,7 +1242,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exportplaintextbackuphtml")
     {
-      if (i < arguments.size() - 2)
+      if (i < argsize - 2)
       {
         d_exportplaintextbackuphtml_1 = std::move(arguments[++i]);
         d_exportplaintextbackuphtml_2 = std::move(arguments[++i]);
@@ -1255,7 +1256,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importplaintextbackup")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_importplaintextbackup = std::move(arguments[++i]);
       }
@@ -1382,7 +1383,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--split")
     {
       d_split_bool = true;
-      if (i < arguments.size() - 1 && !isOption(arguments[i + 1]))
+      if (i < argsize - 1 && !isOption(arguments[i + 1]))
       {
         if (!ston(&d_split, arguments[++i]))
         {
@@ -1395,7 +1396,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--split-by")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::regex validator("year|month|week|day", std::regex::icase);
         if (!std::regex_match(arguments[i + 1], validator))
@@ -1457,7 +1458,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exporttxt")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_exporttxt = std::move(arguments[++i]);
       }
@@ -1471,7 +1472,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exportdesktoptxt")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_exportdesktoptxt = std::move(arguments[++i]);
       }
@@ -1494,7 +1495,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--desktopdbversion")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!ston(&d_desktopdbversion, arguments[++i]))
         {
@@ -1531,7 +1532,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--findrecipient")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!ston(&d_findrecipient, arguments[++i]))
         {
@@ -1548,7 +1549,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--importtelegram" || option == "--importjson")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_importtelegram = std::move(arguments[++i]);
       }
@@ -1562,7 +1563,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--listjsonchats")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_listjsonchats = std::move(arguments[++i]);
       }
@@ -1575,7 +1576,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--selectjsonchats")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseNumberList(arguments[++i], &d_selectjsonchats, true))
         {
@@ -1592,7 +1593,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--mapjsoncontacts")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_mapjsoncontacts, &error))
@@ -1610,7 +1611,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--preventjsonmapping")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_preventjsonmapping))
         {
@@ -1688,7 +1689,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "-l" || option == "--logfile")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_logfile = std::move(arguments[++i]);
       }
@@ -1743,7 +1744,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--mapxmlcontacts")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_mapxmlcontacts, &error))
@@ -1761,7 +1762,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--listxmlcontacts")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         d_listxmlcontacts = std::move(arguments[++i]);
       }
@@ -1774,7 +1775,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--selectxmlchats")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         if (!parseStringList(arguments[++i], &d_selectxmlchats))
         {
@@ -1801,7 +1802,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--setchatcolors")
     {
-      if (i < arguments.size() - 1)
+      if (i < argsize - 1)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_setchatcolors, &error))

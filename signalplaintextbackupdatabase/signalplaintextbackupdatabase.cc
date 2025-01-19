@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -78,6 +78,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     return;
 
   // fill tables
+  std::vector<std::any> values;
   for (auto const &n : rootnode)
   {
     if (n.name() == "sms")
@@ -97,7 +98,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
       // build statement
       std::string columns;
-      std::string values;
+      std::string placeholders;
+      values.clear();
 #if __cplusplus > 201703L
       for (unsigned int i = 0; auto const &rc : requiredcolumns)
 #else
@@ -105,23 +107,29 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       for (auto const &rc : requiredcolumns)
 #endif
       {
-        std::string const &val = n.getAttribute(rc.first);
+        std::string val = n.getAttribute(rc.first);
+
         if (val != "null")
         {
+          if (rc.second == "INTEGER")
+            values.emplace_back(bepaald::toNumber<long long int>(val));
+          else
+            values.emplace_back(val);
+
           columns += (i == 0 ? "" : ", ") + rc.first;
-          values += (i == 0 ? ((rc.second == "TEXT") ? "'" : "") : ((rc.second == "TEXT") ? ", '" : ", ")) + val + ((rc.second == "TEXT") ? "'" : "");
+          placeholders += (i == 0 ? "?" : ", ?");
         }
         ++i;
       }
 
       // maybe prep body? (&#apos; -> ', $#NNN; -> utf8)
 
-      if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + values + ")"))
+      if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
         return;
 
     }
     else
-      Logger::warning("Skipping unsupported element: '", n.name(), "'");
+      warnOnce("Skipping unsupported element: '" + n.name() + "'");
   }
 
   //d_database.prettyPrint(true, "SELECT min(date), max(date) FROM smses");

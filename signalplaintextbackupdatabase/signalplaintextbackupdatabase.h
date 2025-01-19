@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,6 +22,9 @@
 
 #include "../memsqlitedb/memsqlitedb.h"
 #include "../logger/logger.h"
+#include "../common_be.h"
+
+#include <set>
 
 class SignalPlaintextBackupDatabase
 {
@@ -29,6 +32,7 @@ class SignalPlaintextBackupDatabase
   bool d_ok;
   bool d_truncate;
   bool d_verbose;
+  std::set<std::string> d_warningsgiven;
  public:
   SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose);
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
@@ -40,6 +44,9 @@ class SignalPlaintextBackupDatabase
 
   friend class SignalBackup;
   friend class DummyBackup;
+
+ private:
+  inline void warnOnce(std::string const &warning, bool error = false);
 };
 
 inline bool SignalPlaintextBackupDatabase::ok() const
@@ -50,6 +57,18 @@ inline bool SignalPlaintextBackupDatabase::ok() const
 inline bool SignalPlaintextBackupDatabase::listContacts() const
 {
   return d_database.prettyPrint(d_truncate, "SELECT address AS phone, MAX(contact_name) AS contact_name FROM smses GROUP BY phone ORDER BY phone");
+}
+
+inline void SignalPlaintextBackupDatabase::warnOnce(std::string const &warning, bool error)
+{
+  if (!bepaald::contains(d_warningsgiven, warning))
+  {
+    if (error)
+      Logger::error(warning);
+    else
+      Logger::warning(warning);
+    d_warningsgiven.insert(warning);
+  }
 }
 
 #endif

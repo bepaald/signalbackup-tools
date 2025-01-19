@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -45,7 +45,7 @@ bool SignalBackup::unescapeXmlString(std::string *s) const
   {
     // digits
     std::string utf16str(m[1]); // value-part of the match
-    uint16_t utf16 = 0;
+    uint32_t utf16 = 0;
     if (codepointcomplete == 1) // we're here because we need more data
       match_length += m.length(0);
     else
@@ -54,16 +54,22 @@ bool SignalBackup::unescapeXmlString(std::string *s) const
       match_length = m.length(0);     // match (including &#;)
     }
     // check leading x, interpret as hex...
-    if (utf16str[0] == 'x') [[unlikely]] // I dont think exists in Signal plaintext backups
-    {
+    if (utf16str[0] == 'x') [[unlikely]] // I dont think this exists in Signal plaintext
+    {                                    // backups but it does in SMS Backup & Restore
       utf16str = utf16str.substr(1);
-      utf16 = bepaald::toNumberFromHex<uint16_t>(utf16str);
+      utf16 = bepaald::toNumberFromHex<uint32_t>(utf16str);
     }
     else
-      utf16 = bepaald::toNumber<uint16_t>(utf16str);
+      utf16 = bepaald::toNumber<uint32_t>(utf16str);
 
-    //std::cout << "found utf16: " << utf16 << std::endl;
-    codepointcomplete = utf16ToUnicodeCodepoint(utf16, &unicode_codepoint);
+    //std::cout << "found utf16: " << utf16 << " (" << utf16str << ")" << std::endl;
+    if (utf16 > 0xFFFF) [[unlikely]] // SMS Backup & Restore stores as unicode32
+    {
+      codepointcomplete = 0;
+      unicode_codepoint = utf16;
+    }
+    else
+      codepointcomplete = utf16ToUnicodeCodepoint(utf16, &unicode_codepoint);
     if (codepointcomplete == 1)
     {
       //std::cout << "requested more" << std::endl;
@@ -77,7 +83,7 @@ bool SignalBackup::unescapeXmlString(std::string *s) const
     }
 
     //std::cout << "Codepoint: " << unicode_codepoint << " UTF8: ";
-    //std::string utf8(unicodeToUtf8(unicode_codepoint));
+    std::string utf8(unicodeToUtf8(unicode_codepoint));
     //std::cout << bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(utf8.data()), utf8.size()) << std::endl;
 
     // codepointcomplete == 0 : do the replace... start search at top...
