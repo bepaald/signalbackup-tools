@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -45,7 +45,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
     return;
   }
 
-  std::unique_ptr<char []> data(new char[datasize]);
+  std::unique_ptr<char[]> data(new char[datasize]);
 
   if (!sourcefile.read(data.get(), datasize))
   {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -32,7 +32,7 @@
 class DesktopDatabase
 {
   std::unique_ptr<SqlCipherDecryptor> d_cipherdb;
-  std::unique_ptr<unsigned char []> d_rawdb;
+  std::unique_ptr<unsigned char[]> d_rawdb;
   MemSqliteDB d_database;
   std::string d_configdir;
   std::string d_databasedir;

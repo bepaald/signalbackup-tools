@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -76,7 +76,7 @@ bool SignalBackup::setChatColors(std::vector<std::pair<long long int, std::strin
       colorstr = "FF" + colorstr;
     //Logger::message("GOT COLOR STRING: ", colorstr);
 
-    std::unique_ptr<unsigned char []> color_data(new unsigned char[4]);
+    std::unique_ptr<unsigned char[]> color_data(new unsigned char[4]);
     bepaald::hexStringToBytes(colorstr, color_data.get(), 4);
     uint32_t color_value = 0;
     std::memcpy(&color_value, color_data.get(), 4);

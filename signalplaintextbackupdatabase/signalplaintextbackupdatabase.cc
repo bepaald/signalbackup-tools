@@ -192,12 +192,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
           }
           else if (sub.name() == "addrs")
           {
-            for (auto const &addr : sub)
-            {
-              // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
-              //addr.print();
-            }
-            Logger::message("");
+            // for (auto const &addr : sub)
+            // {
+            //   // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
+            //   addr.print();
+            // }
+            // Logger::message("");
           }
 
         }

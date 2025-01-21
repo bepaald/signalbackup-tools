@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -39,7 +39,7 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
 
   // perform the KDF
   uint64_t key_length = 16;
-  std::unique_ptr<unsigned char []> key(new unsigned char[key_length]);
+  std::unique_ptr<unsigned char[]> key(new unsigned char[key_length]);
 #if defined (__APPLE__) && defined (__MACH__)
   int iterations = 1003;
 #else // linux
@@ -55,7 +55,7 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   //// 2. decrypt keydata using key(1)
   // set encrypted key data
   uint64_t data_length = encryptedkeystr.size() / 2;
-  std::unique_ptr<unsigned char []> data(new unsigned char[data_length]);
+  std::unique_ptr<unsigned char[]> data(new unsigned char[data_length]);
   bepaald::hexStringToBytes(encryptedkeystr, data.get(), data_length);
   // check header
   int const version_header_length = 3;

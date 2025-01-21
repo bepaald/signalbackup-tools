@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,7 +36,7 @@ bool DesktopDatabase::getKeyFromEncrypted_win()
     return false;
 
   unsigned long encryptedkey_data_length = keystr.size() / 2;
-  std::unique_ptr<unsigned char []> encryptedkey_data(new unsigned char[encryptedkey_data_length]);
+  std::unique_ptr<unsigned char[]> encryptedkey_data(new unsigned char[encryptedkey_data_length]);
   bepaald::hexStringToBytes(keystr, encryptedkey_data.get(), encryptedkey_data_length);
 
 
@@ -92,7 +92,7 @@ bool DesktopDatabase::getKeyFromEncrypted_win()
   }
   bepaald::destroyPtr(&encrypted_encryptedkey_key.first, &encrypted_encryptedkey_key.second);
   uint64_t encryptedkey_key_length = encryptedkey_key_blob.cbData;
-  std::unique_ptr<unsigned char []> encryptedkey_key(new unsigned char[encryptedkey_key_length]);
+  std::unique_ptr<unsigned char[]> encryptedkey_key(new unsigned char[encryptedkey_key_length]);
   std::memcpy(encryptedkey_key.get(), encryptedkey_key_blob.pbData, encryptedkey_key_length);
   LocalFree(encryptedkey_key_blob.pbData);
   //std::cout << "Decrypted key to decrypt encrypted key: " << bepaald::bytesToHexString(encryptedkey_key.get(), encryptedkey_key_length) << std::endl << std::endl;

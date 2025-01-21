@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -77,7 +77,7 @@ void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets) const
     CFStringRef errmsg_ref = SecCopyErrorMessageString(ret, nullptr);
     CFIndex length = CFStringGetLength(errmsg_ref);
     CFIndex max_length = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
-    std::unique_ptr<char []> error_string(new char[max_length]);
+    std::unique_ptr<char[]> error_string(new char[max_length]);
     if (CFStringGetCString(errmsg_ref, error_string.get(), max_length, kCFStringEncodingUTF8) != 0)
       Logger::error("Unknown error searching keychain");
     else
