@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
     if (!initPlaintextDatabase(arg.exportplaintextbackuphtml_1()))
       return 1;
 
-    DummyBackup dummydb(arg.setselfid(), arg.verbose(), arg.truncate(), arg.showprogress());
+    DummyBackup dummydb(ptdb, arg.setselfid(), arg.verbose(), arg.truncate(), arg.showprogress());
     if (!dummydb.ok())
       return 1;
 

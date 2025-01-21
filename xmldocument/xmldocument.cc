@@ -90,7 +90,6 @@ XmlDocument::XmlDocument(std::string const &filename)
               attribute_value_tmp.clear();
               attribute_name_tmp.clear();
               attribute_pos = -1;
-              attribute_size = -1;
 
               //std::cout << "State: ATTRIBUTE_VALUE_DOUBLE -> ELEMENT_AFTER_TAGNAME" << std::endl;
               state = ELEMENT_AFTER_TAGNAME;
@@ -505,7 +504,6 @@ XmlDocument::XmlDocument(std::string const &filename)
               attribute_value_tmp.clear();
               attribute_name_tmp.clear();
               attribute_pos = -1;
-              attribute_size = -1;
 
               //std::cout << "State: ATTRIBUTE_VALUE_DOUBLE -> ELEMENT_AFTER_TAGNAME" << std::endl;
               state = ELEMENT_AFTER_TAGNAME;

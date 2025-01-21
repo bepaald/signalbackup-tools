@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,11 +22,12 @@
 
 #include "../signalbackup/signalbackup.h"
 #include "../desktopdatabase/desktopdatabase.h"
+#include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 
 class DummyBackup : public SignalBackup
 {
  public:
-  inline DummyBackup(std::string const &selfphone, bool verbose, bool truncate, bool showprogress); // for importing from plaintext
+  inline DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, std::string const &selfid, bool verbose, bool truncate, bool showprogress); // for importing from plaintext
   inline DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, bool verbose, bool truncate, bool showprogress); // for importing from desktop
  private:
   inline DummyBackup(bool verbose, bool truncate, bool showprogress);
@@ -89,7 +90,7 @@ inline DummyBackup::DummyBackup(bool verbose, bool truncate, bool showprogress)
   d_ok = true;
 }
 
-inline DummyBackup::DummyBackup(std::string const &selfphone, bool verbose, bool truncate, bool showprogress)
+inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, std::string const &selfid, bool verbose, bool truncate, bool showprogress)
   :
   DummyBackup(verbose, truncate, showprogress)
 {
@@ -97,10 +98,26 @@ inline DummyBackup::DummyBackup(std::string const &selfphone, bool verbose, bool
     return;
   d_ok = false;
 
+  // a selfid is required to ba able to correctly set from_recipient_id and to_recipient_id when importing messages
+  std::string selfphone(selfid);
+  if (selfphone.empty())
+  {
+    // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
+    if (!ptdb->ok())
+      Logger::error("SignalPlaintextBackupDatabase was not ok");
+
+    // do some scan? not sure how yet, probably only after group-mms are parsed (select distinct source-address (type=137) where type(msg_box) = 2 (outgoing))
+    //selfphone = founinscan;
+  }
+  if (selfphone.empty())
+  {
+    Logger::error("Failed to determine id of 'self'. Please pass `--setselfid \"[phone]\"' to set it manually if problems occur");
+    return;
+  }
+
   std::any new_rid;
   if (!insertRow("recipient", {{d_recipient_e164, selfphone}}, "_id", &new_rid))
     return;
-
   d_selfid = std::any_cast<long long int>(new_rid);
 
   d_ok = true;
@@ -129,7 +146,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
     uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN (SELECT id FROM conversations WHERE type = 'group')", std::string());
     if (uuid.empty())
     {
-      Logger::error("Failed to determin uuid of self");
+      Logger::error("Failed to determine uuid of self");
       return;
     }
   }
