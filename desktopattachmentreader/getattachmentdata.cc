@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -167,6 +167,5 @@ int DesktopAttachmentReader::getEncryptedAttachment(FrameWithAttachment *frame, 
   int ret = getAttachmentData(&data, verbose);
   if (ret == 0) [[likely]]
     frame->setAttachmentDataBacked(data, d_size);
-
   return ret;
 }

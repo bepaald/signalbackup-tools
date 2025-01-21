@@ -55,85 +55,199 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
      status = -1/0/32/64 (none/complete/pending/failed)
      type = 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued
   */
-  std::vector<std::pair<std::string, std::string>> requiredcolumns{{"date", "INTEGER"},
-                                                                   {"type", "INTEGER"},
-                                                                   {"read", "INTEGER"},
-                                                                   {"body", "TEXT"},
-                                                                   {"contact_name", "TEXT"},
-                                                                   {"address", "TEXT"}}; // etc...
+  struct PlaintextColumnInfo
+  {
+    std::string name;
+    std::string type;
+    std::string required_in_node; // empty = ALL
+    std::string columnname;
+  };
 
-  // create table
-  std::string tablecreate("CREATE TABLE smses ");
+  std::vector<PlaintextColumnInfo> const columninfo{{"date", "INTEGER", "", ""},
+                                                    {"type", "INTEGER", "sms", ""},
+                                                    {"msg_box", "INTEGER", "mms", "type"},
+                                                    {"read", "INTEGER", "", ""},
+                                                    {"body", "TEXT", "sms", ""},
+                                                    {"contact_name", "TEXT", "", ""},
+                                                    {"address", "TEXT", "", ""},
+                                                    {"recipients", "TEXT", "none", ""},  // json? {"source":"address", "target":["address1", address2"]} ?
+                                                    {"numattachments", "INTEGER", "none", ""}};
+
+  // create message table
+  std::string tablecreate;
 #if __cplusplus > 201703L
-  for (unsigned int i = 0; auto const &rc : requiredcolumns)
+  for (unsigned int i = 0; auto const &rc : columninfo)
 #else
   unsigned int i = 0;
-  for (auto const &rc : requiredcolumns)
+  for (auto const &rc : columninfo)
 #endif
   {
-    tablecreate += (i == 0 ? " (" : ", ") + rc.first + " " + rc.second + " DEFAULT NULL" + (i == requiredcolumns.size() - 1 ? ")" : "");
+    if (rc.columnname.empty()) [[likely]]
+      tablecreate += (tablecreate.empty() ? "CREATE TABLE smses (" : ", ") + rc.name + " " + rc.type + " DEFAULT NULL";
     ++i;
   }
+  tablecreate += ")";
   if (!d_database.exec(tablecreate))
     return;
+
+  // create attachment table
+  if (!d_database.exec("CREATE TABLE attachments (mid INTEGER, data TEXT DEFAULT NULL, filename TEXT DEFAULT NULL, "
+                       "pos INTEGER DEFAULT -1, size INTEGER DEFAULT -1, ct TEXT default NULL)"))
+    return;
+
 
   // fill tables
   std::vector<std::any> values;
   for (auto const &n : rootnode)
   {
-    if (n.name() == "sms")
-    {
-      // check attribute exists
-      if (!std::all_of(requiredcolumns.begin(), requiredcolumns.end(),
-                       [&](std::pair<std::string, std::string> const &rc)
+
+    // check required attributes exist
+    if (!std::all_of(columninfo.begin(), columninfo.end(),
+                     [&](PlaintextColumnInfo const &rc)
+                     {
+                       if ((rc.required_in_node.empty() || rc.required_in_node == n.name()) && !n.hasAttribute(rc.name))
                        {
-                         if (!n.hasAttribute(rc.first))
-                         {
-                           Logger::warning("Skipping message, missing required attribute '", rc.first, "'");
-                           return false;
-                         }
-                         return true;
-                       }))
-        continue;
+                         Logger::warning("Skipping message, missing required attribute '", rc.name, "'");
+                         return false;
+                       }
+                       return true;
+                     }))
+      continue;
+
+    if (n.name() == "sms" || n.name() == "mms")
+    {
+      // if (n.name() == "mms")
+      // {
+      //   warnOnce("Skipping unsupported element: '" + n.name() + "'");
+      //   continue;
+      // }
 
       // build statement
       std::string columns;
       std::string placeholders;
       values.clear();
 #if __cplusplus > 201703L
-      for (unsigned int i = 0; auto const &rc : requiredcolumns)
+      for (unsigned int i = 0; auto const &rc : columninfo)
 #else
       i = 0;
-      for (auto const &rc : requiredcolumns)
+      for (auto const &rc : columninfo)
 #endif
       {
-        std::string val = n.getAttribute(rc.first);
+        if (rc.required_in_node != n.name() && !rc.required_in_node.empty())
+          continue;
+
+        std::string val = n.getAttribute(rc.name);
 
         if (val != "null")
         {
-          if (rc.second == "INTEGER")
+          if (rc.type == "INTEGER")
             values.emplace_back(bepaald::toNumber<long long int>(val));
           else
             values.emplace_back(val);
 
-          columns += (i == 0 ? "" : ", ") + rc.first;
+          columns += (i == 0 ? "" : ", ") + (rc.columnname.empty() ? rc.name : rc.columnname);
           placeholders += (i == 0 ? "?" : ", ?");
         }
         ++i;
       }
 
-      // maybe prep body? (&#apos; -> ', $#NNN; -> utf8)
+      std::vector<std::pair<XmlDocument::Node::StringOrRef, std::string>> attachments;
+      if (n.name() == "mms")
+      {
+        // get message body && attachments
+        std::string body;
+        bool hasbody = false;
+        for (auto const &sub : n)
+        {
+          //std::cout << sub.name() << std::endl;
+          if (sub.name() == "parts")
+          {
+            for (auto const &part : sub)
+            {
+              if (part.hasAttribute("text"))
+              {
+                if (part.hasAttribute("ct") && part.getAttribute("ct") == "text/plain")
+                {
+                  body += part.getAttribute("text");
+                  hasbody = true;
+                }
+              }
+              if (part.hasAttribute("data"))
+              {
+                //std::cout << "HAS DATA" << std::endl;
+
+                // do something with data...
+                XmlDocument::Node::StringOrRef attachmentdata = part.getAttributeStringOrRef("data");
+                if (attachmentdata.file.empty() && attachmentdata.value.empty()) [[unlikely]]
+                {
+                  Logger::warning("Got data attribute, but no value or reference");
+                  continue;
+                }
+                std::string ct;
+                if (part.hasAttribute("ct"))
+                  ct = part.getAttribute("ct");
+                attachments.emplace_back(std::make_pair(attachmentdata, ct));
+              }
+            }
+          }
+          else if (sub.name() == "addrs")
+          {
+            for (auto const &addr : sub)
+            {
+              // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
+              //addr.print();
+            }
+            Logger::message("");
+          }
+
+        }
+        if (hasbody)
+        {
+          values.emplace_back(body);
+          columns += (columns.empty() ? ""s : ", "s) + "body"s;
+          placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
+        }
+      }
+
+      //std::cout << "attachments: " << attachments.size() << std::endl;
+      values.emplace_back(attachments.size());
+      columns += (columns.empty() ? ""s : ", "s) + "numattachments"s;
+      placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
 
       if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
         return;
 
+      if (!attachments.empty())
+      {
+        long long int lastid = d_database.lastId();
+        for (auto const &a : attachments)
+          d_database.exec("INSERT INTO attachments (mid, data, filename, pos, size, ct) "
+                          "VALUES "
+                          "(?, ?, ?, ?, ?, ?)", {lastid, a.first.value, a.first.file, a.first.pos, a.first.size, a.second});
+      }
+
     }
-    else
+    else [[unlikely]]
       warnOnce("Skipping unsupported element: '" + n.name() + "'");
   }
 
-  //d_database.prettyPrint(true, "SELECT min(date), max(date) FROM smses");
+  // If contact_name IS NULL, "", or "(Unknown)", set it to MAX(contact_name) for that address,
+  // If still empty (all messsages from that contact were NULL, "", OR "(Unknown)", set it
+  // to address
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
+  SqliteDB::QueryResults addresses;
+  if (!d_database.exec("SELECT DISTINCT address FROM smses", &addresses))
+    return;
+  for (unsigned int i = 0; i < addresses.rows(); ++i)
+  {
+    std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' AND address = ?", addresses.value(i, 0), std::string());
+    //std::cout << addresses(i, "address") << " '" << cn << "'" << std::endl;
+    if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {cn.empty() ? addresses.value(i, 0) : cn, addresses.value(i, 0)}))
+      return;
+  }
+  //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
+
+  //d_database.prettyPrint(true, "SELECT min(date), max(date) FROM smses");
   //d_database.prettyPrint(true, "SELECT DISTINCT contact_name, body FROM smses WHERE address = '+31611496644'");
   //d_database.prettyPrint(true, "SELECT DISTINCT contact_name, body FROM smses WHERE address = '+31645756298'");
 

@@ -154,7 +154,6 @@ class SqliteDB
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
   inline long long int lastId() const;
-  inline long long int lastInsertRowid() const;
   inline bool containsTable(std::string const &tablename) const;
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
   template <typename... columnnames>
@@ -793,11 +792,6 @@ inline int SqliteDB::changed() const
 }
 
 inline long long int SqliteDB::lastId() const
-{
-  return sqlite3_last_insert_rowid(d_db);
-}
-
-inline long long int SqliteDB::lastInsertRowid() const
 {
   return sqlite3_last_insert_rowid(d_db);
 }

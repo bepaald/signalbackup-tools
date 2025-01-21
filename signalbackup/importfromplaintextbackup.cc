@@ -22,6 +22,7 @@
 //#include <chrono>
 
 #include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
+#include "../signalplaintextbackupattachmentreader/signalplaintextbackupattachmentreader.h"
 #include "../msgtypes/msgtypes.h"
 
 bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
@@ -113,8 +114,14 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   //ptdb->d_database.prettyPrint(true, "SELECT DISTINCT type, read FROM smses");
   // in signal android backup, all messages are read as well, only old versions of edited are not...
 
+  //ptdb->d_database.saveToFile("plainttext.sqlite");
+
   SqliteDB::QueryResults pt_messages;
-  if (!ptdb->d_database.exec("SELECT * FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
+  if (!ptdb->d_database.exec("SELECT "
+                             "rowid, "
+                             "date, type, read, body, contact_name, address, recipients, numattachments "
+                             //", CONCAT(address, contact_name) AS identifier "
+                             "FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
     return false;
 
   //pt_messages.prettyPrint(d_truncate);
@@ -129,19 +136,20 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       Logger::message_overwrite("Importing messages into backup... ", i, "/", pt_messages.rows());
 
     std::string body = pt_messages(i, "body");
-    if (body.empty())
+    if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)
     {
-      Logger::warning("Not inserting message with empty body.");
+      Logger::warning("Not inserting message with empty body and no attachments.");
       continue;
     }
 
-    std::string pt_messages_contact_name = ptdb->d_database.getSingleResultAs<std::string>("SELECT max(contact_name) FROM smses WHERE address = ?",
-                                                                                           pt_messages.value(i, "address"), std::string());
+    // std::string pt_messages_contact_name = ptdb->d_database.getSingleResultAs<std::string>("SELECT max(contact_name) FROM smses WHERE address = ?",
+    //                                                                                        pt_messages.value(i, "address"), std::string());
+    std::string pt_messages_contact_name = pt_messages(i, "contact_name");
 
     // match phone number to recipient_id
     long long int rid = -1;
-    if (bepaald::contains(contactmap, pt_messages(i, "address")))
-      rid = contactmap[pt_messages(i, "address")];
+    if (auto it = contactmap.find(pt_messages(i, "address")); it != contactmap.end())
+      rid = it->second;
     else
     {
       rid = getRecipientIdFromName(pt_messages_contact_name, false);
@@ -260,6 +268,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       continue;
     }
 
+    std::any newid;
     if (!insertRow(d_mms_table,
                    {{"thread_id", tid},
                     {d_mms_date_sent, freedate},
@@ -271,8 +280,91 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                     {d_mms_read_receipts, (incoming ? 0 : (markread ? 1 : 0))},
                     {d_mms_recipient_id, incoming ? rid : d_selfid}, // FROM_RECIPIENT_ID
                     {"to_recipient_id", incoming ? d_selfid : rid},
-                    {"m_type", incoming ? 132 : 128}})) // dont know what this is, but these are the values...
+                    {"m_type", incoming ? 132 : 128}}, // dont know what this is, but these are the values...
+                   "_id", &newid))
       Logger::warning("Failed to insert message");
+
+    long long int new_msg_id = std::any_cast<long long int>(newid);
+    if (pt_messages.valueAsInt(i, "numattachments", -1) > 0)
+    {
+      SqliteDB::QueryResults attachment_res;
+      if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct FROM attachments WHERE mid = ?", pt_messages.value(i, "rowid"), &attachment_res))
+        continue;
+
+      //attachment_res.prettyPrint(false);
+
+      for (unsigned int j = 0; j < attachment_res.rows(); ++j)
+      {
+        std::string data = attachment_res(j, "data");
+        std::string file = attachment_res(j, "filename");
+        long long int pos = attachment_res.valueAsInt(j, "pos", -1);
+        long long int size = attachment_res.valueAsInt(j, "size", -1);
+        std::string ct = attachment_res(j, "ct");
+
+        // get attachment metadata
+        SignalPlainTextBackupAttachmentReader ptar(data, file, pos, size);
+#if __cpp_lib_out_ptr >= 202106L
+        std::unique_ptr<unsigned char[]> att_data;
+        if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+#else
+        unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
+        if (ptar.getAttachmentData(&att_data, d_verbose) != 0)
+#endif
+      {
+        Logger::error("Failed to get attachment data");
+        continue;
+      }
+
+#if __cpp_lib_out_ptr >= 202106L
+      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data.get(), ptar.dataSize()); // get metadata from heap
+#else
+      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data,  ptar.dataSize());       // get metadata from heap
+      if (att_data)
+        delete[] att_data;
+#endif
+
+        // add entry to attachment table;
+        std::any new_aid;
+        if (!insertRow(d_part_table,
+                       {{d_part_mid, new_msg_id},
+                        {d_part_ct, ct},
+                        {d_part_pending, 0},
+                        {"data_size", amd.filesize},
+                        {"voice_note", 0},
+                        {"width", amd.width == -1 ? 0 : amd.width},
+                        {"height", amd.height == -1 ? 0 : amd.height},
+                        {"quote", 0},
+                        {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
+                        {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), amd.hash},
+                        {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), amd.hash}},
+                       "_id", &new_aid))
+          continue;
+        long long int new_part_id = std::any_cast<long long int>(new_aid);
+
+        DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
+        if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
+                                                                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                                                                 "ATTACHMENTID:uint64:" + bepaald::toString(freedate) : ""),
+                                                                                "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+        {
+          new_attachment_frame->setReader(new SignalPlainTextBackupAttachmentReader(data, file, pos, size));
+          d_attachments.emplace(std::make_pair(new_part_id,
+                                               d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                               freedate : -1), new_attachment_frame.release());
+        }
+        else
+        {
+          Logger::error("Failed to create AttachmentFrame for data");
+          Logger::error_indent("       rowid       : ", new_part_id);
+          Logger::error_indent("       attachmentid: ", d_database.tableContainsColumn(d_part_table, "unique_id") ? freedate : -1);
+          Logger::error_indent("       length      : ", amd.filesize);
+
+          // try to remove the inserted part entry:
+          d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
+          continue;
+        }
+      }
+    }
 
     // mark thread as active??
   }

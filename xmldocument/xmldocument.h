@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -32,19 +32,21 @@ class XmlDocument
  public:
   class Node
   {
-    /*
-      struct StringOrRef
-      {
+   public:
+    struct StringOrRef
+    {
       std::string value; // for now
       std::string file;
-      int pos;
-      int size;
-      };
-    */
+      long long int pos = -1;
+      long long int size = -1;
+    };
+
+   private:
+    static int constexpr s_maxsize = 1024;
 
     Node *d_parent;
     std::vector<Node> d_children;
-    std::map<std::string, std::string> d_attributes;
+    std::map<std::string, StringOrRef> d_attributes;
     std::string d_name;
     std::string d_value; // make this a separate thing, so it can refer to file and position/size if size is too big
     //bool d_value_contains_ampersand; // just a helper if we have read the value during parsing anyway...
@@ -58,6 +60,7 @@ class XmlDocument
     inline std::string const &name() const;
     inline bool hasAttribute(std::string const &name) const;
     inline std::string getAttribute(std::string const &name) const;
+    inline StringOrRef getAttributeStringOrRef(std::string const &name) const;
 
     inline auto begin() const;
     inline auto end() const;
@@ -120,7 +123,12 @@ inline void XmlDocument::Node::print(int indent) const
   {
     Logger::message_start(std::string(indent, ' '), "<", d_name);
     for (auto const &[key, value] : d_attributes)
-      Logger::message_continue(" ", key, "=\"", value, "\""); // note, we should maybe scan for " and use ' if found
+    {
+      if (value.pos == -1) [[likely]]
+        Logger::message_continue(" ", key, "=\"", value.value, "\""); // note, we should maybe scan for " and use ' if found
+      else
+        Logger::message_continue(" ", key, "=\"", "[large]", "\"");
+    }
     Logger::message_continue((d_children.empty() && d_value.empty()) ? " />" : ">");
     if (d_value.empty())
       Logger::message_end();
@@ -150,9 +158,27 @@ inline bool XmlDocument::Node::hasAttribute(std::string const &name) const
 
 inline std::string XmlDocument::Node::getAttribute(std::string const &name) const
 {
-  if (hasAttribute(name)) [[likely]]
-    return d_attributes.at(name);
+  if (auto it = d_attributes.find(name); it != d_attributes.end()) [[likely]]
+  {
+    if (it->second.pos == -1)
+      return it->second.value;
+    else
+    {
+      std::ifstream tmp(it->second.file, std::ios_base::in | std::ios_base::binary);
+      tmp.seekg(it->second.pos);
+      std::unique_ptr<char[]> v(new char[it->second.size]);
+      tmp.read(v.get(), it->second.size);
+      return std::string(tmp.get(), it->second.size);
+    }
+  }
   return std::string();
+}
+
+inline XmlDocument::Node::StringOrRef XmlDocument::Node::getAttributeStringOrRef(std::string const &name) const
+{
+  if (auto it = d_attributes.find(name); it != d_attributes.end()) [[likely]]
+    return it->second;
+  return StringOrRef{};
 }
 
 inline auto XmlDocument::Node::begin() const
