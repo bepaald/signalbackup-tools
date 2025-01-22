@@ -71,6 +71,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                                                     {"contact_name", "TEXT", "", ""},
                                                     {"address", "TEXT", "", ""},
                                                     {"recipients", "TEXT", "none", ""},  // json? {"source":"address", "target":["address1", address2"]} ?
+                                                    {"ismms", "INTEGER", "none", ""},
+                                                    {"sourceaddress", "TEXT", "none", ""},
+                                                    {"numaddresses", "INTEGER", "none", ""},
                                                     {"numattachments", "INTEGER", "none", ""}};
 
   // create message table
@@ -95,9 +98,18 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                        "pos INTEGER DEFAULT -1, size INTEGER DEFAULT -1, ct TEXT default NULL)"))
     return;
 
-
   // fill tables
   std::vector<std::any> values;
+  std::string columns;
+  std::string placeholders;
+
+  auto addvalue = [&](std::string const &column, std::any &&value)
+  {
+    values.emplace_back(value);
+    columns += (columns.empty() ? ""s : ", "s) + column;
+    placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
+  };
+
   for (auto const &n : rootnode)
   {
 
@@ -123,15 +135,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       // }
 
       // build statement
-      std::string columns;
-      std::string placeholders;
+      columns.clear();
+      placeholders.clear();
       values.clear();
-#if __cplusplus > 201703L
-      for (unsigned int i = 0; auto const &rc : columninfo)
-#else
-      i = 0;
       for (auto const &rc : columninfo)
-#endif
       {
         if (rc.required_in_node != n.name() && !rc.required_in_node.empty())
           continue;
@@ -139,16 +146,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
         std::string val = n.getAttribute(rc.name);
 
         if (val != "null")
-        {
-          if (rc.type == "INTEGER")
-            values.emplace_back(bepaald::toNumber<long long int>(val));
-          else
-            values.emplace_back(val);
-
-          columns += (i == 0 ? "" : ", ") + (rc.columnname.empty() ? rc.name : rc.columnname);
-          placeholders += (i == 0 ? "?" : ", ?");
-        }
-        ++i;
+          addvalue((rc.columnname.empty() ? rc.name : rc.columnname), (rc.type == "INTEGER") ? std::any(bepaald::toNumber<long long int>(val)) : std::any(val));
       }
 
       std::vector<std::pair<XmlDocument::Node::StringOrRef, std::string>> attachments;
@@ -157,6 +155,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
         // get message body && attachments
         std::string body;
         bool hasbody = false;
+        std::string sourceaddress;
         for (auto const &sub : n)
         {
           //std::cout << sub.name() << std::endl;
@@ -192,27 +191,47 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
           }
           else if (sub.name() == "addrs")
           {
-            // for (auto const &addr : sub)
-            // {
-            //   // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
-            //   addr.print();
-            // }
-            // Logger::message("");
-          }
+            int numaddresses = 0;
+            for (auto const &addr : sub)
+            {
+              ++numaddresses;
 
+              // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
+              //addr.print();
+              if (addr.hasAttribute("type") && addr.getAttribute("type") == "137")
+              {
+                if (!sourceaddress.empty()) [[unlikely]]
+                {
+                  Logger::warning("Multiple source addresses for message");
+                  sourceaddress.clear();
+                  continue;
+                }
+
+                if (!addr.hasAttribute("address"))
+                {
+                  Logger::warning("No address attribute found in <addr>");
+                  continue;
+                }
+
+                sourceaddress = addr.getAttribute("address");
+              }
+            }
+            addvalue("numaddresses", numaddresses);
+          }
         }
+
         if (hasbody)
-        {
-          values.emplace_back(body);
-          columns += (columns.empty() ? ""s : ", "s) + "body"s;
-          placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
-        }
+          addvalue("body", std::move(body));
+
+        if (!sourceaddress.empty())
+          addvalue("sourceaddress", std::move(sourceaddress));
       }
 
       //std::cout << "attachments: " << attachments.size() << std::endl;
-      values.emplace_back(attachments.size());
-      columns += (columns.empty() ? ""s : ", "s) + "numattachments"s;
-      placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
+      addvalue("numattachments", attachments.size());
+
+      // is sms
+      addvalue("ismms", (n.name() == "mms") ? 1 : 0);
 
       if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
         return;
@@ -250,6 +269,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   //d_database.prettyPrint(true, "SELECT min(date), max(date) FROM smses");
   //d_database.prettyPrint(true, "SELECT DISTINCT contact_name, body FROM smses WHERE address = '+31611496644'");
   //d_database.prettyPrint(true, "SELECT DISTINCT contact_name, body FROM smses WHERE address = '+31645756298'");
+  //d_database.prettyPrint(true, "SELECT DISTINCT ismms, sourceaddress, numaddresses FROM smses");
+  //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress, numaddresses FROM smses WHERE type = 2 AND ismms = 1");
+
+  // this is how to scan for selfid (sourceaddress of outgoing message with at least one target recipient)
+  //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress FROM smses WHERE numaddresses > 1 AND type = 2 AND ismms = 1");
+  //d_database.prettyPrint(true, "SELECT * FROM smses WHERE sourceaddress IS NULL AND type = 2 AND ismms = 1");
 
   d_ok = true;
 }

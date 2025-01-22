@@ -106,8 +106,9 @@ inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> c
     if (!ptdb->ok())
       Logger::error("SignalPlaintextBackupDatabase was not ok");
 
-    // do some scan? not sure how yet, probably only after group-mms are parsed (select distinct source-address (type=137) where type(msg_box) = 2 (outgoing))
-    //selfphone = founinscan;
+    selfphone = ptdb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT sourceaddress FROM smses "
+                                                                "WHERE type = 2 AND numaddresses > 1 AND ismms = 1",
+                                                                std::string());
   }
   if (selfphone.empty())
   {
