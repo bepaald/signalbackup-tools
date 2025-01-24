@@ -261,6 +261,10 @@ class SignalBackup
                                  std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,
                                  bool createmissingcontacts, bool markdelivered, bool markread, bool autodates,
                                  std::string const &selfphone);
+  long long int ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb,
+                                  std::map<std::string, long long int> *contactmap,
+                                  bool *warned_createcontacts, std::string const &contact_name,
+                                  std::string const &address, bool isgroup) const;
   bool checkDbIntegrity(bool warn = false) const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, std::string const &splitby,

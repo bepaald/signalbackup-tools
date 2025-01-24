@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -216,7 +216,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     std::ofstream txtoutput(directory + "/" + filename, std::ios_base::binary);
     if (!txtoutput.is_open())
     {
-      Logger::error("Failed to open '", directory, "/", filename, " for writing.");
+      Logger::error("Failed to open '", directory, "/", filename, "' for writing.");
       if (databasemigrated)
         SqliteDB::copyDb(backup_database, d_database);
       return false;

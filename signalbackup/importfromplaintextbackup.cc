@@ -119,7 +119,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   SqliteDB::QueryResults pt_messages;
   if (!ptdb->d_database.exec("SELECT "
                              "rowid, "
-                             "date, type, read, body, contact_name, address, recipients, numattachments "
+                             "date, type, read, body, contact_name, address, numattachments, sourceaddress, numaddresses, ismms "
                              //", CONCAT(address, contact_name) AS identifier "
                              "FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
     return false;
@@ -129,7 +129,6 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   bool warned_createcontacts = false;
 
   //auto t1 = std::chrono::high_resolution_clock::now();
-  d_database.exec("BEGIN TRANSACTION");
   for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
     if (i % 100 == 0)
@@ -142,19 +141,26 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       continue;
     }
 
-    // std::string pt_messages_contact_name = ptdb->d_database.getSingleResultAs<std::string>("SELECT max(contact_name) FROM smses WHERE address = ?",
-    //                                                                                        pt_messages.value(i, "address"), std::string());
+    std::string pt_messages_address = pt_messages(i, "address");
+    std::string pt_messages_sourceaddress = pt_messages(i, "sourceaddress");
     std::string pt_messages_contact_name = pt_messages(i, "contact_name");
+
+    bool isgroup = false;
+    if (std::string::size_type pos = pt_messages_address.find('~');
+        pos != std::string::npos &&
+        pos != 0 &&
+        pos != pt_messages_address.size() - 1)
+      isgroup = true;
 
     // match phone number to recipient_id
     long long int rid = -1;
-    if (auto it = contactmap.find(pt_messages(i, "address")); it != contactmap.end())
+    if (auto it = contactmap.find(pt_messages_address); it != contactmap.end())
       rid = it->second;
     else
     {
       rid = getRecipientIdFromName(pt_messages_contact_name, false);
       if (rid != -1)
-        contactmap[pt_messages(i, "address")] = rid;
+        contactmap[pt_messages_address] = rid;
       else // try by phone number...
       {
         // this can go wrong these days. When an old contact is no longer on signal, it
@@ -164,52 +170,23 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         //
         // since the xml only has e164 to match, it will match the former (which is possibly
         // not a valid signal contact and likely causes problems when restoring)
-        rid = getRecipientIdFromPhone(pt_messages(i, "address"), false);
+        rid = getRecipientIdFromPhone(pt_messages_address, false);
         if (rid != -1)
-          contactmap[pt_messages(i, "address")] = rid;
+          contactmap[pt_messages_address] = rid;
       }
     }
 
-    if (rid == -1)
-    {
-      if (createmissingcontacts)
-      {
-        // createcontact:
-        if (warned_createcontacts == false)
-        {
-          Logger::warning("Chat partner was not found in recipient-table. Attempting to create.");
-          Logger::warning_indent(Logger::Control::BOLD, "NOTE THE RESULTING BACKUP CAN MOST LIKELY NOT BE RESTORED");
-          Logger::warning_indent("ON SIGNAL ANDROID. IT IS ONLY MEANT TO EXPORT TO HTML.", Logger::Control::NORMAL);
-          warned_createcontacts = true;
-        }
-
-        if (pt_messages_contact_name.empty()) [[unlikely]]
-          Logger::warning("Failed to get name for new contact (", pt_messages(i, "address"), ")");
-
-        std::any new_rid;
-        insertRow("recipient",
-                  {{d_recipient_profile_given_name, pt_messages_contact_name},
-                   {"profile_joined_name", pt_messages_contact_name},
-                   {d_recipient_e164, pt_messages.value(i, "address")}}, "_id", &new_rid);
-        if (new_rid.type() == typeid(long long int)) [[likely]]
-          rid = std::any_cast<long long int>(new_rid);
-
-        if (rid == -1) [[unlikely]]
-        {
-          Logger::warning("Failed to create missing recipient. Skipping message.");
-          continue;
-        }
-        else
-          contactmap[pt_messages(i, "address")] = rid;
-      }
-    }
+    if (rid == -1 && createmissingcontacts)
+      if ((rid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
+                                   pt_messages_address, isgroup)) == -1)
+        continue;
 
     // get matching thread
     long long int tid = getThreadIdFromRecipient(rid);
     if (tid == -1)
     {
       // create thread
-      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", pt_messages(i, "address"), " -> ", rid);
+      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", pt_messages_address, " -> ", rid);
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, rid},
@@ -288,7 +265,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     if (pt_messages.valueAsInt(i, "numattachments", -1) > 0)
     {
       SqliteDB::QueryResults attachment_res;
-      if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct FROM attachments WHERE mid = ?", pt_messages.value(i, "rowid"), &attachment_res))
+      if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct, cl FROM attachments WHERE mid = ?", pt_messages.value(i, "rowid"), &attachment_res))
         continue;
 
       //attachment_res.prettyPrint(false);
@@ -300,6 +277,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         long long int pos = attachment_res.valueAsInt(j, "pos", -1);
         long long int size = attachment_res.valueAsInt(j, "size", -1);
         std::string ct = attachment_res(j, "ct");
+        std::string cl = attachment_res(j, "cl");
 
         // get attachment metadata
         SignalPlainTextBackupAttachmentReader ptar(data, file, pos, size);
@@ -328,6 +306,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         if (!insertRow(d_part_table,
                        {{d_part_mid, new_msg_id},
                         {d_part_ct, ct},
+                        {!cl.empty() ? "file_name" : "", cl},
                         {d_part_pending, 0},
                         {"data_size", amd.filesize},
                         {"voice_note", 0},
@@ -371,7 +350,6 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   //auto t2 = std::chrono::high_resolution_clock::now();
   //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
   //std::cout << " *** TIME: " << ms_int.count() << "ms\n";
-  d_database.exec("COMMIT");
 
   Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
 

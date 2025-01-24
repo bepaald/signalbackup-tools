@@ -108,7 +108,7 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   }
   out_len += tail_len;
 
-  // all input is always padding to the _next_ mutliple of 16 (64 in this case to 80)
+  // all input is always padded to the _next_ multiple of 16 (64 in this case to 80)
   // the padding bytes are always the size of the padding (see below)
   int padding = output_length % 16;
   int realsize = output_length - (padding ? padding : 16);

@@ -106,11 +106,11 @@ bool DesktopDatabase::getKeyFromEncrypted_win()
   // - a 12 byte nonce
   // - 64 bytes of encrypted data
   // - 16 bytes mac
-  uint64_t header_length = 3;
+  uint64_t constexpr header_length = 3;
   unsigned char *header = encryptedkey_data.get();
-  uint64_t nonce_length = 12;
+  uint64_t constexpr nonce_length = 12;
   unsigned char *nonce = encryptedkey_data.get() + header_length;
-  uint64_t mac_length = 16;
+  uint64_t constexpr mac_length = 16;
   unsigned char *mac = encryptedkey_data.get() + (encryptedkey_data_length - mac_length);
   uint64_t encdata_length = encryptedkey_data_length - mac_length - header_length - nonce_length;
   unsigned char *encdata = nonce + nonce_length;
@@ -119,7 +119,7 @@ bool DesktopDatabase::getKeyFromEncrypted_win()
   //std::cout << bepaald::bytesToHexString(encdata, encdata_length) << std::endl;
   //std::cout << bepaald::bytesToHexString(mac, mac_length) << std::endl;
 
-  unsigned char v10header[3] = {'v', '1', '0'};
+  unsigned char const v10header[3] = {'v', '1', '0'};
   if (std::memcmp(header, v10header, header_length) != 0) [[unlikely]]
     Logger::warning("Unexpected header value: ", bepaald::bytesToHexString(header, header_length));
 

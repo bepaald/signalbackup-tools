@@ -70,7 +70,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                                                     {"body", "TEXT", "sms", ""},
                                                     {"contact_name", "TEXT", "", ""},
                                                     {"address", "TEXT", "", ""},
-                                                    {"recipients", "TEXT", "none", ""},  // json? {"source":"address", "target":["address1", address2"]} ?
+                                                    //{"recipients", "TEXT", "none", ""},  // json? {"source":"address", "target":["address1", address2"]} ?
                                                     {"ismms", "INTEGER", "none", ""},
                                                     {"sourceaddress", "TEXT", "none", ""},
                                                     {"numaddresses", "INTEGER", "none", ""},
@@ -95,7 +95,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   // create attachment table
   if (!d_database.exec("CREATE TABLE attachments (mid INTEGER, data TEXT DEFAULT NULL, filename TEXT DEFAULT NULL, "
-                       "pos INTEGER DEFAULT -1, size INTEGER DEFAULT -1, ct TEXT default NULL)"))
+                       "pos INTEGER DEFAULT -1, size INTEGER DEFAULT -1, ct TEXT default NULL, cl TEXT default NULL)"))
     return;
 
   // fill tables
@@ -149,7 +149,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
           addvalue((rc.columnname.empty() ? rc.name : rc.columnname), (rc.type == "INTEGER") ? std::any(bepaald::toNumber<long long int>(val)) : std::any(val));
       }
 
-      std::vector<std::pair<XmlDocument::Node::StringOrRef, std::string>> attachments;
+      std::vector<std::tuple<XmlDocument::Node::StringOrRef, std::string, std::string>> attachments;
       if (n.name() == "mms")
       {
         // get message body && attachments
@@ -185,7 +185,13 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                 std::string ct;
                 if (part.hasAttribute("ct"))
                   ct = part.getAttribute("ct");
-                attachments.emplace_back(std::make_pair(attachmentdata, ct));
+
+                std::string cl;
+                if (part.hasAttribute("cl"))
+                  cl = part.getAttribute("cl");
+
+                attachments.emplace_back(std::make_tuple(attachmentdata, ct, cl));
+
               }
             }
           }
@@ -240,9 +246,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       {
         long long int lastid = d_database.lastId();
         for (auto const &a : attachments)
-          d_database.exec("INSERT INTO attachments (mid, data, filename, pos, size, ct) "
+          d_database.exec("INSERT INTO attachments (mid, data, filename, pos, size, ct, cl) "
                           "VALUES "
-                          "(?, ?, ?, ?, ?, ?)", {lastid, a.first.value, a.first.file, a.first.pos, a.first.size, a.second});
+                          "(?, ?, ?, ?, ?, ?, ?)", {lastid, std::get<0>(a).value, std::get<0>(a).file, std::get<0>(a).pos, std::get<0>(a).size,
+                                                    std::get<1>(a), std::get<2>(a)});
       }
 
     }

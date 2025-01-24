@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -25,6 +25,7 @@
 
 #include "signalbackup.ih"
 
+#include "../scopeguard/scopeguard.h"
 #include <cerrno>
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
@@ -51,52 +52,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
     databasemigrated = true;
   }
-
-  // // >= 168 will work already? (not sure if 168 and 169 were ever in production, I don't have them at least)
-  // if (d_databaseversion == 167)
-  // {
-  //   SqliteDB::copyDb(d_database, backup_database);
-  //   if (!migrateDatabase(167, 170))
-  //   {
-  //     Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
-  //                   " Please upgrade your database");
-  //     SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  //   else
-  //     databasemigrated = true;
-  // }
-  // else if (d_databaseversion < 167)
-  // {
-  //   if (!migrate)
-  //   {
-  //     Logger::error("Currently unsupported database version (", d_databaseversion, ").");
-  //     Logger::error_indent("Please upgrade your database or append the `--migratedb' option to attempt to");
-  //     Logger::error_indent("migrate this database to a supported version.");
-  //     return false;
-  //   }
-  //   SqliteDB::copyDb(d_database, backup_database);
-  //   if (!migrateDatabase(d_databaseversion, 170)) // migrate == TRUE, but migration fails
-  //   {
-  //     Logger::error("Failed to migrate currently unsupported database version (", d_databaseversion, ")."
-  //                   " Please upgrade your database");
-  //     SqliteDB::copyDb(backup_database, d_database);
-  //     return false;
-  //   }
-  //   else
-  //     databasemigrated = true;
-  // }
+  ScopeGuard restore_migrated_database([&]() { if (databasemigrated) SqliteDB::copyDb(backup_database, d_database); });
 
   if (originalfilenames && append) [[unlikely]]
     Logger::warning("Options 'originalfilenames' and 'append' are incompatible");
 
   // // check if dir exists, create if not
   if (!prepareOutputDirectory(directory, overwrite, !originalfilenames /*allowappend only allowed when not using original filenames*/, append))
-  {
-    if (databasemigrated)
-      SqliteDB::copyDb(backup_database, d_database);
     return false;
-  }
 
   // check and warn about selfid & note-to-self thread
   long long int note_to_self_thread_id = -1;
@@ -373,24 +336,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     std::string threaddir = (is_note_to_self ? "Note to Self (_id"s + bepaald::toString(thread_id) + ")"
                              : sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ")"));
-
-    //if (!append)
-    //  makeFilenameUnique(directory, &threaddir);
-
     if (bepaald::fileOrDirExists(directory + "/" + threaddir))
     {
       if (!bepaald::isDir(directory + "/" + threaddir))
       {
         Logger::error("dir is regular file");
-        if (databasemigrated)
-          SqliteDB::copyDb(backup_database, d_database);
         return false;
       }
       if (!append && !overwrite) // should be impossible at this point....
       {
         Logger::error("Refusing to overwrite existing directory");
-        if (databasemigrated)
-          SqliteDB::copyDb(backup_database, d_database);
         return false;
       }
     }
@@ -408,8 +363,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           Logger::message(" Filesize: ", d_fd->total());
         }
       }
-      if (databasemigrated)
-        SqliteDB::copyDb(backup_database, d_database);
       return false;
     }
 
@@ -445,9 +398,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::ofstream htmloutput(directory + "/" + threaddir + "/" + filename, std::ios_base::binary);
       if (!htmloutput.is_open())
       {
-        Logger::error("Failed to open '", directory, "/", threaddir, "/", filename, " for writing.");
-        if (databasemigrated)
-          SqliteDB::copyDb(backup_database, d_database);
+        Logger::error("Failed to open '", directory, "/", threaddir, "/", filename, "' for writing.");
         return false;
       }
 
@@ -1030,10 +981,5 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     HTMLwriteSettings(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   Logger::message("All done!");
-  if (databasemigrated)
-  {
-    Logger::message("restoring migrated database...");
-    SqliteDB::copyDb(backup_database, d_database);
-  }
   return true;
 }
