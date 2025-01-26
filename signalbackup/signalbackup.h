@@ -191,6 +191,7 @@ class SignalBackup
     std::string wall_light;
     std::string wall_dark;
     bool hasavatar;
+    bool verified;
   };
 
   static std::vector<DatabaseLink> const s_databaselinks;

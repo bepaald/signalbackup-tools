@@ -34,7 +34,8 @@ class SignalPlaintextBackupDatabase
   bool d_verbose;
   std::set<std::string> d_warningsgiven;
  public:
-  SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose);
+  SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
+                                std::vector<std::pair<std::string, std::string>> const &namemap);
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase &&other) = delete;
   SignalPlaintextBackupDatabase &operator=(SignalPlaintextBackupDatabase const &other) = delete;
@@ -56,7 +57,21 @@ inline bool SignalPlaintextBackupDatabase::ok() const
 
 inline bool SignalPlaintextBackupDatabase::listContacts() const
 {
-  return d_database.prettyPrint(d_truncate, "SELECT address AS phone, MAX(contact_name) AS contact_name FROM smses GROUP BY phone ORDER BY phone");
+  SqliteDB::QueryResults addresses;
+  d_database.exec("WITH adrs AS "
+                  "("
+                  "  SELECT DISTINCT address FROM smses UNION ALL SELECT DISTINCT sourceaddress AS address FROM smses"
+                  ") "
+                  "SELECT DISTINCT address FROM adrs WHERE address IS NOT NULL ORDER BY address", &addresses);
+  //addresses.prettyPrint(d_truncate);
+
+  for (unsigned int i = 0; i < addresses.rows(); ++i)
+  {
+    std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' AND address = ?", addresses.value(i, 0), std::string());
+    Logger::message(std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
+  }
+
+  return true;
 }
 
 inline void SignalPlaintextBackupDatabase::warnOnce(std::string const &warning, bool error)

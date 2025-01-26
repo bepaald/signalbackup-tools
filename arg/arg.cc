@@ -151,6 +151,7 @@ Arg::Arg(int argc, char *argv[])
   d_selectxmlchats(std::vector<std::string>()),
   d_linkify(true),
   d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
+  d_mapxmlcontactnames(std::vector<std::pair<std::string, std::string>>()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1806,6 +1807,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_setchatcolors, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapxmlcontactnames")
+    {
+      if (i < argsize - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapxmlcontactnames, &error))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;

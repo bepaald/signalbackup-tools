@@ -119,8 +119,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   SqliteDB::QueryResults pt_messages;
   if (!ptdb->d_database.exec("SELECT "
                              "rowid, "
-                             "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, numaddresses, ismms "
-                             //", CONCAT(address, contact_name) AS identifier "
+                             "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, numaddresses, ismms, skip "
                              "FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
     return false;
 
@@ -133,6 +132,9 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   {
     if (i % 100 == 0)
       Logger::message_overwrite("Importing messages into backup... ", i, "/", pt_messages.rows());
+
+    if (pt_messages.valueAsInt(i, "skip") == 1) [[unlikely]]
+      continue;
 
     std::string body = pt_messages(i, "body");
     if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)

@@ -55,9 +55,11 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     (d_database.tableContainsColumn("recipient", "blocked") ? "blocked, " : "") +
                     (d_database.tableContainsColumn("recipient", "mention_setting") ? "mention_setting, " : "") +
                     (d_database.tableContainsColumn("recipient", "message_expiration_time") ? "message_expiration_time, " : "") +
+                    "identities.verified, "
                     "recipient.wallpaper "
                     "FROM recipient "
                     "LEFT JOIN groups ON recipient.group_id = groups.group_id " +
+                    "LEFT JOIN identities ON recipient." + d_recipient_aci + " = identities.address " +
                     (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
                     "WHERE recipient._id = ?",
                     rid, &results);
@@ -148,6 +150,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     bool hasavatar = (std::find_if(d_avatars.begin(), d_avatars.end(),
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
+    bool verified = (results.valueAsInt(0, "verified") == 1);
+
     recipientinfo->emplace(rid, RecipientInfo{display_name,
                                               initial,
                                               initial_is_emoji,
@@ -162,7 +166,8 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                                               color,
                                               wall_light,
                                               wall_dark,
-                                              hasavatar});
+                                              hasavatar,
+                                              verified});
   }
 }
 

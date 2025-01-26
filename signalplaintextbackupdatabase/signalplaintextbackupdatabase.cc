@@ -21,7 +21,8 @@
 
 #include "../xmldocument/xmldocument.h"
 
-SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose)
+SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
+                                                             std::vector<std::pair<std::string, std::string>> const &namemap)
   :
   d_ok(false),
   d_truncate(truncate),
@@ -70,11 +71,13 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                                                     {"body", "TEXT", "sms", ""},
                                                     {"contact_name", "TEXT", "", ""},
                                                     {"address", "TEXT", "", ""},
-                                                    //{"recipients", "TEXT", "none", ""},  // json? {"source":"address", "target":["address1", address2"]} ?
                                                     {"ismms", "INTEGER", "none", ""},
                                                     {"sourceaddress", "TEXT", "none", ""},
                                                     {"numaddresses", "INTEGER", "none", ""},
-                                                    {"numattachments", "INTEGER", "none", ""}};
+                                                    {"numattachments", "INTEGER", "none", ""},
+                                                    {"skip", "INTEGER", "none", ""}};     // skip entries are not real messages, they are just there to set a
+                                                                                          // contacts name who otherwise does not appear in the database (never
+                                                                                          // sent a message, but could be member of group)
 
   // create message table
   std::string tablecreate;
@@ -239,6 +242,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       // is sms
       addvalue("ismms", (n.name() == "mms") ? 1 : 0);
 
+      // dont skip, this is a real message
+      addvalue("skip", 0);
+
       if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
         return;
 
@@ -271,6 +277,27 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {cn.empty() ? addresses.value(i, 0) : cn, addresses.value(i, 0)}))
       return;
   }
+
+  // apply name-mapping....
+  for (auto const &[addr, cn] : namemap)
+  {
+    //std::cout << "Map " << addr << " -> " << cn << std::endl;
+    if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {cn, addr}))
+    {
+      Logger::warning("Failed to set contact name of ", addr, " to \"", cn, "\"");
+      continue;
+    }
+    if (d_database.changed() == 0) // no messages from this contact... add special entry
+    {
+      if (!d_database.exec("INSERT INTO smses (address, contact_name, skip) VALUES (?, ?, ?)", {addr, cn, 1}))
+      {
+        Logger::warning("Failed to set contact name of ", addr, " to \"", cn, "\"");
+        continue;
+      }
+    }
+  }
+  d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
+
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
   //d_database.prettyPrint(true, "SELECT min(date), max(date) FROM smses");
@@ -282,6 +309,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   // this is how to scan for selfid (sourceaddress of outgoing message with at least one target recipient)
   //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress FROM smses WHERE numaddresses > 1 AND type = 2 AND ismms = 1");
   //d_database.prettyPrint(true, "SELECT * FROM smses WHERE sourceaddress IS NULL AND type = 2 AND ismms = 1");
+  //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 3");
 
   d_ok = true;
 }

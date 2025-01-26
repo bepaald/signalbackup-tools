@@ -714,7 +714,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .shared-contact-avatar input[type=checkbox],
       .msg-img-container input[type=checkbox],
       .msg-linkpreview-img-container input[type=checkbox],
-      #thread-subtitle input[type=checkbox] {
+      .thread-subtitle input[type=checkbox] {
         display: none;
       }
 
@@ -1080,6 +1080,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--icon-f);
       }
 
+      .thread-subtitle .msg-security-icon,
       .msg-status .msg-security-icon {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21.793,7.888A19.35,19.35 0,0 1,12 23C7.6,20.4 2,15.5 2,4.5 9,4.5 12,1 12,1s2.156,2.5 7.05,3.268L17.766,5.553A14.7,14.7 0,0 1,12 3,15.653 15.653,0 0,1 3.534,5.946c0.431,8.846 4.8,12.96 8.458,15.29A17.39,17.39 0,0 0,19.983 9.7ZM22.53,5.03 L21.47,3.97 12,13.439 8.53,9.97 7.47,11.03 12,15.561Z"/></svg>');
         filter: var(--icon-f);
@@ -1168,6 +1169,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-call-outgoing,
       .msg-status .msg-info-icon,
       .msg-status .msg-security-icon,
+      .thread-subtitle .msg-security-icon,
       .msg-status .msg-pencil-icon,
       .msg-status .msg-thread-icon,
       .msg-status .msg-megaphone-icon,
@@ -1189,6 +1191,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-right: 8px;
         top: 2px;
         position: relative;
+      }
+
+      .thread-subtitle .msg-security-icon {
+        margin-right: 3px;
       }
 
       #menu {
@@ -1447,7 +1453,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       padding-left: 1%;
     }
 
-    #thread-subtitle input[type=checkbox]:checked ~ label > .groupdetails {
+    .thread-subtitle input[type=checkbox]:checked ~ label > .groupdetails {
       max-height: none;
       padding-top: 5px;
       padding-bottom: 5px;
@@ -1455,11 +1461,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       transition: padding-top 0.2s ease, padding-bottom 0.2s ease, max-height 0.4s ease;
     }
 
-    #thread-subtitle input[type=checkbox] ~ label > small::before {
+    .thread-subtitle input[type=checkbox] ~ label > small::before {
       content: '(show';
     }
 
-    #thread-subtitle input[type=checkbox]:checked ~ label >  small::before {
+    .thread-subtitle input[type=checkbox]:checked ~ label >  small::before {
       content: '(hide';
     }
 
@@ -1482,7 +1488,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: none;
       }
 
-      #thread-subtitle > label > small {
+      .thread-subtitle > label > small {
         display: none;
       }
 
@@ -1784,9 +1790,14 @@ file << R"(
   file << "</pre>";
   if (isnotetoself || isreleasechannel)
     file << "<div class=\"official\"></div>";
-  file << R"(</div>
-          <div id="thread-subtitle">
-            )";
+  file << "</div>\n";
+  if (!isnotetoself && getRecipientInfoFromMap(recipient_info, thread_recipient_id).verified)
+    file <<
+      "          <div class=\"thread-subtitle\">\n"
+      "            <span class=\"msg-security-icon\"></span>verified\n"
+      "          </div>\n";
+  file <<
+    "            <div class=\"thread-subtitle\">\n";
   if (isgroup)
   {
     file << groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << '\n';
