@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -430,6 +430,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
     << "        margin: 0px;\n"
     << "        padding: 0px;\n"
+    << "        overflow: hidden;\n"
+    << "        text-overflow: ellipsis;\n"
     << "      }\n"
     << '\n'
     << "      .groupsender {\n"

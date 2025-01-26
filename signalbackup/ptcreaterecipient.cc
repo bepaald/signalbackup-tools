@@ -21,7 +21,7 @@
 
 #include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 
-long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &,
+long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb,
                                               std::map<std::string, long long int> *contactmap,
                                               bool *warned_createcontacts, std::string const &contact_name,
                                               std::string const &address, bool isgroup) const
@@ -40,7 +40,6 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
 
   if (isgroup)
   {
-    /*
     SqliteDB::QueryResults group_members;
     ptdb->d_database.exec("WITH members AS "
                           "("
@@ -112,7 +111,6 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
     }
     d_database.exec("COMMIT TRANSACTION");
     return new_group_rid;
-    */
   }
 
   // else : NOT A GROUP

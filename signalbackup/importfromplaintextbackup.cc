@@ -119,7 +119,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   SqliteDB::QueryResults pt_messages;
   if (!ptdb->d_database.exec("SELECT "
                              "rowid, "
-                             "date, type, read, body, contact_name, address, numattachments, sourceaddress, numaddresses, ismms "
+                             "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, numaddresses, ismms "
                              //", CONCAT(address, contact_name) AS identifier "
                              "FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
     return false;
@@ -152,15 +152,15 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         pos != pt_messages_address.size() - 1)
       isgroup = true;
 
-    // match phone number to recipient_id
-    long long int rid = -1;
+    // match phone number to thread recipient_id
+    long long int trid = -1;
     if (auto it = contactmap.find(pt_messages_address); it != contactmap.end())
-      rid = it->second;
+      trid = it->second;
     else
     {
-      rid = getRecipientIdFromName(pt_messages_contact_name, false);
-      if (rid != -1)
-        contactmap[pt_messages_address] = rid;
+      trid = getRecipientIdFromName(pt_messages_contact_name, false);
+      if (trid != -1)
+        contactmap[pt_messages_address] = trid;
       else // try by phone number...
       {
         // this can go wrong these days. When an old contact is no longer on signal, it
@@ -170,26 +170,26 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         //
         // since the xml only has e164 to match, it will match the former (which is possibly
         // not a valid signal contact and likely causes problems when restoring)
-        rid = getRecipientIdFromPhone(pt_messages_address, false);
-        if (rid != -1)
-          contactmap[pt_messages_address] = rid;
+        trid = getRecipientIdFromPhone(pt_messages_address, false);
+        if (trid != -1)
+          contactmap[pt_messages_address] = trid;
       }
     }
 
-    if (rid == -1 && createmissingcontacts)
-      if ((rid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
+    if (trid == -1 && createmissingcontacts)
+      if ((trid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
                                    pt_messages_address, isgroup)) == -1)
         continue;
 
     // get matching thread
-    long long int tid = getThreadIdFromRecipient(rid);
+    long long int tid = getThreadIdFromRecipient(trid);
     if (tid == -1)
     {
       // create thread
-      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", pt_messages_address, " -> ", rid);
+      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", pt_messages_address, " -> ", trid);
       std::any new_thread_id;
       if (!insertRow("thread",
-                     {{d_thread_recipient_id, rid},
+                     {{d_thread_recipient_id, trid},
                       {"active", 1}},
                      "_id", &new_thread_id))
       {
@@ -201,7 +201,17 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       Logger::message_end(" -> thread_id: ", tid, ")");
     }
 
-    //std::cout << pt_messages(i, "address") << "/" << pt_messages(i, "contact_name") << " : " << rid << "/" << getNameFromRecipientId(rid) << std::endl;
+    long long int rid = -1;
+    if (auto it = contactmap.find(pt_messages_sourceaddress); it != contactmap.end()) [[likely]]
+      rid = it->second;
+    if (rid == -1)
+    {
+      Logger::error("Failed to find source_recipient_id in contactmap. Should be present at this point. Skipping message");
+      continue;
+    }
+
+
+    //std::cout << pt_messages(i, "address") << "/" << pt_messages(i, "contact_name") << " : " << trid << "/" << getNameFromRecipientId(trid) << std::endl;
 
     /* XML type : 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued */
     bool incoming;
@@ -237,7 +247,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     }
 
     //std::cout << "Get free date for message: '" << body << "'" << std::endl;
-    long long int freedate = getFreeDateForMessage(originaldate, tid, incoming ? rid : d_selfid);
+    long long int freedate = getFreeDateForMessage(originaldate, tid, incoming ? trid : d_selfid);
     if (freedate == -1)
     {
       if (d_verbose) [[unlikely]] Logger::message_end();
@@ -255,8 +265,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                     {"read", 1}, // defaults to 0, but causes tons of unread message notifications
                     {d_mms_delivery_receipts, (incoming ? 0 : (markdelivered ? 1 : 0))},
                     {d_mms_read_receipts, (incoming ? 0 : (markread ? 1 : 0))},
-                    {d_mms_recipient_id, incoming ? rid : d_selfid}, // FROM_RECIPIENT_ID
-                    {"to_recipient_id", incoming ? d_selfid : rid},
+                    {d_mms_recipient_id, incoming ? (isgroup ? rid : trid) : d_selfid}, // FROM_RECIPIENT_ID
+                    {"to_recipient_id", incoming ? d_selfid : trid},
                     {"m_type", incoming ? 132 : 128}}, // dont know what this is, but these are the values...
                    "_id", &newid))
       Logger::warning("Failed to insert message");
