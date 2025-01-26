@@ -58,7 +58,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
   }
 
   // open file
-  std::ofstream stickerhtml(directory + "/stickerpacks.html", std::ios_base::binary);
+  std::ofstream stickerhtml(WIN_LONGPATH(directory + "/stickerpacks.html"), std::ios_base::binary);
   if (!stickerhtml.is_open())
   {
     Logger::error("Failed to open '", directory, "/stickerpacks.html' for writing");
@@ -747,7 +747,7 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
     // file exists, we are appending, we assume we're done
     return true;
   }
-  std::ofstream stickerstream(stickerdatapath, std::ios_base::binary);
+  std::ofstream stickerstream(WIN_LONGPATH(stickerdatapath), std::ios_base::binary);
   if (!stickerstream.is_open()) [[unlikely]]
   {
     Logger::error("Failed to open '", stickerdatapath, "' for writing");

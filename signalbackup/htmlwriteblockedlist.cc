@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -33,7 +33,7 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
       return false;
     }
   }
-  std::ofstream outputfile(dir + "/blockedlist.html", std::ios_base::binary);
+  std::ofstream outputfile(WIN_LONGPATH(dir + "/blockedlist.html"), std::ios_base::binary);
   if (!outputfile.is_open())
   {
     Logger::error("Failed to open '", dir, "/blockedlist.html' for writing.");

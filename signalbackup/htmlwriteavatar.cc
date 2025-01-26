@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -70,7 +70,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     }
 
     // directory exists, now write avatar
-    std::ofstream avatarstream(directory + "/" + threaddir + "/" + avatar, std::ios_base::binary);
+    std::ofstream avatarstream(WIN_LONGPATH(directory + "/" + threaddir + "/" + avatar), std::ios_base::binary);
     if (!avatarstream.is_open())
     {
       Logger::error("Failed to open file for writing: '", directory, "/", threaddir, "/", avatar, "'");

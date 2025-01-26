@@ -135,7 +135,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   // start search index page
   if (searchpage)
   {
-    searchidx.open(directory + "/" + "searchidx.js", std::ios_base::binary);
+    searchidx.open(WIN_LONGPATH(directory + "/" + "searchidx.js"), std::ios_base::binary);
     if (!searchidx.is_open())
     {
       Logger::error("Failed to open 'searchidx.js' for writing");
@@ -395,7 +395,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
       std::string filename = sanitizeFilename(raw_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
-      std::ofstream htmloutput(directory + "/" + threaddir + "/" + filename, std::ios_base::binary);
+      std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
       if (!htmloutput.is_open())
       {
         Logger::error("Failed to open '", directory, "/", threaddir, "/", filename, "' for writing.");

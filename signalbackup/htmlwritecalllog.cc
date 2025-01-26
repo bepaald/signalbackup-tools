@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,7 +36,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
       return;
     }
   }
-  std::ofstream outputfile(directory + "/calllog.html", std::ios_base::binary);
+  std::ofstream outputfile(WIN_LONGPATH(directory + "/calllog.html"), std::ios_base::binary);
   if (!outputfile.is_open())
   {
     Logger::error("Failed to open '", directory, "/calllog.html' for writing.");

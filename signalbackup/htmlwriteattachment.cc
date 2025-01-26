@@ -67,7 +67,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   AttachmentFrame *a = attachmentfound->second.get();
 
   // write actual attachment:
-  std::ofstream attachmentstream(attachment_filename_full, std::ios_base::binary);
+  std::ofstream attachmentstream(WIN_LONGPATH(attachment_filename_full), std::ios_base::binary);
   if (!attachmentstream.is_open())
   {
     Logger::error("Failed to open file for writing: '", attachment_filename_full, "'",

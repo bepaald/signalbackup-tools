@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -32,7 +32,7 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
       return false;
     }
   }
-  std::ofstream outputfile(dir + "/settings.html", std::ios_base::binary);
+  std::ofstream outputfile(WIN_LONGPATH(dir + "/settings.html"), std::ios_base::binary);
   if (!outputfile.is_open())
   {
     Logger::error("Failed to open '", dir, "/settings.html' for writing.");

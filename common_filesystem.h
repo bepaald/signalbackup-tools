@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,7 +22,15 @@
 
 #include <filesystem>
 
+#include "logger/logger.h"
+
 using std::literals::string_literals::operator""s;
+
+#if defined(_WIN32) || defined(__MINGW64__)
+#define WIN_LONGPATH(...) bepaald::windows_long_file( __VA_ARGS__ )
+#else
+#define WIN_LONGPATH(...) __VA_ARGS__
+#endif
 
 namespace bepaald
 {
@@ -33,6 +41,9 @@ namespace bepaald
   inline bool isEmpty(std::string const &path);
   inline bool clearDirectory(std::string const &path);
   inline uint64_t fileSize(std::string const &path);
+#if defined(_WIN32) || defined(__MINGW64__)
+  inline std::string windows_long_file(std::string const &path);
+#endif
 }
 
 inline bool bepaald::fileOrDirExists(std::string const &path)
@@ -82,5 +93,19 @@ inline uint64_t bepaald::fileSize(std::string const &path)
   std::error_code ec;
   return std::filesystem::file_size(std::filesystem::path(path), ec);
 }
+
+#if defined(_WIN32) || defined(__MINGW64__)
+inline std::string bepaald::windows_long_file(std::string const &path)
+{
+  std::error_code ec;
+  auto abs_path = std::filesystem::absolute(path, ec);
+  if (ec)
+  {
+    Logger::error("Failed to get an absolute path for '", path, "'");
+    return path;
+  }
+  return R"(\\?\)" + abs_path.string();
+}
+#endif
 
 #endif

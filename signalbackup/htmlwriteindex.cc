@@ -37,7 +37,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       return false;
     }
   }
-  std::ofstream outputfile(directory + "/" + filename, std::ios_base::binary);
+  std::ofstream outputfile(WIN_LONGPATH(directory + "/" + filename), std::ios_base::binary);
   if (!outputfile.is_open())
   {
     Logger::error("Failed to open '", directory, "/", filename, "' for writing.");
