@@ -236,9 +236,11 @@ inline bool AttachmentFrame::validate() const
     return false;
 
   int foundrowid = 0;
+  int rowid_fieldsize = 0;
   int foundlength = 0;
-  int foundattachmentid = 0;
+  int length_fieldsize = 0;
   int length = 0;
+  int foundattachmentid = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
@@ -247,16 +249,22 @@ inline bool AttachmentFrame::validate() const
       return false;
 
     if (std::get<0>(p) == FIELD::ROWID)
+    {
       ++foundrowid;
+      rowid_fieldsize += std::get<2>(p);
+    }
     else if (std::get<0>(p) == FIELD::ATTACHMENTID)
-      ++foundattachmentid;
+      ++foundattachmentid; // zero for newer backups...
     else if (std::get<0>(p) == FIELD::LENGTH)
     {
       ++foundlength;
       length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+      length_fieldsize += std::get<2>(p);
     }
   }
-  return foundlength == 1 && foundattachmentid == 1 && foundrowid == 1 &&
+
+  return foundlength == 1 && foundattachmentid <= 1 && foundrowid == 1 &&
+    length_fieldsize <= 8 && rowid_fieldsize <= 8 &&
     length < 1 * 1024 * 1024 * 1024; // lets cap a valid attachment size at 1 gigabyte.
   // From what I've found, the current (theoretical) maximum is 500Mb for video on
   // Android.

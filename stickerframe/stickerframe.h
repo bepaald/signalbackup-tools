@@ -209,7 +209,9 @@ inline bool StickerFrame::validate() const
     return false;
 
   int foundrowid = 0;
+  int rowid_fieldsize = 0;
   int foundlength = 0;
+  int length_fieldsize = 0;
   int length = 0;
   for (auto const &p : d_framedata)
   {
@@ -218,14 +220,20 @@ inline bool StickerFrame::validate() const
       return false;
 
     if (std::get<0>(p) == FIELD::ROWID)
+    {
       ++foundrowid;
+      rowid_fieldsize += std::get<2>(p);
+    }
     else if (std::get<0>(p) == FIELD::LENGTH)
     {
       ++foundlength;
       length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+      length_fieldsize += std::get<2>(p);
     }
   }
   return foundlength == 1 && foundrowid == 1 &&
+    length_fieldsize <= 8 &&
+    rowid_fieldsize <= 8 &&
     length < 1 * 1024 * 1024; // If size is more than 1MB, it's not right... From
                               // https://support.signal.org/hc/en-us/articles/360031836512-Stickers :
                               // "Each sticker has a size limit of 300kb"

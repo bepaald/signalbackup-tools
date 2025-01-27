@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -187,6 +187,7 @@ inline bool SharedPrefFrame::validate() const
   int foundfile = 0;
   int foundkey = 0;
   int foundvalue = 0;
+  bool isstringsetvalue = false;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::FILE &&
@@ -208,8 +209,13 @@ inline bool SharedPrefFrame::validate() const
         std::get<0>(p) == FIELD::STRINGSETVALUE ||
         std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
       ++foundvalue;
+
+    if (std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
+      isstringsetvalue = (bytesToUint64(std::get<1>(p), std::get<2>(p)) ? true : false);
   }
-  return (foundfile + foundkey + foundvalue) > 0 && foundkey == foundvalue;
+
+  return (foundfile + foundkey + foundvalue) > 0 &&
+    (isstringsetvalue ? (foundkey <= foundvalue) : (foundkey == foundvalue));
 }
 
 inline std::string SharedPrefFrame::getHumanData() const

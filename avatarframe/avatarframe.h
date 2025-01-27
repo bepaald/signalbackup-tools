@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -237,6 +237,8 @@ inline bool AvatarFrame::validate() const
     return false;
 
   int foundlength = 0;
+  int length_fieldsize = 0;
+  int length = 0;
   int foundname_or_recipient = 0;
   for (auto const &p : d_framedata)
   {
@@ -247,12 +249,17 @@ inline bool AvatarFrame::validate() const
 
     // a valid avatar frame must contain length AND (recipient (newer backups) XOR name (older backups))
     if (std::get<0>(p) == FIELD::LENGTH)
+    {
       ++foundlength;
+      length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+      length_fieldsize += std::get<2>(p);
+    }
     else if (std::get<0>(p) == FIELD::RECIPIENT || std::get<0>(p) != FIELD::NAME)
       ++foundname_or_recipient;
   }
 
-  return foundlength == 1 && foundname_or_recipient == 1;
+  return foundlength == 1 && foundname_or_recipient == 1 &&
+    length_fieldsize <= 8; // && length < some_max_avatar_size;
 }
 
 inline std::string AvatarFrame::getHumanData() const

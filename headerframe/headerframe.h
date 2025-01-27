@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -236,7 +236,8 @@ inline bool HeaderFrame::validate() const
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::IV &&
-        std::get<0>(p) != FIELD::SALT)
+        std::get<0>(p) != FIELD::SALT &&
+        std::get<0>(p) != FIELD::VERSION) // all possible fields, version only in newer backups
       return false;
 
     // must contain salt and iv, each 1 time.

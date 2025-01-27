@@ -27,7 +27,8 @@
 using std::literals::string_literals::operator""s;
 
 #if defined(_WIN32) || defined(__MINGW64__)
-#define WIN_LONGPATH(...) bepaald::windows_long_file( __VA_ARGS__ )
+//#define WIN_LONGPATH(...) bepaald::windows_long_file( __VA_ARGS__ )
+#define WIN_LONGPATH(...) __VA_ARGS__
 #else
 #define WIN_LONGPATH(...) __VA_ARGS__
 #endif
@@ -97,6 +98,8 @@ inline uint64_t bepaald::fileSize(std::string const &path)
 #if defined(_WIN32) || defined(__MINGW64__)
 inline std::string bepaald::windows_long_file(std::string const &path)
 {
+  //Logger::message("WINDOWS_LONG_PATH: input \"", path, "\"");
+
   std::error_code ec;
   auto abs_path = std::filesystem::absolute(path, ec);
   if (ec)
@@ -104,6 +107,10 @@ inline std::string bepaald::windows_long_file(std::string const &path)
     Logger::error("Failed to get an absolute path for '", path, "'");
     return path;
   }
+
+  //Logger::message("WINDOWS_LONG_PATH: output \"", "\\\\?\\" + abs_path.string(), "\"");
+
+  // prepend windows magic long path prefix:
   return R"(\\?\)" + abs_path.string();
 }
 #endif

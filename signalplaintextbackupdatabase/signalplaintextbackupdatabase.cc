@@ -296,7 +296,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       }
     }
   }
-  d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
+  //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
