@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -189,7 +189,7 @@ void SignalBackup::HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, s
                                             url[STRLEN("https://signal.link/call/#key=") + 1]);
     //std::cout << (index % 12) << std::endl;
     if (index > 0) [[likely]]
-      color = s_html_random_colors[index % s_html_random_colors.size()];
+      color = s_html_random_colors[index % s_html_random_colors.size()].second;
   }
 
   htmloutput << std::string(indent, ' ') << "<div class=\"call-link\">\n";

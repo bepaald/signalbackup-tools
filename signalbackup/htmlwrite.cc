@@ -420,7 +420,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg pre a {
-        color: #FFFFFF;
+        color: inherit;
         text-decoration: underline;
       }
 
@@ -1236,6 +1236,9 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         padding: 0px;
         margin: 0px;
+        width: 900px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
       }
 
       .threadtitle-info {

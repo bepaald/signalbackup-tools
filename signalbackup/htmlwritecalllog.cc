@@ -330,7 +330,9 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
         long long int threadid = d_database.getSingleResultAs<long long int>("SELECT thread_id FROM " + d_mms_table + " WHERE _id = ?", results(i, "message_id"), -1);
         if (threadid == -1)
           continue;
-        std::string avatar_path = (sanitizeFilename(getRecipientInfoFromMap(recipientinfo, peer).display_name + " (_id" + bepaald::toString(threadid) + ")"));
+        std::string raw_avatar_path(getRecipientInfoFromMap(recipientinfo, peer).display_name);
+        WIN_LIMIT_FILENAME_LENGTH(raw_avatar_path);
+        std::string avatar_path(sanitizeFilename(raw_avatar_path) + " (_id" + bepaald::toString(threadid) + ")");
         bepaald::replaceAll(&avatar_path, '\"', R"(\")");
         std::string avatar_extension = getAvatarExtension(peer);
 

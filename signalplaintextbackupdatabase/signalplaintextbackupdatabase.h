@@ -65,6 +65,10 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
                   "SELECT DISTINCT address FROM adrs WHERE address IS NOT NULL ORDER BY address", &addresses);
   //addresses.prettyPrint(d_truncate);
 
+  if (addresses.rows() == 0) [[unlikely]]
+    Logger::message("(no contacts found in XML file)");
+  else
+    Logger::message(std::setw(20), std::left, " address", std::setw(0), " :  name");
   for (unsigned int i = 0; i < addresses.rows(); ++i)
   {
     std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' AND address = ?", addresses.value(i, 0), std::string());

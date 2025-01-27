@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -89,7 +89,6 @@ private static final Map<String, MaterialColor> COLOR_MATCHES = new HashMap<Stri
     val TAUPE = ChatColors.forColor(ChatColors.Id.BuiltIn, 0xFF8F616A.toInt())
     val STEEL = ChatColors.forColor(ChatColors.Id.BuiltIn, 0xFF71717F.toInt())
 */
-
 std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red", "CF163E"},
                                                                           {"deep_orange", "CF163E"},
                                                                           {"CRIMSON", "CF163E"},
@@ -175,8 +174,10 @@ std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red"
 
                                                                           {"ultramarine", "315FF4"},
                                                                           {"ULTRAMARINE", "315FF4"},
-                                                                          {"group_color", "315FF4"}/*,
-                                                                          {"GROUP", "315FF4"}*/
+                                                                          {"group_color", "315FF4"}//,
+                                                                          /*
+                                                                          {"GROUP", "315FF4"},
+                                                                          */
 
                                                                           /*
                                                                           {"A180", "FEF5D0"},
@@ -187,6 +188,8 @@ std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red"
                                                                           {"C330", "F6D8EC"},
                                                                           {"C340", "F6D8EC"},
                                                                           {"C350", "F6D8EC"},
+
+                                                                          {"A200", "D2D2DC"}
                                                                           */
                                                                           };
 /*
@@ -206,15 +209,15 @@ std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red"
   UNKNOWN("UNKNOWN", 0x00000000),
   ON_SURFACE_VARIANT("ON_SURFACE_VARIANT", 0x00000000);
 */
-std::array<std::string, 12> const SignalBackup::s_html_random_colors{"E3E3FE",  // A100
-                                                                     "DDE7FC",  // A110
-                                                                     "D8E8F0",  // A120
-                                                                     "CDE4CD",  // A130
-                                                                     "EAE0F8",  // A140
-                                                                     "F5E3FE",  // A150
-                                                                     "F6D8EC",  // A160
-                                                                     "F5D7D7",  // A170
-                                                                     "FEF5D0",  // A180
-                                                                     "EAE6D5",  // A190
-                                                                     "D2D2DC",  // A200
-                                                                     "D7D7D9"}; // A210
+std::array<std::pair<std::string, std::string>, 12> const SignalBackup::s_html_random_colors{std::pair<std::string, std::string>{"A100", "E3E3FE"},
+                                                                                             std::pair<std::string, std::string>{"A110", "DDE7FC"},
+                                                                                             std::pair<std::string, std::string>{"A120", "D8E8F0"},
+                                                                                             std::pair<std::string, std::string>{"A130", "CDE4CD"},
+                                                                                             std::pair<std::string, std::string>{"A140", "EAE0F8"},
+                                                                                             std::pair<std::string, std::string>{"A150", "F5E3FE"},
+                                                                                             std::pair<std::string, std::string>{"A160", "F6D8EC"},
+                                                                                             std::pair<std::string, std::string>{"A170", "F5D7D7"},
+                                                                                             std::pair<std::string, std::string>{"A180", "FEF5D0"},
+                                                                                             std::pair<std::string, std::string>{"A190", "EAE6D5"},
+                                                                                             std::pair<std::string, std::string>{"A200", "D2D2DC"},
+                                                                                             std::pair<std::string, std::string>{"A210", "D7D7D9"}};

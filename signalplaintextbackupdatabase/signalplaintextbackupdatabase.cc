@@ -73,6 +73,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                                                     {"address", "TEXT", "", ""},
                                                     {"ismms", "INTEGER", "none", ""},
                                                     {"sourceaddress", "TEXT", "none", ""},
+                                                    {"targetaddresses", "TEXT", "none", ""}, // the target addresses of group message (json array)
                                                     {"numaddresses", "INTEGER", "none", ""},
                                                     {"numattachments", "INTEGER", "none", ""},
                                                     {"skip", "INTEGER", "none", ""}};     // skip entries are not real messages, they are just there to set a
@@ -105,6 +106,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   std::vector<std::any> values;
   std::string columns;
   std::string placeholders;
+
+  std::set<std::string> group_only_contacts; // the set of contacts that only appear in groups, and only receives messages
+  std::set<std::string> group_recipients; // the same but for each message...
 
   auto addvalue = [&](std::string const &column, std::any &&value)
   {
@@ -141,6 +145,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       columns.clear();
       placeholders.clear();
       values.clear();
+      group_recipients.clear();
+
       for (auto const &rc : columninfo)
       {
         if (rc.required_in_node != n.name() && !rc.required_in_node.empty())
@@ -224,6 +230,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
                 sourceaddress = addr.getAttribute("address");
               }
+              else // likely a receiving addr
+                if (addr.hasAttribute("address"))
+                {
+                  group_only_contacts.insert(addr.getAttribute("address")); // maybe scan for name...
+                  group_recipients.insert(addr.getAttribute("address")); // maybe scan for name...
+                }
             }
             addvalue("numaddresses", numaddresses);
           }
@@ -234,6 +246,16 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
         if (!sourceaddress.empty())
           addvalue("sourceaddress", std::move(sourceaddress));
+
+        if (!group_recipients.empty())
+        {
+          // might need to not do this manually...
+          std::string json_array_recipients("[");
+          for (auto it = group_recipients.begin(); it != group_recipients.end(); ++it)
+            json_array_recipients += (it != group_recipients.begin() ? (", \"" + *it + "\"") : ("\"" + *it + "\""));
+          json_array_recipients += ']';
+          addvalue("targetaddresses", json_array_recipients);
+        }
       }
 
       //std::cout << "attachments: " << attachments.size() << std::endl;
@@ -263,6 +285,14 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       warnOnce("Skipping unsupported element: '" + n.name() + "'");
   }
 
+  // add group-only-contacts, as 'skip' messages, so they can be mapped...
+  for (auto const &a : group_only_contacts)
+    if (!d_database.exec("INSERT INTO smses (address, skip) VALUES (?, ?)", {a, 1}))
+    {
+      Logger::warning("Failed to add group-only-contact ", a);
+      continue;
+    }
+
   // If contact_name IS NULL, "", or "(Unknown)", set it to MAX(contact_name) for that address,
   // If still empty (all messsages from that contact were NULL, "", OR "(Unknown)", set it
   // to address
@@ -272,7 +302,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     return;
   for (unsigned int i = 0; i < addresses.rows(); ++i)
   {
-    std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' AND address = ?", addresses.value(i, 0), std::string());
+    std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses "
+                                                               "WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' "
+                                                               "AND address = ?", addresses.value(i, 0), std::string());
     //std::cout << addresses(i, "address") << " '" << cn << "'" << std::endl;
     if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {cn.empty() ? addresses.value(i, 0) : cn, addresses.value(i, 0)}))
       return;
@@ -287,6 +319,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       Logger::warning("Failed to set contact name of ", addr, " to \"", cn, "\"");
       continue;
     }
+
     if (d_database.changed() == 0) // no messages from this contact... add special entry
     {
       if (!d_database.exec("INSERT INTO smses (address, contact_name, skip) VALUES (?, ?, ?)", {addr, cn, 1}))
@@ -295,7 +328,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
         continue;
       }
     }
+
   }
+
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
@@ -310,6 +345,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress FROM smses WHERE numaddresses > 1 AND type = 2 AND ismms = 1");
   //d_database.prettyPrint(true, "SELECT * FROM smses WHERE sourceaddress IS NULL AND type = 2 AND ismms = 1");
   //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 3");
+
+  //d_database.saveToFile("plaintext.sqlite");
 
   d_ok = true;
 }

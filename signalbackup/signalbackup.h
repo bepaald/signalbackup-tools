@@ -48,6 +48,21 @@
 #include <regex>
 #include <array>
 
+#if defined WIN32 || MINGW
+// Windows has all sorts of issues with 'long' paths. While this tool can (probably)
+// work around that (see WIN_LONGPATH in common_filesystem), it does not help much
+// as many Windows programs can then still not open the resulting files with their
+// long paths. Instead we limit the file length of files written to some max length
+//
+// In Signal currently group titles are limited to 32 characters, while contact names
+// are max 53 (26 first name + space + 26 last name) (historically, longer group
+// titles have been possible).
+#define MAXFILELENGTH 32
+#define WIN_LIMIT_FILENAME_LENGTH(str) if (str.size() > MAXFILELENGTH) str.resize(MAXFILELENGTH);
+#else
+#define WIN_LIMIT_FILENAME_LENGTH(str)
+#endif
+
 struct HTMLMessageInfo;
 struct Range;
 struct GroupInfo;
@@ -200,7 +215,7 @@ class SignalBackup
   static std::unordered_set<char> const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
-  static std::array<std::string, 12> const s_html_random_colors;
+  static std::array<std::pair<std::string, std::string>, 12> const s_html_random_colors;
   static std::regex const s_linkify_pattern;
 
  protected:

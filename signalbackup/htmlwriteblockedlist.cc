@@ -281,7 +281,9 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
       long long int thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", rec_id, -1);
       if (thread_id != -1)
       {
-        std::string thread_dir = sanitizeFilename(getRecipientInfoFromMap(recipient_info, rec_id).display_name + " (_id" + bepaald::toString(thread_id) + ")");
+        std::string raw_thread_dir(getRecipientInfoFromMap(recipient_info, rec_id).display_name);
+        WIN_LIMIT_FILENAME_LENGTH(raw_thread_dir);
+        std::string thread_dir(sanitizeFilename(raw_thread_dir) + " (_id" + bepaald::toString(thread_id) + ")");
         if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension))
           avatarpath = std::move(thread_dir);
       }

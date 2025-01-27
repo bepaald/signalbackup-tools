@@ -334,8 +334,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       continue;
     }
 
-    std::string threaddir = (is_note_to_self ? "Note to Self (_id"s + bepaald::toString(thread_id) + ")"
-                             : sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ")"));
+    std::string basethreaddir(is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
+    WIN_LIMIT_FILENAME_LENGTH(basethreaddir);
+    std::string threaddir(sanitizeFilename(basethreaddir) + " (_id"s + bepaald::toString(thread_id) + ")");
     if (bepaald::fileOrDirExists(directory + "/" + threaddir))
     {
       if (!bepaald::isDir(directory + "/" + threaddir))
@@ -394,6 +395,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::string previous_day_change;
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
+      WIN_LIMIT_FILENAME_LENGTH(raw_base_filename);
       std::string filename = sanitizeFilename(raw_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
       std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
       if (!htmloutput.is_open())
