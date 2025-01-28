@@ -396,7 +396,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_base_filename);
-      std::string filename = sanitizeFilename(raw_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
+      std::string filename(sanitizeFilename(raw_base_filename) + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
       std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
       if (!htmloutput.is_open())
       {

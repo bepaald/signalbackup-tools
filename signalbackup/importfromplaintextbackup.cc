@@ -208,7 +208,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       rid = it->second;
     if (rid == -1)
     {
-      Logger::error("Failed to find source_recipient_id in contactmap. Should be present at this point. Skipping message");
+      Logger::error("Failed to find source_recipient_id in contactmap (", pt_messages_sourceaddress, "). Should be present at this point. Skipping message");
       continue;
     }
 

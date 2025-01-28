@@ -68,11 +68,12 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
   if (addresses.rows() == 0) [[unlikely]]
     Logger::message("(no contacts found in XML file)");
   else
-    Logger::message(std::setw(20), std::left, " address", std::setw(0), " :  name");
+    Logger::message(" is_chat   ", std::setw(20), std::left, " address", std::setw(0), " :  name");
   for (unsigned int i = 0; i < addresses.rows(); ++i)
   {
     std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' AND address = ?", addresses.value(i, 0), std::string());
-    Logger::message(std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
+    long long int is_chat = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM smses WHERE address = ? AND skip = 0", addresses.value(i, 0), 0);
+    Logger::message((is_chat > 0 ? "   (*)   " : "         "), std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
   }
 
   return true;

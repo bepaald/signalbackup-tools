@@ -21,6 +21,11 @@
 
 #include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 
+#if __cpp_lib_bitops >= 201907L
+#include <bit>
+#endif
+
+
 long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb,
                                               std::map<std::string, long long int> *contactmap,
                                               bool *warned_createcontacts, std::string const &contact_name,
@@ -30,7 +35,11 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
   {
     unsigned int result = 0;
     for (auto c : a)
+#if __cpp_lib_bitops >= 201907L
+      result = std::rotl(result, 3) ^ static_cast<int>(c);
+#else
       result = ((result << 3) | (result >> (sizeof(int) - 3))) ^ static_cast<int>(c); // for (value in data) hash = hash.rotateLeft(3) xor value.toInt()
+#endif
     return result;
   };
 

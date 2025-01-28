@@ -57,6 +57,8 @@
 // In Signal currently group titles are limited to 32 characters, while contact names
 // are max 53 (26 first name + space + 26 last name) (historically, longer group
 // titles have been possible).
+// maybe this needs to be done smarter, making sure to only truncate at character
+// boundaries (not in the middle of multibyte ones...
 #define MAXFILELENGTH 32
 #define WIN_LIMIT_FILENAME_LENGTH(str) if (str.size() > MAXFILELENGTH) str.resize(MAXFILELENGTH);
 #else

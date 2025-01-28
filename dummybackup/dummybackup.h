@@ -100,6 +100,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> c
 
   // a selfid is required to ba able to correctly set from_recipient_id and to_recipient_id when importing messages
   std::string selfphone(selfid);
+
   if (selfphone.empty())
   {
     // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
@@ -116,8 +117,17 @@ inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> c
     return;
   }
 
+    // it is possible the contactname is set for this contact through --mapxmlcontactnames
+  std::string contact_name = ptdb->d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE address = ? "
+                                                                             "AND contact_name IS NOT NULL AND contact_name IS NOT ''",
+                                                                             selfphone, std::string());
+
   std::any new_rid;
-  if (!insertRow("recipient", {{d_recipient_e164, selfphone}}, "_id", &new_rid))
+  if (!insertRow("recipient",
+                 {{d_recipient_e164, selfphone},
+                  {(contact_name.empty() ? "" : "profile_given_name"), contact_name},
+                  {(contact_name.empty() ? "" : "profile_joined_name"), contact_name}},
+                 "_id", &new_rid))
     return;
   d_selfid = std::any_cast<long long int>(new_rid);
 
