@@ -109,6 +109,13 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     SELECT address,max(contact_name) FROM smses GROUP BY address ORDER BY address;
    */
   std::map<std::string, long long int> contactmap(initial_contactmap.begin(), initial_contactmap.end());
+  // fill contactmap with known recipients:
+  {
+    SqliteDB::QueryResults recipient_results;
+    if (d_database.exec("SELECT _id, " + d_recipient_e164 + " FROM recipient", &recipient_results))
+      for (unsigned int i = 0; i < recipient_results.rows(); ++i)
+        contactmap.emplace(recipient_results(i, "e164"), recipient_results.valueAsInt(i, "_id"));
+  }
 
   // READ always seems to be 1....
   //ptdb->d_database.prettyPrint(true, "SELECT DISTINCT type, read FROM smses");
@@ -119,7 +126,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   SqliteDB::QueryResults pt_messages;
   if (!ptdb->d_database.exec("SELECT "
                              "rowid, "
-                             "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, numaddresses, ismms, skip "
+                             "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, ismms, skip "
                              "FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
     return false;
 

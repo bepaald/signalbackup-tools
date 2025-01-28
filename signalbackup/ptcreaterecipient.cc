@@ -64,13 +64,9 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
 
     std::set<std::string> group_members;
     SqliteDB::QueryResults group_members_res;
-    ptdb->d_database.exec("WITH members AS "
-                          "("
-                          "  SELECT DISTINCT sourceaddress FROM smses WHERE address = ?"
-                          ")"
-                          "SELECT DISTINCT address FROM smses WHERE address IN members", address, &group_members_res);
+    ptdb->d_database.exec("SELECT DISTINCT sourceaddress FROM smses WHERE address = ?", address, &group_members_res);
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
-      group_members.insert(group_members_res(i, "address"));
+      group_members.insert(group_members_res(i, "sourceaddress"));
 
     ptdb->d_database.exec("SELECT DISTINCT value FROM smses, json_each(targetaddresses) WHERE smses.address = ?", address, &group_members_res);
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
@@ -93,9 +89,10 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
         }
 
         //std::cout << "Need to create group member(2): " << group_members(i, "address") << std::endl;
-        if (ptCreateRecipient(ptdb, contactmap, warned_createcontacts, cn,
-                              gm, false) == -1)
-          return -1;
+        if (!bepaald::contains(contactmap, gm))
+          if (ptCreateRecipient(ptdb, contactmap, warned_createcontacts, cn,
+                                gm, false) == -1)
+            return -1;
         // else
         //   std::cout << "Created contact: " << group_members(i, "address") << std::endl;
       }
@@ -158,7 +155,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
 
   std::any new_rid;
   long long int rid = -1;
-  std::string color = s_html_random_colors[random_from_address(address) % s_html_random_colors.size()].first;
+  std::string color = s_html_random_colors[random_from_address(contact_name) % s_html_random_colors.size()].first;
   insertRow("recipient",
             {{d_recipient_profile_given_name, contact_name},
              {"profile_joined_name", contact_name},

@@ -210,9 +210,15 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
             for (auto const &addr : sub)
             {
               ++numaddresses;
+              //addr.print();
+              if (!addr.hasAttribute("address"))
+              {
+                Logger::warning("No address attribute found in <addr>");
+                continue;
+              }
+              std::string groupmsgaddress = addr.getAttribute("address");
 
               // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
-              //addr.print();
               if (addr.hasAttribute("type") && addr.getAttribute("type") == "137")
               {
                 if (!sourceaddress.empty()) [[unlikely]]
@@ -221,21 +227,14 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                   sourceaddress.clear();
                   continue;
                 }
-
-                if (!addr.hasAttribute("address"))
-                {
-                  Logger::warning("No address attribute found in <addr>");
-                  continue;
-                }
-
-                sourceaddress = addr.getAttribute("address");
+                sourceaddress = groupmsgaddress;
+                group_only_contacts.insert(groupmsgaddress);
               }
               else // likely a receiving addr
-                if (addr.hasAttribute("address"))
-                {
-                  group_only_contacts.insert(addr.getAttribute("address")); // maybe scan for name...
-                  group_recipients.insert(addr.getAttribute("address")); // maybe scan for name...
-                }
+              {
+                group_only_contacts.insert(addr.getAttribute("address")); // maybe scan for name...
+                group_recipients.insert(addr.getAttribute("address")); // maybe scan for name...
+              }
             }
             addvalue("numaddresses", numaddresses);
           }
@@ -287,7 +286,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   // add group-only-contacts, as 'skip' messages, so they can be mapped...
   for (auto const &a : group_only_contacts)
-    if (!d_database.exec("INSERT INTO smses (address, skip) SELECT ?1, 1 WHERE NOT EXISTS (SELECT 1 FROM smses WHERE address = ?1 AND skip = 0)", a))
+    if (!d_database.exec("INSERT INTO smses (address, skip, contact_name) SELECT ?1, 1, ?1 "
+                         "WHERE NOT EXISTS (SELECT 1 FROM smses WHERE address = ?1 AND skip = 0)", a))
     {
       Logger::warning("Failed to add group-only-contact ", a);
       continue;
