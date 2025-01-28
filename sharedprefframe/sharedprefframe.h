@@ -49,7 +49,7 @@ class SharedPrefFrame : public BackupFrame
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t) const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::string key() const;
@@ -179,7 +179,7 @@ inline std::pair<unsigned char *, uint64_t> SharedPrefFrame::getData() const
 
 // not sure about the requirements, but at least _a_ field should be set
 // also a key needs a value, and a value needs a key
-inline bool SharedPrefFrame::validate() const
+inline bool SharedPrefFrame::validate(uint64_t) const
 {
   if (d_framedata.empty())
     return false;

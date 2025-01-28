@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -34,7 +34,7 @@ class EndFrame: public BackupFrame
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t available) const override;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -98,9 +98,10 @@ inline std::pair<unsigned char *, uint64_t> EndFrame::getData() const
   return {data, size};
 }
 
-inline bool EndFrame::validate() const
+inline bool EndFrame::validate(uint64_t available) const
 {
   return d_framedata.size() == 1 && std::get<2>(d_framedata.front()) == 8 &&
+    available == 0 &&
     (bytesToUint64(std::get<1>(d_framedata.front()), std::get<2>(d_framedata.front())) == 1 ||
      bytesToUint64(std::get<1>(d_framedata.front()), std::get<2>(d_framedata.front())) == 0);
 }

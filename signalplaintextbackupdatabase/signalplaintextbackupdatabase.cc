@@ -287,11 +287,13 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   // add group-only-contacts, as 'skip' messages, so they can be mapped...
   for (auto const &a : group_only_contacts)
-    if (!d_database.exec("INSERT INTO smses (address, skip) VALUES (?, ?)", {a, 1}))
+    if (!d_database.exec("INSERT INTO smses (address, skip) SELECT ?1, 1 WHERE NOT EXISTS (SELECT 1 FROM smses WHERE address = ?1 AND skip = 0)", a))
     {
       Logger::warning("Failed to add group-only-contact ", a);
       continue;
     }
+  //d_database.prettyPrint(false, "SELECT address FROM smses WHERE skip = 1");
+  //d_database.prettyPrint(false, "SELECT address FROM smses WHERE skip = 1 AND address IN (SELECT DISTINCT address FROM smses WHERE skip = 0)");
 
   // If contact_name IS NULL, "", or "(Unknown)", set it to MAX(contact_name) for that address,
   // If still empty (all messsages from that contact were NULL, "", OR "(Unknown)", set it

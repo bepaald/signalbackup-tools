@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -45,7 +45,7 @@ class DatabaseVersionFrame : public BackupFrame
   inline uint32_t version() const;
   inline virtual void printInfo() const override;
   inline virtual std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t) const override;
   inline std::string getHumanData() const override;
   //inline virtual bool setNewData(std::string const &field, std::string const &data) override;
   inline unsigned int getField(std::string_view const &str) const;
@@ -153,7 +153,7 @@ inline std::pair<unsigned char *, uint64_t> DatabaseVersionFrame::getData() cons
   return {data, size};
 }
 
-inline bool DatabaseVersionFrame::validate() const
+inline bool DatabaseVersionFrame::validate(uint64_t) const
 {
   if (d_framedata.empty())
     return false;

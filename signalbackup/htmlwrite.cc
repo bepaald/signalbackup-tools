@@ -1289,6 +1289,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       height: 24px;
       aspect-ratio: 1 / 1;
       margin-left: 8px;
+      margin-bottom: 3px;
+      vertical-align: bottom;
     }
 )";
   }
@@ -1297,11 +1299,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   {
     file << '\n'
          << "    .blocked {\n"
+         << "      display: inline-block;\n"
          << "      background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"/></svg>');\n"
          << "      height: 24px;\n"
          << "      aspect-ratio: 1 / 1;\n"
          << "      margin-right: 6px;\n"
          << "      filter: var(--icon-f);\n"
+         << "      margin-bottom: 2px;\n"
+         << "      vertical-align: bottom;\n"
          << "    }\n";
   }
 
@@ -1316,6 +1321,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
          << "      margin-top: 3px;\n"
          << "      margin-right: 8px;\n"
          << "      filter: var(--icon-f);\n"
+         << "      margin-bottom: 2px;\n"
+         << "      vertical-align: bottom;\n"
          << "    }\n";
   }
 
@@ -1783,16 +1790,17 @@ file << R"(
   }
   file << '\n'
        << "          <div id=\"thread-title\">";
+  file << "<pre class=\"threadtitle\">";
   if (isblocked)
-    file << "<div class=\"blocked\"></div>";
+    file << "<span class=\"blocked\"></span>";
   else if (ismuted)
-    file << "<div class=\"muted\"></div>";
-  file << "<pre class=\"threadtitle\">" << title;
+    file << "<span class=\"muted\"></span>";
+  file << title;
   if (expiration_timer)
     file << "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>";
-  file << "</pre>";
   if (isnotetoself || isreleasechannel)
-    file << "<div class=\"official\"></div>";
+    file << "<span class=\"official\"></span>";
+  file << "</pre>";
   file << "</div>\n";
   if (!isnotetoself && getRecipientInfoFromMap(recipient_info, thread_recipient_id).verified)
     file <<

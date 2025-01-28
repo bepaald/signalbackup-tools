@@ -58,7 +58,7 @@ class StickerFrame : public FrameWithAttachment
   inline uint64_t rowId() const;
   inline void setRowId(uint64_t rid);
   inline virtual std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t available) const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::optional<std::string> mimetype() const;
@@ -203,7 +203,7 @@ inline std::pair<unsigned char *, uint64_t> StickerFrame::getData() const
   return {data, size};
 }
 
-inline bool StickerFrame::validate() const
+inline bool StickerFrame::validate(uint64_t available) const
 {
   if (d_framedata.empty())
     return false;
@@ -212,7 +212,7 @@ inline bool StickerFrame::validate() const
   int rowid_fieldsize = 0;
   int foundlength = 0;
   int length_fieldsize = 0;
-  int length = 0;
+  unsigned int length = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
@@ -234,6 +234,7 @@ inline bool StickerFrame::validate() const
   return foundlength == 1 && foundrowid == 1 &&
     length_fieldsize <= 8 &&
     rowid_fieldsize <= 8 &&
+    length <= available &&
     length < 1 * 1024 * 1024; // If size is more than 1MB, it's not right... From
                               // https://support.signal.org/hc/en-us/articles/360031836512-Stickers :
                               // "Each sticker has a size limit of 300kb"

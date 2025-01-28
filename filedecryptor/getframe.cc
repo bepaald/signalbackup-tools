@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -231,6 +231,15 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
   delete[] decodedframe;
 
+  // if (!frame->validate(d_filesize - file.tellg()))
+  // {
+  //   std::cout << std::endl << "    **************        FRAME NOT VALIDATED      ****************" << std::endl;
+  //   frame->printInfo();
+  //   std::cout << "TOTAL SIZE: " << d_filesize << std::endl;
+  //   std::cout << "POSITION  : " << file.tellg()  << std::endl;
+  //   std::cout << "AVAILABLE : " << (d_filesize - file.tellg()) << std::endl;
+  // }
+
   uint32_t attsize = frame->attachmentSize();
   if (!d_badmac && attsize > 0 &&
       (frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT ||
@@ -419,6 +428,15 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
   }
 
   delete[] decodedframe;
+
+  // if (!frame->validate(d_filesize - file.tellg()))
+  // {
+  //   std::cout << std::endl << "    **************        FRAME NOT VALIDATED      ****************" << std::endl;
+  //   frame->printInfo();
+  //   std::cout << "TOTAL SIZE: " << d_filesize << std::endl;
+  //   std::cout << "POSITION  : " << file.tellg()  << std::endl;
+  //   std::cout << "AVAILABLE : " << (d_filesize - file.tellg()) << std::endl;
+  // }
 
   uint32_t attsize = frame->attachmentSize();
   if (!d_badmac && attsize > 0 &&

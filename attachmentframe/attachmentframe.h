@@ -58,7 +58,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline uint64_t attachmentId() const;
   inline void setAttachmentId(uint64_t rid);
   inline std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t available) const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline void setLengthField(uint32_t newlength);
@@ -230,7 +230,7 @@ inline std::pair<unsigned char *, uint64_t> AttachmentFrame::getData() const
 
 }
 
-inline bool AttachmentFrame::validate() const
+inline bool AttachmentFrame::validate(uint64_t available) const
 {
   if (d_framedata.empty())
     return false;
@@ -239,7 +239,7 @@ inline bool AttachmentFrame::validate() const
   int rowid_fieldsize = 0;
   int foundlength = 0;
   int length_fieldsize = 0;
-  int length = 0;
+  unsigned int length = 0;
   int foundattachmentid = 0;
   for (auto const &p : d_framedata)
   {
@@ -265,6 +265,7 @@ inline bool AttachmentFrame::validate() const
 
   return foundlength == 1 && foundattachmentid <= 1 && foundrowid == 1 &&
     length_fieldsize <= 8 && rowid_fieldsize <= 8 &&
+    length <= available &&
     length < 1 * 1024 * 1024 * 1024; // lets cap a valid attachment size at 1 gigabyte.
   // From what I've found, the current (theoretical) maximum is 500Mb for video on
   // Android.

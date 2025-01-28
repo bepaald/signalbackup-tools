@@ -132,7 +132,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, u
     }
     else
     {
-      if (frame->validate() &&
+      if (frame->validate(d_filesize - file.tellg()) &&
           frame->frameType() != BackupFrame::FRAMETYPE::HEADER && // it is impossible to get in this function without the headerframe, and there is only one
           (frame->frameType() != BackupFrame::FRAMETYPE::END || static_cast<uint64_t>(file.tellg()) == d_filesize))
       {

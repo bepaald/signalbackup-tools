@@ -57,7 +57,7 @@ class HeaderFrame : public BackupFrame
   inline virtual void printInfo() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline std::string getHumanData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t) const override;
   inline unsigned int getField(std::string_view const &str) const;
  private:
   inline uint64_t dataSize() const override;
@@ -226,7 +226,7 @@ inline std::string HeaderFrame::getHumanData() const
   return data;
 }
 
-inline bool HeaderFrame::validate() const
+inline bool HeaderFrame::validate(uint64_t) const
 {
   if (d_framedata.empty())
     return false;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -94,7 +94,7 @@ class SqlStatementFrame : public BackupFrame
   // inline std::string getParameterAsString(unsigned int idx) const;
   // inline uint64_t getParameterAsUint64(unsigned int idx) const;
 
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t) const override;
  private:
   void buildStatement();
   inline uint64_t dataSize() const override;
@@ -644,7 +644,7 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
   return parameters;
 }
 
-inline bool SqlStatementFrame::validate() const
+inline bool SqlStatementFrame::validate(uint64_t) const
 {
   if (d_framedata.empty())
     return false;

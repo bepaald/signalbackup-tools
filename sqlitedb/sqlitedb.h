@@ -354,17 +354,36 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &d_stmt, &d_error_tail) != SQLITE_OK) [[unlikely]]
     {
       Logger::error("During sqlite3_prepare_v2(): ", sqlite3_errmsg(d_db));
+      //// old way: just print the error
       //Logger::error_indent("\"", q, "\"");
+
+      //// newer way: mark the point _around_ the error posistion
+      // long long int error_pos = std::distance(q.c_str(), d_error_tail);
+      // long long int error_start = std::max(0ll, error_pos - 2);
+      // long long int error_end = std::min(error_pos + 2, static_cast<long long int>(q.size()));
+      // Logger::error_indent("-> Query: \"",
+      //                      q.substr(0, error_start),
+      //                      Logger::Control::BOLD,
+      //                      q.substr(error_start, error_end - error_start),
+      //                      Logger::Control::NORMAL,
+      //                      q.substr(error_end),
+      //                      "\"");
+
+      // attempt to mark the token that sqlite choked on
       long long int error_pos = std::distance(q.c_str(), d_error_tail);
-      long long int error_start = std::max(0ll, error_pos - 2);
-      long long int error_end = std::min(error_pos + 2, static_cast<long long int>(q.size()));
+      long long int error_start = error_pos; // find the token where the error starts...
+      while (error_start > 0 &&
+             ((q[error_start - 1] >= 'a' && q[error_start - 1] <= 'z') ||
+              (q[error_start - 1] >= 'A' && q[error_start - 1] <= 'Z') ||
+              (q[error_start - 1] >= '0' && q[error_start - 1] <= '9')))
+        --error_start;
       Logger::error_indent("-> Query: \"",
                            q.substr(0, error_start),
                            Logger::Control::BOLD,
-                           q.substr(error_start, error_end - error_start),
+                           q.substr(error_start, error_pos - error_start),
                            Logger::Control::NORMAL,
-                           q.substr(error_end),
-                           "\"");
+                           q.substr(error_pos));
+
       return false;
     }
   }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -97,7 +97,7 @@ class BackupFrame
   inline virtual std::pair<unsigned char *, uint64_t> getData() const;
   inline virtual std::string getHumanData() const;
   inline bool setNewData(unsigned int field, unsigned char *data, uint64_t size);
-  inline virtual bool validate() const;
+  inline virtual bool validate(uint64_t available) const;
   inline virtual uint64_t dataSize() const;
  protected:
   inline uint32_t bytesToUint32(unsigned char const *data, size_t len) const;
@@ -543,7 +543,7 @@ inline bool BackupFrame::setNewData(unsigned int field, unsigned char *data, uin
   return true;
 }
 
-inline bool BackupFrame::validate() const
+inline bool BackupFrame::validate(uint64_t) const
 {
   return true;
 }

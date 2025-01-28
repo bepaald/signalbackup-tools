@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -51,7 +51,7 @@ class KeyValueFrame : public BackupFrame
   inline virtual void printInfo() const override;
   inline virtual FRAMETYPE frameType() const override;
   inline std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t) const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::string key() const;
@@ -194,7 +194,7 @@ inline std::pair<unsigned char *, uint64_t> KeyValueFrame::getData() const
 
 // not sure about the requirements, but I'm guessing
 // 1 key and at least one value is required
-inline bool KeyValueFrame::validate() const
+inline bool KeyValueFrame::validate(uint64_t) const
 {
   if (d_framedata.empty())
     return false;

@@ -57,7 +57,7 @@ class AvatarFrame : public FrameWithAttachment
   inline std::string recipient() const;
   inline void setRecipient(std::string  const &r);
   inline std::pair<unsigned char *, uint64_t> getData() const override;
-  inline virtual bool validate() const override;
+  inline virtual bool validate(uint64_t available) const override;
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::optional<std::string> mimetype() const;
@@ -231,14 +231,14 @@ inline std::pair<unsigned char *, uint64_t> AvatarFrame::getData() const
   return {data, size};
 }
 
-inline bool AvatarFrame::validate() const
+inline bool AvatarFrame::validate(uint64_t available) const
 {
   if (d_framedata.empty())
     return false;
 
   int foundlength = 0;
   int length_fieldsize = 0;
-  int length = 0;
+  unsigned int length = 0;
   int foundname_or_recipient = 0;
   for (auto const &p : d_framedata)
   {
@@ -259,6 +259,7 @@ inline bool AvatarFrame::validate() const
   }
 
   return foundlength == 1 && foundname_or_recipient == 1 &&
+    length <= available &&
     length_fieldsize <= 8; // && length < some_max_avatar_size;
 }
 
