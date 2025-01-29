@@ -139,7 +139,11 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
   DummyBackup(verbose, truncate, showprogress)
 {
   if (!d_ok)
+  {
+    Logger::error("Base not initialized ok");
     return;
+  }
+
   d_ok = false;
 
   // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
@@ -154,7 +158,9 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
   if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
   {
     // a bit more complicated:
-    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN (SELECT id FROM conversations WHERE type = 'group')", std::string());
+    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') "
+                                                          "WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN "
+                                                          "(SELECT id FROM conversations WHERE type = 'group')", std::string());
     if (uuid.empty())
     {
       Logger::error("Failed to determine uuid of self");
@@ -167,8 +173,10 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
                             "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
                             uuid, &selfdata) ||
       selfdata.rows() != 1)
-    // warning
+  {
+    Logger::error("Failed to get profile data of self from Desktop database");
     return;
+  }
 
   std::any new_rid;
   if (!insertRow("recipient",
@@ -178,7 +186,10 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
                   {d_recipient_e164, selfdata.value(0, "e164")},
                   {d_recipient_aci, uuid},
                   {d_recipient_avatar_color, selfdata.value(0, "color")}}, "_id", &new_rid))
+  {
+    Logger::error("Failed to insert profile data of self into DummyBackup");
     return;
+  }
 
   d_selfid = std::any_cast<long long int>(new_rid);
   d_selfuuid = uuid;

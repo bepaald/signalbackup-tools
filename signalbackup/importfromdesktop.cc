@@ -203,6 +203,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                      bool createmissingcontacts_valid, bool autodates, bool importstickers,
                                      std::string const &selfphone)
 {
+  if (d_verbose) [[unlikely]]
+    Logger::message("Starting importFromDesktop()");
+
   if (d_selfid == -1)
   {
     d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);

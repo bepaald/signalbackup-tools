@@ -153,7 +153,11 @@ int main(int argc, char *argv[])
 
     DummyBackup dummydb(ddb, arg.verbose(), arg.truncate(), arg.showprogress());
     if (!dummydb.ok())
+    {
+      if (arg.verbose()) [[unlikely]]
+        Logger::error("DummyBackup not initialized ok");
       return 1;
+    }
 
     if (!dummydb.importFromDesktop(ddb, true /*arg.skipmessagereorder()*/, arg.limittodates(), true /*addincompletedata*/,
                                    false /*importcontacts*/, false /*autolimittodates*/, true /*importstickers*/, arg.setselfid()))
