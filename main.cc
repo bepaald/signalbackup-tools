@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 
     if (!dummydb.importFromPlaintextBackup(ptdb, true /*arg.skipmessagereorder()*/, arg.mapxmlcontacts(), arg.limittodates(),
                                            arg.selectxmlchats(), true /*addincompletedata*/, arg.xmlmarkdelivered(),
-                                           arg.xmlmarkread(), false /*autolimittodates*/, arg.setselfid()))
+                                           arg.xmlmarkread(), false /*autolimittodates*/, arg.setselfid(), true /*isdummydb*/))
       return 1;
 
     if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),

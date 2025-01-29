@@ -98,7 +98,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> c
     return;
   d_ok = false;
 
-  // a selfid is required to ba able to correctly set from_recipient_id and to_recipient_id when importing messages
+  // a selfid is required to be able to correctly set 'from_recipient_id' and 'to_recipient_id' when importing messages
   std::string selfphone(selfid);
 
   if (selfphone.empty())
@@ -117,7 +117,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> c
     return;
   }
 
-    // it is possible the contactname is set for this contact through --mapxmlcontactnames
+  // it is possible the contactname is set for this contact through --mapxmlcontactnames
   std::string contact_name = ptdb->d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE address = ? "
                                                                              "AND contact_name IS NOT NULL AND contact_name IS NOT ''",
                                                                              selfphone, std::string());

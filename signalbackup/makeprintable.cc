@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,10 +22,21 @@
 std::string SignalBackup::makePrintable(std::string const &in) const
 {
   std::string printable_uuid(in);
+
   unsigned int offset = (STRING_STARTS_WITH(in, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
                          (STRING_STARTS_WITH(in, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
-  if (offset < in.size()) [[likely]]
-    std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
+
+  if (STRING_STARTS_WITH(in, "__signal_group__v2__!") ||
+      STRING_STARTS_WITH(in, "__textsecure_group__!"))
+  {
+    if (offset < in.size()) [[likely]]
+      std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
+    else
+      printable_uuid = "xxx";
+  }
+  else if (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c){ return (c >= '0' && c <= '9') || c == '+' || c == '~'; }) &&
+           printable_uuid.size() >= 11)
+    std::replace_if(printable_uuid.begin(), printable_uuid.end() - 4, [](char c){ return (c >= '0' && c <= '9'); }, 'x');
   else
     printable_uuid = "xxx";
   return printable_uuid;

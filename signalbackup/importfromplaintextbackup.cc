@@ -29,7 +29,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                                              std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                              std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,
                                              bool createmissingcontacts, bool markdelivered, bool markread, bool autodates,
-                                             std::string const &selfphone)
+                                             std::string const &selfphone, bool isdummy)
 {
   if (d_selfid == -1)
   {
@@ -51,6 +51,23 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     Logger::error("Failed to open Signal Plaintext Backup database");
     return false;
   }
+
+  ptdb->d_database.prettyPrint(false, "SELECT COUNT(*) FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
+  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT type FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
+  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT numaddresses FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
+  // mms messages that are 1-on-1 and outgoing, often only have a targetaddress, but no source addresses....
+  // the source is implied by the fact it's outgoing:
+  std::string selfe164(selfphone);
+  if (selfe164.empty())
+    selfe164 = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", d_selfid, std::string());
+  if (selfe164.empty())
+    Logger::warning("Failed to get self phone");
+  else
+    ptdb->d_database.exec("UPDATE smses SET sourceaddress = ? WHERE "
+                          "sourceaddress IS NULL AND targetaddresses IS NOT NULL AND type = 2", selfe164);
+  ptdb->d_database.prettyPrint(false, "SELECT COUNT(*) FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
+  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT type FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
+  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT numaddresses FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
@@ -127,21 +144,20 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   if (!ptdb->d_database.exec("SELECT "
                              "rowid, "
                              "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, ismms, skip "
-                             "FROM smses" + datewhereclause + chatselectionclause + " ORDER BY date", &pt_messages))
+                             "FROM smses" + datewhereclause + chatselectionclause +
+                             " WHERE skip = 0"
+                             " ORDER BY date", &pt_messages))
     return false;
 
   //pt_messages.prettyPrint(d_truncate);
 
-  bool warned_createcontacts = false;
+  bool warned_createcontacts = (isdummy ? true : false);
 
   //auto t1 = std::chrono::high_resolution_clock::now();
   for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
-    if (i % 100 == 0)
-      Logger::message_overwrite("Importing messages into backup... ", i, "/", pt_messages.rows());
-
-    if (pt_messages.valueAsInt(i, "skip") == 1) [[unlikely]]
-      continue;
+    //if (i % 100 == 0)
+    Logger::message/*_overwrite*/("Importing messages into backup... ", i, "/", pt_messages.rows());
 
     std::string body = pt_messages(i, "body");
     if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)
@@ -164,12 +180,18 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     // match phone number to thread recipient_id
     long long int trid = -1;
     if (auto it = contactmap.find(pt_messages_address); it != contactmap.end())
+    {
       trid = it->second;
+      Logger::message("Got trid from contactmap: ", makePrintable(pt_messages_address));
+    }
     else
     {
       trid = getRecipientIdFromName(pt_messages_contact_name, false);
       if (trid != -1)
+      {
         contactmap[pt_messages_address] = trid;
+        Logger::message("Got trid from name: ", makePrintable(pt_messages_contact_name));
+      }
       else // try by phone number...
       {
         // this can go wrong these days. When an old contact is no longer on signal, it
@@ -181,21 +203,35 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         // not a valid signal contact and likely causes problems when restoring)
         trid = getRecipientIdFromPhone(pt_messages_address, false);
         if (trid != -1)
+        {
           contactmap[pt_messages_address] = trid;
+          Logger::message("Got trid from addres: ", makePrintable(pt_messages_address));
+        }
       }
     }
 
-    if (trid == -1 && createmissingcontacts)
-      if ((trid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
-                                   pt_messages_address, isgroup)) == -1)
-        continue;
+    if (trid == -1)
+    {
+      if (createmissingcontacts)
+      {
+        if ((trid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
+                                      pt_messages_address, isgroup)) == -1)
+        {
+          Logger::warning("Failed to create thread-recipient for address ", makePrintable(pt_messages_address));
+          continue;
+        }
+        Logger::message("Created thread-recipient id for address ", makePrintable(pt_messages_address));
+      }
+      else
+        Logger::error("Thread recipient not found in database.");
+    }
 
     // get matching thread
     long long int tid = getThreadIdFromRecipient(trid);
     if (tid == -1)
     {
       // create thread
-      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", pt_messages_address, " -> ", trid);
+      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", makePrintable(pt_messages_address), " -> ", trid);
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, trid},
@@ -215,7 +251,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       rid = it->second;
     if (rid == -1)
     {
-      Logger::error("Failed to find source_recipient_id in contactmap (", pt_messages_sourceaddress, "). Should be present at this point. Skipping message");
+      Logger::error("Failed to find source_recipient_id in contactmap (", makePrintable(pt_messages_sourceaddress), "). Should be present at this point. Skipping message");
       continue;
     }
 
@@ -370,7 +406,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
   //std::cout << " *** TIME: " << ms_int.count() << "ms\n";
 
-  Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
+  Logger::message/*_overwrite*/("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
 
   // count entities still present...
   //ptdb->d_database.exec("SELECT rowid,body,LENGTH(body) - LENGTH(REPLACE(body, '&', '')) AS entities FROM smses ORDER BY entities ASC");

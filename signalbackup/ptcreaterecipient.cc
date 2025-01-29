@@ -31,6 +31,9 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
                                               bool *warned_createcontacts, std::string const &contact_name,
                                               std::string const &address, bool isgroup) const
 {
+
+  Logger::message("ptCreateRecipient for address ", makePrintable(address), " (group: ", std::boolalpha, isgroup, ")");
+
   auto random_from_address = [](std::string const &a)
   {
     unsigned int result = 0;
@@ -53,7 +56,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
   }
 
   if (contact_name.empty()) [[unlikely]]
-    Logger::warning("Failed to get name for new contact (", address, ")");
+    Logger::warning("Failed to get name for new contact (", makePrintable(address), ")");
 
   if (isgroup)
   {
@@ -67,35 +70,38 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
     ptdb->d_database.exec("SELECT DISTINCT sourceaddress FROM smses WHERE address = ?", address, &group_members_res);
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
       group_members.insert(group_members_res(i, "sourceaddress"));
-
     ptdb->d_database.exec("SELECT DISTINCT value FROM smses, json_each(targetaddresses) WHERE smses.address = ?", address, &group_members_res);
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
       group_members.insert(group_members_res(i, "value"));
 
-    // std::cout << "ALL GROUP MEMBERS:" << std::endl;
-    // for (auto const &gm : group_members)
-    //   std::cout << gm << std::endl;
+    std::cout << "ALL GROUP MEMBERS:" << std::endl;
+    for (auto const &gm : group_members)
+      std::cout << makePrintable(gm) << std::endl;
 
+    // ensure all group members exist.
     for (auto const &gm : group_members)
     {
       if (!bepaald::contains(contactmap, gm))
       {
-        std::string cn = ptdb->d_database.getSingleResultAs<std::string>("SELECT contact_name FROM smses WHERE address = ?",
+        std::string cn = ptdb->d_database.getSingleResultAs<std::string>("SELECT contact_name FROM smses WHERE address = ? LIMIT 1",
                                                                          gm, std::string());
         if (cn.empty()) [[unlikely]]
         {
-          Logger::warning("Unexpectedly got empty contact name for group recipient ", gm);
+          Logger::warning("Unexpectedly got empty contact name for group recipient ", makePrintable(gm));
           cn = "(unknown)";
         }
 
         //std::cout << "Need to create group member(2): " << group_members(i, "address") << std::endl;
-        if (!bepaald::contains(contactmap, gm))
-          if (ptCreateRecipient(ptdb, contactmap, warned_createcontacts, cn,
-                                gm, false) == -1)
-            return -1;
+        if (ptCreateRecipient(ptdb, contactmap, warned_createcontacts, cn, gm, false) == -1)
+        {
+          Logger::error("Failed to create group member (", makePrintable(gm), ")");
+          return -1;
+        }
         // else
         //   std::cout << "Created contact: " << group_members(i, "address") << std::endl;
       }
+      else
+        Logger::message("Address already present in contactmap: ", makePrintable(gm));
     }
 
     d_database.exec("BEGIN TRANSACTION"); // things could still go bad...
@@ -116,6 +122,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
     if (group_rid.type() != typeid(long long int)) [[unlikely]]
     {
       Logger::error("New (group) recipient _id has unexpected type.");
+      d_database.exec("ROLLBACK TRANSACTION");
       return -1;
     }
     long long int new_group_rid = std::any_cast<long long int>(group_rid);
@@ -147,7 +154,10 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
         return -1;
       }
     }
+
     d_database.exec("COMMIT TRANSACTION");
+
+    contactmap->emplace(address, new_group_rid);
     return new_group_rid;
   }
 
