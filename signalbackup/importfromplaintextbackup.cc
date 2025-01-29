@@ -157,7 +157,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
     //if (i % 100 == 0)
-    Logger::message/*_overwrite*/("Importing messages into backup... ", i, "/", pt_messages.rows());
+    Logger::message/*_overwrite*/("Importing messages into backup... ", i, "/", pt_messages.rows(),
+                                  " (", pt_messages.valueAsInt(i, "ismms"), ",", pt_messages.valueAsInt(i, "type"), ")");
 
     std::string body = pt_messages(i, "body");
     if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)
