@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -34,5 +34,11 @@ void SignalBackup::dtSetColumnNames(SqliteDB *ddb)
     d_dt_m_sourceuuid = "sourceServiceId";
   else if (ddb->tableContainsColumn("messages", "sourceUuid"))
     d_dt_m_sourceuuid = "sourceUuid";
+
+  // sessions.ourUuid -> sessions.ourServiceId
+  if (ddb->tableContainsColumn("sessions", "ourServiceId"))
+    d_dt_s_uuid = "ourServiceId";
+  else if (ddb->tableContainsColumn("sessions", "ourUuid"))
+    d_dt_s_uuid = "ourUuid";
 
 }

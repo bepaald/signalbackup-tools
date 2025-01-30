@@ -126,6 +126,7 @@ class SignalBackup
   // table/column names for desktop db
   std::string d_dt_c_uuid;
   std::string d_dt_m_sourceuuid;
+  std::string d_dt_s_uuid;
 
   std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>> d_avatars;
   std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment

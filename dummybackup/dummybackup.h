@@ -157,19 +157,24 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
                                                                     "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
   if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
   {
-    // a bit more complicated:
-    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE is IS "
-                                                          "("
-                                                          "  SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') "
-                                                          "    WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN "
-                                                          "    ("
-                                                          "      SELECT id FROM conversations WHERE type = 'group'"
-                                                          "    )"
-                                                          ")", std::string());
+    // try from sessions:
+    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT " + d_dt_s_uuid + " FROM sessions WHERE SUBSTR(" + d_dt_s_uuid + ", 1, 4) != 'PNI:'", std::string());
     if (uuid.empty())
     {
-      Logger::error("Failed to determine uuid of self");
-      return;
+      // a bit more complicated:
+      uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE id IS "
+                                                            "("
+                                                            "  SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') "
+                                                            "    WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN "
+                                                            "    ("
+                                                            "      SELECT id FROM conversations WHERE type = 'group'"
+                                                            "    )"
+                                                            ")", std::string());
+      if (uuid.empty())
+      {
+        Logger::error("Failed to determine uuid of self");
+        return;
+      }
     }
   }
 
