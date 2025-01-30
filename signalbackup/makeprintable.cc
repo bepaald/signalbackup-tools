@@ -24,10 +24,14 @@ std::string SignalBackup::makePrintable(std::string const &in) const
   std::string printable_uuid(in);
 
   unsigned int offset = (STRING_STARTS_WITH(in, "__signal_group__v2__!") ? STRLEN("__signal_group__v2__!") + 4 :
-                         (STRING_STARTS_WITH(in, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 : 4));
+                         (STRING_STARTS_WITH(in, "__textsecure_group__!") ? STRLEN("__textsecure_group__!") + 4 :
+                          (STRING_STARTS_WITH(in, "PNI:") ? STRLEN("PNI:") + 4 : 4)));
 
-  if (STRING_STARTS_WITH(in, "__signal_group__v2__!") ||
-      STRING_STARTS_WITH(in, "__textsecure_group__!"))
+  if (STRING_STARTS_WITH(in, "__signal_group__v2__!") || // new group
+      STRING_STARTS_WITH(in, "__textsecure_group__!") || // old group
+      STRING_STARTS_WITH(in, "PNI:") || // pni
+      (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c){ return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; }) &&
+       printable_uuid.size() == 36)) //uuid
   {
     if (offset < in.size()) [[likely]]
       std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');

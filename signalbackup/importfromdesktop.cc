@@ -444,7 +444,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     else if (results2.rows() == 0) // the query was succesful, but yielded no results -> create thread
     {
       Logger::message_start("Failed to find matching thread for conversation, creating. (",
-                            (person_or_group_id.empty() ? "from e164" : ("id: " + person_or_group_id)));
+                            (person_or_group_id.empty() ? "from e164" : ("id: " + makePrintable(person_or_group_id))));
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, recipientid_for_thread},
