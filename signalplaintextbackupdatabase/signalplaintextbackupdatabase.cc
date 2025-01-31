@@ -22,11 +22,13 @@
 #include "../xmldocument/xmldocument.h"
 
 SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
-                                                             std::vector<std::pair<std::string, std::string>> const &namemap)
+                                                             std::vector<std::pair<std::string, std::string>> const &namemap,
+                                                             std::string const &countrycode)
   :
   d_ok(false),
   d_truncate(truncate),
-  d_verbose(verbose)
+  d_verbose(verbose),
+  d_countrycode(countrycode)
 {
   // open and parse XML file
   XmlDocument xmldoc(sptbxml);
@@ -155,7 +157,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
         std::string val = n.getAttribute(rc.name);
 
         if (val != "null")
-          addvalue((rc.columnname.empty() ? rc.name : rc.columnname), (rc.type == "INTEGER") ? std::any(bepaald::toNumber<long long int>(val)) : std::any(val));
+        {
+          if (rc.name == "address")
+            addvalue(rc.name, normalizePhoneNumber(val));
+          else
+            addvalue((rc.columnname.empty() ? rc.name : rc.columnname), (rc.type == "INTEGER") ? std::any(bepaald::toNumber<long long int>(val)) : std::any(val));
+        }
       }
 
       std::vector<std::tuple<XmlDocument::Node::StringOrRef, std::string, std::string>> attachments;
@@ -216,7 +223,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                 Logger::warning("No address attribute found in <addr>");
                 continue;
               }
-              std::string groupmsgaddress = addr.getAttribute("address");
+              std::string groupmsgaddress = normalizePhoneNumber(addr.getAttribute("address"));
 
               // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
               if (addr.hasAttribute("type") && addr.getAttribute("type") == "137")
@@ -228,12 +235,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                   continue;
                 }
                 sourceaddress = groupmsgaddress;
-                group_only_contacts.insert(groupmsgaddress);
+                group_only_contacts.insert(std::move(groupmsgaddress));
               }
               else // likely a receiving addr
               {
-                group_only_contacts.insert(addr.getAttribute("address")); // maybe scan for name...
-                group_recipients.insert(addr.getAttribute("address")); // maybe scan for name...
+                group_recipients.insert(groupmsgaddress);
+                group_only_contacts.insert(std::move(groupmsgaddress));
               }
             }
             addvalue("numaddresses", numaddresses);
@@ -333,6 +340,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   }
 
+  // for all distinct names, set address for that name to be the same..?
+
+
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
@@ -346,7 +356,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   // this is how to scan for selfid (sourceaddress of outgoing message with at least one target recipient)
   //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress FROM smses WHERE numaddresses > 1 AND type = 2 AND ismms = 1");
   //d_database.prettyPrint(true, "SELECT * FROM smses WHERE sourceaddress IS NULL AND type = 2 AND ismms = 1");
-  //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 3");
+
+  //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 50");
 
   //d_database.saveToFile("plaintext.sqlite");
 

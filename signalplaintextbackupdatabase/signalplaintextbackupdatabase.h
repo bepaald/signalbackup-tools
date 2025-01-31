@@ -33,9 +33,11 @@ class SignalPlaintextBackupDatabase
   bool d_truncate;
   bool d_verbose;
   std::set<std::string> d_warningsgiven;
+  std::string d_countrycode;
  public:
   SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
-                                std::vector<std::pair<std::string, std::string>> const &namemap);
+                                std::vector<std::pair<std::string, std::string>> const &namemap,
+                                std::string const &countrycode);
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase &&other) = delete;
   SignalPlaintextBackupDatabase &operator=(SignalPlaintextBackupDatabase const &other) = delete;
@@ -48,6 +50,7 @@ class SignalPlaintextBackupDatabase
 
  private:
   inline void warnOnce(std::string const &warning, bool error = false);
+  inline std::string normalizePhoneNumber(std::string const &in) const;
 };
 
 inline bool SignalPlaintextBackupDatabase::ok() const
@@ -69,13 +72,17 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
     Logger::message("(no contacts found in XML file)");
   else
     Logger::message(" is_chat   ", std::setw(20), std::left, " address", std::setw(0), " :  name");
+
   for (unsigned int i = 0; i < addresses.rows(); ++i)
   {
-    std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE contact_name IS NOT '(Unknown)' AND contact_name IS NOT NULL AND contact_name IS NOT '' AND address = ?", addresses.value(i, 0), std::string());
+    std::string cn = d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses "
+                                                               "WHERE contact_name IS NOT '(Unknown)' "
+                                                               "  AND contact_name IS NOT NULL "
+                                                               "  AND contact_name IS NOT '' "
+                                                               "  AND address = ?", addresses.value(i, 0), std::string());
     long long int is_chat = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM smses WHERE address = ? AND skip = 0", addresses.value(i, 0), 0);
-    Logger::message((is_chat > 0 ? "   (*)   " : "         "), std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
+    Logger::message((is_chat > 0 ? "   (*)     " : "         "), std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
   }
-
   return true;
 }
 
@@ -89,6 +96,62 @@ inline void SignalPlaintextBackupDatabase::warnOnce(std::string const &warning, 
       Logger::warning(warning);
     d_warningsgiven.insert(warning);
   }
+}
+
+inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::string const &in) const
+{
+
+  std::string result;
+
+  // if in is group (phone1~phone2~phone3~etc), split and recurse...
+  if (std::string::size_type pos = in.find('~');
+      pos != std::string::npos &&
+      pos != 0 &&
+      pos != in.size() - 1)
+  {
+    std::string::size_type start = 0;
+    std::string::size_type end;
+    while ((end = in.find('~', start)) != std::string::npos)
+    {
+      result += normalizePhoneNumber(in.substr(start, end - start)) + '~';
+      start = end + 1;
+    }
+    // get last bit
+    result += normalizePhoneNumber(in.substr(start));
+  }
+  else
+  {
+    result = in;
+
+#if __cpp_lib_erase_if >= 202002L
+    unsigned int removed = std::erase_if(result, [](char c) { return (c < '0' || c > '9') && c != '+'; });
+#else
+    unsigned int removed = 0;
+    result.erase(std::remove_if(result.begin(), result.end(),
+                                [&](char c)
+                                {
+                                  if ((c < '0' || c > '9') && c != '+')
+                                  {
+                                    ++removed;
+                                    return true;
+                                  }
+                                  return false;
+                                }), result.end());
+#endif
+
+    if (removed > result.size())
+      return in;
+
+    if (STRING_STARTS_WITH(result, "00"))
+      result = "+" + result.substr(2);
+
+    if (result[0] != '+' && !d_countrycode.empty())
+      result = d_countrycode + (result[0] == '0' ? result.substr(1) : result);
+  }
+  if (result.size() >= 9)
+    return result;
+
+  return in;
 }
 
 #endif

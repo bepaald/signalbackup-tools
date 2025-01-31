@@ -152,6 +152,7 @@ Arg::Arg(int argc, char *argv[])
   d_linkify(true),
   d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
   d_mapxmlcontactnames(std::vector<std::pair<std::string, std::string>>()),
+  d_setcountrycode(std::string()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1829,6 +1830,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
         }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--setcountrycode")
+    {
+      if (i < argsize - 1)
+      {
+        d_setcountrycode = std::move(arguments[++i]);
       }
       else
       {
