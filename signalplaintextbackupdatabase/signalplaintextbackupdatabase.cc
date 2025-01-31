@@ -341,7 +341,11 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   }
 
   // for all distinct names, set address for that name to be the same..?
-
+  SqliteDB::QueryResults all_names_res;
+  if (d_database.exec("SELECT contact_name, address FROM smses GROUP BY contact_name", &all_names_res))
+    for (unsigned int i = 0; i < all_names_res.rows(); ++i)
+      d_database.exec("UPDATE smses SET address = ? WHERE contact_name IS ? AND address != ?",
+                      {all_names_res.value(i, "address"), all_names_res.value(i, "contact_name"), all_names_res.value(i, "address")});
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 

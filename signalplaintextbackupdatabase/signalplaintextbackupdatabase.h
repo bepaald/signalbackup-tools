@@ -81,7 +81,7 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
                                                                "  AND contact_name IS NOT '' "
                                                                "  AND address = ?", addresses.value(i, 0), std::string());
     long long int is_chat = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM smses WHERE address = ? AND skip = 0", addresses.value(i, 0), 0);
-    Logger::message((is_chat > 0 ? "   (*)     " : "         "), std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
+    Logger::message((is_chat > 0 ? "   (*)     " : "           "), std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
   }
   return true;
 }
