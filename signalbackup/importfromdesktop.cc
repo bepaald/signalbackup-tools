@@ -1140,9 +1140,11 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         uint64_t response_type = 0;
         if (request_response == "ACCEPT")
           response_type = Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED;
+        else if (request_response == "BLOCK")
+          continue; // This type does not leave any actual message in the Android database.
+        else if (request_response == "UNBLOCK")
+          response_type = Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED; // this only actually shows up in Android when done on Desktop, when unblocked on android, it shows no message.
         //else if (request_response == "DELETE")
-        //  ;
-        //else if (request_response == "BLOCK")
         //  ;
         //else if (request_response == "BLOCK_AND_DELETE")
         //  ;
@@ -1164,14 +1166,14 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           continue;
         }
 
-        long long message_request_accepted_type = response_type | Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (outgoing ? Types::BASE_SENDING_TYPE : Types::BASE_INBOX_TYPE);
+        long long message_request_response_type = response_type | Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (outgoing ? Types::BASE_SENDING_TYPE : Types::BASE_INBOX_TYPE);
 
         if (d_database.containsTable("sms"))
         {
           if (!insertRow("sms", {{"thread_id", ttid},
                                  {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
                                  {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
-                                 {"type", message_request_accepted_type},
+                                 {"type", message_request_response_type},
                                  {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
                                  {d_sms_recipient_id, address}}))
           {
@@ -1187,7 +1189,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
                                          {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {d_mms_type, message_request_accepted_type},
+                                         {d_mms_type, message_request_response_type},
                                          {d_mms_recipient_id, address},
                                          {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
                                          {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
@@ -1203,7 +1205,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_accepted_type) ? d_selfid : address);
+            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address);
             if (freedate == -1)
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
@@ -1216,9 +1218,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},
                                          {"date_received", freedate},
-                                         {d_mms_type, message_request_accepted_type},
-                                         {d_mms_recipient_id, Types::isOutgoing(message_request_accepted_type) ? d_selfid : address},
-                                         {"to_recipient_id", Types::isOutgoing(message_request_accepted_type) ? address : d_selfid},
+                                         {d_mms_type, message_request_response_type},
+                                         {d_mms_recipient_id, Types::isOutgoing(message_request_response_type) ? d_selfid : address},
+                                         {"to_recipient_id", Types::isOutgoing(message_request_response_type) ? address : d_selfid},
                                          {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
                                          {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
             {

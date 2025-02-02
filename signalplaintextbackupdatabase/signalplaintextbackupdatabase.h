@@ -143,7 +143,9 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
       return in;
 
     if (STRING_STARTS_WITH(result, "00"))
-      result = "+" + result.substr(2);
+      result = "+" + result.substr(STRLEN("00"));
+    else if (STRING_STARTS_WITH(result, "011"))
+      result = "+" + result.substr(STRLEN("011"));
 
     if (result[0] != '+' && !d_countrycode.empty())
       result = d_countrycode + (result[0] == '0' ? result.substr(1) : result);
