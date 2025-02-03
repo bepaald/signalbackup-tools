@@ -88,7 +88,7 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
   std::vector<std::string> numbers
     {
       {"00-1-202-688-5500"},
-      {"(201)855-7600"},
+      {"(202)688-5500"},
       {"+12026885500"},
       {"011-1-202-688-5500"},
       {"011381688-5500"},
@@ -182,9 +182,9 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
   }
   if (result.size() >= 9)
   {
-    if (show && norm_shown.find(result) == norm_shown.end())
+    if (show && norm_shown.find(in) == norm_shown.end())
     {
-      norm_shown.insert(result);
+      norm_shown.insert(in);
       Logger::message("normalizePhoneNumber out: ", result);
     }
     return result;

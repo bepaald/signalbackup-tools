@@ -64,8 +64,12 @@ XmlDocument::XmlDocument(std::string const &filename)
             case '"':
             {
               attribute_size = (filepos + i) - attribute_pos;
-              //std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
-              //std::cout << "attribute value ends at pos: " << (filepos + i) << " SIZE: " << attribute_size << std::endl;
+              // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
+              // std::cout << "filepos : " << filepos << std::endl;
+              // std::cout << "i       : " << i << std::endl;
+              // std::cout << "att_pos : " << attribute_pos << std::endl;
+              // std::cout << "att_size: " << attribute_size << std::endl;
+              // std::cout << "attribute value ends at pos: " << (filepos + i) << " SIZE: " << attribute_size << std::endl;
 
               // {
               //   if (attribute_size > 0)
@@ -479,6 +483,10 @@ XmlDocument::XmlDocument(std::string const &filename)
             {
               attribute_size = (filepos + i) - attribute_pos;
               // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
+              // std::cout << "filepos : " << filepos << std::endl;
+              // std::cout << "i       : " << i << std::endl;
+              // std::cout << "att_pos : " << attribute_pos << std::endl;
+              // std::cout << "att_size: " << attribute_size << std::endl;
               // std::cout << "attribute value ends at pos: " << (filepos + i) << " SIZE: " << attribute_size << std::endl;
 
               // {
@@ -519,7 +527,7 @@ XmlDocument::XmlDocument(std::string const &filename)
             {
               if (attribute_pos == -1) [[unlikely]]
               {
-                attribute_pos = filepos;
+                attribute_pos = filepos + i;
                 //std::cout << "attribute value starts at pos: " << attribute_pos << std::endl;
               }
 
