@@ -363,6 +363,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 50");
 
+  d_database.prettyPrint(false, "SELECT DISTINCT COUNT(DISTINCT numaddresses) FROM smses WHERE address LIKE '%~%' GROUP BY address");
+
+  d_database.printLineMode("SELECT body,HEX(body) FROM smses WHERE date = 1734628440524");
+
   //d_database.saveToFile("plaintext.sqlite");
 
   d_ok = true;

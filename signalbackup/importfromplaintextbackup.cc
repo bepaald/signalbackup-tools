@@ -278,8 +278,17 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         continue;
     }
 
+    // REMOVE THIS
+    if (pt_messages.valueAsInt(i, "date", -1) == 1734628440524)
+      Logger::message("Body before XML unescape: \"", body, "\"");
     if (!unescapeXmlString(&body)) [[unlikely]]
       Logger::warning("Failed to escape message body: '", body, "'");
+    // REMOVE THIS
+    if (pt_messages.valueAsInt(i, "date", -1) == 1734628440524)
+    {
+      Logger::message("Body after XML unescape:  \"", body, "\"");
+      Logger::message("Body after HTML escape :  \"", HTMLescapeString(body), "\"");
+    }
 
     // insert?
 

@@ -50,7 +50,8 @@ class SignalPlaintextBackupDatabase
 
  private:
   inline void warnOnce(std::string const &warning, bool error = false);
-  inline std::string normalizePhoneNumber(std::string const &in) const;
+  inline std::string normalizePhoneNumber(std::string const &in, bool show = true);// const;
+  std::set<std::string> norm_shown;
 };
 
 inline bool SignalPlaintextBackupDatabase::ok() const
@@ -83,6 +84,26 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
     long long int is_chat = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM smses WHERE address = ? AND skip = 0", addresses.value(i, 0), 0);
     Logger::message((is_chat > 0 ? "   (*)     " : "           "), std::setw(20), std::left, addresses(i, "address"), std::setw(0), " : \"", cn, "\"");
   }
+  /*
+  std::vector<std::string> numbers
+    {
+      {"00-1-202-688-5500"},
+      {"(201)855-7600"},
+      {"+12026885500"},
+      {"011-1-202-688-5500"},
+      {"011381688-5500"},
+      {"00381688-5500"},
+      {"+381688-5500"}
+    };
+  std::cout << std::endl;
+  std::cout << std::endl;
+  std::cout << std::endl;
+  for (auto const &n : numbers)
+    std::cout << std::setw(19) << std::left << n << " : " << std::setw(0) << normalizePhoneNumber(n) << std::endl;
+  std::cout << std::endl;
+  std::cout << std::endl;
+  std::cout << std::endl;
+  */
   return true;
 }
 
@@ -98,8 +119,10 @@ inline void SignalPlaintextBackupDatabase::warnOnce(std::string const &warning, 
   }
 }
 
-inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::string const &in) const
+inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::string const &in, bool show)// const
 {
+  if (show && norm_shown.find(in) == norm_shown.end())
+    Logger::message("normalizePhoneNumber in:  ", in);
 
   std::string result;
 
@@ -113,11 +136,11 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
     std::string::size_type end;
     while ((end = in.find('~', start)) != std::string::npos)
     {
-      result += normalizePhoneNumber(in.substr(start, end - start)) + '~';
+      result += normalizePhoneNumber(in.substr(start, end - start), false) + '~';
       start = end + 1;
     }
     // get last bit
-    result += normalizePhoneNumber(in.substr(start));
+    result += normalizePhoneNumber(in.substr(start), false);
   }
   else
   {
@@ -140,7 +163,14 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
 #endif
 
     if (removed > result.size())
+    {
+      if (show && norm_shown.find(in) == norm_shown.end())
+      {
+        norm_shown.insert(in);
+        Logger::message("normalizePhoneNumber out: ", in);
+      }
       return in;
+    }
 
     if (STRING_STARTS_WITH(result, "00"))
       result = "+" + result.substr(STRLEN("00"));
@@ -151,8 +181,20 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
       result = d_countrycode + (result[0] == '0' ? result.substr(1) : result);
   }
   if (result.size() >= 9)
+  {
+    if (show && norm_shown.find(result) == norm_shown.end())
+    {
+      norm_shown.insert(result);
+      Logger::message("normalizePhoneNumber out: ", result);
+    }
     return result;
+  }
 
+  if (show && norm_shown.find(in) == norm_shown.end())
+  {
+    norm_shown.insert(in);
+    Logger::message("normalizePhoneNumber out: ", in);
+  }
   return in;
 }
 
