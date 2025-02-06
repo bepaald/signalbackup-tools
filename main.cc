@@ -55,9 +55,9 @@ int main(int argc, char *argv[])
 
 #ifdef VERSIONDATE
   #if defined(_WIN32) || defined(__MINGW64__)
-  Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE, " (Win)", " (SQlite: ", SQLITE_VERSION, ", OpenSSL: ", OPENSSL_VERSION_TEXT, ")");
+  Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE, " (Win)", " (SQLite: ", SQLITE_VERSION, ", OpenSSL: ", OPENSSL_VERSION_TEXT, ")");
   #else
-  Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE, " (SQlite: ", SQLITE_VERSION, ", OpenSSL: ", OPENSSL_VERSION_TEXT, ")");
+  Logger::message("signalbackup-tools (", argv[0], ") source version ", VERSIONDATE, " (SQLite: ", SQLITE_VERSION, ", OpenSSL: ", OPENSSL_VERSION_TEXT, ")");
   #endif
 #endif
 

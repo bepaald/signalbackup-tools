@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -48,8 +48,8 @@ void SqliteDB::checkDatabaseWriteVersion() const
 {
   if (d_databasewriteversion > SQLITE_VERSION_NUMBER)
   {
-    Logger::warning("Database was created with a newer version of SQlite3 than this program is using. If you");
-    Logger::warning_indent("see a 'malformed database schema' error, please update your SQlite3 version.");
+    Logger::warning("Database was created with a newer version of SQLite3 than this program is using. If you");
+    Logger::warning_indent("see a 'malformed database schema' error, please update your SQLite3 version.");
     Logger::warning_indent("Database was written by version: ", d_databasewriteversion);
     Logger::warning_indent("This program is using version:   ", SQLITE_VERSION_NUMBER);
   }

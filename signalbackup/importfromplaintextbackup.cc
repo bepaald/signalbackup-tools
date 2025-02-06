@@ -52,22 +52,23 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     return false;
   }
 
-  ptdb->d_database.prettyPrint(false, "SELECT COUNT(*) FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
-  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT type FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
-  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT numaddresses FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
   // mms messages that are 1-on-1 and outgoing, often only have a targetaddress, but no source addresses....
   // the source is implied by the fact it's outgoing:
+  // same for incoming actually, and possibly also for non 1-on-1  messages...
   std::string selfe164(selfphone);
   if (selfe164.empty())
     selfe164 = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", d_selfid, std::string());
   if (selfe164.empty())
     Logger::warning("Failed to get self phone");
   else
+  {
+    // set source address
     ptdb->d_database.exec("UPDATE smses SET sourceaddress = ? WHERE "
                           "sourceaddress IS NULL AND targetaddresses IS NOT NULL AND type = 2", selfe164);
-  ptdb->d_database.prettyPrint(false, "SELECT COUNT(*) FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
-  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT type FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
-  ptdb->d_database.prettyPrint(false, "SELECT DISTINCT numaddresses FROM smses WHERE sourceaddress IS NULL AND targetaddresses IS NOT NULL");
+
+    // set target address:
+    //...
+  }
 
   std::vector<std::pair<std::string, std::string>> dateranges;
   if (daterangelist.size() % 2 == 0)
@@ -156,9 +157,9 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   //auto t1 = std::chrono::high_resolution_clock::now();
   for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
-    //if (i % 100 == 0)
-    Logger::message/*_overwrite*/("Importing messages into backup... ", i, "/", pt_messages.rows(),
-                                  " (", pt_messages.valueAsInt(i, "ismms"), ",", pt_messages.valueAsInt(i, "type"), ")");
+    if (i % (pt_messages.rows() > 100 ? 100 : 1) == 0)
+      Logger::message_overwrite("Importing messages into backup... ", i, "/", pt_messages.rows());//,
+    //" (", pt_messages.valueAsInt(i, "ismms"), ",", pt_messages.valueAsInt(i, "type"), ")");
 
     std::string body = pt_messages(i, "body");
     if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)
@@ -183,7 +184,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     if (auto it = contactmap.find(pt_messages_address); it != contactmap.end())
     {
       trid = it->second;
-      Logger::message("Got trid from contactmap: ", makePrintable(pt_messages_address));
+      if (d_verbose) [[unlikely]]
+        Logger::message("Got trid from contactmap: ", makePrintable(pt_messages_address));
     }
     else
     {
@@ -191,7 +193,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       if (trid != -1)
       {
         contactmap[pt_messages_address] = trid;
-        Logger::message("Got trid from name: ", makePrintable(pt_messages_contact_name));
+        if (d_verbose) [[unlikely]]
+          Logger::message("Got trid from name: ", makePrintable(pt_messages_contact_name));
       }
       else // try by phone number...
       {
@@ -206,7 +209,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         if (trid != -1)
         {
           contactmap[pt_messages_address] = trid;
-          Logger::message("Got trid from addres: ", makePrintable(pt_messages_address));
+          if (d_verbose) [[unlikely]]
+            Logger::message("Got trid from addres: ", makePrintable(pt_messages_address));
         }
       }
     }
@@ -221,7 +225,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
           Logger::warning("Failed to create thread-recipient for address ", makePrintable(pt_messages_address));
           continue;
         }
-        Logger::message("Created thread-recipient id for address ", makePrintable(pt_messages_address));
+        if (d_verbose) [[unlikely]]
+          Logger::message("Created thread-recipient id for address ", makePrintable(pt_messages_address));
       }
       else
         Logger::error("Thread recipient not found in database.");
@@ -278,17 +283,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         continue;
     }
 
-    // REMOVE THIS
-    if (pt_messages.valueAsInt(i, "date", -1) == 1734628440524)
-      Logger::message("Body before XML unescape: \"", body, "\"");
     if (!unescapeXmlString(&body)) [[unlikely]]
       Logger::warning("Failed to escape message body: '", body, "'");
-    // REMOVE THIS
-    if (pt_messages.valueAsInt(i, "date", -1) == 1734628440524)
-    {
-      Logger::message("Body after XML unescape:  \"", body, "\"");
-      Logger::message("Body after HTML escape :  \"", HTMLescapeString(body), "\"");
-    }
 
     // insert?
 

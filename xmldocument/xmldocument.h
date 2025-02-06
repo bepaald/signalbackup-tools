@@ -127,7 +127,7 @@ inline void XmlDocument::Node::print(int indent) const
       if (value.pos == -1) [[likely]]
         Logger::message_continue(" ", key, "=\"", value.value, "\""); // note, we should maybe scan for " and use ' if found
       else
-        Logger::message_continue(" ", key, "=\"", "[large]", "\"");
+        Logger::message_continue(" ", key, "=\"", "[", value.size, " bytes]", "\"");
     }
     Logger::message_continue((d_children.empty() && d_value.empty()) ? " />" : ">");
     if (d_value.empty())

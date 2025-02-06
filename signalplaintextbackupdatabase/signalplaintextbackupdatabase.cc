@@ -129,6 +129,13 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                        if ((rc.required_in_node.empty() || rc.required_in_node == n.name()) && !n.hasAttribute(rc.name))
                        {
                          Logger::warning("Skipping message, missing required attribute '", rc.name, "'");
+
+                         //if (d_verbose) [[unlikely]]
+                         {
+                           Logger::warning_indent("Full node data:");
+                           n.print();
+                         }
+
                          return false;
                        }
                        return true;
@@ -137,12 +144,6 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
     if (n.name() == "sms" || n.name() == "mms")
     {
-      // if (n.name() == "mms")
-      // {
-      //   warnOnce("Skipping unsupported element: '" + n.name() + "'");
-      //   continue;
-      // }
-
       // build statement
       columns.clear();
       placeholders.clear();
@@ -340,12 +341,50 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   }
 
+
+
   // for all distinct names, set address for that name to be the same..?
+  //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
   SqliteDB::QueryResults all_names_res;
-  if (d_database.exec("SELECT contact_name, address FROM smses GROUP BY contact_name", &all_names_res))
+  if (d_database.exec("SELECT contact_name, address FROM smses GROUP BY contact_name", &all_names_res)) // "pick one address for each name"
+  {
+    //all_names_res.prettyPrint(false);
+
+    SqliteDB::QueryResults old_addresses;
     for (unsigned int i = 0; i < all_names_res.rows(); ++i)
-      d_database.exec("UPDATE smses SET address = ? WHERE contact_name IS ? AND address != ?",
-                      {all_names_res.value(i, "address"), all_names_res.value(i, "contact_name"), all_names_res.value(i, "address")});
+    {
+      // get the old addresses, that we are going to change
+      d_database.exec("SELECT DISTINCT address FROM smses WHERE contact_name IS ? AND address IS NOT ?",
+                      {all_names_res.value(i, "contact_name"), all_names_res.value(i, "address")},
+                      &old_addresses);
+      //old_addresses.prettyPrint(false);
+
+      // change address, and sourceaddress, and targetaddress
+      for (unsigned int j = 0; j < old_addresses.rows(); ++j)
+      {
+        d_database.exec("UPDATE smses SET address = ? WHERE address = ?",
+                        {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+        //std::cout << "Addr change: " << d_database.changed() << std::endl;
+
+        d_database.exec("UPDATE smses SET sourceaddress = ? WHERE sourceaddress = ?",
+                        {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+        //std::cout << "SrcAddr change: " << d_database.changed() << std::endl;
+
+        d_database.exec("WITH to_update AS "
+                        "("
+                        "  SELECT smses.rowid, json_set(smses.targetaddresses, fullkey, ?) AS new_array FROM smses, json_each(targetaddresses) WHERE value = ?"
+                        ") "
+                        "UPDATE smses SET targetaddresses = "
+                        "  ("
+                        "    SELECT new_array FROM to_update WHERE to_update.rowid = smses.rowid"
+                        "  )"
+                        "  WHERE smses.rowid IN (SELECT to_update.rowid FROM to_update)",
+                        {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+        //std::cout << "TgtAddr change: " << d_database.changed() << std::endl;
+      }
+    }
+    //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
+  }
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
@@ -363,9 +402,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 50");
 
-  d_database.prettyPrint(false, "SELECT DISTINCT COUNT(DISTINCT numaddresses) FROM smses WHERE address LIKE '%~%' GROUP BY address");
+  //d_database.prettyPrint(false, "SELECT DISTINCT COUNT(DISTINCT numaddresses) FROM smses WHERE address LIKE '%~%' GROUP BY address");
 
-  d_database.printLineMode("SELECT body,HEX(body) FROM smses WHERE date = 1734628440524");
+  //d_database.printLineMode("SELECT body,HEX(body) FROM smses WHERE date = 1734628440524");
 
   //d_database.saveToFile("plaintext.sqlite");
 

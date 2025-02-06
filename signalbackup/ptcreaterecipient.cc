@@ -32,7 +32,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
                                               std::string const &address, bool isgroup) const
 {
 
-  Logger::message("ptCreateRecipient for address ", makePrintable(address), " (group: ", std::boolalpha, isgroup, ")");
+  Logger::message("Creating recipient for address ", makePrintable(address), " (group: ", std::boolalpha, isgroup, ")");
 
   auto random_from_address = [](std::string const &a)
   {
@@ -74,9 +74,12 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
       group_members.insert(group_members_res(i, "value"));
 
-    std::cout << "ALL GROUP MEMBERS:" << std::endl;
-    for (auto const &gm : group_members)
-      std::cout << makePrintable(gm) << std::endl;
+    if (d_verbose) [[unlikely]]
+    {
+      Logger::message("ALL GROUP MEMBERS:");
+      for (auto const &gm : group_members)
+        Logger::message(makePrintable(gm));
+    }
 
     // ensure all group members exist.
     for (auto const &gm : group_members)
@@ -101,7 +104,8 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
         //   std::cout << "Created contact: " << group_members(i, "address") << std::endl;
       }
       else
-        Logger::message("Address already present in contactmap: ", makePrintable(gm));
+        if (d_verbose) [[unlikely]]
+          Logger::message("Address already present in contactmap: ", makePrintable(gm));
     }
 
     d_database.exec("BEGIN TRANSACTION"); // things could still go bad...
