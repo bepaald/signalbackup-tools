@@ -626,6 +626,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
+          // all pages end in ".html", slice it off
+          std::string page(msg_info.threaddir + "/" + msg_info.filename, 0, msg_info.threaddir.size() + msg_info.filename.size() + 1 - 5);
+
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
           if (!d_database.exec("SELECT json_object("
                                "'id', " + d_mms_table + "._id, "
@@ -633,9 +636,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "'f', " + d_mms_table + "." + d_mms_recipient_id + ", "
                                "'tr', thread." + d_thread_recipient_id + ", "
                                "'o', (" + d_mms_table + "." + d_mms_type + " & 0x1F) IN (2,11,21,22,23,24,25,26), "
-                               "'d', (" + d_mms_table + ".date_received / 1000 - 1404165600), " // loose the last three digits (miliseconds, they are never displayed anyway).
-                                                                                                // subtract "2014-07-01". Signals initial release was 2014-07-29, negative numbers should work otherwise anyway.
-                               "'p', " + "SUBSTR(\"" + msg_info.threaddir + "/" + msg_info.filename + "\", 1, LENGTH(\"" + msg_info.threaddir + "/" + msg_info.filename + "\") - 5)" + ") AS line, " // all pages end in ".html", slice it off
+                               "'d', (" + d_mms_table + ".date_received / 1000 - 1404165600), " // lose the last three digits (miliseconds, they are never displayed anyway).
+                                                                                                // subtract "2014-07-01". Signals initial release was 2014-07-29, negative
+                                                                                                // numbers should work otherwise anyway.
+                               "'p', ?) AS line,"
                                + d_part_table + "._id AS rowid, " +
                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") +
@@ -643,7 +647,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
                                "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 "
                                "WHERE " + d_mms_table + "._id = ?",
-                               msg_info.msg_id, &search_idx_results) ||
+                               {page, msg_info.msg_id}, &search_idx_results) ||
               search_idx_results.rows() < 1) [[unlikely]]
           {
             Logger::warning("Search_idx query failed or no results");

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -145,7 +145,7 @@ R"*(
                                          blocked contacts in the database.
    --includesettings                     Optional modifier for `--exporthtml'. Generate a page showing
                                          settings found in the backup file.
-   --includefullcontactslist             Optional modifier for `--exporthtml'. Generate a page showing all
+   --includefullcontactlist              Optional modifier for `--exporthtml'. Generate a page showing all
                                          contacts present in the backups database. These include hidden
                                          and blocked contacts, but also system contacts who might not use
                                          Signal at all.

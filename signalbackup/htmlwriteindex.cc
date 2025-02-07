@@ -354,8 +354,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       WIN_LIMIT_FILENAME_LENGTH(raw_avatar_path);
       std::string avatar_path(sanitizeFilename(raw_avatar_path) + " (_id" + results(i, "_id") + ")");
       std::string avatar_extension = getAvatarExtension(rec_id);
-      bepaald::replaceAll(&avatar_path, '\"', R"(\")");
       HTMLescapeUrl(&avatar_path);
+      bepaald::replaceAll(&avatar_path, '\"', R"(\")");
 
       outputfile
         << "      .avatar-" << rec_id << " {\n"

@@ -294,7 +294,11 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
         WIN_LIMIT_FILENAME_LENGTH(raw_thread_dir);
         std::string thread_dir(sanitizeFilename(raw_thread_dir) + " (_id" + bepaald::toString(thread_id) + ")");
         if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension))
+        {
+          HTMLescapeUrl(&thread_dir);
+          bepaald::replaceAll(&thread_dir, '\"', R"(\")");
           avatarpath = std::move(thread_dir);
+        }
       }
 
       if (avatarpath.empty()) // avatar not already present anywhere, write out own...
@@ -308,9 +312,6 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
       }
       else
         avatarpath += "/";
-
-      bepaald::replaceAll(&avatarpath, '\"', R"(\")");
-      HTMLescapeUrl(&avatarpath);
 
       outputfile
         << "      .avatar-" << rec_id << " {\n"

@@ -52,9 +52,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     return false;
   }
 
-  // mms messages that are 1-on-1 and outgoing, often only have a targetaddress, but no source addresses....
-  // the source is implied by the fact it's outgoing:
-  // same for incoming actually, and possibly also for non 1-on-1  messages...
+  // mms messages seem to usually omit the self-address, it is implied to be the sourceaddress when the message is outgoing,
+  // or (one of the) targetaddresses when the message is incoming.
   std::string selfe164(selfphone);
   if (selfe164.empty())
     selfe164 = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", d_selfid, std::string());
@@ -62,12 +61,23 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     Logger::warning("Failed to get self phone");
   else
   {
-    // set source address
-    ptdb->d_database.exec("UPDATE smses SET sourceaddress = ? WHERE "
-                          "sourceaddress IS NULL AND targetaddresses IS NOT NULL AND type = 2", selfe164);
 
+    //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT sourceaddress FROM smses WHERE ismms = 1 AND type = 2");
+    // set source address to self for outgoing
+    ptdb->d_database.exec("UPDATE smses SET sourceaddress = ? WHERE "
+                          "NULLIF(sourceaddress, '') IS NULL AND ismms = 1 AND type = 2", selfe164);
+    //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT sourceaddress FROM smses WHERE ismms = 1 AND type = 2");
+
+    //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT targetaddresses FROM smses WHERE ismms = 1 AND type = 1");
     // set target address:
-    //...
+    ptdb->d_database.exec("UPDATE smses SET targetaddresses = "
+                          "CASE "
+                          "  WHEN targetaddresses IS NULL THEN json_array(?1)"
+                          "  ELSE json_insert(targetaddresses, '$[#]', ?1) "
+                          "END "
+                          "WHERE ismms = 1 AND type = 1", selfe164);
+    //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT targetaddresses FROM smses WHERE ismms = 1 AND type = 1");
+
   }
 
   std::vector<std::pair<std::string, std::string>> dateranges;
@@ -258,6 +268,40 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     if (rid == -1)
     {
       Logger::error("Failed to find source_recipient_id in contactmap (", makePrintable(pt_messages_sourceaddress), "). Should be present at this point. Skipping message");
+
+      Logger::error_indent("Extra info:");
+      Logger::error_indent("Thread recipient: ", trid);
+      std::string groupid = d_database.getSingleResultAs<std::string>("SELECT group_id FROM recipient WHERE _id = ?", trid, std::string());
+      if (!groupid.empty())
+      {
+        Logger::error_indent("Thread is group");
+
+        std::vector<long long int> members;
+        if (!getGroupMembersModern(&members, groupid))
+          Logger::error("Failed to get group members");
+
+        Logger::error_indent("Known group members (", members.size(), "): ");
+
+        for (auto m : members)
+        {
+          std::string phone = d_database.getSingleResultAs<std::string>("SELECT e164 FROM recipient WHERE _id = ?", m, std::string());
+          Logger::error_indent(" - ", m, " : ", phone.empty() ? "(empty)" : makePrintable(phone));
+        }
+      }
+      else
+        Logger::error_indent("Thread is 1-on-1");
+
+      Logger::error_indent("First message for this address was (probably):");
+      ptdb->d_database.prettyPrint(false,
+                                   "SELECT rowid, date, type, read, contact_name, address, numattachments, "
+                                   "sourceaddress, targetaddresses, ismms, skip FROM smses WHERE address = ? "
+                                   "ORDER BY date LIMIT 1", pt_messages_address);
+      Logger::error_indent("Current message for this address was:");
+      ptdb->d_database.prettyPrint(false,
+                                   "SELECT rowid, date, type, read, contact_name, address, numattachments, "
+                                   "sourceaddress, targetaddresses, ismms, skip FROM smses WHERE rowid = ? "
+                                   "ORDER BY date LIMIT 1", pt_messages.value(i, "rowid"));
+
       continue;
     }
 

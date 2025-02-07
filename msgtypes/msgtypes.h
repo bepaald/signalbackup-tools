@@ -173,62 +173,62 @@ struct Types
     return type == MISSED_VIDEO_CALL_TYPE;
   }
 
-  inline static bool isJoined(long type)
+  inline static bool isJoined(uint64_t type)
   {
     return (type & BASE_TYPE_MASK) == JOINED_TYPE;
   }
 
-  inline static bool isNumberChange(long type)
+  inline static bool isNumberChange(uint64_t type)
   {
     return type == CHANGE_NUMBER_TYPE;
   }
 
-  inline static bool isDonationRequest(long type)
+  inline static bool isDonationRequest(uint64_t type)
   {
     return type == BOOST_REQUEST_TYPE;
   }
 
-  inline static bool isExpirationTimerUpdate(long type)
+  inline static bool isExpirationTimerUpdate(uint64_t type)
   {
     return (type & EXPIRATION_TIMER_UPDATE_BIT) != 0;
   }
 
-  inline static bool isIdentityUpdate(long type)
+  inline static bool isIdentityUpdate(uint64_t type)
   {
     return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_UPDATE_BIT;
   }
 
-  inline static bool isIdentityVerified(long type)
+  inline static bool isIdentityVerified(uint64_t type)
   {
     return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_VERIFIED_BIT;
   }
 
-  inline static bool isIdentityDefault(long type)
+  inline static bool isIdentityDefault(uint64_t type)
   {
     return (type & KEY_EXCHANGE_MASK) == KEY_EXCHANGE_IDENTITY_DEFAULT_BIT;
   }
 
-  inline static bool isSecureType(long type)
+  inline static bool isSecureType(uint64_t type)
   {
     return (type & SECURE_MESSAGE_BIT) != 0;
   }
 
-  inline static bool isEndSession(long type)
+  inline static bool isEndSession(uint64_t type)
   {
     return (type & END_SESSION_BIT) != 0;
   }
 
-  inline static bool isProfileChange(long type)
+  inline static bool isProfileChange(uint64_t type)
   {
     return (type & BASE_TYPE_MASK) == PROFILE_CHANGE_TYPE;
   }
 
-  inline static bool isMessageRequestAccepted(long type)
+  inline static bool isMessageRequestAccepted(uint64_t type)
   {
     return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED;
   }
 
-  inline static bool isStatusMessage(long type)
+  inline static bool isStatusMessage(uint64_t type)
   {
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||

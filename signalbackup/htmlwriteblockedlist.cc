@@ -300,8 +300,8 @@ bool SignalBackup::HTMLwriteBlockedlist(std::string const &dir, std::map<long lo
       else
         avatarpath += "/";
 
-      bepaald::replaceAll(&avatarpath, '\"', R"(\")");
       HTMLescapeUrl(&avatarpath);
+      bepaald::replaceAll(&avatarpath, '\"', R"(\")");
 
       outputfile
         << "      .avatar-" << rec_id << " {\n"
