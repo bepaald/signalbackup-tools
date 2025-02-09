@@ -764,13 +764,19 @@ body {
         var index = recipient_idx.findIndex(function(item) {
           return item._id === global_results[i].f;
         });
-        var displayname = recipient_idx[index].display_name;
+        var displayname = recipient_idx[index].display_name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         // get name of 'thread' id
         var index = recipient_idx.findIndex(function(item){
           return item._id === global_results[i].tr;
         });
-        var threadname = recipient_idx[index].display_name;
+        var threadname = recipient_idx[index].display_name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // get base_filename of id
+        var index = page_idx.findIndex(function(item){
+          return item._id === global_results[i].p;
+        });
+        var base_filename = page_idx[index].bn;
 
         // add searchresults
         var elem = document.createElement('a');
@@ -780,7 +786,7 @@ body {
           elem.classList.add("msg-outgoing");
         else
           elem.classList.add("msg-incoming");
-        elem.setAttribute('href', encodeURI(global_results[i].p + '.html#' + global_results[i].id));
+        elem.setAttribute('href', encodeURI(base_filename + (global_results[i].n > 0 ? '_' + global_results[i].n + '.html#' : '.html#') + global_results[i].id));
 
         var linkdiv = document.createElement('div');
 
@@ -790,13 +796,13 @@ body {
           fromspan.classList.add("msg-name-" + global_results[i].f);
 
         if (global_results[i].o == 1)
-          fromspan.innerHTML = displayname + " (to <i>" + threadname + "</i>)";
+          fromspan.innerHTML = displayname + ' (to <span style="font-style: italic; font-synthesis: none;">' + threadname + '</span>)';
         else
         {
           if (global_results[i].f === global_results[i].tr)
             fromspan.innerHTML = displayname;
           else
-            fromspan.innerHTML = displayname + " (in <i>" + threadname + "</i>)";
+            fromspan.innerHTML = displayname + ' (in <span style="font-style: italic; font-synthesis: none;">' + threadname + '</span>)';
         }
         linkdiv.append(fromspan);
 

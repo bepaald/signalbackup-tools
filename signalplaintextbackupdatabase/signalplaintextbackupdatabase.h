@@ -177,6 +177,19 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
     else if (STRING_STARTS_WITH(result, "011"))
       result = "+" + result.substr(STRLEN("011"));
 
+    // Special case to deal with numbers that start with _two_ international call prefixes _ countrycodes:
+    // eg (with countrycode '1'): 01110019999999999
+    if (result.size() >= 15 && // we'll assume max number size of 15 (sources differ), the plus stands for (at least) 2 digits.
+        !d_countrycode.empty() &&
+        d_countrycode[0] == '+' &&
+        STRING_STARTS_WITH(result, d_countrycode) &&
+        (result.substr(d_countrycode.size(), (d_countrycode.size() - 1) + 2) == ("00" + d_countrycode.substr(1)) ||
+         result.substr(d_countrycode.size(), (d_countrycode.size() - 1) + 3) == ("011" + d_countrycode.substr(1)))) [[unlikely]]
+    {
+      Logger::warning("Detected doubled prefix and countrycode in phone number (", in, ")");
+      result = normalizePhoneNumber(result.substr(d_countrycode.size()), false);
+    }
+
     if (result[0] != '+' && !d_countrycode.empty())
       result = d_countrycode + (result[0] == '0' ? result.substr(1) : result);
   }

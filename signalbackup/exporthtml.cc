@@ -132,6 +132,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   SqliteDB::QueryResults search_idx_results;
   std::ofstream searchidx;
   bool searchidx_write_started = false;
+  long long int searchidx_page_idx = 0;
+  std::map<std::string, long long int> searchidx_page_idx_map;
+
   // start search index page
   if (searchpage)
   {
@@ -396,7 +399,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_base_filename);
-      std::string filename(sanitizeFilename(raw_base_filename) + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
+      std::string base_filename(sanitizeFilename(raw_base_filename));// + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
+      std::string filename(base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
       std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
       if (!htmloutput.is_open())
       {
@@ -626,8 +630,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
-          // all pages end in ".html", slice it off
-          std::string page(msg_info.threaddir + "/" + msg_info.filename, 0, msg_info.threaddir.size() + msg_info.filename.size() + 1 - 5);
+          if (auto it = searchidx_page_idx_map.find(msg_info.threaddir + "/" + base_filename); it != searchidx_page_idx_map.end())
+            searchidx_page_idx = it->second;
+          else
+            searchidx_page_idx_map.emplace(msg_info.threaddir + "/" + base_filename, ++searchidx_page_idx);
 
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
           if (!d_database.exec("SELECT json_object("
@@ -639,7 +645,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "'d', (" + d_mms_table + ".date_received / 1000 - 1404165600), " // lose the last three digits (miliseconds, they are never displayed anyway).
                                                                                                 // subtract "2014-07-01". Signals initial release was 2014-07-29, negative
                                                                                                 // numbers should work otherwise anyway.
-                               "'p', ?) AS line,"
+                               "'p', ?, "
+                               "'n', ?) AS line,"
                                + d_part_table + "._id AS rowid, " +
                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") +
@@ -647,7 +654,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                "LEFT JOIN thread ON thread._id IS " + d_mms_table + ".thread_id "
                                "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS " + d_mms_table + "._id AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 "
                                "WHERE " + d_mms_table + "._id = ?",
-                               {page, msg_info.msg_id}, &search_idx_results) ||
+                               {searchidx_page_idx, pagenumber, msg_info.msg_id}, &search_idx_results) ||
               search_idx_results.rows() < 1) [[unlikely]]
           {
             Logger::warning("Search_idx query failed or no results");
@@ -851,9 +858,22 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'display_name', ?)", {r->first, r->second.display_name}, std::string());
       if (line.empty()) [[unlikely]]
         continue;
-
       searchidx << "  " << line;
       if (std::next(r) != recipient_info.end()) [[likely]]
+        searchidx << "," << std::endl;
+      else
+        searchidx << std::endl << "];" << std::endl;
+    }
+
+    // write page info:
+    searchidx << "page_idx = [" << std::endl;
+    for (auto pi = searchidx_page_idx_map.begin() ; pi != searchidx_page_idx_map.end(); ++pi)
+    {
+      std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'bn', ?)", {pi->second, pi->first}, std::string());
+      if (line.empty()) [[unlikely]]
+        continue;
+      searchidx << "  " << line;
+      if (std::next(pi) != searchidx_page_idx_map.end()) [[likely]]
         searchidx << "," << std::endl;
       else
         searchidx << std::endl << "];" << std::endl;

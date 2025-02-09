@@ -1072,8 +1072,8 @@ bool Arg::parsePair(std::string const &token, std::string const &delim, std::pai
     return false;
   }
 
-  std::string first = token.substr(0, pos);
-  std::string second = token.substr(pos + 1);
+  std::string first(token, 0, pos);
+  std::string second(token, pos + 1);
   if (first.empty() || second.empty())
   {
     *error = "Empty field in pair.";

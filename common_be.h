@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -44,6 +44,7 @@
 #else
 #define DEBUGOUT2(...)
 #endif
+
 #define STRLEN( STR ) (bepaald::strlitLength(STR))
 
 #if __cpp_lib_starts_ends_with >= 201711L
@@ -74,7 +75,7 @@ namespace bepaald
   inline std::string toHexString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
-  inline int strlitLength(std::string const &str);
+  //inline int strlitLength(std::string const &str);
   inline int numDigits(long long int num);
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
@@ -233,10 +234,10 @@ inline constexpr int bepaald::strlitLength(char const *str, int pos)
   return str[pos] == '\0' ? 0 : 1 + strlitLength(str, pos + 1);
 }
 
-inline int bepaald::strlitLength(std::string const &str)
-{
-  return str.size();
-}
+// inline int bepaald::strlitLength(std::string const &str)
+// {
+//   return str.size();
+// }
 
 inline int bepaald::numDigits(long long int num)
 {

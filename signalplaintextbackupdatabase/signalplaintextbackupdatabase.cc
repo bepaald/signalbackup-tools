@@ -173,12 +173,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
         std::string body;
         bool hasbody = false;
         std::string sourceaddress;
-        for (auto const &sub : n)
+        for (auto const &childnode : n)
         {
-          //std::cout << sub.name() << std::endl;
-          if (sub.name() == "parts")
+          //std::cout << childnode.name() << std::endl;
+          if (childnode.name() == "parts")
           {
-            for (auto const &part : sub)
+            for (auto const &part : childnode)
             {
               if (part.hasAttribute("text"))
               {
@@ -212,10 +212,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
               }
             }
           }
-          else if (sub.name() == "addrs")
+          else if (childnode.name() == "addrs")
           {
             int numaddresses = 0;
-            for (auto const &addr : sub)
+            for (auto const &addr : childnode)
             {
               ++numaddresses;
               //addr.print();
@@ -380,6 +380,19 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
                         "  )"
                         "  WHERE smses.rowid IN (SELECT to_update.rowid FROM to_update)",
                         {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+        // alternative... looks better, not sure if it is better (will always change all rows?)
+        // d_database.exec("UPDATE smses SET targetaddresses = "
+        //                 "("
+        //                 "  SELECT json_group_array("
+        //                 "    CASE"
+        //                 "      WHEN value = ? THEN ?"
+        //                 "      ELSE value"
+        //                 "    END"
+        //                 "  )"
+        //                 "  FROM json_each(smses.targetaddresses)"
+        //                 ") "
+        //                 "WHERE targetaddresses IS NOT NULL",
+        // {old_addresses.value(j, "address"), all_names_res.value(i, "address")});
         //std::cout << "TgtAddr change: " << d_database.changed() << std::endl;
       }
     }
