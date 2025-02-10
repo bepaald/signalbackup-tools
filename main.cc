@@ -519,13 +519,13 @@ int main(int argc, char *argv[])
   //   sb->hhenkel(arg.hhenkel());
   // }
 
-  // // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
-  // if (arg.hiperfall() != -1)
-  //   if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
-  //   {
-  //     std::cout << "Some error occurred..." << std::endl;
-  //     return 1;
-  //   }
+  // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
+  if (arg.hiperfall() != -1)
+    if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
+    {
+      std::cout << "Some error occurred..." << std::endl;
+      return 1;
+    }
 
   // // temporary, to import messages from truncated database into older, but complete database
   // if (!arg.sleepyh34d().empty())

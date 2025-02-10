@@ -309,7 +309,7 @@ class SignalBackup
   /* CUSTOMS */
   //bool hhenkel(std::string const &);
   //bool sleepyh34d(std::string const &truncatedbackup, std::string const &pwd);
-  //bool hiperfall(uint64_t t_id, std::string const &selfid);
+  bool hiperfall(uint64_t t_id, std::string const &selfid);
   void scanMissingAttachments() const;
   //void devCustom() const;
   //bool carowit(std::string const &sourcefile, std::string const &sourcepw) const;

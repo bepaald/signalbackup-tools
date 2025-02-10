@@ -303,6 +303,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   //d_database.prettyPrint(false, "SELECT address FROM smses WHERE skip = 1");
   //d_database.prettyPrint(false, "SELECT address FROM smses WHERE skip = 1 AND address IN (SELECT DISTINCT address FROM smses WHERE skip = 0)");
 
+  Logger::message("1");
+  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
+
   // If contact_name IS NULL, "", or "(Unknown)", set it to MAX(contact_name) for that address,
   // If still empty (all messsages from that contact were NULL, "", OR "(Unknown)", set it
   // to address
@@ -319,6 +322,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {cn.empty() ? addresses.value(i, 0) : cn, addresses.value(i, 0)}))
       return;
   }
+
+
+  Logger::message("2");
+  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
 
   // apply name-mapping....
   for (auto const &[addr, cn] : namemap)
@@ -341,7 +348,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 
   }
 
-
+  Logger::message("3");
+  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
 
   // for all distinct names, set address for that name to be the same..?
   //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
@@ -399,26 +407,22 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
   }
 
-  //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
+  Logger::message("4");
+  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
-
+  //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
   //d_database.prettyPrint(true, "SELECT min(date), max(date) FROM smses");
   //d_database.prettyPrint(true, "SELECT DISTINCT contact_name, body FROM smses WHERE address = '+31611496644'");
   //d_database.prettyPrint(true, "SELECT DISTINCT contact_name, body FROM smses WHERE address = '+31645756298'");
   //d_database.prettyPrint(true, "SELECT DISTINCT ismms, sourceaddress, numaddresses FROM smses");
   //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress, numaddresses FROM smses WHERE type = 2 AND ismms = 1");
-
   // this is how to scan for selfid (sourceaddress of outgoing message with at least one target recipient)
   //d_database.prettyPrint(true, "SELECT DISTINCT sourceaddress FROM smses WHERE numaddresses > 1 AND type = 2 AND ismms = 1");
   //d_database.prettyPrint(true, "SELECT * FROM smses WHERE sourceaddress IS NULL AND type = 2 AND ismms = 1");
-
   //d_database.prettyPrint(true, "SELECT * FROM smses LIMIT 50");
-
   //d_database.prettyPrint(false, "SELECT DISTINCT COUNT(DISTINCT numaddresses) FROM smses WHERE address LIKE '%~%' GROUP BY address");
-
   //d_database.printLineMode("SELECT body,HEX(body) FROM smses WHERE date = 1734628440524");
-
   //d_database.saveToFile("plaintext.sqlite");
 
   d_ok = true;

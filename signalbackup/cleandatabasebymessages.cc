@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -57,6 +57,14 @@ void SignalBackup::cleanDatabaseByMessages()
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
 
   //runSimpleQuery("SELECT _id, recipient_ids, system_display_name FROM recipient_preferences");
+
+  // remove all call_link's. These are special group types,
+  // which cant have messages? So cleanByMessages, should drop
+  // all these?
+  if (d_database.containsTable("call_link"))
+  {
+    d_database.exec("DELETE FROM call_link");
+  }
 
   if (d_database.containsTable("msl_message") &&
       d_database.containsTable("msl_recipient") &&
@@ -255,6 +263,17 @@ void SignalBackup::cleanDatabaseByMessages()
     }
     if (d_verbose) [[unlikely]]
       Logger::message("Got recipients from MY_STORY. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+
+    // get recipients referenced in call-links
+    if (d_database.containsTable("call_link"))
+    {
+      SqliteDB::QueryResults call_link_recipients;
+      if (d_database.exec("SELECT DISTINCT recipient_id FROM call_link", &call_link_recipients))
+        for (unsigned int clr = 0; clr < call_link_recipients.rows(); ++clr)
+          referenced_recipients.insert(call_link_recipients.valueAsInt(clr, "recipient_id"));
+    }
+    if (d_verbose) [[unlikely]]
+      Logger::message("Got recipients from call_link table. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     std::string referenced_recipients_query;
     if (!referenced_recipients.empty())
