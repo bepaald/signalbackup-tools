@@ -22,8 +22,9 @@
 #include "../xmldocument/xmldocument.h"
 
 SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
-                                                             std::vector<std::pair<std::string, std::string>> const &namemap,
-                                                             std::string const &countrycode)
+                                                             std::vector<std::pair<std::string, std::string>> namemap,
+                                                             std::string const &namemap_filename, std::string const &countrycode,
+                                                             bool autogroupnames)
   :
   d_ok(false),
   d_truncate(truncate),
@@ -36,6 +37,34 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   {
     Logger::error("Reading xml data");
     return;
+  }
+
+  // read and append namemap from file
+  if (!namemap_filename.empty())
+  {
+    std::ifstream namemapfile(namemap_filename, std::ios_base::in | std::ios_base::binary);
+    if (namemapfile.is_open()) [[unlikely]]
+    {
+      std::string line;
+      while (std::getline(namemapfile, line))
+      {
+        if (line.empty() || line[0] == '#')
+          continue;
+
+        std::string::size_type pos;
+        if ((pos = line.find('=')) == std::string::npos)
+        {
+          Logger::warning("Failed to find delimiter in line ('", line, "')");
+          continue;
+        }
+
+        // std::cout << line.substr(0, pos) << std::endl;
+        // std::cout << line.substr(pos + 1) << std::endl;
+        namemap.emplace_back(line.substr(0, pos), line.substr(pos + 1));
+      }
+    }
+    else
+      Logger::warning("Failed to open file '", namemap_filename, "'");
   }
 
   // check expected rootnode
@@ -303,9 +332,6 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   //d_database.prettyPrint(false, "SELECT address FROM smses WHERE skip = 1");
   //d_database.prettyPrint(false, "SELECT address FROM smses WHERE skip = 1 AND address IN (SELECT DISTINCT address FROM smses WHERE skip = 0)");
 
-  Logger::message("1");
-  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
-
   // If contact_name IS NULL, "", or "(Unknown)", set it to MAX(contact_name) for that address,
   // If still empty (all messsages from that contact were NULL, "", OR "(Unknown)", set it
   // to address
@@ -322,10 +348,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {cn.empty() ? addresses.value(i, 0) : cn, addresses.value(i, 0)}))
       return;
   }
-
-
-  Logger::message("2");
-  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
+  //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
   // apply name-mapping....
   for (auto const &[addr, cn] : namemap)
@@ -345,27 +368,64 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
         continue;
       }
     }
-
   }
 
-  Logger::message("3");
-  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
+  if (autogroupnames)
+  {
+    SqliteDB::QueryResults allgroups;
+    if (d_database.exec("SELECT address FROM smses WHERE address LIKE '%~%' AND SUBSTR(address, 1, 1) != '~' AND SUBSTR(address, LENGTH(address), 1) != '~'", &allgroups))
+    {
+      for (unsigned int i = 0; i < allgroups.rows(); ++i)
+      {
+        std::string new_contact_name;
+        std::string groupaddress = allgroups(i, "address");
+        //std::cout << "Doing: " << groupaddress << std::endl;
 
+        std::string::size_type start = 0;
+        std::string::size_type end;
+        while ((end = groupaddress.find('~', start)))
+        {
+          //std::cout << "Single: " << groupaddress.substr(start, (end == std::string::npos ? end : end - start)) << std::endl;
+          std::string groupname_part =  d_database.getSingleResultAs<std::string>("SELECT DISTINCT contact_name FROM smses WHERE address = ? LIMIT 1",
+                                                                                  groupaddress.substr(start, (end == std::string::npos ? end : end - start)),
+                                                                                  std::string());
+          if (groupname_part.empty()) [[unlikely]]
+            groupname_part = groupaddress.substr(start, (end == std::string::npos ? end : end - start));
+
+          new_contact_name += new_contact_name.empty() ? groupname_part : ", " + groupname_part;
+
+          if (end == std::string::npos)
+            break;
+          start = end + 1;
+        }
+
+        if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {new_contact_name, groupaddress}))
+          Logger::warning("Failed to set contact_name of group ('", groupaddress, "') to '", new_contact_name, "'");
+
+      }
+    }
+  }
+
+  /*
   // for all distinct names, set address for that name to be the same..?
   //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
   SqliteDB::QueryResults all_names_res;
-  if (d_database.exec("SELECT contact_name, address FROM smses GROUP BY contact_name", &all_names_res)) // "pick one address for each name"
+  if (d_database.exec("SELECT contact_name, address FROM smses GROUP BY contact_name, address LIKE '%~%'", &all_names_res)) // "pick one address for each name"
   {
-    //all_names_res.prettyPrint(false);
+    // all_names_res.prettyPrint(false);
 
     SqliteDB::QueryResults old_addresses;
     for (unsigned int i = 0; i < all_names_res.rows(); ++i)
     {
       // get the old addresses, that we are going to change
-      d_database.exec("SELECT DISTINCT address FROM smses WHERE contact_name IS ? AND address IS NOT ?",
-                      {all_names_res.value(i, "contact_name"), all_names_res.value(i, "address")},
+      d_database.exec("SELECT DISTINCT address FROM smses WHERE contact_name IS ? AND address IS NOT ? AND "
+                      "((address LIKE '%~%' AND ? LIKE '%~%') OR (address NOT LIKE '%~%' AND ? NOT LIKE '%~%'))",
+                      {all_names_res.value(i, "contact_name"), all_names_res.value(i, "address"),
+                       all_names_res.value(i, "address"), all_names_res.value(i, "address")},
                       &old_addresses);
-      //old_addresses.prettyPrint(false);
+
+      Logger::message(all_names_res(i, "address"), ":");
+      old_addresses.prettyPrint(false);
 
       // change address, and sourceaddress, and targetaddress
       for (unsigned int j = 0; j < old_addresses.rows(); ++j)
@@ -406,9 +466,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
     }
     //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
   }
-
-  Logger::message("4");
-  d_database.prettyPrint(true, "SELECT address, contact_name FROM smses WHERE date = 1721914314000");
+  */
 
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");

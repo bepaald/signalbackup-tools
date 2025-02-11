@@ -95,7 +95,8 @@ int main(int argc, char *argv[])
   auto initPlaintextDatabase = [&](std::string const &xmlfile)
   {
     if (!ptdb)
-      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfile, arg.truncate(), arg.verbose(), arg.mapxmlcontactnames(), arg.setcountrycode()));
+      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfile, arg.truncate(), arg.verbose(), arg.mapxmlcontactnames(),
+                                                   arg.mapxmlcontactnamesfromfile(), arg.setcountrycode(), arg.xmlautogroupnames()));
     return ptdb->ok();
   };
 

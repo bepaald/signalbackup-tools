@@ -36,8 +36,9 @@ class SignalPlaintextBackupDatabase
   std::string d_countrycode;
  public:
   SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
-                                std::vector<std::pair<std::string, std::string>> const &namemap,
-                                std::string const &countrycode);
+                                std::vector<std::pair<std::string, std::string>> namemap,
+                                std::string const &namemap_file, std::string const &countrycode,
+                                bool autogroupnames);
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase &&other) = delete;
   SignalPlaintextBackupDatabase &operator=(SignalPlaintextBackupDatabase const &other) = delete;

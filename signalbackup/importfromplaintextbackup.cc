@@ -199,28 +199,41 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     }
     else
     {
-      trid = getRecipientIdFromName(pt_messages_contact_name, false);
-      if (trid != -1)
-      {
-        contactmap[pt_messages_address] = trid;
-        if (d_verbose) [[unlikely]]
-          Logger::message("Got trid from name: ", makePrintable(pt_messages_contact_name));
-      }
-      else // try by phone number...
-      {
-        // this can go wrong these days. When an old contact is no longer on signal, it
-        // is possible the database has 2 entries for this contact, one with nothing but
-        // phone number (from the system address book, possibly not a valid signal contact),
-        // and one with names/aci/pni etc (which, while no longer registered, is valid).
-        //
-        // since the xml only has e164 to match, it will match the former (which is possibly
-        // not a valid signal contact and likely causes problems when restoring)
+      if (isdummy) /// only try by address (=phone). Names may be falsely doubled in the XML file
+      {            ///
         trid = getRecipientIdFromPhone(pt_messages_address, false);
         if (trid != -1)
         {
           contactmap[pt_messages_address] = trid;
           if (d_verbose) [[unlikely]]
             Logger::message("Got trid from addres: ", makePrintable(pt_messages_address));
+        }
+      }
+      else
+      {
+        trid = getRecipientIdFromName(pt_messages_contact_name, false);
+        if (trid != -1)
+        {
+          contactmap[pt_messages_address] = trid;
+          if (d_verbose) [[unlikely]]
+            Logger::message("Got trid from name: ", makePrintable(pt_messages_contact_name));
+        }
+        else // try by phone number...
+        {
+          // this can go wrong these days. When an old contact is no longer on signal, it
+          // is possible the database has 2 entries for this contact, one with nothing but
+          // phone number (from the system address book, possibly not a valid signal contact),
+          // and one with names/aci/pni etc (which, while no longer registered, is valid).
+          //
+          // since the xml only has e164 to match, it will match the former (which is possibly
+          // not a valid signal contact and likely causes problems when restoring)
+          trid = getRecipientIdFromPhone(pt_messages_address, false);
+          if (trid != -1)
+          {
+            contactmap[pt_messages_address] = trid;
+            if (d_verbose) [[unlikely]]
+              Logger::message("Got trid from addres: ", makePrintable(pt_messages_address));
+          }
         }
       }
     }

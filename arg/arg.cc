@@ -153,6 +153,8 @@ Arg::Arg(int argc, char *argv[])
   d_linkify(true),
   d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
   d_mapxmlcontactnames(std::vector<std::pair<std::string, std::string>>()),
+  d_mapxmlcontactnamesfromfile(std::string()),
+  d_xmlautogroupnames(false),
   d_setcountrycode(std::string()),
   d_input_required(false)
 {
@@ -1854,6 +1856,29 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--mapxmlcontactnamesfromfile")
+    {
+      if (i < argsize - 1)
+      {
+        d_mapxmlcontactnamesfromfile = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--xmlautogroupnames")
+    {
+      d_xmlautogroupnames = true;
+      continue;
+    }
+    if (option == "--no-xmlautogroupnames")
+    {
+      d_xmlautogroupnames = false;
       continue;
     }
     if (option == "--setcountrycode")
