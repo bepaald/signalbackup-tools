@@ -42,7 +42,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   // read and append namemap from file
   if (!namemap_filename.empty())
   {
-    std::ifstream namemapfile(namemap_filename, std::ios_base::in | std::ios_base::binary);
+    // do NOT open in binary mode. We are using getline, on Windows,
+    // using binary mode will append '\r' at the end of each line.
+    std::ifstream namemapfile(namemap_filename, std::ios_base::in);
     if (namemapfile.is_open()) [[unlikely]]
     {
       std::string line;
