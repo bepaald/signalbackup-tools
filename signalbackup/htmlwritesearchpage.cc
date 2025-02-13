@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching) const
+void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching, bool compact) const
 {
 
   Logger::message("Writing searchpage.html...");
@@ -786,7 +786,7 @@ body {
           elem.classList.add("msg-outgoing");
         else
           elem.classList.add("msg-incoming");
-        elem.setAttribute('href', encodeURI(base_filename + (global_results[i].n > 0 ? '_' + global_results[i].n + '.html#' : '.html#') + global_results[i].id));
+        elem.setAttribute('href', encodeURI(base_filename + )code" << (compact ? "global_results[i].n + '.html#'" : "(global_results[i].n > 0 ? '_' + global_results[i].n + '.html#' : '.html#')") << R"code( + global_results[i].id));
 
         var linkdiv = document.createElement('div');
 

@@ -24,7 +24,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       long long int note_to_self_tid, bool calllog, bool searchpage, bool stickerpacks, bool blocked,
                                       bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
                                       std::string const &exportdetails, long long int chatfolder_idx,
-                                      std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders) const
+                                      std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders,
+                                      bool compact) const
 {
   std::string filename(sanitizeFilename(basename) + ".html");
 
@@ -353,6 +354,9 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                   "Note to Self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_avatar_path);
       std::string avatar_path(sanitizeFilename(raw_avatar_path) + " (_id" + results(i, "_id") + ")");
+      if (compact) [[unlikely]]
+        avatar_path = "id" + results(i, "_id");
+
       std::string avatar_extension = getAvatarExtension(rec_id);
       HTMLescapeUrl(&avatar_path);
       bepaald::replaceAll(&avatar_path, '\"', R"(\")");
@@ -1080,8 +1084,16 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     std::string raw_convo_url_path(isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name);
     WIN_LIMIT_FILENAME_LENGTH(raw_convo_url_path);
     std::string convo_url_path(sanitizeFilename(raw_convo_url_path) + " (_id" + bepaald::toString(t_id) + ")");
+    if (compact) [[unlikely]]
+    {
+      raw_convo_url_path.clear();
+      convo_url_path = "id" + bepaald::toString(t_id);
+    }
     HTMLescapeUrl(&convo_url_path);
+
     std::string convo_url_location(sanitizeFilename(raw_convo_url_path) + ".html");
+    if (compact) [[unlikely]]
+      convo_url_location = "0.html";
     HTMLescapeUrl(&convo_url_location);
 
     if (convo_url_location == ".html") [[unlikely]]

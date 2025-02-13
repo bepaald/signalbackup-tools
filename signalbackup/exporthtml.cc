@@ -33,7 +33,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               long long int split, std::string const &selfphone, bool calllog, bool searchpage,
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
-                              bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders)
+                              bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
+                              bool compact)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -340,6 +341,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     std::string basethreaddir(is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
     WIN_LIMIT_FILENAME_LENGTH(basethreaddir);
     std::string threaddir(sanitizeFilename(basethreaddir) + " (_id"s + bepaald::toString(thread_id) + ")");
+    if (compact) [[unlikely]]
+      threaddir = "id" + bepaald::toString(thread_id);
+
     if (bepaald::fileOrDirExists(directory + "/" + threaddir))
     {
       if (!bepaald::isDir(directory + "/" + threaddir))
@@ -399,8 +403,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_base_filename);
-      std::string base_filename(sanitizeFilename(raw_base_filename));// + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
-      std::string filename(base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
+      std::string sanitized_base_filename(sanitizeFilename(raw_base_filename));
+      std::string filename(sanitized_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
+      if (compact) [[unlikely]]
+      {
+        sanitized_base_filename.clear();
+        filename = bepaald::toString(pagenumber) + ".html";
+      }
       std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
       if (!htmloutput.is_open())
       {
@@ -630,10 +639,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
-          if (auto it = searchidx_page_idx_map.find(msg_info.threaddir + "/" + base_filename); it != searchidx_page_idx_map.end())
+          if (auto it = searchidx_page_idx_map.find(msg_info.threaddir + "/" + sanitized_base_filename); it != searchidx_page_idx_map.end())
             searchidx_page_idx = it->second;
           else
-            searchidx_page_idx_map.emplace(msg_info.threaddir + "/" + base_filename, ++searchidx_page_idx);
+            searchidx_page_idx_map.emplace(msg_info.threaddir + "/" + sanitized_base_filename, ++searchidx_page_idx);
 
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
           if (!d_database.exec("SELECT json_object("
@@ -734,28 +743,28 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       if (totalpages > 1)
       {
-        std::string sanitized_filename = sanitizeFilename(raw_base_filename);
+        std::string sanitized_filename(sanitized_base_filename);
         HTMLescapeUrl(&sanitized_filename);
         htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << '\n';
         htmloutput << "        <div title=\"First page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << ".html" << "\">" << '\n';
+        htmloutput << "          <a href=\"" << (compact ? "0" : sanitized_filename) << ".html" << "\">" << '\n';
         htmloutput << "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << '\n';
         htmloutput << "          </a>" << '\n';
         htmloutput << "        </div>" << '\n';
         htmloutput << "        <div title=\"Previous page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "") << ".html" << "\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pagenumber - 1) : (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "")) << ".html" << "\">" << '\n';
         htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << '\n';
         htmloutput << "          </a>" << '\n';
         htmloutput << "        </div>" << '\n';
         htmloutput << "      </div>" << '\n';
         htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << '\n';
         htmloutput << "        <div title=\"Next page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << "_" << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << (compact ? "" : "_") << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">" << '\n';
         htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << '\n';
         htmloutput << "          </a>" << '\n';
         htmloutput << "        </div>" << '\n';
         htmloutput << "        <div title=\"Last page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << "_" << bepaald::toString(totalpages - 1) << ".html" << "\">" << '\n';
+        htmloutput << "          <a href=\"" << sanitized_filename << (compact ? "" : "_") << bepaald::toString(totalpages - 1) << ".html" << "\">" << '\n';
         htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << '\n';
         htmloutput << "          </a>" << '\n';
         htmloutput << "        </div>" << '\n';
@@ -979,29 +988,31 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
                             calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
                             append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"),
-                            chatfolders_list);
+                            chatfolders_list, compact);
       }
     }
   }
   HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_list);
+                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_list, compact);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,
-                     overwrite, append, lighttheme, themeswitching, exportdetails_html);
+                     overwrite, append, lighttheme, themeswitching, exportdetails_html, compact);
 
   if (searchpage)
-    HTMLwriteSearchpage(directory, lighttheme, themeswitching);
+    HTMLwriteSearchpage(directory, lighttheme, themeswitching, compact);
 
   if (stickerpacks)
     HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   if (blocked)
-    HTMLwriteBlockedlist(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
+    HTMLwriteBlockedlist(directory, &recipient_info, overwrite, append, lighttheme, themeswitching,
+                         exportdetails_html, compact);
 
   if (fullcontacts)
-    HTMLwriteFullContacts(directory, &recipient_info, overwrite, append, lighttheme, themeswitching, exportdetails_html);
+    HTMLwriteFullContacts(directory, &recipient_info, overwrite, append, lighttheme, themeswitching,
+                          exportdetails_html, compact);
 
   if (settings)
     HTMLwriteSettings(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);

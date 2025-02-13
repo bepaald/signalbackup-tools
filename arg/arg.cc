@@ -156,6 +156,7 @@ Arg::Arg(int argc, char *argv[])
   d_mapxmlcontactnamesfromfile(std::string()),
   d_xmlautogroupnames(false),
   d_setcountrycode(std::string()),
+  d_compactfilenames(false),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1892,6 +1893,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--compactfilenames")
+    {
+      d_compactfilenames = true;
+      continue;
+    }
+    if (option == "--no-compactfilenames")
+    {
+      d_compactfilenames = false;
       continue;
     }
     if (option[0] != '-')

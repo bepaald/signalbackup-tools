@@ -21,7 +21,7 @@
 
 bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long long int, RecipientInfo> *recipient_info,
                                          bool overwrite, bool append, bool light, bool themeswitching,
-                                         std::string const &exportdetails) const
+                                         std::string const &exportdetails, bool compact) const
 {
   Logger::message("Writing fullcontactslist.html...");
 
@@ -293,6 +293,8 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
         std::string raw_thread_dir(getRecipientInfoFromMap(recipient_info, rec_id).display_name);
         WIN_LIMIT_FILENAME_LENGTH(raw_thread_dir);
         std::string thread_dir(sanitizeFilename(raw_thread_dir) + " (_id" + bepaald::toString(thread_id) + ")");
+        if (compact) [[unlikely]]
+          thread_dir = "id" + bepaald::toString(thread_id);
         if (bepaald::fileOrDirExists(dir + "/" + thread_dir + "/media/Avatar_" + bepaald::toString(rec_id) + "." + avatar_extension))
         {
           HTMLescapeUrl(&thread_dir);
