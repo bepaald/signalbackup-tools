@@ -208,7 +208,7 @@ To limit the export to certain contacts, add the option `--limitcontacts [LIST_O
 **<span id="fix">Fixing broken backups</span>**
 
 > [!IMPORTANT]
-> Around version 6.26 of Signal Android (circa July 2023), the backup format was changed in a way that makes it impossible to recover from data corruption that happens across fame boundaries. This functionality is disabled for newer backups. In other cases (corruption within a single frame, the occasional bug in Signal), part of the data could possibly still be recovered, though it might require a custom function. You could always open an issue if you need help. Note that this type of corruption, where only a single frame is affected, is rare and recent versions of Signal Android usually deal with this case quite well.
+> Around version 6.26 of Signal Android (circa July 2023), the backup format was changed in a way that makes it impossible to recover from data corruption that happens across frame boundaries. This functionality is disabled for newer backups. In other cases (corruption within a single frame, the occasional bug in Signal), part of the data could possibly still be recovered, though it might require a custom function. You could always open an issue if you need help. Note that this type of corruption, where only a single frame is affected, is rare and recent versions of Signal Android usually deal with this case quite well.
 
 At the moment it has been used successfully to fix backups that were corrupted for some reason (see https://github.com/signalapp/Signal-Android/issues/8355, and https://community.signalusers.org/t/tool-to-re-encrypt-signal-backup-optionally-changing-password-or-dropping-bad-frames/6497). If you want to fix a broken backup, run the tool as follows:
 
