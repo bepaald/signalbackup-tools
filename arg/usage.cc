@@ -130,6 +130,9 @@ R"*(
    --originalfilenames                   Optional modifier for `--exporthtml'. Use the original filenames
                                          for attached media when available. This option can not be used
                                          together with `--append'.
+   --compactfilenames                    Use (very) short filenames for the generated HTML pages. May be
+                                         of use when running into maximum path length limitations on
+                                         Windows.
    --allhtmlpages                        Optional modifier for `--exporthtml'. Convenience option that
                                          enables all the modifying options for `--exporthtml' listed below.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
