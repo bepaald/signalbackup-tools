@@ -607,7 +607,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         font-size: large;
         font-weight: 700;
         text-decoration: none;
-        color: var(--conversationbox-c);
+        color: inherit;
         padding-left: 5px;
       }
 
@@ -828,7 +828,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-incoming .attachment-unknown-type {
-        background-color: rgba(255, 255, 255, .16);
+        background-color: var(--incominglinkpreview-bc);
       }
 
       .msg-outgoing .attachment-unknown-type {
@@ -2059,10 +2059,10 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     else if (content_type.empty())
     {
       if (original_filename.empty())
-        htmloutput << std::string(indent, ' ') << "  Attachment of unknown type <span class=\"msg-dl-link\"><a href=\"media/"
+        htmloutput << std::string(indent, ' ') << "  [Attachment of unknown type]<span class=\"msg-dl-link\"><a href=\"media/"
                    << attachment_filename_on_disk << "\">&#129055;</a></span>\n";
       else
-        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "' <span class=\"msg-dl-link\"><a href=\"media/"
+        htmloutput << std::string(indent, ' ') << "  [Attachment '" << original_filename << "']<span class=\"msg-dl-link\"><a href=\"media/"
                    << attachment_filename_on_disk << "\">&#129055;</a></span>\n";
                 // the following does not work, because URIs on file:// are cross-origin
                 // << attachment_filename_on_disk << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n";
@@ -2070,10 +2070,10 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     else // content-type not empty, but not 'image/', 'audio/' or 'video/'
     {
       if (original_filename.empty())
-        htmloutput << std::string(indent, ' ') << "  Attachment of type " << content_type << "<span class=\"msg-dl-link\"><a href=\"media/"
+        htmloutput << std::string(indent, ' ') << "  [Attachment of type " << content_type << "]<span class=\"msg-dl-link\"><a href=\"media/"
                    << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
       else
-        htmloutput << std::string(indent, ' ') << "  Attachment '" << original_filename << "'<span class=\"msg-dl-link\"><a href=\"media/"
+        htmloutput << std::string(indent, ' ') << "  [Attachment '" << original_filename << "']<span class=\"msg-dl-link\"><a href=\"media/"
                    << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
     }
 
