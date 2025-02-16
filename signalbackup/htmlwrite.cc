@@ -229,6 +229,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         padding-top: 30px;
         padding-bottom: 30px;
+        width: 90%;
       }
 
       .conversation-box {
@@ -1225,7 +1226,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       #thread-title {
         display: flex;
         align-items: center;
-        width: min-content;
+        width: auto;
         margin-left: auto;
         margin-right: auto;
       }
@@ -1235,8 +1236,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         font-size: x-large;
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         padding: 0px;
-        margin: 0px;
-        width: 900px;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        margin-left: auto;
+        margin-right: auto;
+        min-width: 100%;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
       }
