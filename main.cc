@@ -20,6 +20,10 @@
 #include <string>
 #include <vector>
 
+#if __cpp_lib_span >= 202002L
+#include <span>
+#endif
+
 #include "main.h"
 #include "arg/arg.h"
 #include "common_be.h"
@@ -92,10 +96,14 @@ int main(int argc, char *argv[])
                                     arg.showdesktopkey(), arg.dbusverbose()));
     return ddb->ok();
   };
-  auto initPlaintextDatabase = [&](std::string const &xmlfile)
+#if __cpp_lib_span >= 202002L
+  auto initPlaintextDatabase = [&](std::span<std::string const> const &xmlfiles)
+#else
+  auto initPlaintextDatabase = [&](std::vector<std::string> const &xmlfiles)
+#endif
   {
     if (!ptdb)
-      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfile, arg.truncate(), arg.verbose(), arg.mapxmlcontactnames(),
+      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfiles, arg.truncate(), arg.verbose(), arg.mapxmlcontactnames(),
                                                    arg.mapxmlcontactnamesfromfile(), arg.setcountrycode(), arg.xmlautogroupnames()));
     return ptdb->ok();
   };
@@ -178,9 +186,15 @@ int main(int argc, char *argv[])
         return 1;
   }
 
-  if (!arg.exportplaintextbackuphtml_1().empty())
+  if (!arg.exportplaintextbackuphtml().empty())
   {
-    if (!initPlaintextDatabase(arg.exportplaintextbackuphtml_1()))
+    // skip last entry, it is the output
+#if __cpp_lib_span >= 202002L
+    if (!initPlaintextDatabase(std::span(arg.exportplaintextbackuphtml().begin(), arg.exportplaintextbackuphtml().end() - 1)))
+#else
+    std::vector<std::string> xmlfiles(arg.exportplaintextbackuphtml().begin(), arg.exportplaintextbackuphtml().end() - 1);
+    if (!initPlaintextDatabase(xmlfiles))
+#endif
       return 1;
 
     DummyBackup dummydb(ptdb, arg.setselfid(), arg.verbose(), arg.truncate(), arg.showprogress());
@@ -192,7 +206,7 @@ int main(int argc, char *argv[])
                                            arg.xmlmarkread(), false /*autolimittodates*/, arg.setselfid(), true /*isdummydb*/))
       return 1;
 
-    if (!dummydb.exportHtml(arg.exportplaintextbackuphtml_2(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
+    if (!dummydb.exportHtml(arg.exportplaintextbackuphtml().back(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
                             (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,

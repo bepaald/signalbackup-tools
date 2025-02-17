@@ -117,9 +117,8 @@ class Arg
   bool d_interactive;
   std::string d_exporthtml;
   std::string d_exportdesktophtml;
-  std::string d_exportplaintextbackuphtml_1;
-  std::string d_exportplaintextbackuphtml_2;
-  std::string d_importplaintextbackup;
+  std::vector<std::string> d_exportplaintextbackuphtml;
+  std::vector<std::string> d_importplaintextbackup;
   bool d_addexportdetails;
   bool d_includecalllog;
   bool d_includeblockedlist;
@@ -161,7 +160,7 @@ class Arg
   bool d_skipmessagereorder;
   bool d_migrate_to_191;
   std::vector<std::pair<std::string,long long int>> d_mapxmlcontacts;
-  std::string d_listxmlcontacts;
+  std::vector<std::string> d_listxmlcontacts;
   std::vector<std::string> d_selectxmlchats;
   bool d_linkify;
   std::vector<std::pair<long long int, std::string>> d_setchatcolors;
@@ -259,9 +258,8 @@ class Arg
   inline bool interactive() const;
   inline std::string const &exporthtml() const;
   inline std::string const &exportdesktophtml() const;
-  inline std::string const &exportplaintextbackuphtml_1() const;
-  inline std::string const &exportplaintextbackuphtml_2() const;
-  inline std::string const &importplaintextbackup() const;
+  inline std::vector<std::string> const &exportplaintextbackuphtml() const;
+  inline std::vector<std::string> const &importplaintextbackup() const;
   inline bool addexportdetails() const;
   inline bool includecalllog() const;
   inline bool includeblockedlist() const;
@@ -303,7 +301,7 @@ class Arg
   inline bool skipmessagereorder() const;
   inline bool migrate_to_191() const;
   inline std::vector<std::pair<std::string,long long int>> const &mapxmlcontacts() const;
-  inline std::string const &listxmlcontacts() const;
+  inline std::vector<std::string> const &listxmlcontacts() const;
   inline std::vector<std::string> const &selectxmlchats() const;
   inline bool linkify() const;
   inline std::vector<std::pair<long long int, std::string>> const &setchatcolors() const;
@@ -739,17 +737,12 @@ inline std::string const &Arg::exportdesktophtml() const
   return d_exportdesktophtml;
 }
 
-inline std::string const &Arg::exportplaintextbackuphtml_1() const
+inline std::vector<std::string> const &Arg::exportplaintextbackuphtml() const
 {
-  return d_exportplaintextbackuphtml_1;
+  return d_exportplaintextbackuphtml;
 }
 
-inline std::string const &Arg::exportplaintextbackuphtml_2() const
-{
-  return d_exportplaintextbackuphtml_2;
-}
-
-inline std::string const &Arg::importplaintextbackup() const
+inline std::vector<std::string> const &Arg::importplaintextbackup() const
 {
   return d_importplaintextbackup;
 }
@@ -959,7 +952,7 @@ inline std::vector<std::pair<std::string,long long int>> const &Arg::mapxmlconta
   return d_mapxmlcontacts;
 }
 
-inline std::string const &Arg::listxmlcontacts() const
+inline std::vector<std::string> const &Arg::listxmlcontacts() const
 {
   return d_listxmlcontacts;
 }

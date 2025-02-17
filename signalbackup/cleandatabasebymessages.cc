@@ -420,7 +420,7 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_database.containsTable("chat_folder"))
   {
     Logger::message_start("  Deleting empty chat_folders");
-    d_database.exec("DELETE FROM chat_folder WHERE _id NOT IN (SELECT chat_folder_id FROM chat_folder_membership)");
+    d_database.exec("DELETE FROM chat_folder WHERE name IS NOT NULL AND _id NOT IN (SELECT chat_folder_id FROM chat_folder_membership)");
     Logger::message_end(" (", d_database.changed(), ")");
   }
 

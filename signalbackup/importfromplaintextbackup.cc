@@ -201,7 +201,11 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     {
       if (isdummy) /// only try by address (=phone). Names may be falsely doubled in the XML file
       {            ///
-        trid = getRecipientIdFromPhone(pt_messages_address, false);
+        if (isgroup)
+          trid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE group_id = ?", "__signal_group__fake__" + pt_messages_address, -1);
+        else
+          trid = getRecipientIdFromPhone(pt_messages_address, false);
+
         if (trid != -1)
         {
           contactmap[pt_messages_address] = trid;
@@ -390,6 +394,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
       for (unsigned int j = 0; j < attachment_res.rows(); ++j)
       {
+        MEMINFO("START ATTACHMENT LOOP");
+
         std::string data = attachment_res(j, "data");
         std::string file = attachment_res(j, "filename");
         long long int pos = attachment_res.valueAsInt(j, "pos", -1);
@@ -414,7 +420,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 #if __cpp_lib_out_ptr >= 202106L
       AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data.get(), ptar.dataSize()); // get metadata from heap
 #else
-      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data,  ptar.dataSize());       // get metadata from heap
+      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data, ptar.dataSize());       // get metadata from heap
       if (att_data)
         delete[] att_data;
 #endif
@@ -460,6 +466,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
           d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
           continue;
         }
+        MEMINFO("END ATTACHMENT LOOP");
       }
     }
 

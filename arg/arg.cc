@@ -104,9 +104,8 @@ Arg::Arg(int argc, char *argv[])
   d_interactive(false),
   d_exporthtml(std::string()),
   d_exportdesktophtml(std::string()),
-  d_exportplaintextbackuphtml_1(std::string()),
-  d_exportplaintextbackuphtml_2(std::string()),
-  d_importplaintextbackup(std::string()),
+  d_exportplaintextbackuphtml(std::vector<std::string>()),
+  d_importplaintextbackup(std::vector<std::string>()),
   d_addexportdetails(false),
   d_includecalllog(false),
   d_includeblockedlist(false),
@@ -148,7 +147,7 @@ Arg::Arg(int argc, char *argv[])
   d_skipmessagereorder(false),
   d_migrate_to_191(false),
   d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
-  d_listxmlcontacts(std::string()),
+  d_listxmlcontacts(std::vector<std::string>()),
   d_selectxmlchats(std::vector<std::string>()),
   d_linkify(true),
   d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
@@ -495,7 +494,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-          d_runsqlquery.emplace_back(std::move(arguments[++i]));
+        d_runsqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -509,7 +508,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-          d_runprettysqlquery.emplace_back(std::move(arguments[++i]));
+        d_runprettysqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -523,7 +522,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-          d_rundtsqlquery.emplace_back(std::move(arguments[++i]));
+        d_rundtsqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -536,7 +535,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-          d_rundtprettysqlquery.emplace_back(std::move(arguments[++i]));
+        d_rundtprettysqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -1265,27 +1264,26 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--exportplaintextbackuphtml")
     {
-      if (i < argsize - 2)
+      while (i < argsize - 1 && !isOption(arguments[i + 1]))
       {
-        d_exportplaintextbackuphtml_1 = std::move(arguments[++i]);
-        d_exportplaintextbackuphtml_2 = std::move(arguments[++i]);
+        d_exportplaintextbackuphtml.emplace_back(std::move(arguments[++i]));
       }
-      else
+      if (d_exportplaintextbackuphtml.size() < 2)
       {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        std::cerr << "[ Error parsing command line option `" << option << "': 2 arguments required, " << d_exportplaintextbackuphtml.size() << " provided ]" << std::endl;
         ok = false;
       }
       continue;
     }
     if (option == "--importplaintextbackup")
     {
-      if (i < argsize - 1)
+      while (i < argsize - 1 && !isOption(arguments[i + 1]))
       {
-        d_importplaintextbackup = std::move(arguments[++i]);
+        d_importplaintextbackup.emplace_back(std::move(arguments[++i]));
       }
-      else
+      if (d_importplaintextbackup.size() < 1)
       {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        std::cerr << "[ Error parsing command line option `" << option << "': 1 arguments required, " << d_importplaintextbackup.size() << " provided ]" << std::endl;
         ok = false;
       }
       d_input_required = true;
@@ -1785,13 +1783,13 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     }
     if (option == "--listxmlcontacts")
     {
-      if (i < argsize - 1)
+      while (i < argsize - 1 && !isOption(arguments[i + 1]))
       {
-        d_listxmlcontacts = std::move(arguments[++i]);
+        d_listxmlcontacts.emplace_back(std::move(arguments[++i]));
       }
-      else
+      if (d_listxmlcontacts.size() < 1)
       {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        std::cerr << "[ Error parsing command line option `" << option << "': 1 arguments required, " << d_listxmlcontacts.size() << " provided ]" << std::endl;
         ok = false;
       }
       continue;

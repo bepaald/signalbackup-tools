@@ -21,24 +21,23 @@
 
 #include "../xmldocument/xmldocument.h"
 
-SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
+#if __cpp_lib_span >= 202002L
+SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
                                                              std::vector<std::pair<std::string, std::string>> namemap,
                                                              std::string const &namemap_filename, std::string const &countrycode,
                                                              bool autogroupnames)
+#else
+SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::string> const &sptbxmls, bool truncate, bool verbose,
+                                                             std::vector<std::pair<std::string, std::string>> namemap,
+                                                             std::string const &namemap_filename, std::string const &countrycode,
+                                                             bool autogroupnames)
+#endif
   :
   d_ok(false),
   d_truncate(truncate),
   d_verbose(verbose),
   d_countrycode(countrycode)
 {
-  // open and parse XML file
-  XmlDocument xmldoc(sptbxml);
-  if (!xmldoc.ok())
-  {
-    Logger::error("Reading xml data");
-    return;
-  }
-
   // read and append namemap from file
   if (!namemap_filename.empty())
   {
@@ -69,25 +68,17 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
       Logger::warning("Failed to open file '", namemap_filename, "'");
   }
 
-  // check expected rootnode
-  XmlDocument::Node const &rootnode = xmldoc.root();
-  if (rootnode.name() != "smses")
-  {
-    Logger::error("Unexpected rootnode '", rootnode.name(), "', expected 'smses'.");
-    return;
-  }
-
   /*
     columns (XML attributes) imported into SQL table
 
-       available columns:
-     <sms protocol="n" address="+[phonenumber]" contact_name="[name]" date="nnnnnnnnnnnnn" readable_date="[date-as-string]" type="2" subject="null" body="[message-body]" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" />
+    available columns:
+    <sms protocol="n" address="+[phonenumber]" contact_name="[name]" date="nnnnnnnnnnnnn" readable_date="[date-as-string]" type="2" subject="null" body="[message-body]" toa="null" sc_toa="null" service_center="null" read="1" status="-1" locked="0" />
 
-     date = ms since epoch (same as Signal database)
-     address = recipient.e164
-     read = 1/0 (read/unread)
-     status = -1/0/32/64 (none/complete/pending/failed)
-     type = 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued
+    date = ms since epoch (same as Signal database)
+    address = recipient.e164
+    read = 1/0 (read/unread)
+    status = -1/0/32/64 (none/complete/pending/failed)
+    type = 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued
   */
   struct PlaintextColumnInfo
   {
@@ -118,7 +109,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
 #if __cplusplus > 201703L
   for (unsigned int i = 0; auto const &rc : columninfo)
 #else
-  unsigned int i = 0;
+    unsigned int i = 0;
   for (auto const &rc : columninfo)
 #endif
   {
@@ -139,188 +130,208 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   std::vector<std::any> values;
   std::string columns;
   std::string placeholders;
-
   std::set<std::string> group_only_contacts; // the set of contacts that only appear in groups, and only receives messages
   std::set<std::string> group_recipients; // the same but for each message...
 
-  auto addvalue = [&](std::string const &column, std::any &&value)
+  for (auto const &xmlfile : sptbxmls)
   {
-    values.emplace_back(value);
-    columns += (columns.empty() ? ""s : ", "s) + column;
-    placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
-  };
+    Logger::message("Parsing file: ", xmlfile);
 
-  for (auto const &n : rootnode)
-  {
-
-    // check required attributes exist
-    if (!std::all_of(columninfo.begin(), columninfo.end(),
-                     [&](PlaintextColumnInfo const &rc)
-                     {
-                       if ((rc.required_in_node.empty() || rc.required_in_node == n.name()) && !n.hasAttribute(rc.name))
-                       {
-                         Logger::warning("Skipping message, missing required attribute '", rc.name, "'");
-
-                         //if (d_verbose) [[unlikely]]
-                         {
-                           Logger::warning_indent("Full node data:");
-                           n.print();
-                         }
-
-                         return false;
-                       }
-                       return true;
-                     }))
-      continue;
-
-    if (n.name() == "sms" || n.name() == "mms")
+    // open and parse XML file
+    XmlDocument xmldoc(xmlfile);
+    if (!xmldoc.ok())
     {
-      // build statement
-      columns.clear();
-      placeholders.clear();
-      values.clear();
-      group_recipients.clear();
-
-      for (auto const &rc : columninfo)
-      {
-        if (rc.required_in_node != n.name() && !rc.required_in_node.empty())
-          continue;
-
-        std::string val = n.getAttribute(rc.name);
-
-        if (val != "null")
-        {
-          if (rc.name == "address")
-            addvalue(rc.name, normalizePhoneNumber(val));
-          else
-            addvalue((rc.columnname.empty() ? rc.name : rc.columnname), (rc.type == "INTEGER") ? std::any(bepaald::toNumber<long long int>(val)) : std::any(val));
-        }
-      }
-
-      std::vector<std::tuple<XmlDocument::Node::StringOrRef, std::string, std::string>> attachments;
-      if (n.name() == "mms")
-      {
-        // get message body && attachments
-        std::string body;
-        bool hasbody = false;
-        std::string sourceaddress;
-        for (auto const &childnode : n)
-        {
-          //std::cout << childnode.name() << std::endl;
-          if (childnode.name() == "parts")
-          {
-            for (auto const &part : childnode)
-            {
-              if (part.hasAttribute("text"))
-              {
-                if (part.hasAttribute("ct") && part.getAttribute("ct") == "text/plain")
-                {
-                  body += part.getAttribute("text");
-                  hasbody = true;
-                }
-              }
-              if (part.hasAttribute("data"))
-              {
-                //std::cout << "HAS DATA" << std::endl;
-
-                // do something with data...
-                XmlDocument::Node::StringOrRef attachmentdata = part.getAttributeStringOrRef("data");
-                if (attachmentdata.file.empty() && attachmentdata.value.empty()) [[unlikely]]
-                {
-                  Logger::warning("Got data attribute, but no value or reference");
-                  continue;
-                }
-                std::string ct;
-                if (part.hasAttribute("ct"))
-                  ct = part.getAttribute("ct");
-
-                std::string cl;
-                if (part.hasAttribute("cl"))
-                  cl = part.getAttribute("cl");
-
-                attachments.emplace_back(std::make_tuple(attachmentdata, ct, cl));
-
-              }
-            }
-          }
-          else if (childnode.name() == "addrs")
-          {
-            int numaddresses = 0;
-            for (auto const &addr : childnode)
-            {
-              ++numaddresses;
-              //addr.print();
-              if (!addr.hasAttribute("address"))
-              {
-                Logger::warning("No address attribute found in <addr>");
-                continue;
-              }
-              std::string groupmsgaddress = normalizePhoneNumber(addr.getAttribute("address"));
-
-              // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
-              if (addr.hasAttribute("type") && addr.getAttribute("type") == "137")
-              {
-                if (!sourceaddress.empty()) [[unlikely]]
-                {
-                  Logger::warning("Multiple source addresses for message");
-                  sourceaddress.clear();
-                  continue;
-                }
-                sourceaddress = groupmsgaddress;
-                group_only_contacts.insert(std::move(groupmsgaddress));
-              }
-              else // likely a receiving addr
-              {
-                group_recipients.insert(groupmsgaddress);
-                group_only_contacts.insert(std::move(groupmsgaddress));
-              }
-            }
-            addvalue("numaddresses", numaddresses);
-          }
-        }
-
-        if (hasbody)
-          addvalue("body", std::move(body));
-
-        if (!sourceaddress.empty())
-          addvalue("sourceaddress", std::move(sourceaddress));
-
-        if (!group_recipients.empty())
-        {
-          // might need to not do this manually...
-          std::string json_array_recipients("[");
-          for (auto it = group_recipients.begin(); it != group_recipients.end(); ++it)
-            json_array_recipients += (it != group_recipients.begin() ? (", \"" + *it + "\"") : ("\"" + *it + "\""));
-          json_array_recipients += ']';
-          addvalue("targetaddresses", json_array_recipients);
-        }
-      }
-
-      //std::cout << "attachments: " << attachments.size() << std::endl;
-      addvalue("numattachments", attachments.size());
-
-      // is sms
-      addvalue("ismms", (n.name() == "mms") ? 1 : 0);
-
-      // dont skip, this is a real message
-      addvalue("skip", 0);
-
-      if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
-        return;
-
-      if (!attachments.empty())
-      {
-        long long int lastid = d_database.lastId();
-        for (auto const &a : attachments)
-          d_database.exec("INSERT INTO attachments (mid, data, filename, pos, size, ct, cl) "
-                          "VALUES "
-                          "(?, ?, ?, ?, ?, ?, ?)", {lastid, std::get<0>(a).value, std::get<0>(a).file, std::get<0>(a).pos, std::get<0>(a).size,
-                                                    std::get<1>(a), std::get<2>(a)});
-      }
-
+      Logger::error("Reading xml data");
+      return;
     }
-    else [[unlikely]]
-      warnOnce("Skipping unsupported element: '" + n.name() + "'");
+
+    // check expected rootnode
+    XmlDocument::Node const &rootnode = xmldoc.root();
+    if (rootnode.name() != "smses")
+    {
+      Logger::error("Unexpected rootnode '", rootnode.name(), "', expected 'smses'.");
+      return;
+    }
+
+    auto addvalue = [&](std::string const &column, std::any &&value)
+    {
+      values.emplace_back(value);
+      columns += (columns.empty() ? ""s : ", "s) + column;
+      placeholders += (placeholders.empty() ? ""s : ", "s) + "?"s;
+    };
+
+    for (auto const &n : rootnode)
+    {
+
+      // check required attributes exist
+      if (!std::all_of(columninfo.begin(), columninfo.end(),
+                       [&](PlaintextColumnInfo const &rc)
+                       {
+                         if ((rc.required_in_node.empty() || rc.required_in_node == n.name()) && !n.hasAttribute(rc.name))
+                         {
+                           Logger::warning("Skipping message, missing required attribute '", rc.name, "'");
+
+                           //if (d_verbose) [[unlikely]]
+                           {
+                             Logger::warning_indent("Full node data:");
+                             n.print();
+                           }
+
+                           return false;
+                         }
+                         return true;
+                       }))
+        continue;
+
+      if (n.name() == "sms" || n.name() == "mms")
+      {
+        // build statement
+        columns.clear();
+        placeholders.clear();
+        values.clear();
+        group_recipients.clear();
+
+        for (auto const &rc : columninfo)
+        {
+          if (rc.required_in_node != n.name() && !rc.required_in_node.empty())
+            continue;
+
+          std::string val = n.getAttribute(rc.name);
+
+          if (val != "null")
+          {
+            if (rc.name == "address")
+              addvalue(rc.name, normalizePhoneNumber(val));
+            else
+              addvalue((rc.columnname.empty() ? rc.name : rc.columnname), (rc.type == "INTEGER") ? std::any(bepaald::toNumber<long long int>(val)) : std::any(val));
+          }
+        }
+
+        std::vector<std::tuple<XmlDocument::Node::StringOrRef, std::string, std::string>> attachments;
+        if (n.name() == "mms")
+        {
+          // get message body && attachments
+          std::string body;
+          bool hasbody = false;
+          std::string sourceaddress;
+          for (auto const &childnode : n)
+          {
+            //std::cout << childnode.name() << std::endl;
+            if (childnode.name() == "parts")
+            {
+              for (auto const &part : childnode)
+              {
+                if (part.hasAttribute("text"))
+                {
+                  if (part.hasAttribute("ct") && part.getAttribute("ct") == "text/plain")
+                  {
+                    body += part.getAttribute("text");
+                    hasbody = true;
+                  }
+                }
+                if (part.hasAttribute("data"))
+                {
+                  //std::cout << "HAS DATA" << std::endl;
+
+                  // do something with data...
+                  XmlDocument::Node::StringOrRef attachmentdata = part.getAttributeStringOrRef("data");
+                  if (attachmentdata.file.empty() && attachmentdata.value.empty()) [[unlikely]]
+                  {
+                    Logger::warning("Got data attribute, but no value or reference");
+                    continue;
+                  }
+                  std::string ct;
+                  if (part.hasAttribute("ct"))
+                    ct = part.getAttribute("ct");
+
+                  std::string cl;
+                  if (part.hasAttribute("cl"))
+                    cl = part.getAttribute("cl");
+
+                  attachments.emplace_back(std::make_tuple(attachmentdata, ct, cl));
+
+                }
+              }
+            }
+            else if (childnode.name() == "addrs")
+            {
+              int numaddresses = 0;
+              for (auto const &addr : childnode)
+              {
+                ++numaddresses;
+                //addr.print();
+                if (!addr.hasAttribute("address"))
+                {
+                  Logger::warning("No address attribute found in <addr>");
+                  continue;
+                }
+                std::string groupmsgaddress = normalizePhoneNumber(addr.getAttribute("address"));
+
+                // type - The type of address, 129 = BCC, 130 = CC, 151 = To, 137 = From
+                if (addr.hasAttribute("type") && addr.getAttribute("type") == "137")
+                {
+                  if (!sourceaddress.empty()) [[unlikely]]
+                  {
+                    Logger::warning("Multiple source addresses for message");
+                    sourceaddress.clear();
+                    continue;
+                  }
+                  sourceaddress = groupmsgaddress;
+                  group_only_contacts.insert(std::move(groupmsgaddress));
+                }
+                else // likely a receiving addr
+                {
+                  group_recipients.insert(groupmsgaddress);
+                  group_only_contacts.insert(std::move(groupmsgaddress));
+                }
+              }
+              addvalue("numaddresses", numaddresses);
+            }
+          }
+
+          if (hasbody)
+            addvalue("body", std::move(body));
+
+          if (!sourceaddress.empty())
+            addvalue("sourceaddress", std::move(sourceaddress));
+
+          if (!group_recipients.empty())
+          {
+            // might need to not do this manually...
+            std::string json_array_recipients("[");
+            for (auto it = group_recipients.begin(); it != group_recipients.end(); ++it)
+              json_array_recipients += (it != group_recipients.begin() ? (", \"" + *it + "\"") : ("\"" + *it + "\""));
+            json_array_recipients += ']';
+            addvalue("targetaddresses", json_array_recipients);
+          }
+        }
+
+        //std::cout << "attachments: " << attachments.size() << std::endl;
+        addvalue("numattachments", attachments.size());
+
+        // is sms
+        addvalue("ismms", (n.name() == "mms") ? 1 : 0);
+
+        // dont skip, this is a real message
+        addvalue("skip", 0);
+
+        if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
+          return;
+
+        if (!attachments.empty())
+        {
+          long long int lastid = d_database.lastId();
+          for (auto const &a : attachments)
+            d_database.exec("INSERT INTO attachments (mid, data, filename, pos, size, ct, cl) "
+                            "VALUES "
+                            "(?, ?, ?, ?, ?, ?, ?)", {lastid, std::get<0>(a).value, std::get<0>(a).file, std::get<0>(a).pos, std::get<0>(a).size,
+                                                      std::get<1>(a), std::get<2>(a)});
+        }
+
+      }
+      else [[unlikely]]
+        warnOnce("Skipping unsupported element: '" + n.name() + "'");
+    }
   }
 
   // add group-only-contacts, as 'skip' messages, so they can be mapped...
@@ -414,59 +425,59 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::string const &
   SqliteDB::QueryResults all_names_res;
   if (d_database.exec("SELECT contact_name, address FROM smses GROUP BY contact_name, address LIKE '%~%'", &all_names_res)) // "pick one address for each name"
   {
-    // all_names_res.prettyPrint(false);
+  // all_names_res.prettyPrint(false);
 
-    SqliteDB::QueryResults old_addresses;
-    for (unsigned int i = 0; i < all_names_res.rows(); ++i)
-    {
-      // get the old addresses, that we are going to change
-      d_database.exec("SELECT DISTINCT address FROM smses WHERE contact_name IS ? AND address IS NOT ? AND "
-                      "((address LIKE '%~%' AND ? LIKE '%~%') OR (address NOT LIKE '%~%' AND ? NOT LIKE '%~%'))",
-                      {all_names_res.value(i, "contact_name"), all_names_res.value(i, "address"),
-                       all_names_res.value(i, "address"), all_names_res.value(i, "address")},
-                      &old_addresses);
+  SqliteDB::QueryResults old_addresses;
+  for (unsigned int i = 0; i < all_names_res.rows(); ++i)
+  {
+  // get the old addresses, that we are going to change
+  d_database.exec("SELECT DISTINCT address FROM smses WHERE contact_name IS ? AND address IS NOT ? AND "
+  "((address LIKE '%~%' AND ? LIKE '%~%') OR (address NOT LIKE '%~%' AND ? NOT LIKE '%~%'))",
+  {all_names_res.value(i, "contact_name"), all_names_res.value(i, "address"),
+  all_names_res.value(i, "address"), all_names_res.value(i, "address")},
+  &old_addresses);
 
-      Logger::message(all_names_res(i, "address"), ":");
-      old_addresses.prettyPrint(false);
+  Logger::message(all_names_res(i, "address"), ":");
+  old_addresses.prettyPrint(false);
 
-      // change address, and sourceaddress, and targetaddress
-      for (unsigned int j = 0; j < old_addresses.rows(); ++j)
-      {
-        d_database.exec("UPDATE smses SET address = ? WHERE address = ?",
-                        {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
-        //std::cout << "Addr change: " << d_database.changed() << std::endl;
+  // change address, and sourceaddress, and targetaddress
+  for (unsigned int j = 0; j < old_addresses.rows(); ++j)
+  {
+  d_database.exec("UPDATE smses SET address = ? WHERE address = ?",
+  {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+  //std::cout << "Addr change: " << d_database.changed() << std::endl;
 
-        d_database.exec("UPDATE smses SET sourceaddress = ? WHERE sourceaddress = ?",
-                        {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
-        //std::cout << "SrcAddr change: " << d_database.changed() << std::endl;
+  d_database.exec("UPDATE smses SET sourceaddress = ? WHERE sourceaddress = ?",
+  {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+  //std::cout << "SrcAddr change: " << d_database.changed() << std::endl;
 
-        d_database.exec("WITH to_update AS "
-                        "("
-                        "  SELECT smses.rowid, json_set(smses.targetaddresses, fullkey, ?) AS new_array FROM smses, json_each(targetaddresses) WHERE value = ?"
-                        ") "
-                        "UPDATE smses SET targetaddresses = "
-                        "  ("
-                        "    SELECT new_array FROM to_update WHERE to_update.rowid = smses.rowid"
-                        "  )"
-                        "  WHERE smses.rowid IN (SELECT to_update.rowid FROM to_update)",
-                        {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
-        // alternative... looks better, not sure if it is better (will always change all rows?)
-        // d_database.exec("UPDATE smses SET targetaddresses = "
-        //                 "("
-        //                 "  SELECT json_group_array("
-        //                 "    CASE"
-        //                 "      WHEN value = ? THEN ?"
-        //                 "      ELSE value"
-        //                 "    END"
-        //                 "  )"
-        //                 "  FROM json_each(smses.targetaddresses)"
-        //                 ") "
-        //                 "WHERE targetaddresses IS NOT NULL",
-        // {old_addresses.value(j, "address"), all_names_res.value(i, "address")});
-        //std::cout << "TgtAddr change: " << d_database.changed() << std::endl;
-      }
-    }
-    //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
+  d_database.exec("WITH to_update AS "
+  "("
+  "  SELECT smses.rowid, json_set(smses.targetaddresses, fullkey, ?) AS new_array FROM smses, json_each(targetaddresses) WHERE value = ?"
+  ") "
+  "UPDATE smses SET targetaddresses = "
+  "  ("
+  "    SELECT new_array FROM to_update WHERE to_update.rowid = smses.rowid"
+  "  )"
+  "  WHERE smses.rowid IN (SELECT to_update.rowid FROM to_update)",
+  {all_names_res.value(i, "address"), old_addresses.value(j, "address")});
+  // alternative... looks better, not sure if it is better (will always change all rows?)
+  // d_database.exec("UPDATE smses SET targetaddresses = "
+  //                 "("
+  //                 "  SELECT json_group_array("
+  //                 "    CASE"
+  //                 "      WHEN value = ? THEN ?"
+  //                 "      ELSE value"
+  //                 "    END"
+  //                 "  )"
+  //                 "  FROM json_each(smses.targetaddresses)"
+  //                 ") "
+  //                 "WHERE targetaddresses IS NOT NULL",
+  // {old_addresses.value(j, "address"), all_names_res.value(i, "address")});
+  //std::cout << "TgtAddr change: " << d_database.changed() << std::endl;
+  }
+  }
+  //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
   }
   */
 

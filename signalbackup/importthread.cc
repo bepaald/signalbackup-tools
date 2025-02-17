@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -962,6 +962,13 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     for (unsigned int i = 0; i < res.rows(); ++i)
       source->d_database.exec("DELETE FROM chat_folder_membership WHERE chat_folder_id = ? AND thread_id = ?",
                               {res.value(i, "chat_folder_id"), res.value(i, "thread_id")});
+  }
+
+  // delete the default chat_folder
+  if (source->d_database.containsTable("chat_folder_membership") &&
+      d_database.containsTable("chat_folder_membership"))
+  {
+    source->d_database.exec("DELETE FROM chat_folder WHERE NAME IS NULL");
   }
 
   // // export database

@@ -25,6 +25,9 @@
 #include "../common_be.h"
 
 #include <set>
+#if __cpp_lib_span >= 202002L
+#include <span>
+#endif
 
 class SignalPlaintextBackupDatabase
 {
@@ -35,10 +38,17 @@ class SignalPlaintextBackupDatabase
   std::set<std::string> d_warningsgiven;
   std::string d_countrycode;
  public:
-  SignalPlaintextBackupDatabase(std::string const &sptbxml, bool truncate, bool verbose,
+#if __cpp_lib_span >= 202002L
+  SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
                                 std::vector<std::pair<std::string, std::string>> namemap,
                                 std::string const &namemap_file, std::string const &countrycode,
                                 bool autogroupnames);
+#else
+  SignalPlaintextBackupDatabase(std::vector<std::string> const &sptbxmls, bool truncate, bool verbose,
+                                std::vector<std::pair<std::string, std::string>> namemap,
+                                std::string const &namemap_file, std::string const &countrycode,
+                                bool autogroupnames);
+#endif
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase &&other) = delete;
   SignalPlaintextBackupDatabase &operator=(SignalPlaintextBackupDatabase const &other) = delete;
