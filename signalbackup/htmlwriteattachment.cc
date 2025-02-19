@@ -23,7 +23,7 @@
 
 bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string const &threaddir,
                                        long long int rowid, long long int uniqueid, //std::string const &ext,
-                                       std::string const &attachment_filename,
+                                       std::string const &attachment_filename, long long int timestamp,
                                        bool overwrite, bool append) const
 {
   auto attachmentfound = d_attachments.find({rowid, uniqueid});
@@ -50,6 +50,8 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
     attachment_filename;
   // "/media/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + "." + ext;
 
+  WIN_CHECK_PATH_LENGTH(attachment_filename_full);
+
   if (bepaald::fileOrDirExists(attachment_filename_full))
   {
     if (append) // file already exists, but we were asked to just use the existing file, so we're done
@@ -57,7 +59,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
     if (!overwrite) // file already exists, but we were no asked to overwrite -> error!
     {
 
-      std::cout << attachment_filename << std::endl;
+      //std::cout << attachment_filename << std::endl;
 
       Logger::error("Attachment file exists. Not overwriting");
       return false;
@@ -90,6 +92,12 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
       return false;
     // write was succesfull. drop attachment data
     a->clearData();
+
+    attachmentstream.close(); // need to close, or the auto-close will change files mtime again.
+
+    if (timestamp >= 0)
+      if (!setFileTimeStamp(attachment_filename_full, timestamp)) [[unlikely]]
+        Logger::warning("Failed to set timestamp for attachment '", attachment_filename_full, "'");
   }
   return true;
 }

@@ -1961,7 +1961,8 @@ file << R"(
 
 void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                                           std::string const &directory, std::string const &threaddir, bool use_original_filenames,
-                                          bool is_image_preview, bool overwrite, bool append) const
+                                          bool is_image_preview, bool overwrite, bool append,
+                                          std::vector<std::string> const &ignoremediatypes) const
 {
   for (unsigned int a = 0; a < attachment_results.rows(); ++a)
   {
@@ -2019,18 +2020,23 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     }
 
     // write the attachment data
-    if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, attachment_filename_on_disk, overwrite, append))
+    if (!HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, attachment_filename_on_disk, attachment_results.valueAsInt(a, "date_received", -1), overwrite, append))
       continue;
 
     if (use_original_filenames)
       HTMLescapeUrl(&attachment_filename_on_disk);
 
+    // check if content type must not be handled as media:
+    bool ignoremedia = false;
+    if (bepaald::contains(ignoremediatypes, content_type)) [[unlikely]]
+      ignoremedia = true;
+
     htmloutput << std::string(indent, ' ') << "<div class=\"attachment"
-               << ((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) ?
+               << (((!STRING_STARTS_WITH(content_type, "image/") && !STRING_STARTS_WITH(content_type, "video/") && !STRING_STARTS_WITH(content_type, "audio/")) || ignoremedia) ?
                    " attachment-unknown-type" : "")
                << "\">\n";
 
-    if (STRING_STARTS_WITH(content_type, "image/"))
+    if (STRING_STARTS_WITH(content_type, "image/") && !ignoremedia)
     {
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
@@ -2042,8 +2048,8 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
         htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>\n";
       htmloutput << std::string(indent, ' ') << "  </div>\n";
     }
-    else if (STRING_STARTS_WITH(content_type, "video/") ||
-             STRING_STARTS_WITH(content_type, "audio/"))
+    else if ((STRING_STARTS_WITH(content_type, "video/") ||
+              STRING_STARTS_WITH(content_type, "audio/")) && !ignoremedia)
     {
       htmloutput << std::string(indent, ' ') << "  <div class=\"msg-vid-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <" << std::string_view(content_type.data(), 5) << " controls>\n";
@@ -2067,7 +2073,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
                 // the following does not work, because URIs on file:// are cross-origin
                 // << attachment_filename_on_disk << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n";
     }
-    else // content-type not empty, but not 'image/', 'audio/' or 'video/'
+    else // content-type not empty, but not 'image/', 'audio/' or 'video/', or ignored as media on user-request
     {
       if (original_filename.empty())
         htmloutput << std::string(indent, ' ') << "  [Attachment of type " << content_type << "]<span class=\"msg-dl-link\"><a href=\"media/"
@@ -2107,7 +2113,7 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
     if (rowid >= 0 && uniqueid >= 0)
     {
       // write the attachment data
-      HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, extension, overwrite, append);
+      HTMLwriteAttachment(directory, threaddir, rowid, uniqueid, extension, -1, overwrite, append);
     }
 
     // prefer phone number
@@ -2183,7 +2189,8 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
 
 void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info,
                                     std::map<long long int, RecipientInfo> *recipient_info,
-                                    bool searchpage, bool writereceipts) const
+                                    bool searchpage, bool writereceipts,
+                                    std::vector<std::string> const &ignoremediatypes) const
 {
   int extraindent = 0;
   // insert message
@@ -2255,7 +2262,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-attach\">\n";
       HTMLwriteAttachmentDiv(htmloutput, *msg_info.quote_attachment_results, 16 + extraindent,
                              msg_info.directory, msg_info.threaddir, msg_info.orig_filename,
-                             false, msg_info.overwrite, msg_info.append);
+                             false, msg_info.overwrite, msg_info.append, ignoremediatypes);
       htmloutput << "                </div>\n";
     }
 
@@ -2274,7 +2281,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
                            msg_info.directory, msg_info.threaddir, msg_info.orig_filename,
                            (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
-                           msg_info.overwrite, msg_info.append);
+                           msg_info.overwrite, msg_info.append, ignoremediatypes);
 
 
   // insert link_preview data? (if not call link)
@@ -2428,7 +2435,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
           htmloutput << "<div class=\"history-header\">Edit history</div>";
 
         // add earlier revision
-        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, recipient_info, false);
+        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, recipient_info, false, ignoremediatypes);
 
         if (i < msg_info.edit_revisions->rows() - 2)
           htmloutput << "<hr>";

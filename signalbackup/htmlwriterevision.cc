@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -20,7 +20,8 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
-                                     std::map<long long int, RecipientInfo> *recipient_info, bool linkify) const
+                                     std::map<long long int, RecipientInfo> *recipient_info, bool linkify,
+                                     std::vector<std::string> const &ignoremediatypes) const
 {
   SqliteDB::QueryResults revision;
   if (!d_database.exec("SELECT " +
@@ -179,5 +180,5 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
 
                             icon});
 
-  HTMLwriteMessage(filt, msg_info, recipient_info, false /*searchpage*/, false /*writereceipts*/);
+  HTMLwriteMessage(filt, msg_info, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
 }

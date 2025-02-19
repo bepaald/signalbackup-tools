@@ -34,7 +34,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
-                              bool compact)
+                              bool compact, std::vector<std::string> const &ignoremediatypes)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -410,6 +410,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         sanitized_base_filename.clear();
         filename = bepaald::toString(pagenumber) + ".html";
       }
+
+      WIN_CHECK_PATH_LENGTH(directory + "/" + threaddir + "/" + filename);
+
       std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
       if (!htmloutput.is_open())
       {
@@ -635,7 +638,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
                                   icon
           });
-        HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage, receipts);
+        HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage, receipts, ignoremediatypes);
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {

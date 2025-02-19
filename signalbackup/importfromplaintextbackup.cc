@@ -19,8 +19,6 @@
 
 #include "signalbackup.ih"
 
-//#include <chrono>
-
 #include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 #include "../signalplaintextbackupattachmentreader/signalplaintextbackupattachmentreader.h"
 #include "../msgtypes/msgtypes.h"
@@ -322,7 +320,6 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       continue;
     }
 
-
     //std::cout << pt_messages(i, "address") << "/" << pt_messages(i, "contact_name") << " : " << trid << "/" << getNameFromRecipientId(trid) << std::endl;
 
     /* XML type : 1 = Received, 2 = Sent, 3 = Draft, 4 = Outbox, 5 = Failed, 6 = Queued */
@@ -347,24 +344,26 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     if (!unescapeXmlString(&body)) [[unlikely]]
       Logger::warning("Failed to escape message body: '", body, "'");
 
-    // insert?
-
-    // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-    // we try to get the first free date_sent
-    long long int originaldate = pt_messages.valueAsInt(i, "date", -1);
-    if (originaldate == -1)
+    long long int freedate = pt_messages.valueAsInt(i, "date", -1);
+    if (!isdummy)
     {
-      Logger::error("Failed to get message date. Skipping...");
-      continue;
-    }
+      // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      // we try to get the first free date_sent
+      long long int originaldate = freedate;
+      if (originaldate == -1)
+      {
+        Logger::error("Failed to get message date. Skipping...");
+        continue;
+      }
 
-    //std::cout << "Get free date for message: '" << body << "'" << std::endl;
-    long long int freedate = getFreeDateForMessage(originaldate, tid, incoming ? trid : d_selfid);
-    if (freedate == -1)
-    {
-      if (d_verbose) [[unlikely]] Logger::message_end();
-      Logger::error("Getting free date for inserting message into mms. Skipping...");
-      continue;
+      //std::cout << "Get free date for message: '" << body << "'" << std::endl;
+      freedate = getFreeDateForMessage(originaldate, tid, incoming ? trid : d_selfid);
+      if (freedate == -1)
+      {
+        if (d_verbose) [[unlikely]] Logger::message_end();
+        Logger::error("Getting free date for inserting message into mms. Skipping...");
+        continue;
+      }
     }
 
     std::any newid;
@@ -380,12 +379,16 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                     {d_mms_recipient_id, incoming ? (isgroup ? rid : trid) : d_selfid}, // FROM_RECIPIENT_ID
                     {"to_recipient_id", incoming ? d_selfid : trid},
                     {"m_type", incoming ? 132 : 128}}, // dont know what this is, but these are the values...
-                   "_id", &newid))
+                   (pt_messages.valueAsInt(i, "numattachments", -1) > 0 ? "_id" : ""), &newid)) [[unlikely]]
+    {
       Logger::warning("Failed to insert message");
+      continue;
+    }
 
-    long long int new_msg_id = std::any_cast<long long int>(newid);
     if (pt_messages.valueAsInt(i, "numattachments", -1) > 0)
     {
+      long long int new_msg_id = std::any_cast<long long int>(newid);
+
       SqliteDB::QueryResults attachment_res;
       if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct, cl FROM attachments WHERE mid = ?", pt_messages.value(i, "rowid"), &attachment_res))
         continue;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,14 +21,14 @@
 
 #include "../common_be.h"
 
-void SignalBackup::warnOnce(std::string const &warning, bool error)
+void SignalBackup::warnOnce(std::string const &warning, bool error, std::string::size_type sub_id)
 {
-  if (!bepaald::contains(d_warningsgiven, warning))
+  if (!bepaald::contains(d_warningsgiven, warning.substr(0, sub_id)))
   {
     if (error)
       Logger::error(warning);
     else
       Logger::warning(warning);
-    d_warningsgiven.insert(warning);
+    d_warningsgiven.emplace(warning, 0, sub_id);
   }
 }

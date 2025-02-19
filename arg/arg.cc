@@ -156,6 +156,7 @@ Arg::Arg(int argc, char *argv[])
   d_xmlautogroupnames(false),
   d_setcountrycode(std::string()),
   d_compactfilenames(false),
+  d_htmlignoremediatypes(std::vector<std::string>()),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1901,6 +1902,23 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-compactfilenames")
     {
       d_compactfilenames = false;
+      continue;
+    }
+    if (option == "--htmlignoremediatypes")
+    {
+      if (i < argsize - 1)
+      {
+        if (!parseStringList(arguments[++i], &d_htmlignoremediatypes))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
       continue;
     }
     if (option[0] != '-')

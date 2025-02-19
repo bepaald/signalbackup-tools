@@ -44,6 +44,7 @@ namespace bepaald
   inline uint64_t fileSize(std::string const &path);
 #if defined(_WIN32) || defined(__MINGW64__)
   inline std::string windows_long_file(std::string const &path);
+  inline long long int abs_path_length(std::string const &path);
 #endif
 }
 
@@ -112,6 +113,25 @@ inline std::string bepaald::windows_long_file(std::string const &path)
 
   // prepend windows magic long path prefix:
   return R"(\\?\)" + abs_path.string();
+}
+#endif
+
+#if defined(_WIN32) || defined(__MINGW64__)
+inline long long int bepaald::abs_path_length(std::string const &path)
+{
+  //Logger::message("WINDOWS_LONG_PATH: input \"", path, "\"");
+
+  std::error_code ec;
+  auto abs_path = std::filesystem::absolute(path, ec);
+  if (ec)
+  {
+    Logger::error("Failed to get an absolute path for '", path, "'");
+    return -1;
+  }
+
+  //Logger::message("WINDOWS_PATH_LENGTH: \"", abs_path.string(), "\", ", abs_path.string().size());
+
+  return abs_path.string().size();
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -315,7 +315,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     attachmentstream.close(); // need to close, or the auto-close will change files mtime again.
     a->clearData();
 
-    setFileTimeStamp(targetdir + "/" + filename, datum); // ignoring return for now...
+    if (!setFileTimeStamp(targetdir + "/" + filename, datum)) [[unlikely]]
+        Logger::warning("Failed to set timestamp for attachment '", targetdir, "/", filename, "'");
 
     // !! ifdef c++20
     //std::error_code ec;

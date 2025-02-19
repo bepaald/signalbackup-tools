@@ -108,6 +108,14 @@ int main(int argc, char *argv[])
     return ptdb->ok();
   };
 
+  // if (!arg.generatedummy().empty())
+  // {
+  //   DummyBackup d(arg.verbose(), arg.truncate(), arg.showprogress());
+  //   if (!d.ok() ||
+  //       !d.exportBackup(arg.generatedummy(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, false /*onlydb*/))
+  //     return 1;
+  // }
+
   // show desktop key
   if (arg.showdesktopkey())
     if (!initDesktopDatabase())
@@ -177,7 +185,8 @@ int main(int argc, char *argv[])
                               (arg.split_bool() ? arg.split() : -1), arg.setselfid(),  arg.includecalllog(), arg.searchpage(),
                               arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
-                              arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames()))
+                              arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
+                              arg.htmlignoremediatypes()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
@@ -210,7 +219,8 @@ int main(int argc, char *argv[])
                             (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
-                            arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames()))
+                            arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
+                            arg.htmlignoremediatypes()))
       return 1;
   }
 
@@ -424,7 +434,8 @@ int main(int argc, char *argv[])
 
     if (!sb->importFromPlaintextBackup(ptdb, arg.skipmessagereorder(), arg.mapxmlcontacts(), arg.limittodates(),
                                        arg.selectxmlchats(), arg.addincompletedataforhtmlexport(),
-                                       arg.xmlmarkdelivered(), arg.xmlmarkread(), arg.autolimitdates(), arg.setselfid()))
+                                       arg.xmlmarkdelivered(), arg.xmlmarkread(), arg.autolimitdates(), arg.setselfid(),
+                                       false /*arg.targetisdummy()*/))
       return 1;
   }
 
@@ -509,7 +520,7 @@ int main(int argc, char *argv[])
                         arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
                         arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
                         arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames(),
-                        arg.linkify(), arg.chatfolders(), arg.compactfilenames()))
+                        arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.htmlignoremediatypes()))
       return 1;
 
   if (!arg.exporttxt().empty())

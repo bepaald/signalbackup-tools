@@ -60,9 +60,16 @@
 // maybe this needs to be done smarter, making sure to only truncate at character
 // boundaries (not in the middle of multibyte ones...
 #define MAXFILELENGTH 54
-#define WIN_LIMIT_FILENAME_LENGTH(str) if (str.size() > MAXFILELENGTH) [[unlikely]]  str.resize(MAXFILELENGTH);
+//#define WIN_LIMIT_FILENAME_LENGTH(str) if (str.size() > MAXFILELENGTH) [[unlikely]]  str.resize(MAXFILELENGTH);
+#define WIN_LIMIT_FILENAME_LENGTH(str)
 #else
 #define WIN_LIMIT_FILENAME_LENGTH(str)
+#endif
+
+#if defined WIN32 || MINGW
+#define WIN_CHECK_PATH_LENGTH(str) if (int pl = bepaald::abs_path_length(str); pl >= 260) Logger::warning("Path length is ", pl, ". This may be more than the allowed maximum path length on your platform. If you run into problems, use the option `--compactfilenames' to shorten the filenames this tool writes.");
+#else
+#define WIN_CHECK_PATH_LENGTH(str)
 #endif
 
 struct HTMLMessageInfo;
@@ -279,7 +286,7 @@ class SignalBackup
                                  std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                  std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,
                                  bool createmissingcontacts, bool markdelivered, bool markread, bool autodates,
-                                 std::string const &selfphone, bool isdummy = false);
+                                 std::string const &selfphone, bool isdummy);
   long long int ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb,
                                   std::map<std::string, long long int> *contactmap,
                                   bool *warned_createcontacts, std::string const &contact_name,
@@ -291,7 +298,7 @@ class SignalBackup
                   bool stickerpacks, bool migrate, bool overwrite, bool append, bool theme,
                   bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                   bool settings, bool receipts, bool use_original_filenames, bool linkify,
-                  bool chatfolders, bool compact);
+                  bool chatfolders, bool compact, std::vector<std::string> const &ignoremediatypes);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
@@ -441,7 +448,7 @@ class SignalBackup
                       bool light, bool themeswitching, bool searchpage, bool exportdetails) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool use_original_filenames,
-                              bool is_image_preview, bool overwrite, bool append) const;
+                              bool is_image_preview, bool overwrite, bool append, std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, std::string const &url, std::string const &title,
                             std::string const &description/*, std::string const &directory, std::string const &threaddir,
                                                               bool overwrite, bool append*/) const;
@@ -449,7 +456,8 @@ class SignalBackup
                                  std::string const &directory, std::string const &threaddir,
                                  bool overwrite, bool append) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
-                           long long int uniqueid, std::string const &attachment_filename, bool overwrite, bool append) const;
+                           long long int uniqueid, std::string const &attachment_filename, long long int timestamp,
+                           bool overwrite, bool append) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
@@ -457,9 +465,10 @@ class SignalBackup
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo,
-                        bool searchpage, bool writereceipts) const;
+                        bool searchpage, bool writereceipts, std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
-                         std::map<long long int, RecipientInfo> *recipientinfo, bool linkify) const;
+                         std::map<long long int, RecipientInfo> *recipientinfo, bool linkify,
+                         std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,
                                long long int message_id, bool isgroup, long long int read_count,
                                long long int delivered_count, long long int timestamp, int indent) const;
@@ -525,7 +534,7 @@ class SignalBackup
   bool dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
                    long long int rid, std::string const &databasedir);
   std::string dtSetSharedContactsJsonString(SqliteDB const &ddb, long long int rowid) const;
-  void warnOnce(std::string const &msg, bool error = false);
+  void warnOnce(std::string const &msg, bool error = false, std::string::size_type sub_id = std::string::npos);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
   std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
