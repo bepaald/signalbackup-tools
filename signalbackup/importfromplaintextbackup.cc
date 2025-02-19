@@ -162,6 +162,9 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
   bool warned_createcontacts = (isdummy ? true : false);
 
+  // saves {rowid, {new_mms_id, unique_id}} for messages with attachments
+  std::map<long long int, std::pair<long long int, long long int>> attachment_messages;
+
   //auto t1 = std::chrono::high_resolution_clock::now();
   for (unsigned int i = 0; i < pt_messages.rows(); ++i)
   {
@@ -385,101 +388,112 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       continue;
     }
 
-    if (pt_messages.valueAsInt(i, "numattachments", -1) > 0)
+    if (pt_messages.valueAsInt(i, "numattachments", 0) > 0)
+      attachment_messages.emplace_hint(attachment_messages.end(),
+                                       pt_messages.valueAsInt(i, "rowid", 0),
+                                       std::pair<long long int, long long int>{std::any_cast<long long int>(newid), freedate});
+  }
+
+  Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
+
+  SqliteDB::QueryResults attachment_res;
+  if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct, cl, mid FROM attachments", &attachment_res))
+    return false;
+
+  for (unsigned int j = 0; j < attachment_res.rows(); ++j)
+  {
+    if (j % (attachment_res.rows() > 100 ? 100 : 1) == 0)
+      Logger::message_overwrite("Importing attachments into backup... ", j, "/", attachment_res.rows());
+
+    MEMINFO("START ATTACHMENT LOOP");
+
+    std::string data = attachment_res(j, "data");
+    std::string file = attachment_res(j, "filename");
+    long long int pos = attachment_res.valueAsInt(j, "pos", -1);
+    long long int size = attachment_res.valueAsInt(j, "size", -1);
+    std::string ct = attachment_res(j, "ct");
+    std::string cl = attachment_res(j, "cl");
+
+    auto amit = attachment_messages.find(attachment_res.valueAsInt(j, "mid", -1));
+    if (amit == attachment_messages.end()) [[unlikely]]
     {
-      long long int new_msg_id = std::any_cast<long long int>(newid);
+      Logger::warning("Found attachment that belongs to no message");
+      continue;
+    }
+    long long int new_message_id = amit->second.first;
+    long long int unique_id = amit->second.second;
 
-      SqliteDB::QueryResults attachment_res;
-      if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct, cl FROM attachments WHERE mid = ?", pt_messages.value(i, "rowid"), &attachment_res))
-        continue;
-
-      //attachment_res.prettyPrint(false);
-
-      for (unsigned int j = 0; j < attachment_res.rows(); ++j)
-      {
-        MEMINFO("START ATTACHMENT LOOP");
-
-        std::string data = attachment_res(j, "data");
-        std::string file = attachment_res(j, "filename");
-        long long int pos = attachment_res.valueAsInt(j, "pos", -1);
-        long long int size = attachment_res.valueAsInt(j, "size", -1);
-        std::string ct = attachment_res(j, "ct");
-        std::string cl = attachment_res(j, "cl");
-
-        // get attachment metadata
-        SignalPlainTextBackupAttachmentReader ptar(data, file, pos, size);
+    // get attachment metadata
+    SignalPlainTextBackupAttachmentReader ptar(data, file, pos, size);
 #if __cpp_lib_out_ptr >= 202106L
-        std::unique_ptr<unsigned char[]> att_data;
-        if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+    std::unique_ptr<unsigned char[]> att_data;
+    if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
 #else
-        unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
-        if (ptar.getAttachmentData(&att_data, d_verbose) != 0)
+    unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
+    if (ptar.getAttachmentData(&att_data, d_verbose) != 0)
 #endif
-      {
-        Logger::error("Failed to get attachment data");
-        continue;
-      }
-
-#if __cpp_lib_out_ptr >= 202106L
-      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data.get(), ptar.dataSize()); // get metadata from heap
-#else
-      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data, ptar.dataSize());       // get metadata from heap
-      if (att_data)
-        delete[] att_data;
-#endif
-
-        // add entry to attachment table;
-        std::any new_aid;
-        if (!insertRow(d_part_table,
-                       {{d_part_mid, new_msg_id},
-                        {d_part_ct, ct},
-                        {!cl.empty() ? "file_name" : "", cl},
-                        {d_part_pending, 0},
-                        {"data_size", amd.filesize},
-                        {"voice_note", 0},
-                        {"width", amd.width == -1 ? 0 : amd.width},
-                        {"height", amd.height == -1 ? 0 : amd.height},
-                        {"quote", 0},
-                        {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
-                        {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), amd.hash},
-                        {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), amd.hash}},
-                       "_id", &new_aid))
-          continue;
-        long long int new_part_id = std::any_cast<long long int>(new_aid);
-
-        DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
-        if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
-                                                                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
-                                                                                 "ATTACHMENTID:uint64:" + bepaald::toString(freedate) : ""),
-                                                                                "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
-        {
-          new_attachment_frame->setReader(new SignalPlainTextBackupAttachmentReader(data, file, pos, size));
-          d_attachments.emplace(std::make_pair(new_part_id,
-                                               d_database.tableContainsColumn(d_part_table, "unique_id") ?
-                                               freedate : -1), new_attachment_frame.release());
-        }
-        else
-        {
-          Logger::error("Failed to create AttachmentFrame for data");
-          Logger::error_indent("       rowid       : ", new_part_id);
-          Logger::error_indent("       attachmentid: ", d_database.tableContainsColumn(d_part_table, "unique_id") ? freedate : -1);
-          Logger::error_indent("       length      : ", amd.filesize);
-
-          // try to remove the inserted part entry:
-          d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
-          continue;
-        }
-        MEMINFO("END ATTACHMENT LOOP");
-      }
+    {
+      Logger::error("Failed to get attachment data");
+      continue;
     }
 
-    // mark thread as active??
+#if __cpp_lib_out_ptr >= 202106L
+    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data.get(), ptar.dataSize()); // get metadata from heap
+#else
+    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data, ptar.dataSize());       // get metadata from heap
+    if (att_data)
+      delete[] att_data;
+#endif
+
+    // add entry to attachment table;
+    std::any new_aid;
+    if (!insertRow(d_part_table,
+                   {{d_part_mid, new_message_id},
+                    {d_part_ct, ct},
+                    {!cl.empty() ? "file_name" : "", cl},
+                    {d_part_pending, 0},
+                    {"data_size", amd.filesize},
+                    {"voice_note", 0},
+                    {"width", amd.width == -1 ? 0 : amd.width},
+                    {"height", amd.height == -1 ? 0 : amd.height},
+                    {"quote", 0},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), amd.hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), amd.hash}},
+                   "_id", &new_aid))
+      continue;
+    long long int new_part_id = std::any_cast<long long int>(new_aid);
+
+    DeepCopyingUniquePtr<AttachmentFrame> new_attachment_frame;
+    if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
+                                                                            (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                                                             "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
+                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+    {
+      new_attachment_frame->setReader(new SignalPlainTextBackupAttachmentReader(data, file, pos, size));
+      d_attachments.emplace(std::make_pair(new_part_id,
+                                           d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                           unique_id : -1), new_attachment_frame.release());
+    }
+    else
+    {
+      Logger::error("Failed to create AttachmentFrame for data");
+      Logger::error_indent("       rowid       : ", new_part_id);
+      Logger::error_indent("       attachmentid: ", d_database.tableContainsColumn(d_part_table, "unique_id") ? unique_id : -1);
+      Logger::error_indent("       length      : ", amd.filesize);
+
+      // try to remove the inserted part entry:
+      d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
+      continue;
+    }
+      MEMINFO("END ATTACHMENT LOOP");
   }
+
   //auto t2 = std::chrono::high_resolution_clock::now();
   //auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
   //std::cout << " *** TIME: " << ms_int.count() << "ms\n";
 
-  Logger::message/*_overwrite*/("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
+  Logger::message_overwrite("Importing attachments into backup... ", attachment_res.rows(), "/", attachment_res.rows(), " done!", Logger::Control::ENDOVERWRITE);
 
   // count entities still present...
   //ptdb->d_database.exec("SELECT rowid,body,LENGTH(body) - LENGTH(REPLACE(body, '&', '')) AS entities FROM smses ORDER BY entities ASC");
@@ -490,5 +504,6 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   if (!skipmessagereorder) [[likely]]
     reorderMmsSmsIds();
   updateThreadsEntries();
+
   return checkDbIntegrity();
 }

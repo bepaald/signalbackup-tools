@@ -61,7 +61,7 @@ XmlDocument::XmlDocument(std::string const &filename)
         {                                  //  <tag attribute="...
           switch (buffer[i])
           {
-            case '"':
+            [[unlikely]] case '"':
             {
               attribute_size = (filepos + i) - attribute_pos;
               // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
@@ -117,6 +117,8 @@ XmlDocument::XmlDocument(std::string const &filename)
               break;
             }
           }
+
+
           break;
         }
 
@@ -479,7 +481,7 @@ XmlDocument::XmlDocument(std::string const &filename)
         {                                  //  <tag attribute='...
           switch (buffer[i])
           {
-            case '\'':
+            [[unlikely]] case '\'':
             {
               attribute_size = (filepos + i) - attribute_pos;
               // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
