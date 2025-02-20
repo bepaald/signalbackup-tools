@@ -143,6 +143,11 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         contactmap.emplace(recipient_results(i, "e164"), recipient_results.valueAsInt(i, "_id"));
   }
 
+  /*
+    threadmap
+  */
+  std::map<long long int, long long int> threadmap;
+
   // READ always seems to be 1....
   //ptdb->d_database.prettyPrint(true, "SELECT DISTINCT type, read FROM smses");
   // in signal android backup, all messages are read as well, only old versions of edited are not...
@@ -260,24 +265,31 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         Logger::error("Thread recipient not found in database.");
     }
 
+    long long int tid = -1;
     // get matching thread
-    long long int tid = getThreadIdFromRecipient(trid);
-    if (tid == -1)
+    if (auto it = threadmap.find(trid); it != threadmap.end())
+      tid = it->second;
+    else
     {
-      // create thread
-      Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", makePrintable(pt_messages_address), " -> ", trid);
-      std::any new_thread_id;
-      if (!insertRow("thread",
-                     {{d_thread_recipient_id, trid},
-                      {"active", 1}},
-                     "_id", &new_thread_id))
+      tid = getThreadIdFromRecipient(trid);
+      if (tid == -1)
       {
-        Logger::message_end();
-        Logger::error("Failed to create thread for conversation. Skipping message.");
-        continue;
+        // create thread
+        Logger::message_start("Failed to find matching thread for conversation, creating. (e164: ", makePrintable(pt_messages_address), " -> ", trid);
+        std::any new_thread_id;
+        if (!insertRow("thread",
+                       {{d_thread_recipient_id, trid},
+                        {"active", 1}},
+                       "_id", &new_thread_id))
+        {
+          Logger::message_end();
+          Logger::error("Failed to create thread for conversation. Skipping message.");
+          continue;
+        }
+        tid = std::any_cast<long long int>(new_thread_id);
+        Logger::message_end(" -> thread_id: ", tid, ")");
       }
-      tid = std::any_cast<long long int>(new_thread_id);
-      Logger::message_end(" -> thread_id: ", tid, ")");
+      threadmap.emplace(trid, tid);
     }
 
     long long int rid = -1;
@@ -423,27 +435,42 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     long long int new_message_id = amit->second.first;
     long long int unique_id = amit->second.second;
 
+    uint64_t att_data_size;
+    int width = 0;
+    int height = 0;
+    std::string hash;
     // get attachment metadata
     SignalPlainTextBackupAttachmentReader ptar(data, file, pos, size);
-#if __cpp_lib_out_ptr >= 202106L
-    std::unique_ptr<unsigned char[]> att_data;
-    if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
-#else
-    unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
-    if (ptar.getAttachmentData(&att_data, d_verbose) != 0)
-#endif
+
+    // if it's not just for HTML export we need data hash, and resolution
+    if (!isdummy)
     {
-      Logger::error("Failed to get attachment data");
-      continue;
-    }
+#if __cpp_lib_out_ptr >= 202106L
+      std::unique_ptr<unsigned char[]> att_data;
+      if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+#else
+      unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
+      if (ptar.getAttachmentData(&att_data, d_verbose) != 0)
+#endif
+      {
+        Logger::error("Failed to get attachment data");
+        continue;
+      }
 
 #if __cpp_lib_out_ptr >= 202106L
-    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data.get(), ptar.dataSize()); // get metadata from heap
+      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data.get(), ptar.dataSize()); // get metadata from heap
 #else
-    AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data, ptar.dataSize());       // get metadata from heap
-    if (att_data)
-      delete[] att_data;
+      AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), att_data, ptar.dataSize());       // get metadata from heap
+      if (att_data)
+        delete[] att_data;
 #endif
+      att_data_size = amd.filesize;
+      width = amd.width == -1 ? 0 : amd.width;
+      height = amd.height== -1 ? 0 : amd.height;
+      hash = amd.hash;
+    }
+    else
+      att_data_size = ptar.dataSize();
 
     // add entry to attachment table;
     std::any new_aid;
@@ -452,14 +479,14 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                     {d_part_ct, ct},
                     {!cl.empty() ? "file_name" : "", cl},
                     {d_part_pending, 0},
-                    {"data_size", amd.filesize},
+                    {"data_size", att_data_size},
                     {"voice_note", 0},
-                    {"width", amd.width == -1 ? 0 : amd.width},
-                    {"height", amd.height == -1 ? 0 : amd.height},
+                    {"width", width},
+                    {"height", height},
                     {"quote", 0},
-                    {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
-                    {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), amd.hash},
-                    {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), amd.hash}},
+                    {((d_database.tableContainsColumn(d_part_table, "data_hash") && !isdummy) ? "data_hash" : ""), hash},
+                    {((d_database.tableContainsColumn(d_part_table, "data_hash_start") && !isdummy) ? "data_hash_start" : ""), hash},
+                    {((d_database.tableContainsColumn(d_part_table, "data_hash_end") && !isdummy) ? "data_hash_end" : ""), hash}},
                    "_id", &new_aid))
       continue;
     long long int new_part_id = std::any_cast<long long int>(new_aid);
@@ -468,7 +495,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     if (setFrameFromStrings(&new_attachment_frame, std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
                                                                             (d_database.tableContainsColumn(d_part_table, "unique_id") ?
                                                                              "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
-                                                                            "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+                                                                            "LENGTH:uint32:" + bepaald::toString(att_data_size)}))
     {
       new_attachment_frame->setReader(new SignalPlainTextBackupAttachmentReader(data, file, pos, size));
       d_attachments.emplace(std::make_pair(new_part_id,
@@ -480,13 +507,13 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       Logger::error("Failed to create AttachmentFrame for data");
       Logger::error_indent("       rowid       : ", new_part_id);
       Logger::error_indent("       attachmentid: ", d_database.tableContainsColumn(d_part_table, "unique_id") ? unique_id : -1);
-      Logger::error_indent("       length      : ", amd.filesize);
+      Logger::error_indent("       length      : ", att_data_size);
 
       // try to remove the inserted part entry:
       d_database.exec("DELETE FROM " + d_part_table + " WHERE _id = ?", new_part_id);
       continue;
     }
-      MEMINFO("END ATTACHMENT LOOP");
+    MEMINFO("END ATTACHMENT LOOP");
   }
 
   //auto t2 = std::chrono::high_resolution_clock::now();

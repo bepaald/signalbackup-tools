@@ -31,7 +31,7 @@ class SignalPlainTextBackupAttachmentReader : public AttachmentReader<RawFileAtt
   std::string d_base64data;
   std::string d_filename;
   long long int d_pos;
-  long long int d_size;
+  long long int d_size; // size of the base64 string data
   long long int d_truesize;
  public:
   inline explicit SignalPlainTextBackupAttachmentReader(std::string const &b64data, std::string const &filename = std::string(),
@@ -118,10 +118,31 @@ inline long long int SignalPlainTextBackupAttachmentReader::dataSize()
 {
   if (d_truesize == -1)
   {
-    unsigned char *data = nullptr;
-    getAttachmentData(&data, false);
-    if (data)
-      delete[] data;
+    if (d_base64data.empty() && !d_filename.empty())
+    {
+      std::ifstream file(std::filesystem::path(d_filename), std::ios_base::binary | std::ios_base::in);
+      if (!file.is_open())
+      {
+        Logger::error("Failed to open file '", d_filename, "' for reading attachment");
+        return 1;
+      }
+      if (!file.seekg(d_pos + d_size - 2)) // we want the last two characters to check if they are padding
+      {
+        Logger::error("Failed to seek to correct offset in file '", d_filename, " (", d_pos, ")");
+        return 1;
+      }
+      int numpadding = 0;
+      char ch = file.get();
+      if (ch == '=')
+        ++numpadding;
+      ch = file.get();
+      if (ch == '=')
+        ++numpadding;
+      d_truesize = ((d_size / 4) * 3) - numpadding;
+    }
+    else
+    {
+    }
   }
   return d_truesize;
 }
