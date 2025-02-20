@@ -525,12 +525,11 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   // count entities still present...
   //ptdb->d_database.exec("SELECT rowid,body,LENGTH(body) - LENGTH(REPLACE(body, '&', '')) AS entities FROM smses ORDER BY entities ASC");
 
-  // sage to disk
+  // save to disk
   //ptdb->d_database.saveToFile("xmldb.sqlite");
 
   if (!skipmessagereorder) [[likely]]
     reorderMmsSmsIds();
   updateThreadsEntries();
-
   return checkDbIntegrity();
 }

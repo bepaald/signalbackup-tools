@@ -19,6 +19,7 @@
 
 #include "xmldocument.h"
 
+#include <cstring>
 #include <fstream>
 #include <memory>
 
@@ -35,7 +36,7 @@ XmlDocument::XmlDocument(std::string const &filename)
 {
   std::ifstream file(filename, std::ios_base::in | std::ios_base::binary);
 
-  unsigned int buffer_size = 4096;
+  unsigned int constexpr buffer_size = 16 * 1024;
   std::unique_ptr<char[]> buffer(new char[buffer_size]);
   unsigned int filepos; // save file position of (very) large values
   unsigned int available;
@@ -44,12 +45,13 @@ XmlDocument::XmlDocument(std::string const &filename)
   std::string attribute_name_tmp;
   std::string attribute_value_tmp;
   long long int attribute_pos = -1;
-  long long int attribute_size = -1;
+  long long int attribute_size = 0;
   std::string closing_tag_tmp;
   bool has_root_element = false;
   while (true)
   {
     filepos = file.tellg();
+
     file.read(buffer.get(), buffer_size);
     available = file.gcount();
     for (unsigned int i = 0; i < available; ++i)
@@ -59,6 +61,58 @@ XmlDocument::XmlDocument(std::string const &filename)
 
         case ATTRIBUTE_VALUE_DOUBLE:       //                  v
         {                                  //  <tag attribute="...
+          if (attribute_pos == -1) [[unlikely]]
+          {
+            attribute_pos = filepos + i;
+            attribute_size = 0;
+            ///std::cout << "attribute value starts at pos: " << attribute_pos << "(" << attribute_size << ")" << std::endl;
+          }
+
+          /**** NEW METHOD ****/
+          // just quickly scan for closing quote,
+          // this is not very strict, as we dont
+          // care about invalid characters in the
+          // attribute value ('<' '>' '&'(except in entity))
+          char *closing_quote = (char*)std::memchr(buffer.get() + i, '"', available - i);
+          if (closing_quote != nullptr)
+          {
+            attribute_size = attribute_size + (closing_quote - (buffer.get() + i));
+            attribute_value_tmp.append(buffer.get() + i, attribute_size < Node::s_maxsize ? attribute_size - attribute_value_tmp.size() : 0);
+
+            // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
+            // std::cout << "filepos : " << filepos << std::endl;
+            //// std::cout << "i       : " << newbufferpos << std::endl;
+            // std::cout << "att_pos : " << attribute_pos << std::endl;
+            // std::cout << "att_size: " << attribute_size << std::endl;
+            // std::cout << "attribute value ends at pos: " << (filepos + i + (closing_quote - (buffer.get() + i))) << " SIZE: " << attribute_size << std::endl;
+
+            Node::StringOrRef attributevalue =
+              {
+                (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
+                (attribute_size < Node::s_maxsize) ? std::string() : filename,
+                (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
+                (attribute_size < Node::s_maxsize) ? -1 : attribute_size
+              };
+
+            d_currentnode->d_attributes[attribute_name_tmp] = std::move(attributevalue);
+            attribute_value_tmp.clear();
+            attribute_name_tmp.clear();
+            attribute_pos = -1;
+
+            i += (closing_quote - (buffer.get() + i));
+
+            //std::cout << "State: ATTRIBUTE_VALUE_DOUBLE -> ELEMENT_AFTER_TAGNAME" << std::endl;
+            state = ELEMENT_AFTER_TAGNAME;
+          }
+          else
+          {
+            attribute_size += available - i;
+            attribute_value_tmp.append(buffer.get() + i, attribute_value_tmp.size() < Node::s_maxsize ? available - i : 0);
+            i = available;
+          }
+          /**** END NEW METHOD ****/
+
+          /**** OLD METHOD
           switch (buffer[i])
           {
             [[unlikely]] case '"':
@@ -83,12 +137,12 @@ XmlDocument::XmlDocument(std::string const &filename)
               // }
 
               Node::StringOrRef attributevalue =
-              {
-                (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
-                (attribute_size < Node::s_maxsize) ? std::string() : filename,
-                (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
-                (attribute_size < Node::s_maxsize) ? -1 : attribute_size
-              };
+                {
+                  (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
+                  (attribute_size < Node::s_maxsize) ? std::string() : filename,
+                  (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
+                  (attribute_size < Node::s_maxsize) ? -1 : attribute_size
+                };
 
               d_currentnode->d_attributes[attribute_name_tmp] = std::move(attributevalue);
               attribute_value_tmp.clear();
@@ -107,17 +161,11 @@ XmlDocument::XmlDocument(std::string const &filename)
             }
             default:
             {
-              if (attribute_pos == -1) [[unlikely]]
-              {
-                attribute_pos = filepos + i;
-                //std::cout << "attribute value starts at pos: " << attribute_pos << std::endl;
-              }
-
               attribute_value_tmp += buffer[i];
               break;
             }
           }
-
+          END OLD METHOD ****/
 
           break;
         }
@@ -479,64 +527,43 @@ XmlDocument::XmlDocument(std::string const &filename)
 
         case ATTRIBUTE_VALUE_SINGLE:       //                 v
         {                                  //  <tag attribute='...
-          switch (buffer[i])
+          if (attribute_pos == -1) [[unlikely]]
           {
-            [[unlikely]] case '\'':
-            {
-              attribute_size = (filepos + i) - attribute_pos;
-              // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
-              // std::cout << "filepos : " << filepos << std::endl;
-              // std::cout << "i       : " << i << std::endl;
-              // std::cout << "att_pos : " << attribute_pos << std::endl;
-              // std::cout << "att_size: " << attribute_size << std::endl;
-              // std::cout << "attribute value ends at pos: " << (filepos + i) << " SIZE: " << attribute_size << std::endl;
-
-              // {
-              //   if (attribute_size > 0)
-              //   {
-              //     std::ifstream tmp(filename, std::ios_base::in | std::ios_base::binary);
-              //     tmp.seekg(attribute_pos);
-              //     std::unique_ptr<char[]> v(new char[attribute_size]);
-              //     tmp.read(v.get(), attribute_size);
-              //     std::cout << " *** " << std::string(v.get(), attribute_size) << std::endl;
-              //   }
-              // }
-
-              Node::StringOrRef attributevalue =
-              {
-                (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
-                (attribute_size < Node::s_maxsize) ? std::string() : filename,
-                (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
-                (attribute_size < Node::s_maxsize) ? -1 : attribute_size
-              };
-
-              d_currentnode->d_attributes[attribute_name_tmp] = std::move(attributevalue);
-              attribute_value_tmp.clear();
-              attribute_name_tmp.clear();
-              attribute_pos = -1;
-
-              //std::cout << "State: ATTRIBUTE_VALUE_DOUBLE -> ELEMENT_AFTER_TAGNAME" << std::endl;
-              state = ELEMENT_AFTER_TAGNAME;
-              break;
-            }
-            [[unlikely]] case '<': // ampersand is also not allowed as a representing itself, but is used for entities (like &amp;)
-            [[unlikely]] case '>':
-            {
-              Logger::error("Illegal character in attribute value: '", buffer[i], "'");
-              return;
-            }
-            default:
-            {
-              if (attribute_pos == -1) [[unlikely]]
-              {
-                attribute_pos = filepos + i;
-                //std::cout << "attribute value starts at pos: " << attribute_pos << std::endl;
-              }
-
-              attribute_value_tmp += buffer[i];
-              break;
-            }
+            attribute_pos = filepos + i;
+            attribute_size = 0;
           }
+
+          /**** NEW METHOD ****/
+          // See ATTRIBUTE_VALUE_DOUBLE for notes and OLD METHOD
+          char *closing_quote = (char*)std::memchr(buffer.get() + i, '\'', available - i);
+          if (closing_quote != nullptr)
+          {
+            attribute_size = attribute_size + (closing_quote - (buffer.get() + i));
+            attribute_value_tmp.append(buffer.get() + i, attribute_size < Node::s_maxsize ? attribute_size - attribute_value_tmp.size() : 0);
+
+            Node::StringOrRef attributevalue = {
+              (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
+              (attribute_size < Node::s_maxsize) ? std::string() : filename,
+              (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
+              (attribute_size < Node::s_maxsize) ? -1 : attribute_size
+            };
+
+            d_currentnode->d_attributes[attribute_name_tmp] = std::move(attributevalue);
+            attribute_value_tmp.clear();
+            attribute_name_tmp.clear();
+            attribute_pos = -1;
+
+            i += (closing_quote - (buffer.get() + i));
+
+            state = ELEMENT_AFTER_TAGNAME;
+          }
+          else
+          {
+            attribute_size += available - i;
+            attribute_value_tmp.append(buffer.get() + i, attribute_value_tmp.size() < Node::s_maxsize ? available - i : 0);
+            i = available;
+          }
+          /**** END NEW METHOD ****/
           break;
         }
 
