@@ -309,7 +309,7 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     }
     else
     {
-      warnOnce("Unsupported message type 'group-v2-change:" + changetype + "'. Skipping... (this warning will be shown only once)");
+      Logger::warnOnce("Unsupported message type 'group-v2-change:" + changetype + "'. Skipping... (this warning will be shown only once)");
       continue;
     }
 

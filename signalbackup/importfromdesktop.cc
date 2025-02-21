@@ -201,7 +201,7 @@
 bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                                      std::vector<std::string> const &daterangelist, bool createmissingcontacts,
                                      bool createmissingcontacts_valid, bool autodates, bool importstickers,
-                                     std::string const &selfphone)
+                                     std::string const &selfphone, bool targetisdummy)
 {
   if (d_verbose) [[unlikely]]
     Logger::message("Starting importFromDesktop()");
@@ -663,7 +663,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                      &adjusted_timestamps, &recipientmap, databasedir, false, createmissingcontacts, createmissingcontacts_valid,
                                      &warned_createcontacts);
         else
-          warnOnce("Unsupported message type 'group-v2-change'. Skipping... (this warning will be shown only once)");
+          Logger::warnOnce("Unsupported message type 'group-v2-change'. Skipping... (this warning will be shown only once)");
         //if (d_verbose) [[unlikely]] std::cout << "done" << std::endl;
         continue;
       }
@@ -699,7 +699,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                        &adjusted_timestamps, &recipientmap, databasedir, true, createmissingcontacts, createmissingcontacts_valid,
                                        &warned_createcontacts);
           else
-            warnOnce("Unsupported message type 'timer-notification (in group)'. Skipping... (this warning will be shown only once)");
+            Logger::warnOnce("Unsupported message type 'timer-notification (in group)'. Skipping... (this warning will be shown only once)");
           continue;
         }
 
@@ -746,14 +746,18 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
-            if (freedate == -1)
+            long long int freedate = originaldate;
+            if (!targetisdummy)
             {
-              Logger::error("Getting free date for inserting session reset into mms");
-              continue;
+              freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
+              if (freedate == -1)
+              {
+                Logger::error("Getting free date for inserting session reset into mms");
+                continue;
+              }
+              if (originaldate != freedate)
+                adjusted_timestamps[originaldate] = freedate;
             }
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table,
                            {{"thread_id", ttid},
@@ -810,16 +814,19 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
-            if (freedate == -1)
+            long long int freedate = originaldate;
+            if (!targetisdummy)
             {
-              if (d_verbose) [[unlikely]] Logger::message_end();
-              Logger::error("Getting free date for inserting number-change into mms");
-              continue;
+              freedate = getFreeDateForMessage(originaldate, ttid, address);
+              if (freedate == -1)
+              {
+                if (d_verbose) [[unlikely]] Logger::message_end();
+                Logger::error("Getting free date for inserting number-change into mms");
+                continue;
+              }
+              if (originaldate != freedate)
+                adjusted_timestamps[originaldate] = freedate;
             }
-
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},
@@ -882,15 +889,19 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, address);
-            if (freedate == -1)
+            long long int freedate = originaldate;
+            if (!targetisdummy)
             {
-              if (d_verbose) [[unlikely]] Logger::message_end();
-              Logger::error("Getting free date for inserting keychange into mms");
+              freedate = getFreeDateForMessage(originaldate, ttid, address);
+              if (freedate == -1)
+              {
+                if (d_verbose) [[unlikely]] Logger::message_end();
+                Logger::error("Getting free date for inserting keychange into mms");
               continue;
+              }
+              if (originaldate != freedate)
+                adjusted_timestamps[originaldate] = freedate;
             }
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},
@@ -976,15 +987,19 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
-            if (freedate == -1)
+            long long int freedate = originaldate;
+            if (!targetisdummy)
             {
-              if (d_verbose) [[unlikely]] Logger::message_end();
-              Logger::error("Getting free date for inserting verified-change message into mms");
-              continue;
+              freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
+              if (freedate == -1)
+              {
+                if (d_verbose) [[unlikely]] Logger::message_end();
+                Logger::error("Getting free date for inserting verified-change message into mms");
+                continue;
+              }
+              if (originaldate != freedate)
+                adjusted_timestamps[originaldate] = freedate;
             }
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
@@ -1090,15 +1105,18 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
-            if (freedate == -1)
+            long long int freedate = originaldate;
             {
-              if (d_verbose) [[unlikely]] Logger::message_end();
-              Logger::error("Getting free date for inserting profile-change into mms");
-              continue;
+              freedate = getFreeDateForMessage(freedate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
+              if (freedate == -1)
+              {
+                if (d_verbose) [[unlikely]] Logger::message_end();
+                Logger::error("Getting free date for inserting profile-change into mms");
+                continue;
+              }
+              if (originaldate != freedate)
+                adjusted_timestamps[originaldate] = freedate;
             }
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
@@ -1205,15 +1223,18 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address);
-            if (freedate == -1)
+            long long int freedate = originaldate;
             {
-              if (d_verbose) [[unlikely]] Logger::message_end();
-              Logger::error("Getting free date for inserting ", type, " into mms");
-              continue;
+              freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address);
+              if (freedate == -1)
+              {
+                if (d_verbose) [[unlikely]] Logger::message_end();
+                Logger::error("Getting free date for inserting ", type, " into mms");
+                continue;
+              }
+              if (originaldate != freedate)
+                adjusted_timestamps[originaldate] = freedate;
             }
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
 
             if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                          {d_mms_date_sent, freedate},
@@ -1253,8 +1274,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       else if (!outgoing && !incoming)
       {
         if (!d_verbose) [[likely]]
-          warnOnce("Unhandled message type '" + type + "'. Skipping message. "
-                   "(this warning will be shown only once)");
+          Logger::warnOnce("Unhandled message type '" + type + "'. Skipping message. "
+                           "(this warning will be shown only once)");
         else [[unlikely]]
         {
           // get some extra info and show it (threadname, timestamp?)
@@ -1544,15 +1565,20 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
           // we try to get the first free date_sent
           long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-          long long int freedate = getFreeDateForMessage(originaldate, ttid, incoming ? address : d_selfid);
-          if (freedate == -1)
+          long long int freedate = originaldate;
+          if (!targetisdummy)
           {
-            if (d_verbose) [[unlikely]] Logger::message_end();
-            Logger::error("Getting free date for inserting message into mms");
-            continue;
+            freedate = getFreeDateForMessage(originaldate, ttid, incoming ? address : d_selfid);
+            if (freedate == -1)
+            {
+              if (d_verbose) [[unlikely]] Logger::message_end();
+              Logger::error("Getting free date for inserting message into mms");
+              continue;
+            }
+            if (originaldate != freedate)
+              adjusted_timestamps[originaldate] = freedate;
           }
-          if (originaldate != freedate)
-            adjusted_timestamps[originaldate] = freedate;
+
           if (!insertRow(d_mms_table, {{"thread_id", ttid},
                                        {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
                                        {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
@@ -1628,13 +1654,13 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         // insert message attachments
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting attachments...");
         dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
-                          rowid, dtdb->d_database, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false, issticker);
+                          rowid, dtdb->d_database, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false, issticker, targetisdummy);
         if (hasquote && !mmsquote_missing)
         {
           // insert quotes attachments
           dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, dtdb->d_database,
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
-                            "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/);
+                            "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/, targetisdummy);
         }
         if (d_verbose) [[unlikely]] Logger::message_end("done");
 

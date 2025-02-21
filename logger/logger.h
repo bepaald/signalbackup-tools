@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -31,6 +31,7 @@
 #include <iomanip>
 #include <ctime>
 #include <algorithm>
+#include <set>
 
 #if defined(_WIN32) || defined(__MINGW64__)
 #define WIN32_LEAN_AND_MEAN 1
@@ -88,6 +89,8 @@ class Logger
   bool d_overwriting;
   bool d_dangling;
   //std::sstream d_previousline;
+  std::set<std::string> d_warningsgiven;
+
  public:
   inline static void setFile(std::string const &f);
   inline static void setTimestamp(bool val);
@@ -122,6 +125,8 @@ class Logger
 
   template <typename First, typename... Rest>
   inline static void output_indent(int indent, First const &f, Rest... r);
+
+  inline static void warnOnce(std::string const &w, bool error = false, std::string::size_type = std::string::npos);
 
   inline ~Logger();
  private:
@@ -560,6 +565,19 @@ inline void Logger::outputMsg(Flags flags, Control c)
     std::cout << std::flush;
   else
     std::cout << std::endl;
+}
+
+inline void Logger::warnOnce(std::string const &w, bool error, std::string::size_type sub_id)
+{
+  ensureLogger();
+  if (s_instance->d_warningsgiven.find(w.substr(0, sub_id)) == s_instance->d_warningsgiven.end())
+  {
+    if (error)
+      Logger::error(w);
+    else
+      Logger::warning(w);
+    s_instance->d_warningsgiven.emplace(w, 0, sub_id);
+  }
 }
 
 #endif

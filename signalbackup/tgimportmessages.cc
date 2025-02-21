@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -84,7 +84,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
     if (!message_data.isNull(i, "poll"))
     {
-      warnOnce("Message is 'poll'. This is not supported in Signal. Skipping...");
+      Logger::warnOnce("Message is 'poll'. This is not supported in Signal. Skipping...");
       continue;
     }
 
@@ -239,7 +239,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
     // else if...
     else
     {
-      warnOnce("Unsupported message type `" + message_data.valueAsString(i, "type") + "'. Skipping...");
+      Logger::warnOnce("Unsupported message type `" + message_data.valueAsString(i, "type") + "'. Skipping...");
       continue;
     }
   }

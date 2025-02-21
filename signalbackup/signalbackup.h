@@ -67,7 +67,7 @@
 #endif
 
 #if defined WIN32 || MINGW
-#define WIN_CHECK_PATH_LENGTH(str) if (int pl = bepaald::abs_path_length(str); pl >= 260) Logger::warning("Path length is ", pl, ". This may be more than the allowed maximum path length on your platform. If you run into problems, use the option `--compactfilenames' to shorten the filenames this tool writes.");
+#define WIN_CHECK_PATH_LENGTH(str) if (int pl = bepaald::abs_path_length(str); pl >= 260) Logger::warnOnce("Path length is " + bepaald::toString(pl) + ". This may be more than the allowed maximum path length on your platform. If you run into problems, use the option `--compactfilenames' to shorten the filenames this tool writes.", false, STRLEN("Path length is "));
 #else
 #define WIN_CHECK_PATH_LENGTH(str)
 #endif
@@ -152,7 +152,6 @@ class SignalBackup
   bool d_verbose;
   bool d_truncate;
   bool d_fulldecode;
-  std::set<std::string> d_warningsgiven;
   long long int d_selfid;
   std::string d_selfuuid;
 
@@ -281,12 +280,12 @@ class SignalBackup
   bool importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
                          bool createcontacts_nowarn, bool autodates, bool importstickers,
-                         std::string const &selfphone);
+                         std::string const &selfphone, bool targetisdummy);
   bool importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
                                  std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                  std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,
                                  bool createmissingcontacts, bool markdelivered, bool markread, bool autodates,
-                                 std::string const &selfphone, bool isdummy);
+                                 std::string const &selfphone, bool targetisdummy);
   long long int ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb,
                                   std::map<std::string, long long int> *contactmap,
                                   bool *warned_createcontacts, std::string const &contact_name,
@@ -418,7 +417,7 @@ class SignalBackup
                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
                            long long int rowid, SqliteDB const &ddb, std::string const &where,
-                           std::string const &databasedir, bool isquote, bool issticker);
+                           std::string const &databasedir, bool isquote, bool issticker, bool targetisdummy);
   bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address, bool insertincompletedataforexport) const;
   bool handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
                                   long long int date, std::map<long long int, long long int> *adjusted_timestamps, std::map<std::string, long long int> *savedmap,
@@ -534,7 +533,6 @@ class SignalBackup
   bool dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
                    long long int rid, std::string const &databasedir);
   std::string dtSetSharedContactsJsonString(SqliteDB const &ddb, long long int rowid) const;
-  void warnOnce(std::string const &msg, bool error = false, std::string::size_type sub_id = std::string::npos);
   void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
   std::string HTMLprepLinkPreviewDescription(std::string const &in) const;

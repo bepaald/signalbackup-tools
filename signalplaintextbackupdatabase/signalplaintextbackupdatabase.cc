@@ -330,7 +330,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
 
       }
       else [[unlikely]]
-        warnOnce("Skipping unsupported element: '" + n.name() + "'");
+        Logger::warnOnce("Skipping unsupported element: '" + n.name() + "'");
     }
   }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,7 @@
 
 bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,
                                      long long int rowid, SqliteDB const &ddb, std::string const &where, std::string const &databasedir,
-                                     bool isquote, bool issticker)
+                                     bool isquote, bool issticker, bool targetisdummy)
 {
   bool quoted_linkpreview = false;
   bool quoted_sticker = false;
@@ -107,6 +107,8 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
                   //"json_extract(json, '" + jsonpath + ".cdnKey') AS cdn_key,"
                   "json_extract(json, '" + jsonpath + ".localKey') AS localKey,"
                   "IFNULL(json_extract(json, '" + jsonpath + ".version'), 1) AS version,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".width'), 0) AS width,"
+                  "IFNULL(json_extract(json, '" + jsonpath + ".height'), 0) AS height,"
 
                   // only in sticker
                   "json_extract(json, '" + jsonpath + ".emoji') AS sticker_emoji,"
@@ -258,50 +260,59 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
     }
 
 
-    // get attachment metadata
-    AttachmentMetadata amd;
-    if (version >= 2) [[likely]]
+    long long int filesize = results_attachment_data.valueAsInt(0, "size", 0);
+    std::string hash;
+
+    if (!targetisdummy || filesize == 0)
     {
-      DesktopAttachmentReader dar(version, fullpath, localkey, size);
-#if __cpp_lib_out_ptr >= 202106L
-      std::unique_ptr<unsigned char[]> att_data;
-      if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
-#else
-      unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
-      if (dar.getAttachmentData(&att_data, d_verbose) != 0)
-#endif
+      // get attachment metadata
+      AttachmentMetadata amd;
+      if (version >= 2) [[likely]]
       {
-        Logger::error("Failed to get attachment data");
+        DesktopAttachmentReader dar(version, fullpath, localkey, size);
+#if __cpp_lib_out_ptr >= 202106L
+        std::unique_ptr<unsigned char[]> att_data;
+        if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+#else
+        unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
+        if (dar.getAttachmentData(&att_data, d_verbose) != 0)
+#endif
+        {
+          Logger::error("Failed to get attachment data");
+          continue;
+        }
+
+#if __cpp_lib_out_ptr >= 202106L
+        amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
+#else
+        amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
+        if (att_data)
+          delete[] att_data;
+#endif
+      }
+      else
+        amd = AttachmentMetadata::getAttachmentMetaData(fullpath);                        // get from file
+
+      if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.valueAsInt(0, "size", 0) != 0))
+      {
+        Logger::error("Trying to set attachment data. Skipping.");
+        Logger::error_indent("Pending: ", results_attachment_data.valueAsInt(0, "pending"));
+        //results_attachment_data.prettyPrint();
+        //std::cout << amd.filesize << std::endl;
+
+        //std::cout << "Corresponding message:" << std::endl;
+        //ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
         continue;
       }
 
-#if __cpp_lib_out_ptr >= 202106L
-      amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
-#else
-      amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
-      if (att_data)
-        delete[] att_data;
-#endif
-    }
-    else
-      amd = AttachmentMetadata::getAttachmentMetaData(fullpath);                        // get from file
+      if (amd.filesize == 0)
+      {
+        Logger::warning("Skipping 0 byte attachment. Not supported in Signal Android.");
+        continue;
+      }
 
-    if (amd.filename.empty() || (amd.filesize == 0 && results_attachment_data.valueAsInt(0, "size", 0) != 0))
-    {
-      Logger::error("Trying to set attachment data. Skipping.");
-      Logger::error_indent("Pending: ", results_attachment_data.valueAsInt(0, "pending"));
-      //results_attachment_data.prettyPrint();
-      //std::cout << amd.filesize << std::endl;
-
-      //std::cout << "Corresponding message:" << std::endl;
-      //ddb.prettyPrint("SELECT DATETIME(ROUND(messages.sent_at/1000),'unixepoch','localtime'),messages.body,COALESCE(conversations.profileFullName,conversations.name) AS correspondent FROM messages LEFT JOIN conversations ON json_extract(messages.json, '$.conversationId') == conversations.id " + where);
-      continue;
-    }
-
-    if (amd.filesize == 0)
-    {
-      Logger::warning("Skipping 0 byte attachment. Not supported in Signal Android.");
-      continue;
+      filesize = amd.filesize;
+      hash = amd.hash;
     }
 
     //insert into part
@@ -310,15 +321,15 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
                    {{d_part_mid, mms_id},
                     {d_part_ct, results_attachment_data.value(0, "content_type")},
                     {d_part_pending, 0},
-                    {"data_size", amd.filesize},
+                    {"data_size", filesize},
                     {(d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id" : ""), unique_id},
                     {"voice_note", results_attachment_data.isNull(0, "flags") ? 0 : (results_attachment_data.valueAsInt(0, "flags", 0) == 1 ? 1 : 0)},
-                    {"width", amd.width == -1 ? 0 : amd.width},
-                    {"height", amd.height == -1 ? 0 : amd.height},
+                    {"width", results_attachment_data.value(0, "width")},
+                    {"height", results_attachment_data.value(0, "height")},
                     {"quote", isquote ? 1 : 0},
-                    {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
-                    {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), amd.hash},
-                    {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), amd.hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), hash},
+                    {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), hash},
                     {"upload_timestamp", results_attachment_data.value(0, "upload_timestamp")},      // will be 0 on sticker
                     {"cdn_number", results_attachment_data.value(0, "cdn_number")}, // will be 0 on sticker, usually 0 or 2, but I dont know what it means
                     {"file_name", results_attachment_data.value(0, "file_name")}},
@@ -459,7 +470,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
                             std::vector<std::string>{"ROWID:uint64:" + bepaald::toString(new_part_id),
                                                      (d_database.tableContainsColumn(d_part_table, "unique_id") ?
                                                       "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
-                                                     "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
+                                                     "LENGTH:uint32:" + bepaald::toString(filesize)}))
     {
       new_attachment_frame->setReader(new DesktopAttachmentReader(version, fullpath, localkey, size));
       d_attachments.emplace(std::make_pair(new_part_id,
@@ -471,7 +482,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       Logger::error("Failed to create AttachmentFrame for data");
       Logger::error_indent("       rowid       : ", new_part_id);
       Logger::error_indent("       attachmentid: ", unique_id);
-      Logger::error_indent("       length      : ", amd.filesize);
+      Logger::error_indent("       length      : ", filesize);
       Logger::error_indent("       path        : ", databasedir, "/attachments.noindex/",
                            results_attachment_data.valueAsString(0, "path"));
 

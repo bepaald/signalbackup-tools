@@ -47,7 +47,7 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     source->d_database.exec("SELECT * FROM remapped_recipients", &r);
     if (r.rows())
     {
-      warnOnce("Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!");
+      Logger::warnOnce("Source database contains 'remapped_recipients'. This case may not yet be handled correctly by this program!");
       if (d_verbose) [[unlikely]]
       {
         for (unsigned int i = 0; i < r.rows(); ++i)

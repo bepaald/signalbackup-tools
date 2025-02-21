@@ -24,7 +24,6 @@
 #include "../logger/logger.h"
 #include "../common_be.h"
 
-#include <set>
 #if __cpp_lib_span >= 202002L
 #include <span>
 #endif
@@ -35,7 +34,7 @@ class SignalPlaintextBackupDatabase
   bool d_ok;
   bool d_truncate;
   bool d_verbose;
-  std::set<std::string> d_warningsgiven;
+  //std::set<std::string> d_warningsgiven;
   std::string d_countrycode;
  public:
 #if __cpp_lib_span >= 202002L
@@ -60,7 +59,6 @@ class SignalPlaintextBackupDatabase
   friend class DummyBackup;
 
  private:
-  inline void warnOnce(std::string const &warning, bool error = false);
   inline std::string normalizePhoneNumber(std::string const &in, bool show = true);// const;
   std::set<std::string> norm_shown;
 };
@@ -116,18 +114,6 @@ inline bool SignalPlaintextBackupDatabase::listContacts() const
   std::cout << std::endl;
   */
   return true;
-}
-
-inline void SignalPlaintextBackupDatabase::warnOnce(std::string const &warning, bool error)
-{
-  if (!bepaald::contains(d_warningsgiven, warning))
-  {
-    if (error)
-      Logger::error(warning);
-    else
-      Logger::warning(warning);
-    d_warningsgiven.insert(warning);
-  }
 }
 
 inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::string const &in, bool show)// const

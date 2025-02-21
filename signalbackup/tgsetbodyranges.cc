@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -78,11 +78,11 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
       bodyrangelist.addField<1>(bodyrange);
     }
     else if (br("type") == "underline")
-      warnOnce("Underline text styling is not supported by Signal");
+      Logger::warnOnce("Underline text styling is not supported by Signal");
     else if (br("type") == "link")
-      warnOnce("'Link' text styling is not supported by Signal");
+      Logger::warnOnce("'Link' text styling is not supported by Signal");
     else
-      warnOnce("(unknown text styling: '" + br("type") + "')");
+      Logger::warnOnce("(unknown text styling: '" + br("type") + "')");
 
     currentpos += fraglen;
   }
