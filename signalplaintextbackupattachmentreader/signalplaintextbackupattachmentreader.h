@@ -142,6 +142,14 @@ inline long long int SignalPlainTextBackupAttachmentReader::dataSize()
     }
     else
     {
+      int numpadding = 0;
+      if (d_base64data[d_base64data.size() - 1] == '=')
+      {
+        ++numpadding;
+        if (d_base64data[d_base64data.size() - 2] == '=')
+          ++numpadding;
+      }
+      d_truesize = ((d_base64data.size() / 4) * 3) - numpadding;
     }
   }
   return d_truesize;

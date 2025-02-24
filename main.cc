@@ -108,13 +108,13 @@ int main(int argc, char *argv[])
     return ptdb->ok();
   };
 
-  // if (!arg.generatedummy().empty())
-  // {
-  //   DummyBackup d(arg.verbose(), arg.truncate(), arg.showprogress());
-  //   if (!d.ok() ||
-  //       !d.exportBackup(arg.generatedummy(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, false /*onlydb*/))
-  //     return 1;
-  // }
+  if (!arg.generatedummy().empty())
+  {
+    DummyBackup d(arg.verbose(), arg.truncate(), arg.showprogress());
+    if (!d.ok() ||
+        !d.exportBackup(arg.generatedummy(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, false /*onlydb*/))
+      return 1;
+  }
 
   // show desktop key
   if (arg.showdesktopkey())
@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
     if (!sb->importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(),
                                (arg.addincompletedataforhtmlexport() | arg.importdesktopcontacts()),
                                arg.importdesktopcontacts(), arg.autolimitdates(),  arg.importstickers(),
-                               arg.setselfid(), false /*targetisdummy*/))
+                               arg.setselfid(), arg.targetisdummy()))
       return 1;
     MEMINFO("After importfromdesktop");
   }
@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
     if (!sb->importFromPlaintextBackup(ptdb, arg.skipmessagereorder(), arg.mapxmlcontacts(), arg.limittodates(),
                                        arg.selectxmlchats(), arg.addincompletedataforhtmlexport(),
                                        arg.xmlmarkdelivered(), arg.xmlmarkread(), arg.autolimitdates(), arg.setselfid(),
-                                       false /*arg.targetisdummy()*/))
+                                       arg.targetisdummy()))
       return 1;
   }
 

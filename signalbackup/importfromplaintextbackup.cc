@@ -31,17 +31,41 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 {
   if (d_selfid == -1)
   {
-    d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
-    if (d_selfid == -1)
+    if (isdummy && !selfphone.empty()) // lets just create a recipient
     {
-      Logger::error_start("Failed to determine id of 'self'.");
-      if (selfphone.empty())
-        Logger::message_start(" Please pass `--setselfid \"[phone]\"' to set it manually");
-      Logger::message_end();
-      return false;
+      d_selfid = d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
+      if (d_selfid == -1)
+      {
+        // it is possible the contactname is set for this contact in ptdb through --mapxmlcontactnames
+        std::string contact_name = ptdb->d_database.getSingleResultAs<std::string>("SELECT MAX(contact_name) FROM smses WHERE address = ? "
+                                                                                   "AND contact_name IS NOT NULL AND contact_name IS NOT ''",
+                                                                                   selfphone, std::string());
+
+        std::any new_rid;
+        if (!insertRow("recipient",
+                       {{d_recipient_e164, selfphone},
+                        {(contact_name.empty() ? "" : "profile_given_name"), contact_name},
+                        {(contact_name.empty() ? "" : "profile_joined_name"), contact_name}},
+                       "_id", &new_rid))
+          return false;
+
+        d_selfid = std::any_cast<long long int>(new_rid);
+      }
     }
-    if (d_selfuuid.empty())
-      d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+    else
+    {
+      d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
+      if (d_selfid == -1)
+      {
+        Logger::error_start("Failed to determine id of 'self'.");
+        if (selfphone.empty())
+          Logger::message_start(" Please pass `--setselfid \"[phone]\"' to set it manually");
+        Logger::message_end();
+        return false;
+      }
+      if (d_selfuuid.empty())
+        d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+    }
   }
 
   if (!ptdb->ok())
@@ -529,7 +553,8 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
   //ptdb->d_database.saveToFile("xmldb.sqlite");
 
   if (!skipmessagereorder) [[likely]]
-    reorderMmsSmsIds();
+    if (!isdummy)
+      reorderMmsSmsIds();
   updateThreadsEntries();
   return checkDbIntegrity();
 }

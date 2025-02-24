@@ -156,6 +156,8 @@ Arg::Arg(int argc, char *argv[])
   d_xmlautogroupnames(false),
   d_setcountrycode(std::string()),
   d_compactfilenames(false),
+  d_generatedummy(std::string()),
+  d_targetisdummy(false),
   d_htmlignoremediatypes(std::vector<std::string>()),
   d_input_required(false)
 {
@@ -1902,6 +1904,32 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-compactfilenames")
     {
       d_compactfilenames = false;
+      continue;
+    }
+    if (option == "--generatedummy")
+    {
+      if (i < argsize - 1)
+      {
+        d_generatedummy = std::move(arguments[++i]);
+        d_opassphrase = "000000000000000000000000000001";
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--targetisdummy")
+    {
+      d_targetisdummy = true;
+      d_passphrase = "000000000000000000000000000001";
+      d_opassphrase = "000000000000000000000000000001";
+      continue;
+    }
+    if (option == "--no-targetisdummy")
+    {
+      d_targetisdummy = false;
       continue;
     }
     if (option == "--htmlignoremediatypes")
