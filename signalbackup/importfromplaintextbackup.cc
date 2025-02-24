@@ -274,7 +274,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
     if (trid == -1)
     {
-      if (createmissingcontacts)
+      if (createmissingcontacts || isdummy)
       {
         if ((trid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
                                       pt_messages_address, isgroup)) == -1)
