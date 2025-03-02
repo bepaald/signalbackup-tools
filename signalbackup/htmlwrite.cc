@@ -825,6 +825,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding-left: 9px;
         padding-right: 9px;
         margin-bottom: 5px;
+        display: flex;
+        align-items: center;
       }
 
       .msg-incoming .attachment-unknown-type {
@@ -833,6 +835,26 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .msg-outgoing .attachment-unknown-type {
         background-color: rgba(0, 0, 0, 0.244);
+      }
+
+      .document-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 113 161"><path d="M112.5 40.5v105a14.97 14.97 0 0 1-15 15h-82a14.97 14.97 0 0 1-15-15v-130a14.97 14.97 0 0 1 15-15h57" fill="%23f9f9f9" stroke="%23aaaaaa"/><path d="M112.5 40.5h-25a14.97 14.97 0 0 1-15-15V.5z" fill="%23fbfbfb" stroke="%23bbbbbb"/></svg>');
+        display: inline-block;
+        height: 75px;
+        aspect-ratio: 112 / 160;
+        margin-right: 10px;
+        margin-top: 3px;
+        margin-bottom: 3px;
+        color: black;
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      .document-ext {
+        position: relative;
+        top: calc(50% - 0.5em);
+        font-variant: all-small-caps;
+        font-weight: bold;
       }
 
       .msg-with-reaction {
@@ -2062,29 +2084,31 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
         htmloutput << std::string(indent, ' ') << "    <pre><span class=\"caption\">" << attachment_results(a, "caption") << "</span></pre>\n";
       htmloutput << std::string(indent, ' ') << "  </div>\n";
     }
-    else if (content_type.empty())
+    else
     {
-      if (original_filename.empty())
-        htmloutput << std::string(indent, ' ') << "  [Attachment of unknown type]<span class=\"msg-dl-link\"><a href=\"media/"
-                   << attachment_filename_on_disk << "\">&#129055;</a></span>\n";
-      else
-        htmloutput << std::string(indent, ' ') << "  [Attachment '" << original_filename << "']<span class=\"msg-dl-link\"><a href=\"media/"
-                   << attachment_filename_on_disk << "\">&#129055;</a></span>\n";
-                // the following does not work, because URIs on file:// are cross-origin
-                // << attachment_filename_on_disk << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n";
+      htmloutput << std::string(indent, ' ') << "  <div class=\"document-icon\"><div class=\"document-ext\">" << (extension.size() <= 5 ? extension : "") << "</div></div>\n";
+      if (content_type.empty())
+      {
+        if (original_filename.empty())
+          htmloutput << std::string(indent, ' ') << "  <div>[Attachment of unknown type]<span class=\"msg-dl-link\"><a href=\"media/"
+                     << attachment_filename_on_disk << "\">&#129055;</a></span></div>\n";
+        else
+          htmloutput << std::string(indent, ' ') << "  <div>[Attachment '" << original_filename << "']<span class=\"msg-dl-link\"><a href=\"media/"
+                     << attachment_filename_on_disk << "\">&#129055;</a></span></div>\n";
+        // the following does not work, because URIs on file:// are cross-origin
+        // << attachment_filename_on_disk << "\" download=\"" << original_filename << "\">&#129055;</a></span>\n";
+      }
+      else // content-type not empty, but not 'image/', 'audio/' or 'video/', or ignored as media on user-request
+      {
+        if (original_filename.empty())
+          htmloutput << std::string(indent, ' ') << "  <div>[Attachment of type \"" << content_type << "\"]<span class=\"msg-dl-link\"><a href=\"media/"
+                     << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span></div>\n";
+        else
+          htmloutput << std::string(indent, ' ') << "  <div>[Attachment '" << original_filename << "']<span class=\"msg-dl-link\"><a href=\"media/"
+                     << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span></div>\n";
+      }
     }
-    else // content-type not empty, but not 'image/', 'audio/' or 'video/', or ignored as media on user-request
-    {
-      if (original_filename.empty())
-        htmloutput << std::string(indent, ' ') << "  [Attachment of type " << content_type << "]<span class=\"msg-dl-link\"><a href=\"media/"
-                   << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
-      else
-        htmloutput << std::string(indent, ' ') << "  [Attachment '" << original_filename << "']<span class=\"msg-dl-link\"><a href=\"media/"
-                   << attachment_filename_on_disk << "\" type=\"" << content_type << "\">&#129055;</a></span>\n";
-    }
-
     htmloutput << std::string(indent, ' ') << "</div>\n";
-
   }
 }
 
