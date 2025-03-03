@@ -336,6 +336,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
   }
 
   // add group-only-contacts, as 'skip' messages, so they can be mapped...
+  Logger::message("Marking group-only contacts");
   for (auto const &a : group_only_contacts)
     if (!d_database.exec("INSERT INTO smses (address, skip, contact_name) SELECT ?1, 1, ?1 "
                          "WHERE NOT EXISTS (SELECT 1 FROM smses WHERE address = ?1 AND skip = 0)", a))
@@ -350,6 +351,8 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
   // If still empty (all messsages from that contact were NULL, "", OR "(Unknown)", set it
   // to address
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
+
+  Logger::message("Setting contact names where empty");
   SqliteDB::QueryResults addresses;
   if (!d_database.exec("SELECT DISTINCT address FROM smses", &addresses))
     return;
@@ -364,6 +367,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
   }
   //d_database.prettyPrint(true, "SELECT DISTINCT address, contact_name FROM smses ORDER BY address ASC");
 
+  Logger::message("Apply name-mapping");
   // apply name-mapping....
   for (auto const &[addr, cn] : namemap)
   {
@@ -386,13 +390,16 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
 
   if (autogroupnames)
   {
+    Logger::message("Auto-generating groupnames");
     SqliteDB::QueryResults allgroups;
-    if (d_database.exec("SELECT address FROM smses WHERE address LIKE '%~%' AND SUBSTR(address, 1, 1) != '~' AND SUBSTR(address, LENGTH(address), 1) != '~'", &allgroups))
+    if (d_database.exec("SELECT DISTINCT address FROM smses WHERE address LIKE '%~%' AND SUBSTR(address, 1, 1) != '~' AND SUBSTR(address, LENGTH(address), 1) != '~'", &allgroups))
     {
+      //std::cout << "allgroups size: " << allgroups.rows() << std::endl;
       for (unsigned int i = 0; i < allgroups.rows(); ++i)
       {
         std::string new_contact_name;
         std::string groupaddress = allgroups(i, "address");
+
         //std::cout << "Doing: " << groupaddress << std::endl;
 
         std::string::size_type start = 0;
@@ -413,9 +420,12 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
           start = end + 1;
         }
 
+        //std::cout << "Got: '" << new_contact_name << "'" << std::endl;
+
         if (!d_database.exec("UPDATE smses SET contact_name = ? WHERE address = ?", {new_contact_name, groupaddress}))
           Logger::warning("Failed to set contact_name of group ('", groupaddress, "') to '", new_contact_name, "'");
-
+        // else
+        //   std::cout << "Updated " << d_database.changed() << std::endl;
       }
     }
   }
