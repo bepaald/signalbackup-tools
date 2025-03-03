@@ -211,6 +211,9 @@ inline void FrameWithAttachment::clearData()
     delete[] d_attachmentdata;
     d_attachmentdata = nullptr;
   }
+
+  // to allow the attachmentreader to do its own cleanup
+  d_attachmentreader->clearData();
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -34,7 +34,7 @@ class BaseAttachmentReader
   virtual BaseAttachmentReader *clone() const = 0;
 
   inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) = 0;
-  //inline virtual void clearData() = 0;
+  inline virtual void clearData();
 };
 
 template <typename T>
@@ -46,5 +46,9 @@ class AttachmentReader : public BaseAttachmentReader
     return new T(static_cast<T const &>(*this));
   }
 };
+
+// this can be overridden in attachment readers to do more cleanup if needed
+inline void BaseAttachmentReader::clearData()
+{}
 
 #endif

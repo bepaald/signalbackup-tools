@@ -26,9 +26,9 @@
 
 #include <tuple>
 
-class SignalPlainTextBackupAttachmentReader : public AttachmentReader<RawFileAttachmentReader>
+class SignalPlainTextBackupAttachmentReader : public AttachmentReader<SignalPlainTextBackupAttachmentReader>
 {
-  std::string d_base64data;
+  std::string const d_base64data;
   std::string d_filename;
   long long int d_pos;
   long long int d_size; // size of the base64 string data
@@ -45,6 +45,7 @@ class SignalPlainTextBackupAttachmentReader : public AttachmentReader<RawFileAtt
   inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) override;
   inline int getAttachmentData(unsigned char **data, bool verbose);
   inline long long int dataSize();
+  //inline virtual void clearData() override;
 };
 
 SignalPlainTextBackupAttachmentReader::SignalPlainTextBackupAttachmentReader(std::string const &b64data, std::string const &filename,
@@ -69,6 +70,7 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachment(FrameWithAttachm
 inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned char **data, bool verbose)
 {
   // read the data if needed
+  std::string local_b64_data;
   if (d_size > 0 && d_base64data.empty() && !d_filename.empty())
   {
     std::ifstream file(std::filesystem::path(d_filename), std::ios_base::binary | std::ios_base::in);
@@ -86,9 +88,9 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
     if (verbose) [[unlikely]]
       Logger::message("Reading attachment data, length: ", d_size);
 
-    d_base64data.reserve(d_size + 1);
+    local_b64_data.reserve(d_size + 1);
     std::istreambuf_iterator<char> file_it(file);
-    std::copy_n(file_it, d_size, std::back_inserter<std::string>(d_base64data));
+    std::copy_n(file_it, d_size, std::back_inserter<std::string>(local_b64_data));
     if (file.tellg() != (d_pos + d_size - 1))
     {
       Logger::error("Failed to read base64-encoded attachment from \"", d_filename, "\"");
@@ -96,14 +98,14 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
     }
   }
 
-  if (d_size > 0 && d_base64data.empty()) // filename.empty(), but so is data, while size is > 0
+  if (d_size > 0 && d_base64data.empty() && local_b64_data.empty()) // filename.empty(), but so is data, while size is > 0
   {
     Logger::error("SignalPlainTextBackupAttachmentReader has no base64 encoded data");
     return 1;
   }
 
   unsigned char *attdata;
-  std::tie(attdata, d_truesize) = Base64::base64StringToBytes(d_base64data);
+  std::tie(attdata, d_truesize) = Base64::base64StringToBytes(d_base64data.empty() ? local_b64_data : d_base64data);
   if (!attdata)
   {
     Logger::error("Failed to decode base64-encoded attachment from \"", d_filename, "\"");
@@ -143,10 +145,10 @@ inline long long int SignalPlainTextBackupAttachmentReader::dataSize()
     else
     {
       int numpadding = 0;
-      if (d_base64data[d_base64data.size() - 1] == '=')
+      if (d_base64data.size() > 0 && d_base64data[d_base64data.size() - 1] == '=')
       {
         ++numpadding;
-        if (d_base64data[d_base64data.size() - 2] == '=')
+        if (d_base64data.size() > 1 && d_base64data[d_base64data.size() - 2] == '=')
           ++numpadding;
       }
       d_truesize = ((d_base64data.size() / 4) * 3) - numpadding;
@@ -154,5 +156,11 @@ inline long long int SignalPlainTextBackupAttachmentReader::dataSize()
   }
   return d_truesize;
 }
+
+// inline void SignalPlainTextBackupAttachmentReader::clearData()
+// {
+//   if (!d_filename.empty() && d_pos != -1)
+//     std::string().swap(d_base64data); // this is pretty ugly...
+// }
 
 #endif
