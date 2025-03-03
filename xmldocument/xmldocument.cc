@@ -65,7 +65,8 @@ XmlDocument::XmlDocument(std::string const &filename)
           {
             attribute_pos = filepos + i;
             attribute_size = 0;
-            ///std::cout << "attribute value starts at pos: " << attribute_pos << "(" << attribute_size << ")" << std::endl;
+            // if (attribute_name_tmp == "data")
+            //   std::cout << "attribute value starts at pos: " << attribute_pos << "(" << attribute_size << ")" << std::endl;
           }
 
           /**** NEW METHOD ****/
@@ -79,20 +80,31 @@ XmlDocument::XmlDocument(std::string const &filename)
             attribute_size = attribute_size + (closing_quote - (buffer.get() + i));
             attribute_value_tmp.append(buffer.get() + i, attribute_size < Node::s_maxsize ? attribute_size - attribute_value_tmp.size() : 0);
 
+            // if (attribute_name_tmp == "data")
+            // {
             // std::cout << " - attribute: '" << attribute_name_tmp << "'='" << attribute_value_tmp << "'" << std::endl;
             // std::cout << "filepos : " << filepos << std::endl;
-            //// std::cout << "i       : " << newbufferpos << std::endl;
+            // //std::cout << "i       : " << newbufferpos << std::endl;
             // std::cout << "att_pos : " << attribute_pos << std::endl;
             // std::cout << "att_size: " << attribute_size << std::endl;
             // std::cout << "attribute value ends at pos: " << (filepos + i + (closing_quote - (buffer.get() + i))) << " SIZE: " << attribute_size << std::endl;
+            // }
 
             Node::StringOrRef attributevalue =
               {
                 (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
                 (attribute_size < Node::s_maxsize) ? std::string() : filename,
                 (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
-                (attribute_size < Node::s_maxsize) ? -1 : attribute_size
+                attribute_size
               };
+
+            // if (attribute_name_tmp == "data")
+            // {
+            // std::cout << attributevalue.file << std::endl;
+            // std::cout << attributevalue.value << std::endl;
+            // std::cout << attributevalue.size << std::endl;
+            // std::cout << attributevalue.pos << std::endl;
+            // }
 
             d_currentnode->d_attributes[attribute_name_tmp] = std::move(attributevalue);
             attribute_value_tmp.clear();

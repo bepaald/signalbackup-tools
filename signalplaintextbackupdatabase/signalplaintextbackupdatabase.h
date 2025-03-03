@@ -143,6 +143,8 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
   {
     result = in;
 
+    // convert entities : '&[x][NN];'?
+
 #if __cpp_lib_erase_if >= 202002L
     unsigned int removed = std::erase_if(result, [](char c) { return (c < '0' || c > '9') && c != '+'; });
 #else

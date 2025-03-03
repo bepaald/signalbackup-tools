@@ -235,9 +235,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
 
                   // do something with data...
                   XmlDocument::Node::StringOrRef attachmentdata = part.getAttributeStringOrRef("data");
-                  if (attachmentdata.file.empty() && attachmentdata.value.empty()) [[unlikely]]
+                  if (attachmentdata.size > 0 && attachmentdata.file.empty() && attachmentdata.value.empty()) [[unlikely]]
                   {
                     Logger::warning("Got data attribute, but no value or reference");
+                    n.print();
                     continue;
                   }
                   std::string ct;

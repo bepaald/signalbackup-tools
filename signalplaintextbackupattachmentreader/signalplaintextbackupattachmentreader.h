@@ -69,7 +69,7 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachment(FrameWithAttachm
 inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned char **data, bool verbose)
 {
   // read the data if needed
-  if (d_base64data.empty() && !d_filename.empty())
+  if (d_size > 0 && d_base64data.empty() && !d_filename.empty())
   {
     std::ifstream file(std::filesystem::path(d_filename), std::ios_base::binary | std::ios_base::in);
     if (!file.is_open())
@@ -96,7 +96,7 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
     }
   }
 
-  if (d_base64data.empty())
+  if (d_size > 0 && d_base64data.empty()) // filename.empty(), but so is data, while size is > 0
   {
     Logger::error("SignalPlainTextBackupAttachmentReader has no base64 encoded data");
     return 1;
@@ -104,7 +104,7 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
 
   unsigned char *attdata;
   std::tie(attdata, d_truesize) = Base64::base64StringToBytes(d_base64data);
-  if (d_truesize == 0 || !attdata)
+  if (!attdata)
   {
     Logger::error("Failed to decode base64-encoded attachment from \"", d_filename, "\"");
     return 1;

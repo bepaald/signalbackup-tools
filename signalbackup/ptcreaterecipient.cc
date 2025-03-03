@@ -90,7 +90,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
                                                                          gm, std::string());
         if (cn.empty()) [[unlikely]]
         {
-          Logger::warning("Unexpectedly got empty contact name for group recipient ", makePrintable(gm));
+          Logger::warning("Unexpectedly got empty contact name for group recipient ", gm);//makePrintable(gm));
           cn = "(unknown)";
         }
 

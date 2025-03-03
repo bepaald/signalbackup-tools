@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -63,8 +63,7 @@ inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(T const &st
   std::unique_ptr<unsigned char[]> output(new unsigned char[binarylength]);
   if (EVP_DecodeBlock(output.get(), reinterpret_cast<unsigned const char *>(str.data()), str.size()) == -1)
   {
-    Logger::error("Failed to base64 decode data: ",
-                  bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(str.data()), str.size()));
+    Logger::error("Failed to base64 decode data (size: ", str.size(), "): ", str.data());
     return {nullptr, 0};
   }
   if (str.empty() || str.back() != '=')

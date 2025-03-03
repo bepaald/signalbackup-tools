@@ -204,7 +204,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     std::string body = pt_messages(i, "body");
     if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)
     {
-      Logger::warning("Not inserting message with empty body and no attachments.");
+      Logger::warning("Not inserting message with empty body and no attachments. (date: ", pt_messages.valueAsInt(i, "date", -1), ")");
       continue;
     }
 
@@ -453,7 +453,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     auto amit = attachment_messages.find(attachment_res.valueAsInt(j, "mid", -1));
     if (amit == attachment_messages.end()) [[unlikely]]
     {
-      Logger::warning("Found attachment that belongs to no message");
+      Logger::warning("Found attachment that belongs to no message (mid: ", attachment_res.valueAsInt(j, "mid", -1), ", size: ", size, ")");
       continue;
     }
     long long int new_message_id = amit->second.first;
@@ -495,6 +495,13 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     }
     else
       att_data_size = ptar.dataSize();
+
+    // not supported on signal android anyway
+    if (att_data_size == 0) [[unlikely]]
+    {
+      Logger::warning("Not inserting 0 byte attachment");
+      continue;
+    }
 
     // add entry to attachment table;
     std::any new_aid;
