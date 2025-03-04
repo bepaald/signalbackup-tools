@@ -204,7 +204,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     std::string body = pt_messages(i, "body");
     if (body.empty() && pt_messages.valueAsInt(i, "numattachments") <= 0)
     {
-      Logger::warning("Not inserting message with empty body and no attachments. (date: ", pt_messages.valueAsInt(i, "date", -1), ")");
+      Logger::warning("Not inserting message with empty body and no attachments. (date: ", pt_messages.valueAsInt(i, "date", -1), ", rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
       continue;
     }
 
@@ -279,7 +279,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
         if ((trid = ptCreateRecipient(ptdb, &contactmap, &warned_createcontacts, pt_messages_contact_name,
                                       pt_messages_address, isgroup)) == -1)
         {
-          Logger::warning("Failed to create thread-recipient for address ", makePrintable(pt_messages_address));
+          Logger::warning("Failed to create thread-recipient for address ", makePrintable(pt_messages_address), " (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
           continue;
         }
         if (d_verbose) [[unlikely]]
@@ -307,7 +307,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                        "_id", &new_thread_id))
         {
           Logger::message_end();
-          Logger::error("Failed to create thread for conversation. Skipping message.");
+          Logger::error("Failed to create thread for conversation. Skipping message. (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
           continue;
         }
         tid = std::any_cast<long long int>(new_thread_id);
@@ -321,7 +321,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       rid = it->second;
     if (rid == -1)
     {
-      Logger::error("Failed to find source_recipient_id in contactmap (", makePrintable(pt_messages_sourceaddress), "). Should be present at this point. Skipping message");
+      Logger::error("Failed to find source_recipient_id in contactmap (", makePrintable(pt_messages_sourceaddress), "). Should be present at this point. Skipping message (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
 
       Logger::error_indent("Extra info:");
       Logger::error_indent("Thread recipient: ", trid);
@@ -376,7 +376,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       case 5:
       case 6:
       default:
-        Logger::warning("Unsupported message type (", pt_messages.valueAsInt(i, "type", -1), "). Skipping...");
+        Logger::warning("Unsupported message type (", pt_messages.valueAsInt(i, "type", -1), "). Skipping... (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
         continue;
     }
 
@@ -391,7 +391,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       long long int originaldate = freedate;
       if (originaldate == -1)
       {
-        Logger::error("Failed to get message date. Skipping...");
+        Logger::error("Failed to get message date. Skipping... (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
         continue;
       }
 
@@ -400,7 +400,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
       if (freedate == -1)
       {
         if (d_verbose) [[unlikely]] Logger::message_end();
-        Logger::error("Getting free date for inserting message into mms. Skipping...");
+        Logger::error("Getting free date for inserting message into mms. Skipping... (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
         continue;
       }
     }
@@ -420,7 +420,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                     {"m_type", incoming ? 132 : 128}}, // dont know what this is, but these are the values...
                    (pt_messages.valueAsInt(i, "numattachments", -1) > 0 ? "_id" : ""), &newid)) [[unlikely]]
     {
-      Logger::warning("Failed to insert message");
+      Logger::warning("Failed to insert message (rowid: ", pt_messages.valueAsInt(i, "rowid"), ")");
       continue;
     }
 
