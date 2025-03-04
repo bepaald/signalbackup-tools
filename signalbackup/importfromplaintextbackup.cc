@@ -183,7 +183,7 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
                              "rowid, "
                              "date, type, read, body, contact_name, address, numattachments, COALESCE(sourceaddress, address) AS sourceaddress, ismms, skip "
                              "FROM smses" + datewhereclause + chatselectionclause +
-                             " WHERE skip = 0"
+                             (datewhereclause.empty() && chatselectionclause.empty() ? " WHERE skip = 0" : " AND skip = 0") +
                              " ORDER BY date", &pt_messages))
     return false;
 
@@ -432,8 +432,12 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
 
   Logger::message_overwrite("Importing messages into backup... ", pt_messages.rows(), "/", pt_messages.rows(), " done!", Logger::Control::ENDOVERWRITE);
 
+
   SqliteDB::QueryResults attachment_res;
-  if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct, cl, mid FROM attachments", &attachment_res))
+  if (!ptdb->d_database.exec("SELECT data, filename, pos, size, ct, cl, mid FROM attachments "
+                             "WHERE mid IN (SELECT rowid FROM smses" + datewhereclause + chatselectionclause +
+                             (datewhereclause.empty() && chatselectionclause.empty() ? " WHERE skip = 0" : " AND skip = 0") + ")",
+                             &attachment_res))
     return false;
 
   for (unsigned int j = 0; j < attachment_res.rows(); ++j)
