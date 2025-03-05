@@ -283,8 +283,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   bool warned_createcontacts = createmissingcontacts_valid; // no warning if explicitly requesting this...
 
   // find out which database is newer
-  long long int maxdate_desktop_db = dtdb->d_database.getSingleResultAs<long long int>("SELECT MAX(MAX(json_extract(json, '$.received_at_ms')),MAX(received_at)) FROM messages", 0);
+  long long int maxdate_desktop_db = dtdb->d_database.getSingleResultAs<long long int>("SELECT MAX(MAX(COALESCE(received_at_ms, json_extract(json, '$.received_at_ms'))),MAX(received_at)) FROM messages", 0);
   long long int maxdate_android_db = d_database.getSingleResultAs<long long int>("SELECT MAX(date_received) FROM " + d_mms_table, 0);
+
   if (d_database.containsTable("sms"))
     maxdate_android_db = d_database.getSingleResultAs<long long int>("SELECT MAX((SELECT MAX(date_received) FROM " + d_mms_table + "),(SELECT MAX(" + d_sms_date_received + ") FROM sms))", 0);
   bool desktop_is_newer = maxdate_desktop_db > maxdate_android_db;
@@ -449,8 +450,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       if (!insertRow("thread",
                      {{d_thread_recipient_id, recipientid_for_thread},
                       {"active", 1},
-                      {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")},
-                      {"pinned", results_all_conversations.getValueAs<long long int>(i, "is_pinned")}},
+                      {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")}},
                      "_id", &new_thread_id))
       {
         Logger::message_end();
@@ -479,10 +479,23 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     // we have the Android thread id (ttid) and the desktop data (results_all_conversations.value(i, "xxx")), update
     // Androids pinned and archived status if desktop is newer:
     if (desktop_is_newer)
-      if (!d_database.exec("UPDATE thread SET archived = ?, " + d_thread_pinned + " = ? WHERE _id = ?", {results_all_conversations.getValueAs<long long int>(i, "is_archived"),
-                                                                                                         results_all_conversations.getValueAs<long long int>(i, "is_pinned"),
-                                                                                                         ttid}))
+    {
+      bool res = d_database.exec("UPDATE thread SET archived = ? WHERE _id = ?", {results_all_conversations.getValueAs<long long int>(i, "is_archived"), ttid});
+      if (res)
+      {
+        if (results_all_conversations.valueAsInt(i, "is_pinned", 0) > 0) // pin in Android database
+          res &= d_database.exec("UPDATE thread SET " + d_thread_pinned + " = IFNULL((SELECT MAX(" + d_thread_pinned + ") FROM thread), 0) + 1 "
+                                 "WHERE _id = ? AND (" + d_thread_pinned + " IS NULL OR " + d_thread_pinned + " = 0)", ttid);
+        else // unpin in Android database
+        {
+          // to unpin something, set it to the default value. This was '0' before dbv266, 'NULL' after...
+          std::string pinned_default = d_database.getSingleResultAs<std::string>("SELECT dflt_value FROM pragma_table_info('thread') WHERE name = '" + d_thread_pinned + "'", std::string());
+          res &= d_database.exec("UPDATE thread SET " + d_thread_pinned + " = " + pinned_default + " WHERE _id = ?", ttid);
+        }
+      }
+      if (!res)
         Logger::warning("Failed to update thread properties (id: ", ttid, ")");
+    }
 
     // now lets get all messages for this conversation
     SqliteDB::QueryResults results_all_messages_from_conversation;
