@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -494,7 +494,8 @@ std::map<std::string, std::vector<std::vector<std::string>>> const SignalBackup:
                  std::vector<std::vector<std::string>>{{"recipient_id", "thread_recipient_id", "recipient_ids"},
                                                        {"meaningful_messages", "message_count"},
                                                        {"has_delivery_receipt", "delivery_receipt_count"},
-                                                       {"has_read_receipt", "read_receipt_count"}}),
+                                                       {"has_read_receipt", "read_receipt_count"},
+                                                       {"pinned_order", "pinned"}}),
 
   std::make_pair("recipient",
                  std::vector<std::vector<std::string>>{{"aci", "uuid"},

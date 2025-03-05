@@ -661,6 +661,16 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   {
     Logger::message("  No existing thread found in target database for this recipient, importing.");
 
+    // unpin thread from source database, to prevent uniqueness issues with target
+    if (source->d_database.tableContainsColumn("thread", source->d_thread_pinned) &&
+        d_database.tableContainsColumn("thread", d_thread_pinned))
+    {
+      // before dbv266, 'unpinned' meant the column was set to '0', after dbv266 it was 'NULL'. Make sure to use target's default here!
+      std::string target_pinned_default = d_database.getSingleResultAs<std::string>("SELECT dflt_value FROM pragma_table_info('thread') WHERE name = '" + d_thread_pinned + "'", std::string());
+      if (!source->d_database.exec("UPDATE thread SET " + source->d_thread_pinned + " = " + target_pinned_default))
+        Logger::warning("Failed to unpin threads in source database.");
+    }
+
     // check identities and recipient prefs for presence of values, they may be there (even
     // though no thread was found (for example via a group chat or deleted thread))
     // get identities from target, drop all rows from source that are already present
