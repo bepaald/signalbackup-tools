@@ -102,6 +102,7 @@ class SignalBackup
   std::string d_thread_message_count;
   std::string d_thread_delivery_receipts;
   std::string d_thread_read_receipts;
+  std::string d_thread_pinned;
   std::string d_sms_date_received;
   std::string d_sms_recipient_id;
   std::string d_sms_recipient_device_id;

@@ -479,9 +479,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     // we have the Android thread id (ttid) and the desktop data (results_all_conversations.value(i, "xxx")), update
     // Androids pinned and archived status if desktop is newer:
     if (desktop_is_newer)
-      if (!d_database.exec("UPDATE thread SET archived = ?, pinned = ? WHERE _id = ?", {results_all_conversations.getValueAs<long long int>(i, "is_archived"),
-                                                                                        results_all_conversations.getValueAs<long long int>(i, "is_pinned"),
-                                                                                        ttid}))
+      if (!d_database.exec("UPDATE thread SET archived = ?, " + d_thread_pinned + " = ? WHERE _id = ?", {results_all_conversations.getValueAs<long long int>(i, "is_archived"),
+                                                                                                         results_all_conversations.getValueAs<long long int>(i, "is_pinned"),
+                                                                                                         ttid}))
         Logger::warning("Failed to update thread properties (id: ", ttid, ")");
 
     // now lets get all messages for this conversation

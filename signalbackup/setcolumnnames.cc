@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -109,6 +109,13 @@ bool SignalBackup::setColumnNames()
   if (!d_database.tableContainsColumn("thread", "has_read_receipt") &&
       d_database.tableContainsColumn("thread", "read_receipt_count"))
     d_thread_read_receipts = "read_receipt_count";
+
+  // from dbv266
+  d_thread_pinned = "pinned_order";
+  // before 211
+  if (!d_database.tableContainsColumn("thread", "pinned_order") &&
+      d_database.tableContainsColumn("thread", "pinned"))
+    d_thread_pinned = "pinned";
 
 
 

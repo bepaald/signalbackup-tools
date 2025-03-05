@@ -51,7 +51,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
                    {{d_thread_recipient_id, thread_recipient_id},
                     {"active", 1},
                     {"archived", 0},
-                    {"pinned", 0}},
+                    //{d_thread_pinned, 0}
+                   },
                    "_id", &new_thread_id))
     {
       Logger::message_end();

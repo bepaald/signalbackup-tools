@@ -78,7 +78,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        "json_extract(thread.snippet_extras, '$.bodyRanges') AS 'snippet_ranges', "
                        "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', "
-                       + (d_database.tableContainsColumn("thread", "pinned") ? "pinned," : "") +
+                       + (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        //"IFNULL(recipient.mute_until, 0) AS mute_until, " // dont think this is ever NULL
                        //"recipient.blocked, "
@@ -87,7 +87,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
                        "WHERE thread._id IN (" + threadlist + ") AND " + d_thread_message_count + " > 0 ORDER BY "
-                       + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, pinned ASC, " : "") +
+                       "(pinned != 0) DESC, pinned ASC, " // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pining something, even the first thread, the value is set to 1 to start)
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
                        "date DESC", &results))
   {
@@ -135,7 +135,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', "
                          + d_mms_ranges + " AS 'snippet_ranges', "
                          + (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ")
-                         + (d_database.tableContainsColumn("thread", "pinned") ? "thread.pinned, " : "") +
+                         + (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
                          + (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
                          //"IFNULL(recipient.mute_until, 0) AS mute_until, "
                          //"recipient.blocked, "
@@ -154,7 +154,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
                          "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ?) SELECT * FROM partitioned_messages WHERE partition_idx = 1 "
                          "ORDER BY "
-                         + (d_database.tableContainsColumn("thread", "pinned") ? "(pinned != 0) DESC, pinned ASC, " : "") +
+                         "(pinned != 0) DESC, pinned ASC, " // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pining something, even the first thread, the value is set to 1 to start)
                          + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") + "date DESC",
                          {maxtimestamp,
                           Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
@@ -988,9 +988,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       archivedheader = true;
     }
 
-    bool pinned = false;
-    if (d_database.tableContainsColumn("thread", "pinned"))
-      pinned = (results.getValueAs<long long int>(i, "pinned") != 0);
+    bool pinned = (results.valueAsInt(i, "pinned", 0) != 0); // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pining something, even the first thread, the value is set to 1 to start)
     if (pinned && !pinnedheader)
     {
       outputfile << "      <div class=\"header\">Pinned</div>\n";
