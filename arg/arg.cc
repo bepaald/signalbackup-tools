@@ -159,6 +159,7 @@ Arg::Arg(int argc, char *argv[])
   d_generatedummy(std::string()),
   d_targetisdummy(false),
   d_htmlignoremediatypes(std::vector<std::string>()),
+  d_pagemenu(false),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1947,6 +1948,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--pagemenu")
+    {
+      d_pagemenu = true;
+      continue;
+    }
+    if (option == "--no-pagemenu")
+    {
+      d_pagemenu = false;
       continue;
     }
     if (option[0] != '-')

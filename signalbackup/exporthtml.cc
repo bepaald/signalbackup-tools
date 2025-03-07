@@ -34,7 +34,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
-                              bool compact, std::vector<std::string> const &ignoremediatypes)
+                              bool compact, bool pagemenu, std::vector<std::string> const &ignoremediatypes)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -224,6 +224,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   std::string periodsplitformat;
+  std::string readablesplitformat;
   if (!splitby.empty())
   {
     auto icasecompare = [](std::string const &a, std::string const &b)
@@ -232,13 +233,25 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     };
 
     if (icasecompare(splitby, "year"))
+    {
       periodsplitformat = "%Y";
+      readablesplitformat = "%Y";
+    }
     else if (icasecompare(splitby, "month"))
+    {
       periodsplitformat = "%Y%m";
+      readablesplitformat = "%b, %Y";
+    }
     else if (icasecompare(splitby, "week"))
+    {
       periodsplitformat = "%Y%W";
+      readablesplitformat = "week %W, %Y";
+    }
     else if (icasecompare(splitby, "day"))
+    {
       periodsplitformat = "%Y%j";
+      readablesplitformat = "%b %d, %Y";
+    }
     else
       Logger::warning("Ignoring invalid 'split-by'-value ('", splitby, "')");
   }
@@ -385,9 +398,23 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       totalpages = (messages.rows() / split) + (messages.rows() % split > 0 ? 1 : 0);
       max_msg_per_page = messages.rows() / totalpages + (messages.rows() % totalpages ? 1 : 0);
     }
+    std::vector<std::string> split_page_names;
     if (!periodsplitformat.empty())
-      totalpages = d_database.getSingleResultAs<long long int>("SELECT COUNT(DISTINCT strftime('" + periodsplitformat +  "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')) "
-                                                               "FROM message WHERE thread_id = ?" + datewhereclause, t, 1);
+    {
+      SqliteDB::QueryResults pagenames;
+      if (d_database.exec("SELECT "
+                          "strftime('" + periodsplitformat + "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime') AS splitdate, date_received / 1000 AS date_secs "
+                          "FROM " + d_mms_table + " WHERE thread_id = ? " + datewhereclause + " GROUP BY splitdate", t, &pagenames))
+      {
+        totalpages = pagenames.rows();
+        for (unsigned int p = 0; p < pagenames.rows(); ++p)
+          split_page_names.emplace_back(bepaald::toDateString(pagenames.valueAsInt(p, "date_secs", 0), readablesplitformat));
+      }
+    }
+    else if (totalpages > 1)
+      for (int p = 0; p < totalpages; ++p)
+        split_page_names.emplace_back("Page " + bepaald::toString(p + 1));
+
 
     // std::cout << "Split: " << split << std::endl;
     // std::cout << "N MSG: " << messages.rows() << std::endl;
@@ -423,7 +450,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
                      is_releasechannel, all_recipients_ids, &recipient_info, &written_avatars, overwrite,
-                     append, lighttheme, themeswitching, searchpage, addexportdetails);
+                     append, lighttheme, themeswitching, searchpage, addexportdetails, pagemenu && totalpages > 1);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
              messages(messagecount, "periodsplit") == previous_period_split_string)
       {
@@ -732,95 +759,128 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             // std::cout << "SPLITTING! (rangeend(" << daterangeidx << "): " << dateranges[daterangeidx].second << ")" << std::endl;
             // std::cout << "         ! (rangeend(" << daterangeidx << "): " << dateranges[daterangeidx + 1].first << ")" << std::endl;
             // std::cout << "         ! " << messages.getValueAs<long long int>(messagecount, "date_received") << std::endl;
-            htmloutput << "        </div>" << std::endl;
-            htmloutput << "        <div class=\"conversation-box\">" << std::endl;
-            htmloutput << std::endl;
+            htmloutput <<
+              "        </div>\n"
+              "        <div class=\"conversation-box\">\n"
+              "\n";
           }
         }
       }
 
-      htmloutput << "        </div>" << '\n'; // closes conversation-box
-      htmloutput << "        <a id=\"pagebottom\"></a>" << '\n';
-      htmloutput << "      </div>" << '\n'; // closes conversation-wrapper
-      htmloutput << '\n';
+      htmloutput <<
+        "        </div>\n"                      // closes conversation-box
+        "        <a id=\"pagebottom\"></a>\n"
+        "      </div>\n"                        // closes conversation-wrapper
+        "\n";
 
       if (totalpages > 1)
       {
         std::string sanitized_filename(sanitized_base_filename);
         HTMLescapeUrl(&sanitized_filename);
-        htmloutput << "      <div class=\"conversation-link conversation-link-left\">" << '\n';
-        htmloutput << "        <div title=\"First page\">" << '\n';
-        htmloutput << "          <a href=\"" << (compact ? "0" : sanitized_filename) << ".html" << "\">" << '\n';
-        htmloutput << "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << '\n';
-        htmloutput << "          </a>" << '\n';
-        htmloutput << "        </div>" << '\n';
-        htmloutput << "        <div title=\"Previous page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pagenumber - 1) : (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "")) << ".html" << "\">" << '\n';
-        htmloutput << "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>" << '\n';
-        htmloutput << "          </a>" << '\n';
-        htmloutput << "        </div>" << '\n';
-        htmloutput << "      </div>" << '\n';
-        htmloutput << "      <div class=\"conversation-link conversation-link-right\">" << '\n';
-        htmloutput << "        <div title=\"Next page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << (compact ? "" : "_") << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">" << '\n';
-        htmloutput << "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << '\n';
-        htmloutput << "          </a>" << '\n';
-        htmloutput << "        </div>" << '\n';
-        htmloutput << "        <div title=\"Last page\">" << '\n';
-        htmloutput << "          <a href=\"" << sanitized_filename << (compact ? "" : "_") << bepaald::toString(totalpages - 1) << ".html" << "\">" << '\n';
-        htmloutput << "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>" << '\n';
-        htmloutput << "          </a>" << '\n';
-        htmloutput << "        </div>" << '\n';
-        htmloutput << "      </div>" << '\n';
-        htmloutput << '\n';
+        htmloutput <<
+          "      <div class=\"conversation-link conversation-link-left\">\n"
+          "        <div title=\"First page\">\n"
+          "          <a href=\"" << (compact ? "0" : sanitized_filename) << ".html" << "\">\n"
+          "            <div class=\"menu-icon nav-max" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>\n"
+          "          </a>\n"
+          "        </div>\n"
+          "        <div title=\"Previous page\">\n"
+          "          <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pagenumber - 1) : (pagenumber - 1 > 0 ? ("_" + bepaald::toString(pagenumber - 1)) : "")) << ".html" << "\">\n"
+          "            <div class=\"menu-icon nav-one" << (pagenumber > 0 ? "" : " nav-disabled") << "\"></div>\n"
+          "          </a>\n"
+          "        </div>\n"
+          "      </div>\n"
+          "      <div class=\"conversation-link conversation-link-right\">\n"
+          "        <div title=\"Next page\">\n"
+          "          <a href=\"" << sanitized_filename << (compact ? "" : "_") << (pagenumber + 1 <= totalpages - 1 ?  bepaald::toString(pagenumber + 1) : bepaald::toString(totalpages - 1)) << ".html" << "\">\n"
+          "            <div class=\"menu-icon nav-one nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>\n"
+          "          </a>\n"
+          "        </div>\n"
+          "        <div title=\"Last page\">\n"
+          "          <a href=\"" << sanitized_filename << (compact ? "" : "_") << bepaald::toString(totalpages - 1) << ".html" << "\">\n"
+          "            <div class=\"menu-icon nav-max nav-fwd" << (pagenumber < totalpages - 1 ? "" : " nav-disabled") << "\"></div>\n"
+          "          </a>\n"
+          "        </div>\n"
+          "      </div>\n"
+          "\n";
       }
-      htmloutput << "     </div>" << '\n'; // closes controls-wrapper
-      htmloutput << '\n';
-      htmloutput << "       <div id=\"bottom\">" << '\n';
-      htmloutput << "         <a href=\"#pagebottom\" title=\"Jump to bottom\">" << '\n';
-      htmloutput << "           <div class=\"menu-item-bottom\">" << '\n';
-      htmloutput << "             <span class=\"menu-icon nav-one nav-bottom\">" << '\n';
-      htmloutput << "             </span>" << '\n';
-      htmloutput << "           </div>" << '\n';
-      htmloutput << "         </a>" << '\n';
-      htmloutput << "      </div>" << '\n';
-      htmloutput << "      <div id=\"menu\">" << '\n';
-      htmloutput << "        <a href=\"../index.html\">" << '\n';
-      htmloutput << "          <div class=\"menu-item\">" << '\n';
-      htmloutput << "            <div class=\"menu-icon nav-up\">" << '\n';
-      htmloutput << "            </div>" << '\n';
-      htmloutput << "            <div>" << '\n';
-      htmloutput << "              index" << '\n';
-      htmloutput << "            </div>" << '\n';
-      htmloutput << "          </div>" << '\n';
-      htmloutput << "        </a>" << '\n';
-      htmloutput << "      </div>" << '\n';
-      htmloutput << '\n';
-      if (themeswitching || searchpage)
+      htmloutput <<
+        "     </div>\n" // closes controls-wrapper
+        "\n"
+        "       <div id=\"bottom\">\n"
+        "         <a href=\"#pagebottom\" title=\"Jump to bottom\">\n"
+        "           <div class=\"menu-item-bottom\">\n"
+        "             <span class=\"menu-icon nav-one nav-bottom\">\n"
+        "             </span>\n"
+        "           </div>\n"
+        "         </a>\n"
+        "      </div>\n"
+        "      <div id=\"menu\">\n"
+        "        <a href=\"../index.html\">\n"
+        "          <div class=\"menu-item\">\n"
+        "            <div class=\"menu-icon nav-up\">\n"
+        "            </div>\n"
+        "            <div>\n"
+        "              index\n"
+        "            </div>\n"
+        "          </div>\n"
+        "        </a>\n"
+        "      </div>\n"
+        "\n";
+      if (themeswitching || searchpage || (pagemenu && totalpages > 1))
       {
-        htmloutput << "      <div id=\"theme\">" << '\n';
+        htmloutput << "      <div id=\"theme\">\n";
+        if (pagemenu && totalpages > 1)
+        {
+          std::string sanitized_filename(sanitized_base_filename);
+          HTMLescapeUrl(&sanitized_filename);
+
+          htmloutput <<
+            "        <div class=\"menu-item\">\n"
+            "          <div class=\"expandable-menu-item\">\n"
+            "            <div class=\"menu-header\">\n"
+            "              <span id=\"jump-to-page-icon\"></span>\n"
+            "            </div>\n"
+            "            <div class=\"expandedmenu\">\n";
+          for (int pn = 0; pn < static_cast<int>(split_page_names.size()); ++pn)
+          {
+            htmloutput <<
+              "              <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pn) : (pn > 0 ? "_" + bepaald::toString(pn) : "")) << ".html\">\n"
+              "                <div class=\"menu-item" << (pn == pagenumber ? " currentpage" : "") <<"\">\n"
+              "                  <div>" << split_page_names[pn] << "</div>\n"
+              "                </div>\n"
+              "              </a>\n";
+          }
+          htmloutput <<
+            "            </div>\n"
+            "          </div>\n"
+            "        </div>\n";
+        }
         if (searchpage)
         {
-          htmloutput << "        <div class=\"menu-item\">" << '\n';
-          htmloutput << "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\" title=\"Search\">" << '\n';
-          htmloutput << "            <span class=\"menu-icon searchbutton\">" << '\n';
-          htmloutput << "            </span>" << '\n';
-          htmloutput << "          </a>" << '\n';
-          htmloutput << "        </div>" << '\n';
+          htmloutput <<
+            "        <div class=\"menu-item\">\n"
+            "          <a href=\"../searchpage.html?recipient=" << thread_recipient_id << "\" title=\"Search\">\n"
+            "            <span class=\"menu-icon searchbutton\">\n"
+            "            </span>\n"
+            "          </a>\n"
+            "        </div>\n";
         }
         if (themeswitching)
         {
-          htmloutput << "        <div class=\"menu-item\">" << '\n';
-          htmloutput << "          <label for=\"theme-switch\">" << '\n';
-          htmloutput << "            <span class=\"menu-icon themebutton\">" << '\n';
-          htmloutput << "            </span>" << '\n';
-          htmloutput << "          </label>" << '\n';
-          htmloutput << "        </div>" << '\n';
+          htmloutput <<
+            "        <div class=\"menu-item\">\n"
+            "          <label for=\"theme-switch\">\n"
+            "            <span class=\"menu-icon themebutton\">\n"
+            "            </span>\n"
+            "          </label>\n"
+            "        </div>\n";
         }
-        htmloutput << "      </div>" << '\n';
-        htmloutput << '\n';
+        htmloutput <<
+          "      </div>\n"
+          "\n";
       }
-      htmloutput << "  </div>" << '\n'; // closes div id=page (I think)
+      htmloutput << "  </div>\n"; // closes div id=page (I think)
 
       if (addexportdetails)
         htmloutput << '\n' << exportdetails_html << '\n';
@@ -848,8 +908,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
 )";
       }
-      htmloutput << "  </body>" << '\n';
-      htmloutput << "</html>" << '\n';
+      htmloutput << "  </body>\n";
+      htmloutput << "</html>\n";
 
       ++pagenumber;
       if (messagecount >= messages.rows())

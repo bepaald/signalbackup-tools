@@ -45,7 +45,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
                                   std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
                                   bool overwrite, bool append, bool light, bool themeswitch,
-                                  bool searchpage, bool exportdetails) const
+                                  bool searchpage, bool exportdetails, bool pagemenu) const
 {
   std::vector<long long int> groupmembers;
   if (isgroup)
@@ -1236,6 +1236,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         text-decoration: none;
       }
 
+      .menu-item .nav-up
+      {
+        margin-right: 5px;
+      }
+
       .menu-item {
         display: flex;
         flex-direction: row;
@@ -1245,7 +1250,77 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding: 5px;
       }
 
-      #thread-title {
+)";
+  if (pagemenu)
+    file <<
+      "      .expandedmenu a:link,\n"
+      "      .expandedmenu a:visited,\n"
+      "      .expandedmenu a:hover,\n"
+      "      .expandedmenu a:active {\n"
+      "        color: #FFFFFF;\n"
+      "        text-decoration: none;\n"
+      "      }\n"
+      "\n"
+      "      .expandedmenu .menu-item {\n"
+      "        padding-left: 0px;\n"
+      "        padding-bottom: 0px;\n"
+      "      }\n"
+      "\n"
+      "      .expandedmenu .currentpage {\n"
+      "        font-weight: bold;\n"
+      "      }\n"
+      "\n"
+      "      .expandable-menu-item {\n"
+      "        display: flex;\n"
+      "        flex-direction: column;\n"
+      "        margin-right: 0px;\n"
+      "        cursor: pointer;\n"
+      "        align-items: end;\n"
+      "      }\n"
+      "\n"
+      "      .expandedmenu {\n"
+      "        display: flex;\n"
+      "        flex-direction: column;\n"
+      "        align-items: flex-start;\n"
+      "        width: 0px;\n"
+      "        max-height: 0px;\n"
+      "        overflow: hidden;\n"
+      "        padding: 0px;\n"
+      "        opacity: 0%;\n"
+      "        border: none;\n"
+      "        background: var(--body-bgc);\n"
+      "        transition: max-height .25s ease-out, padding .25s ease-out, opacity .25s ease-out, width 0s 0.25s, overflow 0s 0.25s;\n"
+      "        position: absolute;\n"
+      "      }\n"
+      "\n"
+      "     .expandable-menu-item:hover .expandedmenu {\n"
+      "       width: max-content;\n"
+      "       max-height: 90vh;\n"
+      "       top: 35px;\n"
+      "       padding-top: 5px;\n"
+      "       opacity: 100%;\n"
+      "       transition: max-height .25s ease-out, padding .25s ease-out, opacity .15s ease-out;\n"
+      "       align-items: end;\n"
+      "       overflow-y: scroll;\n"
+      "     }\n"
+      "\n"
+      "     .menu-header .label-text {\n"
+      "       display: inline-block;\n"
+      "       height: 100%;\n"
+      "       vertical-align: middle;\n"
+      "     }\n"
+      "\n"
+      "     #jump-to-page-icon {\n"
+      "       display: inline-block;\n"
+      "       width:30px;\n"
+      "       height: 30px;\n"
+      "       margin-right: 5px;\n"
+      "       vertical-align: middle;\n"
+      "       background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"white\" stroke=\"none\" d=\"M12 8c-.41 0-.75.34-.75.75s.34.75.75.75h8c.41 0 .75-.34.75-.75S20.41 8 20 8zm0 10.5c-.41 0-.75.34-.75.75s.34.75.75.75h5c.41 0 .75-.34.75-.75s-.34-.75-.75-.75zm-.75-2.75c0-.41.34-.75.75-.75h8c.41 0 .75.34.75.75s-.34.75-.75.75h-8c-.41 0-.75-.34-.75-.75zM12 11.5c-.41 0-.75.34-.75.75s.34.75.75.75h8c.41 0 .75-.34.75-.75s-.34-.75-.75-.75z\" /><path fill=\"none\" stroke=\"white\" stroke-width=\"1.5\" d=\"M8.75 7.75v12.5a3 3 0 0 0 3 3h8.5a3 3 0 0 0 3-3V7.75a3 3 0 0 0-3-3h-8.5a3 3 0 0 0-3 3z M15.078 2.75a3 3 0 0 0-2.828-2h-8.5a3 3 0 0 0-3 3h0v12.5a3 3 0 0 0 3 3h1.191 M19.078 4.75a3 3 0 0 0-2.828-2h-8.5a3 3 0 0 0-3 3h0v12.5a3 3 0 0 0 3 3h1.191\"/></svg>');\n"
+      "       filter: var(--icon-f);\n"
+      "     }\n"
+      "\n";
+  file << R"(      #thread-title {
         display: flex;
         align-items: center;
         width: auto;
@@ -1269,10 +1344,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .threadtitle-info {
         font-size: large;
-      }
-
-      .menu-item > div {
-        margin-right: 5px;
       }
 
       .menu-icon {

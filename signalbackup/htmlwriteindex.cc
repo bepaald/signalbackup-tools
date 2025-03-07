@@ -87,7 +87,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "FROM thread "
                        "LEFT JOIN recipient ON recipient._id IS thread." + d_thread_recipient_id + " "
                        "WHERE thread._id IN (" + threadlist + ") AND " + d_thread_message_count + " > 0 ORDER BY "
-                       "(pinned != 0) DESC, pinned ASC, " // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pining something, even the first thread, the value is set to 1 to start)
+                       "(pinned != 0) DESC, pinned ASC, " // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pinning something, even the first thread, the value is set to 1 to start)
                        + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") +
                        "date DESC", &results))
   {
@@ -154,7 +154,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ? "
                          "AND (" + d_mms_table + "." + d_mms_type + " & ?) IS NOT ?) SELECT * FROM partitioned_messages WHERE partition_idx = 1 "
                          "ORDER BY "
-                         "(pinned != 0) DESC, pinned ASC, " // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pining something, even the first thread, the value is set to 1 to start)
+                         "(pinned != 0) DESC, pinned ASC, " // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pinning something, even the first thread, the value is set to 1 to start)
                          + (d_database.tableContainsColumn("thread", "archived") ? "archived ASC, " : "") + "date DESC",
                          {maxtimestamp,
                           Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
@@ -988,7 +988,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       archivedheader = true;
     }
 
-    bool pinned = (results.valueAsInt(i, "pinned", 0) != 0); // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pining something, even the first thread, the value is set to 1 to start)
+    bool pinned = (results.valueAsInt(i, "pinned", 0) != 0); // before 266 pinned == 0 meant 'not pinned', after pinned = NULL is not pinned. But in the code, pinned = 0 is still not possible (when pinning something, even the first thread, the value is set to 1 to start)
     if (pinned && !pinnedheader)
     {
       outputfile << "      <div class=\"header\">Pinned</div>\n";

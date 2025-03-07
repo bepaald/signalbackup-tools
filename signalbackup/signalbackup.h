@@ -298,7 +298,8 @@ class SignalBackup
                   bool stickerpacks, bool migrate, bool overwrite, bool append, bool theme,
                   bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                   bool settings, bool receipts, bool use_original_filenames, bool linkify,
-                  bool chatfolders, bool compact, std::vector<std::string> const &ignoremediatypes);
+                  bool chatfolders, bool compact, bool pagemenu,
+                  std::vector<std::string> const &ignoremediatypes);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
                  std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
   bool findRecipient(long long int id) const;
@@ -445,7 +446,7 @@ class SignalBackup
                       std::string const &threaddir, bool isgroup, bool isnotetoself, bool isreleasechannel,
                       std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo,
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append,
-                      bool light, bool themeswitching, bool searchpage, bool exportdetails) const;
+                      bool light, bool themeswitching, bool searchpage, bool exportdetails, bool pagemenu) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool use_original_filenames,
                               bool is_image_preview, bool overwrite, bool append, std::vector<std::string> const &ignoremediatypes) const;
