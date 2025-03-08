@@ -73,9 +73,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
   std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   //file << "<!-- Generated on " << std::put_time(std::localtime(&now), "%F %T") // %F and %T do not work on minGW
-  file << "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S")
-       << " by signalbackup-tools (" << VERSIONDATE << "). "
-       << "Input database version: " << d_databaseversion << ". -->" << std::endl;
+  file <<
+    "<!-- Generated on " << std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S") <<
+    " by signalbackup-tools (" << VERSIONDATE << "). "
+    "Input database version: " << d_databaseversion << ". -->\n";
 
   std::string title = (isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name);
   HTMLescapeString(&title);
@@ -90,74 +91,76 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     <title>)" << title << R"(</title>
     <style>)" << std::endl;
 
-  file << "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {\n";
-  file << "        /* " << (light ? "light" : "dark") << " */\n";
-  file << "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << '\n';
-  file << "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
-  file << "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << '\n';
-  file << "        --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
-  file << "        --spoilerout-b: " << (light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
-  file << "        --spoilerin-b: " << (light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
-  file << "        --deletedmsg-border: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --deletedmsg-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --nobgbubble-footer-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --nobgbubble-checkmarks-f: " << (light ? "brightness(0);" : "none;") << '\n';
-  file << "        --mentionin-bc: " << (light ? "#C6C6C6;" : "#5E5E5E;") << '\n';
-  file << "        --msgreaction-bc: " << (light ? "#E7EBF3;" : "#303133;") << '\n';
-  file << "        --msgreaction-border: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
-  file << "        --msgreaction-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;": "#505050;") << '\n';
-  file << "        --msgreactioninfo-border: " << (light ? "#1B1C1F;": "#FBFCFF;") << '\n';
-  file << "        --reactioncount-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --incominglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << '\n';
-  file << "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << '\n';
-  file << "        --icon-f: " << (light ? "brightness(0);" : "none;") << '\n';
-  file << "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  file << "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << '\n';
-  file << "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << '\n';
-  file << "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << '\n';
-  file << "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << '\n';
-  file << "      }\n";
-  file << '\n';
+  file <<
+    "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {\n"
+    "        /* " << (light ? "light" : "dark") << " */\n"
+    "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << "\n"
+    "        --body-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << "\n"
+    "        --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << "\n"
+    "        --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << "\n"
+    "        --spoilerout-b: " << (light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << "\n"
+    "        --spoilerin-b: " << (light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << "\n"
+    "        --deletedmsg-border: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --deletedmsg-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --nobgbubble-footer-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --nobgbubble-checkmarks-f: " << (light ? "brightness(0);" : "none;") << "\n"
+    "        --mentionin-bc: " << (light ? "#C6C6C6;" : "#5E5E5E;") << "\n"
+    "        --msgreaction-bc: " << (light ? "#E7EBF3;" : "#303133;") << "\n"
+    "        --msgreaction-border: " << (light ? "#FBFCFF;" : "#1B1C1F;") << "\n"
+    "        --msgreaction-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --msgreactioninfo-bc: " << (light ? "#D2D6DE;": "#505050;") << "\n"
+    "        --msgreactioninfo-border: " << (light ? "#1B1C1F;": "#FBFCFF;") << "\n"
+    "        --reactioncount-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --incominglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << "\n"
+    "        --outgoinglinkpreview-bc: " << (light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << "\n"
+    "        --icon-f: " << (light ? "brightness(0);" : "none;") << "\n"
+    "        --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    "        --media-status-checkmarks-f: " << (light ? "brightness(.75);" : "brightness(.25);") << "\n"
+    "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << "\n"
+    "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << "\n"
+    "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << "\n"
+    "      }\n"
+    "\n";
 
   if (themeswitch)
   {
-    file << "      :root[data-theme=\"" << (!light ? "light" : "dark") << "\"] {\n";
-    file << "        /* " << (!light ? "light" : "dark") << " */\n";
-    file << "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << '\n';
-    file << "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
-    //file << "        --conversationbox-bc: " << (!light ? (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light.empty() ? "#FBFCFF;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light + ";") : (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark.empty() ? "#1B1C1F;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark + ";")) << '\n';
-    file << "        --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << '\n';
-    file << "        --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
-    file << "        --spoilerout-b: " << (!light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
-    file << "        --spoilerin-b: " << (!light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << '\n';
-    file << "        --deletedmsg-border: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --deletedmsg-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --nobgbubble-footer-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --nobgbubble-checkmarks-f: " << (!light ? "brightness(0);" : "none;") << '\n';
-    file << "        --mentionin-bc: " << (!light ? "#C6C6C6;" : "#5E5E5E;") << '\n';
-    file << "        --msgreaction-bc: " << (!light ? "#E7EBF3;" : "#303133;") << '\n';
-    file << "        --msgreaction-border: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
-    file << "        --msgreaction-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;": "#505050;") << '\n';
-    file << "        --msgreactioninfo-border: " << (!light ? "#1B1C1F;": "#FBFCFF;") << '\n';
-    file << "        --reactioncount-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --incominglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << '\n';
-    file << "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << '\n';
-    file << "        --icon-f: " << (!light ? "brightness(0);" : "none;") << '\n';
-    file << "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    file << "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << '\n';
-    file << "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << '\n';
-    file << "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << '\n';
-    file << "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << '\n';
-    file << "      }";
-    file << '\n';
+    file <<
+      "      :root[data-theme=\"" << (!light ? "light" : "dark") << "\"] {\n"
+      "        /* " << (!light ? "light" : "dark") << " */\n"
+      "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << "\n"
+      "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << "\n"
+      // "        --conversationbox-bc: " << (!light ? (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light.empty() ? "#FBFCFF;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_light + ";") : (getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark.empty() ? "#1B1C1F;" : "#" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).wall_dark + ";")) << "\n"
+      "        --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << "\n"
+      "        --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << "\n"
+      "        --spoilerout-b: " << (!light ? "rgba(255, 255, 255, 0.5);" : "rgba(255, 255, 255, 0.5);") << "\n"
+      "        --spoilerin-b: " << (!light ? "rgba(0, 0, 0, 0.5);" : "rgba(255, 255, 255, 0.5);") << "\n"
+      "        --deletedmsg-border: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --deletedmsg-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --nobgbubble-footer-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --nobgbubble-checkmarks-f: " << (!light ? "brightness(0);" : "none;") << "\n"
+      "        --mentionin-bc: " << (!light ? "#C6C6C6;" : "#5E5E5E;") << "\n"
+      "        --msgreaction-bc: " << (!light ? "#E7EBF3;" : "#303133;") << "\n"
+      "        --msgreaction-border: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << "\n"
+      "        --msgreaction-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --msgreactioninfo-bc: " << (!light ? "#D2D6DE;": "#505050;") << "\n"
+      "        --msgreactioninfo-border: " << (!light ? "#1B1C1F;": "#FBFCFF;") << "\n"
+      "        --reactioncount-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --incominglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .5);" : "rgba(255, 255, 255, .16);") << "\n"
+      "        --outgoinglinkpreview-bc: " << (!light ? "rgba(255, 255, 255, .485);" : "rgba(255, 255, 255, .485);") << "\n"
+      "        --icon-f: " << (!light ? "brightness(0);" : "none;") << "\n"
+      "        --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      "        --media-status-checkmarks-f: " << (!light ? "brightness(.75);" : "brightness(.25);") << "\n"
+      "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << "\n"
+      "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << "\n"
+      "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << "\n"
+      "      }"
+      "\n";
   }
 
   file << R"(      body {
@@ -181,30 +184,30 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
   if (exportdetails)
   {
-    file
-      << '\n' << '\n'
-      << "      .export-details {\n"
-      << "        display: none;\n"
-      << "        grid-template-columns: repeat(2 , 1fr);\n"
-      << "        color: var(--body-c);\n"
-      << "        margin-left: auto;\n"
-      << "        margin-right: auto;\n"
-      << "        margin-bottom: 10px;\n"
-      << "        margin-top: 10px;\n"
-      << "        grid-gap: 0px 15px;\n"
-      << "        width: fit-content;\n"
-      << "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
-      << "        break-inside: avoid;\n"
-      << "      }\n"
-      << "      .export-details-fullwidth {\n"
-      << "        text-align: center;\n"
-      << "        font-weight: bold;\n"
-      << "        grid-column: 1 / 3;\n"
-      << "      }\n"
-      << "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {\n"
-      << "        text-align: right;\n"
-      << "        font-style: italic;\n"
-      << "      }\n";
+    file <<
+      "\n\n"
+      "      .export-details {\n"
+      "        display: none;\n"
+      "        grid-template-columns: repeat(2 , 1fr);\n"
+      "        color: var(--body-c);\n"
+      "        margin-left: auto;\n"
+      "        margin-right: auto;\n"
+      "        margin-bottom: 10px;\n"
+      "        margin-top: 10px;\n"
+      "        grid-gap: 0px 15px;\n"
+      "        width: fit-content;\n"
+      "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
+      "        break-inside: avoid;\n"
+      "      }\n"
+      "      .export-details-fullwidth {\n"
+      "        text-align: center;\n"
+      "        font-weight: bold;\n"
+      "        grid-column: 1 / 3;\n"
+      "      }\n"
+      "      .export-details div:nth-child(odd of :not(.export-details-fullwidth)) {\n"
+      "        text-align: right;\n"
+      "        font-style: italic;\n"
+      "      }\n";
   }
 
   file << R"(
@@ -917,10 +920,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-receipt-info {)";
-  file << '\n'
-       <<"        width: " << (isgroup ? "270" : "210") << "px;"
-       << '\n'
-       << "        right: calc(((" << (isgroup ? "270" : "210") << "px / 2) * -1) + 15px);";
+
+  file <<
+    "\n"
+    "        width: " << (isgroup ? "270" : "210") << "px;"
+    "\n"
+    "        right: calc(((" << (isgroup ? "270" : "210") << "px / 2) * -1) + 15px);";
+
   file << R"(
         font-size: small;
         bottom: 33px;
@@ -1275,7 +1281,14 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        flex-direction: column;\n"
       "        margin-right: 0px;\n"
       "        cursor: pointer;\n"
-      "        align-items: end;\n"
+      "        align-items: center;\n"
+      "      }\n"
+      "\n"
+      "      .expandedmenu-container {\n"
+      "        background-color: var(--conversationbox-bc);\n"
+      "        border-radius: 10px;\n"
+      "        padding: 10px;\n"
+      "        margin-top: 7px;\n"
       "      }\n"
       "\n"
       "      .expandedmenu {\n"
@@ -1285,7 +1298,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        width: 0px;\n"
       "        max-height: 0px;\n"
       "        overflow: hidden;\n"
-      "        padding: 0px;\n"
       "        opacity: 0%;\n"
       "        border: none;\n"
       "        background: var(--body-bgc);\n"
@@ -1297,7 +1309,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "       width: max-content;\n"
       "       max-height: 90vh;\n"
       "       top: 35px;\n"
-      "       padding-top: 5px;\n"
       "       opacity: 100%;\n"
       "       transition: max-height .25s ease-out, padding .25s ease-out, opacity .15s ease-out;\n"
       "       align-items: end;\n"
@@ -1316,7 +1327,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "       height: 30px;\n"
       "       margin-right: 5px;\n"
       "       vertical-align: middle;\n"
-      "       background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><path fill=\"white\" stroke=\"none\" d=\"M12 8c-.41 0-.75.34-.75.75s.34.75.75.75h8c.41 0 .75-.34.75-.75S20.41 8 20 8zm0 10.5c-.41 0-.75.34-.75.75s.34.75.75.75h5c.41 0 .75-.34.75-.75s-.34-.75-.75-.75zm-.75-2.75c0-.41.34-.75.75-.75h8c.41 0 .75.34.75.75s-.34.75-.75.75h-8c-.41 0-.75-.34-.75-.75zM12 11.5c-.41 0-.75.34-.75.75s.34.75.75.75h8c.41 0 .75-.34.75-.75s-.34-.75-.75-.75z\" /><path fill=\"none\" stroke=\"white\" stroke-width=\"1.5\" d=\"M8.75 7.75v12.5a3 3 0 0 0 3 3h8.5a3 3 0 0 0 3-3V7.75a3 3 0 0 0-3-3h-8.5a3 3 0 0 0-3 3z M15.078 2.75a3 3 0 0 0-2.828-2h-8.5a3 3 0 0 0-3 3h0v12.5a3 3 0 0 0 3 3h1.191 M19.078 4.75a3 3 0 0 0-2.828-2h-8.5a3 3 0 0 0-3 3h0v12.5a3 3 0 0 0 3 3h1.191\"/></svg>');\n"
+      "       background: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"white\" stroke-width=\"1.5\" stroke-linecap=\"round\"><defs><path id=\"p\" d=\"M15.078 2.75a3 3 0 0 0-2.828-2h-8.5a3 3 0 0 0-3 3h0v12.5a3 3 0 0 0 3 3h1.191\"/><path id=\"l\" d=\"M12,8.75 h8\"/></defs><path d=\"M8.75 7.75v12.5a3 3 0 0 0 3 3h8.5a3 3 0 0 0 3-3V7.75a3 3 0 0 0-3-3h-8.5a3 3 0 0 0-3 3z\"/><path d=\"M12,19.25h5\"/><use href=\"%23p\"/><use href=\"%23p\" x=\"4\" y=\"2\"/><use href=\"%23l\"/><use href=\"%23l\" y=\"3.5\"/><use href=\"%23l\" y=\"7\"/></svg>');\n"
       "       filter: var(--icon-f);\n"
       "     }\n"
       "\n";
@@ -1382,7 +1393,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << R"(
     .official {
       display: inline-block;
-      background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="3 3 18 18"><path d="M10.662 3.455a1.82 1.82 0 0 1 2.676 0l.37.402a1.82 1.82 0 0 0 1.697.551l.535-.108a1.82 1.82 0 0 1 2.165 1.573l.063.542a1.82 1.82 0 0 0 1.049 1.444l.496.227a1.82 1.82 0 0 1 .827 2.545l-.268.476a1.82 1.82 0 0 0 0 1.785l.268.476a1.82 1.82 0 0 1-.827 2.545l-.496.227a1.82 1.82 0 0 0-1.049 1.444l-.063.542A1.82 1.82 0 0 1 15.94 19.7l-.535-.108a1.82 1.82 0 0 0-1.697.551l-.37.402a1.82 1.82 0 0 1-2.676 0l-.37-.402a1.82 1.82 0 0 0-1.697-.551l-.535.108a1.82 1.82 0 0 1-2.165-1.573l-.063-.542a1.82 1.82 0 0 0-1.049-1.444l-.496-.227a1.82 1.82 0 0 1-.827-2.545l.268-.476a1.82 1.82 0 0 0 0-1.785l-.268-.476a1.82 1.82 0 0 1 .827-2.545l.496-.227a1.82 1.82 0 0 0 1.049-1.444l.063-.542A1.82 1.82 0 0 1 8.06 4.3l.535.108a1.82 1.82 0 0 0 1.697-.551l.37-.402z" fill="%232c6bed"/><path d="M16.524 9.948l-.999-.999-4.55 4.551-2.164-2.164-.999.999 3.162 3.162 5.549-5.549z" fill="white"/></svg>');
+      background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns="http://www.w3.org/2000/svg" viewBox="3 3 18 18"><path d="M10.662 3.455a1.82 1.82 0 0 1 2.676 0l.37.402a1.82 1.82 0 0 0 1.697.551l.535-.108a1.82 1.82 0 0 1 2.165 1.573l.063.542a1.82 1.82 0 0 0 1.049 1.444l.496.227a1.82 1.82 0 0 1 .827 2.545l-.268.476a1.82 1.82 0 0 0 0 1.785l.268.476a1.82 1.82 0 0 1-.827 2.545l-.496.227a1.82 1.82 0 0 0-1.049 1.444l-.063.542A1.82 1.82 0 0 1 15.94 19.7l-.535-.108a1.82 1.82 0 0 0-1.697.551l-.37.402a1.82 1.82 0 0 1-2.676 0l-.37-.402a1.82 1.82 0 0 0-1.697-.551l-.535.108a1.82 1.82 0 0 1-2.165-1.573l-.063-.542a1.82 1.82 0 0 0-1.049-1.444l-.496-.227a1.82 1.82 0 0 1-.827-2.545l.268-.476a1.82 1.82 0 0 0 0-1.785l-.268-.476a1.82 1.82 0 0 1 .827-2.545l.496-.227a1.82 1.82 0 0 0 1.049-1.444l.063-.542A1.82 1.82 0 0 1 8.06 4.3l.535.108a1.82 1.82 0 0 0 1.697-.551l.37-.402z" fill="%232c6bed"/><path d="M16.524 9.948l-.999-.999-4.55 4.551-2.164-2.164-.999.999 3.162 3.162 5.549-5.549z" fill="white"/></svg>');
       height: 24px;
       aspect-ratio: 1 / 1;
       margin-left: 8px;
@@ -1394,44 +1405,46 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
   if (isblocked)
   {
-    file << '\n'
-         << "    .blocked {\n"
-         << "      display: inline-block;\n"
-         << "      background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"/></svg>');\n"
-         << "      height: 24px;\n"
-         << "      aspect-ratio: 1 / 1;\n"
-         << "      margin-right: 6px;\n"
-         << "      filter: var(--icon-f);\n"
-         << "      margin-bottom: 2px;\n"
-         << "      vertical-align: bottom;\n"
-         << "    }\n";
+    file <<
+      "\n"
+      "    .blocked {\n"
+      "      display: inline-block;\n"
+      "      background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"white\" stroke=\"white\"><path d=\"M12 1a11 11 0 1 0 11 11A11 11 0 0 0 12 1zm0 1.5a9.448 9.448 0 0 1 6.159 2.281L4.781 18.159A9.488 9.488 0 0 1 12 2.5zm0 19a9.448 9.448 0 0 1-6.159-2.281L19.219 5.841A9.488 9.488 0 0 1 12 21.5z\"/></svg>');\n"
+      "      height: 24px;\n"
+      "      aspect-ratio: 1 / 1;\n"
+      "      margin-right: 6px;\n"
+      "      filter: var(--icon-f);\n"
+      "      margin-bottom: 2px;\n"
+      "      vertical-align: bottom;\n"
+      "    }\n";
   }
 
   if (ismuted && !isblocked)
   {
-    file << '\n'
-         << "    .muted {\n"
-         << "      display: inline-block;\n"
-         << "      background-image: url('data:image/svg+xml;utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" fill=\"white\"><path d=\"M6.163 14h3.674a1.875 1.875 0 0 1-3.674 0zM8 2a3.233 3.233 0 0 1 3.041 2.171l.113.322L3.5 10.507a8.079 8.079 0 0 0 .335-1.136L4.84 4.548A3.25 3.25 0 0 1 8 2m0-1a4.236 4.236 0 0 0-4.138 3.337l-1.007 4.83a5.83 5.83 0 0 1-1.785 3.25l-.879.69.618.786 14-11-.618-.786-2.206 1.734A4.225 4.225 0 0 0 8 1zm6.54 10.035a2.846 2.846 0 0 1-1.395-1.868l-.662-3.176h0l-.878.689.564 2.7a3.954 3.954 0 0 0 1.89 2.558A.059.059 0 0 1 14 12H4.834l-1.272 1H14a1.056 1.056 0 0 0 .54-1.965z\"/></svg>');\n"
-         << "      height: 24px;\n"
-         << "      aspect-ratio: 1 / 1;\n"
-         << "      margin-top: 3px;\n"
-         << "      margin-right: 8px;\n"
-         << "      filter: var(--icon-f);\n"
-         << "      margin-bottom: 2px;\n"
-         << "      vertical-align: bottom;\n"
-         << "    }\n";
+    file <<
+      "\n"
+      "    .muted {\n"
+      "      display: inline-block;\n"
+      "      background-image: url('data:image/svg+xml;utf-8,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 16\" fill=\"white\"><path d=\"M6.163 14h3.674a1.875 1.875 0 0 1-3.674 0zM8 2a3.233 3.233 0 0 1 3.041 2.171l.113.322L3.5 10.507a8.079 8.079 0 0 0 .335-1.136L4.84 4.548A3.25 3.25 0 0 1 8 2m0-1a4.236 4.236 0 0 0-4.138 3.337l-1.007 4.83a5.83 5.83 0 0 1-1.785 3.25l-.879.69.618.786 14-11-.618-.786-2.206 1.734A4.225 4.225 0 0 0 8 1zm6.54 10.035a2.846 2.846 0 0 1-1.395-1.868l-.662-3.176h0l-.878.689.564 2.7a3.954 3.954 0 0 0 1.89 2.558A.059.059 0 0 1 14 12H4.834l-1.272 1H14a1.056 1.056 0 0 0 .54-1.965z\"/></svg>');\n"
+      "      height: 24px;\n"
+      "      aspect-ratio: 1 / 1;\n"
+      "      margin-top: 3px;\n"
+      "      margin-right: 8px;\n"
+      "      filter: var(--icon-f);\n"
+      "      margin-bottom: 2px;\n"
+      "      vertical-align: bottom;\n"
+      "    }\n";
   }
 
   if (themeswitch)
   {
-    file << R"(
+    file << R"*(
     .themebutton {
       display: block;
-      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white"><g><path d="M11.5 7.75c0-0.4 0.34-0.77 0.78-0.74C14.9 7.15 17 9.33 17 12c0 2.67-2.09 4.85-4.72 5-0.44 0.02-0.78-0.34-0.78-0.75v-8.5Z"/><path d="M12.97 0.73c-0.53-0.53-1.4-0.53-1.94 0L8.39 3.38H4.75c-0.76 0-1.37 0.61-1.37 1.37v3.64l-2.65 2.64c-0.53 0.53-0.53 1.4 0 1.94l2.65 2.64v3.64c0 0.76 0.61 1.38 1.37 1.38h3.64l2.64 2.64c0.53 0.53 1.4 0.53 1.94 0l2.64-2.63 3.64-0.01c0.76 0 1.38-0.62 1.38-1.38v-3.64l2.63-2.64c0.54-0.53 0.54-1.4 0-1.94l-2.62-2.61-0.01-3.67c0-0.76-0.62-1.38-1.38-1.38h-3.64l-2.64-2.64Zm-3.45 4L12 2.22l2.48 2.5c0.26 0.25 0.61 0.4 0.98 0.4h3.42v3.45c0.01 0.36 0.16 0.71 0.41 0.97L21.76 12l-2.48 2.48c-0.26 0.26-0.4 0.61-0.4 0.98v3.42h-3.43c-0.36 0.01-0.7 0.15-0.96 0.4L12 21.77l-2.48-2.48c-0.26-0.26-0.61-0.4-0.98-0.4H5.13v-3.42c0-0.37-0.15-0.72-0.4-0.98L2.22 12l2.5-2.48c0.25-0.26 0.4-0.61 0.4-0.98V5.13h3.41c0.37 0 0.72-0.15 0.98-0.4Z"/></g></svg>');
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" fill="white" stroke="white"><defs><path id="s" d="m12.5,2.5 2.5,2.5c0.27,0.27 0.63,0.43 1,0.43L19.62,5.42h1.79l-3.8e-5,-0.4C21.41,4.24 20.77,3.61 20,3.6l-3.8,0 -2.64,-2.65C13,0.4 12,0.4 11.5,0.96l-0.28,0.28z"/></defs><path d="m12,8.13c0,-0.4 0.35,-0.8 0.8,-0.76 2.7,0.14 4.86,2.4 4.86,5.13 0,2.75 -2.15,5 -4.86,5.14 -0.45,0 -0.8,-0.35 -0.8,-0.77z"/><use href="%23s"/><use href="%23s" transform="rotate(45 12.5 12.5)"/><use href="%23s" transform="rotate(90 12.5 12.5)"/><use href="%23s" transform="rotate(135 12.5 12.5)"/><use href="%23s" transform="rotate(180 12.5 12.5)"/><use href="%23s" transform="rotate(225 12.5 12.5)"/><use href="%23s" transform="rotate(270 12.5 12.5)"/><use href="%23s" transform="rotate(315 12.5 12.5)"/></svg>');
       filter: var(--icon-f);
     }
-)";
+)*";
   }
 
   if (searchpage)
@@ -1439,7 +1452,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     file << R"(
     .searchbutton {
       display: block;
-      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white"><g><path d="M10 2.125a7.875 7.875 0 1 0 4.716 14.182l4.989 4.989a1.125 1.125 0 0 0 1.59-1.591l-4.988-4.989A7.875 7.875 0 0 0 10 2.125zM3.875 10a6.125 6.125 0 1 1 12.25 0 6.125 6.125 0 0 1-12.25 0z"/></g></svg>');
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="white"><path d="M10 2.125a7.875 7.875 0 1 0 4.716 14.182l4.989 4.989a1.125 1.125 0 0 0 1.59-1.591l-4.988-4.989A7.875 7.875 0 0 0 10 2.125zM3.875 10a6.125 6.125 0 1 1 12.25 0 6.125 6.125 0 0 1-12.25 0z"/></svg>');
       filter: var(--icon-f);
     }
 )";
@@ -1447,7 +1460,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
     file << R"(
     .nav-up {
-      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"/></svg>');
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"/></svg>');
       filter: var(--icon-f);
     }
 
@@ -1470,12 +1483,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     }
 
     .nav-one {
-      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131"/></svg>');
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="3"><path d="M 13.8,2.94 6.73,10 13.8,17.06"/></svg>');
       filter: var(--icon-f);
     }
 
     .nav-max {
-      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white"><path style="stroke-width: 3;" d="M 10.746186,2.9378689 3.6836603,10.000394 10.745399,17.062131"/><path style="stroke-width: 3;" d="M 16.846186,2.9378689 9.7836603,10.000394 16.845399,17.062131"/></svg>');
+      background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="3"><path d="M 10.75,2.94 3.68,10 10.75,17.06M 16.85,2.94 9.78,10 16.85,17.06"/></svg>');
       filter: var(--icon-f);
     }
 
@@ -1885,20 +1898,26 @@ file << R"(
             <img class="avatar avatar-)" << thread_recipient_id << " header-avatar msg-sender-" << thread_recipient_id << "\" src=\"" << thread_avatar << R"(" alt=")" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial + R"(">
           </label>)";
   }
-  file << '\n'
-       << "          <div id=\"thread-title\">";
-  file << "<pre class=\"threadtitle\">";
+
+  file <<
+    "\n"
+    "          <div id=\"thread-title\"><pre class=\"threadtitle\">";
+
   if (isblocked)
     file << "<span class=\"blocked\"></span>";
   else if (ismuted)
     file << "<span class=\"muted\"></span>";
+
   file << title;
+
   if (expiration_timer)
     file << "<span class=\"thread-disappearing-messages-info\"></span><span class=\"threadtitle-info\">" + exptimer_short + "</span>";
   if (isnotetoself || isreleasechannel)
     file << "<span class=\"official\"></span>";
-  file << "</pre>";
-  file << "</div>\n";
+
+  file <<
+    "</pre></div>\n";
+
   if (!isnotetoself && getRecipientInfoFromMap(recipient_info, thread_recipient_id).verified)
     file <<
       "          <div class=\"thread-subtitle\">\n"
@@ -1908,23 +1927,26 @@ file << R"(
     "            <div class=\"thread-subtitle\">\n";
   if (isgroup)
   {
-    file << groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << '\n';
-    file << "            <input type=\"checkbox\" id=\"showmembers\">\n";
-    file << "            <label for=\"showmembers\">\n";
-    file << "              <small> details)</small>\n";
-    file << "              <span class=\"groupdetails\">\n";
-    file << "                <span class=\"columnview\">\n";
+    file <<
+      groupmembers.size() << " member" << (groupmembers.size() != 1 ? "s" : "") << "\n"
+      "            <input type=\"checkbox\" id=\"showmembers\">\n"
+      "            <label for=\"showmembers\">\n"
+      "              <small> details)</small>\n"
+      "              <span class=\"groupdetails\">\n"
+      "                <span class=\"columnview\">\n";
 
     // group description
     if (!groupinfo.description.empty())
     {
-      file << "                  <span class=\"column-right-align\">Description:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << HTMLescapeString(groupinfo.description) << "</span>\n";
+      file <<
+        "                  <span class=\"column-right-align\">Description:</span>\n"
+        "                  <span class=\"column-left-align\">" << HTMLescapeString(groupinfo.description) << "</span>\n";
     }
 
     // group members
-    file << "                  <span class=\"column-right-align\">Members:</span>\n";
-    file << "                  <span class=\"column-left-align\">";
+    file <<
+      "                  <span class=\"column-right-align\">Members:</span>\n"
+      "                  <span class=\"column-left-align\">";
     for (unsigned int gm = 0; gm < groupmembers.size(); ++gm)
       file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name)
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
@@ -1933,8 +1955,9 @@ file << R"(
     if (d_database.tableContainsColumn("groups", "decrypted_group"))
     {
       // pending members
-      file << "                  <span class=\"column-right-align\">Pending members:</span>\n";
-      file << "                  <span class=\"column-left-align\">";
+      file <<
+        "                  <span class=\"column-right-align\">Pending members:</span>\n"
+        "                  <span class=\"column-left-align\">";
       if (groupinfo.pending_members.size() == 0)
         file << "(none)";
       else
@@ -1944,8 +1967,9 @@ file << R"(
       file << "</span>\n";
 
       // 'requesting' members
-      file << "                  <span class=\"column-right-align\">Requesting members:</span>\n";
-      file << "                  <span class=\"column-left-align\">";
+      file <<
+        "                  <span class=\"column-right-align\">Requesting members:</span>\n"
+        "                  <span class=\"column-left-align\">";
       if (groupinfo.requesting_members.size() == 0)
         file << "(none)";
       else
@@ -1955,8 +1979,9 @@ file << R"(
       file << "</span>\n";
 
       // banned members
-      file << "                  <span class=\"column-right-align\">Banned members:</span>\n";
-      file << "                  <span class=\"column-left-align\">";
+      file <<
+        "                  <span class=\"column-right-align\">Banned members:</span>\n"
+        "                  <span class=\"column-left-align\">";
       if (groupinfo.banned_members.size() == 0)
         file << "(none)";
       else
@@ -1965,47 +1990,48 @@ file << R"(
                << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
       file << "</span>\n";
 
-      // access control
-      file << "                  <span class=\"columnview-header\">Permissions</span>\n";
-      file << "                  <span class=\"column-right-align\">Add members:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_members << "</span>\n";
-      file << "                  <span class=\"column-right-align\">Edit group info:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_attributes << "</span>\n";
-      file << "                  <span class=\"column-right-align\">Send messages:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n";
-      file << "                  <span class=\"column-right-align\">Approve members from invite link:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n";
-
-      file << "                  <span class=\"columnview-header\">Options</span>\n";
-
-      // expiration timer
-      file << "                  <span class=\"column-right-align\">Disappearing messages:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << exptimer << "</span>\n";
-
-      // link enabled?
-      file << "                  <span class=\"column-right-align\">Group link:</span>\n";
-      file << "                  <span class=\"column-left-align\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
-
-      // muted
-      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
-      {
-        long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
-        file << "                  <span class=\"column-right-align\">Muted:</span>\n";
-        file << "                  <span class=\"column-left-align\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
-      }
+      // coolumn header: access control
+      file <<
+        "                  <span class=\"columnview-header\">Permissions</span>\n"
+        "                  <span class=\"column-right-align\">Add members:</span>\n"
+        "                  <span class=\"column-left-align\">" << groupinfo.access_control_members << "</span>\n"
+        "                  <span class=\"column-right-align\">Edit group info:</span>\n"
+        "                  <span class=\"column-left-align\">" << groupinfo.access_control_attributes << "</span>\n"
+        "                  <span class=\"column-right-align\">Send messages:</span>\n"
+        "                  <span class=\"column-left-align\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n"
+        "                  <span class=\"column-right-align\">Approve members from invite link:</span>\n"
+        "                  <span class=\"column-left-align\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n"
+        // column header: option
+        "                  <span class=\"columnview-header\">Options</span>\n"
+        // expiration timer
+        "                  <span class=\"column-right-align\">Disappearing messages:</span>\n"
+        "                  <span class=\"column-left-align\">" << exptimer << "</span>\n"
+        // link enabled?
+        "                  <span class=\"column-right-align\">Group link:</span>\n"
+        "                  <span class=\"column-left-align\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
+        // muted
+        if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
+        {
+          long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
+          file <<
+            "                  <span class=\"column-right-align\">Muted:</span>\n"
+            "                  <span class=\"column-left-align\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
+        }
 
       // notify-on-mention
       if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
       {
-        file << "                  <span class=\"column-right-align\">Mentions:</span>\n";
-        file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
+        file <<
+          "                  <span class=\"column-right-align\">Mentions:</span>\n"
+          "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
       }
 
       // custom notifications
       if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications != -1)
       {
-        file << "                  <span class=\"column-right-align\">Custom notifications:</span>\n";
-        file << "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
+        file <<
+          "                  <span class=\"column-right-align\">Custom notifications:</span>\n"
+          "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
 
         // custom notifications were enabled, let's print them
         if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
@@ -2019,25 +2045,26 @@ file << R"(
             //std::string call_ringtone = notification_res.valueAsString(0, "call_ringtone");
             long long int call_vibrate = notification_res.valueAsInt(0, "call_vibrate");
 
-            //file << "                  <span class=\"column-right-align\">Message ringtone:</span>\n";
-            //file << "                  <span class=\"column-left-align\">" << msg_ringtone <<  "</span>\n";
-            file << "                  <span class=\"column-right-align\">Message vibrate:</span>\n";
-            file << "                  <span class=\"column-left-align\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
-            //file << "                  <span class=\"column-right-align\">Call ringtone:</span>\n";
-            //file << "                  <span class=\"column-left-align\">" << call_ringtone <<  "</span>\n";
-            file << "                  <span class=\"column-right-align\">Call vibrate:</span>\n";
-            file << "                  <span class=\"column-left-align\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
+            file <<
+              // "                  <span class=\"column-right-align\">Message ringtone:</span>\n"
+              // "                  <span class=\"column-left-align\">" << msg_ringtone <<  "</span>\n"
+              "                  <span class=\"column-right-align\">Message vibrate:</span>\n"
+              "                  <span class=\"column-left-align\">" << (msg_vibrate == 0 ? "(default)" : (msg_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n"
+              // "                  <span class=\"column-right-align\">Call ringtone:</span>\n"
+              // "                  <span class=\"column-left-align\">" << call_ringtone <<  "</span>\n"
+              "                  <span class=\"column-right-align\">Call vibrate:</span>\n"
+              "                  <span class=\"column-left-align\">" << (call_vibrate == 0 ? "(default)" : (call_vibrate == 1 ? "Enabled" : "Disabled")) <<  "</span>\n";
           }
         }
       }
     }
     else // decrypted_group info not available
-    {
       file << "                  <span class=\"columnview-header\">More group details not available</span>\n";
-    }
-    file << "                </span>\n";
-    file << "              </span>\n";
-    file << "            </label>\n";
+
+    file <<
+      "                </span>\n"
+      "              </span>\n"
+      "            </label>\n";
   }
   else // !isgroup
     file << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
@@ -2386,16 +2413,18 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "            <div class=\"linkpreview\">\n";
     if (!msg_info.link_preview_title.empty())
     {
-      htmloutput << "              <div class=\"linkpreview_title\">\n";
-      htmloutput << "                " << HTMLescapeString(msg_info.link_preview_title) << '\n';
-      htmloutput << "              </div>\n";
+      htmloutput <<
+        "              <div class=\"linkpreview_title\">\n"
+        "                " << HTMLescapeString(msg_info.link_preview_title) << "\n"
+        "              </div>\n";
     }
     std::string cleaned_link_preview_description = HTMLprepLinkPreviewDescription(msg_info.link_preview_description);
     if (!cleaned_link_preview_description.empty())
     {
-      htmloutput << "              <div class=\"linkpreview_description\">\n";
-      htmloutput << "                " << cleaned_link_preview_description << '\n';
-      htmloutput << "              </div>\n";
+      htmloutput <<
+        "              <div class=\"linkpreview_description\">\n"
+        "                " << cleaned_link_preview_description << "\n"
+        "              </div>\n";
     }
     htmloutput << "            </div>\n";
   }

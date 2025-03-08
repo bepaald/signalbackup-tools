@@ -841,17 +841,25 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             "            <div class=\"menu-header\">\n"
             "              <span id=\"jump-to-page-icon\"></span>\n"
             "            </div>\n"
-            "            <div class=\"expandedmenu\">\n";
+            "            <div class=\"expandedmenu\">\n"
+            "              <div class=\"expandedmenu-container\">\n";
           for (int pn = 0; pn < static_cast<int>(split_page_names.size()); ++pn)
           {
-            htmloutput <<
-              "              <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pn) : (pn > 0 ? "_" + bepaald::toString(pn) : "")) << ".html\">\n"
-              "                <div class=\"menu-item" << (pn == pagenumber ? " currentpage" : "") <<"\">\n"
-              "                  <div>" << split_page_names[pn] << "</div>\n"
-              "                </div>\n"
-              "              </a>\n";
+            if (pn == pagenumber)
+              htmloutput <<
+                "                <div class=\"menu-item" << (pn == pagenumber ? " currentpage" : "") <<"\">\n"
+                "                  <div>" << split_page_names[pn] << "</div>\n"
+                "                </div>\n";
+            else
+              htmloutput <<
+                "                <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pn) : (pn > 0 ? "_" + bepaald::toString(pn) : "")) << ".html\">\n"
+                "                  <div class=\"menu-item" << (pn == pagenumber ? " currentpage" : "") <<"\">\n"
+                "                    <div>" << split_page_names[pn] << "</div>\n"
+                "                  </div>\n"
+                "                </a>\n";
           }
           htmloutput <<
+            "              </div>\n"
             "            </div>\n"
             "          </div>\n"
             "        </div>\n";
