@@ -87,7 +87,9 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT sourceaddress FROM smses WHERE ismms = 1 AND type = 2");
     // set source address to self for outgoing
     ptdb->d_database.exec("UPDATE smses SET sourceaddress = ? WHERE "
-                          "NULLIF(sourceaddress, '') IS NULL AND ismms = 1 AND type = 2", selfe164);
+                          "(NULLIF(sourceaddress, '') IS NULL OR sourceaddress = 'insert-address-token') AND "
+                          "ismms = 1 AND "
+                          "type = 2", selfe164);
     //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT sourceaddress FROM smses WHERE ismms = 1 AND type = 2");
 
     //ptdb->d_database.prettyPrint(false, "SELECT DISTINCT targetaddresses FROM smses WHERE ismms = 1 AND type = 1");

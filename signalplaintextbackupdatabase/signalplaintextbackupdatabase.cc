@@ -475,6 +475,9 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
     }
   }
 
+  // show if we have other sources than self as the sender of outgoing messages
+  //d_database.prettyPrint(d_truncate, "SELECT DISTINCT sourceaddress FROM smses WHERE ismms = 1 AND type = 2");
+
   /*
   // for all distinct names, set address for that name to be the same..?
   //d_database.prettyPrint(false, "SELECT DISTINCT rowid,targetaddresses FROM smses WHERE targetaddresses IS NOT NULL");
