@@ -36,17 +36,18 @@ class SignalPlaintextBackupDatabase
   bool d_verbose;
   //std::set<std::string> d_warningsgiven;
   std::string d_countrycode;
+  std::vector<std::pair<std::string, std::string>> d_addressmap;
  public:
 #if __cpp_lib_span >= 202002L
   SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
-                                std::vector<std::pair<std::string, std::string>> namemap,
-                                std::string const &namemap_file, std::string const &countrycode,
-                                bool autogroupnames);
+                                std::vector<std::pair<std::string, std::string>> namemap, std::string const &namemap_file,
+                                std::vector<std::pair<std::string, std::string>> const &addressmap, std::string const &addressmap_file,
+                                std::string const &countrycode, bool autogroupnames);
 #else
   SignalPlaintextBackupDatabase(std::vector<std::string> const &sptbxmls, bool truncate, bool verbose,
-                                std::vector<std::pair<std::string, std::string>> namemap,
-                                std::string const &namemap_file, std::string const &countrycode,
-                                bool autogroupnames);
+                                std::vector<std::pair<std::string, std::string>> namemap, std::string const &namemap_file,
+                                std::vector<std::pair<std::string, std::string>> const &addressmap, std::string const &addressmap_file,
+                                std::string const &countrycode, bool autogroupnames);
 #endif
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase const &other) = delete;
   SignalPlaintextBackupDatabase(SignalPlaintextBackupDatabase &&other) = delete;
@@ -143,7 +144,19 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
   {
     result = in;
 
-    // convert entities : '&[x][NN];'?
+    // find in in address-map
+    for (auto const &[from, to] : d_addressmap)
+    {
+      if (from == result)
+      {
+        if (show && norm_shown.find(in) == norm_shown.end())
+        {
+          norm_shown.insert(in);
+          Logger::message("normalizePhoneNumber out: ", to);
+        }
+        return to;
+      }
+    }
 
 #if __cpp_lib_erase_if >= 202002L
     unsigned int removed = std::erase_if(result, [](char c) { return (c < '0' || c > '9') && c != '+'; });
@@ -192,6 +205,7 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
     if (result[0] != '+' && !d_countrycode.empty())
       result = d_countrycode + (result[0] == '0' ? result.substr(1) : result);
   }
+
   if (result.size() >= 9)
   {
     if (show && norm_shown.find(in) == norm_shown.end())

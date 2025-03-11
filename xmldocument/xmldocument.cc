@@ -38,7 +38,7 @@ XmlDocument::XmlDocument(std::string const &filename)
 
   unsigned int constexpr buffer_size = 16 * 1024;
   std::unique_ptr<char[]> buffer(new char[buffer_size]);
-  unsigned int filepos; // save file position of (very) large values
+  unsigned long long int filepos; // save file position of (very) large values
   unsigned int available;
   State state = INITIAL;
   State state_before_comment = INITIAL;
@@ -153,7 +153,7 @@ XmlDocument::XmlDocument(std::string const &filename)
                   (attribute_size < Node::s_maxsize) ? std::move(attribute_value_tmp) : std::string(),
                   (attribute_size < Node::s_maxsize) ? std::string() : filename,
                   (attribute_size < Node::s_maxsize) ? -1 : attribute_pos,
-                  (attribute_size < Node::s_maxsize) ? -1 : attribute_size
+                  attribute_size
                 };
 
               d_currentnode->d_attributes[attribute_name_tmp] = std::move(attributevalue);

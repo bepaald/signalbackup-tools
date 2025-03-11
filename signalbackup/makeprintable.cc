@@ -35,12 +35,14 @@ std::string SignalBackup::makePrintable(std::string const &in) const
   {
     if (offset < in.size()) [[likely]]
       std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
-    else
+    else // almost possible I think...
       printable_uuid = "xxx";
   }
   else if (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c){ return (c >= '0' && c <= '9') || c == ' ' || c == '-' || c == '+' || c == '~'; }) &&
            printable_uuid.size() >= 10)
     std::replace_if(printable_uuid.begin(), printable_uuid.end() - 4, [](char c){ return (c >= '0' && c <= '9'); }, 'x');
+  else if (in.empty())
+    printable_uuid = "(empty)";
   else
     printable_uuid = "xxx";
   return printable_uuid;

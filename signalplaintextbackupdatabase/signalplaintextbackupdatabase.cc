@@ -24,21 +24,65 @@
 #if __cpp_lib_span >= 202002L
 SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
                                                              std::vector<std::pair<std::string, std::string>> namemap,
-                                                             std::string const &namemap_filename, std::string const &countrycode,
-                                                             bool autogroupnames)
+                                                             std::string const &namemap_filename,
+                                                             std::vector<std::pair<std::string, std::string>> const &addressmap,
+                                                             std::string const &addressmap_filename,
+                                                             std::string const &countrycode, bool autogroupnames)
 #else
 SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::string> const &sptbxmls, bool truncate, bool verbose,
                                                              std::vector<std::pair<std::string, std::string>> namemap,
-                                                             std::string const &namemap_filename, std::string const &countrycode,
-                                                             bool autogroupnames)
+                                                             std::string const &namemap_filename,
+                                                             std::vector<std::pair<std::string, std::string>> const &addressmap,
+                                                             std::string const &addressmap_filename,
+                                                             std::string const &countrycode, bool autogroupnames)
 #endif
   :
   d_ok(false),
   d_truncate(truncate),
   d_verbose(verbose),
-  d_countrycode(countrycode)
+  d_countrycode(countrycode),
+  d_addressmap(addressmap)
 {
+  // read map from file
+  auto readMapFromFile = [](std::string const &mapfilename, std::vector<std::pair<std::string, std::string>> *map)
+  {
+    if (mapfilename.empty())
+      return;
+
+    // do NOT open in binary mode. We are using getline, on Windows,
+    // using binary mode will append '\r' at the end of each line.
+    std::ifstream mapfile(mapfilename, std::ios_base::in);
+    if (mapfile.is_open()) [[unlikely]]
+    {
+      std::string line;
+      while (std::getline(mapfile, line))
+      {
+        if (line.empty() || line[0] == '#')
+          continue;
+
+        std::string::size_type pos;
+        if ((pos = line.find('=')) == std::string::npos)
+        {
+          Logger::warning("Failed to find delimiter in line ('", line, "')");
+          continue;
+        }
+
+        // std::cout << line.substr(0, pos) << std::endl;
+        // std::cout << line.substr(pos + 1) << std::endl;
+        map->emplace_back(line.substr(0, pos), line.substr(pos + 1));
+      }
+    }
+    else
+      Logger::warning("Failed to open file '", mapfilename, "'");
+  };
+
   // read and append namemap from file
+  readMapFromFile(namemap_filename, &namemap);
+
+  // read and append addressmap from file
+  readMapFromFile(addressmap_filename, &d_addressmap);
+
+  /*
   if (!namemap_filename.empty())
   {
     // do NOT open in binary mode. We are using getline, on Windows,
@@ -67,6 +111,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
     else
       Logger::warning("Failed to open file '", namemap_filename, "'");
   }
+  */
 
   /*
     columns (XML attributes) imported into SQL table

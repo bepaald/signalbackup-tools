@@ -103,8 +103,10 @@ int main(int argc, char *argv[])
 #endif
   {
     if (!ptdb)
-      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfiles, arg.truncate(), arg.verbose(), arg.mapxmlcontactnames(),
-                                                   arg.mapxmlcontactnamesfromfile(), arg.setcountrycode(), arg.xmlautogroupnames()));
+      ptdb.reset(new SignalPlaintextBackupDatabase(xmlfiles, arg.truncate(), arg.verbose(),
+                                                   arg.mapxmlcontactnames(), arg.mapxmlcontactnamesfromfile(),
+                                                   arg.mapxmladdresses(), arg.mapxmladdressesfromfile(),
+                                                   arg.setcountrycode(), arg.xmlautogroupnames()));
     return ptdb->ok();
   };
 

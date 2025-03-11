@@ -69,10 +69,20 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
     SqliteDB::QueryResults group_members_res;
     ptdb->d_database.exec("SELECT DISTINCT sourceaddress FROM smses WHERE address = ?", address, &group_members_res);
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
-      group_members.insert(group_members_res(i, "sourceaddress"));
+    {
+      if (group_members_res.isNull(i, "sourceaddress")) [[unlikely]]
+        Logger::warning("Got 'NULL' sourceaddress in group '", makePrintable(address), "'");
+      else
+        group_members.insert(group_members_res(i, "sourceaddress"));
+    }
     ptdb->d_database.exec("SELECT DISTINCT value FROM smses, json_each(targetaddresses) WHERE smses.address = ?", address, &group_members_res);
     for (unsigned int i = 0; i < group_members_res.rows(); ++i)
-      group_members.insert(group_members_res(i, "value"));
+    {
+      if (group_members_res.isNull(i, "value")) [[unlikely]]
+        Logger::warning("Got 'NULL' targetaddress in group '", makePrintable(address), "'");
+      else
+        group_members.insert(group_members_res(i, "value"));
+    }
 
     if (d_verbose) [[unlikely]]
     {
@@ -90,7 +100,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
                                                                          gm, std::string());
         if (cn.empty()) [[unlikely]]
         {
-          Logger::warning("Unexpectedly got empty contact name for group recipient ", gm);//makePrintable(gm));
+          Logger::warning("Unexpectedly got empty contact name for group recipient '", gm, "'");//makePrintable(gm));
           cn = "(unknown)";
         }
 

@@ -153,6 +153,8 @@ Arg::Arg(int argc, char *argv[])
   d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
   d_mapxmlcontactnames(std::vector<std::pair<std::string, std::string>>()),
   d_mapxmlcontactnamesfromfile(std::string()),
+  d_mapxmladdresses(std::vector<std::pair<std::string, std::string>>()),
+  d_mapxmladdressesfromfile(std::string()),
   d_xmlautogroupnames(false),
   d_setcountrycode(std::string()),
   d_compactfilenames(false),
@@ -1866,6 +1868,37 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < argsize - 1)
       {
         d_mapxmlcontactnamesfromfile = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapxmladdresses")
+    {
+      if (i < argsize - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapxmladdressesfromfile")
+    {
+      if (i < argsize - 1)
+      {
+        d_mapxmladdressesfromfile = std::move(arguments[++i]);
       }
       else
       {
