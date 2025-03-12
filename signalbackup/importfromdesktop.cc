@@ -942,7 +942,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           Logger::message_start("Dealing with ", type, " message... ");
         SqliteDB::QueryResults identityverification_results;
         if (!dtdb->d_database.exec("SELECT "
-                                  "json_extract(json, '$.local') AS 'local', "
+                                  "IFNULL(json_extract(json, '$.local'), 0) AS 'local', "
                                   "json_extract(json, '$.verified') AS 'verified' "
                                   "FROM messages WHERE rowid = ?", rowid, &identityverification_results))
         {
@@ -954,7 +954,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         // if local == false, it would be an incoming message on Android and
         // marked as 'You marked your safety number with CONTACT verified from another device'
         // instead of just 'You marked your safety number with CONTACT verified'
-        [[maybe_unused]] bool local = identityverification_results.getValueAs<long long int>(0, "local") == 0 ? false : true;
+        //[[maybe_unused]] bool local = identityverification_results.getValueAs<long long int>(0, "local") == 0 ? false : true;
         bool verified = identityverification_results.getValueAs<long long int>(0, "verified") == 0 ? false : true;
 
         // not sure if I should do anythng with local... the desktop may have been 'another device', but

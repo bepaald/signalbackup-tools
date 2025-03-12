@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -33,7 +33,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   // First, do mentions
   for (auto const &m : mentions)
   {
-    // m1 : uuid, m2: start, m3: length
+    // m0 : recipient_id, m1: start, m2: length
     std::string author = getRecipientInfoFromMap(recipient_info, std::get<0>(m)).display_name;
     if (!author.empty())
     {
