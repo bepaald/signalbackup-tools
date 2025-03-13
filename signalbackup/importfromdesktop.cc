@@ -1119,6 +1119,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
             long long int freedate = originaldate;
+            if (!targetisdummy)
             {
               freedate = getFreeDateForMessage(freedate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
               if (freedate == -1)
@@ -1237,6 +1238,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             // we try to get the first free date_sent
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
             long long int freedate = originaldate;
+            if (!targetisdummy)
             {
               freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address);
               if (freedate == -1)
