@@ -108,7 +108,7 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
   std::tie(attdata, d_truesize) = Base64::base64StringToBytes(d_base64data.empty() ? local_b64_data : d_base64data);
   if (!attdata)
   {
-    d_truesize = -1;
+    d_truesize = -1; // truesize was set 0 by failed base64decode, reset to -1 to mark 'unset'
     Logger::error("Failed to decode base64-encoded attachment.");// from \"", d_filename, "\"");
     Logger::error_indent("Base64 data: ", d_base64data.substr(0, 10), (d_base64data.size() > 10 ? "..." : ""));
     Logger::error_indent("Filename: '", d_filename, "'");

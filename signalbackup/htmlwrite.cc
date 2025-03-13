@@ -1281,7 +1281,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        flex-direction: column;\n"
       "        margin-right: 0px;\n"
       "        cursor: pointer;\n"
-      "        align-items: center;\n"
+      "        align-items: end;\n"
       "      }\n"
       "\n"
       "      .expandedmenu-container {\n"
@@ -1375,7 +1375,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
 )";
 
-  if (themeswitch || searchpage)
+  if (themeswitch || searchpage || pagemenu)
   {
     file << R"(
       #theme {
@@ -2321,7 +2321,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->\n";
 
-  if (searchpage) // output an anchor to link to in sarch results
+  if (searchpage) // output an anchor to link to in search results
     htmloutput << "          <a id=\"" << msg_info.msg_id << "\"></a>\n";
 
   // for incoming group (normal) message: insert avatar with initial
