@@ -21,7 +21,7 @@
 
 #include "../xmldocument/xmldocument.h"
 
-#if __cpp_lib_span >= 202002L
+#if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
 SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
                                                              std::vector<std::pair<std::string, std::string>> namemap,
                                                              std::string const &namemap_filename,

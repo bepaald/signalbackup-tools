@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -81,9 +81,9 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
       {
         for (auto att = d_attachments.begin(); att != d_attachments.end(); )
         {
-          if (reinterpret_cast<AttachmentFrame *>(att->second.get())->rowId() == static_cast<uint64_t>(valuetochange))
+          if (att->second.get()->rowId() == static_cast<uint64_t>(valuetochange))
           {
-            AttachmentFrame *af = reinterpret_cast<AttachmentFrame *>(att->second.release());
+            AttachmentFrame *af = att->second.release();
             att = d_attachments.erase(att);
             af->setRowId(nid);
             int64_t uniqueid = af->attachmentId();
@@ -99,9 +99,9 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
       {
         for (auto s = d_stickers.begin(); s != d_stickers.end(); )
         {
-          if (reinterpret_cast<StickerFrame *>(s->second.get())->rowId() == static_cast<uint64_t>(valuetochange))
+          if (s->second.get()->rowId() == static_cast<uint64_t>(valuetochange))
           {
-            StickerFrame *sf = reinterpret_cast<StickerFrame *>(s->second.release());
+            StickerFrame *sf = s->second.release();
             s = d_stickers.erase(s);
             sf->setRowId(nid);
             d_stickers.emplace(std::make_pair(sf->rowId(), sf));

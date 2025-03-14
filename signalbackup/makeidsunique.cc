@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -83,11 +83,11 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> newattdb;
       for (auto &att : source->d_attachments)
       {
-        AttachmentFrame *af = reinterpret_cast<AttachmentFrame *>(att.second.release());
+        AttachmentFrame *af = att.second.release();
         af->setRowId(af->rowId() + offsetvalue);
 
         int64_t attachmentid = af->attachmentId();
-        newattdb.emplace(std::make_pair(af->rowId(), attachmentid ? attachmentid : -1), af);
+        newattdb.emplace_hint(newattdb.end(), std::make_pair(af->rowId(), attachmentid ? attachmentid : -1), af);
       }
       source->d_attachments.clear();
       source->d_attachments = std::move(newattdb);
@@ -99,10 +99,10 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
       std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> newsdb;
       for (auto &s : source->d_stickers)
       {
-        StickerFrame *sf = reinterpret_cast<StickerFrame *>(s.second.release());
+        StickerFrame *sf = s.second.release();
         sf->setRowId(sf->rowId() + offsetvalue);
 
-        newsdb.emplace(std::make_pair(sf->rowId(), sf));
+        newsdb.emplace_hint(newsdb.end(), sf->rowId(), sf);
       }
       source->d_stickers.clear();
       source->d_stickers = std::move(newsdb);

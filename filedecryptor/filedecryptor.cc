@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -66,17 +66,11 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
     Logger::error("failed to retrieve HeaderFrame, length was ", headerlength, " bytes");
     return;
   }
-  if (!(headerframe->frameType() == BackupFrame::FRAMETYPE::HEADER))
+
+  if (headerframe->frameType() != BackupFrame::FRAMETYPE::HEADER)
   {
     //std::cout << "Error: First frame is not a HeaderFrame" << std::endl;
     Logger::error("First frame is not a HeaderFrame");
-    delete headerframe;
-    return;
-  }
-  //reinterpret_cast<HeaderFrame *>(headerframe);
-
-  if (!dynamic_cast<HeaderFrame *>(headerframe)->iv())
-  {
     delete headerframe;
     return;
   }

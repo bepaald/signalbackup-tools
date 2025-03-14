@@ -20,7 +20,9 @@
 #include <string>
 #include <vector>
 
-#if __cpp_lib_span >= 202002L
+// the last part here is to work-around an apple clang thing. In true Apple fashion,
+// they expose the feature flag without actually supporting (fully) span...
+#if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
 #include <span>
 #endif
 
@@ -96,7 +98,7 @@ int main(int argc, char *argv[])
                                     arg.showdesktopkey(), arg.dbusverbose()));
     return ddb->ok();
   };
-#if __cpp_lib_span >= 202002L
+#if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
   auto initPlaintextDatabase = [&](std::span<std::string const> const &xmlfiles)
 #else
   auto initPlaintextDatabase = [&](std::vector<std::string> const &xmlfiles)
@@ -201,7 +203,7 @@ int main(int argc, char *argv[])
   if (!arg.exportplaintextbackuphtml().empty())
   {
     // skip last entry, it is the output
-#if __cpp_lib_span >= 202002L
+#if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
     if (!initPlaintextDatabase(std::span(arg.exportplaintextbackuphtml().begin(), arg.exportplaintextbackuphtml().end() - 1)))
 #else
     std::vector<std::string> xmlfiles(arg.exportplaintextbackuphtml().begin(), arg.exportplaintextbackuphtml().end() - 1);

@@ -24,7 +24,9 @@
 #include "../logger/logger.h"
 #include "../common_be.h"
 
-#if __cpp_lib_span >= 202002L
+// the last part here is to work-around an apple clang thing. In true Apple fashion,
+// they expose the feature flag without actually supporting (fully) span...
+#if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
 #include <span>
 #endif
 
@@ -38,7 +40,7 @@ class SignalPlaintextBackupDatabase
   std::string d_countrycode;
   std::vector<std::pair<std::string, std::string>> d_addressmap;
  public:
-#if __cpp_lib_span >= 202002L
+#if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
   SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
                                 std::vector<std::pair<std::string, std::string>> namemap, std::string const &namemap_file,
                                 std::vector<std::pair<std::string, std::string>> const &addressmap, std::string const &addressmap_file,
