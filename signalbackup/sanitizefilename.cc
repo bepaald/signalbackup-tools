@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -31,7 +31,7 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
 
 #else // WINDOWS, NOT TESTED
 
-  auto icasecmp = [](char a, char b)
+  auto icasecmp = [](char a, char b) STATICLAMBDA
   {
     return ((a == b) || (tolower(static_cast<unsigned char>(a)) == tolower(static_cast<unsigned char>(b))));
   };

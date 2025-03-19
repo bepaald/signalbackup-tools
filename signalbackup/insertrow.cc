@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -56,7 +56,7 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
   bool ret = d_database.exec(query, std::views::values(data), &res, d_verbose);
 #else
   std::vector<std::any> values;
-  std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });
+  std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair) STATICLAMBDA { return pair.second; });
   bool ret = d_database.exec(query, values, &res, d_verbose);
 #endif
 

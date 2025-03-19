@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
                               arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                               arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
-                              arg.pagemenu(), arg.htmlignoremediatypes()))
+                              arg.htmlpagemenu(), arg.htmlignoremediatypes()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                             arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
-                            arg.pagemenu(), arg.htmlignoremediatypes()))
+                            arg.htmlpagemenu(), arg.htmlignoremediatypes()))
       return 1;
   }
 
@@ -526,7 +526,7 @@ int main(int argc, char *argv[])
                         arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
                         arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
                         arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames(),
-                        arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.pagemenu(), arg.htmlignoremediatypes()))
+                        arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.htmlpagemenu(), arg.htmlignoremediatypes()))
       return 1;
 
   if (!arg.exporttxt().empty())

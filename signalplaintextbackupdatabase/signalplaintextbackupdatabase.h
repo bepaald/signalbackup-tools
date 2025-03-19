@@ -161,7 +161,7 @@ inline std::string SignalPlaintextBackupDatabase::normalizePhoneNumber(std::stri
     }
 
 #if __cpp_lib_erase_if >= 202002L
-    unsigned int removed = std::erase_if(result, [](char c) { return (c < '0' || c > '9') && c != '+'; });
+    unsigned int removed = std::erase_if(result, [](char c) STATICLAMBDA { return (c < '0' || c > '9') && c != '+'; });
 #else
     unsigned int removed = 0;
     result.erase(std::remove_if(result.begin(), result.end(),

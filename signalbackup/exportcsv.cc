@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -60,7 +60,7 @@ bool SignalBackup::exportCsv(std::string const &filename, std::string const &tab
       std::string vas = results.valueAsString(j, i);
       duplicateQuotes(&vas);
       bool escape = (vas.find_first_of(",\"\n") != std::string::npos) || // contains newline, quote or comma
-        (!vas.empty() && (std::find_if(vas.begin(), vas.end(), [](char c){ return !std::isspace(c); }) == vas.end())); // is all whitespace (and non empty)
+        (!vas.empty() && (std::find_if(vas.begin(), vas.end(), [](char c) STATICLAMBDA { return !std::isspace(c); }) == vas.end())); // is all whitespace (and non empty)
       outputfile << (escape ? "\"" : "") << vas << (escape ? "\"" : "") << ((i == results.columns() - 1) ? '\n' : ',');
     }
 

@@ -67,7 +67,7 @@ long long int SignalBackup::getRecipientIdFromPhoneMapped(std::string const &pho
   std::string printable_phone(phone);
   unsigned int offset = 3;
   if (offset < phone.size()) [[likely]]
-    std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c){ return std::isdigit(c); }, 'x');
+    std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c) STATICLAMBDA { return std::isdigit(c); }, 'x');
   else
     printable_phone = "xxx";
 

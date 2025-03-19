@@ -46,7 +46,7 @@ void SignalBackup::HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, s
   std::string color = "E3E3FE"; // random default
   if (url.size() > STRLEN("https://signal.link/call/#key=") + 2)
   {
-    auto consonant_base16_decode = [](char first, char second) -> int32_t
+    auto consonant_base16_decode = [](char first, char second) STATICLAMBDA -> int32_t
     {
       int high = -1;
       int low  = -1;

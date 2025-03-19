@@ -25,6 +25,7 @@
 #include "../base64/base64.h"
 
 #include <tuple>
+#include <filesystem>
 
 class SignalPlainTextBackupAttachmentReader : public AttachmentReader<SignalPlainTextBackupAttachmentReader>
 {

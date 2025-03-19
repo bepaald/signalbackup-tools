@@ -44,7 +44,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
   d_addressmap(addressmap)
 {
   // read map from file
-  auto readMapFromFile = [](std::string const &mapfilename, std::vector<std::pair<std::string, std::string>> *map)
+  auto readMapFromFile = [](std::string const &mapfilename, std::vector<std::pair<std::string, std::string>> *map) STATICLAMBDA
   {
     if (mapfilename.empty())
       return;

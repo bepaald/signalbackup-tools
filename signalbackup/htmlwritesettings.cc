@@ -354,7 +354,7 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
   bool hasoutput = false;
 
   // output keyvalueframes if "settings.*" (others may include private keys and such)
-  if (std::any_of(d_keyvalueframes.begin(), d_keyvalueframes.end(), [](auto const &kv) { return STRING_STARTS_WITH(kv->key(), "settings."); } ))
+  if (std::any_of(d_keyvalueframes.begin(), d_keyvalueframes.end(), [](auto const &kv) STATICLAMBDA { return STRING_STARTS_WITH(kv->key(), "settings."); } ))
   {
     hasoutput = true;
 
@@ -397,7 +397,7 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
 
   // output sharedpreferenceframes (if not private keys (these were in these frames only in (very) old databases))
   if (std::any_of(d_sharedpreferenceframes.begin(), d_sharedpreferenceframes.end(),
-                  [](auto const &sp) { return !STRING_STARTS_WITH(sp->key(), "pref_identity_") && sp->key().find("private") == std::string::npos; } ))
+                  [](auto const &sp) STATICLAMBDA { return !STRING_STARTS_WITH(sp->key(), "pref_identity_") && sp->key().find("private") == std::string::npos; } ))
   {
     hasoutput = true;
 

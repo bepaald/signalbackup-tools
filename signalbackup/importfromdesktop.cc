@@ -1531,7 +1531,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 #elif __cpp_lib_shared_ptr_arrays >= 201707L
             mmsquote_mentions.first = std::make_shared<unsigned char []>(bodyrangelist.size());
 #else
-            mmsquote_mentions.first = std::shared_ptr<unsigned char []>(new unsigned char[bodyrangelist.size()], [](unsigned char *p) { delete[] p; } );
+            mmsquote_mentions.first = std::shared_ptr<unsigned char []>(new unsigned char[bodyrangelist.size()], [](unsigned char *p) STATICLAMBDA { delete[] p; });
 #endif
             mmsquote_mentions.second = bodyrangelist.size();
             std::memcpy(mmsquote_mentions.first.get(), bodyrangelist.data(), bodyrangelist.size());

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -143,7 +143,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       std::regex comma(",");
       std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
       std::transform(iter, std::sregex_token_iterator(), std::back_inserter(individual_groupmembers),
-                     [](std::string const &m) -> std::string { return m; });
+                     [](std::string const &m) STATICLAMBDA -> std::string { return m; });
       for (auto const &m : individual_groupmembers)
         if (!m.empty() &&
             d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient_preferences WHERE recipient_ids = ?", m, -1) == -1)
@@ -175,7 +175,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       std::regex comma(",");
       std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
       std::transform(iter, std::sregex_token_iterator(), std::back_inserter(individual_groupmembers),
-                     [](std::string const &m) -> std::string { return m; });
+                     [](std::string const &m) STATICLAMBDA -> std::string { return m; });
       std::string members_id_str;
 
       for (auto const &m : individual_groupmembers)

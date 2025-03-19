@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -37,11 +37,11 @@ bool SignalBackup::scrambleHelper(std::string const &table, std::vector<std::str
     for (unsigned int j = 0; j < columns.size(); ++j)
     {
       str.push_back(res.valueAsString(i, columns[j]));
-      std::replace_if(str.back().begin(), str.back().end(), [](char c)
+      std::replace_if(str.back().begin(), str.back().end(), [](char c) STATICLAMBDA
       {
         return c != ' ' && std::islower(c);
       }, 'x');
-      std::replace_if(str.back().begin(), str.back().end(), [](char c)
+      std::replace_if(str.back().begin(), str.back().end(), [](char c) STATICLAMBDA
       {
         return c != ' ' && !std::islower(c);
       }, 'X');

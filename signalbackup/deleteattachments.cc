@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -230,7 +230,7 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
 
   // else replace attachments
 
-  std::sort(replace.begin(), replace.end(), [](std::pair<std::string, std::string> const &lhs, std::pair<std::string, std::string> const &rhs)
+  std::sort(replace.begin(), replace.end(), [](std::pair<std::string, std::string> const &lhs, std::pair<std::string, std::string> const &rhs) STATICLAMBDA
   {
     return (lhs.first == "default" ? false : (rhs.first == "default" ? true : lhs.first.length() > rhs.first.length()));
   });

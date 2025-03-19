@@ -1072,7 +1072,7 @@ inline bool SqliteDB::schemaVersionChanged() const
 {
   std::pair<bool, char *> sv_data = {false, d_previous_schema_version};
   sqlite3_exec(d_db, "SELECT schema_version FROM PRAGMA_SCHEMA_VERSION;",
-               [](void *sv, int /*count*/, char **data, char **)
+               [](void *sv, int /*count*/, char **data, char **) STATICLAMBDA
                {
                  // assert(count == 1);
 

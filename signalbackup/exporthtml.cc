@@ -227,9 +227,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   std::string readablesplitformat;
   if (!splitby.empty())
   {
-    auto icasecompare = [](std::string const &a, std::string const &b)
+    auto icasecompare = [](std::string const &a, std::string const &b) STATICLAMBDA
     {
-      return std::equal(a.begin(), a.end(), b.begin(), b.end(), [](char ca, char cb) { return std::tolower(ca) == std::tolower(cb); });
+      return std::equal(a.begin(), a.end(), b.begin(), b.end(), [](char ca, char cb) STATICLAMBDA { return std::tolower(ca) == std::tolower(cb); });
     };
 
     if (icasecompare(splitby, "year"))

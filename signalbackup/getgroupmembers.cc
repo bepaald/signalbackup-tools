@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -61,7 +61,7 @@ bool SignalBackup::getGroupMembersOld(std::vector<long long int> *members, std::
   std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
 
   std::transform(iter, std::sregex_token_iterator(), std::back_inserter(*members),
-                 [](std::string const &m) -> long long int { return bepaald::toNumber<long long int>(m); });
+                 [](std::string const &m) STATICLAMBDA -> long long int { return bepaald::toNumber<long long int>(m); });
 
   // std::cout << "=====" << std::endl;
   // std::cout << "Set group members:" << std::endl;

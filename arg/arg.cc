@@ -161,7 +161,7 @@ Arg::Arg(int argc, char *argv[])
   d_generatedummy(std::string()),
   d_targetisdummy(false),
   d_htmlignoremediatypes(std::vector<std::string>()),
-  d_pagemenu(false),
+  d_htmlpagemenu(true),
   d_input_required(false)
 {
   // vector to hold arguments
@@ -1983,14 +1983,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--pagemenu")
+    if (option == "--htmlpagemenu")
     {
-      d_pagemenu = true;
+      d_htmlpagemenu = true;
       continue;
     }
-    if (option == "--no-pagemenu")
+    if (option == "--no-htmlpagemenu")
     {
-      d_pagemenu = false;
+      d_htmlpagemenu = false;
       continue;
     }
     if (option[0] != '-')

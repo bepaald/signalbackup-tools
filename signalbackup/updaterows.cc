@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -72,8 +72,8 @@ bool SignalBackup::updateRows(std::string const &table,
   bool ret = d_database.exec(query, std::ranges::views::values(std::ranges::views::concat(data, whereclause)), &res, d_verbose);
 #else
   std::vector<std::any> values;
-  std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });
-  std::transform(whereclause.begin(), whereclause.end(), std::back_inserter(values), [](auto const &pair){ return pair.second; });
+  std::transform(data.begin(), data.end(), std::back_inserter(values), [](auto const &pair) STATICLAMBDA { return pair.second; });
+  std::transform(whereclause.begin(), whereclause.end(), std::back_inserter(values), [](auto const &pair) STATICLAMBDA { return pair.second; });
   bool ret = d_database.exec(query, values, &res, d_verbose);
 #endif
   if (ret && !returnfield.empty() && returnvalue && res.rows() && res.columns())

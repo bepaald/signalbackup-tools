@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -1090,7 +1090,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   if (d_databaseversion < 152)
   {
     Logger::message("To 152");
-    if (!d_database.exec("UPDATE recipient SET group_type = 4 WHERE  distribution_list_id IS NOT NULL"))
+    if (!d_database.exec("UPDATE recipient SET group_type = 4 WHERE distribution_list_id IS NOT NULL"))
       return false;
 
     // setDBV 152
@@ -1554,7 +1554,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
       std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
       std::vector<long long int> members_list;
       std::transform(iter, std::sregex_token_iterator(), std::back_inserter(members_list),
-                     [](std::string const &m) -> long long int { return bepaald::toNumber<long long int>(m); });
+                     [](std::string const &m) STATICLAMBDA -> long long int { return bepaald::toNumber<long long int>(m); });
 
       for (unsigned int j = 0; j < members_list.size(); ++j)
         if (!d_database.exec("INSERT INTO group_membership (group_id, recipient_id) VALUES (?, ?)", {group_id, members_list[j]}))

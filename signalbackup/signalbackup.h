@@ -788,7 +788,7 @@ inline void SignalBackup::runQuery(std::string const &q, std::string const &mode
     return;
 
   std::string q_comm(q, 0, STRLEN("DELETE")); // delete, insert and update are same length...
-  std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) { ch = std::toupper(ch); });
+  std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) STATICLAMBDA { ch = std::toupper(ch); });
 
   if (q_comm == "DELETE" || q_comm == "INSERT" || q_comm == "UPDATE")
   {

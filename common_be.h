@@ -53,6 +53,12 @@
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
 #endif
 
+#if _cpp_static_call_operator >= 202207L
+#define STATICLAMBDA static
+#else
+#define STATICLAMBDA
+#endif
+
 using std::literals::string_literals::operator""s;
 
 namespace bepaald

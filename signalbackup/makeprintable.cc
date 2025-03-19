@@ -30,17 +30,17 @@ std::string SignalBackup::makePrintable(std::string const &in) const
   if (STRING_STARTS_WITH(in, "__signal_group__v2__!") || // new group
       STRING_STARTS_WITH(in, "__textsecure_group__!") || // old group
       STRING_STARTS_WITH(in, "PNI:") || // pni
-      (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c){ return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; }) &&
+      (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c) STATICLAMBDA { return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'; }) &&
        printable_uuid.size() == 36)) //uuid
   {
     if (offset < in.size()) [[likely]]
-      std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c){ return c != '-'; }, 'x');
+      std::replace_if(printable_uuid.begin() + offset, printable_uuid.end(), [](char c) STATICLAMBDA { return c != '-'; }, 'x');
     else // almost possible I think...
       printable_uuid = "xxx";
   }
-  else if (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c){ return (c >= '0' && c <= '9') || c == ' ' || c == '-' || c == '+' || c == '~'; }) &&
+  else if (std::all_of(printable_uuid.begin(), printable_uuid.end(), [](char c) STATICLAMBDA { return (c >= '0' && c <= '9') || c == ' ' || c == '-' || c == '+' || c == '~'; }) &&
            printable_uuid.size() >= 10)
-    std::replace_if(printable_uuid.begin(), printable_uuid.end() - 4, [](char c){ return (c >= '0' && c <= '9'); }, 'x');
+    std::replace_if(printable_uuid.begin(), printable_uuid.end() - 4, [](char c) STATICLAMBDA { return (c >= '0' && c <= '9'); }, 'x');
   else if (in.empty())
     printable_uuid = "(empty)";
   else

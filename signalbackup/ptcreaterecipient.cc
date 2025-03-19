@@ -34,7 +34,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
 
   Logger::message("Creating recipient for address ", makePrintable(address), " (group: ", std::boolalpha, isgroup, ")");
 
-  auto random_from_address = [](std::string const &a)
+  auto random_from_address = [](std::string const &a) STATICLAMBDA
   {
     unsigned int result = 0;
     for (auto c : a)
