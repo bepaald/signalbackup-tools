@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,13 @@
 */
 
 #include "fileencryptor.ih"
+
+#include <openssl/evp.h>
+#include <openssl/sha.h>
+#include <openssl/hmac.h>
+
+#include <memory>
+#include <cstring>
 
 std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *data, uint64_t length)
 {

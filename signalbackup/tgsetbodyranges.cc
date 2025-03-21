@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
 bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int message_id)
 {
   //std::cout << "bodydata: " << bodyjson << std::endl;

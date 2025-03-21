@@ -90,25 +90,25 @@ inline DummyBackup::DummyBackup(bool verbose, bool truncate, bool showprogress)
     return;
 
   // set database version
-  DeepCopyingUniquePtr<DatabaseVersionFrame> d_new_dbvframe;
-  if (!setFrameFromStrings(&d_new_dbvframe, std::vector<std::string>{"VERSION:uint32:223"}))
+  DeepCopyingUniquePtr<DatabaseVersionFrame> new_dbvframe;
+  if (!setFrameFromStrings(&new_dbvframe, std::vector<std::string>{"VERSION:uint32:223"}))
   {
     Logger::error("Failed to create new databaseversionframe");
     return;
   }
-  d_databaseversionframe.reset(d_new_dbvframe.release());
+  d_databaseversionframe.reset(new_dbvframe.release());
   d_databaseversion = 223;
 
   // set headerframe
-  DeepCopyingUniquePtr<HeaderFrame> d_new_headerframe;
-  if (!setFrameFromStrings(&d_new_headerframe, std::vector<std::string>{"IV:bytes:AAAAAAAAAAAAAAAAAAAAAA==",
-                                                                        "SALT:bytes:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-                                                                        "VERSION:uint32:1"}))
+  DeepCopyingUniquePtr<HeaderFrame> new_headerframe;
+  if (!setFrameFromStrings(&new_headerframe, std::vector<std::string>{"IV:bytes:AAAAAAAAAAAAAAAAAAAAAA==",
+                                                                      "SALT:bytes:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                                                                      "VERSION:uint32:1"}))
   {
     Logger::error("Failed to create new databaseversionframe");
     return;
   }
-  d_headerframe.reset(d_new_headerframe.release());
+  d_headerframe.reset(new_headerframe.release());
 
   // set endframe
   d_endframe.reset(new EndFrame(nullptr, 1ull));
@@ -131,7 +131,6 @@ inline DummyBackup::DummyBackup(std::unique_ptr<SignalPlaintextBackupDatabase> c
 
   if (selfphone.empty())
   {
-    // open desktopdb, scan for self id, add to recipient and set d_selfphone/id
     if (!ptdb->ok())
       Logger::error("SignalPlaintextBackupDatabase was not ok");
 
@@ -242,6 +241,28 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
 
   d_selfid = std::any_cast<long long int>(new_rid);
   d_selfuuid = uuid;
+
+  // let scan self work on this dummy, by adding keyvalueframe...
+  if (!insertRow("identities",
+                 {{"address", uuid},
+                  {"identity_key", "this/is/a/fake/key0="}, // fake key, and 'guaranteed' to be invalid
+                  {"first_use", 1},
+                  {"timestamp", 0},
+                  {"verified", 1},
+                  {"nonblocking_approval", 1}}))
+  {
+    Logger::error("Failed to insert identitykey of self into DummyBackup");
+    return;
+  }
+
+  DeepCopyingUniquePtr<KeyValueFrame> kvframe;
+  if (!setFrameFromStrings(&kvframe, std::vector<std::string>{"KEY:string:account.aci_identity_public_key",
+                                                              "BLOBVALUE:bytes:this/is/a/fake/key0="}))
+  {
+    Logger::error("Failed to create new keyvalueframe");
+    return;
+  }
+  d_keyvalueframes.emplace_back(std::move(kvframe));
 
   d_ok = true;
 }

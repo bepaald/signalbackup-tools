@@ -18,6 +18,9 @@
 */
 
 #include "arg.h"
+#include <iostream>
+#include <iterator>
+#include <regex>
 
 Arg::Arg(int argc, char *argv[])
   :
@@ -75,12 +78,7 @@ Arg::Arg(int argc, char *argv[])
   d_stoponerror(false),
   d_verbose(false),
   d_dbusverbose(false),
-  d_strugee(-1),
-  d_strugee3(-1),
-  d_ashmorgan(false),
-  d_strugee2(false),
   d_hiperfall(-1),
-  d_arc(-1),
   d_deleteattachments(false),
   d_onlyinthreads(std::vector<long long int>()),
   d_onlyolderthan(std::string()),
@@ -159,6 +157,7 @@ Arg::Arg(int argc, char *argv[])
   d_setcountrycode(std::string()),
   d_compactfilenames(false),
   d_generatedummy(std::string()),
+  d_generatedummyfordesktop(std::string()),
   d_targetisdummy(false),
   d_htmlignoremediatypes(std::vector<std::string>()),
   d_htmlpagemenu(true),
@@ -879,82 +878,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_dbusverbose = false;
       continue;
     }
-    if (option == "--strugee")
-    {
-      if (i < argsize - 1)
-      {
-        if (!ston(&d_strugee, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--strugee3")
-    {
-      if (i < argsize - 1)
-      {
-        if (!ston(&d_strugee3, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--ashmorgan")
-    {
-      d_ashmorgan = true;
-      continue;
-    }
-    if (option == "--no-ashmorgan")
-    {
-      d_ashmorgan = false;
-      continue;
-    }
-    if (option == "--strugee2")
-    {
-      d_strugee2 = true;
-      continue;
-    }
-    if (option == "--no-strugee2")
-    {
-      d_strugee2 = false;
-      continue;
-    }
     if (option == "--hiperfall")
     {
       if (i < argsize - 1)
       {
         if (!ston(&d_hiperfall, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--arc")
-    {
-      if (i < argsize - 1)
-      {
-        if (!ston(&d_arc, arguments[++i]))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
@@ -1945,6 +1873,20 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       if (i < argsize - 1)
       {
         d_generatedummy = std::move(arguments[++i]);
+        d_opassphrase = "000000000000000000000000000001";
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--generatedummyfordesktop")
+    {
+      if (i < argsize - 1)
+      {
+        d_generatedummyfordesktop = std::move(arguments[++i]);
         d_opassphrase = "000000000000000000000000000001";
       }
       else

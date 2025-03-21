@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../csvreader/csvreader.h"
 
 /*
  * Things to deal with:

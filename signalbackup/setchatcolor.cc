@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../protobufparser/protobufparser.h"
+
 bool SignalBackup::setChatColors(std::vector<std::pair<long long int, std::string>> const &colorlist)
 {
 

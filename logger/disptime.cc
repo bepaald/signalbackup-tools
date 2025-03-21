@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -17,14 +17,12 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.h"
+#include "logger.h"
 
-#include <set>
-#include <iterator>
-#include <optional>
+#include <chrono>
 
-#include "../msgtypes/msgtypes.h"
-#include "../autoversion.h"
-
-#include "htmlmessageinfo.h"
-#include "groupinfo.h"
+std::ostream &Logger::dispTime(std::ostream &stream) // static
+{
+  std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  return stream << std::put_time(std::localtime(&cur), "%Y-%m-%d %H:%M:%S"); // %F and %T do not work on mingw
+}

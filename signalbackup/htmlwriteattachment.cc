@@ -21,6 +21,8 @@
 
 #include <cerrno>
 
+#include "../common_filesystem.h"
+
 bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string const &threaddir,
                                        long long int rowid, long long int uniqueid, //std::string const &ext,
                                        std::string const &attachment_filename, long long int timestamp,

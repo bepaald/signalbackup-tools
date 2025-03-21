@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../protobufparser/protobufparser.h"
 
 bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid,
                                            long long int ttid, long long int address, bool insertincompletedataforexport) const

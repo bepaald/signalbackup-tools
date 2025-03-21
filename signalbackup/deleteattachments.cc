@@ -19,6 +19,10 @@
 
 #include "signalbackup.ih"
 
+#include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
+#include "../rawfileattachmentreader/rawfileattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
 bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids,

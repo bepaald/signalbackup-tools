@@ -19,6 +19,8 @@
 
 #include "arg.h"
 
+#include <iostream>
+
 void Arg::usage() const
 {
   std::cout << R"*(

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,9 +18,5 @@
 */
 
 #include "fileencryptor.h"
-
-#include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
 
 #include "../logger/logger.h"

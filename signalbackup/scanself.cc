@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../reactionlist/reactionlist.h"
+
 long long int SignalBackup::scanSelf() const
 {
   if (!d_database.containsTable("recipient"))

@@ -19,6 +19,8 @@
 
 #include "filedecryptor.ih"
 
+#include "../invalidframe/invalidframe.h"
+
 std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 {
   if (d_backupfileversion == 0) [[unlikely]]

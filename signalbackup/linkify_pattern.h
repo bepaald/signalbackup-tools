@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -20,7 +20,7 @@
 // Modified (slightly) from The Android Open Source Project
 // (https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/util/Patterns.java)
 
-#include "signalbackup.ih"
+#include <regex>
 
 #define IANA_TOP_LEVEL_DOMAINS "(?:"                                    \
     "(?:aaa|aarp|abb|abbott|abogado|academy|accenture|accountant|accountants|aco|active" \
@@ -218,7 +218,10 @@
     WORD_BOUNDARY                                       \
     ")"
 
-std::regex const SignalBackup::s_linkify_pattern("(" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", std::regex_constants::icase);
+namespace HTMLLinkify
+{
+  static std::regex const pattern("(" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", std::regex_constants::icase);
+}
 
 #undef IANA_TOP_LEVEL_DOMAINS
 #undef IP_ADDRESS

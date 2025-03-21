@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,10 +19,13 @@
 
 #include "signalbackup.ih"
 
+#include <sstream>
 #include <cmath>
 #if __cpp_lib_math_constants >= 201907L
 #include <numbers>
 #endif
+
+#include "../protobufparser/protobufparser.h"
 
 std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colordata) const
 {
@@ -71,7 +74,7 @@ std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::
     uint8_t g = (c >> (1 * 8)) & 0xFF;
     uint8_t b = (c >> (0 * 8)) & 0xFF;
 
-    std::stringstream ss;
+    std::ostringstream ss;
     ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(r)
        << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(g)
        << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
@@ -106,7 +109,7 @@ std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::
 
       double z = (maxrgb - minrgb) * (1 - std::abs(std::fmod((h / 60), 2) - 1));
 
-      std::stringstream ss2;
+      std::ostringstream ss2;
       if (h < 60)
         ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // r
             << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // g

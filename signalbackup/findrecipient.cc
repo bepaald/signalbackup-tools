@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,11 @@
 */
 
 #include "signalbackup.ih"
+
+#include <sstream>
+
+#include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
 
 bool SignalBackup::findRecipient(long long int id) const
 {
@@ -109,7 +114,7 @@ bool SignalBackup::findRecipient(long long int id) const
     for (unsigned int i = 0; i < results.rows(); ++i)
     {
       std::string membersstr = results.getValueAs<std::string>(i, members);
-      std::stringstream ss(membersstr);
+      std::istringstream ss(membersstr);
       while (ss.good())
       {
         std::string substr;

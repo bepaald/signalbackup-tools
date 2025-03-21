@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,6 +19,7 @@
 
 #include "signalbackup.ih"
 
+#include "../desktopattachmentreader/desktopattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
 bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,

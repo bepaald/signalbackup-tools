@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,9 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../common_filesystem.h"
+#include "../desktopattachmentreader/desktopattachmentreader.h"
 
 bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &databasedir)
 {

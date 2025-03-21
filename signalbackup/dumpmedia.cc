@@ -19,6 +19,10 @@
 
 #include "signalbackup.ih"
 
+#include "../common_be.h"
+#include "../common_filesystem.h"
+#include "../mimetypes/mimetypes.h"
+
 bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> const &daterangelist,
                              std::vector<long long int> const &threads, bool excludestickers, bool overwrite) const
 {
@@ -183,17 +187,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
 
     if (filename.empty()) // filename was not set in database or was not impossible
     {                     // to sanitize (eg reserved name in windows 'COM1')
-
-      std::ostringstream tmp;
-      if (datum != -1) [[likely]]
-      {
-        // get datestring
-        std::time_t epoch = datum / 1000;
-        tmp << std::put_time(std::localtime(&epoch), "signal-%Y-%m-%d-%H%M%S");
-        //tmp << "." << datum % 1000;
-      }
-      else
-        tmp << "signal";
+      std::string datestr = (datum != -1) ? bepaald::toDateString(datum / 1000, "signal-%Y-%m-%d-%H%M%S") : "signal";
 
       // get file ext
       std::string mime = results.valueAsString(0, d_part_ct);
@@ -201,11 +195,11 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       if (ext.empty())
       {
         ext = "attach";
-        Logger::warning("mimetype not found in database (", mime, ") -> saving as '", tmp.str(), ".", ext, "'");
+        Logger::warning("mimetype not found in database (", mime, ") -> saving as '", datestr, ".", ext, "'");
       }
 
       //build filename
-      filename = tmp.str() + ((order) ? ("_" + bepaald::toString(order)) : "") + "." + ext;
+      filename = datestr + ((order) ? ("_" + bepaald::toString(order)) : "") + "." + ext;
     }
 
     // std::cout << "FILENAME: " << filename << std::endl;

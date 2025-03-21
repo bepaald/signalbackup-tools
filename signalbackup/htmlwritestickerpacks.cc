@@ -19,6 +19,11 @@
 
 #include "signalbackup.ih"
 
+#include <chrono>
+
+#include "../common_filesystem.h"
+#include "../mimetypes/mimetypes.h"
+
 bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool overwrite, bool append,
                                          bool light, bool themeswitching, std::string const &exportdetails) const
 {

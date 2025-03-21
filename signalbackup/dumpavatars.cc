@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,7 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../mimetypes/mimetypes.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
+#include "../common_filesystem.h"
 
 bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const
 {

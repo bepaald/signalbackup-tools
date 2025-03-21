@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -17,10 +17,60 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef GROUPSTATUSMESSAGEPROTO_H_
-#define GROUPSTATUSMESSAGEPROTO_H_
+#ifndef GROUPSTATUSMESSAGEPROTO_TYPEDEF_H_
+#define GROUPSTATUSMESSAGEPROTO_TYPEDEF_H_
 
-#include "../protobufparser/protobufparser.h"
+struct ZigZag32;
+struct ZigZag64;
+struct Fixed32;
+struct Fixed64;
+struct SFixed32;
+struct SFixed64;
+namespace protobuffer
+{
+  namespace optional
+  {
+    typedef double DOUBLE;
+    typedef float FLOAT;
+    typedef int32_t ENUM;
+    typedef int32_t INT32;
+    typedef int64_t INT64;
+    typedef uint32_t UINT32;
+    typedef uint64_t UINT64;
+    typedef ZigZag32 SINT32;
+    typedef ZigZag64 SINT64;
+    typedef Fixed32 FIXED32;
+    typedef Fixed64 FIXED64;
+    typedef SFixed32 SFIXED32;
+    typedef SFixed64 SFIXED64;
+    typedef bool BOOL;
+    typedef std::string STRING;
+    typedef unsigned char *BYTES;
+    typedef int DUMMY;
+  }
+  namespace repeated
+  {
+    typedef std::vector<double> DOUBLE;
+    typedef std::vector<float> FLOAT;
+    typedef std::vector<int32_t> ENUM;
+    typedef std::vector<int32_t> INT32;
+    typedef std::vector<int64_t> INT64;
+    typedef std::vector<uint32_t> UINT32;
+    typedef std::vector<uint64_t> UINT64;
+    typedef std::vector<ZigZag32> SINT32;
+    typedef std::vector<ZigZag64> SINT64;
+    typedef std::vector<Fixed32> FIXED32;
+    typedef std::vector<Fixed64> FIXED64;
+    typedef std::vector<SFixed32> SFIXED32;
+    typedef std::vector<SFixed64> SFIXED64;
+    typedef std::vector<bool> BOOL;
+    typedef std::vector<std::string> STRING;
+    typedef std::vector<unsigned char *> BYTES;
+    typedef int DUMMY;
+  }
+}
+template <typename... Spec>
+class ProtoBufParser;
 
 /*
  * This uses the old(?) V1(?) group status update protobuf

@@ -19,6 +19,10 @@
 
 #include "signalbackup.ih"
 
+#include <sstream>
+
+#include "../reactionlist/reactionlist.h"
+
 void SignalBackup::cleanDatabaseByMessages()
 {
   Logger::message(__FUNCTION__);
@@ -222,7 +226,7 @@ void SignalBackup::cleanDatabaseByMessages()
       for (unsigned int i = 0; i < results.rows(); ++i)
       {
         std::string membersstr = results.getValueAs<std::string>(i, members);
-        std::stringstream ss(membersstr);
+        std::istringstream ss(membersstr);
         while (ss.good())
         {
           std::string substr;

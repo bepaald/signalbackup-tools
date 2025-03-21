@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "fileencryptor.ih"
+
+#include <cstring>
 
 bool FileEncryptor::init(unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size)
 {

@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
 long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               std::string const &id, std::string const &phone, std::string const &groupidb64,
                                               std::string const &databasedir,

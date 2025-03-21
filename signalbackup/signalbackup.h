@@ -32,11 +32,9 @@
 #include "../keyvalueframe/keyvalueframe.h"
 #include "../stickerframe/stickerframe.h"
 #include "../endframe/endframe.h"
-#include "../sqlstatementframe/sqlstatementframe.h"
 #include "../logger/logger.h"
 #include "../deepcopyinguniqueptr/deepcopyinguniqueptr.h"
-#include "../groupv2statusmessageproto/groupv2statusmessageproto.h"
-#include "../attachmentmetadata/attachmentmetadata.h"
+#include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 
 #include "../common_bytes.h"
 
@@ -45,7 +43,7 @@
 #include <unordered_set>
 #include <string>
 #include <algorithm>
-#include <regex>
+//#include <regex>
 #include <array>
 
 #if defined WIN32 || MINGW
@@ -79,6 +77,8 @@ enum class IconType;
 class JsonDatabase;
 class DesktopDatabase;
 class SignalPlaintextBackupDatabase;
+struct AttachmentMetadata;
+class SqlStatementFrame;
 
 class SignalBackup
 {
@@ -226,7 +226,7 @@ class SignalBackup
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
   static std::array<std::pair<std::string, std::string>, 12> const s_html_random_colors;
-  static std::regex const s_linkify_pattern;
+  //static std::regex const s_linkify_pattern;
 
  protected:
   inline SignalBackup(bool verbose, bool truncate, bool showprogress);
@@ -402,7 +402,7 @@ class SignalBackup
   void dtSetColumnNames(SqliteDB *ddb);
   long long int scanSelf() const;
   bool cleanAttachments();
-  inline bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
+  bool updatePartTableForReplace(AttachmentMetadata const &data, long long int id);
   bool scrambleHelper(std::string const &table, std::vector<std::string> const &columns) const;
   std::vector<long long int> getGroupUpdateRecipients(int thread = -1) const;
   void getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Context const &sts2, std::set<std::string> *uuids) const;
@@ -706,7 +706,7 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   else if (type == "int64" || type == "int32") // Note stol and stoll are the same on linux. Internally 8 byte int are needed anyway.
   {
     // (on windows stol would be four bytes and the above if-clause would cause bad data
-    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(bepaald::toNumber<long long>(datastr)));
+    std::pair<unsigned char *, size_t> decdata = numToData(bepaald::swap_endian(bepaald::toNumber<long long int>(datastr)));
     if (!decdata.first) [[unlikely]]
       return false;
     (*newframe)->setNewData(field, decdata.first, decdata.second);
@@ -850,22 +850,6 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
     if (results.valueHasType<long long int>(i, columnname)) // column name. This function expect it may fail
       tmp = results.getValueAs<long long int>(i, columnname);
   return tmp;
-}
-
-inline bool SignalBackup::updatePartTableForReplace(AttachmentMetadata const &data, long long int id)
-{
-  if (!updateRows(d_part_table,
-                  {{d_part_ct, data.filetype},
-                   {"data_size", data.filesize},
-                   {"width", data.width},
-                   {"height", data.height},
-                   {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), data.hash},
-                   {(d_database.tableContainsColumn(d_part_table, "data_hash_start") ? "data_hash_start" : ""), data.hash},
-                   {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), data.hash}},
-                  {{"_id", id}}) ||
-      d_database.changed() != 1)
-    return false;
-  return true;
 }
 
 inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const

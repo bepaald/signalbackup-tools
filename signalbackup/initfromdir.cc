@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../filesqlitedb/filesqlitedb.h"
+#include "../rawfileattachmentreader/rawfileattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
 void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments)

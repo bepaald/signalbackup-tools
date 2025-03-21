@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "signalbackup.ih"
+
+#include <sstream>
 
 void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
 {
@@ -38,7 +40,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
   {
     d_database.exec("SELECT members FROM groups WHERE group_id = ?", targetgroup, &res);
     std::string targetmembers = res.getValueAs<std::string>(0, 0);
-    std::stringstream ss(targetmembers);
+    std::istringstream ss(targetmembers);
     while (ss.good())
     {
       std::string substr;
@@ -117,7 +119,7 @@ void SignalBackup::mergeGroups(std::vector<std::string> const &groupids)
       {
         d_database.exec("SELECT members FROM groups WHERE group_id = ?", groupids[i], &res);
         std::string members = res.getValueAs<std::string>(0, 0);
-        std::stringstream ss2(members);
+        std::istringstream ss2(members);
         while (ss2.good())
         {
           std::string substr;

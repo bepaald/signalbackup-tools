@@ -19,6 +19,10 @@
 
 #include "signalbackup.ih"
 
+#include <chrono>
+
+#include "../common_filesystem.h"
+
 bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, bool append, bool light [[maybe_unused]],
                                      bool themeswitching [[maybe_unused]], std::string const &exportdetails [[maybe_unused]]) const
 {

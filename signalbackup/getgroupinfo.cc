@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
 void SignalBackup::getGroupInfo(long long int rid, GroupInfo *groupinfo) const
 {
   std::pair<std::shared_ptr<unsigned char []>, size_t> groupdata =

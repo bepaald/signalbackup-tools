@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../sqlstatementframe/sqlstatementframe.h"
+
 bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 {
   Logger::message(__FUNCTION__, " (", thread, ")");

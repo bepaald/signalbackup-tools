@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,6 +19,7 @@
 
 #include "signalbackup.ih"
 
+#include "linkify_pattern.h"
 #include "msgrange.h"
 
 void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const
@@ -44,7 +45,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
   pos = 0;
   std::smatch url_match_result;
   std::string bodycopy(body);
-  while (std::regex_search(bodycopy, url_match_result, s_linkify_pattern))
+  while (std::regex_search(bodycopy, url_match_result, HTMLLinkify::pattern))
   {
     //std::cout << "MATCH : " << url_match_result[0] << " (" << url_match_result.size() << " matches total)"
     //          << " : " << pos + url_match_result.position(0) << " " << url_match_result.length(0) << std::endl;

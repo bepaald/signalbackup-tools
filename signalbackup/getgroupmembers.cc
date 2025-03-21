@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include <regex>
+
 bool SignalBackup::getGroupMembersModern(std::vector<long long int> *members, std::string const &group_id) const
 {
   SqliteDB::QueryResults r;

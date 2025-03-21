@@ -119,6 +119,15 @@ int main(int argc, char *argv[])
         !d.exportBackup(arg.generatedummy(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, false /*onlydb*/))
       return 1;
   }
+  if (!arg.generatedummyfordesktop().empty())
+  {
+    if (!initDesktopDatabase())
+      return 1;
+    DummyBackup d(ddb, arg.verbose(), arg.truncate(), arg.showprogress());
+    if (!d.ok() ||
+        !d.exportBackup(arg.generatedummyfordesktop(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, false /*onlydb*/))
+      return 1;
+  }
 
   // show desktop key
   if (arg.showdesktopkey())
@@ -570,14 +579,14 @@ int main(int argc, char *argv[])
   // }
 
   // temporary,
-  if (arg.arc() != -1)
-  {
-    if (!sb->arc(arg.arc(), arg.setselfid()))
-    {
-      Logger::error("Failed somehow");
-      return 1;
-    }
-  }
+  // if (arg.arc() != -1)
+  // {
+  //   if (!sb->arc(arg.arc(), arg.setselfid()))
+  //   {
+  //     Logger::error("Failed somehow");
+  //     return 1;
+  //   }
+  // }
 
   // // temporary, to investigate #95
   // if (!arg.carowit_1().empty())

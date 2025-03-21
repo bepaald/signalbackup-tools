@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,9 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
 
 std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, std::string const &name) const
 {

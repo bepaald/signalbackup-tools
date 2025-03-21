@@ -20,6 +20,9 @@
 #include "signalbackup.ih"
 #include "htmlicontypes.h"
 
+#include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
 std::string SignalBackup::decodeStatusMessage(std::string const &body, long long int expiration, long long int type, std::string const &contactname, IconType *icon) const
 {
 

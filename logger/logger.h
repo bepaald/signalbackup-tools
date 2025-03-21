@@ -25,7 +25,6 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <chrono>
 #include <cstring>
 #include <vector>
 #include <iomanip>
@@ -132,8 +131,8 @@ class Logger
  private:
   inline Logger();
   inline static void ensureLogger();
-  inline static void firstUse();
-  inline static std::ostream &dispTime(std::ostream &stream);
+  static void firstUse();
+  static std::ostream &dispTime(std::ostream &stream);
   inline static void messagePre();
   void outputHead(std::string const &file, std::string const &stdandardout, bool overwrite = false,
                   std::pair<std::string, std::string> const &prepost = std::pair<std::string, std::string>(),
@@ -211,27 +210,6 @@ inline void Logger::ensureLogger() // static
 {
   if (!s_instance.get()) [[unlikely]]
     s_instance.reset(new Logger);
-}
-
-// prints out a header containing current date and time
-inline void Logger::firstUse() // static
-{
-  if (!s_instance->d_used) [[unlikely]]
-  {
-    s_instance->d_used = true;
-
-    std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
-    if (s_instance->d_currentoutput)
-      *(s_instance->d_currentoutput) << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " ***" << "\n";
-    std::cout << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " ***" << std::endl;
-  }
-}
-
-inline std::ostream &Logger::dispTime(std::ostream &stream) // static
-{
-  std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  return stream << std::put_time(std::localtime(&cur), "%Y-%m-%d %H:%M:%S"); // %F and %T do not work on mingw
 }
 
 inline void Logger::messagePre() //static

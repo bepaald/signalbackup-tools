@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../reactionlist/reactionlist.h"
 
 // update (old-style)reaction authors
 // current (and future) databases do not have reactions in the [s|m]ms tables,

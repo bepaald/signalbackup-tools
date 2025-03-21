@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -20,6 +20,7 @@
 #include "signalbackup.ih"
 
 #include "../scopeguard/scopeguard.h"
+#include "../mimetypes/mimetypes.h"
 
 std::string SignalBackup::getAvatarExtension(long long int recipient_id) const
 {

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,12 +22,11 @@
 
 #include <cstring>
 #include <fstream>
+#include <memory>
 
 #include "../common_be.h"
 #include "../backupframe/backupframe.h"
-#include "../framewithattachment/framewithattachment.h"
 #include "../cryptbase/cryptbase.h"
-#include "../invalidframe/invalidframe.h"
 #include "../logger/logger.h"
 
 class  FileDecryptor : public CryptBase

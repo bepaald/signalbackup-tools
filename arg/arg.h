@@ -20,21 +20,19 @@
 #ifndef ARGS_H_
 #define ARGS_H_
 
-#include <iostream>
 #include <vector>
+#include <utility>
+#include <string>
 #include <sstream>
 #include <cstdlib>
-#include <fstream>
-#include <iterator>
-#include <algorithm>
-#include <utility>
 #include <array>
-#include <regex>
+#include <type_traits>
+#include <algorithm>
 
 class Arg
 {
   bool d_ok;
-  std::array<std::string, 201> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--querymode", "--runsqlquery", "--runprettysqlquery", "--rundtsqlquery", "--rundtprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdir", "--desktopdirs", "--rawdesktopdb", "--desktopkey", "--showdesktopkey", "--no-showdesktopkey", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--dbusverbose", "--no-dbusverbose", "--strugee", "--strugee3", "--ashmorgan", "--no-ashmorgan", "--strugee2", "--no-strugee2", "--hiperfall", "--arc", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--exportplaintextbackuphtml", "--importplaintextbackup", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--includereceipts", "--no-includereceipts", "--chatfolders", "--no-chatfolders", "--allhtmlpages", "--split", "--split-by", "--originalfilenames", "--no-originalfilenames", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--importdesktopcontacts", "--no-importdesktopcontacts", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--xmlmarkread", "--no-xmlmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--mapxmlcontacts", "--listxmlcontacts", "--selectxmlchats", "--linkify", "--no-linkify", "--setchatcolors", "--mapxmlcontactnames", "--mapxmlcontactnamesfromfile", "--mapxmladdresses", "--mapxmladdressesfromfile", "--xmlautogroupnames", "--no-xmlautogroupnames", "--setcountrycode", "--compactfilenames", "--no-compactfilenames", "--generatedummy", "--targetisdummy", "--no-targetisdummy", "--htmlignoremediatypes", "--htmlpagemenu", "--no-htmlpagemenu"};
+  std::array<std::string, 195> const d_alloptions{"-i", "--input", "-p", "--passphrase", "--importthreads", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--croptothreads", "--croptothreadsbyname", "--croptodates", "--mergerecipients", "--mergegroups", "--exportcsv", "--exportxml", "--querymode", "--runsqlquery", "--runprettysqlquery", "--rundtsqlquery", "--rundtprettysqlquery", "--limitcontacts", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--editattachmentsize", "--dumpdesktopdb", "--desktopdir", "--desktopdirs", "--rawdesktopdb", "--desktopkey", "--showdesktopkey", "--no-showdesktopkey", "--dumpmedia", "--excludestickers", "--no-excludestickers", "--dumpavatars", "--devcustom", "--no-devcustom", "--importcsv", "--mapcsvfields", "--setselfid", "--onlydb", "--no-onlydb", "--overwrite", "--no-overwrite", "--listthreads", "--no-listthreads", "--listrecipients", "--no-listrecipients", "--showprogress", "--no-showprogress", "--removedoubles", "--reordermmssmsids", "--no-reordermmssmsids", "--stoponerror", "--no-stoponerror", "-v", "--verbose", "--no-verbose", "--dbusverbose", "--no-dbusverbose", "--hiperfall", "--deleteattachments", "--no-deleteattachments", "--onlyinthreads", "--onlyolderthan", "--onlynewerthan", "--onlylargerthan", "--onlytype", "--appendbody", "--prependbody", "--replaceattachments", "-h", "--help", "--no-help", "--scanmissingattachments", "--no-scanmissingattachments", "--showdbinfo", "--no-showdbinfo", "--scramble", "--no-scramble", "--importfromdesktop", "--no-importfromdesktop", "--limittodates", "--autolimitdates", "--no-autolimitdates", "--ignorewal", "--no-ignorewal", "--includemms", "--no-includemms", "--checkdbintegrity", "--no-checkdbintegrity", "--interactive", "--no-interactive", "--exporthtml", "--exportdesktophtml", "--exportplaintextbackuphtml", "--importplaintextbackup", "--addexportdetails", "--no-addexportdetails", "--includecalllog", "--no-includecalllog", "--includeblockedlist", "--no-includeblockedlist", "--includesettings", "--no-includesettings", "--includefullcontactlist", "--no-includefullcontactlist", "--themeswitching", "--no-themeswitching", "--searchpage", "--no-searchpage", "--stickerpacks", "--no-stickerpacks", "--includereceipts", "--no-includereceipts", "--chatfolders", "--no-chatfolders", "--allhtmlpages", "--split", "--split-by", "--originalfilenames", "--no-originalfilenames", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--importdesktopcontacts", "--no-importdesktopcontacts", "--light", "--no-light", "--exporttxt", "--exportdesktoptxt", "--append", "--no-append", "--desktopdbversion", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--findrecipient", "--importtelegram", "--listjsonchats", "--selectjsonchats", "--mapjsoncontacts", "--preventjsonmapping", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--xmlmarkread", "--no-xmlmarkread", "--fulldecode", "--no-fulldecode", "-l", "--logfile", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--mapxmlcontacts", "--listxmlcontacts", "--selectxmlchats", "--linkify", "--no-linkify", "--setchatcolors", "--mapxmlcontactnames", "--mapxmlcontactnamesfromfile", "--mapxmladdresses", "--mapxmladdressesfromfile", "--xmlautogroupnames", "--no-xmlautogroupnames", "--setcountrycode", "--compactfilenames", "--no-compactfilenames", "--generatedummy", "--generatedummyfordesktop", "--targetisdummy", "--no-targetisdummy", "--htmlignoremediatypes", "--htmlpagemenu", "--no-htmlpagemenu"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -88,12 +86,7 @@ class Arg
   bool d_stoponerror;
   bool d_verbose;
   bool d_dbusverbose;
-  long long int d_strugee;
-  long long int d_strugee3;
-  bool d_ashmorgan;
-  bool d_strugee2;
   long long int d_hiperfall;
-  long long int d_arc;
   bool d_deleteattachments;
   std::vector<long long int> d_onlyinthreads;
   std::string d_onlyolderthan;
@@ -172,6 +165,7 @@ class Arg
   std::string d_setcountrycode;
   bool d_compactfilenames;
   std::string d_generatedummy;
+  std::string d_generatedummyfordesktop;
   bool d_targetisdummy;
   std::vector<std::string> d_htmlignoremediatypes;
   bool d_htmlpagemenu;
@@ -235,12 +229,7 @@ class Arg
   inline bool stoponerror() const;
   inline bool verbose() const;
   inline bool dbusverbose() const;
-  inline long long int strugee() const;
-  inline long long int strugee3() const;
-  inline bool ashmorgan() const;
-  inline bool strugee2() const;
   inline long long int hiperfall() const;
-  inline long long int arc() const;
   inline bool deleteattachments() const;
   inline std::vector<long long int> const &onlyinthreads() const;
   inline std::string const &onlyolderthan() const;
@@ -319,6 +308,7 @@ class Arg
   inline std::string const &setcountrycode() const;
   inline bool compactfilenames() const;
   inline std::string const &generatedummy() const;
+  inline std::string const &generatedummyfordesktop() const;
   inline bool targetisdummy() const;
   inline std::vector<std::string> const &htmlignoremediatypes() const;
   inline bool htmlpagemenu() const;
@@ -604,34 +594,9 @@ inline bool Arg::dbusverbose() const
   return d_dbusverbose;
 }
 
-inline long long int Arg::strugee() const
-{
-  return d_strugee;
-}
-
-inline long long int Arg::strugee3() const
-{
-  return d_strugee3;
-}
-
-inline bool Arg::ashmorgan() const
-{
-  return d_ashmorgan;
-}
-
-inline bool Arg::strugee2() const
-{
-  return d_strugee2;
-}
-
 inline long long int Arg::hiperfall() const
 {
   return d_hiperfall;
-}
-
-inline long long int Arg::arc() const
-{
-  return d_arc;
 }
 
 inline bool Arg::deleteattachments() const
@@ -1022,6 +987,11 @@ inline bool Arg::compactfilenames() const
 inline std::string const &Arg::generatedummy() const
 {
   return d_generatedummy;
+}
+
+inline std::string const &Arg::generatedummyfordesktop() const
+{
+  return d_generatedummyfordesktop;
 }
 
 inline bool Arg::targetisdummy() const

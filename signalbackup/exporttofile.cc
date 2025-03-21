@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../common_filesystem.h"
+#include "../sqlstatementframe/sqlstatementframe.h"
+
 bool SignalBackup::exportBackupToFile(std::string const &filename, std::string const &passphrase, bool overwrite, bool keepattachmentdatainmemory)
 {
   Logger::message("\nExporting backup to '", filename, "'");

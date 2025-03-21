@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../sqlstatementframe/sqlstatementframe.h"
 
 SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers,
                                                        std::vector<std::any> const &result) const

@@ -19,6 +19,7 @@
 
 #include "signalbackup.ih"
 
+#include "../desktopattachmentreader/desktopattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
 bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreview,

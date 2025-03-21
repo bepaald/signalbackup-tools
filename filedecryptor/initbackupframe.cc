@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "filedecryptor.ih"
+
+#include "../endframe/endframe.h"
 
 BackupFrame *FileDecryptor::initBackupFrame(unsigned char *data, size_t length, uint64_t count) const
 {
@@ -50,7 +52,7 @@ BackupFrame *FileDecryptor::initBackupFrame(unsigned char *data, size_t length, 
     return nullptr;
   }
 
-  if (static_cast<BackupFrame::FRAMETYPE>(fieldnum) == BackupFrame::FRAMETYPE::END) // is a raw bool type, not a message
+  if (static_cast<BackupFrame::FRAMETYPE>(fieldnum) == BackupFrame::FRAMETYPE::END) [[unlikely]] // is a raw bool type, not a message
   {
     if (wiretype == BackupFrame::WIRETYPE::VARINT && datalength == 1)
       return new EndFrame(data, datalength, count);

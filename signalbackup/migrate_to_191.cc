@@ -41,6 +41,8 @@
 #include <cstdio>
 #endif
 
+#include "../reactionlist/reactionlist.h"
+
 bool SignalBackup::migrate_to_191(std::string const &selfphone)
 {
   if (d_databaseversion < 98)

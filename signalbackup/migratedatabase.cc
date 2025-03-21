@@ -19,6 +19,10 @@
 
 #include "signalbackup.ih"
 
+#include <regex>
+
+#include "../reactionlist/reactionlist.h"
+
 bool SignalBackup::migrateDatabase(int from, int to) const
 {
   // NOTE: This function does not perform a full migrate to a (necessarily) working

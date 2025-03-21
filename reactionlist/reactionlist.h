@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2020-2024  Selwin van Dijk
+  Copyright (C) 2020-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 

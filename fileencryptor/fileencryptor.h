@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -20,9 +20,8 @@
 #ifndef FILEENCRYPTOR_H_
 #define FILEENCRYPTOR_H_
 
-#include <cstring>
-#include <utility>
 #include <memory>
+#include <utility>
 
 #include "../cryptbase/cryptbase.h"
 

@@ -19,7 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../common_filesystem.h"
 #include "../scopeguard/scopeguard.h"
+#include "../mimetypes/mimetypes.h"
 
 std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::string const &directory,
                                           std::string const &threaddir, bool overwrite, bool append) const

@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../common_filesystem.h"
+
 void SignalBackup::duplicateQuotes(std::string *s) const
 {
   size_t pos = 0;

@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../common_filesystem.h"
+
 void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool themeswitching, bool compact) const
 {
 

@@ -39,6 +39,11 @@
 
 #include "signalbackup.ih"
 
+#include <chrono>
+
+#include "../mimetypes/mimetypes.h"
+#include "../common_be.h"
+
 bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id,
                                   std::string const &directory, std::string const &threaddir, bool isgroup,
                                   bool isnotetoself, bool isreleasechannel, std::set<long long int> const &recipient_ids,
@@ -2121,16 +2126,8 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       if (attachment_filename_on_disk.empty())    // filename was not set in database or was not impossible
       {                                           // to sanitize (eg reserved name in windows 'COM1')
         long long int datum = attachment_results.valueAsInt(a, "date_received", -1);
-        std::ostringstream tmp;
-        if (datum != -1)
-        {
-          // get datestring
-          std::time_t epoch = datum / 1000;
-          tmp << std::put_time(std::localtime(&epoch), "signal-%Y-%m-%d-%H%M%S");
-        }
-        else
-          tmp << "signal";
-        attachment_filename_on_disk = tmp.str() + "." + extension;
+        std::string datestr = (datum != -1) ? bepaald::toDateString(datum / 1000, "signal-%Y-%m-%d-%H%M%S") : "signal";
+        attachment_filename_on_disk = datestr + "." + extension;
       }
       if (!makeFilenameUnique(directory + "/" + threaddir + "/media", &attachment_filename_on_disk))
       {

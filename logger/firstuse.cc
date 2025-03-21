@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -17,14 +17,21 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "signalbackup.h"
+#include "logger.h"
 
-#include <set>
-#include <iterator>
-#include <optional>
+#include <chrono>
 
-#include "../msgtypes/msgtypes.h"
-#include "../autoversion.h"
+// prints out a header containing current date and time
+void Logger::firstUse() // static
+{
+  if (!s_instance->d_used) [[unlikely]]
+  {
+    s_instance->d_used = true;
 
-#include "htmlmessageinfo.h"
-#include "groupinfo.h"
+    std::time_t cur = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+    if (s_instance->d_currentoutput)
+      *(s_instance->d_currentoutput) << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " ***" << "\n";
+    std::cout << " *** Starting log: " << std::put_time(std::localtime(&cur), "%F %T") << " ***" << std::endl;
+  }
+}

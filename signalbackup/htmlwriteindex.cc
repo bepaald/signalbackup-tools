@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include <chrono>
+#include "../common_filesystem.h"
+
 bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                       std::string const &basename, std::map<long long int, RecipientInfo> *recipient_info,
                                       long long int note_to_self_tid, bool calllog, bool searchpage, bool stickerpacks, bool blocked,

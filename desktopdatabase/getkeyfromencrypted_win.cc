@@ -22,8 +22,12 @@
 #include "desktopdatabase.ih"
 
 #include "../base64/base64.h"
+
 #include <dpapi.h>
 #include <openssl/core_names.h>
+
+#include <regex>
+#include <fstream>
 
 bool DesktopDatabase::getKeyFromEncrypted_win()
 {

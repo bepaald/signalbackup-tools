@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,9 @@
 */
 
 #include "signalbackup.ih"
+
+#include <regex>
+#include <sstream>
 
 long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring) const
 {

@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include "../sqlstatementframe/sqlstatementframe.h"
+
 void SignalBackup::initFromFile()
 {
   if (!d_fd->ok())

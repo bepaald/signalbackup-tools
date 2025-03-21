@@ -22,6 +22,9 @@
 #include "../desktopdatabase/desktopdatabase.h"
 #include "../msgtypes/msgtypes.h"
 
+#include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
 /*
   TODO
   DONE? - limit timeframe

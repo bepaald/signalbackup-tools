@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include <sstream>
+
 void SignalBackup::updateGroupMembers(long long int id1, long long int id2) const // if id2 == -1, id1 is an offset
 {                                                                                 // else, change id1 into id2
   for (auto const &members : {"members"s, d_groups_v1_members})
@@ -36,7 +38,7 @@ void SignalBackup::updateGroupMembers(long long int id1, long long int id2) cons
       long long int gid = results.getValueAs<long long int>(i, "_id");
       std::string membersstr = results.getValueAs<std::string>(i, members);
       std::vector<int> membersvec;
-      std::stringstream ss(membersstr);
+      std::istringstream ss(membersstr);
       while (ss.good())
       {
         std::string substr;

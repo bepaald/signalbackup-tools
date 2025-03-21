@@ -19,6 +19,10 @@
 
 #include "signalbackup.ih"
 
+#include <chrono>
+
+#include "../common_filesystem.h"
+
 void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                                     std::string const &datewhereclause,
                                     std::map<long long int, RecipientInfo> *recipientinfo,

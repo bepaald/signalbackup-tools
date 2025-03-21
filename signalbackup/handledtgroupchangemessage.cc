@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+
 /*
   It seems the desktop message does not contain most of the info of the phone message. For example the creation message:
 

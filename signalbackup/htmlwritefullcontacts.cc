@@ -19,6 +19,9 @@
 
 #include "signalbackup.ih"
 
+#include <chrono>
+#include "../common_filesystem.h"
+
 bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long long int, RecipientInfo> *recipient_info,
                                          bool overwrite, bool append, bool light, bool themeswitching,
                                          std::string const &exportdetails, bool compact) const

@@ -25,8 +25,10 @@
 
 #include "signalbackup.ih"
 
+#include "../common_filesystem.h"
 #include "../scopeguard/scopeguard.h"
 #include <cerrno>
+#include <chrono>
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, std::string const &splitby,

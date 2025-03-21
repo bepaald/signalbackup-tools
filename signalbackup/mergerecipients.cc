@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,10 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../reactionlist/reactionlist.h"
+#include "../groupstatusmessageproto_typedef/groupstatusmessageproto_typedef.h"
+#include "../protobufparser/protobufparser.h"
 
 bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, bool editgroupmembers*/) // addresses is list of phone numbers
 {

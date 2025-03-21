@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include <sstream>
+
 void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
 {
   Logger::warning("Bad MAC in frame, trying to print frame info:");

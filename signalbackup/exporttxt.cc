@@ -18,6 +18,8 @@
 */
 
 #include "signalbackup.ih"
+
+#include "../common_filesystem.h"
 #include "msgrange.h"
 
 bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long int> const &limittothreads,

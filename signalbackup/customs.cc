@@ -23,7 +23,7 @@
 
 #include "signalbackup.ih"
 
-// #include <sstream>
+#include <sstream>
 // #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
 
 
