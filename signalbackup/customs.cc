@@ -27,96 +27,96 @@
 // #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
 
 
-/* move messages froma given thread to the note-to-self thread, adjusting recipienst */
-bool SignalBackup::arc(long long int tid, std::string const &selfphone)
-{
-  // check and warn about selfid & note-to-self thread
-  long long int note_to_self_thread_id = -1;
-  d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
-  if (d_selfid == -1)
-  {
-    if (!selfphone.empty())
-      Logger::error("Failed to determine id of 'self'.");
-    else // if (selfphone.empty())
-      Logger::error("Failed to determine Note-to-self thread. Consider passing `--setselfid \"[phone]\"' to set it manually");
+// /* move messages froma given thread to the note-to-self thread, adjusting recipienst */
+// bool SignalBackup::arc(long long int tid, std::string const &selfphone)
+// {
+//   // check and warn about selfid & note-to-self thread
+//   long long int note_to_self_thread_id = -1;
+//   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
+//   if (d_selfid == -1)
+//   {
+//     if (!selfphone.empty())
+//       Logger::error("Failed to determine id of 'self'.");
+//     else // if (selfphone.empty())
+//       Logger::error("Failed to determine Note-to-self thread. Consider passing `--setselfid \"[phone]\"' to set it manually");
 
-    return false;
-  }
-  else
-    note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", d_selfid, -1);
+//     return false;
+//   }
+//   else
+//     note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", d_selfid, -1);
 
-  Logger::message("Using self-id: ", d_selfid, ", with thread ", note_to_self_thread_id);
-  Logger::message("Initially in note-to-self-thread:");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
-                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", note_to_self_thread_id);
-  Logger::message("Initially in thread ", tid, ":");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
-                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", tid);
+//   Logger::message("Using self-id: ", d_selfid, ", with thread ", note_to_self_thread_id);
+//   Logger::message("Initially in note-to-self-thread:");
+//   d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+//                          "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", note_to_self_thread_id);
+//   Logger::message("Initially in thread ", tid, ":");
+//   d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+//                          "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", tid);
 
-  // check if any of the date_sents in tid match any of those in nts-thread
-  long long int doublemsgs = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ? AND date_sent IN (SELECT date_sent FROM message WHERE thread_id = ?)", {tid, note_to_self_thread_id}, -1);
-  if (doublemsgs == -1)
-    Logger::warning("Failed to check timestamps shared between threads.");
-  else if (doublemsgs > 0)
-    Logger::warning("Found duplicate timestamps between threads. Expecting at least ", doublemsgs, " will fail to import...");
-  else // doublemsg == 0
-    Logger::message("Found no duplicate timestamps between thread.");
+//   // check if any of the date_sents in tid match any of those in nts-thread
+//   long long int doublemsgs = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ? AND date_sent IN (SELECT date_sent FROM message WHERE thread_id = ?)", {tid, note_to_self_thread_id}, -1);
+//   if (doublemsgs == -1)
+//     Logger::warning("Failed to check timestamps shared between threads.");
+//   else if (doublemsgs > 0)
+//     Logger::warning("Found duplicate timestamps between threads. Expecting at least ", doublemsgs, " will fail to import...");
+//   else // doublemsg == 0
+//     Logger::message("Found no duplicate timestamps between thread.");
 
-  long long int non_outgoing_messages = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ? AND (type & 0x1f) != 23", tid, 1);
-  if (non_outgoing_messages > 0)
-  {
-    Logger::warning("Found ", non_outgoing_messages, " messages in thread ", tid, " that have a type not normally found in note-to-self");
-    Logger::warning_indent("threads (for example, incoming message, calls, or profile changes). Summary of");
-    Logger::warning_indent("message types found:");
-    d_database.prettyPrint(d_truncate, "SELECT DISTINCT type, (type & 0x1f) FROM message WHERE thread_id = ? ORDER BY (type & 0x1f)", tid);
-  }
+//   long long int non_outgoing_messages = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ? AND (type & 0x1f) != 23", tid, 1);
+//   if (non_outgoing_messages > 0)
+//   {
+//     Logger::warning("Found ", non_outgoing_messages, " messages in thread ", tid, " that have a type not normally found in note-to-self");
+//     Logger::warning_indent("threads (for example, incoming message, calls, or profile changes). Summary of");
+//     Logger::warning_indent("message types found:");
+//     d_database.prettyPrint(d_truncate, "SELECT DISTINCT type, (type & 0x1f) FROM message WHERE thread_id = ? ORDER BY (type & 0x1f)", tid);
+//   }
 
-  SqliteDB::QueryResults message_ids;
-  if (!d_database.exec("SELECT _id FROM message WHERE thread_id = ?", tid, &message_ids))
-    return false;
+//   SqliteDB::QueryResults message_ids;
+//   if (!d_database.exec("SELECT _id FROM message WHERE thread_id = ?", tid, &message_ids))
+//     return false;
 
-  Logger::message("Attempting move of ", message_ids.rows(), " messages...");
+//   Logger::message("Attempting move of ", message_ids.rows(), " messages...");
 
-  long long int moved = 0;
-  for (unsigned int i = 0; i < message_ids.rows(); ++i)
-  {
-    //Logger::message(message_ids.valueAsInt(i, "_id", -1));
-    if (!d_database.exec("UPDATE message SET from_recipient_id = ?, to_recipient_id = ?, thread_id = ? WHERE _id = ?", {d_selfid, d_selfid, note_to_self_thread_id, message_ids.value(i, "_id")}))
-    {
-      Logger::warning("Failed to move message id: ", message_ids.valueAsInt(i, "_id", -1));
-      Logger::warning_indent("Some info on this message:");
-      d_database.printLineMode("SELECT _id, date_sent, date_received, date_server, from_recipient_id, to_recipient_id, type, read, m_type, receipt_timestamp, has_delivery_receipt, has_read_receipt, viewed, mismatched_identities, network_failures, expires_in, expire_started, notified, quote_id, quote_author, quote_missing, quote_body, quote_mentions, quote_type, shared_contacts, unidentified, link_previews ,view_once, reactions_unread, reactions_last_seen, remote_deleted, mentions_self, notified_timestamp, server_guid, message_ranges, story_type, parent_story_id, message_extras, latest_revision_id, original_message_id, revision_number FROM message WHERE _id = ?", message_ids.value(i, "_id"));
-    }
-    else
-    {
-      ++moved;
-    }
-  }
+//   long long int moved = 0;
+//   for (unsigned int i = 0; i < message_ids.rows(); ++i)
+//   {
+//     //Logger::message(message_ids.valueAsInt(i, "_id", -1));
+//     if (!d_database.exec("UPDATE message SET from_recipient_id = ?, to_recipient_id = ?, thread_id = ? WHERE _id = ?", {d_selfid, d_selfid, note_to_self_thread_id, message_ids.value(i, "_id")}))
+//     {
+//       Logger::warning("Failed to move message id: ", message_ids.valueAsInt(i, "_id", -1));
+//       Logger::warning_indent("Some info on this message:");
+//       d_database.printLineMode("SELECT _id, date_sent, date_received, date_server, from_recipient_id, to_recipient_id, type, read, m_type, receipt_timestamp, has_delivery_receipt, has_read_receipt, viewed, mismatched_identities, network_failures, expires_in, expire_started, notified, quote_id, quote_author, quote_missing, quote_body, quote_mentions, quote_type, shared_contacts, unidentified, link_previews ,view_once, reactions_unread, reactions_last_seen, remote_deleted, mentions_self, notified_timestamp, server_guid, message_ranges, story_type, parent_story_id, message_extras, latest_revision_id, original_message_id, revision_number FROM message WHERE _id = ?", message_ids.value(i, "_id"));
+//     }
+//     else
+//     {
+//       ++moved;
+//     }
+//   }
 
-  Logger::message("Moved ", moved, " messages to note-to-self thread");
+//   Logger::message("Moved ", moved, " messages to note-to-self thread");
 
-  // if old thread empty -> mark inactive
-  if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ?", tid, -1) == 0)
-  {
-    Logger::message("Old thread is empty, marking as inactive");
-    if (!d_database.exec("UPDATE thread SET meaningful_messages = 0, active = 0 WHERE _id = ?", tid))
-      Logger::error("Failed to update old thread status");
-  }
+//   // if old thread empty -> mark inactive
+//   if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message WHERE thread_id = ?", tid, -1) == 0)
+//   {
+//     Logger::message("Old thread is empty, marking as inactive");
+//     if (!d_database.exec("UPDATE thread SET meaningful_messages = 0, active = 0 WHERE _id = ?", tid))
+//       Logger::error("Failed to update old thread status");
+//   }
 
-  // mark new thread as active
-  if (moved)
-    if (!d_database.exec("UPDATE thread SET meaningful_messages = 1, active = 1 WHERE _id = ?", note_to_self_thread_id))
-      Logger::error("Failed to update note-to-self thread");
+//   // mark new thread as active
+//   if (moved)
+//     if (!d_database.exec("UPDATE thread SET meaningful_messages = 1, active = 1 WHERE _id = ?", note_to_self_thread_id))
+//       Logger::error("Failed to update note-to-self thread");
 
-  Logger::message("Finally in note-to-self-thread:");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
-                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", note_to_self_thread_id);
-  Logger::message("Finally in thread ", tid, ":");
-  d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
-                         "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", tid);
+//   Logger::message("Finally in note-to-self-thread:");
+//   d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+//                          "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", note_to_self_thread_id);
+//   Logger::message("Finally in thread ", tid, ":");
+//   d_database.prettyPrint(d_truncate, "SELECT DISTINCT thread_id, from_recipient_id, to_recipient_id, COUNT(*) AS nmessages FROM message "
+//                          "WHERE thread_id = ? GROUP BY thread_id, from_recipient_id, to_recipient_id", tid);
 
-  return true;
-}
+//   return true;
+// }
 
 
 /* alter a version 214 database so it is compatiible enough with 215 to be imported into a 215 db as source */
