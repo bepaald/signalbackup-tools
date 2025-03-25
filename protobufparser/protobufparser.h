@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -79,8 +79,8 @@ namespace protobuffer
   {
     typedef double DOUBLE;
     typedef float FLOAT;
-    typedef int32_t ENUM;
     typedef int32_t INT32;
+    typedef int32_t ENUM;
     typedef int64_t INT64;
     typedef uint32_t UINT32;
     typedef uint64_t UINT64;
@@ -99,8 +99,8 @@ namespace protobuffer
   {
     typedef std::vector<double> DOUBLE;
     typedef std::vector<float> FLOAT;
-    typedef std::vector<int32_t> ENUM;
     typedef std::vector<int32_t> INT32;
+    typedef std::vector<int32_t> ENUM;
     typedef std::vector<int64_t> INT64;
     typedef std::vector<uint32_t> UINT32;
     typedef std::vector<uint64_t> UINT64;
@@ -236,8 +236,8 @@ class ProtoBufParser
   inline bool addFieldInternal(T const &value);
   int64_t readVarInt(int *pos, unsigned char const *data, int size, bool zigzag = false) const;
   int64_t getVarIntFieldLength(int pos, unsigned char const *data, int size) const;
-  std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint) const;
-  std::pair<unsigned char *, int64_t> getField(int num, bool *isvarint, int *pos) const;
+  std::pair<unsigned char *, int64_t> getField(int num, int32_t *wiretype) const;
+  std::pair<unsigned char *, int64_t> getField(int num, int32_t *wiretype, int *pos) const;
   void getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const;
   bool fieldExists(int num) const;
   template <int idx>
@@ -434,8 +434,8 @@ template <typename... Spec>
 template <typename T>
 inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser<Spec...>::getFieldAs(int num) const
 {
-  bool varint = false;
-  std::pair<unsigned char *, int64_t> fielddata(getField(num, &varint));
+  int32_t wiretype;
+  std::pair<unsigned char *, int64_t> fielddata(getField(num, &wiretype));
   if (fielddata.first)
   {
     if constexpr (std::is_constructible<T, char *, int64_t>::value) // this handles std::string and ProtoBufParser<U...> ?
@@ -448,7 +448,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       return fielddata;
     else // some numerical type (double / float / (u)int32/64 / bool / Enum)
     {
-      if (varint) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
+      if (wiretype == WIRETYPE::VARINT) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
       {
         if constexpr (std::is_same<T, ZigZag32>::value || std::is_same<T, ZigZag64>::value)
         {
@@ -478,7 +478,7 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
 
         }
-        else if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value)
+        else if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value) // float and double...
         {
           if (sizeof(T) == fielddata.second) [[likely]]
           {
@@ -506,8 +506,8 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
   int pos = 0;
   while (true)
   {
-    bool varint = false;
-    std::pair<unsigned char *, int64_t> fielddata(getField(num, &varint, &pos));
+    int32_t wiretype;
+    std::pair<unsigned char *, int64_t> fielddata(getField(num, &wiretype, &pos));
     if (fielddata.first)
     {
       if constexpr (std::is_constructible<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, char *, int64_t>::value)
@@ -520,7 +520,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
         result.emplace_back(fielddata);
       else // maybe check return type is numerical? if constexpr (typename ProtoBufParserReturn::item_return<T, true>::type::value_type == numerical type);
       {
-        if (varint) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
+        if (wiretype == WIRETYPE::VARINT) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
         {
           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
                         std::is_same<typename T::value_type, ZigZag64>::value)
@@ -544,7 +544,52 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
           }
           else
           {
-            Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (3)");
+            // repeated (s/ZigZag)int32 or int64 in a length delimited type indicates PACKED repeated field
+            if (wiretype == WIRETYPE::LENGTH_DELIMITED)
+            {
+              // Logger::error("PACKED PACKED PACKED");
+              // Logger::message("Data: ", bepaald::bytesToHexString(fielddata), "(size: ", fielddata.second, ")");
+
+              int pos2 = 0;
+              while (pos2 < fielddata.second)
+              {
+                if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
+                              std::is_same<typename T::value_type, ZigZag64>::value)
+                  //std::cout << "Readin varint from fielddata... pos: " << pos2 << " total length: " << fielddata.second << std::endl;
+                  result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
+                else if constexpr (std::is_same<typename T::value_type, Fixed32>::value ||
+                                   std::is_same<typename T::value_type, SFixed32>::value ||
+                                   std::is_same<typename T::value_type, float>::value)
+                {
+                  if (fielddata.second < pos2 + 4) [[unlikely]]
+                    break;
+                  typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
+                  std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 4);
+                  pos2 += 4;
+                  result.push_back(fixednumerical);
+                }
+                else if constexpr (std::is_same<typename T::value_type, Fixed64>::value ||
+                                   std::is_same<typename T::value_type, SFixed64>::value ||
+                                   std::is_same<typename T::value_type, double>::value)
+                {
+                  if (fielddata.second < pos2 + 8) [[unlikely]]
+                    break;
+                  typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
+                  std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 8);
+                  pos2 == 8;
+                  result.push_back(fixednumerical);
+                }
+                else // VARINT ([S|U]INT[32|64])
+                  result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, false));
+                //std::cout << "GOT : " << result.back() << std::endl;
+                //std::cout << "Pos now: " << pos2 << std::endl;
+              }
+            }
+            else
+            {
+              Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (3). Field data size: ", fielddata.second);
+              Logger::error_indent("Field data: ", bepaald::bytesToHexString(fielddata));
+            }
           }
         }
       }
@@ -602,11 +647,11 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
 
       bool del = false;
       int tmppos = pos;
-      bool isvarint = false;
+      int32_t wiretype;
 
       if constexpr (std::is_constructible<T, char *, int64_t>::value) // meant for probably for std::strings
       {
-        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &wiretype, &tmppos);
         T tmp(reinterpret_cast<char *>(l_data.first), l_data.second);
 
         //std::cout << "Created tmp1: " << tmp << std::endl;
@@ -616,28 +661,28 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
       }
       else if constexpr (std::is_same<T, std::pair<char *, uint64_t>>::value)
       {
-        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &wiretype, &tmppos);
         if (value->second == l_data.second && std::memcmp(reinterpret_cast<char *>(value->first), l_data.first, l_data.second) == 0)
           del = true;
       }
       else if constexpr (std::is_same<T, std::pair<unsigned char *, uint64_t>>::value)
       {
-        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &wiretype, &tmppos);
         if (value->second == l_data.second && std::memcmp(value->first, l_data.first, l_data.second) == 0)
           del = true;
       }
       else if constexpr (is_specialization_of<ProtoBufParser, T>::value)
       {
         //std::cout << "YO666" << std::endl;
-        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &wiretype, &tmppos);
         T tmp(l_data.first, l_data.second);
         if (tmp == *value)
           del = true;
       }
       else if constexpr (std::is_integral<T>::value)
       {
-        std::pair<unsigned char *, uint64_t> l_data = getField(num, &isvarint, &tmppos);
-        if (isvarint)
+        std::pair<unsigned char *, uint64_t> l_data = getField(num, &wiretype, &tmppos);
+        if (wiretype == WIRETYPE::VARINT)
         {
           int lpos = 0;
           T vint = readVarInt(&lpos, l_data.first, l_data.second, false); // zigzag not (yet) supported
@@ -1066,20 +1111,20 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
 }
 
 template <typename... Spec>
-std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, bool *isvarint) const
+std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, int32_t *wiretype) const
 {
   int pos = 0;
-  return getField(num, isvarint, &pos);
+  return getField(num, wiretype, &pos);
 }
 
 template <typename... Spec>
-std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, bool *isvarint, int *pos) const
+std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, int32_t *wiretype, int *pos) const
 {
   while (*pos < d_size)
   {
     //std::cout << "AT: " << *pos << " : " << "0x" << std::hex << static_cast<int>(d_data[*pos] & 0xff) << std::dec << std::endl;
     int32_t field    = (d_data[*pos] & 0b00000000000000000000000001111000) >> 3;
-    int32_t wiretype = d_data[*pos] & 0b00000000000000000000000000000111;
+    *wiretype = d_data[*pos] & 0b00000000000000000000000000000111;
     int fieldshift = 4;
     while (d_data[*pos] & 0b00000000000000000000000010000000 && // skipping the shift
            *pos < d_size - 1)
@@ -1092,7 +1137,7 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
     // std::cout << "wiret: " << wiretype << std::endl;
 
     ++(*pos);
-    switch (wiretype)
+    switch (*wiretype)
     {
       case WIRETYPE::LENGTH_DELIMITED:
       {
@@ -1104,7 +1149,6 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, b
       }
       case WIRETYPE::VARINT:
       {
-        *isvarint = true;
         //std::cout << "AT: " << *pos << " : " << "0x" << std::hex << static_cast<int>(d_data[*pos] & 0xff) << std::dec << std::endl;
         uint64_t fieldlength = getVarIntFieldLength(*pos, d_data, d_size);
         if (field == num)

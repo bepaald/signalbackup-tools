@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -34,13 +34,58 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   for (unsigned int i = 0; i < threads.rows(); ++i)
   {
     long long int tid = threads.valueAsInt(i, "_id");
-    long long int removed_last = 0;
+    long long int removed_this_tread = 0;
+
+    //SqliteDB::QueryResults todelete;
+    if (d_database.containsTable("sms"))
+    {
+      if (!d_database.exec("WITH messages_with_attachmentsize AS "
+                           "("
+                           "  SELECT sms._id, " + d_sms_recipient_id + ", thread_id, date_sent, type, body FROM sms"
+                           "    WHERE thread_id = ?"
+                           "    GROUP BY sms._id, " + d_sms_recipient_id + ", thread_id, date_sent, type, body"
+                           "), "
+                           "candidates AS "
+                           "("
+                           "  SELECT M._id, M." + d_sms_recipient_id + ", M.thread_id, M.date_sent, M.type, M.body FROM"
+                           "  ("
+                           "    SELECT _id, " + d_sms_recipient_id + ", thread_id, date_sent, type, body FROM messages_with_attachmentsize"
+                           "    GROUP BY " + d_sms_recipient_id + ", thread_id, type, COALESCE(body, '') "
+                           "    HAVING COUNT(*) > 1"
+                           "  ) AS D"
+                           "  JOIN messages_with_attachmentsize AS M ON"
+                           "    COALESCE(M.body, '') = COALESCE(D.body, '') AND"
+                           "    M." + d_sms_recipient_id + " = D." + d_sms_recipient_id + " AND"
+                           "    M.type = D.type"
+                           "  ORDER BY M._id"
+                           "),"
+                           "to_delete AS "
+                           "("
+                           "  SELECT _id FROM candidates C WHERE "
+                           "  _id > "
+                           "  ("
+                           "    SELECT min(_id) FROM candidates WHERE "
+                           "      COALESCE(body, '') = COALESCE(C.body, '') AND "
+                           "      " + d_sms_recipient_id + " = C." + d_sms_recipient_id + " AND "
+                           "      type = C.type AND"
+                           "      ABS(date_sent - C.date_sent) <= ?"
+                           "  )"
+                           ") "
+                           //" SELECT _id FROM to_delete", {tid, milliseconds}, &todelete))
+                           "DELETE FROM sms WHERE _id IN to_delete", {tid, milliseconds}))
+      {
+        Logger::error("Failed to delete doubles from table 'sms'");
+        return;
+      }
+      removed_this_tread += d_database.changed();
+      removed_total += removed_this_tread;
+    }
 
     //SqliteDB::QueryResults todelete;
     if (!d_database.exec("WITH messages_with_attachmentsize AS "
                          "("
                          "  SELECT " + d_mms_table + "._id, " + d_mms_recipient_id + ", thread_id, " + d_mms_date_sent + ", " + d_mms_type + ", body, IFNULL(COUNT(data_size), 0) AS numattachments, IFNULL(SUM(data_size), 0) AS totalfilesize FROM " + d_mms_table +
-                         "    LEFT JOIN " + d_part_table + " ON message_id IS " + d_mms_table + "._id"
+                         "    LEFT JOIN " + d_part_table + " ON " + d_part_mid + " IS " + d_mms_table + "._id"
                          "    WHERE thread_id = ?"
                          "    GROUP BY " + d_mms_table + "._id, " + d_mms_recipient_id + ", thread_id, " + d_mms_date_sent + ", " + d_mms_type + ", body"
                          "), "
@@ -77,13 +122,13 @@ void SignalBackup::removeDoubles(long long int milliseconds)
                          //" SELECT _id FROM to_delete", {tid, milliseconds}, &todelete))
                          "DELETE FROM " + d_mms_table + " WHERE _id IN to_delete", {tid, milliseconds}))
     {
-      Logger::error("Failed to delete doubles");
+      Logger::error("Failed to delete doubles from table '", d_mms_table, "'");
       return;
     }
+    removed_this_tread += d_database.changed();
+    removed_total += removed_this_tread;
 
-    removed_last = d_database.changed();
-    removed_total += removed_last;
-    Logger::message("Deleted ", (removed_last ? Logger::Control::BOLD : Logger::Control::NORMAL), removed_last, Logger::Control::NORMAL, " duplicate entries from thread ", tid, " (", i + 1, "/", threads.rows(), ")");
+    Logger::message("Deleted ", (removed_this_tread ? Logger::Control::BOLD : Logger::Control::NORMAL), removed_this_tread, Logger::Control::NORMAL, " duplicate entries from thread ", tid, " (", i + 1, "/", threads.rows(), ")");
     //todelete.prettyPrint(false);
   }
   Logger::message("Removed ", (removed_total ? Logger::Control::BOLD : Logger::Control::NORMAL), removed_total, Logger::Control::NORMAL, " doubled messages from database");
