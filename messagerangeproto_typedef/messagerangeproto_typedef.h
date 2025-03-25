@@ -26,6 +26,7 @@ struct Fixed32;
 struct Fixed64;
 struct SFixed32;
 struct SFixed64;
+struct Enum;
 namespace protobuffer
 {
   namespace optional
@@ -33,7 +34,7 @@ namespace protobuffer
     typedef double DOUBLE;
     typedef float FLOAT;
     typedef int32_t INT32;
-    typedef long int ENUM;
+    typedef Enum ENUM;
     typedef int64_t INT64;
     typedef uint32_t UINT32;
     typedef uint64_t UINT64;
@@ -53,7 +54,7 @@ namespace protobuffer
     typedef std::vector<double> DOUBLE;
     typedef std::vector<float> FLOAT;
     typedef std::vector<int32_t> INT32;
-    typedef std::vector<long int> ENUM;
+    typedef std::vector<Enum> ENUM;
     typedef std::vector<int64_t> INT64;
     typedef std::vector<uint32_t> UINT32;
     typedef std::vector<uint64_t> UINT64;

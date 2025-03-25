@@ -48,29 +48,59 @@ template < template <typename...> class Template, typename... Args >
 struct is_specialization_of< Template, Template<Args...> > : std::true_type {};
 
 struct ZigZag32
-{};
+{
+  int32_t value; // this holds the decoded (non-zigzag) value
+  operator int32_t() const { return value; }
+  ZigZag32() = default;
+  ZigZag32(uint32_t v) : value(v) {}
+};
 
 struct ZigZag64
-{};
+{
+  int64_t value; // this holds the decoded (non-zigzag) value
+  operator int64_t() const { return value; }
+  ZigZag64() = default;
+  ZigZag64(uint64_t v) : value(v) {}
+};
 
 struct Fixed32
 {
   uint32_t value;
+  operator uint32_t() const { return value; }
+  Fixed32() = default;
+  Fixed32(uint32_t v) : value(v) {}
 };
 
 struct Fixed64
 {
   uint64_t value;
+  operator uint64_t() const { return value; }
+  Fixed64() = default;
+  Fixed64(uint64_t v) : value(v) {}
 };
 
 struct SFixed32
 {
   int32_t value;
+  operator int32_t() const { return value; }
+  SFixed32() = default;
+  SFixed32(int32_t v) : value(v) {}
 };
 
 struct SFixed64
 {
   int64_t value;
+  operator int64_t() const { return value; }
+  SFixed64() = default;
+  SFixed64(int64_t v) : value(v) {}
+};
+
+struct Enum
+{
+  int32_t value;
+  operator int32_t() const { return value; }
+  Enum() = default;
+  Enum(int32_t v) : value(v) {}
 };
 
 namespace protobuffer
@@ -80,7 +110,7 @@ namespace protobuffer
     typedef double DOUBLE;
     typedef float FLOAT;
     typedef int32_t INT32;
-    typedef long int ENUM; // just to differentiate it from int32_t
+    typedef Enum ENUM;
     typedef int64_t INT64;
     typedef uint32_t UINT32;
     typedef uint64_t UINT64;
@@ -100,7 +130,7 @@ namespace protobuffer
     typedef std::vector<double> DOUBLE;
     typedef std::vector<float> FLOAT;
     typedef std::vector<int32_t> INT32;
-    typedef std::vector<long int> ENUM; // just to differentiate it from int32_t
+    typedef std::vector<Enum> ENUM;
     typedef std::vector<int64_t> INT64;
     typedef std::vector<uint32_t> UINT32;
     typedef std::vector<uint64_t> UINT64;
@@ -265,7 +295,6 @@ class ProtoBufParser
   inline void printSingle(int indent, std::string const &typestring) const;
   template<std::size_t idx, typename T>
   inline void printRepeated(int indent, std::string const &typestring) const;
-
 };
 
 template <typename... Spec>
@@ -820,7 +849,11 @@ inline constexpr unsigned int ProtoBufParser<Spec...>::getType() //static
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::SINT64>::value ||
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
-                                  protobuffer::repeated::SINT64>::value)
+                                  protobuffer::repeated::SINT64>::value ||
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                                  protobuffer::optional::BOOL>::value ||
+                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
+                                  protobuffer::repeated::BOOL>::value)
     return WIRETYPE::VARINT;
   else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::FLOAT>::value ||
@@ -833,11 +866,7 @@ inline constexpr unsigned int ProtoBufParser<Spec...>::getType() //static
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::SFIXED32>::value ||
                      std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
-                                  protobuffer::repeated::SFIXED32>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
-                                  protobuffer::optional::BOOL>::value ||
-                     std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
-                                  protobuffer::repeated::BOOL>::value)
+                                  protobuffer::repeated::SFIXED32>::value)
     return WIRETYPE::FIXED32;
   else if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type,
                                   protobuffer::optional::DOUBLE>::value ||
@@ -867,6 +896,7 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
   unsigned int field = idx;
   unsigned int constexpr type = getType<idx>();
   unsigned int fielddatasize = 0;
+
   if constexpr (type == WIRETYPE::LENGTH_DELIMITED)
   {
     if constexpr (is_specialization_of<std::pair, T>{}) // bytes
@@ -875,7 +905,14 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
       fielddatasize = value.size();
   }
   else if constexpr (type == WIRETYPE::VARINT)
-    fielddatasize = varIntSize(value);
+  {
+    if constexpr (std::is_same<T, ZigZag32>::value)
+      fielddatasize = varIntSize((static_cast<uint32_t>(value) << 1) ^ static_cast<uint32_t>(value >> 31));
+    else if constexpr (std::is_same<T, ZigZag64>::value)
+      fielddatasize = varIntSize((static_cast<uint64_t>(value) << 1) ^ static_cast<uint64_t>(value >> 63));
+    else
+      fielddatasize = varIntSize(value);
+  }
   else if constexpr (type == WIRETYPE::FIXED32)
     fielddatasize = 4;
   else if constexpr (type == WIRETYPE::FIXED64)
@@ -906,7 +943,14 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
     if constexpr (type == WIRETYPE::LENGTH_DELIMITED)
       varint = fielddatasize;
     else if constexpr (type == WIRETYPE::VARINT)
-      varint = value;
+    {
+      if constexpr (std::is_same<T, ZigZag32>::value)
+        varint = ((static_cast<uint32_t>(value) << 1) ^ static_cast<uint32_t>(value >> 31));
+      else if constexpr (std::is_same<T, ZigZag64>::value)
+        varint = ((static_cast<uint64_t>(value) << 1) ^ static_cast<uint64_t>(value >> 63));
+      else
+        varint = value;
+    }
     while (varint > 127)
     {
       mem[mempos] = (static_cast<uint8_t>(varint & 127)) | 128;
@@ -1004,7 +1048,7 @@ int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char const *data,
   value |= ((static_cast<uint64_t>(data[(*pos)++]) & 0b01111111) << (times * 7));
 
   if (zigzag)
-    value = -(value & 1) ^ (value >> 1);
+    value = ((value >> 1) ^ (~(value & 1) + 1));
 
   return value;
 }
@@ -1288,9 +1332,6 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   //   return;
   // }
 
-  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::ENUM>::value)
-    return printSingle<idx>(indent, "(optional::enum)");
-
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::INT32>::value)
     return printSingle<idx>(indent, "(optional::int32)");
 
@@ -1327,6 +1368,9 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::SFIXED64>::value)
     return printSingle<idx>(indent, "(optional::sfixed64)");
 
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::ENUM>::value)
+    return printSingle<idx>(indent, "(optional::enum)");
+
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::BOOL>::value)
   {
     auto tmp = getField<idx + 1>();
@@ -1349,7 +1393,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     if (getField<idx + 1>().has_value())
     {
-      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::protobuf): ");
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::protobuf):");
       return getField<idx + 1>().value().print(indent + 2);
     }
   }
@@ -1358,9 +1402,6 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::STRING>::value)
     return printRepeated<idx, std::string>(indent, "(repeated::string)");
-
-  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::ENUM>::value)
-    return printRepeated<idx, protobuffer::optional::ENUM>(indent, "(repeated::enum)");
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::INT32>::value)
     return printRepeated<idx, int32_t>(indent, "(repeated::int32)");
@@ -1398,6 +1439,9 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::SFIXED64>::value)
     return printRepeated<idx, int64_t>(indent, "(repeated::sfixed64)");
 
+  if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::ENUM>::value)
+    return printRepeated<idx, Enum>(indent, "(repeated::enum)");
+
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BOOL>::value)
   {
     std::vector<bool> tmp = getField<idx + 1>();
@@ -1423,7 +1467,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
       auto tmp = getField<idx + 1>();
       for (unsigned int i = 0; i < tmp.size(); ++i)
       {
-        Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::protobuf) (", i + 1 , "/", tmp.size(), "): ");
+        Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::protobuf) (", i + 1 , "/", tmp.size(), "):");
         tmp.at(i).print(indent + 2);
       }
       return;
