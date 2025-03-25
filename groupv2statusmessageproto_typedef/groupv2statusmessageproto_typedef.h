@@ -36,7 +36,7 @@ namespace protobuffer
     typedef double DOUBLE;
     typedef float FLOAT;
     typedef int32_t INT32;
-    typedef int32_t ENUM;
+    typedef long int ENUM;
     typedef int64_t INT64;
     typedef uint32_t UINT32;
     typedef uint64_t UINT64;
@@ -56,7 +56,7 @@ namespace protobuffer
     typedef std::vector<double> DOUBLE;
     typedef std::vector<float> FLOAT;
     typedef std::vector<int32_t> INT32;
-    typedef std::vector<int32_t> ENUM;
+    typedef std::vector<long int> ENUM;
     typedef std::vector<int64_t> INT64;
     typedef std::vector<uint32_t> UINT32;
     typedef std::vector<uint64_t> UINT64;

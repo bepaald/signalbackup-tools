@@ -80,7 +80,7 @@ namespace protobuffer
     typedef double DOUBLE;
     typedef float FLOAT;
     typedef int32_t INT32;
-    typedef int32_t ENUM;
+    typedef long int ENUM; // just to differentiate it from int32_t
     typedef int64_t INT64;
     typedef uint32_t UINT32;
     typedef uint64_t UINT64;
@@ -100,7 +100,7 @@ namespace protobuffer
     typedef std::vector<double> DOUBLE;
     typedef std::vector<float> FLOAT;
     typedef std::vector<int32_t> INT32;
-    typedef std::vector<int32_t> ENUM;
+    typedef std::vector<long int> ENUM; // just to differentiate it from int32_t
     typedef std::vector<int64_t> INT64;
     typedef std::vector<uint32_t> UINT32;
     typedef std::vector<uint64_t> UINT64;
@@ -538,7 +538,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
         {
           if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second) [[likely]]
           {
-            typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
+            typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be fixed32, fixed64, float or double
             std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);
             result.push_back(fixednumerical);
           }
@@ -576,7 +576,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
                     break;
                   typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
                   std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 8);
-                  pos2 == 8;
+                  pos2 += 8;
                   result.push_back(fixednumerical);
                 }
                 else // VARINT ([S|U]INT[32|64])
@@ -1295,7 +1295,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
     return printSingle<idx>(indent, "(optional::int32)");
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::INT64>::value)
-    return printSingle<idx>(indent, "(optional::int32)");
+    return printSingle<idx>(indent, "(optional::int64)");
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::UINT32>::value)
     return printSingle<idx>(indent, "(optional::uint32)");
@@ -1354,14 +1354,13 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
     }
   }
 
-
   // REPEATED
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::STRING>::value)
     return printRepeated<idx, std::string>(indent, "(repeated::string)");
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::ENUM>::value)
-    return printRepeated<idx, int32_t>(indent, "(repeated::enum)");
+    return printRepeated<idx, protobuffer::optional::ENUM>(indent, "(repeated::enum)");
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::INT32>::value)
     return printRepeated<idx, int32_t>(indent, "(repeated::int32)");
@@ -1412,12 +1411,8 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   {
     std::vector<std::pair<unsigned char *, uint64_t>> tmp = getField<idx + 1>();
     for (unsigned int i = 0; i < tmp.size(); ++i)
-    {
-      std::pair<unsigned char *, size_t> tmp2 = tmp[i];
-      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bytes) (", i + 1 , "/", tmp.size(), "): ",
-                      bepaald::bytesToHexString(tmp2.first, tmp2.second));
-      return;
-    }
+      Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bytes[", tmp[i].second, "]) (", i + 1 , "/", tmp.size(), "): ",
+                      bepaald::bytesToHexString(tmp[i].first, tmp[i].second));
     return;
   }
 
