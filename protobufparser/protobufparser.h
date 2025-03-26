@@ -563,22 +563,24 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second));
           }
         }
-        else
+        else // wiretype not varint -> [S]FIXED[32|64]
         {
-          if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second) [[likely]]
+          if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second &&
+              (wiretype == WIRETYPE::FIXED64 || wiretype == WIRETYPE::FIXED32)) [[likely]] // [float/double/fixed32/fixed64]
           {
-            typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be fixed32, fixed64, float or double
+            typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical;
             std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);
             result.push_back(fixednumerical);
           }
           else
           {
-            // repeated (s/ZigZag)int32 or int64 in a length delimited type indicates PACKED repeated field
+            // if any type, that is normally VARINT ([U|S]INT[32|64]+BOOL), is in a LENGTH_DELIMITED field
+            // and is a repeated::-type, this indicates a 'packed' field: the wiretype and length are omitted
+            // after the first value, instead the length indicates the total length of the pack, and values
+            // are concatenated one after the other...
             if (wiretype == WIRETYPE::LENGTH_DELIMITED)
             {
-              // Logger::error("PACKED PACKED PACKED");
               // Logger::message("Data: ", bepaald::bytesToHexString(fielddata), "(size: ", fielddata.second, ")");
-
               int pos2 = 0;
               while (pos2 < fielddata.second)
               {
@@ -608,7 +610,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
                   pos2 += 8;
                   result.push_back(fixednumerical);
                 }
-                else // VARINT ([S|U]INT[32|64])
+                else // VARINT ([S|U]INT[32|64]/BOOL)
                   result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, false));
                 //std::cout << "GOT : " << result.back() << std::endl;
                 //std::cout << "Pos now: " << pos2 << std::endl;
@@ -662,11 +664,10 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
   {
     getPosAndLengthForField(num, startpos, &pos, &fieldlength);
 
-    if (pos == -1 || fieldlength == -1)
-      return false;
-
     //std::cout << "DATA: " << bepaald::bytesToHexString(d_data, d_size) << std::endl;
     //std::cout << "Got requested field at pos " << pos << " (length " << fieldlength << ")" << std::endl;
+    if (pos == -1 || fieldlength == -1)
+      return false;
     //std::cout << "FIELD: " << bepaald::bytesToHexString(d_data + pos, fieldlength) << std::endl;
 
     if constexpr (!std::is_same<T, std::nullptr_t>::value)
@@ -1071,17 +1072,20 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
   int localpos = startpos;
   while (localpos < d_size)
   {
-    int32_t field    = (d_data[localpos] & 0b00000000000000000000000001111000) >> 3;
-    int32_t wiretype = d_data[localpos] & 0b00000000000000000000000000000111;
+    int32_t field    = (d_data[localpos] & 0b0111'1000) >> 3;
+    int32_t wiretype =  d_data[localpos] & 0b0000'0111;
     int fieldshift = 4;
     unsigned int localpos2 = localpos;
     while (localpos2 < d_size - 1 &&
-           d_data[localpos2] & 0b00000000000000000000000010000000) // skipping the shift
+           d_data[localpos2] & 0b10000000) // skipping the shift
     {
-      field |= (d_data[++localpos2] & 0b00000000000000000000000001111111) << fieldshift;
+      field |= (d_data[++localpos2] & 0b01111111) << fieldshift;
       fieldshift += 7;
     }
     int nextpos = localpos2 + 1;
+
+    //std::cout << "F: " << field << std::endl;
+    //std::cout << "W: " << wiretype << std::endl;
 
     switch (wiretype)
     {
@@ -1115,7 +1119,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         if (field == num)
         {
           *pos = localpos;
-          *fieldlength = localfieldlength + 1;
+          *fieldlength = localfieldlength + nextpos - localpos;
           return;
         }
         localpos = nextpos + localfieldlength;
@@ -1127,7 +1131,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
         if (field == num)
         {
           *pos = localpos;
-          *fieldlength = localfieldlength + 1;
+          *fieldlength = localfieldlength + nextpos - localpos;
           return;
         }
         localpos = nextpos + localfieldlength;
@@ -1136,13 +1140,13 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       case WIRETYPE::STARTGROUP:
       {
         if (field == num)
-          Logger::warning("Skipping startgroup for now");
+          Logger::warning("Skipping startgroup for now (deprecated)");
         break;
       }
       case WIRETYPE::ENDGROUP:
       {
         if (field == num)
-          Logger::warning("Skipping endgroup for now");
+          Logger::warning("Skipping endgroup for now (deprecated)");
         break;
       }
       default:
@@ -1167,14 +1171,14 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, i
   while (*pos < d_size)
   {
     //std::cout << "AT: " << *pos << " : " << "0x" << std::hex << static_cast<int>(d_data[*pos] & 0xff) << std::dec << std::endl;
-    int32_t field    = (d_data[*pos] & 0b00000000000000000000000001111000) >> 3;
-    *wiretype = d_data[*pos] & 0b00000000000000000000000000000111;
+    int32_t field = (d_data[*pos] & 0b0111'1000) >> 3;
+    *wiretype     =  d_data[*pos] & 0b0000'0111;
     int fieldshift = 4;
-    while (d_data[*pos] & 0b00000000000000000000000010000000 && // skipping the shift
+    while (d_data[*pos] & 0b1000'0000 && // skipping the shift
            *pos < d_size - 1)
     {
       //std::cout << "Adding byte to varint field number" << std::endl;
-      field |= (d_data[++(*pos)] & 0b00000000000000000000000001111111) << fieldshift;
+      field |= (d_data[++(*pos)] & 0b0111'1111) << fieldshift;
       fieldshift += 7;
     }
     // std::cout << "field: " << field << std::endl;
