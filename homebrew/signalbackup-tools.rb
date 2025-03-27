@@ -9,6 +9,7 @@ class SignalbackupTools < Formula
   depends_on "cmake" =>:build
   depends_on "openssl@3"
   depends_on "sqlite"
+  depends_on "dbus" =>:optional
 
   def install
     system "cmake", "-B", "build", *std_cmake_args
