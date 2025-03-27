@@ -12,7 +12,11 @@ class SignalbackupTools < Formula
   depends_on "dbus" =>:optional
 
   def install
-    system "cmake", "-B", "build", *std_cmake_args
+    if build.with?('dbus')
+      system "cmake", "-B", "build", *std_cmake_args
+    else
+      system "cmake", "-B", "build", "-DWITHOUT_DBUS=1", *std_cmake_args
+    end
     system "cmake", "--build", "build"
     bin.install "build/signalbackup-tools"
   end
