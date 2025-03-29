@@ -48,7 +48,7 @@ if (APPLE)
   endif()
 endif()
 
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.cc *.h)
+file(GLOB SOURCES CONFIGURE_DEPENDS */*.cc */*.h *.cc *.h)
 add_executable(signalbackup-tools ${SOURCES})
 
 target_link_libraries(signalbackup-tools OpenSSL::Crypto SQLite::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})

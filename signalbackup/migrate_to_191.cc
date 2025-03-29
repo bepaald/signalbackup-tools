@@ -1962,7 +1962,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
     changed = d_database.changed();
     if (changed)
-      Logger::message("Updated ", changed, " doubled messages");
+      Logger::message("Deleted ", changed, " doubled messages");
 
     if (d_database.exec("SELECT COUNT(*) FROM message") &&
         d_database.exec("PRAGMA quick_check"))

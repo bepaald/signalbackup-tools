@@ -115,6 +115,12 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     if (results.rows() != 1 || results.columns() != 1 ||
         !results.valueHasType<std::string>(0, 0))
     {
+      // this can happen if the thread list is passed by range (1-5), but not all of 1,2,3,4,5 exist. Let's be forgiving of this and continue
+      if (source->d_database.getSingleResultAs<long long int>("SELECT EXISTS (SELECT 1 FROM thread WHERE _id = ?)", thread, 1) == 0)
+      {
+        Logger::warning("Requested thread (_id: ", thread, ") not found in source database. Skipping...");
+        return true;
+      }
       Logger::error("Failed to get recipient id from source database");
       return false;
     }
@@ -160,6 +166,13 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
         Logger::message("Skipping releasechannel...");
         return true; // when this channel is actually active, maybe remove this return statement and
                      // manually set targetthread with the help of target_releasechannel (if != -1)
+      }
+
+      // this can happen if the thread list is passed by range (1-5), but not all of 1,2,3,4,5 exist. Let's be forgiving of this and continue
+      if (source->d_database.getSingleResultAs<long long int>("SELECT EXISTS (SELECT 1 FROM thread WHERE _id = ?)", thread, 1) == 0)
+      {
+        Logger::warning("Requested thread (_id: ", thread, ") not found in source database. Skipping...");
+        return true;
       }
 
       Logger::error("Failed to get uuid/phone/group_id from source database");
