@@ -9,7 +9,12 @@ class SignalbackupTools < Formula
   depends_on "cmake" =>:build
   depends_on "openssl@3"
   depends_on "sqlite"
-  depends_on "dbus" =>:optional
+  on_linux do
+    depends_on "dbus" =>:recommended
+  end
+  if build.with?('dbus')
+    depends_on "pkg-config"
+  end
 
   def install
     if build.with?('dbus')
