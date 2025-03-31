@@ -20,6 +20,10 @@ elseif(CMAKE_CXX_STANDARD_LATEST) # if cmake version is ok and the variable is s
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10.0)
+  add_complie_options(-Wno-attributes)
+endif()
+
 # find and set DBUS include and library paths
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if (WITHOUT_DBUS)

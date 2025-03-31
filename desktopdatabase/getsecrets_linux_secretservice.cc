@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -57,8 +57,8 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
                      "/org/freedesktop/secrets",
                      "org.freedesktop.Secret.Service",
                      "OpenSession",
-                     {"plain",
-                      DBusVariant{""}});
+                     {"plain"s,
+                      DBusVariant{""s}});
   std::string session_objectpath = dbuscon.get<std::string>("vo", 1);
   if (session_objectpath.empty())
   {
@@ -77,8 +77,8 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
   //                      "/org/freedesktop/secrets",
   //                      "org.freedesktop.Secret.Service",
   //                      "SearchItems",
-  //                      {DBusDict{{"org.freedesktop.Secret.Collection.Label", "Chromium Keys/Chromium Safe Storage"},
-  //                                {"Label", "Chromium Keys/Chromium Safe Storage"}}});
+  //                      {DBusDict{{"org.freedesktop.Secret.Collection.Label"s, "Chromium Keys/Chromium Safe Storage"s},
+  //                                {"Label"s, "Chromium Keys/Chromium Safe Storage"s}}});
   // }
 
   // if constexpr (false)
@@ -91,7 +91,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
   //                      "/org/freedesktop/secrets",
   //                      "org.freedesktop.Secret.Service",
   //                      "ReadAlias",
-  //                      {"default"});
+  //                      {"default"s});
   // }
 
   /* UNLOCK THE DEFAULT COLLECTION */
@@ -124,7 +124,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
                        prompt.c_str(),
                        "org.freedesktop.Secret.Prompt",
                        "Prompt",
-                       {""}); // 'Platform specific window handle to use for showing the prompt.'
+                       {""s}); // 'Platform specific window handle to use for showing the prompt.'
 
     /* WAIT FOR PROMPT COMPLETED SIGNAL */
     // note, we will not even check the signal contents (dismissed/result), since we check if we're
@@ -140,7 +140,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
                      "/org/freedesktop/secrets/aliases/default",
                      "org.freedesktop.DBus.Properties",
                      "Get",
-                     {"org.freedesktop.Secret.Collection", "Locked"});
+                     {"org.freedesktop.Secret.Collection"s, "Locked"s});
   bool islocked = dbuscon.get<bool>("v", 0, true);
   if (islocked)
   {
@@ -154,7 +154,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
                      "/org/freedesktop/secrets/aliases/default",
                      "org.freedesktop.DBus.Properties",
                      "Get",
-                     {"org.freedesktop.Secret.Collection", "Items"});
+                     {"org.freedesktop.Secret.Collection"s, "Items"s});
   std::vector<std::string> items = dbuscon.get<std::vector<std::string>>("v", 0);
   if (items.empty())
   {
@@ -171,7 +171,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
                        item.c_str(),
                        "org.freedesktop.DBus.Properties",
                        "Get",
-                       {"org.freedesktop.Secret.Item", "Label"});
+                       {"org.freedesktop.Secret.Item"s, "Label"s});
     std::string label = dbuscon.get<std::string>("v", 0);
     if (d_dbus_verbose) Logger::message(" *** Label: ", label);
 

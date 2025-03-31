@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -80,7 +80,7 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
                      path.c_str(),
                      interface.c_str(),
                      "open",
-                     {walletname, int64_t{0}, "signalbackup-tools"});
+                     {walletname, int64_t{0}, "signalbackup-tools"s});
   int32_t handle = dbuscon.get<int32_t>("i", 0 - 1);
   if (handle < 0)
   {
@@ -97,7 +97,7 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
                      path.c_str(),
                      interface.c_str(),
                      "folderList",
-                     {handle, "signalbackup-tools"});
+                     {handle, "signalbackup-tools"s});
   std::vector<std::string> folders = dbuscon.get<std::vector<std::string>>("as", 0);
   if (folders.empty())
   {
@@ -121,7 +121,7 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
                          path.c_str(),
                          interface.c_str(),
                          "passwordList",
-                         {handle, folder, "signalbackup-tools"});
+                         {handle, folder, "signalbackup-tools"s});
       /*
         The password list returns a dict (dicts are always (in) an array as per dbus spec)
         the signature is a{sv} -> the v in our case is a string again, pretty much a map<std::string, std::string>,
@@ -161,7 +161,7 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
                      path.c_str(),
                      interface.c_str(),
                      "close",
-                     {handle, false, "signalbackup-tools"});
+                     {handle, false, "signalbackup-tools"s});
 
 
 
