@@ -20,8 +20,17 @@ elseif(CMAKE_CXX_STANDARD_LATEST) # if cmake version is ok and the variable is s
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
-if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10.0)
-  add_complie_options(-Wno-attributes)
+# For GCC:
+# The version here is a bit pessimistic. on compiler-explorer the warning is gone
+# at the first gcc-9 release, but I have reports (and verified in VM) the warning
+# appears with "gcc-9.4-ubuntu" (on Mint 20.3). At worst here, we are suppressing
+# a non-existing warning on newer compilers
+# For CLANG:
+# This is just based on godbolt testing...
+if ((CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
+    OR
+    (CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12))
+  add_compile_options(-Wno-attributes)
 endif()
 
 # find and set DBUS include and library paths
