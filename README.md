@@ -38,6 +38,8 @@ To compile this project, current stable released versions of the following are n
 - [SQLite3](https://www.sqlite.org/) (any reasonably recent version)
 - Only on Linux: [dbus](https://www.freedesktop.org/wiki/Software/dbus/). Optional, but required by default. See the [compiling](#compiling) section to build without `dbus`. If the program is compiled without `dbus`, operations that need to open the Signal Desktop client database will not work unless the decrypted encryption key is manually provided.
 
+Note that some Linux distributions split their packages depending on whether they are used for compiling programs or not. For example, the `OpenSSL` dependency may require you to install `libssl-dev` (on Debian-like systems), or `openssl-devel` (on Red Hat-like systems). If you need help with this specifically, there are detailed instructions for some common Linux distributions in the [compiling](#compiling) section below (under 'CMake').
+
 ### Obtaining
 
 **<span id="windows">Windows binary</span>**
@@ -60,7 +62,7 @@ Manually compiling should also be possible assuming the dependencies are install
 
 **<span id="compiling">Compiling</span>**
 
-To compile the program, three main options are available:
+To compile the program, first make sure the [dependencies](#requirements) are installed. Then three main options are available:
 
 - CMake. Make sure to have `cmake` installed. On Linux this method also requires `pkg-config` (unless building without `dbus`). From the project directory, run:
     ```Shell
@@ -68,6 +70,147 @@ To compile the program, three main options are available:
     $ cmake --build build -j $(nproc)
     ```
     To build without `dbus` (and `pkg-config`), add `-DWITHOUT_DBUS=1` to the first command.
+<ul>
+<details>
+<summary><i>Detailed compilation instructions for Debian-based systems (Ubuntu, Debian, Mint, and others) (click to show)</i></summary>
+<p>
+Below is the terminal output for installing the dependencies and compiling the program on a default Ubuntu 24.04 (slightly abbreviated). Start by opening your preferred terminal emulator. Then you should be able to copy and paste the commands below, one after the other.
+
+```Shell
+btimmer@btimmer-VirtualBox:~$  #Install dependencies:
+btimmer@btimmer-VirtualBox:~$ sudo apt install g++ git cmake libssl-dev libsqlite3-dev libdbus-1-dev pkg-config
+Reading package lists... Done
+Building dependency tree... Done
+  [...]
+Need to get 36.5 MB of archives.
+After this operation, 148 MB of additional disk space will be used.
+Do you want to continue? [Y/n] y
+Get:1 http://nl.archive.ubuntu.com/ubuntu noble/main amd64 libjsoncpp25 amd64 1.9.5-6build1 [82.8 kB]
+Get:2 http://nl.archive.ubuntu.com/ubuntu noble/main amd64 librhash0 amd64 1.4.3-3build1 [129 kB]
+  [...]
+Setting up g++ (4:13.2.0-7ubuntu1) ...
+update-alternatives: using /usr/bin/g++ to provide /usr/bin/c++ (c++) in auto mode
+Processing triggers for libc-bin (2.39-0ubuntu8.4) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for sgml-base (1.31) ...
+btimmer@btimmer-VirtualBox:~$  # Get the source code and enter the directory
+btimmer@btimmer-VirtualBox:~$ git clone https://github.com/bepaald/signalbackup-tools
+Cloning into 'signalbackup-tools'...
+remote: Enumerating objects: 10068, done.
+remote: Counting objects: 100% (456/456), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 10068 (delta 399), reused 413 (delta 380), pack-reused 9612 (from 3)
+Receiving objects: 100% (10068/10068), 3.69 MiB | 33.71 MiB/s, done.
+Resolving deltas: 100% (7899/7899), done.
+btimmer@btimmer-VirtualBox:~$ cd signalbackup-tools/
+btimmer@btimmer-VirtualBox:~/signalbackup-tools$  # Initialize and run CMake
+btimmer@btimmer-VirtualBox:~/signalbackup-tools$ cmake -B build -DCMAKE_BUILD_TYPE=Release
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")
+-- Found SQLite3: /usr/include (found version "3.45.1")
+-- Found PkgConfig: /usr/bin/pkg-config (found version "1.8.1")
+-- Checking for module 'dbus-1'
+--   Found dbus-1, version 1.14.10
+-- Configuring done (0.4s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/btimmer/signalbackup-tools/build
+btimmer@btimmer-VirtualBox:~/signalbackup-tools$ cmake --build build/ -j $(nproc)
+[  0%] Building CXX object CMakeFiles/signalbackup-tools.dir/arg/arg.cc.o
+[  0%] Building CXX object CMakeFiles/signalbackup-tools.dir/arg/usage.cc.o
+  [...]
+[ 99%] Building CXX object CMakeFiles/signalbackup-tools.dir/stickerframe/statics.cc.o
+[ 99%] Building CXX object CMakeFiles/signalbackup-tools.dir/xmldocument/xmldocument.cc.o
+[100%] Linking CXX executable signalbackup-tools
+[100%] Built target signalbackup-tools
+btimmer@btimmer-VirtualBox:~/signalbackup-tools$ ls -l build/signalbackup-tools
+-rwxrwxr-x 1 btimmer btimmer 6023168 Apr  1 15:14 build/signalbackup-tools
+btimmer@btimmer-VirtualBox:~/signalbackup-tools$
+```
+The program is now successfully built in the subdirectory `build/`, and can simply be run from there (ie. `./build/signalbackup-tools [options]`). Alternatively, you can move the program to some directory that is in your <code><a href="https://en.wikipedia.org/wiki/PATH_(variable)">$PATH</a></code> to run it from any location without specifying the full path.
+</p>
+</details>
+</ul>
+<ul>
+<details>
+<summary><i>Detailed compilation instructions for Red Hat-based systems (Fedora, RHEL) (click to show)</i></summary>
+<p>
+Below is the terminal output for installing the dependencies and compiling the program on a default Fedora 41 installation (slightly abbreviated). Start by opening your preferred terminal emulator. Then you should be able to copy and paste the commands below, one after the other.
+
+```Shell
+btimmer@vbox:~$  # Install the dependecies:
+btimmer@vbox:~$ sudo dnf install gcc-c++ git cmake openssl-devel sqlite-devel dbus-devel pkg-config
+Updating and loading repositories:
+Repositories loaded.
+Package "pkgconf-pkg-config-2.3.0-1.fc41.x86_64" is already installed.
+  [...]
+Total size of inbound packages is 81 MiB. Need to download 81 MiB.
+After this operation, 256 MiB extra will be used (install 256 MiB, remove 0 B).
+Is this ok [y/N]: y
+[ 1/25] make-1:4.4.1-8.fc41.x86_64                                      100% | 667.5 KiB/s | 586.1 KiB |  00m01s
+[ 2/25] git-0:2.49.0-1.fc41.x86_64                                      100% | 336.0 KiB/s |  51.1 KiB |  00m00s
+  [...]
+[26/27] Installing dbus-devel-1:1.14.10-4.fc41.x86_64                   100% |   3.8 MiB/s | 134.8 KiB |  00m00s
+[27/27] Installing openssl-devel-1:3.2.4-1.fc41.x86_64                  100% |   4.9 MiB/s |   5.2 MiB |  00m01s
+Complete!
+btimmer@vbox:~$  # get the source code and enter the directory
+btimmer@vbox:~$ git clone https://github.com/bepaald/signalbackup-tools
+Cloning into 'signalbackup-tools'...
+remote: Enumerating objects: 10068, done.
+remote: Counting objects: 100% (456/456), done.
+remote: Compressing objects: 100% (68/68), done.
+remote: Total 10068 (delta 399), reused 413 (delta 380), pack-reused 9612 (from 3)
+Receiving objects: 100% (10068/10068), 3.69 MiB | 40.60 MiB/s, done.
+Resolving deltas: 100% (7899/7899), done.
+btimmer@vbox:~$ cd signalbackup-tools/
+btimmer@vbox:~/signalbackup-tools$  # Initialize and run CMake
+btimmer@vbox:~/signalbackup-tools$ cmake -B build -DCMAKE_BUILD_TYPE=Release
+-- The C compiler identification is GNU 14.2.1
+-- The CXX compiler identification is GNU 14.2.1
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found OpenSSL: /usr/lib64/libcrypto.so (found version "3.2.4")
+-- Found SQLite3: /usr/include (found version "3.46.1")
+-- Found PkgConfig: /usr/bin/pkg-config (found version "2.3.0")
+-- Checking for module 'dbus-1'
+--   Found dbus-1, version 1.14.10
+-- Configuring done (0.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/btimmer/signalbackup-tools/build
+btimmer@vbox:~/signalbackup-tools$ cmake --build build -j $(nproc)
+[  0%] Building CXX object CMakeFiles/signalbackup-tools.dir/arg/arg.cc.o
+[  0%] Building CXX object CMakeFiles/signalbackup-tools.dir/arg/usage.cc.o
+[  1%] Building CXX object CMakeFiles/signalbackup-tools.dir/attachmentframe/statics.cc.o
+  [...]
+[ 99%] Building CXX object CMakeFiles/signalbackup-tools.dir/stickerframe/statics.cc.o
+[ 99%] Building CXX object CMakeFiles/signalbackup-tools.dir/xmldocument/xmldocument.cc.o
+[100%] Linking CXX executable signalbackup-tools
+[100%] Built target signalbackup-tools
+btimmer@vbox:~/signalbackup-tools$ ls -l build/signalbackup-tools
+-rwxr-xr-x. 1 btimmer btimmer 5914432 Apr  1 14:48 build/signalbackup-tools
+btimmer@vbox:~/signalbackup-tools$
+```
+The program is now successfully built in the subdirectory `build/`, and can simply be run from there (ie. `./build/signalbackup-tools [options]`). Alternatively, you can move the program to some directory that is in your <code><a href="https://en.wikipedia.org/wiki/PATH_(variable)">$PATH</a></code> to run it from any location without specifying the full path.
+</details>
+</ul>
 
 - The bash script. In the project directory is a bash script `BUILDSCRIPT.bash`. Simply run it:
   ```Shell
