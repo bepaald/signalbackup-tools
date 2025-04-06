@@ -317,7 +317,7 @@ class Arg
   template <typename T>
   bool ston(T *t, std::string const &str) const;
   bool parseArgs(std::vector<std::string> const &args);
-  inline bool parseStringList(std::string const &strlist, std::vector<std::string> *list) const;
+  inline void parseStringList(std::string const &strlist, std::vector<std::string> *list) const;
   template <typename T, typename U>
   inline bool parsePairList(std::string const &pairlist, std::string const &delim, std::vector<std::pair<T, U>> *list, std::string *error) const;
   template <typename T>
@@ -1026,7 +1026,7 @@ bool Arg::ston(T *t, std::string const &str) const
   return !(iss >> *t).fail();
 }
 
-inline bool Arg::parseStringList(std::string const &strlist, std::vector<std::string> *list) const
+inline void Arg::parseStringList(std::string const &strlist, std::vector<std::string> *list) const
 {
   std::string tr = strlist;
 
@@ -1038,7 +1038,6 @@ inline bool Arg::parseStringList(std::string const &strlist, std::vector<std::st
     start = pos + 1;
   }
   list->emplace_back(tr.substr(start));
-  return true;
 }
 
 template <typename T, typename U>

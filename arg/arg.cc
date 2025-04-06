@@ -244,11 +244,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_importthreadsbyname))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_importthreadsbyname);
       }
       else
       {
@@ -279,11 +275,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_limittothreadsbyname))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_limittothreadsbyname);
       }
       else
       {
@@ -367,11 +359,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_croptothreadsbyname))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_croptothreadsbyname);
       }
       else
       {
@@ -392,11 +380,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ok = false;
           continue;
         }
-        if (!parseStringList(arguments[++i], &d_croptodates))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_croptodates);
       }
       else
       {
@@ -410,11 +394,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_mergerecipients))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_mergerecipients);
       }
       else
       {
@@ -428,11 +408,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_mergegroups))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_mergegroups);
       }
       else
       {
@@ -553,11 +529,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_limitcontacts))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_limitcontacts);
       }
       else
       {
@@ -984,11 +956,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_onlytype))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_onlytype);
       }
       else
       {
@@ -1105,11 +1073,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           ok = false;
           continue;
         }
-        if (!parseStringList(arguments[++i], &d_limittodates))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_limittodates);
       }
       else
       {
@@ -1568,11 +1532,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_preventjsonmapping))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_preventjsonmapping);
       }
       else
       {
@@ -1732,11 +1692,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_selectxmlchats))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_selectxmlchats);
       }
       else
       {
@@ -1912,11 +1868,7 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     {
       if (i < argsize - 1)
       {
-        if (!parseStringList(arguments[++i], &d_htmlignoremediatypes))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
+        parseStringList(arguments[++i], &d_htmlignoremediatypes);
       }
       else
       {

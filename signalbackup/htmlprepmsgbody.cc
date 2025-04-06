@@ -23,6 +23,7 @@
 #include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
+// returns (body == all_emoji)
 bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
                                    std::map<long long int, RecipientInfo> *recipient_info, bool incoming,
                                    std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,

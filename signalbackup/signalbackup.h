@@ -40,10 +40,8 @@
 
 #include <map>
 #include <set>
-#include <unordered_set>
 #include <string>
 #include <algorithm>
-//#include <regex>
 #include <array>
 
 #if defined WIN32 || MINGW
@@ -221,8 +219,8 @@ class SignalBackup
 
   static std::vector<DatabaseLink> const s_databaselinks;
   static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
-  static char const *const s_emoji_unicode_list[3781];
-  static std::unordered_set<char> const s_emoji_first_bytes;
+  static std::string const s_emoji_unicode_list[3781];
+  static std::string const s_emoji_first_bytes;
   static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
   static std::map<std::string, std::string> const s_html_colormap;
   static std::array<std::pair<std::string, std::string>, 12> const s_html_random_colors;
@@ -671,8 +669,14 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
     return false;
   }
 
+#if __cplusplus >= 202002L
+  std::string_view type(line.begin() + pos, line.begin() + pos2);
+  std::string_view datastr(line.begin() + pos2 + 1, line.end());
+#else
+  // this is inefficient according to cppcheck
   std::string_view type(line.data() + pos, pos2 - pos);
   std::string_view datastr(line.data() + pos2 + 1);
+#endif
 
   if (type == "uint64" || type == "uint32") // Note stoul and stoull are the same on linux. Internally 8 byte int are needed anyway.
   {

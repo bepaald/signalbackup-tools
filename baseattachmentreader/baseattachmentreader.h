@@ -42,7 +42,7 @@ template <typename T>
 class AttachmentReader : public BaseAttachmentReader
 {
  public:
-  virtual BaseAttachmentReader *clone() const
+  virtual BaseAttachmentReader *clone() const override
   {
     return new T(static_cast<T const &>(*this));
   }

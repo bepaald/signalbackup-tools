@@ -52,7 +52,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
   }
 
   /* OPEN SESSION */
-  if (d_dbus_verbose) Logger::message("[OpenSession]");
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[OpenSession]");
   dbuscon.callMethod("org.freedesktop.secrets",
                      "/org/freedesktop/secrets",
                      "org.freedesktop.Secret.Service",
@@ -65,7 +65,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
     Logger::error("Failed to get session");
     return;
   }
-  if (d_dbus_verbose) Logger::message(" *** Session: ", session_objectpath);
+  if (d_dbus_verbose) [[unlikely]] Logger::message(" *** Session: ", session_objectpath);
 
   // if constexpr (false)
   // {
@@ -95,7 +95,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
   // }
 
   /* UNLOCK THE DEFAULT COLLECTION */
-  if (d_dbus_verbose) Logger::message("[Unlock]");
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[Unlock]");
   dbuscon.callMethod("org.freedesktop.secrets",
                      "/org/freedesktop/secrets",
                      "org.freedesktop.Secret.Service",
@@ -109,7 +109,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
     Logger::error("Error getting prompt");
     return;
   }
-  if (d_dbus_verbose) Logger::message(" *** Prompt: ", prompt);
+  if (d_dbus_verbose) [[unlikely]] Logger::message(" *** Prompt: ", prompt);
 
   bool unlocked_by_us = false;
   if (prompt != "/")
@@ -119,9 +119,9 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
       Logger::message("WARN: Failed to register for prompt signal");
 
     /* PROMPT FOR UNLOCK */
-    if (d_dbus_verbose) Logger::message("[Prompt]");
+    if (d_dbus_verbose) [[unlikely]] Logger::message("[Prompt]");
     dbuscon.callMethod("org.freedesktop.secrets",
-                       prompt.c_str(),
+                       prompt,
                        "org.freedesktop.Secret.Prompt",
                        "Prompt",
                        {""s}); // 'Platform specific window handle to use for showing the prompt.'
@@ -162,7 +162,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
     return;
   }
   else
-    if (d_dbus_verbose) Logger::message("Got ", items.size(), " items to check");
+    if (d_dbus_verbose) [[unlikely]] Logger::message("Got ", items.size(), " items to check");
 
   for (auto const &item : items)
   {
@@ -186,7 +186,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
 #endif
     {
       /* GET SECRETS */
-      if (d_dbus_verbose) Logger::message("[GetSecret]");
+      if (d_dbus_verbose) [[unlikely]] Logger::message("[GetSecret]");
       dbuscon.callMethod("org.freedesktop.secrets",
                          item,
                          "org.freedesktop.Secret.Item",
@@ -226,7 +226,7 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
   /* LOCK COLLECTION */
   if (unlocked_by_us)
   {
-    if (d_dbus_verbose) Logger::message("[Lock]");
+    if (d_dbus_verbose) [[unlikely]] Logger::message("[Lock]");
     dbuscon.callMethod("org.freedesktop.secrets",
                        "/org/freedesktop/secrets",
                        "org.freedesktop.Secret.Service",
@@ -235,9 +235,9 @@ void DesktopDatabase::getSecrets_linux_SecretService(std::set<std::string> *secr
   }
 
   /* CLOSE SESSION */
-  if (d_dbus_verbose) Logger::message("[Close]");
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[Close]");
   dbuscon.callMethod("org.freedesktop.secrets",
-                     session_objectpath.c_str(), //"/org/freedesktop/secrets",
+                     session_objectpath, //"/org/freedesktop/secrets",
                      "org.freedesktop.Secret.Session",
                      "Close");
 

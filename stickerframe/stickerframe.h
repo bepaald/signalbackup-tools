@@ -31,7 +31,7 @@
 
 class StickerFrame : public FrameWithAttachment
 {
-  enum FIELD
+  enum FIELD : int
   {
     INVALID = 0,
     ROWID = 1, // uint64
@@ -62,7 +62,7 @@ class StickerFrame : public FrameWithAttachment
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::optional<std::string> mimetype() const;
-  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
+  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false) override;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -113,11 +113,7 @@ inline void StickerFrame::printInfo() const // virtual override
 
 inline uint32_t StickerFrame::length() const
 {
-  if (!d_attachmentdata_size)
-    for (auto const &p : d_framedata)
-      if (std::get<0>(p) == FIELD::LENGTH)
-        return bytesToUint32(std::get<1>(p), std::get<2>(p));
-  return d_attachmentdata_size;
+  return FrameWithAttachment::length<FIELD::LENGTH>();
 }
 
 inline uint32_t StickerFrame::attachmentSize() const // virtual override
@@ -212,7 +208,7 @@ inline bool StickerFrame::validate(uint64_t available) const
   int rowid_fieldsize = 0;
   int foundlength = 0;
   int length_fieldsize = 0;
-  unsigned int length = 0;
+  unsigned int len = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) != FIELD::ROWID &&
@@ -227,15 +223,15 @@ inline bool StickerFrame::validate(uint64_t available) const
     else if (std::get<0>(p) == FIELD::LENGTH)
     {
       ++foundlength;
-      length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+      len += bytesToUint32(std::get<1>(p), std::get<2>(p));
       length_fieldsize += std::get<2>(p);
     }
   }
   return foundlength == 1 && foundrowid == 1 &&
     length_fieldsize <= 8 &&
     rowid_fieldsize <= 8 &&
-    length <= available &&
-    length < 1 * 1024 * 1024; // If size is more than 1MB, it's not right... From
+    len <= available &&
+    len < 1 * 1024 * 1024; // If size is more than 1MB, it's not right... From
                               // https://support.signal.org/hc/en-us/articles/360031836512-Stickers :
                               // "Each sticker has a size limit of 300kb"
 }

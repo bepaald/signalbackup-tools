@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -76,10 +76,10 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 
   // calculate widths
   std::vector<unsigned int> widths(contents[0].size(), 0);
-  for (unsigned int col = 0; col < contents[0].size(); ++col)
-    for (unsigned int row = 0; row < contents.size(); ++row)
-      if (widths[col] < charCount(contents[row][col]))
-        widths[col] = charCount(contents[row][col]);
+  for (unsigned int c = 0; c < contents[0].size(); ++c)
+    for (unsigned int r = 0; r < contents.size(); ++r)
+      if (widths[c] < charCount(contents[r][c]))
+        widths[c] = charCount(contents[r][c]);
 
   int totalw = std::accumulate(widths.begin(), widths.end(), 0) + 3 * columns() + 1;
   int availablewidth = truncate ? availableWidth() : std::numeric_limits<int>::max();
@@ -121,16 +121,16 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
     //std::cout << L"Real max width per col: " << maxwidthpercol << L" (left " << leftforlongcols << L")" << std::endl;
 
     // maybe some oversized column are not oversized anymore...
-    bool changed = true;
-    while (changed)
+    bool haschanged = true;
+    while (haschanged)
     {
-      changed = false;
+      haschanged = false;
       for (auto it = oversizedcols.begin(); it != oversizedcols.end(); ++it)
       {
         if (widths[*it] < maxwidthpercol)
         {
           //std::cout << "Column has room, needs " << widths[*it] << " available: " << maxwidthpercol << " adds " << maxwidthpercol - widths[*it] << " to pool of leftspace for " << oversizedcols.size() - 1 << " remaining oversized cols" << std::endl;
-          changed = true;
+          haschanged = true;
           maxwidthpercol += (maxwidthpercol - widths[*it]) / (oversizedcols.size() - 1);
           oversizedcols.erase(it);
           break;
@@ -148,39 +148,39 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
     // update widths
     widths.clear();
     widths.resize(contents[0].size());
-    for (unsigned int col = 0; col < contents[0].size(); ++col)
-      for (unsigned int row = 0; row < contents.size(); ++row)
+    for (unsigned int c = 0; c < contents[0].size(); ++c)
+      for (unsigned int r = 0; r < contents.size(); ++r)
       {
-        if (charCount(contents[row][col]) > maxwidthpercol + ((col == widestcol) ? leftforlongcols : 0))
+        if (charCount(contents[r][c]) > maxwidthpercol + ((c == widestcol) ? leftforlongcols : 0))
         {
-          contents[row][col].resize(maxwidthpercol + ((col == widestcol) ? leftforlongcols : 0) - 5); // this might overcrop, because the max is set to charcount
-          contents[row][col] += "[...]";                                                              // while the resize is done at bytecount. We could crop at
-        }                                                                                             // charcount, but some char take two columns of terminal, so
-        if (widths[col] < charCount(contents[row][col]))                                              // we might then undercrop, which is worse.
-          widths[col] = charCount(contents[row][col]);
+          contents[r][c].resize(maxwidthpercol + ((c == widestcol) ? leftforlongcols : 0) - 5); // this might overcrop, because the max is set to charcount
+          contents[r][c] += "[...]";                                                            // while the resize is done at bytecount. We could crop at
+        }                                                                                       // charcount, but some char take two columns of terminal, so
+        if (widths[c] < charCount(contents[r][c]))                                              // we might then undercrop, which is worse.
+          widths[c] = charCount(contents[r][c]);
       }
   }
 
   //std::cout << std::string(availableWidth(), '*') << std::endl;
   //bool ansi = useEscapeCodes();
   Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
-  for (unsigned int row = 0; row < contents.size(); ++row)
+  for (unsigned int r = 0; r < contents.size(); ++r)
   {
     Logger::message_start();
     unsigned int pos = 1; // for seeking horizontal position with ANSI escape codes, this starts counting at 1
-    for (unsigned int col = 0; col < contents[row].size(); ++col)
+    for (unsigned int c = 0; c < contents[r].size(); ++c)
     {
-      Logger::message_continue(std::left, "| ", std::setw(widths[col]), std::setfill(' '), contents[row][col], std::setw(0), " ");
+      Logger::message_continue(std::left, "| ", std::setw(widths[c]), std::setfill(' '), contents[r][c], std::setw(0), " ");
       //if (ansi) // if we support control codes, make 'sure' the cursor is at the right position
       //{
-        pos += 2 + widths[col] + 1; // "| " + content + " "
+        pos += 2 + widths[c] + 1; // "| " + content + " "
         Logger::message_continue(Logger::ControlChar("\033[" + bepaald::toString(pos - 1) + "G ")); // prints a space right before where the next '|' will come
       //}
     }
     Logger::message_end("|");
 
     // another bar under top row
-    if (row == 0)
+    if (r == 0)
       Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
   }
   Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));

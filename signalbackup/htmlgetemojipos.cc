@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,47 +21,21 @@
 
 std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos(std::string const &str) const
 {
-  // for (char c : str)
-  // {
-  //   if (std::isprint(c))
-  //     std::cout << c;
-  //   else
-  //     std::cout << std::hex << static_cast<int>(c & 0xff);
-  // }
-  // std::cout << "" << std::endl;
-
   std::vector<std::pair<unsigned int, unsigned int>> results;
+  std::string::size_type pos = 0;
 
-  for (unsigned int i = 0; i < std::max(static_cast<unsigned int>(str.size()), s_emoji_min_size) - s_emoji_min_size; ++i)
+  while ((pos = str.find_first_of(s_emoji_first_bytes, pos)) != std::string::npos)
   {
-    //std::cout << "Checking byte " << std::dec << i << ": " << std::hex << static_cast<int>(str[i] & 0xff) << std::endl;
-    if (bepaald::contains(s_emoji_first_bytes, str[i]))
+    for (std::string const &emoji_string : s_emoji_unicode_list)
     {
-      for (char const *const emoji_string : s_emoji_unicode_list)
+      if (pos <= (str.size() - emoji_string.size()) &&
+          std::memcmp(str.data() + pos, emoji_string.data(), emoji_string.size()) == 0)
       {
-        int emoji_size = std::strlen(emoji_string);
-        if (i <= (str.size() - emoji_size) &&
-            std::strncmp(str.data() + i, emoji_string, emoji_size) == 0)
-        {
-
-          // std::cout << "matched emoji: ";
-          // for (unsigned int c = 0; c < emoji_size; ++c)
-          //   std::cout << std::hex << static_cast<int>(emoji_string[c] & 0xff);
-          // std::cout << "" << std::endl;
-
-          results.emplace_back(std::make_pair(i, emoji_size));
-          i += emoji_size - 1; // minus one because ++i in for loop
-
-          //str->insert(i, "<*>");
-          //str->insert(i + 3 + emoji_size, "<*>");
-          //i += 3 + emoji_size + 3;
-
-          //std::cout << *str << std::endl;
-        }
+        results.emplace_back(std::make_pair(pos, emoji_string.size()));
+        pos += emoji_string.size() - 1; // minus one because ++pos in while...
       }
     }
-    //else if ((*str)[i] != ' ') // spaces don't count
-    //  all_emoji = false;
+    ++pos;
   }
   return results;
 }

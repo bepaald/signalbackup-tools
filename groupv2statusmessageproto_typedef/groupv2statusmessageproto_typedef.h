@@ -30,8 +30,10 @@ struct Fixed64;
 struct SFixed32;
 struct SFixed64;
 struct Enum;
+struct Dummy;
 namespace protobuffer
 {
+  typedef Dummy DUMMY;
   namespace optional
   {
     typedef double DOUBLE;
@@ -50,7 +52,6 @@ namespace protobuffer
     typedef bool BOOL;
     typedef std::string STRING;
     typedef unsigned char *BYTES;
-    typedef int DUMMY;
   }
   namespace repeated
   {
@@ -70,7 +71,6 @@ namespace protobuffer
     typedef std::vector<bool> BOOL;
     typedef std::vector<std::string> STRING;
     typedef std::vector<unsigned char *> BYTES;
-    typedef int DUMMY;
   }
 }
 template <typename... Spec>
@@ -133,7 +133,7 @@ message DecryptedMember {
 }
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM,
-                       protobuffer::optional::BYTES, protobuffer::optional::DUMMY,
+                       protobuffer::optional::BYTES, protobuffer::DUMMY,
                        protobuffer::optional::UINT32, protobuffer::optional::BYTES> DecryptedMember;
 
 /*
@@ -157,7 +157,7 @@ message DecryptedRequestingMember {
 }
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES,
-                       protobuffer::optional::DUMMY, protobuffer::optional::UINT64> DecryptedRequestingMember;
+                       protobuffer::DUMMY, protobuffer::optional::UINT64> DecryptedRequestingMember;
 
 
 /*
@@ -279,7 +279,7 @@ enum EnabledState {
 }
 
 */
-typedef ProtoBufParser<protobuffer::optional::DUMMY, protobuffer::optional::STRING,
+typedef ProtoBufParser<protobuffer::DUMMY, protobuffer::optional::STRING,
                        protobuffer::optional::STRING, DecryptedTimer,
                        AccessControl, protobuffer::optional::UINT32,
                        std::vector<DecryptedMember>, std::vector<DecryptedPendingMember>,

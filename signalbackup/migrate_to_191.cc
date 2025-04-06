@@ -45,7 +45,7 @@
 
 bool SignalBackup::migrate_to_191(std::string const &selfphone)
 {
-  if (d_databaseversion < 98)
+  if (d_databaseversion < 97)
   {
     Logger::error("Sorry, db version too old. Not supported (yet?)");
     return false;
@@ -176,8 +176,8 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
         // Refer Section 4.2 of RFC-4122
         // https://tools.ietf.org/html/rfc4122#section-4.2
-        uuid.uuidstruct.clk_seq_hi_res = (uint8_t) ((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
-        uuid.uuidstruct.time_hi_and_version = (uint16_t) ((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
+        uuid.uuidstruct.clk_seq_hi_res = static_cast<uint8_t>((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
+        uuid.uuidstruct.time_hi_and_version = static_cast<uint16_t>((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
 
 #if __cpp_lib_format >= 201907L
         std::string distribution_id = std::format("{:0>8x}-{:0>4x}-{:0>4x}-{:0>2x}{:0>2x}-{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}",
@@ -863,8 +863,8 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
 
     // Refer Section 4.2 of RFC-4122
     // https://tools.ietf.org/html/rfc4122#section-4.2
-    uuid.uuidstruct.clk_seq_hi_res = (uint8_t) ((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
-    uuid.uuidstruct.time_hi_and_version = (uint16_t) ((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
+    uuid.uuidstruct.clk_seq_hi_res = static_cast<uint8_t>((uuid.uuidstruct.clk_seq_hi_res & 0x3F) | 0x80);
+    uuid.uuidstruct.time_hi_and_version = static_cast<uint16_t>((uuid.uuidstruct.time_hi_and_version & 0x0FFF) | 0x4000);
 
 #if __cpp_lib_format >= 201907L
     std::string uuid_str = std::format("{:0>8x}-{:0>4x}-{:0>4x}-{:0>2x}{:0>2x}-{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}{:0>2x}",

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -61,14 +61,15 @@ AttachmentMetadata AttachmentMetadata::getAttachmentMetaData(std::string const &
       Logger::warning("Failed to set hash");
       hash = std::string();
     }
-    hash = Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
+    else
+      hash = Base64::bytesToBase64String(rawhash, SHA256_DIGEST_LENGTH);
     //std::cout << bepaald::bytesToHexString(rawhash, SHA256_DIGEST_LENGTH) << std::endl;
     //std::cout << "GOT HASH: " << hash << std::endl;
   }
 
   // set buffer for file header
   int bufsize = std::min(data_size, uint64_t(30));
-  unsigned char *buf = data;
+  unsigned char const *buf = data;
 
 
 

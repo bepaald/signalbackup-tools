@@ -72,7 +72,7 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptFrame(unsigned char *
     encryptedframepos = l;
 
     if (d_verbose) [[unlikely]]
-      Logger::message_end(bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(encryptedframe.get()), 4));
+      Logger::message_end(bepaald::bytesToHexString(encryptedframe.get(), sizeof(uint32_t)));
   }
   else [[unlikely]] // old backup file format, had RAW frame length
   {

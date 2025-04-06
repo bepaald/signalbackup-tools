@@ -98,34 +98,38 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
 
 )";
 
-  outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {" << '\n';
-  outputfile << "  /* " << (light ? "light" : "dark") << " */" << '\n';
-  outputfile << "  --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << '\n';
-  outputfile << "  --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  outputfile << "  --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
-  outputfile << "  --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  outputfile << "  --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << '\n';
-  outputfile << "  --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
-  outputfile << "  --icon-f: " << (light ? "brightness(0);" : "none;") << '\n';
-  outputfile << "  --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << '\n';
-  outputfile << "  --msg-incoming-bc-hover: " << (light ? "#F9FEFF;" : "#46474A;") << '\n';
-  outputfile << "}" << '\n';
-  outputfile << '\n';
+  outputfile
+    << ":root" << (themeswitching ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {\n"
+    << "  /* " << (light ? "light" : "dark") << " */\n"
+    << "  --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << "\n"
+    << "  --messageheader-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    << "  --conversationbox-bc: " << (light ? "#FBFCFF;" : "#1B1C1F;") << "\n"
+    << "  --conversationbox-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    << "  --msgincoming-b: " << (light ? "#E7EBF3;" : "#303133;") << "\n"
+    // << "  --msgoutgoing-c: " << (light ? "#FFFFFF;" : "#FFFFFF;") << "\n"
+    << "  --msgoutgoing-c: #FFFFFF;\n"
+    << "  --icon-f: " << (light ? "brightness(0);" : "none;") << "\n"
+    << "  --menuitem-c: " << (light ? "#000000;" : "#FFFFFF;") << "\n"
+    << "  --msg-incoming-bc-hover: " << (light ? "#F9FEFF;" : "#46474A;") << "\n"
+    << "}\n"
+    << "\n";
   if (themeswitching)
   {
-    outputfile << ":root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {" << '\n';
-    outputfile << "  /* " << (!light ? "light" : "dark") << " */" << '\n';
-    outputfile << "  --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << '\n';
-    outputfile << "  --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    outputfile << "  --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << '\n';
-    outputfile << "  --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    outputfile << "  --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << '\n';
-    outputfile << "  --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << '\n';
-    outputfile << "  --icon-f: " << (!light ? "brightness(0);" : "none;") << '\n';
-    outputfile << "  --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << '\n';
-    outputfile << "  --msg-incoming-bc-hover: " << (!light ? "#F9FEFF;" : "#46474A;") << '\n';
-    outputfile << "}" << '\n';
-    outputfile << '\n';
+    outputfile
+      << ":root[data-theme=\"" + (!light ? "light"s : "dark") + "\"] {\n"
+      << "  /* " << (!light ? "light" : "dark") << " */\n"
+      << "  --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << "\n"
+      << "  --messageheader-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      << "  --conversationbox-bc: " << (!light ? "#FBFCFF;" : "#1B1C1F;") << "\n"
+      << "  --conversationbox-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      << "  --msgincoming-b: " << (!light ? "#E7EBF3;" : "#303133;") << "\n"
+      // << "  --msgoutgoing-c: " << (!light ? "#FFFFFF;" : "#FFFFFF;") << "\n"
+      << "  --msgoutgoing-c: #FFFFFF;\n"
+      << "  --icon-f: " << (!light ? "brightness(0);" : "none;") << "\n"
+      << "  --menuitem-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"
+      << "  --msg-incoming-bc-hover: " << (!light ? "#F9FEFF;" : "#46474A;") << "\n"
+      << "}\n"
+      << "\n";
   }
   outputfile << R"*(
 body {

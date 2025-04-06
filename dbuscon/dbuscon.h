@@ -121,7 +121,7 @@ class DBusCon
   bool d_ok;
 
  public:
-  inline DBusCon(bool dbus_verbose);
+  inline explicit DBusCon(bool dbus_verbose);
   inline DBusCon(DBusCon const &other) = delete;
   inline DBusCon &operator=(DBusCon const &other) = delete;
   inline ~DBusCon();
@@ -485,7 +485,7 @@ inline void DBusCon::showresponse2(DBusMessageIter *iter, int indent)
   while ((current_type = dbus_message_iter_get_arg_type(iter)) != DBUS_TYPE_INVALID)
   {
     char *cursig = dbus_message_iter_get_signature(iter);
-    Logger::message_start(std::string(indent, ' '), idx++, ". Got reply (", (char)current_type, ") (sig: \"", cursig, "\") : ");
+    Logger::message_start(std::string(indent, ' '), idx++, ". Got reply (", static_cast<char>(current_type), ") (sig: \"", cursig, "\") : ");
     dbus_free(cursig);
 
     if (current_type == DBUS_TYPE_VARIANT || current_type == DBUS_TYPE_ARRAY || current_type == DBUS_TYPE_DICT_ENTRY || current_type == DBUS_TYPE_STRUCT)

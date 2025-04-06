@@ -162,7 +162,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
     // now get all messages
     SqliteDB::QueryResults messages;
-    if (!d_database.exec("SELECT "s
+    if (!d_database.exec("SELECT "
                          "_id, " + d_mms_recipient_id + ", "
                          + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
                          "date_received, " + d_mms_type + ", "

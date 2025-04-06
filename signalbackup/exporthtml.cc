@@ -299,7 +299,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     // now get all messages
     SqliteDB::QueryResults messages;
-    d_database.exec("SELECT "s
+    d_database.exec("SELECT "
                     "_id, " + d_mms_recipient_id + ", "
                     + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
                     "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, "
@@ -398,7 +398,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (split > 0)
     {
       totalpages = (messages.rows() / split) + (messages.rows() % split > 0 ? 1 : 0);
-      max_msg_per_page = messages.rows() / totalpages + (messages.rows() % totalpages ? 1 : 0);
+      max_msg_per_page = messages.rows() / totalpages + ((messages.rows() % totalpages) ? 1 : 0);
     }
     std::vector<std::string> split_page_names;
     if (!periodsplitformat.empty())
@@ -849,13 +849,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           {
             if (pn == pagenumber)
               htmloutput <<
-                "                <div class=\"menu-item" << (pn == pagenumber ? " currentpage" : "") <<"\">\n"
+                "                <div class=\"menu-item currentpage\">\n"
                 "                  <div>" << split_page_names[pn] << "</div>\n"
                 "                </div>\n";
             else
               htmloutput <<
                 "                <a href=\"" << sanitized_filename << (compact ? bepaald::toString(pn) : (pn > 0 ? "_" + bepaald::toString(pn) : "")) << ".html\">\n"
-                "                  <div class=\"menu-item" << (pn == pagenumber ? " currentpage" : "") <<"\">\n"
+                "                  <div class=\"menu-item\">\n"
                 "                    <div>" << split_page_names[pn] << "</div>\n"
                 "                  </div>\n"
                 "                </a>\n";

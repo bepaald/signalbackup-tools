@@ -164,7 +164,8 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
       if (table == d_part_table) // find corresponding attachment
       {
         bool needuniqqueid = d_database.tableContainsColumn(d_part_table, "unique_id");
-        long long int rowid = 0, uniqueid = needuniqqueid ? 0 : -1;
+        long long int rowid = 0;
+        long long int uniqueid = needuniqqueid ? 0 : -1;
         for (unsigned int j = 0; j < results.columns(); ++j)
         {
           if (results.header(j) == "_id" && results.valueHasType<long long int>(i, j))
@@ -174,11 +175,12 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
               break;
           }
           else if (needuniqqueid &&
-                   results.header(j) == "unique_id" && results.valueHasType<long long int>(i, j))
+                   results.header(j) == "unique_id" &&
+                   results.valueHasType<long long int>(i, j))
           {
-           //std::cout << "UNIQUEID: " << std::any_cast<long long int>(results[i][j].second) << std::endl;
+            //std::cout << "UNIQUEID: " << std::any_cast<long long int>(results[i][j].second) << std::endl;
             uniqueid = results.getValueAs<long long int>(i, j);
-            if (rowid && (uniqueid || !needuniqqueid))
+            if (rowid && uniqueid)
               break;
           }
         }

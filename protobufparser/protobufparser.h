@@ -49,7 +49,7 @@ struct is_specialization_of< Template, Template<Args...> > : std::true_type {};
 
 struct ZigZag32
 {
-  int32_t value; // this holds the decoded (non-zigzag) value
+  int32_t value{0}; // this holds the decoded (non-zigzag) value
   operator int32_t() const { return value; }
   ZigZag32() = default;
   ZigZag32(uint32_t v) : value(v) {}
@@ -57,7 +57,7 @@ struct ZigZag32
 
 struct ZigZag64
 {
-  int64_t value; // this holds the decoded (non-zigzag) value
+  int64_t value{0}; // this holds the decoded (non-zigzag) value
   operator int64_t() const { return value; }
   ZigZag64() = default;
   ZigZag64(uint64_t v) : value(v) {}
@@ -65,7 +65,7 @@ struct ZigZag64
 
 struct Fixed32
 {
-  uint32_t value;
+  uint32_t value{0};
   operator uint32_t() const { return value; }
   Fixed32() = default;
   Fixed32(uint32_t v) : value(v) {}
@@ -73,7 +73,7 @@ struct Fixed32
 
 struct Fixed64
 {
-  uint64_t value;
+  uint64_t value{0};
   operator uint64_t() const { return value; }
   Fixed64() = default;
   Fixed64(uint64_t v) : value(v) {}
@@ -81,7 +81,7 @@ struct Fixed64
 
 struct SFixed32
 {
-  int32_t value;
+  int32_t value{0};
   operator int32_t() const { return value; }
   SFixed32() = default;
   SFixed32(int32_t v) : value(v) {}
@@ -89,7 +89,7 @@ struct SFixed32
 
 struct SFixed64
 {
-  int64_t value;
+  int64_t value{0};
   operator int64_t() const { return value; }
   SFixed64() = default;
   SFixed64(int64_t v) : value(v) {}
@@ -97,14 +97,18 @@ struct SFixed64
 
 struct Enum
 {
-  int32_t value;
+  int32_t value{0};
   operator int32_t() const { return value; }
   Enum() = default;
   Enum(int32_t v) : value(v) {}
 };
 
+struct Dummy
+{};
+
 namespace protobuffer
 {
+  typedef Dummy DUMMY;
   namespace optional
   {
     typedef double DOUBLE;
@@ -123,7 +127,6 @@ namespace protobuffer
     typedef bool BOOL;
     typedef std::string STRING;
     typedef unsigned char *BYTES;
-    typedef int DUMMY;
   }
   namespace repeated
   {
@@ -143,7 +146,6 @@ namespace protobuffer
     typedef std::vector<bool> BOOL;
     typedef std::vector<std::string> STRING;
     typedef std::vector<unsigned char *> BYTES;
-    typedef int DUMMY;
   }
 }
 
@@ -715,7 +717,7 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
         if (wiretype == WIRETYPE::VARINT)
         {
           int lpos = 0;
-          T vint = readVarInt(&lpos, l_data.first, l_data.second, false); // zigzag not (yet) supported
+          T vint = readVarInt(&lpos, l_data.first, l_data.second, false);
           if (vint == *value)
             del = true;
         }

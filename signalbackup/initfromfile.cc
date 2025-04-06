@@ -127,7 +127,7 @@ void SignalBackup::initFromFile()
         a->attachmentData(nullptr, d_verbose);
         a->clearData();
       }
-      d_avatars.emplace_back(std::string((d_databaseversion < 33) ? a->name() : a->recipient()), a);
+      d_avatars.emplace_back(d_databaseversion < 33 ? a->name() : a->recipient(), a);
     }
     else if (frame->frameType() == BackupFrame::FRAMETYPE::STICKER)
     {

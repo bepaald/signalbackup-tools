@@ -109,7 +109,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
   if (themeswitching)
   {
     stickerhtml <<
-      "      :root" << (themeswitching ? "[data-theme=\"" + (!light ? "light"s : "dark") + "\"]" : "") << " {\n"
+      "      :root[data-theme=\"" + (!light ? "light"s : "dark") + "\"] {\n"
       "        /* " << (!light ? "light" : "dark") << "*/\n"
       "        --body-bgc: " << (!light ? "#EDF0F6;" : "#000000;") << "\n"
       "        --body-c: " << (!light ? "#000000;" : "#FFFFFF;") << "\n"

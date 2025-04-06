@@ -431,7 +431,9 @@ bool SignalBackup::migrateDatabase(int from, int to) const
 
   for (unsigned int i = min; i <= max; ++i)
   {
+#if SQLITE_VERSION_NUMBER >= 3035000 // RETURNING was not available prior to 3.35.0
     SqliteDB::QueryResults newmmsid;
+#endif
     if (!d_database.exec("INSERT INTO mms "
                          "(" + d_mms_date_sent + ", "
                          "date_received, "

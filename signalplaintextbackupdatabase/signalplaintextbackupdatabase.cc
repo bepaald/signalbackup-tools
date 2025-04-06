@@ -449,8 +449,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
 
         std::string::size_type start = 0;
         std::string::size_type end;
-        while ((end = groupaddress.find('~', start)))
+        while (true)
         {
+          end = groupaddress.find('~', start);
+
           //std::cout << "Single: " << groupaddress.substr(start, (end == std::string::npos ? end : end - start)) << std::endl;
           std::string groupname_part =  d_database.getSingleResultAs<std::string>("SELECT DISTINCT contact_name FROM smses WHERE address = ? LIMIT 1",
                                                                                   groupaddress.substr(start, (end == std::string::npos ? end : end - start)),

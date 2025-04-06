@@ -45,7 +45,7 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
 #else // linux
   int iterations = 1;
 #endif
-  if (PKCS5_PBKDF2_HMAC_SHA1(reinterpret_cast<char const *>(secret.data()), secret.size(), salt, salt_length, iterations, key_length, key.get()) != 1)
+  if (PKCS5_PBKDF2_HMAC_SHA1(secret.data(), secret.size(), salt, salt_length, iterations, key_length, key.get()) != 1)
   {
     Logger::error("Error deriving key from password");
     return decryptedkey;
@@ -60,16 +60,16 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   // check header
   int const version_header_length = 3;
 #if defined (__APPLE__) && defined (__MACH__)
-  unsigned char version_header[version_header_length] = {'v', '1', '0'};
+  unsigned char const version_header[version_header_length] = {'v', '1', '0'};
 #else // linux
-  unsigned char version_header[version_header_length] = {'v', '1', '1'};
+  unsigned char const version_header[version_header_length] = {'v', '1', '1'};
 #endif
   if (std::memcmp(data.get(), version_header, 3) != 0) [[unlikely]]
     Logger::warning("Unexpected header value: ", bepaald::bytesToHexString(data.get(), 3));
 
   // set iv
   uint64_t const iv_length = 16;
-  unsigned char iv[iv_length] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}; // 16 spaces
+  unsigned char const iv[iv_length] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}; // 16 spaces
   // init cipher and context
   std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
   if (!ctx)

@@ -781,7 +781,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                             {"date_received", freedate},
                             {d_mms_type, endsessiontype},
                             {d_mms_recipient_id, Types::isOutgoing(endsessiontype) ? d_selfid : address},
-                            {"to_recipient_id", Types::isOutgoing(endsessiontype) ? address : address},
+                            {"to_recipient_id", address},//Types::isOutgoing(endsessiontype) ? address : address},
                             {"read", 1}}))
               Logger::error("Inserting session reset into mms");
           }

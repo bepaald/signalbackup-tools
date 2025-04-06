@@ -83,7 +83,7 @@ bool SignalBackup::unescapeXmlString(std::string *s) const
     }
 
     //std::cout << "Codepoint: " << unicode_codepoint << " UTF8: ";
-    std::string utf8(unicodeToUtf8(unicode_codepoint));
+    //std::string utf8(unicodeToUtf8(unicode_codepoint));
     //std::cout << bepaald::bytesToHexString(reinterpret_cast<unsigned char *>(utf8.data()), utf8.size()) << std::endl;
 
     // codepointcomplete == 0 : do the replace... start search at top...

@@ -72,11 +72,10 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     bool initial_is_emoji = false;
     if (bepaald::contains(s_emoji_first_bytes, display_name[0]))
     {
-      for (char const *const emoji_string : s_emoji_unicode_list)
+      for (std::string const &emoji_string : s_emoji_unicode_list)
       {
-        unsigned int emoji_size = std::strlen(emoji_string);
-        if ((display_name.size() >= emoji_size) &&
-            std::strncmp(display_name.data(), emoji_string, emoji_size) == 0)
+        if ((display_name.size() >= emoji_string.size()) &&
+            std::memcmp(display_name.data(), emoji_string.data(), emoji_string.size()) == 0)
         {
           initial = emoji_string;
           initial_is_emoji = true;

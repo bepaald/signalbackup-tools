@@ -56,10 +56,10 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
   std::string interface("org.kde.KWallet");
 
   /* GET WALLET */
-  if (d_dbus_verbose) Logger::message("[networkWallet]");
-  dbuscon.callMethod(destination.c_str(),
-                     path.c_str(),
-                     interface.c_str(),
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[networkWallet]");
+  dbuscon.callMethod(destination,
+                     path,
+                     interface,
                      "networkWallet");
   std::string walletname = dbuscon.get<std::string>("s", 0);
   if (walletname.empty())
@@ -67,7 +67,7 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
     Logger::error("Failed to get wallet name");
     return;
   }
-  if (d_dbus_verbose) Logger::message(" *** Wallet name: ", walletname);
+  if (d_dbus_verbose) [[unlikely]] Logger::message(" *** Wallet name: ", walletname);
 
   // ON KDE THE 'open' METHOD SEEMS TO BLOCK FOR PASSWORD PROMPT BY ITSELF...
   // /* Register to wait for opening wallet */
@@ -75,10 +75,10 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
   //   Logger::message("WARN: Failed to register for signal");
 
   /* OPEN WALLET */
-  if (d_dbus_verbose) Logger::message("[open]");
-  dbuscon.callMethod(destination.c_str(),
-                     path.c_str(),
-                     interface.c_str(),
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[open]");
+  dbuscon.callMethod(destination,
+                     path,
+                     interface,
                      "open",
                      {walletname, int64_t{0}, "signalbackup-tools"s});
   int32_t handle = dbuscon.get<int32_t>("i", 0 - 1);
@@ -87,15 +87,15 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
     Logger::error("Failed to open wallet");
     return;
   }
-  if (d_dbus_verbose) Logger::message(" *** Handle: ", handle);
+  if (d_dbus_verbose) [[unlikely]] Logger::message(" *** Handle: ", handle);
 
 
 
   /* GET FOLDERS */
-  if (d_dbus_verbose) Logger::message("[folderList]");
-  dbuscon.callMethod(destination.c_str(),
-                     path.c_str(),
-                     interface.c_str(),
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[folderList]");
+  dbuscon.callMethod(destination,
+                     path,
+                     interface,
                      "folderList",
                      {handle, "signalbackup-tools"s});
   std::vector<std::string> folders = dbuscon.get<std::vector<std::string>>("as", 0);
@@ -116,10 +116,10 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
 #endif
     {
       /* GET PASSWORD */
-      if (d_dbus_verbose) Logger::message("[passwordList]");
-      dbuscon.callMethod(destination.c_str(),
-                         path.c_str(),
-                         interface.c_str(),
+      if (d_dbus_verbose) [[unlikely]] Logger::message("[passwordList]");
+      dbuscon.callMethod(destination,
+                         path,
+                         interface,
                          "passwordList",
                          {handle, folder, "signalbackup-tools"s});
       /*
@@ -148,18 +148,18 @@ void DesktopDatabase::getSecrets_linux_Kwallet(int version, std::set<std::string
 
 
   /* CLOSE WALLET */
-  if (d_dbus_verbose) Logger::message("[close (wallet)]");
-  dbuscon.callMethod(destination.c_str(),
-                     path.c_str(),
-                     interface.c_str(),
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[close (wallet)]");
+  dbuscon.callMethod(destination,
+                     path,
+                     interface,
                      "close",
                      {walletname, false});
 
   /* CLOSE SESSION */
-  if (d_dbus_verbose) Logger::message("[close (session)]");
-  dbuscon.callMethod(destination.c_str(),
-                     path.c_str(),
-                     interface.c_str(),
+  if (d_dbus_verbose) [[unlikely]] Logger::message("[close (session)]");
+  dbuscon.callMethod(destination,
+                     path,
+                     interface,
                      "close",
                      {handle, false, "signalbackup-tools"s});
 

@@ -91,13 +91,13 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       long long int dtcoveronly = dtstickers.valueAsInt(j, "isCoverOnly");
       long long int dtstickerid = dtstickers.valueAsInt(j, "id");
       std::string dtemoji = dtstickers(j, "emoji");
-      uint64_t filelength = dtstickers.valueAsInt(j, "size");
+      uint64_t filelength = dtstickers.valueAsInt(j, "size", 0);
       long long int version = dtstickers.valueAsInt(j, "version");
       std::string localkey = dtstickers(j, "localKey");
       std::string fullpath(databasedir + "/stickers.noindex/" + dtstickers(j, "path"));
 
       // get filelength if not in database
-      if (filelength <= 0)
+      if (filelength == 0)
         //{
         //std::ifstream dtstickerfile(fullpath, std::ios_base::binary | std::ios_base::in);
         //if (!dtstickerfile.is_open())

@@ -46,11 +46,12 @@ class FrameWithAttachment : public BackupFrame
   inline virtual ~FrameWithAttachment() override;
   bool setAttachmentDataBacked(unsigned char *data, long long int length) override;
   bool setAttachmentDataUnbacked(unsigned char const *data, long long int length);
+  template <int lengthfield>
   inline uint32_t length() const;
-  inline void setLength(int32_t l);
+  //inline void setLength(int32_t l);
   inline void setReader(BaseAttachmentReader *reader);
   inline BaseAttachmentReader *reader() const;
-  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
+  inline virtual unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
   inline void clearData();
 };
 
@@ -156,8 +157,13 @@ inline FrameWithAttachment::~FrameWithAttachment()
     delete d_attachmentreader;
 }
 
+template <int lengthfield>
 inline uint32_t FrameWithAttachment::length() const
 {
+  if (!d_attachmentdata_size)
+    for (auto const &p : d_framedata)
+      if (std::get<0>(p) == lengthfield)
+        return bytesToUint32(std::get<1>(p), std::get<2>(p));
   return d_attachmentdata_size;
 }
 

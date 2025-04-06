@@ -372,10 +372,10 @@ inline uint64_t BackupFrame::bytesToUint64(unsigned char const *data, size_t len
 
 inline int32_t BackupFrame::bytesToInt32(unsigned char const *data, size_t len) const
 {
-  return static_cast<int32_t>(data[len - 1] & 0xFF) |
-    static_cast<int32_t>(data[len - 2] & 0xFF) << 8 |
-    static_cast<int32_t>(data[len - 3] & 0xFF) << 16 |
-    static_cast<int32_t>(data[len - 4] & 0xFF) << 24;
+  return (data[len - 1] & 0xFF) |
+    (data[len - 2] & 0xFF) << 8 |
+    (data[len - 3] & 0xFF) << 16 |
+    (data[len - 4] & 0xFF) << 24;
 }
 
 inline int64_t BackupFrame::bytesToInt64(unsigned char const *data, size_t len) const

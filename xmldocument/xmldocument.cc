@@ -45,8 +45,6 @@ XmlDocument::XmlDocument(std::string const &filename)
   //std::unique_ptr<char[]> buffer(new char[buffer_size]);
   char buffer[buffer_size];
 
-  unsigned long long int filepos; // save file position of (very) large values
-  unsigned int available;
   State state = INITIAL;
   State state_before_comment = INITIAL;
   std::string attribute_name_tmp;
@@ -57,9 +55,9 @@ XmlDocument::XmlDocument(std::string const &filename)
   bool has_root_element = false;
   while (true)
   {
-    filepos = file.tellg();
+    unsigned long long int filepos = file.tellg();
     file.read(buffer, buffer_size);
-    available = file.gcount();
+    unsigned int available = file.gcount();
 
     for (unsigned int i = 0; i < available; ++i)
     {

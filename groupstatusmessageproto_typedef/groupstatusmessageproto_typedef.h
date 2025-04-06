@@ -27,8 +27,10 @@ struct Fixed64;
 struct SFixed32;
 struct SFixed64;
 struct Enum;
+struct Dummy;
 namespace protobuffer
 {
+  typedef Dummy DUMMY;
   namespace optional
   {
     typedef double DOUBLE;
@@ -47,7 +49,6 @@ namespace protobuffer
     typedef bool BOOL;
     typedef std::string STRING;
     typedef unsigned char *BYTES;
-    typedef int DUMMY;
   }
   namespace repeated
   {
@@ -67,7 +68,6 @@ namespace protobuffer
     typedef std::vector<bool> BOOL;
     typedef std::vector<std::string> STRING;
     typedef std::vector<unsigned char *> BYTES;
-    typedef int DUMMY;
   }
 }
 template <typename... Spec>
@@ -141,7 +141,7 @@ message GroupContext {
   optional AttachmentPointer avatar      = 5;
 }
 */
-typedef ProtoBufParser<protobuffer::optional::DUMMY, protobuffer::optional::STRING> Member2;
+typedef ProtoBufParser<protobuffer::DUMMY, protobuffer::optional::STRING> Member2;
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM, protobuffer::optional::STRING,
                        protobuffer::repeated::STRING, std::vector<Member2>, AttachmentPointer> GroupContext;
 

@@ -61,7 +61,7 @@ class AvatarFrame : public FrameWithAttachment
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::optional<std::string> mimetype() const;
-  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
+  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false) override;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -122,11 +122,7 @@ inline BackupFrame::FRAMETYPE AvatarFrame::frameType() const // virtual override
 
 inline uint32_t AvatarFrame::length() const
 {
-  if (!d_attachmentdata_size)
-    for (auto const &p : d_framedata)
-      if (std::get<0>(p) == FIELD::LENGTH)
-        return  bytesToUint32(std::get<1>(p), std::get<2>(p));
-  return d_attachmentdata_size;
+  return FrameWithAttachment::length<FIELD::LENGTH>();
 }
 
 inline uint32_t AvatarFrame::attachmentSize() const // virtual override
@@ -238,7 +234,7 @@ inline bool AvatarFrame::validate(uint64_t available) const
 
   int foundlength = 0;
   int length_fieldsize = 0;
-  unsigned int length = 0;
+  unsigned int len = 0;
   int foundname_or_recipient = 0;
   for (auto const &p : d_framedata)
   {
@@ -251,7 +247,7 @@ inline bool AvatarFrame::validate(uint64_t available) const
     if (std::get<0>(p) == FIELD::LENGTH)
     {
       ++foundlength;
-      length += bytesToUint32(std::get<1>(p), std::get<2>(p));
+      len += bytesToUint32(std::get<1>(p), std::get<2>(p));
       length_fieldsize += std::get<2>(p);
     }
     else if (std::get<0>(p) == FIELD::RECIPIENT || std::get<0>(p) != FIELD::NAME)
@@ -259,7 +255,7 @@ inline bool AvatarFrame::validate(uint64_t available) const
   }
 
   return foundlength == 1 && foundname_or_recipient == 1 &&
-    length <= available &&
+    len <= available &&
     length_fieldsize <= 8; // && length < some_max_avatar_size;
 }
 
