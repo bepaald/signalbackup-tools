@@ -30,6 +30,19 @@ struct Range
   std::string post;
   bool nobreak;
 
+#if __cpp_aggregate_paren_init < 201902L
+  // to allow compiling on older compilers (gcc 9, apple clang, anything pre-c++20)
+  Range (long long int s, long long int l, std::string const &pr, std::string const &rep, std::string const &po, bool nb)
+    :
+    start(s),
+    length(l),
+    pre(std::move(pr)),
+    replacement(std::move(rep)),
+    post(std::move(po)),
+    nobreak(nb)
+  {};
+#endif
+
   bool operator<(Range const &other) const
   {
     return (start < other.start) ||
