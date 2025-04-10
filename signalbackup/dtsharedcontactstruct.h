@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -72,12 +72,12 @@ struct SharedContactDataAvatar
 };
 
 struct SharedContactData {
-  SharedContactDataName name;
-  std::optional<SharedContactDataOrganization> organization;
   std::vector<SharedContactDataPhone> phoneNumbers;
   std::vector<SharedContactDataEmail> emails;
   std::vector<SharedContactDataPostalAddress> postalAddresses;
+  SharedContactDataName name;
   SharedContactDataAvatar avatar;
+  std::optional<SharedContactDataOrganization> organization;
 };
 
 #endif

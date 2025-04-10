@@ -71,18 +71,13 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     std::string initial;
     bool initial_is_emoji = false;
     if (s_emoji_first_bytes.find(display_name[0]) != std::string::npos)
-    {
-      for (std::string const &emoji_string : s_emoji_unicode_list)
-      {
-        if ((display_name.size() >= emoji_string.size()) &&
-            std::memcmp(display_name.data(), emoji_string.data(), emoji_string.size()) == 0)
+      for (std::string_view emoji_string : s_emoji_unicode_list)
+        if (STRING_STARTS_WITH(display_name, emoji_string))
         {
           initial = emoji_string;
           initial_is_emoji = true;
           break;
         }
-      }
-    }
 
     if (initial.empty())
     {
@@ -153,18 +148,18 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
 
     recipientinfo->emplace(rid, RecipientInfo{display_name,
                                               initial,
-                                              initial_is_emoji,
                                               results.valueAsString(0, d_recipient_aci),
                                               results.valueAsString(0, d_recipient_e164),
                                               results.valueAsString(0, "username"),
-                                              mute_until,
-                                              blocked,
-                                              mention_setting,
-                                              message_expiration_time,
-                                              custom_notifications,
                                               color,
                                               wall_light,
                                               wall_dark,
+                                              mute_until,
+                                              mention_setting,
+                                              message_expiration_time,
+                                              custom_notifications,
+                                              initial_is_emoji,
+                                              blocked,
                                               hasavatar,
                                               verified});
   }

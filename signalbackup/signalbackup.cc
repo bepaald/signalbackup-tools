@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -27,8 +27,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   :
   d_filename(filename),
   d_passphrase(passphrase),
-  d_found_sqlite_sequence_in_backup(false),
-  d_ok(false),
+  d_selfid(-1),
   d_databaseversion(-1),
   d_backupfileversion(-1),
   d_showprogress(showprogress),
@@ -36,7 +35,8 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   d_verbose(verbose),
   d_truncate(truncate),
   d_fulldecode(fulldecode),
-  d_selfid(-1)
+  d_ok(false),
+  d_found_sqlite_sequence_in_backup(false)
 {
   if (bepaald::isDir(filename))
     initFromDir(filename, replaceattachments);

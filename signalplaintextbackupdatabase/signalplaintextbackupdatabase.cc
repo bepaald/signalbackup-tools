@@ -37,11 +37,11 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
                                                              std::string const &countrycode, bool autogroupnames)
 #endif
   :
+  d_countrycode(countrycode),
+  d_addressmap(addressmap),
   d_ok(false),
   d_truncate(truncate),
-  d_verbose(verbose),
-  d_countrycode(countrycode),
-  d_addressmap(addressmap)
+  d_verbose(verbose)
 {
   // read map from file
   auto readMapFromFile = [](std::string const &mapfilename, std::vector<std::pair<std::string, std::string>> *map) STATICLAMBDA
@@ -294,7 +294,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
                   if (part.hasAttribute("cl"))
                     cl = part.getAttribute("cl");
 
-                  attachments.emplace_back(std::make_tuple(attachmentdata, ct, cl));
+                  attachments.emplace_back(std::move(attachmentdata), std::move(ct), std::move(cl));
 
                 }
               }

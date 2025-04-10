@@ -31,15 +31,15 @@
 
 class  FileDecryptor : public CryptBase
 {
-  std::unique_ptr<BackupFrame> d_headerframe;
   std::string d_filename;
+  std::vector<long long int> d_editattachments;
+  std::unique_ptr<BackupFrame> d_headerframe;
   uint64_t d_framecount;
   uint64_t d_filesize;
+  uint32_t d_backupfileversion;
   bool d_badmac;
   bool d_assumebadframesize;
-  std::vector<long long int> d_editattachments;
   bool d_stoponerror;
-  uint32_t d_backupfileversion;
 
  public:
   FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> const &editattachments = std::vector<long long int>());
@@ -75,15 +75,15 @@ class  FileDecryptor : public CryptBase
 inline FileDecryptor::FileDecryptor(FileDecryptor const &other)
   :
   CryptBase(other),
-  d_headerframe(nullptr),
   d_filename(other.d_filename),
+  d_editattachments(other.d_editattachments),
+  d_headerframe(nullptr),
   d_framecount(other.d_framecount),
   d_filesize(other.d_filesize),
+  d_backupfileversion(other.d_backupfileversion),
   d_badmac(other.d_badmac),
   d_assumebadframesize(other.d_assumebadframesize),
-  d_editattachments(other.d_editattachments),
-  d_stoponerror(other.d_stoponerror),
-  d_backupfileversion(other.d_backupfileversion)
+  d_stoponerror(other.d_stoponerror)
 {
   d_ok = false;
 
@@ -99,16 +99,16 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
   if (this != &other)
   {
     CryptBase::operator=(other);
+    d_filename = other.d_filename;
+    d_editattachments = other.d_editattachments;
     if (other.d_headerframe)
       d_headerframe.reset(other.d_headerframe->clone());
-    d_filename = other.d_filename;
     d_framecount = other.d_framecount;
     d_filesize = other.d_filesize;
+    d_backupfileversion = other.d_backupfileversion;
     d_badmac = other.d_badmac;
     d_assumebadframesize = other.d_assumebadframesize;
-    d_editattachments = other.d_editattachments;
     d_stoponerror = other.d_stoponerror;
-    d_backupfileversion = other.d_backupfileversion;
     d_ok = other.d_ok;
   }
   return *this;
@@ -117,15 +117,15 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
 inline FileDecryptor::FileDecryptor(FileDecryptor &&other)
   :
   CryptBase(std::move(other)),
-  d_headerframe(std::move(other.d_headerframe)),
   d_filename(std::move(other.d_filename)),
+  d_editattachments(std::move(other.d_editattachments)),
+  d_headerframe(std::move(other.d_headerframe)),
   d_framecount(std::move(other.d_framecount)),
   d_filesize(std::move(other.d_filesize)),
+  d_backupfileversion(std::move(other.d_backupfileversion)),
   d_badmac(std::move(other.d_badmac)),
   d_assumebadframesize(std::move(other.d_assumebadframesize)),
-  d_editattachments(std::move(other.d_editattachments)),
-  d_stoponerror(std::move(other.d_stoponerror)),
-  d_backupfileversion(std::move(other.d_backupfileversion))
+  d_stoponerror(std::move(other.d_stoponerror))
 {}
 
 inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
@@ -133,15 +133,16 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
   if (this != &other)
   {
     CryptBase::operator=(std::move(other));
-    d_headerframe = std::move(other.d_headerframe);
     d_filename = std::move(other.d_filename);
+    d_editattachments = std::move(other.d_editattachments);
+    d_headerframe = std::move(other.d_headerframe);
     d_framecount = std::move(other.d_framecount);
     d_filesize = std::move(other.d_filesize);
+    d_backupfileversion = std::move(other.d_backupfileversion);
     d_badmac = std::move(other.d_badmac);
     d_assumebadframesize = std::move(other.d_assumebadframesize);
-    d_editattachments = std::move(other.d_editattachments);
     d_stoponerror = std::move(other.d_stoponerror);
-    d_backupfileversion = std::move(other.d_backupfileversion);
+    d_ok = std::move(other.d_ok);
   }
   return *this;
 }

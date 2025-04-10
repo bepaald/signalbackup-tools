@@ -41,11 +41,11 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
     std::string author = getRecipientInfoFromMap(recipient_info, std::get<0>(m)).display_name;
     if (!author.empty())
     {
-      ranges.emplace_back(Range{std::get<1>(m), std::get<2>(m),
-                                (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
-                                "@" + author,
-                                (isquote ? "" : "</span>"),
-                                true});
+      ranges.emplace_back(std::get<1>(m), std::get<2>(m),
+                          (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
+                          "@" + author,
+                          (isquote ? "" : "</span>"),
+                          true);
     }
   }
 
@@ -71,11 +71,11 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
         long long int authorid = getRecipientIdFromUuidMapped(mentionuuid, nullptr);
         std::string author = getRecipientInfoFromMap(recipient_info, authorid).display_name;
         if (!author.empty())
-          ranges.emplace_back(Range{start, length,
-                                    (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
-                                    "@" + author,
-                                    (isquote ? "" : "</span>"),
-                                    true});
+          ranges.emplace_back(start, length,
+                              (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
+                              "@" + author,
+                              (isquote ? "" : "</span>"),
+                              true);
       }
 
       // get style
@@ -91,27 +91,27 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
         {
           case 0: // BOLD
           {
-            ranges.emplace_back(Range{start, length, "<b>", "", "</b>", false});
+            ranges.emplace_back(start, length, "<b>", "", "</b>", false);
             break;
           }
           case 1: // ITALIC
           {
-            ranges.emplace_back(Range{start, length, "<i>", "", "</i>", false});
+            ranges.emplace_back(start, length, "<i>", "", "</i>", false);
             break;
           }
           case 2: // SPOILER
           {
-            ranges.emplace_back(Range{start, length, "<span class=\"spoiler\">", "", "</span>", true});
+            ranges.emplace_back(start, length, "<span class=\"spoiler\">", "", "</span>", true);
             break;
           }
           case 3: // STRIKETHROUGH
           {
-            ranges.emplace_back(Range{start, length, "<s>", "", "</s>", false}); // or <del>? or <span class="strikthrough">?
+            ranges.emplace_back(start, length, "<s>", "", "</s>", false); // or <del>? or <span class="strikthrough">?
             break;
           }
           case 4: // MONOSPACE
           {
-            ranges.emplace_back(Range{start, length, "<span class=\"monospace\">", "", "</span>", false});
+            ranges.emplace_back(start, length, "<span class=\"monospace\">", "", "</span>", false);
             break;
           }
           default:
@@ -123,7 +123,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       if (!link.empty())
       {
         //std::cout << "Adding link to range [" << start << "-" << start+length << "] '" << link << "'" << std::endl;
-        ranges.emplace_back(Range{start, length, "<a class=\"styled-link\" href=\"" + link + "\">", "", "</a>", true});
+        ranges.emplace_back(start, length, "<a class=\"styled-link\" href=\"" + link + "\">", "", "</a>", true);
         hasstyledlinks = true;
       }
     }

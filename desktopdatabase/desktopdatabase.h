@@ -31,17 +31,17 @@
 
 class DesktopDatabase
 {
-  std::unique_ptr<SqlCipherDecryptor> d_cipherdb;
-  std::unique_ptr<unsigned char[]> d_rawdb;
   MemSqliteDB d_database;
   std::string d_configdir;
   std::string d_databasedir;
   std::string d_hexkey;
+  std::unique_ptr<SqlCipherDecryptor> d_cipherdb;
+  std::unique_ptr<unsigned char[]> d_rawdb;
+  long long int d_cipherversion;
   bool d_ok;
   bool d_verbose;
   bool d_dbus_verbose;
   bool d_ignorewal;
-  long long int d_cipherversion;
   bool d_truncate;
   bool d_showkey;
  public:
@@ -97,14 +97,17 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   d_configdir(configdir),
   d_databasedir(databasedir),
   d_hexkey(hexkey),
+  d_cipherversion(cipherversion),
   d_ok(false),
   d_verbose(verbose),
   d_dbus_verbose(dbus_verbose),
   d_ignorewal(ignorewal),
-  d_cipherversion(cipherversion),
   d_truncate(truncate),
   d_showkey(showkey)
 {
+
+  std::cout << "SIZE MEM" << sizeof(MemSqliteDB) << std::endl;
+
   d_ok = init(rawdb);
 }
 

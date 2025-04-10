@@ -1025,6 +1025,8 @@ Done! Wrote 10940302 bytes.
 </details>
 </ul>
 
+- `--removedoubles <ms>` Removes doubled messages from a backup file. The supplied argument `ms` is optional (default 0) and sets the maximum number of milliseconds the timestamps of two messages can be apart and still be considered potential doubles. Note, in any somewhat recent backups true doubles (with a timestamp difference of 0) are not possible, as the database does not allow the insertion of messages in the same thread, from the same recipient with the same timestamp. This function also considers the message body and number of attachments when determining if a message is doubled. Could be useful after having merged older, overlapping backups or imported overlapping data from Signal Desktop without using the `--limittodates/--autolimitdates` option, and no possibility to redo the process. _This function is experimental but has been used successfully at least once._
+
 **<span id="advanced">Advanced options</span>**
 
 The program can run any sql queries on the database in the backup file and save the output. If you know the schema of the database and know what you're doing, feel free to run any query and save the output. Examples:

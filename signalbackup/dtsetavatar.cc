@@ -74,7 +74,7 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const 
                                                                       "LENGTH:uint32:" + bepaald::toString(amd.filesize)}))
   {
     new_avatar_frame->setReader(new DesktopAttachmentReader(version, fullpath, key, size));
-    d_avatars.emplace_back(std::make_pair(bepaald::toString(rid), std::move(new_avatar_frame)));
+    d_avatars.emplace_back(bepaald::toString(rid), std::move(new_avatar_frame));
     return true;
   }
   return false;

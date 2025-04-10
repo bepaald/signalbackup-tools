@@ -121,9 +121,9 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   // if (prepbody)
   std::vector<std::tuple<long long int, long long int, long long int>> mentions;
   for (unsigned int mi = 0; mi < mention_results.rows(); ++mi)
-    mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
-                                          mention_results.getValueAs<long long int>(mi, "range_start"),
-                                          mention_results.getValueAs<long long int>(mi, "range_length")));
+    mentions.emplace_back(mention_results.getValueAs<long long int>(mi, "recipient_id"),
+                          mention_results.getValueAs<long long int>(mi, "range_start"),
+                          mention_results.getValueAs<long long int>(mi, "range_length"));
   std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
   if (!revision.isNull(0, d_mms_ranges))
     brdata = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, d_mms_ranges);
@@ -142,32 +142,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
     quote_mentions = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "quote_mentions");
   HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, linkify, true /*isquote*/);
 
-  HTMLMessageInfo msg_info({only_emoji,
-                            false, //is_deleted,
-                            false, //is_viewonce,
-                            parent_info.isgroup,
-                            incoming,
-                            nobackground,
-                            hasquote,
-                            quote_missing,
-                            parent_info.orig_filename,
-                            parent_info.overwrite, // ?
-                            parent_info.append,    // ?
-                            parent_info.story_reply,
-                            type,
-                            expires_in,
-                            msg_id,
-                            msg_recipient_id,
-                            -1, //original_message_id,
-                            0, // messagecount, // idx of current message in &messages
-
-                            &revision,
-                            &quote_attachment_results,
-                            &attachment_results,
-                            &reaction_results,
-                            &edit_revisions,
-
-                            body,
+  HTMLMessageInfo msg_info({body,
                             quote_body,
                             readable_date,
                             parent_info.directory,
@@ -178,7 +153,33 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             revision(0, "link_preview_description"),
                             shared_contacts,
 
-                            icon});
+                            &revision,
+                            &quote_attachment_results,
+                            &attachment_results,
+                            &reaction_results,
+                            &edit_revisions,
+
+                            type,
+                            expires_in,
+                            msg_id,
+                            msg_recipient_id,
+                            -1, //original_message_id,
+
+                            icon,
+                            0, // messagecount, // idx of current message in &messages
+
+                            only_emoji,
+                            false, //is_deleted,
+                            false, //is_viewonce,
+                            parent_info.isgroup,
+                            incoming,
+                            nobackground,
+                            hasquote,
+                            quote_missing,
+                            parent_info.orig_filename,
+                            parent_info.overwrite, // ?
+                            parent_info.append,    // ?
+                            parent_info.story_reply});
 
   HTMLwriteMessage(filt, msg_info, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
 }

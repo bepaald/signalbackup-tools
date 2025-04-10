@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,6 @@
 
 bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
 {
-
   //std::cout << "INITIALIZING FRAME OF " << l << " BYTES" << std::endl;
 
   unsigned int processed = 0;
@@ -49,30 +48,29 @@ bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tup
         unsigned char *fielddata = new unsigned char[length];
         std::memcpy(fielddata, data + processed, length);
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, length));
-        framedata->push_back(std::make_tuple(fieldnumber, fielddata, length));
+        framedata->emplace_back(fieldnumber, fielddata, length);
         processed += length; // up to length was eaten
         break;
       }
       case VARINT:
       {
         int64_t val = getVarint(data, &processed, l); // for UNSIGNED varints
-        if (val == -1 &&                           // (possible?) invalid value
-            processed == l &&                      // last byte was processed
-            data[l - 1] & 0b10000000) [[unlikely]] // but last byte was not end of varint
+        if (processed == l &&                       // last byte was processed
+             data[l - 1] & 0b10000000) [[unlikely]] // but last byte was not end of varint
           return false;
         //DEBUGOUT("Got varint: ", val);
-        val = bepaald::swap_endian(val); // because java writes integers in big endian?
+        val = bepaald::swap_endian(val); // because java writes integers in big endian? or protobuf does?
         //DEBUGOUT("Got varint: ", val);
         unsigned char *fielddata = new unsigned char[sizeof(decltype(val))];
         std::memcpy(fielddata, reinterpret_cast<unsigned char *>(&val), sizeof(decltype(val)));
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, sizeof(decltype(val))));
 
         // this used to say sizeof(sizeof(decltype(val))), I assumed it was a mistake
-        framedata->push_back(std::make_tuple(fieldnumber, fielddata, sizeof(decltype(val))));
+        framedata->emplace_back(fieldnumber, fielddata, sizeof(decltype(val)));
         // processed is set in getVarInt
         break;
       }
-      case FIXED32:
+      [[unlikely]] case FIXED32: // Note this does not occur in normal backup files
       {
         //std::cout << "BIT32 TYPE" << std::endl;
         unsigned int length = 4;
@@ -81,7 +79,7 @@ bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tup
         processed += length; // ????
         break;
       }
-      case FIXED64:
+      [[unlikely]] case FIXED64: // Note this does not occur in normal backup files
       {
         unsigned int length = 8;
         if (processed + length > l) // more then we have
@@ -89,18 +87,18 @@ bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tup
         unsigned char *fielddata = new unsigned char[length];
         std::memcpy(fielddata, data + processed, length);
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, length));
-        framedata->push_back(std::make_tuple(fieldnumber, fielddata, length));
+        framedata->emplace_back(fieldnumber, fielddata, length);
         processed += length;
         break;
       }
-      case STARTTYPE:
+      [[unlikely]] case STARTTYPE: // Note this does not occur in normal backup files
       {
         //std::cout << "GOT STARTTYPE" << std::endl;
         unsigned int length = 0;
         processed += length; // ????
         break;
       }
-      case ENDTYPE:
+      [[unlikely]] case ENDTYPE: // Note this does not occur in normal backup files
       {
         //std::cout << "GOT ENDTYPE" << std::endl;
         unsigned int length = 0;

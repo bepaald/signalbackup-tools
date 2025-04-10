@@ -56,8 +56,8 @@ class SqlStatementFrame : public BackupFrame
  private:
   static Registrar s_registrar;
 
-  std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> d_parameterdata; // PARAMETER_FIELD, bytes, size
   std::string d_statement;
+  std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> d_parameterdata; // PARAMETER_FIELD, bytes, size
 
  public:
   inline SqlStatementFrame();

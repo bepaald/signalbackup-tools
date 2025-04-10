@@ -320,7 +320,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
             auto [tmpuuid, tmpuuid_size] = dm.getField<1>().value();
             std::string pmus = bepaald::toLower(bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true));
             pmus.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-            promotedmemberuuids.emplace_back(pmus);
+            promotedmemberuuids.emplace_back(std::move(pmus));
           }
         }
 
@@ -810,7 +810,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
             invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
             invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
           }
-          invitedmembers.emplace_back(std::pair<std::string, std::string>{invited_uuidstr, invited_by_uuidstr});
+          invitedmembers.emplace_back(std::move(invited_uuidstr), std::move(invited_by_uuidstr));
         }
       }
 

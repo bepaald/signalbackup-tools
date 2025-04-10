@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -40,10 +40,10 @@
 
 class DesktopAttachmentReader : public AttachmentReader<DesktopAttachmentReader>
 {
-  int d_version;
   std::string d_path;
   std::string d_key;
   uint64_t d_size;
+  int d_version;
  public:
   inline explicit DesktopAttachmentReader(std::string const &path);
   inline DesktopAttachmentReader(int version, std::string const &path, std::string const &key, uint64_t size);
@@ -67,10 +67,10 @@ inline DesktopAttachmentReader::DesktopAttachmentReader(std::string const &path)
 
 inline DesktopAttachmentReader::DesktopAttachmentReader(int version, std::string const &path, std::string const &key, uint64_t size)
   :
-  d_version(version),
   d_path(path),
   d_key(key),
-  d_size(size)
+  d_size(size),
+  d_version(version)
 {}
 
 inline int DesktopAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose)

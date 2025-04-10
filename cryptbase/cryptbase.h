@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -28,11 +28,7 @@
 
 class CryptBase
 {
- public:
-  unsigned int static constexpr MACSIZE = 10;
  protected:
-  bool d_ok;
-  bool d_verbose;
   unsigned char *d_backupkey;
   uint64_t d_backupkey_size;
   unsigned char *d_cipherkey;
@@ -44,6 +40,11 @@ class CryptBase
   unsigned char *d_salt;
   uint64_t d_salt_size;
   uint64_t d_counter;
+ public:
+  unsigned int static constexpr MACSIZE = 10;
+ protected:
+  bool d_ok;
+  bool d_verbose;
  public:
   inline explicit CryptBase(bool verbose);
   inline CryptBase(CryptBase const &other);
@@ -61,8 +62,6 @@ class CryptBase
 
 inline CryptBase::CryptBase(bool verbose)
   :
-  d_ok(false),
-  d_verbose(verbose),
   d_backupkey(nullptr),
   d_backupkey_size(0),
   d_cipherkey(nullptr),
@@ -73,13 +72,13 @@ inline CryptBase::CryptBase(bool verbose)
   d_iv_size(0),
   d_salt(nullptr),
   d_salt_size(0),
-  d_counter(0)
+  d_counter(0),
+  d_ok(false),
+  d_verbose(verbose)
 {}
 
 inline CryptBase::CryptBase(CryptBase const &other)
   :
-  d_ok(false),
-  d_verbose(other.d_verbose),
   d_backupkey(nullptr),
   d_backupkey_size(other.d_backupkey_size),
   d_cipherkey(nullptr),
@@ -90,7 +89,9 @@ inline CryptBase::CryptBase(CryptBase const &other)
   d_iv_size(other.d_iv_size),
   d_salt(nullptr),
   d_salt_size(other.d_salt_size),
-  d_counter(other.d_counter)
+  d_counter(other.d_counter),
+  d_ok(false),
+  d_verbose(other.d_verbose)
 {
   if (other.d_backupkey)
   {
@@ -177,8 +178,6 @@ inline CryptBase &CryptBase::operator=(CryptBase const &other)
 
 inline CryptBase::CryptBase(CryptBase &&other)
   :
-  d_ok(std::move(other.d_ok)),
-  d_verbose(std::move(other.d_verbose)),
   d_backupkey(std::move(other.d_backupkey)),
   d_backupkey_size(std::move(other.d_backupkey_size)),
   d_cipherkey(std::move(other.d_cipherkey)),
@@ -189,7 +188,9 @@ inline CryptBase::CryptBase(CryptBase &&other)
   d_iv_size(std::move(other.d_iv_size)),
   d_salt(std::move(other.d_salt)),
   d_salt_size(std::move(other.d_salt_size)),
-  d_counter(std::move(other.d_counter))
+  d_counter(std::move(other.d_counter)),
+  d_ok(std::move(other.d_ok)),
+  d_verbose(std::move(other.d_verbose))
 {
   other.d_backupkey = nullptr;
   other.d_backupkey_size = 0;

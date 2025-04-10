@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,24 +24,17 @@ void SignalBackup::escapeXmlString(std::string *str) const
   size_t pos = 0;
   while (pos != str->size())
   {
+    if ((*str)[pos] == '\'')
+    {
+      str->replace(pos, 1, "&apos;");
+      pos += STRLEN("&apos;");
+      continue;
+    }
+
     if ((*str)[pos] == '&')
     {
       str->replace(pos, 1, "&amp;");
       pos += STRLEN("&amp;");
-      continue;
-    }
-
-    if ((*str)[pos] == '<')
-    {
-      str->replace(pos, 1, "&lt;");
-      pos += STRLEN("&lt;");
-      continue;
-    }
-
-    if ((*str)[pos] == '>')
-    {
-      str->replace(pos, 1, "&gt;");
-      pos += STRLEN("&gt;");
       continue;
     }
 
@@ -52,10 +45,17 @@ void SignalBackup::escapeXmlString(std::string *str) const
       continue;
     }
 
-    if ((*str)[pos] == '\'')
+    if ((*str)[pos] == '>')
     {
-      str->replace(pos, 1, "&apos;");
-      pos += STRLEN("&apos;");
+      str->replace(pos, 1, "&gt;");
+      pos += STRLEN("&gt;");
+      continue;
+    }
+
+    if ((*str)[pos] == '<')
+    {
+      str->replace(pos, 1, "&lt;");
+      pos += STRLEN("&lt;");
       continue;
     }
 

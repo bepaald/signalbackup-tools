@@ -40,8 +40,8 @@ class AvatarFrame : public FrameWithAttachment
     RECIPIENT = 3, //string
   };
 
-  static Registrar s_registrar;
   std::optional<std::string> d_mimetype;
+  static Registrar s_registrar;
  public:
   inline explicit AvatarFrame(uint64_t count = 0);
   inline AvatarFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);

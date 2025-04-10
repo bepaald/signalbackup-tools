@@ -68,10 +68,10 @@ class BackupFrame
       s_registry()[ft] = func;
     }
   };
-  bool d_ok;
   std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> d_framedata; // field number, field data, length
   uint64_t d_count;
   size_t d_constructedsize;
+  bool d_ok;
  public:
   explicit inline BackupFrame(uint64_t count);
   inline BackupFrame(unsigned char const *data, size_t length, uint64_t count);
@@ -128,16 +128,16 @@ inline std::unordered_map<BackupFrame::FRAMETYPE, BackupFrame *(*)(unsigned char
 
 inline BackupFrame::BackupFrame(uint64_t num)
   :
-  d_ok(false),
   d_count(num),
-  d_constructedsize(0)
+  d_constructedsize(0),
+  d_ok(false)
 {}
 
 inline BackupFrame::BackupFrame(unsigned char const *data, size_t l, uint64_t num)
   :
-  d_ok(false),
   d_count(num),
-  d_constructedsize(l)
+  d_constructedsize(l),
+  d_ok(false)
 {
   //std::cout << "CREATING BACKUPFRAME!" << std::endl;
   //Logger::message("DATA: ", bepaald::bytesToHexString(data, l), " (", l, " bytes)");
@@ -146,10 +146,10 @@ inline BackupFrame::BackupFrame(unsigned char const *data, size_t l, uint64_t nu
 
 inline BackupFrame::BackupFrame(BackupFrame &&other)
   :
-  d_ok(std::move(other.d_ok)),
   d_framedata(std::move(other.d_framedata)),
   d_count(std::move(other.d_count)),
-  d_constructedsize(std::move(other.d_constructedsize))
+  d_constructedsize(std::move(other.d_constructedsize)),
+  d_ok(std::move(other.d_ok))
 {
   other.d_framedata.clear(); // clear other without delete[]ing, ~this will do it
 }
@@ -304,19 +304,66 @@ inline std::string BackupFrame::frameTypeString() const
 
 inline int64_t BackupFrame::getLengthOrVarint(unsigned char const *data, unsigned int *offset, unsigned int totallength) // static
 {
-  if (*offset >= totallength)
-    return -1;
+  /*
+  // This is a unrolled variant of the original below, in artificial testing, it appeared
+  // faster (millisecs, on 500 million inputs), but in practice, this causes to slow
+  // opening backup file down (also milliseconds)
+
+  // read first byte (if bytes available)
+  uint64_t length = (*offset < totallength) ? data[*offset] & 0b0111'1111 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 7 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 14 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 21 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 28 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 35 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 42 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 49 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 56 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  length += (*offset < totallength) ? (static_cast<uint64_t>(data[*offset]) & 0b0111'1111) << 63 : 0;
+  if (*offset < totallength && data[(*offset)++] < 0b1000'0000)
+    return length;
+
+  return 0;
+  */
+
+  if (*offset >= totallength) [[unlikely]]
+    return 0;
 
   uint64_t length = 0;
   uint64_t times = 0;
   while (*offset < totallength && (data[*offset]) & 0b10000000)
     length += ((static_cast<uint64_t>(data[(*offset)++]) & 0b01111111) << (times++ * 7));
-  if (*offset >= totallength)
-    return -1;
-  length += ((static_cast<uint64_t>(data[(*offset)++]) & 0b01111111) << (times * 7));
-  return length;
+  if (*offset >= totallength) [[unlikely]]
+    return 0;
+  return length + ((static_cast<uint64_t>(data[(*offset)++]) & 0b01111111) << (times * 7));
 }
-
 
 inline BackupFrame *BackupFrame::instantiate(FRAMETYPE ft, unsigned char *data, size_t length, uint64_t count) //static
 {
@@ -389,12 +436,6 @@ inline int64_t BackupFrame::bytesToInt64(unsigned char const *data, size_t len) 
     static_cast<int64_t>(data[len - 7] & 0xFF) << 48 |
     static_cast<int64_t>(data[len - 8] & 0xFF) << 56;
 }
-
-// inline void BackupFrame::printInfo() const // virtual
-// {
-//   DEBUGOUT("I AM A GENERIC BACKUPFRAME. IT SEEMS A BAD CHILD OF MINE HAS NOT OVERRIDDEN ME!");
-//   std::cout << "Frame number: " << d_count << std::endl;
-// }
 
 inline uint64_t BackupFrame::frameNumber() const
 {

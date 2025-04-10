@@ -102,18 +102,18 @@ class SqliteDB
   };
 
  private:
+  mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
+  mutable std::map<std::string, std::map<std::string, bool>> d_columns;
+  std::string d_name;
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
   mutable sqlite3_stmt *d_stmt; // cache a (prepared) statement for reuse in subsequent transactions
   mutable char const *d_error_tail;
-  std::string d_name;
   // non-owning pointer!
   std::pair<unsigned char *, uint64_t> *d_data;
   uint32_t d_databasewriteversion;
   bool d_readonly;
   bool d_ok;
-  mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
-  mutable std::map<std::string, std::map<std::string, bool>> d_columns;
   mutable char d_previous_schema_version[11]; // 11 = maximum chars in string representing 4 byte number (+ '\0')
 
  protected:
@@ -198,11 +198,11 @@ inline SqliteDB::SqliteDB()
 
 inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   :
+  d_name(name),
   d_db(nullptr),
   d_vfs(nullptr),
   d_stmt(nullptr),
   d_error_tail(nullptr),
-  d_name(name),
   d_data(nullptr),
   d_databasewriteversion(0),
   d_readonly(readonly),
@@ -387,14 +387,11 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
       return false;
     }
   }
-  else // reuse existing prepared statement
+  else if (sqlite3_reset(d_stmt) != SQLITE_OK) [[unlikely]] // reuse existing prepared statement
   {
-    if (sqlite3_reset(d_stmt) != SQLITE_OK) [[unlikely]]
-    {
-      Logger::error("During sqlite3_reset(): ", sqlite3_errmsg(d_db));
-      Logger::error_indent("-> Query: \"", q, "\"");
-      return false;
-    }
+    Logger::error("During sqlite3_reset(): ", sqlite3_errmsg(d_db));
+    Logger::error_indent("-> Query: \"", q, "\"");
+    return false;
   }
 
   if (static_cast<int>(params.size()) != sqlite3_bind_parameter_count(d_stmt)) [[unlikely]]

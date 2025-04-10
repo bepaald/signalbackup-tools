@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -33,24 +33,24 @@
 SqlCipherDecryptor::SqlCipherDecryptor(std::string const &databasepath, std::string const &hexkey,
                                        int version, bool verbose)
   :
-  d_ok(false),
   d_databasepath(databasepath),
   d_key(nullptr),
-  d_keysize(0),
   d_hmackey(nullptr),
-  d_hmackeysize(0),
   d_salt(nullptr),
-  d_saltsize(0),
   d_digest(version >= 4 ? EVP_sha512() : EVP_sha1()),
+  d_decrypteddata(nullptr),
+  d_decrypteddatasize(0),
   d_digestname_size((version >= 4 ? STRLEN("SHA512") : STRLEN("SHA1")) + 1),
   d_digestname(version >= 4 ?
                new char[d_digestname_size] {'S', 'H', 'A', '5', '1', '2', '\0'} :
                new char[d_digestname_size] {'S', 'H', 'A', '1', '\0'}),
+  d_keysize(0),
+  d_hmackeysize(0),
+  d_saltsize(0),
   d_digestsize(EVP_MD_size(d_digest)),
   d_pagesize(version >= 4 ? 4096 : 1024),
-  d_decrypteddata(nullptr),
-  d_decrypteddatasize(0),
-  d_verbose(verbose)
+  d_verbose(verbose),
+  d_ok(false)
 {
   if (hexkey.empty())
     return;

@@ -22,6 +22,32 @@
 
 struct HTMLMessageInfo
 {
+  std::string body;
+  std::string quote_body;
+  std::string readable_date;
+  std::string directory;
+  std::string threaddir;
+  std::string filename;
+  std::string link_preview_url;
+  std::string link_preview_title;
+  std::string link_preview_description;
+  std::string shared_contacts;
+
+  SqliteDB::QueryResults *messages;
+  SqliteDB::QueryResults *quote_attachment_results;
+  SqliteDB::QueryResults *attachment_results;
+  SqliteDB::QueryResults *reaction_results;
+  SqliteDB::QueryResults *edit_revisions;
+
+  long long int type;
+  long long int expires_in;
+  long long int msg_id;
+  long long int msg_recipient_id;
+  long long int original_message_id;
+
+  IconType icon; //size: 4
+  unsigned int idx;
+
   bool only_emoji;
   bool is_deleted;
   bool is_viewonce;
@@ -34,29 +60,4 @@ struct HTMLMessageInfo
   bool overwrite;
   bool append;
   bool story_reply;
-  long long int type;
-  long long int expires_in;
-  long long int msg_id;
-  long long int msg_recipient_id;
-  long long int original_message_id;
-  unsigned int idx;
-
-  SqliteDB::QueryResults *messages;
-  SqliteDB::QueryResults *quote_attachment_results;
-  SqliteDB::QueryResults *attachment_results;
-  SqliteDB::QueryResults *reaction_results;
-  SqliteDB::QueryResults *edit_revisions;
-
-  std::string body;
-  std::string quote_body;
-  std::string readable_date;
-  std::string directory;
-  std::string threaddir;
-  std::string filename;
-  std::string link_preview_url;
-  std::string link_preview_title;
-  std::string link_preview_description;
-  std::string shared_contacts;
-
-  IconType icon;
 };

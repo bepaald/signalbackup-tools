@@ -32,13 +32,14 @@
 
 class SignalPlaintextBackupDatabase
 {
+  std::set<std::string> norm_shown;
+  std::string d_countrycode;
+  std::vector<std::pair<std::string, std::string>> d_addressmap;
   MemSqliteDB d_database;
   bool d_ok;
   bool d_truncate;
   bool d_verbose;
   //std::set<std::string> d_warningsgiven;
-  std::string d_countrycode;
-  std::vector<std::pair<std::string, std::string>> d_addressmap;
  public:
 #if __cpp_lib_span >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
   SignalPlaintextBackupDatabase(std::span<std::string const> const &sptbxmls, bool truncate, bool verbose,
@@ -63,7 +64,6 @@ class SignalPlaintextBackupDatabase
 
  private:
   inline std::string normalizePhoneNumber(std::string const &in, bool show = true);// const;
-  std::set<std::string> norm_shown;
 };
 
 inline bool SignalPlaintextBackupDatabase::ok() const

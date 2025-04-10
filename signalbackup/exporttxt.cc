@@ -322,12 +322,12 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
             std::string displayname = getNameFromRecipientId(mention_results.getValueAs<long long int>(m, "recipient_id"));
             if (displayname.empty())
               continue;
-            ranges.emplace_back(Range{mention_results.getValueAs<long long int>(m, "range_start"),
-                                      mention_results.getValueAs<long long int>(m, "range_length"),
-                                      "",
-                                      "@" + displayname,
-                                      "",
-                                      false});
+            ranges.emplace_back(mention_results.getValueAs<long long int>(m, "range_start"),
+                                mention_results.getValueAs<long long int>(m, "range_length"),
+                                "",
+                                "@" + displayname,
+                                "",
+                                false);
           }
           applyRanges(&body, &ranges, nullptr);
 

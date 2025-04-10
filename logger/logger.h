@@ -78,6 +78,7 @@ class Logger
   };
 
  private:
+  std::set<std::string> d_warningsgiven;
   static std::unique_ptr<Logger> s_instance;
   std::ofstream *d_file;
   std::ostringstream *d_strstreambackend;
@@ -88,7 +89,6 @@ class Logger
   bool d_overwriting;
   bool d_dangling;
   //std::sstream d_previousline;
-  std::set<std::string> d_warningsgiven;
 
  public:
   inline static void setFile(std::string const &f);

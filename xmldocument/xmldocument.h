@@ -45,10 +45,10 @@ class XmlDocument
     static int constexpr s_maxsize = 1024;
 
     Node *d_parent;
-    std::vector<Node> d_children;
     std::map<std::string, StringOrRef> d_attributes;
     std::string d_name;
-    std::string d_value; // make this a separate thing, so it can refer to file and position/size if size is too big
+    std::string d_value;
+    std::vector<Node> d_children;
     //bool d_value_contains_ampersand; // just a helper if we have read the value during parsing anyway...
     bool is_closed;
     bool is_text_node;
@@ -99,8 +99,8 @@ class XmlDocument
   };
 
   Node d_rootnode;
-  Node *d_currentnode;
   std::string d_prolog;
+  Node *d_currentnode;
   bool d_ok;
 
  public:

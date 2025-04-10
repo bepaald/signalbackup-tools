@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -29,7 +29,7 @@ void SignalBackup::scanMissingAttachments() const
   std::vector<std::pair<long long int, long long int>> missing;
   for (unsigned int i = 0; i < res.rows(); ++i)
     if (/*true || */d_attachments.find({res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")}) == d_attachments.end())
-      missing.emplace_back(std::make_pair(res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id")));
+      missing.emplace_back(res.getValueAs<long long int>(i, "_id"), res.getValueAs<long long int>(i, "unique_id"));
 
   Logger::message("Got ", missing.size(), " attachments with data not found");
 

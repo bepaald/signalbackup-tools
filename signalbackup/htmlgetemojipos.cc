@@ -19,6 +19,39 @@
 
 #include "signalbackup.ih"
 
+std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos(std::string_view str) const
+{
+  std::vector<std::pair<unsigned int, unsigned int>> results;
+  std::string::size_type pos = 0;
+
+  // check first byte, emoji begin with one of a few possible bytes,
+  // that are otherwise fairly rare in messages, find the first
+  // possible starting position.
+  while ((pos = str.find_first_of(s_emoji_first_bytes, pos)) != std::string::npos)
+  {
+    for (std::string_view const &emoji_string : s_emoji_unicode_list)
+    {
+      bool hit = true;
+      // now that a (likely) emoji byte was found, lets see _which_ emoji it is.
+      // many emoji start with the same byte sequence, so we check back to front
+      for (unsigned int i = emoji_string.size(); i-- ;)
+        if ((pos + i) > str.size() || str[pos + i] != emoji_string[i])
+        {
+          hit = false;
+          break;
+        }
+      if (hit)
+      {
+        results.emplace_back(pos, emoji_string.size());
+        pos += emoji_string.size() - 1;
+      }
+    }
+    ++pos;
+  }
+  return results;
+}
+
+/*
 std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos(std::string const &str) const
 {
   std::vector<std::pair<unsigned int, unsigned int>> results;
@@ -31,7 +64,7 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
       if (pos <= (str.size() - emoji_string.size()) &&
           std::memcmp(str.data() + pos, emoji_string.data(), emoji_string.size()) == 0)
       {
-        results.emplace_back(std::make_pair(pos, emoji_string.size()));
+        results.emplace_back(pos, emoji_string.size());
         pos += emoji_string.size() - 1; // minus one because ++pos in while...
       }
     }
@@ -39,3 +72,4 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
   }
   return results;
 }
+*/

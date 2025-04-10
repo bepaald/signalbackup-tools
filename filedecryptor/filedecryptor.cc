@@ -24,15 +24,15 @@
 FileDecryptor::FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror, bool assumebadframesize, std::vector<long long int> const &editattachments)
   :
   CryptBase(verbose),
-  d_headerframe(nullptr),
   d_filename(filename),
+  d_editattachments(editattachments),
+  d_headerframe(nullptr),
   d_framecount(0),
   d_filesize(0),
+  d_backupfileversion(0),
   d_badmac(false),
   d_assumebadframesize(assumebadframesize),
-  d_editattachments(editattachments),
-  d_stoponerror(stoponerror),
-  d_backupfileversion(0)
+  d_stoponerror(stoponerror)
 {
   std::ifstream file(d_filename, std::ios_base::binary | std::ios_base::in);
   if (!file.is_open())

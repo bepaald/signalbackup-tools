@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,15 +23,15 @@
 
 struct GroupInfo
 {
-  std::list<long long int> admin_ids;
-  long long int expiration_timer = 0;
-  bool link_invite_enabled = false;
   std::string description;
-  std::vector<long long int> pending_members;
-  std::vector<long long int> requesting_members;
-  std::vector<long long int> banned_members;
   std::string access_control_attributes;
   std::string access_control_members;
   std::string access_control_addfromlinkinvite;
+  std::list<long long int> admin_ids;
+  std::vector<long long int> pending_members;
+  std::vector<long long int> requesting_members;
+  std::vector<long long int> banned_members;
+  long long int expiration_timer = 0;
+  bool link_invite_enabled = false;
   bool isannouncementgroup = false;
 };

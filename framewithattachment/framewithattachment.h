@@ -32,9 +32,9 @@ class FrameWithAttachment : public BackupFrame
 {
  protected:
   unsigned char *d_attachmentdata;
+  BaseAttachmentReader *d_attachmentreader;
   uint32_t d_attachmentdata_size;
   bool d_noclear;
-  BaseAttachmentReader *d_attachmentreader;
 
  public:
   inline explicit FrameWithAttachment(uint64_t count = 0);
@@ -59,31 +59,31 @@ inline FrameWithAttachment::FrameWithAttachment(uint64_t count)
   :
   BackupFrame(count),
   d_attachmentdata(nullptr),
+  d_attachmentreader(nullptr),
   d_attachmentdata_size(0),
-  d_noclear(false),
-  d_attachmentreader(nullptr)
+  d_noclear(false)
 {}
 
 inline FrameWithAttachment::FrameWithAttachment(unsigned char const *bytes, size_t length, uint64_t count)
   :
   BackupFrame(bytes, length, count),
   d_attachmentdata(nullptr),
+  d_attachmentreader(nullptr),
   d_attachmentdata_size(0),
-  d_noclear(false),
-  d_attachmentreader(nullptr)
+  d_noclear(false)
 {}
 
 inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment &&other)
   :
   BackupFrame(std::move(other)),
   d_attachmentdata(std::move(other.d_attachmentdata)),
+  d_attachmentreader(std::move(other.d_attachmentreader)),
   d_attachmentdata_size(std::move(other.d_attachmentdata_size)),
-  d_noclear(std::move(other.d_noclear)),
-  d_attachmentreader(std::move(other.d_attachmentreader))
+  d_noclear(std::move(other.d_noclear))
 {
   other.d_attachmentdata = nullptr;
-  other.d_attachmentdata_size = 0;
   other.d_attachmentreader = nullptr;
+  other.d_attachmentdata_size = 0;
 }
 
 inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &&other)
@@ -97,12 +97,12 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &
     BackupFrame::operator=(std::move(other));
     d_attachmentdata = std::move(other.d_attachmentdata);
     d_attachmentdata_size = std::move(other.d_attachmentdata_size);
-    d_noclear = std::move(other.d_noclear);
     d_attachmentreader = std::move(other.d_attachmentreader);
+    d_noclear = std::move(other.d_noclear);
 
     other.d_attachmentdata = nullptr;
-    other.d_attachmentdata_size = 0;
     other.d_attachmentreader = nullptr;
+    other.d_attachmentdata_size = 0;
   }
   return *this;
 }
@@ -111,9 +111,9 @@ inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment const &other
   :
   BackupFrame(other),
   d_attachmentdata(nullptr),
+  d_attachmentreader(nullptr),
   d_attachmentdata_size(other.d_attachmentdata_size),
-  d_noclear(other.d_noclear),
-  d_attachmentreader(nullptr)
+  d_noclear(other.d_noclear)
 {
   if (other.d_attachmentdata)
   {

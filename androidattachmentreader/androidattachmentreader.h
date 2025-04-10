@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -32,15 +32,15 @@
 
 class AndroidAttachmentReader : public AttachmentReader<AndroidAttachmentReader>
 {
-  uint32_t d_attachmentdata_size;
+  std::string d_filename;
   uint64_t d_filepos;
-  uint32_t d_iv_size;
   unsigned char *d_iv;
   uint64_t d_mackey_size;
   unsigned char *d_mackey;
   uint64_t d_cipherkey_size;
   unsigned char *d_cipherkey;
-  std::string d_filename;
+  uint32_t d_attachmentdata_size;
+  uint32_t d_iv_size;
  public:
   inline AndroidAttachmentReader(unsigned char const *iv, uint32_t iv_size,
                                  unsigned char const *mackey, uint64_t mackey_size,
@@ -59,14 +59,14 @@ inline AndroidAttachmentReader::AndroidAttachmentReader(unsigned char const *iv,
                                                         unsigned char const *cipherkey, uint64_t cipherkey_size,
                                                         uint32_t attsize, std::string const &filename, uint64_t filepos)
   :
-  d_attachmentdata_size(0),
   d_filepos(0),
-  d_iv_size(0),
   d_iv(nullptr),
   d_mackey_size(0),
   d_mackey(nullptr),
   d_cipherkey_size(0),
-  d_cipherkey(nullptr)
+  d_cipherkey(nullptr),
+  d_attachmentdata_size(0),
+  d_iv_size(0)
 {
   d_iv_size = iv_size;
   if (iv)
@@ -98,15 +98,15 @@ inline AndroidAttachmentReader::AndroidAttachmentReader(unsigned char const *iv,
 inline AndroidAttachmentReader::AndroidAttachmentReader(AndroidAttachmentReader const &other)
   :
   AttachmentReader(other),
-  d_attachmentdata_size(other.d_attachmentdata_size),
+  d_filename(other.d_filename),
   d_filepos(other.d_filepos),
-  d_iv_size(other.d_iv_size),
   d_iv(nullptr),
   d_mackey_size(other.d_mackey_size),
   d_mackey(nullptr),
   d_cipherkey_size(other.d_cipherkey_size),
   d_cipherkey(nullptr),
-  d_filename(other.d_filename)
+  d_attachmentdata_size(other.d_attachmentdata_size),
+  d_iv_size(other.d_iv_size)
 {
   if (other.d_iv)
   {
@@ -130,15 +130,15 @@ inline AndroidAttachmentReader::AndroidAttachmentReader(AndroidAttachmentReader 
 inline AndroidAttachmentReader::AndroidAttachmentReader(AndroidAttachmentReader &&other)
   :
   AttachmentReader(other),
-  d_attachmentdata_size(std::move(other.d_attachmentdata_size)),
+  d_filename(std::move(other.d_filename)),
   d_filepos(std::move(other.d_filepos)),
-  d_iv_size(std::move(other.d_iv_size)),
   d_iv(std::move(other.d_iv)),
   d_mackey_size(std::move(other.d_mackey_size)),
   d_mackey(std::move(other.d_mackey)),
   d_cipherkey_size(std::move(other.d_cipherkey_size)),
   d_cipherkey(std::move(other.d_cipherkey)),
-  d_filename(std::move(other.d_filename))
+  d_attachmentdata_size(std::move(other.d_attachmentdata_size)),
+  d_iv_size(std::move(other.d_iv_size))
 {
   other.d_attachmentdata_size = 0;
   other.d_iv_size = 0;

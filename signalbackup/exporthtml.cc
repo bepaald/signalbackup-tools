@@ -575,9 +575,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         // if (prepbody)
         std::vector<std::tuple<long long int, long long int, long long int>> mentions;
         for (unsigned int mi = 0; mi < mention_results.rows(); ++mi)
-          mentions.emplace_back(std::make_tuple(mention_results.getValueAs<long long int>(mi, "recipient_id"),
-                                                mention_results.getValueAs<long long int>(mi, "range_start"),
-                                                mention_results.getValueAs<long long int>(mi, "range_length")));
+          mentions.emplace_back(mention_results.getValueAs<long long int>(mi, "recipient_id"),
+                                mention_results.getValueAs<long long int>(mi, "range_start"),
+                                mention_results.getValueAs<long long int>(mi, "range_length"));
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
         if (!messages.isNull(messagecount, d_mms_ranges))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
@@ -629,7 +629,33 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
          */
 
         // collect data needed by writeMessage()
-        HTMLMessageInfo msg_info({only_emoji,
+        HTMLMessageInfo msg_info({body,
+                                  quote_body,
+                                  readable_date,
+                                  directory,
+                                  threaddir,
+                                  filename,
+                                  messages(messagecount, "link_preview_url"),
+                                  messages(messagecount, "link_preview_title"),
+                                  messages(messagecount, "link_preview_description"),
+                                  shared_contacts,
+
+                                  &messages,
+                                  &quote_attachment_results,
+                                  &attachment_results,
+                                  &reaction_results,
+                                  &edit_revisions,
+
+                                  type,
+                                  expires_in,
+                                  msg_id,
+                                  msg_recipient_id,
+                                  original_message_id,
+
+                                  icon,
+                                  messagecount,
+
+                                  only_emoji,
                                   is_deleted,
                                   is_viewonce,
                                   isgroup,
@@ -640,33 +666,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   originalfilenames,
                                   overwrite,
                                   append,
-                                  story_reply,
-                                  type,
-                                  expires_in,
-                                  msg_id,
-                                  msg_recipient_id,
-                                  original_message_id,
-                                  messagecount,
-
-                                  &messages,
-                                  &quote_attachment_results,
-                                  &attachment_results,
-                                  &reaction_results,
-                                  &edit_revisions,
-
-                                  body,
-                                  quote_body,
-                                  readable_date,
-                                  directory,
-                                  threaddir,
-                                  filename,
-                                  messages(messagecount, "link_preview_url"),
-                                  messages(messagecount, "link_preview_title") ,
-                                  messages(messagecount, "link_preview_description"),
-                                  shared_contacts,
-
-                                  icon
-          });
+                                  story_reply});
         HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage, receipts, ignoremediatypes);
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))

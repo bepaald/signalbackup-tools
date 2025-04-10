@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -127,7 +127,7 @@ bool SignalBackup::dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid,
       if (backup)
       {
         Logger::message_overwrite("Updating avatar... Failed, restoring previous...", Logger::Control::ENDOVERWRITE);
-        d_avatars.emplace_back(std::make_pair(bepaald::toString(aid), std::move(backup)));
+        d_avatars.emplace_back(bepaald::toString(aid), std::move(backup));
       }
     }
     else

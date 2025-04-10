@@ -84,14 +84,13 @@ class SignalBackup
   static bool constexpr DROPATTACHMENTDATA = false;
 
  protected:
-  MemSqliteDB d_database;
-  DeepCopyingUniquePtr<FileDecryptor> d_fd;
-  FileEncryptor d_fe;
+  MemSqliteDB d_database; // size 192
+  FileEncryptor d_fe; // size 136
+  std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
+  std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> d_stickers; //maps <sticker._id> to sticker
   std::string d_filename;
   std::string d_passphrase;
-
-  // only used in testing
-  bool d_found_sqlite_sequence_in_backup;
+  std::string d_selfuuid;
 
   // table/column names
   std::string d_mms_table;
@@ -135,15 +134,14 @@ class SignalBackup
   std::string d_dt_s_uuid;
 
   std::vector<std::pair<std::string, DeepCopyingUniquePtr<AvatarFrame>>> d_avatars;
-  std::map<std::pair<uint64_t, int64_t>, DeepCopyingUniquePtr<AttachmentFrame>> d_attachments; //maps <rowid,uniqueid> to attachment
-  std::map<uint64_t, DeepCopyingUniquePtr<StickerFrame>> d_stickers; //maps <sticker._id> to sticker
-  DeepCopyingUniquePtr<HeaderFrame> d_headerframe;
-  DeepCopyingUniquePtr<DatabaseVersionFrame> d_databaseversionframe;
   std::vector<DeepCopyingUniquePtr<SharedPrefFrame>> d_sharedpreferenceframes;
   std::vector<DeepCopyingUniquePtr<KeyValueFrame>> d_keyvalueframes;
-  DeepCopyingUniquePtr<EndFrame> d_endframe;
   std::vector<std::pair<uint32_t, uint64_t>> d_badattachments;
-  bool d_ok;
+  DeepCopyingUniquePtr<FileDecryptor> d_fd;  // 8
+  DeepCopyingUniquePtr<HeaderFrame> d_headerframe;
+  DeepCopyingUniquePtr<DatabaseVersionFrame> d_databaseversionframe;
+  DeepCopyingUniquePtr<EndFrame> d_endframe;
+  long long int d_selfid;
   unsigned int d_databaseversion;
   unsigned int d_backupfileversion;
   bool d_showprogress;
@@ -151,8 +149,10 @@ class SignalBackup
   bool d_verbose;
   bool d_truncate;
   bool d_fulldecode;
-  long long int d_selfid;
-  std::string d_selfuuid;
+  bool d_ok;
+
+  // only used in testing
+  bool d_found_sqlite_sequence_in_backup;
 
   enum DBLinkFlag : int
   {
@@ -201,27 +201,26 @@ class SignalBackup
   {
     std::string display_name;
     std::string initial;
-    bool initial_is_emoji;
     std::string uuid;
     std::string phone;
     std::string username;
-    long long int mute_until;           // -1 : n/a
-    bool blocked;
-    long long int mention_setting;      // -1 : n/a
-    long long int message_expiration_time;
-    long long int custom_notifications; // -1 : n/a
     std::string color; // "RRGGBB"
     std::string wall_light;
     std::string wall_dark;
+    long long int mute_until;           // -1 : n/a
+    long long int mention_setting;      // -1 : n/a
+    long long int message_expiration_time;
+    long long int custom_notifications; // -1 : n/a
+    bool initial_is_emoji;
+    bool blocked;
     bool hasavatar;
     bool verified;
   };
 
   static std::vector<DatabaseLink> const s_databaselinks;
   static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
-  static std::string const s_emoji_unicode_list[3781];
-  static std::string const s_emoji_first_bytes;
-  static unsigned int constexpr s_emoji_min_size = 2; // smallest emoji_unicode_size - 1
+  static std::string_view const s_emoji_unicode_list[3781];
+  static std::string_view const s_emoji_first_bytes;
   static std::map<std::string, std::string> const s_html_colormap;
   static std::array<std::pair<std::string, std::string>, 12> const s_html_random_colors;
   //static std::regex const s_linkify_pattern;
@@ -513,7 +512,7 @@ class SignalBackup
   std::string getAvatarExtension(long long int recipient_id) const;
   void prepRanges(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
-  std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string const &line) const;
+  std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string_view line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
@@ -566,8 +565,7 @@ class SignalBackup
 // ONLY FOR DUMMYBACKUP
 inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress)
   :
-  d_found_sqlite_sequence_in_backup(false),
-  d_ok(false),
+  d_selfid(-1),
   d_databaseversion(-1),
   d_backupfileversion(-1),
   d_showprogress(showprogress),
@@ -575,7 +573,8 @@ inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress
   d_verbose(verbose),
   d_truncate(truncate),
   d_fulldecode(false),
-  d_selfid(-1)
+  d_ok(false),
+  d_found_sqlite_sequence_in_backup(false)
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,

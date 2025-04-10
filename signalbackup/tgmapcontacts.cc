@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -123,9 +123,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     }
     else
     {
-      recipientsnotfound.emplace_back(std::make_pair(i, std::vector<std::string>()));
+      recipientsnotfound.emplace_back(i, std::vector<std::string>());
       for (unsigned int j = 0; j < aliases.rows(); ++j)
-        recipientsnotfound.back().second.push_back(aliases.isNull(j, "name") ? "null" : aliases(j, "name"));
+        recipientsnotfound.back().second.emplace_back(aliases.isNull(j, "name") ? "null" : aliases(j, "name"));
     }
   }
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -38,8 +38,8 @@ class CSVReader
 
   std::ifstream d_csvfile;
   std::vector<std::vector<std::string>> d_results;
-  bool d_ok;
   unsigned int d_fields; // an extra check
+  bool d_ok;
  public:
   inline explicit CSVReader(std::string const &filename);
   inline bool ok() const;
@@ -55,8 +55,8 @@ class CSVReader
 inline CSVReader::CSVReader(std::string const &filename)
   :
   d_csvfile(filename),
-  d_ok(false),
-  d_fields(0)
+  d_fields(0),
+  d_ok(false)
 {
   if (d_csvfile.is_open())
     d_ok = read();

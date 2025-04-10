@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,6 +36,5 @@ enum class IconType
   THREAD,
   //AVATAR_REMOVE,
 };
-
 
 #endif

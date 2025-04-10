@@ -38,8 +38,8 @@ class StickerFrame : public FrameWithAttachment
     LENGTH = 2, // uint32
   };
 
-  static Registrar s_registrar;
   std::optional<std::string> d_mimetype;
+  static Registrar s_registrar;
  public:
   inline explicit StickerFrame(uint64_t count = 0);
   inline StickerFrame(unsigned char const *data, size_t length, uint64_t count = 0);

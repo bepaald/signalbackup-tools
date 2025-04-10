@@ -355,7 +355,7 @@ XmlDocument::XmlDocument(std::string const &filename)
               //std::cout << "Current node exists: " << (d_currentnode ? "yes" : "no") << std::endl;
               if (!d_currentnode->is_text_node || d_currentnode->is_closed)
               {
-                d_currentnode->d_children.emplace_back(Node(d_currentnode));
+                d_currentnode->d_children.emplace_back(d_currentnode);
                 d_currentnode = &d_currentnode->d_children.back();
                 d_currentnode->is_text_node = true;
               }
@@ -407,12 +407,12 @@ XmlDocument::XmlDocument(std::string const &filename)
               {
                 if (d_currentnode->is_closed)
                 {
-                  d_currentnode->d_parent->d_children.emplace_back(Node(d_currentnode));
+                  d_currentnode->d_parent->d_children.emplace_back(d_currentnode);
                   d_currentnode = &d_currentnode->d_parent->d_children.back();
                 }
                 else
                 {
-                  d_currentnode->d_children.emplace_back(Node(d_currentnode));
+                  d_currentnode->d_children.emplace_back(d_currentnode);
                   d_currentnode = &d_currentnode->d_children.back();
                 }
               }

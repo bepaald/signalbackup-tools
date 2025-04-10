@@ -33,7 +33,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
     uint32_t rowid = a->rowId();
     int64_t uniqueid = a->attachmentId();
 
-    d_badattachments.emplace_back(std::make_pair(rowid, uniqueid));
+    d_badattachments.emplace_back(rowid, uniqueid);
 
     Logger::message("Frame is attachment, it belongs to entry in the 'part' table of the database:");
     //std::vector<std::vector<std::pair<std::string, std::any>>> results;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -162,12 +162,12 @@ ThreadTable::
                 std::string displayname = getNameFromRecipientId(snippet_mentions.getValueAs<long long int>(m, "recipient_id"));
                 if (displayname.empty())
                   continue;
-                ranges.emplace_back(Range{snippet_mentions.getValueAs<long long int>(m, "range_start"),
-                                          snippet_mentions.getValueAs<long long int>(m, "range_length"),
-                                          "",
-                                          "@" + displayname,
-                                          "",
-                                          false});
+                ranges.emplace_back(snippet_mentions.getValueAs<long long int>(m, "range_start"),
+                                    snippet_mentions.getValueAs<long long int>(m, "range_length"),
+                                    "",
+                                    "@" + displayname,
+                                    "",
+                                    false);
               }
               applyRanges(&newsnippet, &ranges, nullptr);
             }

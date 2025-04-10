@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -30,22 +30,22 @@ struct evp_md_st;
 
 class SqlCipherDecryptor
 {
-  bool d_ok;
   std::string d_databasepath;
   unsigned char *d_key;
-  unsigned int d_keysize;
   unsigned char *d_hmackey;
-  unsigned int d_hmackeysize;
   unsigned char *d_salt;
-  unsigned int d_saltsize;
   evp_md_st const *d_digest;
-  size_t d_digestname_size;
-  char *d_digestname;
-  unsigned int d_digestsize;
-  unsigned int d_pagesize;
   unsigned char *d_decrypteddata;
   uint64_t d_decrypteddatasize;
+  size_t d_digestname_size;
+  char *d_digestname;
+  unsigned int d_keysize;
+  unsigned int d_hmackeysize;
+  unsigned int d_saltsize;
+  unsigned int d_digestsize;
+  unsigned int d_pagesize;
   bool d_verbose;
+  bool d_ok;
 
   static unsigned char constexpr s_saltmask = 0x3a;
   static int constexpr s_sqlliteheader_size = 16;
