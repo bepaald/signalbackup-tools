@@ -95,12 +95,12 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     }
 
     if (url_match_result.length(3) > 0) // -> URL_WITH_PROTOCOL
-      ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
-                           match_length, //url_match_result.length(0),
-                           "<a class=\"unstyled-link\" href=\"" + match_link + "\">",
-                           "",
-                           "</a>",
-                           true);
+      ranges->emplace_back(Range{match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
+                                 match_length, //url_match_result.length(0),
+                                 "<a class=\"unstyled-link\" href=\"" + match_link + "\">",
+                                 "",
+                                 "</a>",
+                                 true});
     else if (url_match_result.length(9) > 0) // -> URL_WITHOUT_PROTOCOL
       /* Here, we add the protocol manually (guessing it to be https),
          without a protocol, the 'link' will be interpreted as a location
@@ -109,19 +109,19 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
          is at a new root, but automatically uses the current protocol (which is file://,
          which is not correct.
       */
-      ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
-                           match_length, //url_match_result.length(0),
-                           "<a class=\"unstyled-link\" href=\"https://" + match_link + "\">",
-                           "",
-                           "</a>",
-                           true);
+      ranges->emplace_back(Range{match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
+                                 match_length, //url_match_result.length(0),
+                                 "<a class=\"unstyled-link\" href=\"https://" + match_link + "\">",
+                                 "",
+                                 "</a>",
+                                 true});
     else if (url_match_result.length(2) > 0) // -> EMAIL
-      ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
-                           match_length, //url_match_result.length(0),
-                           "<a class=\"unstyled-link\" href=\"mailto:" + match_link + "\">",
-                           "",
-                           "</a>",
-                           true);
+      ranges->emplace_back(Range{match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
+                                 match_length, //url_match_result.length(0),
+                                 "<a class=\"unstyled-link\" href=\"mailto:" + match_link + "\">",
+                                 "",
+                                 "</a>",
+                                 true});
 
 
     pos += url_match_result.position(0) + url_match_result.length(0);

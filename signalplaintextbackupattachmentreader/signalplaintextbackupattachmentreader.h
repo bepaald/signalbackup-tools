@@ -29,7 +29,7 @@
 
 class SignalPlainTextBackupAttachmentReader : public AttachmentReader<SignalPlainTextBackupAttachmentReader>
 {
-  std::string const d_base64data;
+  std::string d_base64data;
   std::string d_filename;
   long long int d_pos;
   long long int d_size; // size of the base64 string data
