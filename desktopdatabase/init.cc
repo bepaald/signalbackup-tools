@@ -69,15 +69,18 @@ bool DesktopDatabase::init(std::string const &rawdb)
   }
 
   // check if a wal (Write-Ahead Logging) file is present in path, and warn user to (cleanly) shut Signal Desktop down
-  if (!d_ignorewal &&
-      bepaald::fileOrDirExists(d_databasedir + "/sql/db.sqlite-wal"))
+  if (bepaald::fileOrDirExists(d_databasedir + "/sql/db.sqlite-wal"))
   {
-    // warn
+    if (!d_ignorewal) // error
+    {
+      Logger::error("Found Sqlite-WAL file (write-ahead logging).");
+      Logger::error_indent("Desktop data may not be fully up-to-date.");
+      Logger::error_indent("Maybe Signal Desktop has not cleanly shut down?");
+      Logger::error_indent("(pass `--ignorewal' to disable this warning)");
+      return false;
+    }
     Logger::warning("Found Sqlite-WAL file (write-ahead logging).");
     Logger::warning_indent("Desktop data may not be fully up-to-date.");
-    Logger::warning_indent("Maybe Signal Desktop has not cleanly shut down?");
-    Logger::warning_indent("(pass `--ignorewal' to disable this warning)");
-    return false;
   }
 
   // get key

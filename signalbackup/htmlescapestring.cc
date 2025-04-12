@@ -34,7 +34,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
   for (unsigned int i = 0; i < strlen; ++i)
   {
     if ((*body)[i] > '>' ||
-        (*body)[i] < '"') [[likely]]
+        (*body)[i] < '"' ||
+        ((*body)[i] > '\'' && (*body)[i] < '<')) [[likely]]
       continue;
 
     //std::cout << "I, POSITIONS_ADDED: " << i << "," << positions_added << std::endl;
@@ -46,8 +47,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         {
           body->replace(i, 1, "&apos;");
           strlen += STRLEN("&apos;") - 1;
+          positions_added += STRLEN("&apos;") - 1; // this adds the '&', so it isnt escaped again
           i += STRLEN("&apos;") - 1;
-          positions_added += STRLEN("&apos;") - 1; // this adds the '&', so it isnt esacped again
         }
         break;
       case '&':
@@ -56,8 +57,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         {
           body->replace(i, 1, "&amp;");
           strlen += STRLEN("&amp;") - 1;
-          i += STRLEN("&amp;") - 1;
           positions_added += STRLEN("&amp;") - 1;
+          i += STRLEN("&amp;") - 1;
         }
         break;
       case '"':
@@ -66,8 +67,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         {
           body->replace(i, 1, "&quot;");
           strlen += STRLEN("&quot;") - 1;
-          i += STRLEN("&quot;") - 1;
           positions_added += STRLEN("&quot;") - 1;
+          i += STRLEN("&quot;") - 1;
         }
         break;
       case '>':
@@ -76,8 +77,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         {
           body->replace(i, 1, "&gt;");
           strlen += STRLEN("&gt;") - 1;
-          i += STRLEN("&gt;") - 1;
           positions_added += STRLEN("&gt;") - 1;
+          i += STRLEN("&gt;") - 1;
         }
         break;
       case '<':
@@ -86,8 +87,8 @@ void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *cons
         {
           body->replace(i, 1, "&lt;");
           strlen += STRLEN("&lt;") - 1;
-          i += STRLEN("&lt;") - 1;
           positions_added += STRLEN("&lt;") - 1;
+          i += STRLEN("&lt;") - 1;
         }
         break;
     }

@@ -32,13 +32,22 @@ struct Range
 
 #if __cpp_aggregate_paren_init < 201902L
   // to allow compiling on older compilers (gcc 9, apple clang, anything pre-c++20)
-  Range (long long int s, long long int l, std::string const &pr, std::string const &rep, std::string const &po, bool nb)
+  Range(long long int s, long long int l, std::string &&pr, std::string &&r, std::string &&po, bool nb)
     :
     start(s),
     length(l),
-    pre(std::move(pr)),
-    replacement(std::move(rep)),
-    post(std::move(po)),
+    pre(pr),
+    replacement(r),
+    post(po),
+    nobreak(nb)
+  {};
+  Range(long long int s, long long int l, std::string const &pr, std::string const &r, std::string const &po, bool nb)
+    :
+    start(s),
+    length(l),
+    pre(pr),
+    replacement(r),
+    post(po),
     nobreak(nb)
   {};
 #endif

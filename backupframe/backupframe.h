@@ -306,8 +306,9 @@ inline int64_t BackupFrame::getLengthOrVarint(unsigned char const *data, unsigne
 {
   /*
   // This is a unrolled variant of the original below, in artificial testing, it appeared
-  // faster (millisecs, on 500 million inputs), but in practice, this causes to slow
-  // opening backup file down (also milliseconds)
+  // faster (~70 millisecs, on 100 million inputs), but in practice, this causes to slow
+  // opening backup file down (just single milliseconds, not significant but the speedup
+  // was gone)
 
   // read first byte (if bytes available)
   uint64_t length = (*offset < totallength) ? data[*offset] & 0b0111'1111 : 0;

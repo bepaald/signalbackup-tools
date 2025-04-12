@@ -105,9 +105,6 @@ inline DesktopDatabase::DesktopDatabase(std::string const &configdir, std::strin
   d_truncate(truncate),
   d_showkey(showkey)
 {
-
-  std::cout << "SIZE MEM" << sizeof(MemSqliteDB) << std::endl;
-
   d_ok = init(rawdb);
 }
 
