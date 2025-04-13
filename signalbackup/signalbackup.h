@@ -668,7 +668,7 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
     return false;
   }
 
-#if __cplusplus >= 202002L
+#if __cplusplus >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
   std::string_view type(line.begin() + pos, line.begin() + pos2);
   std::string_view datastr(line.begin() + pos2 + 1, line.end());
 #else
