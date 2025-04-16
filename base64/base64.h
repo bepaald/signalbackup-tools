@@ -40,9 +40,9 @@ struct Base64
 
 inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t size)
 {
-  int base64length = ((4 * size / 3) + 3) & ~3;
+  size_t base64length = ((4 * size / 3) + 3) & ~3;
   std::unique_ptr<unsigned char[]> output(new unsigned char[base64length + 1]); // +1 for terminating null
-  if (EVP_EncodeBlock(output.get(), data, size) != base64length)
+  if (EVP_EncodeBlock(output.get(), data, static_cast<int>(size)) != static_cast<int>(base64length))
   {
     Logger::error("Failed to base64 encode data");
     return std::string();

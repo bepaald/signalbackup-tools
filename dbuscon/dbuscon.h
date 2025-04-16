@@ -135,10 +135,10 @@ class DBusCon
   inline bool waitSignal(int attempts, int timeoutms_per_attempt, std::string const &interface, std::string const &name);
 
   template <typename T>
-  inline T get(std::string const &sig, std::vector<int> const &idx, T def = T{});
+  inline T get(std::string const &sig, std::vector<int> const &idx, T const &def = T{});
 
   template <typename T>
-  inline T get(std::string const &sig, int idx, T def = T{});
+  inline T get(std::string const &sig, int idx, T const &def = T{});
 
  private:
   template <typename T>
@@ -152,7 +152,7 @@ class DBusCon
   template <typename T>
   inline void set(T *ret, DBusMessageIter *iter, int current_type);
   template <typename T>
-  inline T get2(DBusMessageIter *iter, std::vector<int> const &idx, T def = T{});
+  inline T get2(DBusMessageIter *iter, std::vector<int> const &idx, T const &def);
 };
 
 inline DBusCon::DBusCon(bool dbus_verbose)
@@ -755,7 +755,7 @@ inline void DBusCon::set(T *ret, DBusMessageIter *iter, int current_type1)
 }
 
 template <typename T>
-inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T def)
+inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T const &def)
 {
   T ret{def};
   int i = 0;
@@ -801,7 +801,7 @@ inline T DBusCon::get2(DBusMessageIter *iter, std::vector<int> const &idx, T def
 }
 
 template <typename T>
-inline T DBusCon::get(std::string const &sig, std::vector<int> const &idx, T def)
+inline T DBusCon::get(std::string const &sig, std::vector<int> const &idx, T const &def)
 {
   if (!d_reply || dbus_message_get_signature(d_reply.get()) != sig)
   {
@@ -819,7 +819,7 @@ inline T DBusCon::get(std::string const &sig, std::vector<int> const &idx, T def
 }
 
 template <typename T>
-inline T DBusCon::get(std::string const &sig, int idx, T def)
+inline T DBusCon::get(std::string const &sig, int idx, T const &def)
 {
   return get<T>(sig, std::vector<int>{idx}, def);
 }

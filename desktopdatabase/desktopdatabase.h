@@ -28,6 +28,7 @@
 #include "../common_filesystem.h"
 #include "../memsqlitedb/memsqlitedb.h"
 #include "../sqlcipherdecryptor/sqlcipherdecryptor.h"
+#include "../common_be.h"
 
 class DesktopDatabase
 {
@@ -190,8 +191,7 @@ inline void DesktopDatabase::runQuery(std::string const &q, std::string const &m
   if (!d_database.exec(q, &res))
     return;
 
-  std::string q_comm(q, 0, STRLEN("DELETE")); // delete, insert and update are same length...
-  std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) STATICLAMBDA { ch = std::toupper(ch); });
+  std::string q_comm(bepaald::toUpper(std::string(q, 0, STRLEN("DELETE")))); // delete, insert and update are same length...
 
   if (q_comm == "DELETE" || q_comm == "INSERT" || q_comm == "UPDATE")
   {

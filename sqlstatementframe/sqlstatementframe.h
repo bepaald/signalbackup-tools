@@ -38,7 +38,7 @@ struct Period final : std::numpunct<char>
 class SqlStatementFrame : public BackupFrame
 {
  public:
-  enum PARAMETER_FIELD
+  enum PARAMETER_FIELD : std::uint8_t
   {
     STRING = 1, // string
     INT = 2,    // uint64
@@ -47,7 +47,7 @@ class SqlStatementFrame : public BackupFrame
     NULLPARAMETER = 5 // bool
   };
 
-  enum FIELD
+  enum FIELD : std::uint8_t
   {
     STATEMENT = 1,  // string
     PARAMETERS = 2  // PARAMETER_FIELD (repeated)
@@ -62,8 +62,8 @@ class SqlStatementFrame : public BackupFrame
  public:
   inline SqlStatementFrame();
   inline SqlStatementFrame(unsigned char const *data, size_t length, uint64_t count = 0);
-  inline SqlStatementFrame(SqlStatementFrame &&other);
-  inline SqlStatementFrame &operator=(SqlStatementFrame &&other);
+  inline SqlStatementFrame(SqlStatementFrame &&other) noexcept;
+  inline SqlStatementFrame &operator=(SqlStatementFrame &&other) noexcept;
   inline SqlStatementFrame(SqlStatementFrame const &other);
   inline SqlStatementFrame &operator=(SqlStatementFrame const &other);
   inline virtual ~SqlStatementFrame() override;
@@ -122,7 +122,7 @@ inline SqlStatementFrame::SqlStatementFrame(unsigned char const *data, size_t le
     }
 }
 
-inline SqlStatementFrame::SqlStatementFrame(SqlStatementFrame &&other)
+inline SqlStatementFrame::SqlStatementFrame(SqlStatementFrame &&other) noexcept
   :
   BackupFrame(std::move(other)),
   d_parameterdata(std::move(other.d_parameterdata))
@@ -130,7 +130,7 @@ inline SqlStatementFrame::SqlStatementFrame(SqlStatementFrame &&other)
   other.d_parameterdata.clear();
 }
 
-inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame &&other)
+inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame &&other) noexcept
 {
   if (this != &other)
   {

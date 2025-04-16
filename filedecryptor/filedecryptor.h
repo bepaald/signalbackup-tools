@@ -45,8 +45,8 @@ class  FileDecryptor : public CryptBase
   FileDecryptor(std::string const &filename, std::string const &passphrase, bool verbose, bool stoponerror = false, bool assumebadframesize = false, std::vector<long long int> const &editattachments = std::vector<long long int>());
   inline FileDecryptor(FileDecryptor const &other);
   inline FileDecryptor &operator=(FileDecryptor const &other);
-  inline FileDecryptor(FileDecryptor &&other);
-  inline FileDecryptor &operator=(FileDecryptor &&other);
+  inline FileDecryptor(FileDecryptor &&other) noexcept;
+  inline FileDecryptor &operator=(FileDecryptor &&other) noexcept;
 
   std::unique_ptr<BackupFrame> getFrameOld(std::ifstream &file);
   std::unique_ptr<BackupFrame> getFrame(std::ifstream &file);
@@ -114,21 +114,21 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor const &other)
   return *this;
 }
 
-inline FileDecryptor::FileDecryptor(FileDecryptor &&other)
+inline FileDecryptor::FileDecryptor(FileDecryptor &&other) noexcept
   :
   CryptBase(std::move(other)),
   d_filename(std::move(other.d_filename)),
   d_editattachments(std::move(other.d_editattachments)),
   d_headerframe(std::move(other.d_headerframe)),
-  d_framecount(std::move(other.d_framecount)),
-  d_filesize(std::move(other.d_filesize)),
-  d_backupfileversion(std::move(other.d_backupfileversion)),
-  d_badmac(std::move(other.d_badmac)),
-  d_assumebadframesize(std::move(other.d_assumebadframesize)),
-  d_stoponerror(std::move(other.d_stoponerror))
+  d_framecount(other.d_framecount),
+  d_filesize(other.d_filesize),
+  d_backupfileversion(other.d_backupfileversion),
+  d_badmac(other.d_badmac),
+  d_assumebadframesize(other.d_assumebadframesize),
+  d_stoponerror(other.d_stoponerror)
 {}
 
-inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
+inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other) noexcept
 {
   if (this != &other)
   {
@@ -136,13 +136,13 @@ inline FileDecryptor &FileDecryptor::operator=(FileDecryptor &&other)
     d_filename = std::move(other.d_filename);
     d_editattachments = std::move(other.d_editattachments);
     d_headerframe = std::move(other.d_headerframe);
-    d_framecount = std::move(other.d_framecount);
-    d_filesize = std::move(other.d_filesize);
-    d_backupfileversion = std::move(other.d_backupfileversion);
-    d_badmac = std::move(other.d_badmac);
-    d_assumebadframesize = std::move(other.d_assumebadframesize);
-    d_stoponerror = std::move(other.d_stoponerror);
-    d_ok = std::move(other.d_ok);
+    d_framecount = other.d_framecount;
+    d_filesize = other.d_filesize;
+    d_backupfileversion = other.d_backupfileversion;
+    d_badmac = other.d_badmac;
+    d_assumebadframesize = other.d_assumebadframesize;
+    d_stoponerror = other.d_stoponerror;
+    d_ok = other.d_ok;
   }
   return *this;
 }
@@ -174,7 +174,7 @@ inline uint32_t FileDecryptor::getNextFrameBlockSize(std::ifstream &file)
 inline bool FileDecryptor::getNextFrameBlock(std::ifstream &file, unsigned char *data, size_t length)
 {
   //std::cout << "reading " << length << " bytes" << std::endl;
-  if (!file.read(reinterpret_cast<char *>(data), length))
+  if (!file.read(reinterpret_cast<char *>(data), static_cast<std::streamsize>(length)))
     return false;
   return true;
 }

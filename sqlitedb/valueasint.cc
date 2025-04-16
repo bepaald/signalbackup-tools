@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -45,8 +45,7 @@ long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column, long
   if (valueHasType<double>(row, column))
     return def;
 
-  else [[unlikely]]
-    return def;
+  return def;
 }
 
 long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string const &header, long long int def) const

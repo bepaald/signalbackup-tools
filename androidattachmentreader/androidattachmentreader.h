@@ -47,9 +47,9 @@ class AndroidAttachmentReader : public AttachmentReader<AndroidAttachmentReader>
                                  unsigned char const *cipherkey, uint64_t cipherkey_size,
                                  uint32_t attsize, std::string const &filename, uint64_t filepos);
   inline AndroidAttachmentReader(AndroidAttachmentReader const &other);
-  inline AndroidAttachmentReader(AndroidAttachmentReader &&other);
+  inline AndroidAttachmentReader(AndroidAttachmentReader &&other) noexcept;
   inline AndroidAttachmentReader &operator=(AndroidAttachmentReader const &other);
-  inline AndroidAttachmentReader &operator=(AndroidAttachmentReader &&other);
+  inline AndroidAttachmentReader &operator=(AndroidAttachmentReader &&other) noexcept;
   inline virtual ~AndroidAttachmentReader() override;
   inline virtual int getAttachment(FrameWithAttachment *frame,  bool verbose) override;
 };
@@ -127,18 +127,18 @@ inline AndroidAttachmentReader::AndroidAttachmentReader(AndroidAttachmentReader 
   }
 }
 
-inline AndroidAttachmentReader::AndroidAttachmentReader(AndroidAttachmentReader &&other)
+inline AndroidAttachmentReader::AndroidAttachmentReader(AndroidAttachmentReader &&other) noexcept
   :
-  AttachmentReader(other),
+  AttachmentReader(std::move(other)),
   d_filename(std::move(other.d_filename)),
-  d_filepos(std::move(other.d_filepos)),
-  d_iv(std::move(other.d_iv)),
-  d_mackey_size(std::move(other.d_mackey_size)),
-  d_mackey(std::move(other.d_mackey)),
-  d_cipherkey_size(std::move(other.d_cipherkey_size)),
-  d_cipherkey(std::move(other.d_cipherkey)),
-  d_attachmentdata_size(std::move(other.d_attachmentdata_size)),
-  d_iv_size(std::move(other.d_iv_size))
+  d_filepos(other.d_filepos),
+  d_iv(other.d_iv),
+  d_mackey_size(other.d_mackey_size),
+  d_mackey(other.d_mackey),
+  d_cipherkey_size(other.d_cipherkey_size),
+  d_cipherkey(other.d_cipherkey),
+  d_attachmentdata_size(other.d_attachmentdata_size),
+  d_iv_size(other.d_iv_size)
 {
   other.d_attachmentdata_size = 0;
   other.d_iv_size = 0;
@@ -186,7 +186,7 @@ inline AndroidAttachmentReader &AndroidAttachmentReader::operator=(AndroidAttach
   return *this;
 }
 
-inline AndroidAttachmentReader &AndroidAttachmentReader::operator=(AndroidAttachmentReader &&other)
+inline AndroidAttachmentReader &AndroidAttachmentReader::operator=(AndroidAttachmentReader &&other) noexcept
 {
   if (this != &other)
   {
@@ -196,16 +196,15 @@ inline AndroidAttachmentReader &AndroidAttachmentReader::operator=(AndroidAttach
     bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
 
     // take over other's data
-    d_iv = std::move(other.d_iv);
-    d_iv_size = std::move(other.d_iv_size);
-    d_mackey = std::move(other.d_mackey);
-    d_mackey_size = std::move(other.d_mackey_size);
-    d_cipherkey = std::move(other.d_cipherkey);
-    d_cipherkey_size = std::move(other.d_cipherkey_size);
+    d_iv = other.d_iv;
+    d_iv_size = other.d_iv_size;
+    d_mackey = other.d_mackey;
+    d_mackey_size = other.d_mackey_size;
+    d_cipherkey = other.d_cipherkey;
+    d_cipherkey_size = other.d_cipherkey_size;
     d_filename = std::move(other.d_filename);
-    d_filepos = std::move(other.d_filepos);
-    d_attachmentdata_size = std::move(other.d_attachmentdata_size);
-
+    d_filepos = other.d_filepos;
+    d_attachmentdata_size = other.d_attachmentdata_size;
     // invalidate other
     other.d_iv = nullptr;
     other.d_iv_size = 0;

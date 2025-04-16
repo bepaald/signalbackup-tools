@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2020-2024  Selwin van Dijk
+  Copyright (C) 2020-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -27,6 +27,10 @@ class InvalidFrame : public BackupFrame
   static Registrar s_registrar;
  public:
   inline explicit InvalidFrame(uint64_t count = 0);
+  inline InvalidFrame(InvalidFrame &&other) noexcept = default;
+  inline InvalidFrame &operator=(InvalidFrame &&other) noexcept = default;
+  inline InvalidFrame(InvalidFrame const &other) = default;
+  inline InvalidFrame &operator=(InvalidFrame const &other) = default;
   inline virtual ~InvalidFrame() override = default;
   inline virtual InvalidFrame *clone() const override;
   inline virtual InvalidFrame *move_clone() override;

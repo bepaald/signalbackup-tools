@@ -29,7 +29,7 @@
 class CSVReader
 {
  private:
-  enum class CSVState
+  enum class CSVState : std::uint8_t
   {
     UNQUOTEDFIELD,
     QUOTEDFIELD,

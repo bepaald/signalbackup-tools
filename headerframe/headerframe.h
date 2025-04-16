@@ -30,7 +30,7 @@
 
 class HeaderFrame : public BackupFrame
 {
-  enum FIELD : unsigned int
+  enum FIELD : std::uint8_t
   {
    INVALID = 0,
    IV = 1,   // byte[]
@@ -39,10 +39,13 @@ class HeaderFrame : public BackupFrame
   };
 
   static Registrar s_registrar;
-
  public:
   inline explicit HeaderFrame(uint64_t count = 0);
   inline HeaderFrame(unsigned char const *data, size_t length, uint64_t count = 0);
+  inline HeaderFrame(HeaderFrame const &other) = default;
+  inline HeaderFrame &operator=(HeaderFrame const &other) = default;
+  inline HeaderFrame(HeaderFrame &&other) noexcept = default;
+  inline HeaderFrame &operator=(HeaderFrame &&other) noexcept = default;
   inline virtual ~HeaderFrame() override = default;
   inline virtual HeaderFrame *clone() const override;
   inline virtual HeaderFrame *move_clone() override;

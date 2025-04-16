@@ -35,8 +35,8 @@ class FileEncryptor : public CryptBase
   FileEncryptor();
   inline FileEncryptor(FileEncryptor const &other);
   inline FileEncryptor &operator=(FileEncryptor const &other);
-  inline FileEncryptor(FileEncryptor &&other);
-  inline FileEncryptor &operator=(FileEncryptor &&other);
+  inline FileEncryptor(FileEncryptor &&other) noexcept;
+  inline FileEncryptor &operator=(FileEncryptor &&other) noexcept;
   inline bool init(std::string const &passphrase, unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size, uint32_t backupfileversion, bool verbose);
   bool init(unsigned char const *salt, uint64_t salt_size, unsigned char const *iv, uint64_t iv_size);
   inline std::pair<unsigned char *, uint64_t> encryptFrame(std::pair<std::shared_ptr<unsigned char[]>, uint64_t> const &data);
@@ -63,20 +63,20 @@ inline FileEncryptor &FileEncryptor::operator=(FileEncryptor const &other)
   return *this;
 }
 
-inline FileEncryptor::FileEncryptor(FileEncryptor &&other)
+inline FileEncryptor::FileEncryptor(FileEncryptor &&other) noexcept
   :
   CryptBase(std::move(other)),
   d_passphrase(std::move(other.d_passphrase)),
-  d_backupfileversion(std::move(other.d_backupfileversion))
+  d_backupfileversion(other.d_backupfileversion)
 {}
 
-inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other)
+inline FileEncryptor &FileEncryptor::operator=(FileEncryptor &&other) noexcept
 {
   if (this != &other)
   {
     CryptBase::operator=(other);
     d_passphrase = std::move(other.d_passphrase);
-    d_backupfileversion = std::move(other.d_backupfileversion);
+    d_backupfileversion = other.d_backupfileversion;
   }
   return *this;
 }

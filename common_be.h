@@ -141,7 +141,6 @@ inline void bepaald::log(Args && ...args)
 }
 #endif
 
-//#include <iostream>
 template <typename T, typename S>
 T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *)
 {
@@ -167,6 +166,8 @@ T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::is_integra
       return def;
   }
   return value * sign;
+
+  // // old version:
   // std::istringstream s(str);
   // T i = def;
   // if (!(s >> i)) [[unlikely]]
@@ -246,31 +247,49 @@ inline constexpr int bepaald::strlitLength(char const *str, int pos)
 
 inline int bepaald::numDigits(long long int num)
 {
-  int count = 0;
-  while (num)
-  {
-    num /= 10;
+  int count = 1;
+  while (num /= 10)
     ++count;
-  }
   return count;
 }
 
 inline std::string bepaald::toDateString(std::time_t epoch, std::string const &format)
 {
+  int size = 32;
+  char *timestr = new char[size];
+  size_t chars;
+  // if strftime does not get a large enough buffer, it returns 0. there is no way
+  // to know how large a buffer must be (considering localized fmt strings), so we check
+  // and realloc. In practice, ~28 seems to be large enough for all formats this tool
+  // uses.
+  while ((chars = strftime(timestr, size, format.c_str(), std::localtime(&epoch))) == 0)
+  {
+    delete[] timestr;
+    size += size;
+    timestr = new char[size];
+  }
+  std::string ret(timestr, chars);
+  delete[] timestr;
+  return ret;
+
+  /*
+  // The old version. I'm not a fan of the new version,
+  // but it is faster (if no realloc needs to be done)
   std::ostringstream tmp;
   tmp << std::put_time(std::localtime(&epoch), format.c_str());
   return tmp.str();
+  */
 }
 
 inline std::string bepaald::toLower(std::string s)
 {
-  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::for_each(s.begin(), s.end(), [](unsigned char c) STATICLAMBDA { return std::tolower(c); });
   return s;
 }
 
 inline std::string bepaald::toUpper(std::string s)
 {
-  std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+  std::for_each(s.begin(), s.end(), [](unsigned char c) STATICLAMBDA { return std::toupper(c); });
   return s;
 }
 

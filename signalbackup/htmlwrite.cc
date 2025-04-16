@@ -89,14 +89,13 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   bool ismuted = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until == 0x7FFFFFFFFFFFFFFF;
   bool isblocked = getRecipientInfoFromMap(recipient_info, thread_recipient_id).blocked;
 
-  file << R"(<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>)" << title << R"(</title>
-    <style>)" << std::endl;
-
   file <<
+    "<!DOCTYPE html>\n"
+    "<html>\n"
+    "  <head>\n"
+    "    <meta charset=\"utf-8\">\n"
+    "    <title>" << title << "</title>\n"
+    "    <style>\n"
     "      :root" << (themeswitch ? "[data-theme=\"" + (light ? "light"s : "dark") + "\"]" : "") << " {\n"
     "        /* " << (light ? "light" : "dark") << " */\n"
     "        --body-bgc: " << (light ? "#EDF0F6;" : "#000000;") << "\n"
@@ -2125,7 +2124,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     }
 
     std::string extension(MimeTypes::getExtension(content_type, "bin"));
-    std::string attachment_filename_on_disk = "Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + "." + extension;
+    std::string attachment_filename_on_disk = std::string("Attachment_").append(bepaald::toString(rowid)).append("_").append(bepaald::toString(uniqueid)).append(".").append(extension);
     if (use_original_filenames)
     {
       attachment_filename_on_disk = sanitizeFilename(attachment_results(a, "file_name"));
@@ -2133,9 +2132,9 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       {                                           // to sanitize (eg reserved name in windows 'COM1')
         long long int datum = attachment_results.valueAsInt(a, "date_received", -1);
         std::string datestr = (datum != -1) ? bepaald::toDateString(datum / 1000, "signal-%Y-%m-%d-%H%M%S") : "signal";
-        attachment_filename_on_disk = datestr + "." + extension;
+        attachment_filename_on_disk = std::string(datestr).append(".").append(extension);
       }
-      if (!makeFilenameUnique(directory + "/" + threaddir + "/media", &attachment_filename_on_disk))
+      if (!makeFilenameUnique(std::string(directory).append("/").append(threaddir).append("/media"), &attachment_filename_on_disk))
       {
         Logger::error("Getting unique filename for '", directory, "/", threaddir, "/media/", attachment_filename_on_disk, "'");
         continue;

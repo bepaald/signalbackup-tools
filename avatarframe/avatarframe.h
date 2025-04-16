@@ -32,7 +32,7 @@
 
 class AvatarFrame : public FrameWithAttachment
 {
-  enum FIELD
+  enum FIELD : std::uint8_t
   {
     INVALID = 0,
     NAME = 1, // string
@@ -45,6 +45,10 @@ class AvatarFrame : public FrameWithAttachment
  public:
   inline explicit AvatarFrame(uint64_t count = 0);
   inline AvatarFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline AvatarFrame(AvatarFrame const &other) = default;
+  inline AvatarFrame &operator=(AvatarFrame const &other) = default;
+  inline AvatarFrame(AvatarFrame &&other) noexcept = default;
+  inline AvatarFrame &operator=(AvatarFrame &&other) noexcept = default;
   inline virtual ~AvatarFrame() override = default;
   inline virtual AvatarFrame *clone() const override;
   inline virtual AvatarFrame *move_clone() override;
@@ -233,7 +237,7 @@ inline bool AvatarFrame::validate(uint64_t available) const
     return false;
 
   int foundlength = 0;
-  int length_fieldsize = 0;
+  unsigned long length_fieldsize = 0;
   unsigned int len = 0;
   int foundname_or_recipient = 0;
   for (auto const &p : d_framedata)

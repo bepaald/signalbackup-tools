@@ -27,7 +27,7 @@
 
 class DatabaseVersionFrame : public BackupFrame
 {
-  enum FIELD: unsigned int
+  enum FIELD : std::uint8_t
   {
     INVALID = 0,
     VERSION = 1 // uint32
@@ -37,6 +37,10 @@ class DatabaseVersionFrame : public BackupFrame
  public:
   inline explicit DatabaseVersionFrame(uint64_t count = 0);
   inline DatabaseVersionFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline DatabaseVersionFrame(DatabaseVersionFrame const &other) = default;
+  inline DatabaseVersionFrame &operator=(DatabaseVersionFrame const &other) = default;
+  inline DatabaseVersionFrame(DatabaseVersionFrame &&other) noexcept = default;
+  inline DatabaseVersionFrame &operator=(DatabaseVersionFrame &&other) noexcept = default;
   inline virtual ~DatabaseVersionFrame() override = default;
   inline virtual DatabaseVersionFrame *clone() const override;
   inline virtual DatabaseVersionFrame *move_clone() override;

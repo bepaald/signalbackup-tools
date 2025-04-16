@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -101,12 +101,12 @@ inline int MemFileDB::ioRead(sqlite3_file *pFile, void *zBuf, int iAmt, sqlite_i
     return SQLITE_IOERR_READ;
   }
 
-  int toread = iAmt;
+  int64_t toread = iAmt;
   bool shortread = false;
   if (static_cast<uint64_t>(iOfst + iAmt) > reinterpret_cast<MemFile *>(pFile)->datasize)
   {
     //std::cout << "SHORTREAD" << std::endl;
-    toread -= ((iOfst + iAmt) - reinterpret_cast<MemFile *>(pFile)->datasize);
+    toread -= ((iOfst + iAmt) - static_cast<int64_t>(reinterpret_cast<MemFile *>(pFile)->datasize));
     shortread = true;
   }
 
@@ -142,7 +142,7 @@ inline int MemFileDB::ioSync(sqlite3_file *pFile [[maybe_unused]], int flags [[m
 inline int MemFileDB::ioFileSize(sqlite3_file *pFile, sqlite_int64 *pSize)
 {
   //std::cout << "Called: " << __FUNCTION__ << std::endl;
-  *pSize = reinterpret_cast<MemFile *>(pFile)->datasize;
+  *pSize = static_cast<sqlite_int64>(reinterpret_cast<MemFile *>(pFile)->datasize);
   return SQLITE_OK;
 }
 

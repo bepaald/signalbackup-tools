@@ -62,12 +62,8 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
   }
 
   if (numattachments == 0)
-  {
-    if (haspreview > 0)
+    if (haspreview > 0 || issticker)
       numattachments = 1;
-    else if (issticker)
-      numattachments = 1;
-  }
 
   //std::cout << "rowid: " << rowid << std::endl;
   //if (numattachments)

@@ -564,7 +564,7 @@ int main(int argc, char *argv[])
   if (arg.hiperfall() != -1)
     if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
     {
-      std::cout << "Some error occurred..." << std::endl;
+      Logger::error("Some error occurred in SignalBackup::hiperfall()...");
       return 1;
     }
 

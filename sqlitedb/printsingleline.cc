@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -29,8 +29,8 @@ void SqliteDB::QueryResults::printSingleLine(long long int row) const
 
   //Logger::message
 
-  long long int startrow = row == -1 ? 0 : row;
-  long long int endrow = row == -1 ? rows() : row + 1;
+  unsigned long long int startrow = row == -1 ? 0 : row;
+  unsigned long long int endrow = row == -1 ? rows() : row + 1;
   for (unsigned int i = startrow; i < endrow; ++i)
   {
     for (unsigned int j = 0; j < columns(); ++j)

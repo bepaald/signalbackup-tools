@@ -27,7 +27,7 @@
 
 class SharedPrefFrame : public BackupFrame
 {
-  enum FIELD
+  enum FIELD : std::uint8_t
   {
     INVALID = 0,
     FILE = 1, // string
@@ -42,6 +42,10 @@ class SharedPrefFrame : public BackupFrame
  public:
   inline explicit SharedPrefFrame(uint64_t count = 0);
   inline SharedPrefFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline SharedPrefFrame(SharedPrefFrame const &other) = default;
+  inline SharedPrefFrame &operator=(SharedPrefFrame const &other) = default;
+  inline SharedPrefFrame(SharedPrefFrame &&other) noexcept = default;
+  inline SharedPrefFrame &operator=(SharedPrefFrame &&other) noexcept = default;
   inline virtual ~SharedPrefFrame() override = default;
   inline virtual SharedPrefFrame *clone() const override;
   inline virtual SharedPrefFrame *move_clone() override;

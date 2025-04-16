@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-bool SignalBackup::writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile, std::pair<std::shared_ptr<unsigned char[]>, uint64_t> framedata)
+bool SignalBackup::writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile, std::pair<std::shared_ptr<unsigned char[]>, uint64_t> const &framedata)
 {
   // write frame (the non-attachmentdata part)
   std::pair<unsigned char *, uint64_t> encryptedframe = d_fe.encryptFrame(framedata);

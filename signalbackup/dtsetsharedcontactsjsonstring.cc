@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -152,8 +152,6 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
         tmp.type = "WORK"s;
         break;
       case 4:
-        tmp.type = "CUSTOM"s;
-        break;
       default:
         tmp.type = "CUSTOM"s;
         break;
@@ -189,8 +187,6 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
         tmp.type = "WORK"s;
         break;
       case 4:
-        tmp.type = "CUSTOM"s;
-        break;
       default:
         tmp.type = "CUSTOM"s;
         break;

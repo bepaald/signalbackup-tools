@@ -81,8 +81,8 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
       if (widths[c] < charCount(contents[r][c]))
         widths[c] = charCount(contents[r][c]);
 
-  int totalw = std::accumulate(widths.begin(), widths.end(), 0) + 3 * columns() + 1;
-  int availablewidth = truncate ? availableWidth() : std::numeric_limits<int>::max();
+  unsigned int totalw = std::accumulate(widths.begin(), widths.end(), 0u) + 3 * columns() + 1;
+  unsigned int availablewidth = truncate ? availableWidth() : std::numeric_limits<int>::max();
   //std::cout << " total width: " << totalw << std::endl;
   //std::cout << " available width: " << availablewidth << std::endl;
 
@@ -163,7 +163,7 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 
   //std::cout << std::string(availableWidth(), '*') << std::endl;
   //bool ansi = useEscapeCodes();
-  Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
+  Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0u) + 2 * columns() + columns() + 1, '-'));
   for (unsigned int r = 0; r < contents.size(); ++r)
   {
     Logger::message_start();
@@ -181,9 +181,9 @@ void SqliteDB::QueryResults::prettyPrint(bool truncate, long long int requestedr
 
     // another bar under top row
     if (r == 0)
-      Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
+      Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0u) + 2 * columns() + columns() + 1, '-'));
   }
-  Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0) + 2 * columns() + columns() + 1, '-'));
+  Logger::message(std::string(std::accumulate(widths.begin(), widths.end(), 0u) + 2 * columns() + columns() + 1, '-'));
 
   return;
 }

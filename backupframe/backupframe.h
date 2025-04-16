@@ -32,7 +32,7 @@
 class BackupFrame
 {
  public:
-  enum FRAMETYPE : unsigned int
+  enum FRAMETYPE : std::uint8_t
   {
     HEADER = 1,
     SQLSTATEMENT = 2,
@@ -44,10 +44,10 @@ class BackupFrame
     STICKER = 8,
     KEYVALUE = 9,
 
-    INVALID = std::numeric_limits<unsigned int>::max()
+    INVALID = std::numeric_limits<std::uint8_t>::max()
   };
 
-  enum WIRETYPE : unsigned int
+  enum WIRETYPE : std::uint8_t
   {
     VARINT = 0,
     FIXED64 = 1,
@@ -75,8 +75,8 @@ class BackupFrame
  public:
   explicit inline BackupFrame(uint64_t count);
   inline BackupFrame(unsigned char const *data, size_t length, uint64_t count);
-  inline BackupFrame(BackupFrame &&other);
-  inline BackupFrame &operator=(BackupFrame &&other);
+  inline BackupFrame(BackupFrame &&other) noexcept;
+  inline BackupFrame &operator=(BackupFrame &&other) noexcept;
   inline BackupFrame(BackupFrame const &other);
   inline BackupFrame &operator=(BackupFrame const &other);
   inline virtual ~BackupFrame();
@@ -144,17 +144,17 @@ inline BackupFrame::BackupFrame(unsigned char const *data, size_t l, uint64_t nu
   d_ok = init(data, l, &d_framedata);
 }
 
-inline BackupFrame::BackupFrame(BackupFrame &&other)
+inline BackupFrame::BackupFrame(BackupFrame &&other) noexcept
   :
   d_framedata(std::move(other.d_framedata)),
-  d_count(std::move(other.d_count)),
-  d_constructedsize(std::move(other.d_constructedsize)),
-  d_ok(std::move(other.d_ok))
+  d_count(other.d_count),
+  d_constructedsize(other.d_constructedsize),
+  d_ok(other.d_ok)
 {
   other.d_framedata.clear(); // clear other without delete[]ing, ~this will do it
 }
 
-inline BackupFrame &BackupFrame::operator=(BackupFrame &&other)
+inline BackupFrame &BackupFrame::operator=(BackupFrame &&other) noexcept
 {
   if (this != &other)
   {
@@ -164,11 +164,11 @@ inline BackupFrame &BackupFrame::operator=(BackupFrame &&other)
         delete[] std::get<1>(d_framedata[i]);
     d_framedata.clear();
 
-    d_ok = std::move(other.d_ok);
+    d_ok = other.d_ok;
     d_framedata = std::move(other.d_framedata);
     other.d_framedata.clear();
-    d_count = std::move(other.d_count);
-    d_constructedsize = std::move(other.d_constructedsize);
+    d_count = other.d_count;
+    d_constructedsize = other.d_constructedsize;
   }
   return *this;
 }
@@ -363,7 +363,7 @@ inline int64_t BackupFrame::getLengthOrVarint(unsigned char const *data, unsigne
     length += ((static_cast<uint64_t>(data[(*offset)++]) & 0b01111111) << (times++ * 7));
   if (*offset >= totallength) [[unlikely]]
     return 0;
-  return length + ((static_cast<uint64_t>(data[(*offset)++]) & 0b01111111) << (times * 7));
+  return static_cast<int64_t>(length + ((static_cast<uint64_t>(data[(*offset)++]) & 0b01111111) << (times * 7)));
 }
 
 inline BackupFrame *BackupFrame::instantiate(FRAMETYPE ft, unsigned char *data, size_t length, uint64_t count) //static

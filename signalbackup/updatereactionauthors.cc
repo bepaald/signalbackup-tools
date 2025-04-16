@@ -37,7 +37,7 @@ void SignalBackup::updateReactionAuthors(long long int id1, long long int id2) c
       {
         bool changed = false;
         ReactionList reactions(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "reactions"));
-        for (unsigned int j = 0; j < reactions.numReactions(); ++j)
+        for (int j = 0; j < static_cast<int>(reactions.numReactions()); ++j)
         {
           //std::cout << "Updating reaction author (" << msgtable << ") : " << reactions.getAuthor(j) << "..." << std::endl;
           if (id2 == -1)

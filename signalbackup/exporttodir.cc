@@ -103,7 +103,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 #if __cplusplus > 201703L
     for (int count = 1; auto const &aframe : d_avatars)
 #else
-      int count = 1;
+    int count = 1;
     for (auto const &aframe : d_avatars)
 #endif
     {
@@ -143,7 +143,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 #if __cplusplus > 201703L
     for (int count = 1; auto const &spframe : d_sharedpreferenceframes)
 #else
-      count = 1;
+    count = 1;
     for (auto const &spframe : d_sharedpreferenceframes)
 #endif
       if (!writeRawFrameDataToFile(directory + "/SharedPreference_" + bepaald::toString(count++) + ".sbf", spframe)) [[unlikely]]
@@ -158,7 +158,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 #if __cplusplus > 201703L
     for (int count = 1; auto const &kvframe : d_keyvalueframes)
 #else
-      count = 1;
+    count = 1;
     for (auto const &kvframe : d_keyvalueframes)
 #endif
       if (!writeRawFrameDataToFile(directory + "/KeyValue_" + bepaald::toString(count++) + ".sbf", kvframe)) [[unlikely]]
@@ -173,7 +173,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
 #if __cplusplus > 201703L
     for (int count = 1; auto const &sframe : d_stickers)
 #else
-      count = 1;
+    count = 1;
     for (auto const &sframe : d_stickers)
 #endif
     {

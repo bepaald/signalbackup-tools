@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -72,7 +72,7 @@ void SqlStatementFrame::buildStatement()
           rep.replace(pos2, 1, "''");
           pos2 += 2;
         }
-        rep = '\'' + rep + '\'';
+        rep = std::string("'").append(rep).append("'");
 
         d_statement.replace(pos, 1, rep);
         pos += rep.length();

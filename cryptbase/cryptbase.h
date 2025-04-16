@@ -49,8 +49,8 @@ class CryptBase
   inline explicit CryptBase(bool verbose);
   inline CryptBase(CryptBase const &other);
   inline CryptBase &operator=(CryptBase const &other);
-  inline CryptBase(CryptBase &&other);
-  inline CryptBase &operator=(CryptBase &&other);
+  inline CryptBase(CryptBase &&other) noexcept;
+  inline CryptBase &operator=(CryptBase &&other) noexcept;
   inline ~CryptBase();
   inline bool ok() const;
  protected:
@@ -176,21 +176,21 @@ inline CryptBase &CryptBase::operator=(CryptBase const &other)
   return *this;
 }
 
-inline CryptBase::CryptBase(CryptBase &&other)
+inline CryptBase::CryptBase(CryptBase &&other) noexcept
   :
-  d_backupkey(std::move(other.d_backupkey)),
-  d_backupkey_size(std::move(other.d_backupkey_size)),
-  d_cipherkey(std::move(other.d_cipherkey)),
-  d_cipherkey_size(std::move(other.d_cipherkey_size)),
-  d_mackey(std::move(other.d_mackey)),
-  d_mackey_size(std::move(other.d_mackey_size)),
-  d_iv(std::move(other.d_iv)),
-  d_iv_size(std::move(other.d_iv_size)),
-  d_salt(std::move(other.d_salt)),
-  d_salt_size(std::move(other.d_salt_size)),
-  d_counter(std::move(other.d_counter)),
-  d_ok(std::move(other.d_ok)),
-  d_verbose(std::move(other.d_verbose))
+  d_backupkey(other.d_backupkey),
+  d_backupkey_size(other.d_backupkey_size),
+  d_cipherkey(other.d_cipherkey),
+  d_cipherkey_size(other.d_cipherkey_size),
+  d_mackey(other.d_mackey),
+  d_mackey_size(other.d_mackey_size),
+  d_iv(other.d_iv),
+  d_iv_size(other.d_iv_size),
+  d_salt(other.d_salt),
+  d_salt_size(other.d_salt_size),
+  d_counter(other.d_counter),
+  d_ok(other.d_ok),
+  d_verbose(other.d_verbose)
 {
   other.d_backupkey = nullptr;
   other.d_backupkey_size = 0;
@@ -204,7 +204,7 @@ inline CryptBase::CryptBase(CryptBase &&other)
   other.d_salt_size = 0;
 }
 
-inline CryptBase &CryptBase::operator=(CryptBase &&other)
+inline CryptBase &CryptBase::operator=(CryptBase &&other) noexcept
 {
   if (this != &other)
   {
@@ -216,19 +216,19 @@ inline CryptBase &CryptBase::operator=(CryptBase &&other)
     bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
 
     // take over other's data
-    d_ok = std::move(other.d_ok);
-    d_verbose = std::move(other.d_verbose);
-    d_backupkey = std::move(other.d_backupkey);
-    d_backupkey_size = std::move(other.d_backupkey_size);
-    d_cipherkey = std::move(other.d_cipherkey);
-    d_cipherkey_size = std::move(other.d_cipherkey_size);
-    d_mackey = std::move(other.d_mackey);
-    d_mackey_size = std::move(other.d_mackey_size);
-    d_iv = std::move(other.d_iv);
-    d_iv_size = std::move(other.d_iv_size);
-    d_salt = std::move(other.d_salt);
-    d_salt_size = std::move(other.d_salt_size);
-    d_counter = std::move(other.d_counter);
+    d_ok = other.d_ok;
+    d_verbose = other.d_verbose;
+    d_backupkey = other.d_backupkey;
+    d_backupkey_size = other.d_backupkey_size;
+    d_cipherkey = other.d_cipherkey;
+    d_cipherkey_size = other.d_cipherkey_size;
+    d_mackey = other.d_mackey;
+    d_mackey_size = other.d_mackey_size;
+    d_iv = other.d_iv;
+    d_iv_size = other.d_iv_size;
+    d_salt = other.d_salt;
+    d_salt_size = other.d_salt_size;
+    d_counter = other.d_counter;
 
     // invalidate other
     other.d_backupkey = nullptr;

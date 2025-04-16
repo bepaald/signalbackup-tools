@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -78,7 +78,7 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
       if (replacement.empty())
         replacement = body->substr(bodyidx, length);
 
-      body->replace(bodyidx, length, pre + replacement + post);
+      body->replace(bodyidx, length, std::string(pre).append(replacement).append(post));
 
       for (unsigned int i = 0; i < pre.size(); ++i)
         if (positions_excluded_from_escape)

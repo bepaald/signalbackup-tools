@@ -28,7 +28,7 @@
 
 class KeyValueFrame : public BackupFrame
 {
-  enum FIELD
+  enum FIELD : std::uint8_t
   {
     INVALID = 0,
     KEY = 1,          // string
@@ -44,6 +44,10 @@ class KeyValueFrame : public BackupFrame
  public:
   inline explicit KeyValueFrame(uint64_t count = 0);
   inline KeyValueFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
+  inline KeyValueFrame(KeyValueFrame const &other) = default;
+  inline KeyValueFrame &operator=(KeyValueFrame const &other) = default;
+  inline KeyValueFrame(KeyValueFrame &&other) noexcept = default;
+  inline KeyValueFrame &operator=(KeyValueFrame &&other) noexcept = default;
   inline virtual ~KeyValueFrame() override = default;
   inline virtual KeyValueFrame *clone() const override;
   inline virtual KeyValueFrame *move_clone() override;
@@ -96,7 +100,7 @@ inline void KeyValueFrame::printInfo() const // virtual
   {
     if (std::get<0>(p) == FIELD::KEY)
       Logger::message("         - (key  : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
-    else if (std::get<0>(p) == FIELD::BLOBVALUE)
+    else if (std::get<0>(p) == FIELD::BLOBVALUE) // base64 encoded string
       Logger::message("         - (blobvalue   : \"", bepaald::bytesToString(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::BOOLEANVALUE)
       Logger::message("         - (booleanvalue : \"", std::boolalpha, (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? true : false), "\")");

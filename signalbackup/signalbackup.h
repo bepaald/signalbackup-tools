@@ -71,7 +71,7 @@
 struct HTMLMessageInfo;
 struct Range;
 struct GroupInfo;
-enum class IconType;
+enum class IconType : std::uint8_t;
 class JsonDatabase;
 class DesktopDatabase;
 class SignalPlaintextBackupDatabase;
@@ -154,14 +154,14 @@ class SignalBackup
   // only used in testing
   bool d_found_sqlite_sequence_in_backup;
 
-  enum DBLinkFlag : int
+  enum DBLinkFlag : std::uint8_t
   {
     NO_COMPACT = 0b01, // don't run compactids on this table
     SKIP = 0b10,       // ignore this table, but don't warn about it not being handled
     WARN = 0b100,      // this is a somewhat unknown table, warn about it
   };
 
-  enum LinkFlag : int
+  enum LinkFlag : std::uint8_t
   {
     SET_UNIQUELY = (1 << 0),
     //NEW_FLAG = (1 << 1),
@@ -342,7 +342,7 @@ class SignalBackup
   [[nodiscard]] inline bool writeFrameDataToFile(std::ofstream &outputfile, std::pair<unsigned char *, uint64_t> const &data) const;
   [[nodiscard]] bool writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *frame);
   [[nodiscard]] bool writeEncryptedFrameWithoutAttachment(std::ofstream &outputfile,
-                                                          std::pair<std::shared_ptr<unsigned char[]>, uint64_t> framedata);
+                                                          std::pair<std::shared_ptr<unsigned char[]>, uint64_t> const &framedata);
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::string> const &headers,
                                            std::vector<std::any> const &result) const;
   SqlStatementFrame buildSqlStatementFrame(std::string const &table, std::vector<std::any> const &result) const;
@@ -516,10 +516,10 @@ class SignalBackup
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
   inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
-  inline int utf16CharSize(std::string const &body, int idx) const;
+  inline int utf16CharSize(std::string const &body, unsigned int idx) const;
   inline int utf8Chars(std::string const &body) const;
   inline void resizeToNUtf8Chars(std::string &body, unsigned long size) const;
-  inline int bytesToUtf8CharSize(std::string const &body, int idx) const;
+  inline int bytesToUtf8CharSize(std::string const &body, unsigned int idx) const;
   std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
@@ -605,7 +605,7 @@ inline bool SignalBackup::writeRawFrameDataToFile(std::string const &outputfile,
   }
 
   if (frame->frameType() == BackupFrame::FRAMETYPE::END)
-    rawframefile << "END" << std::endl;
+    rawframefile << "END\n";
   else
   {
     std::string d = frame->getHumanData();
@@ -627,7 +627,7 @@ bool SignalBackup::writeFrameDataToFile(std::ofstream &outputfile, std::pair<uns
   if (!outputfile.write(reinterpret_cast<char *>(&besize), sizeof(uint32_t)))
     return false;
   // write data
-  if (!outputfile.write(reinterpret_cast<char *>(data.first), data.second))
+  if (!outputfile.write(reinterpret_cast<char *>(data.first), static_cast<std::streamsize>(data.second)))
     return false;
   return true;
 }
@@ -646,7 +646,7 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   if (line.empty())
     return true;
 
-  std::string::size_type pos = line.find(":", 0);
+  std::string::size_type pos = line.find(':', 0);
   if (pos == std::string::npos) [[unlikely]]
   {
     Logger::error("Failed to read frame data line '", line, "'");
@@ -661,7 +661,7 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   }
 
   ++pos;
-  std::string::size_type pos2 = line.find(":", pos);
+  std::string::size_type pos2 = line.find(':', pos);
   if (pos2 == std::string::npos) [[unlikely]]
   {
     Logger::error("Failed to read frame data from line '", line, "'");
@@ -669,8 +669,8 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   }
 
 #if __cplusplus >= 202002L && (!defined __apple_build_version__ || __apple_build_version__ >= 15000100)
-  std::string_view type(line.begin() + pos, line.begin() + pos2);
-  std::string_view datastr(line.begin() + pos2 + 1, line.end());
+  std::string_view type(line.begin() + static_cast<long>(pos), line.begin() + static_cast<long>(pos2));
+  std::string_view datastr(line.begin() + static_cast<long>(pos2) + 1, line.end());
 #else
   // this is inefficient according to cppcheck
   std::string_view type(line.data() + pos, pos2 - pos);
@@ -790,8 +790,7 @@ inline void SignalBackup::runQuery(std::string const &q, std::string const &mode
   if (!d_database.exec(q, &res))
     return;
 
-  std::string q_comm(q, 0, STRLEN("DELETE")); // delete, insert and update are same length...
-  std::for_each(q_comm.begin(), q_comm.end(), [] (char &ch) STATICLAMBDA { ch = std::toupper(ch); });
+  std::string q_comm(bepaald::toUpper(std::string(q, 0, STRLEN("DELETE")))); // delete, insert and update are same length...
 
   if (q_comm == "DELETE" || q_comm == "INSERT" || q_comm == "UPDATE")
   {
@@ -881,7 +880,7 @@ inline bool SignalBackup::HTMLwriteChatFolder(std::vector<long long int> const &
                             fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, chatfolderidx, chatfolders, compact);
 }
 
-inline int SignalBackup::utf16CharSize(std::string const &body, int idx) const
+inline int SignalBackup::utf16CharSize(std::string const &body, unsigned int idx) const
 {
   // get code point
   uint32_t codepoint = 0;
@@ -954,7 +953,7 @@ inline void SignalBackup::resizeToNUtf8Chars(std::string &body, unsigned long si
     body.resize(idx);
 }
 
-inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx) const
+inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, unsigned int idx) const
 {
   if ((static_cast<uint8_t>(body[idx]) & 0b10000000) == 0b00000000)
     return 1;
@@ -964,8 +963,7 @@ inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, int idx) c
     return 3;
   else if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
     return 4;
-  else
-    return 1;
+  return 1;
 }
 
 inline std::string SignalBackup::utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const

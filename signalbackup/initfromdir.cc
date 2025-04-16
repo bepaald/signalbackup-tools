@@ -151,7 +151,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     if (att.path().extension() != ".sbf" || !STRING_STARTS_WITH(att.path().filename().string(), "Attachment_"))
       continue;
 
-    std::filesystem::path attframe = att.path();
+    std::filesystem::path const &attframe = att.path();
     std::filesystem::path attbin = att.path();
     attbin.replace_extension(".bin");
 
@@ -226,7 +226,7 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
     if (sticker.path().extension() != ".sbf" || sticker.path().filename().string().substr(0, STRLEN("Sticker_")) != "Sticker_")
       continue;
 
-    std::filesystem::path stickerframe = sticker.path();
+    std::filesystem::path const &stickerframe = sticker.path();
     std::filesystem::path stickerbin = sticker.path();
     stickerbin.replace_extension(".bin");
 

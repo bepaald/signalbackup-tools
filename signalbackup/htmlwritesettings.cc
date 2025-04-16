@@ -377,13 +377,13 @@ bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, boo
 
         if (valuetype == "STRING")
         {
-          value = "\"" + value + "\"";
+          value = std::string("\"").append(value).append("\"");
           HTMLescapeString(&value);
         }
         else if (valuetype == "BLOB")
-          value = "(base64: )" + value;
+          value = std::string("(base64: )").append(value);
         else if (valuetype == "FLOAT")
-          value = "(base64 float: )" + value;
+          value = std::string("(base64 float: )").append(value);
 
         outputfile <<
           "        <div class=\"keyvalue-item\">\n"

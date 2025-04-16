@@ -45,7 +45,7 @@
 
 class Logger
 {
-  enum Flags
+  enum Flags : std::uint8_t
   {
     NONE = 0,
     OVERWRITE = 0b1,
@@ -53,7 +53,7 @@ class Logger
   };
 
  public:
-  enum class Control
+  enum class Control : std::uint8_t
   {
     BOLD,
     NORMAL,
@@ -95,35 +95,35 @@ class Logger
   inline static void setTimestamp(bool val);
 
   template <typename First, typename... Rest>
-  inline static void message_overwrite(First const &f, Rest... r);
+  inline static void message_overwrite(First const &f, Rest const &... r);
 
   template <typename First, typename... Rest>
-  inline static void message(First const &f, Rest... r);
+  inline static void message(First const &f, Rest const &... r);
   template <typename First, typename... Rest>
-  inline static void message_start(First const &f, Rest... r);
+  inline static void message_start(First const &f, Rest const &... r);
   inline static void message_start();
   template <typename First, typename... Rest>
-  inline static void message_continue(First const &f, Rest... r);
+  inline static void message_continue(First const &f, Rest const &... r);
   template <typename First, typename... Rest>
-  inline static void message_end(First const &f, Rest... r);
+  inline static void message_end(First const &f, Rest const &... r);
   inline static void message_end();
 
   template <typename First, typename... Rest>
-  inline static void warning(First const &f, Rest... r);
+  inline static void warning(First const &f, Rest const &... r);
   template <typename First, typename... Rest>
-  inline static void warning_start(First const &f, Rest... r);
+  inline static void warning_start(First const &f, Rest const &... r);
   template <typename First, typename... Rest>
-  inline static void warning_indent(First const &f, Rest... r);
+  inline static void warning_indent(First const &f, Rest const &... r);
 
   template <typename First, typename... Rest>
-  inline static void error(First const &f, Rest... r);
+  inline static void error(First const &f, Rest const &... r);
   template <typename First, typename... Rest>
-  inline static void error_start(First const &f, Rest... r);
+  inline static void error_start(First const &f, Rest const &... r);
   template <typename First, typename... Rest>
-  inline static void error_indent(First const &f, Rest... r);
+  inline static void error_indent(First const &f, Rest const &... r);
 
   template <typename First, typename... Rest>
-  inline static void output_indent(int indent, First const &f, Rest... r);
+  inline static void output_indent(int indent, First const &f, Rest const &... r);
 
   inline static void warnOnce(std::string const &w, bool error = false, std::string::size_type = std::string::npos);
 
@@ -142,28 +142,28 @@ class Logger
                   std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
 
   template <typename First, typename... Rest>
-  inline void outputMsg(Flags flags, First const &f, Rest... r);
+  inline void outputMsg(Flags flags, First const &f, Rest const &... r);
   template <typename T>
   inline void outputMsg(Flags flags, T const &t);
 
   // specializations for controlchar
   template <typename... Rest>
-  inline void outputMsg(Flags flags, Logger::ControlChar const &c, Rest... r);
+  inline void outputMsg(Flags flags, Logger::ControlChar const &c, Rest const &... r);
   inline void outputMsg(Flags flags, Logger::ControlChar const &c);
 
   // specializations for vector type
   template <typename T, typename... Rest>
-  inline void outputMsg(Flags flags, VECTOR<T> const &vec, Rest... r);
+  inline void outputMsg(Flags flags, VECTOR<T> const &vec, Rest const &... r);
   template <typename T>
   inline void outputMsg(Flags flags, VECTOR<T> const &vec);
   template <typename T, typename... Rest>
-  inline void outputMsg(Flags flags, std::vector<T> const &vec, Rest... r);
+  inline void outputMsg(Flags flags, std::vector<T> const &vec, Rest const &... r);
   template <typename T>
   inline void outputMsg(Flags flags, std::vector<T> const &vec);
 
   // specializations for control
   template <typename... Rest>
-  inline void outputMsg(Flags flags, Control c, Rest... r);
+  inline void outputMsg(Flags flags, Control c, Rest const &... r);
   inline void outputMsg(Flags flags, Control c);
 
   static bool supportsAnsi();
@@ -263,7 +263,7 @@ inline void Logger::setTimestamp(bool val) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::message_overwrite(First const &f, Rest... r) // static
+inline void Logger::message_overwrite(First const &f, Rest const &... r) // static
 {
   ensureLogger();
   firstUse();
@@ -280,7 +280,7 @@ inline void Logger::message_overwrite(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::message(First const &f, Rest... r) // static
+inline void Logger::message(First const &f, Rest const &... r) // static
 {
   messagePre();
   //outputHead("[MESSAGE] ", "[MESSAGE] ");
@@ -289,7 +289,7 @@ inline void Logger::message(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::message_start(First const &f, Rest... r) // static
+inline void Logger::message_start(First const &f, Rest const &... r) // static
 {
   messagePre();
   s_instance->d_dangling = true;
@@ -304,14 +304,14 @@ inline void Logger::message_start() // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::message_continue(First const &f, Rest... r) // static
+inline void Logger::message_continue(First const &f, Rest const &... r) // static
 {
   s_instance->outputHead("", false, {"", ": "});
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
 template <typename First, typename... Rest>
-inline void Logger::message_end(First const &f, Rest... r) // static
+inline void Logger::message_end(First const &f, Rest const &... r) // static
 {
   s_instance->d_dangling = false;
   s_instance->outputHead("", false, {"", ": "});
@@ -325,7 +325,7 @@ inline void Logger::message_end() // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::warning(First const &f, Rest... r) // static
+inline void Logger::warning(First const &f, Rest const &... r) // static
 {
   messagePre();
   //outputHead("[WARNING] ", "[\033[38;5;37mWARNING\033[0m] ");
@@ -334,7 +334,7 @@ inline void Logger::warning(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::warning_start(First const &f, Rest... r) // static
+inline void Logger::warning_start(First const &f, Rest const &... r) // static
 {
   messagePre();
   s_instance->outputHead("Warning", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
@@ -342,7 +342,7 @@ inline void Logger::warning_start(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::warning_indent(First const &f, Rest... r) // static
+inline void Logger::warning_indent(First const &f, Rest const &... r) // static
 {
   messagePre();
   s_instance->outputHead("       ", false, {" ", "   "});
@@ -350,7 +350,7 @@ inline void Logger::warning_indent(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::error(First const &f, Rest... r) // static
+inline void Logger::error(First const &f, Rest const &... r) // static
 {
   messagePre();
   //outputHead("[ ERROR ] ", "[ \033[1;31mERROR\033[0m ] ");
@@ -359,7 +359,7 @@ inline void Logger::error(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::error_start(First const &f, Rest... r) // static
+inline void Logger::error_start(First const &f, Rest const &... r) // static
 {
   messagePre();
   s_instance->outputHead("Error", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
@@ -367,7 +367,7 @@ inline void Logger::error_start(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::error_indent(First const &f, Rest... r) // static
+inline void Logger::error_indent(First const &f, Rest const &... r) // static
 {
   messagePre();
   s_instance->outputHead("     ", false, {" ", "   "});
@@ -375,7 +375,7 @@ inline void Logger::error_indent(First const &f, Rest... r) // static
 }
 
 template <typename First, typename... Rest>
-inline void Logger::output_indent(int indent, First const &f, Rest... r) // static
+inline void Logger::output_indent(int indent, First const &f, Rest const &... r) // static
 {
   messagePre();
   s_instance->outputHead(std::string(indent, ' '));
@@ -383,7 +383,7 @@ inline void Logger::output_indent(int indent, First const &f, Rest... r) // stat
 }
 
 template <typename First, typename... Rest>
-inline void Logger::outputMsg(Flags flags, First const &f, Rest... r)
+inline void Logger::outputMsg(Flags flags, First const &f, Rest const &... r)
 {
   if (d_currentoutput)
     *(d_currentoutput) << f;
@@ -409,7 +409,7 @@ inline void Logger::outputMsg(Flags flags, T const &t)
 }
 
 template <typename T, typename... Rest>
-inline void Logger::outputMsg(Flags flags, VECTOR<T> const &vec, Rest... r)
+inline void Logger::outputMsg(Flags flags, VECTOR<T> const &vec, Rest const &... r)
 {
   if (d_currentoutput)
     for (unsigned int i = 0; i < vec.data.size(); ++i)
@@ -441,7 +441,7 @@ inline void Logger::outputMsg(Flags flags, VECTOR<T> const &vec)
 }
 
 template <typename T, typename... Rest>
-inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec, Rest... r)
+inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec, Rest const &... r)
 {
   outputMsg(flags, VECTOR(vec, ","), r...);
 }
@@ -453,7 +453,7 @@ inline void Logger::outputMsg(Flags flags, std::vector<T> const &vec)
 }
 
 template <typename... Rest>
-inline void Logger::outputMsg(Flags flags, Logger::ControlChar const &c, Rest... r)
+inline void Logger::outputMsg(Flags flags, Logger::ControlChar const &c, Rest const &... r)
 {
   if (d_controlcodessupported)
     std::cout << c.code;
@@ -473,7 +473,7 @@ inline void Logger::outputMsg(Flags flags, Logger::ControlChar const &c)
 }
 
 template <typename... Rest>
-inline void Logger::outputMsg(Flags flags, Control c, Rest... r)
+inline void Logger::outputMsg(Flags flags, Control c, Rest const &... r)
 {
   // (no control codes to file)
 

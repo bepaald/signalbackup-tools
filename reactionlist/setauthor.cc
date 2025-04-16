@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2020-2024  Selwin van Dijk
+  Copyright (C) 2020-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -43,12 +43,15 @@ bool ReactionList::setAuthor(unsigned int idx, uint64_t author)
     {
       ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::UINT64,
                      protobuffer::optional::UINT64, protobuffer::optional::UINT64> tmp;
-      if (!tmp.addField<1>(reactions[i].getField<1>().value()) ||
+      if (!reactions[i].getField<1>().has_value() ||
+          !reactions[i].getField<3>().has_value() ||
+          !reactions[i].getField<4>().has_value() ||
+          !tmp.addField<1>(reactions[i].getField<1>().value()) ||
           !tmp.addField<2>(author) ||
           !tmp.addField<3>(reactions[i].getField<3>().value()) ||
           !tmp.addField<4>(reactions[i].getField<4>().value()))
         return false;
-      newreactions.push_back(tmp);
+      newreactions.emplace_back(std::move(tmp));
     }
   }
 

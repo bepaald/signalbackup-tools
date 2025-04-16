@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -28,14 +28,14 @@ void SqliteDB::QueryResults::printLineMode(long long int row) const
   }
 
   // get longest header
-  unsigned int maxheader = 0;
+  int maxheader = 0;
   for (auto const &h : d_headers)
-    if (h.size() > maxheader)
-      maxheader = h.size();
+    if (static_cast<int>(h.size()) > maxheader)
+      maxheader = static_cast<int>(h.size());
 
   // print
-  long long int startrow = row == -1 ? 0 : row;
-  long long int endrow = row == -1 ? rows() : row + 1;
+  unsigned long long int startrow = row == -1 ? 0 : row;
+  unsigned long long int endrow = row == -1 ? rows() : row + 1;
   for (unsigned int i = startrow; i < endrow; ++i)
   {
     Logger::message(" === Row ", i + 1, "/", rows(), " ===");

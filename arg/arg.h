@@ -1028,35 +1028,31 @@ bool Arg::ston(T *t, std::string const &str) const
 
 inline void Arg::parseStringList(std::string const &strlist, std::vector<std::string> *list) const
 {
-  std::string tr = strlist;
-
   size_t start = 0;
   size_t pos = 0;
-  while ((pos = tr.find(',', start)) != std::string::npos)
+  while ((pos = strlist.find(',', start)) != std::string::npos)
   {
-    list->emplace_back(tr.substr(start, pos - start));
+    list->emplace_back(strlist.substr(start, pos - start));
     start = pos + 1;
   }
-  list->emplace_back(tr.substr(start));
+  list->emplace_back(strlist.substr(start));
 }
 
 template <typename T, typename U>
 inline bool Arg::parsePairList(std::string const &pairlist, std::string const &delim, std::vector<std::pair<T, U>> *list, std::string *error) const
 {
-  std::string tr = pairlist;
-
   size_t start = 0;
   size_t pos = 0;
-  while ((pos = tr.find(',', start)) != std::string::npos)
+  while ((pos = pairlist.find(',', start)) != std::string::npos)
   {
     std::pair<T, U> tmp;
-    if (!parsePair(tr.substr(start, pos - start), delim, &tmp, error))
+    if (!parsePair(pairlist.substr(start, pos - start), delim, &tmp, error))
       return false;
     list->emplace_back(std::move(tmp));
     start = pos + 1;
   }
   std::pair<T, U> tmp;
-  if (!parsePair(tr.substr(start), delim, &tmp, error))
+  if (!parsePair(pairlist.substr(start), delim, &tmp, error))
     return false;
   list->emplace_back(std::move(tmp));
   return true;
@@ -1065,25 +1061,23 @@ inline bool Arg::parsePairList(std::string const &pairlist, std::string const &d
 template <typename T>
 bool Arg::parseNumberList(std::string const &strlist, std::vector<T> *list, bool sort, std::vector<std::string> *faillist) const
 {
-  std::string tr = strlist;
-
   size_t start = 0;
   size_t pos = 0;
-  while ((pos = tr.find(',', start)) != std::string::npos)
+  while ((pos = strlist.find(',', start)) != std::string::npos)
   {
-    if (!parseNumberListToken(tr.substr(start, pos - start), list))  // get&parse token
+    if (!parseNumberListToken(strlist.substr(start, pos - start), list))  // get&parse token
     {
       if (faillist)
-        faillist->emplace_back(tr.substr(start, pos - start));
+        faillist->emplace_back(strlist.substr(start, pos - start));
       else
         return false;
     }
     start = pos + 1;
   }
-  if (!parseNumberListToken(tr.substr(start), list)) // get last bit
+  if (!parseNumberListToken(strlist.substr(start), list)) // get last bit
   {
     if (faillist)
-      faillist->emplace_back(tr.substr(start));
+      faillist->emplace_back(strlist.substr(start));
     else
       return false;
   }

@@ -95,10 +95,15 @@ inline std::string bepaald::bytesToHexString(unsigned char const *data, unsigned
 
 inline std::string bepaald::bytesToString(unsigned char const *data, unsigned int length)
 {
+  return std::string(reinterpret_cast<char const *>(data), length);
+  /*
+    // this may have been the stupidest bit of code in this project
+    // saved here for all to see
   std::ostringstream oss;
   for (unsigned int i = 0; i < length; ++i)
     oss << static_cast<char>(data[i]);
   return oss.str();
+  */
 }
 
 inline std::string bepaald::bytesToPrintableString(unsigned char const *data, unsigned int length)
@@ -134,7 +139,7 @@ inline bool bepaald::hexStringToBytes(unsigned char const *in, uint64_t insize, 
     return false;
   }
 
-  auto charToInt = [] (char c)
+  auto charToInt = [] (unsigned char c)
   {
     if (c <= '9' && c >= '0')
       return c - '0';

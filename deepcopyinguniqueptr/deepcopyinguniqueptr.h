@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -70,7 +70,7 @@ class DeepCopyingUniquePtr : public std::unique_ptr<T, U>
     return *this;
   }
 
-  inline DeepCopyingUniquePtr(DeepCopyingUniquePtr<T, U> &&other)
+  inline DeepCopyingUniquePtr(DeepCopyingUniquePtr<T, U> &&other) noexcept
     :
     std::unique_ptr<T, U>()
   {
@@ -80,7 +80,7 @@ class DeepCopyingUniquePtr : public std::unique_ptr<T, U>
       this->reset(other ? new T(std::move(*(other.get()))) : nullptr);
   }
 
-  inline DeepCopyingUniquePtr<T, U> &operator=(DeepCopyingUniquePtr<T, U> &&other)
+  inline DeepCopyingUniquePtr<T, U> &operator=(DeepCopyingUniquePtr<T, U> &&other) noexcept
   {
     if (this != &other) [[likely]]
     {

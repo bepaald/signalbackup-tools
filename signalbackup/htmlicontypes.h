@@ -20,7 +20,7 @@
 #ifndef HTMLICONTYPES_H_
 #define HTMLICONTYPES_H_
 
-enum class IconType
+enum class IconType : std::uint8_t
 {
   NONE,
   TIMER_UPDATE,

@@ -34,7 +34,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   }
 
   std::vector<std::string> r_ids = addresses;
-  std::vector<std::string> phonenumbers = addresses;
+  std::vector<std::string> const &phonenumbers = addresses;
 
   // for database version >= 24, addresses = recipient_ids, for db version < 24 addresses = recipient.phone
   // so convert to recipient._ids
@@ -55,7 +55,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   }
 
   std::string target_rid = r_ids.back();
-  std::string targetphone = phonenumbers.back();
+  std::string const &targetphone = phonenumbers.back();
 
   // deal with one-on-one conversations:
   // get thread of target address

@@ -28,7 +28,7 @@
 
 class AttachmentFrame : public FrameWithAttachment
 {
-  enum FIELD
+  enum FIELD : std::uint8_t
   {
    INVALID = 0,
    ROWID = 1, // uint64
@@ -40,8 +40,8 @@ class AttachmentFrame : public FrameWithAttachment
  public:
   inline explicit AttachmentFrame(uint64_t count = 0);
   inline AttachmentFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
-  inline AttachmentFrame(AttachmentFrame &&other) = default;
-  inline AttachmentFrame &operator=(AttachmentFrame &&other) = default;
+  inline AttachmentFrame(AttachmentFrame &&other) noexcept = default;
+  inline AttachmentFrame &operator=(AttachmentFrame &&other) noexcept = default;
   inline AttachmentFrame(AttachmentFrame const &other) = default;
   inline AttachmentFrame &operator=(AttachmentFrame const &other) = default;
   inline virtual ~AttachmentFrame() override = default;
@@ -232,9 +232,9 @@ inline bool AttachmentFrame::validate(uint64_t available) const
     return false;
 
   int foundrowid = 0;
-  int rowid_fieldsize = 0;
+  unsigned long rowid_fieldsize = 0;
   int foundlength = 0;
-  int length_fieldsize = 0;
+  unsigned long length_fieldsize = 0;
   unsigned int len = 0;
   int foundattachmentid = 0;
   for (auto const &p : d_framedata)

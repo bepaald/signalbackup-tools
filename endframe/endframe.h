@@ -28,6 +28,10 @@ class EndFrame: public BackupFrame
  public:
   inline EndFrame(unsigned char const *bytes, size_t length, uint64_t count = 0);
   inline virtual ~EndFrame() override = default;
+  inline EndFrame(EndFrame &&other) noexcept = default;
+  inline EndFrame &operator=(EndFrame &&other) noexcept = default;
+  inline EndFrame(EndFrame const &other) = default;
+  inline EndFrame &operator=(EndFrame const &other) = default;
   inline virtual EndFrame *clone() const override;
   inline virtual EndFrame *move_clone() override;
   inline static BackupFrame *create(unsigned char const *bytes, size_t length, uint64_t count);

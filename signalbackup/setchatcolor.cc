@@ -75,7 +75,7 @@ bool SignalBackup::setChatColors(std::vector<std::pair<long long int, std::strin
 
     // append opacity
     if (colorstr.size() == 6)
-      colorstr = "FF" + colorstr;
+      colorstr = std::string("FF").append(colorstr);
     //Logger::message("GOT COLOR STRING: ", colorstr);
 
     std::unique_ptr<unsigned char[]> color_data(new unsigned char[4]);

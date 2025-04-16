@@ -114,8 +114,8 @@ int DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool ver
 
   if (std::memcmp(calculatedmac.get(), theirmac.get(), theirmac_length) != 0)
   {
-    Logger::error("MAC failed! (theirMAC: ", bepaald::bytesToString(theirmac.get(), theirmac_length),
-                  " ourMAC: ", bepaald::bytesToString(calculatedmac.get(), theirmac_length));
+    Logger::error("MAC failed! (theirMAC: ", bepaald::bytesToHexString(theirmac.get(), theirmac_length));
+    Logger::error_indent("               ourMAC: ", bepaald::bytesToHexString(calculatedmac.get(), theirmac_length));
     return -1;
   }
 

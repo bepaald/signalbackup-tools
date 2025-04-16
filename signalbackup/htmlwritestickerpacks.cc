@@ -717,7 +717,7 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
   }
 
   // make sure a 'stickers/' subdirectory exists, and 'stickers/stickerpack_id/' exists
-  for (auto subdir : {"/stickers"s, "/stickers/"s + packid})
+  for (auto const &subdir : {"/stickers"s, "/stickers/"s + packid})
   {
     if (!bepaald::fileOrDirExists(directory + subdir))
     {

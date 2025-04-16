@@ -31,7 +31,7 @@
 
 class StickerFrame : public FrameWithAttachment
 {
-  enum FIELD : int
+  enum FIELD : std::uint8_t
   {
     INVALID = 0,
     ROWID = 1, // uint64
@@ -189,8 +189,6 @@ inline std::pair<unsigned char *, uint64_t> StickerFrame::getData() const
     switch (std::get<0>(fd))
     {
       case FIELD::ROWID:
-        datapos += putVarIntType(fd, data + datapos);
-        break;
       case FIELD::LENGTH:
         datapos += putVarIntType(fd, data + datapos);
         break;
@@ -205,9 +203,9 @@ inline bool StickerFrame::validate(uint64_t available) const
     return false;
 
   int foundrowid = 0;
-  int rowid_fieldsize = 0;
+  unsigned long rowid_fieldsize = 0;
   int foundlength = 0;
-  int length_fieldsize = 0;
+  unsigned long length_fieldsize = 0;
   unsigned int len = 0;
   for (auto const &p : d_framedata)
   {

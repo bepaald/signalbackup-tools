@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -29,10 +29,10 @@ std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string const &in) 
 
   std::string cleaned = in;
 
-  while (cleaned.find("<") != std::string::npos)
+  while (cleaned.find('<') != std::string::npos)
   {
-    auto startpos = cleaned.find("<");
-    auto endpos = cleaned.find(">") + 1;
+    auto startpos = cleaned.find('<');
+    auto endpos = cleaned.find('>') + 1;
 
     if (endpos != std::string::npos)
       cleaned.erase(startpos, endpos - startpos);

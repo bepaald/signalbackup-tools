@@ -39,8 +39,8 @@ class FrameWithAttachment : public BackupFrame
  public:
   inline explicit FrameWithAttachment(uint64_t count = 0);
   inline FrameWithAttachment(unsigned char const *bytes, size_t length, uint64_t count = 0);
-  inline FrameWithAttachment(FrameWithAttachment &&other);
-  inline FrameWithAttachment &operator=(FrameWithAttachment &&other);
+  inline FrameWithAttachment(FrameWithAttachment &&other) noexcept;
+  inline FrameWithAttachment &operator=(FrameWithAttachment &&other) noexcept;
   inline FrameWithAttachment(FrameWithAttachment const &other);
   inline FrameWithAttachment &operator=(FrameWithAttachment const &other);
   inline virtual ~FrameWithAttachment() override;
@@ -73,20 +73,20 @@ inline FrameWithAttachment::FrameWithAttachment(unsigned char const *bytes, size
   d_noclear(false)
 {}
 
-inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment &&other)
+inline FrameWithAttachment::FrameWithAttachment(FrameWithAttachment &&other) noexcept
   :
   BackupFrame(std::move(other)),
-  d_attachmentdata(std::move(other.d_attachmentdata)),
-  d_attachmentreader(std::move(other.d_attachmentreader)),
-  d_attachmentdata_size(std::move(other.d_attachmentdata_size)),
-  d_noclear(std::move(other.d_noclear))
+  d_attachmentdata(other.d_attachmentdata),
+  d_attachmentreader(other.d_attachmentreader),
+  d_attachmentdata_size(other.d_attachmentdata_size),
+  d_noclear(other.d_noclear)
 {
   other.d_attachmentdata = nullptr;
   other.d_attachmentreader = nullptr;
   other.d_attachmentdata_size = 0;
 }
 
-inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &&other)
+inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &&other) noexcept
 {
   if (this != &other)
   {
@@ -95,10 +95,10 @@ inline FrameWithAttachment &FrameWithAttachment::operator=(FrameWithAttachment &
       delete d_attachmentreader;
 
     BackupFrame::operator=(std::move(other));
-    d_attachmentdata = std::move(other.d_attachmentdata);
-    d_attachmentdata_size = std::move(other.d_attachmentdata_size);
-    d_attachmentreader = std::move(other.d_attachmentreader);
-    d_noclear = std::move(other.d_noclear);
+    d_attachmentdata = other.d_attachmentdata;
+    d_attachmentdata_size = other.d_attachmentdata_size;
+    d_attachmentreader = other.d_attachmentreader;
+    d_noclear = other.d_noclear;
 
     other.d_attachmentdata = nullptr;
     other.d_attachmentreader = nullptr;

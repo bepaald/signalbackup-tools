@@ -147,7 +147,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       Logger::error("Failed to open 'searchidx.js' for writing");
       return false;
     }
-    searchidx << "message_idx = [" << std::endl;
+    searchidx << "message_idx = [\n";
   }
 
   std::string exportdetails_html;
@@ -359,9 +359,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (compact) [[unlikely]]
       threaddir = "id" + bepaald::toString(thread_id);
 
-    if (bepaald::fileOrDirExists(directory + "/" + threaddir))
+    if (bepaald::fileOrDirExists(std::string(directory).append("/").append(threaddir)))
     {
-      if (!bepaald::isDir(directory + "/" + threaddir))
+      if (!bepaald::isDir(std::string(directory).append("/").append(threaddir)))
       {
         Logger::error("dir is regular file");
         return false;
@@ -372,7 +372,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         return false;
       }
     }
-    else if (!bepaald::createDir(directory + "/" + threaddir)) // try to create it
+    else if (!bepaald::createDir(std::string(directory).append("/").append(threaddir))) // try to create it
     {
       Logger::error("Failed to create directory `", directory, "/", threaddir, "'",
                     " (errno: ", std::strerror(errno), ")"); // note: errno is not required to be set by std
@@ -440,9 +440,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         filename = bepaald::toString(pagenumber) + ".html";
       }
 
-      WIN_CHECK_PATH_LENGTH(directory + "/" + threaddir + "/" + filename);
+      WIN_CHECK_PATH_LENGTH(std::string(directory).append("/").append(threaddir).append("/").append(filename));
 
-      std::ofstream htmloutput(WIN_LONGPATH(directory + "/" + threaddir + "/" + filename), std::ios_base::binary);
+      std::ofstream htmloutput(WIN_LONGPATH(std::string(directory).append("/").append(threaddir).append("/").append(filename)), std::ios_base::binary);
       if (!htmloutput.is_open())
       {
         Logger::error("Failed to open '", directory, "/", threaddir, "/", filename, "' for writing.");
@@ -599,11 +599,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         // insert date-change message
         if (readable_date_day != previous_day_change)
         {
-          htmloutput << R"(          <div class="msg msg-date-change">
-            <p>
-              )" << readable_date_day << R"(
-            </p>
-          </div>)" << std::endl << std::endl;
+          htmloutput <<
+            "          <div class=\"msg msg-date-change\">\n"
+            "            <p>\n"
+            "              " << readable_date_day << "\n"
+            "            </p>\n"
+            "          </div>\n\n";
         }
         previous_day_change = readable_date_day;
         previous_period_split_string = messages(messagecount, "periodsplit");
@@ -724,7 +725,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
               }
 
               if (searchidx_write_started) [[likely]]
-                searchidx << "," << std::endl;
+                searchidx << ",\n";
 
               searchidx << "  " << line;
               searchidx_write_started = true;
@@ -930,11 +931,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   if (searchpage)
   {
     if (searchidx_write_started) [[likely]]
-      searchidx << std::endl << "];" << std::endl;
+      searchidx << "\n];\n";
 
     // write recipient info:
     //std::map<long long int, RecipientInfo> recipient_info;
-    searchidx << "recipient_idx = [" << std::endl;
+    searchidx << "recipient_idx = [\n";
     for (auto r = recipient_info.begin(); r != recipient_info.end(); ++r)
     {
       std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'display_name', ?)", {r->first, r->second.display_name}, std::string());
@@ -942,13 +943,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         continue;
       searchidx << "  " << line;
       if (std::next(r) != recipient_info.end()) [[likely]]
-        searchidx << "," << std::endl;
+        searchidx << ",\n";
       else
-        searchidx << std::endl << "];" << std::endl;
+        searchidx << "\n];\n";
     }
 
     // write page info:
-    searchidx << "page_idx = [" << std::endl;
+    searchidx << "page_idx = [\n";
     for (auto pi = searchidx_page_idx_map.begin() ; pi != searchidx_page_idx_map.end(); ++pi)
     {
       std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'bn', ?)", {pi->second, pi->first}, std::string());
@@ -956,9 +957,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         continue;
       searchidx << "  " << line;
       if (std::next(pi) != searchidx_page_idx_map.end()) [[likely]]
-        searchidx << "," << std::endl;
+        searchidx << ",\n";
       else
-        searchidx << std::endl << "];" << std::endl;
+        searchidx << "\n];\n";
     }
   }
 

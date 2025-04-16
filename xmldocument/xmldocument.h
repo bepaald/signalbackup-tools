@@ -69,7 +69,7 @@ class XmlDocument
   };
 
  private:
-  enum State
+  enum State : std::uint8_t
   {
     INITIAL,
     FINISHED,

@@ -96,7 +96,7 @@ inline bool SqlCipherDecryptor::writeToFile(std::string const &filename, bool ov
     return false;
   }
 
-  if (!out.write(reinterpret_cast<char *>(d_decrypteddata), d_decrypteddatasize))
+  if (!out.write(reinterpret_cast<char *>(d_decrypteddata), static_cast<std::streamsize>(d_decrypteddatasize)))
   {
     Logger::error("Error writing data to file");
     return false;

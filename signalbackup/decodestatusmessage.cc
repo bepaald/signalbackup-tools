@@ -517,7 +517,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       auto memberrolechanges = groupchange.getField<5>();
       for (unsigned int i = 0; i < memberrolechanges.size(); ++i) // I dont know how this can be more than size() == 1
       {
-        DecryptedModifyMemberRole mr = memberrolechanges[i];
+        DecryptedModifyMemberRole const &mr = memberrolechanges[i];
 
         std::string uuidstr;
         if (mr.getField<1>().has_value())

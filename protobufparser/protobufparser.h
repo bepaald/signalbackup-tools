@@ -52,7 +52,7 @@ struct ZigZag32
   int32_t value{0}; // this holds the decoded (non-zigzag) value
   operator int32_t() const { return value; }
   ZigZag32() = default;
-  ZigZag32(uint32_t v) : value(v) {}
+  ZigZag32(uint32_t v) : value(static_cast<int32_t>(v)) {}
 };
 
 struct ZigZag64
@@ -60,7 +60,7 @@ struct ZigZag64
   int64_t value{0}; // this holds the decoded (non-zigzag) value
   operator int64_t() const { return value; }
   ZigZag64() = default;
-  ZigZag64(uint64_t v) : value(v) {}
+  ZigZag64(uint64_t v) : value(static_cast<int64_t>(v)) {}
 };
 
 struct Fixed32
@@ -200,7 +200,7 @@ namespace ProtoBufParserReturn
 template <typename... Spec>
 class ProtoBufParser
 {
-  enum WIRETYPE : int
+  enum WIRETYPE : std::uint8_t
   {
    VARINT = 0,
    FIXED64 = 1,
@@ -210,7 +210,7 @@ class ProtoBufParser
    FIXED32 = 5
   };
   unsigned char *d_data;
-  int64_t d_size;
+  uint64_t d_size;
 
  public:
   inline ProtoBufParser();
@@ -219,8 +219,8 @@ class ProtoBufParser
   explicit ProtoBufParser(unsigned char const *data, int64_t size);
   inline ProtoBufParser(ProtoBufParser const &other);
   inline ProtoBufParser &operator=(ProtoBufParser const &other);
-  inline ProtoBufParser(ProtoBufParser &&other);
-  inline ProtoBufParser &operator=(ProtoBufParser &&other);
+  inline ProtoBufParser(ProtoBufParser &&other) noexcept;
+  inline ProtoBufParser &operator=(ProtoBufParser &&other) noexcept;
   ~ProtoBufParser();
   inline bool operator==(ProtoBufParser const &other) const;
   inline bool operator!=(ProtoBufParser const &other) const;
@@ -266,11 +266,11 @@ class ProtoBufParser
  private:
   template <unsigned int idx, typename T>
   inline bool addFieldInternal(T const &value);
-  int64_t readVarInt(int *pos, unsigned char const *data, int size, bool zigzag = false) const;
+  int64_t readVarInt(unsigned int *pos, unsigned char const *data, unsigned int size, bool zigzag = false) const;
   int64_t getVarIntFieldLength(int pos, unsigned char const *data, int size) const;
-  std::pair<unsigned char *, int64_t> getField(int num, int32_t *wiretype) const;
-  std::pair<unsigned char *, int64_t> getField(int num, int32_t *wiretype, int *pos) const;
-  void getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const;
+  std::pair<unsigned char *, uint64_t> getField(int num, int32_t *wiretype) const;
+  std::pair<unsigned char *, uint64_t> getField(int num, int32_t *wiretype, unsigned int *pos) const;
+  void getPosAndLengthForField(int num, int startpos, int64_t *pos, int64_t *fieldlength) const;
   bool fieldExists(int num) const;
   template <int idx>
   inline constexpr uint64_t fieldSize() const;
@@ -333,7 +333,7 @@ inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParse
 }
 
 template <typename... Spec>
-inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser &&other)
+inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser &&other) noexcept
   :
   d_data(other.d_data),
   d_size(other.d_size)
@@ -343,7 +343,7 @@ inline ProtoBufParser<Spec...>::ProtoBufParser(ProtoBufParser &&other)
 }
 
 template <typename... Spec>
-inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParser &&other)
+inline ProtoBufParser<Spec...> &ProtoBufParser<Spec...>::operator=(ProtoBufParser &&other) noexcept
 {
   if (this != &other)
   {
@@ -483,12 +483,12 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       {
         if constexpr (std::is_same<T, ZigZag32>::value || std::is_same<T, ZigZag64>::value)
         {
-          int pos = 0;
+          unsigned int pos = 0;
           return readVarInt(&pos, fielddata.first, fielddata.second, true);
         }
         else
         {
-          int pos = 0;
+          unsigned int pos = 0;
           return readVarInt(&pos, fielddata.first, fielddata.second);
         }
       }
@@ -534,11 +534,11 @@ template <typename T>
 inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<Spec...>::getFieldsAs(int num) const
 {
   typename ProtoBufParserReturn::item_return<T, true>::type result; // == for example, for repeated::BYTES -> std::vector<std::pair<unsigned char *, size_t>>
-  int pos = 0;
+  unsigned int pos = 0;
   while (true)
   {
     int32_t wiretype;
-    std::pair<unsigned char *, int64_t> fielddata(getField(num, &wiretype, &pos));
+    std::pair<unsigned char *, uint64_t> fielddata(getField(num, &wiretype, &pos));
     if (fielddata.first)
     {
       if constexpr (std::is_constructible<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, char *, int64_t>::value)
@@ -556,12 +556,12 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
                         std::is_same<typename T::value_type, ZigZag64>::value)
           {
-            int pos2 = 0;
+            unsigned int pos2 = 0;
             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
           }
           else
           {
-            int pos2 = 0;
+            unsigned int pos2 = 0;
             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second));
           }
         }
@@ -583,7 +583,7 @@ inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParser<
             if (wiretype == WIRETYPE::LENGTH_DELIMITED)
             {
               // Logger::message("Data: ", bepaald::bytesToHexString(fielddata), "(size: ", fielddata.second, ")");
-              int pos2 = 0;
+              unsigned int pos2 = 0;
               while (pos2 < fielddata.second)
               {
                 if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
@@ -658,11 +658,11 @@ template <typename... Spec>
 template <typename T>
 bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_unused]])
 {
-  int startpos = 0;
-  int pos = -1;
-  int fieldlength = -1;
+  int64_t startpos = 0;
+  int64_t pos = -1;
+  int64_t fieldlength = -1;
 
-  while (startpos < d_size)
+  while (startpos < static_cast<int64_t>(d_size))
   {
     getPosAndLengthForField(num, startpos, &pos, &fieldlength);
 
@@ -678,7 +678,7 @@ bool ProtoBufParser<Spec...>::deleteFirstField(int num, T const *value [[maybe_u
       //std::cout << "Asked to delete specific: " << *value << std::endl;
 
       bool del = false;
-      int tmppos = pos;
+      unsigned int tmppos = pos;
       int32_t wiretype;
 
       if constexpr (std::is_constructible<T, char *, int64_t>::value) // meant for probably for std::strings
@@ -1042,7 +1042,7 @@ inline typename std::enable_if<std::is_same<typename std::remove_reference<declt
 }
 
 template <typename... Spec>
-int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char const *data, int size, bool zigzag) const
+int64_t ProtoBufParser<Spec...>::readVarInt(unsigned int *pos, unsigned char const *data, unsigned int size, bool zigzag) const
 {
   uint64_t value = 0;
   uint64_t times = 0;
@@ -1053,13 +1053,13 @@ int64_t ProtoBufParser<Spec...>::readVarInt(int *pos, unsigned char const *data,
   if (zigzag)
     value = ((value >> 1) ^ (~(value & 1) + 1));
 
-  return value;
+  return static_cast<int64_t>(value);
 }
 
 template <typename... Spec>
 int64_t ProtoBufParser<Spec...>::getVarIntFieldLength(int pos, unsigned char const *data, int size) const
 {
-  uint64_t length = 0;
+  int64_t length = 0;
   while (pos < size && (data[pos]) & 0b10000000)
   {
     ++length;
@@ -1069,22 +1069,22 @@ int64_t ProtoBufParser<Spec...>::getVarIntFieldLength(int pos, unsigned char con
 }
 
 template <typename... Spec>
-void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int *pos, int *fieldlength) const
+void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int64_t *pos, int64_t *fieldlength) const
 {
-  int localpos = startpos;
-  while (localpos < d_size)
+  int64_t localpos = startpos;
+  while (localpos < static_cast<int64_t>(d_size))
   {
     int32_t field    = (d_data[localpos] & 0b0111'1000) >> 3;
     int32_t wiretype =  d_data[localpos] & 0b0000'0111;
     int fieldshift = 4;
-    unsigned int localpos2 = localpos;
-    while (localpos2 < d_size - 1 &&
+    int64_t localpos2 = localpos;
+    while (localpos2 < static_cast<int64_t>(d_size) - 1 &&
            d_data[localpos2] & 0b10000000) // skipping the shift
     {
       field |= (d_data[++localpos2] & 0b01111111) << fieldshift;
       fieldshift += 7;
     }
-    int nextpos = localpos2 + 1;
+    unsigned int nextpos = static_cast<uint64_t>(localpos2) + 1;
 
     //std::cout << "F: " << field << std::endl;
     //std::cout << "W: " << wiretype << std::endl;
@@ -1093,7 +1093,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
     {
       case WIRETYPE::LENGTH_DELIMITED:
       {
-        uint64_t localfieldlength = readVarInt(&nextpos, d_data, d_size);
+        int64_t localfieldlength = readVarInt(&nextpos, d_data, d_size);
         if (field == num)
         {
           *pos = localpos;
@@ -1105,7 +1105,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       }
       case WIRETYPE::VARINT:
       {
-        uint64_t localfieldlength = getVarIntFieldLength(nextpos, d_data, d_size);
+        int64_t localfieldlength = getVarIntFieldLength(nextpos, d_data, d_size);
         if (field == num)
         {
           *pos = localpos;
@@ -1117,7 +1117,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       }
       case WIRETYPE::FIXED64:
       {
-        uint64_t localfieldlength = 8;
+        int64_t localfieldlength = 8;
         if (field == num)
         {
           *pos = localpos;
@@ -1129,7 +1129,7 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
       }
       case WIRETYPE::FIXED32:
       {
-        uint64_t localfieldlength = 4;
+        int64_t localfieldlength = 4;
         if (field == num)
         {
           *pos = localpos;
@@ -1161,14 +1161,14 @@ void ProtoBufParser<Spec...>::getPosAndLengthForField(int num, int startpos, int
 }
 
 template <typename... Spec>
-std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, int32_t *wiretype) const
+std::pair<unsigned char *, uint64_t> ProtoBufParser<Spec...>::getField(int num, int32_t *wiretype) const
 {
-  int pos = 0;
+  unsigned int pos = 0;
   return getField(num, wiretype, &pos);
 }
 
 template <typename... Spec>
-std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, int32_t *wiretype, int *pos) const
+std::pair<unsigned char *, uint64_t> ProtoBufParser<Spec...>::getField(int num, int32_t *wiretype, unsigned int *pos) const
 {
   while (*pos < d_size)
   {
@@ -1240,7 +1240,7 @@ std::pair<unsigned char *, int64_t> ProtoBufParser<Spec...>::getField(int num, i
 template <typename... Spec>
 bool ProtoBufParser<Spec...>::fieldExists(int num) const
 {
-  int pos = 0;
+  unsigned int pos = 0;
   while (pos < d_size)
   {
     int32_t field    = (d_data[pos] & 0b00000000000000000000000001111000) >> 3;
@@ -1283,9 +1283,6 @@ bool ProtoBufParser<Spec...>::fieldExists(int num) const
         break;
       }
       case WIRETYPE::STARTGROUP: // deprecated/not implemented yet
-      {
-        break;
-      }
       case WIRETYPE::ENDGROUP: // deprecated/not implemented yet
       {
         break;

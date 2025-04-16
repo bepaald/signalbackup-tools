@@ -134,11 +134,11 @@ class SqliteDB
 #endif
   inline bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr, bool verbose = false) const;
   template <typename T>
-  inline T getSingleResultAs(std::string const &q, T defaultval) const;
+  inline T getSingleResultAs(std::string const &q, T const &defaultval) const;
   template <typename T>
-  inline T getSingleResultAs(std::string const &q, std::any const &param, T defaultval) const;
+  inline T getSingleResultAs(std::string const &q, std::any const &param, T const &defaultval) const;
   template <typename T>
-  inline T getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T defaultval) const;
+  inline T getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T const &defaultval) const;
   inline bool print(std::string const &q) const;
   inline bool print(std::string const &q, std::any const &param) const;
   inline bool print(std::string const &q, std::vector<std::any> const &params) const;
@@ -157,7 +157,7 @@ class SqliteDB
   inline bool containsTable(std::string const &tablename) const;
   inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
   template <typename... columnnames>
-  inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const;
+  inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames const &... list) const;
   inline void clearTableCache() const;
   inline void freeMemory();
   void checkDatabaseWriteVersion() const;
@@ -549,9 +549,9 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
 
   if (results)
     results->clear();
+
   int rc;
   int row = 0;
-
   while ((rc = sqlite3_step(d_stmt)) == SQLITE_ROW)
   {
     if (!results)
@@ -564,14 +564,16 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
 
     // set values
     for (int c = 0; c < sqlite3_column_count(d_stmt); ++c)
-    {  // order empirically determined
-      if (sqlite3_column_type(d_stmt, c) == SQLITE_INTEGER)
+    {
+      auto coltype = sqlite3_column_type(d_stmt, c);
+      // order empirically determined
+      if (coltype == SQLITE_INTEGER)
         results->emplaceValue(row, sqlite3_column_int64(d_stmt, c));
-      else if (sqlite3_column_type(d_stmt, c) == SQLITE_NULL)
+      else if (coltype == SQLITE_NULL)
         results->emplaceValue(row, nullptr);
-      else if (sqlite3_column_type(d_stmt, c) == SQLITE_TEXT)
+      else if (coltype == SQLITE_TEXT)
         results->emplaceValue(row, std::string(reinterpret_cast<char const *>(sqlite3_column_text(d_stmt, c))));
-      else if (sqlite3_column_type(d_stmt, c) == SQLITE_BLOB)
+      else if (coltype == SQLITE_BLOB)
       {
         size_t blobsize = sqlite3_column_bytes(d_stmt, c);
         std::shared_ptr<unsigned char []> blob(new unsigned char[blobsize]);
@@ -579,7 +581,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
           std::memcpy(blob.get(), reinterpret_cast<unsigned char const *>(sqlite3_column_blob(d_stmt, c)), blobsize);
         results->emplaceValue(row, std::make_pair(blob, blobsize));
       }
-      else if (sqlite3_column_type(d_stmt, c) == SQLITE_FLOAT)
+      else if (coltype == SQLITE_FLOAT)
         results->emplaceValue(row, sqlite3_column_double(d_stmt, c));
     }
     ++row;
@@ -611,19 +613,19 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
 #endif
 
 template <typename T>
-inline T SqliteDB::getSingleResultAs(std::string const &q, T defaultval) const
+inline T SqliteDB::getSingleResultAs(std::string const &q, T const &defaultval) const
 {
   return getSingleResultAs<T>(q, std::vector<std::any>(), defaultval);
 }
 
 template <typename T>
-inline T SqliteDB::getSingleResultAs(std::string const &q, std::any const &param, T defaultval) const
+inline T SqliteDB::getSingleResultAs(std::string const &q, std::any const &param, T const &defaultval) const
 {
   return getSingleResultAs<T>(q, std::vector<std::any>{param}, defaultval);
 }
 
 template <typename T>
-inline T SqliteDB::getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T defaultval) const
+inline T SqliteDB::getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T const &defaultval) const
 {
   QueryResults tmp;
   if (!exec(q, params, &tmp))
@@ -739,19 +741,19 @@ inline int SqliteDB::execParamFiller(int count, unsigned char const *param) cons
 inline int SqliteDB::execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, size_t> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first.get()), param.second, SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first.get()), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, std::pair<unsigned char *, size_t> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), param.second, SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, StaticTextParam const &param) const
 {
   //std::cout << "Binding STATIC TEXT at " << count << std::endl;
-  return sqlite3_bind_text(d_stmt, count, param.ptr, param.size, SQLITE_STATIC);
+  return sqlite3_bind_text(d_stmt, count, param.ptr, static_cast<int>(param.size), SQLITE_STATIC);
 }
 
 inline int SqliteDB::execParamFiller(int count, int param) const
@@ -775,7 +777,7 @@ inline int SqliteDB::execParamFiller(int count, long param) const
 inline int SqliteDB::execParamFiller(int count, unsigned long param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, param);
+  return sqlite3_bind_int64(d_stmt, count, static_cast<sqlite_int64>(param));
 }
 
 inline int SqliteDB::execParamFiller(int count, long long int param) const
@@ -787,7 +789,7 @@ inline int SqliteDB::execParamFiller(int count, long long int param) const
 inline int SqliteDB::execParamFiller(int count, unsigned long long int param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, param);
+  return sqlite3_bind_int64(d_stmt, count, static_cast<sqlite_int64>(param));
 }
 
 inline int SqliteDB::execParamFiller(int count, std::nullptr_t) const
@@ -854,7 +856,7 @@ inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::str
 }
 
 template <typename... columnnames>
-inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames... list) const
+inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames const &... list) const
 {
   return tableContainsColumn(tablename, columnname) && tableContainsColumn(tablename, list...);
 }
@@ -905,7 +907,7 @@ inline std::any const &SqliteDB::QueryResults::value(size_t row, size_t idx) con
 
 inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
 {
-  for (unsigned int i = 0; i < d_headers.size(); ++i)
+  for (int i = 0; i < static_cast<int>(d_headers.size()); ++i)
     if (d_headers[i] == header)
       return i;
   [[unlikely]] return -1;
@@ -1113,9 +1115,9 @@ inline void SqliteDB::tokencount(sqlite3_context *context, int argc, sqlite3_val
     return;
   }
 
-  char delim = ' ';
+  unsigned char delim = ' ';
   if (argc > 1 && argv[1] && sqlite3_value_text(argv[1])[0])
-    delim = (sqlite3_value_text(argv[1]))[0];
+    delim = (sqlite3_value_text(argv[1])[0]);
 
   int startpos = 0;
   int count = 1;
@@ -1149,7 +1151,7 @@ inline void SqliteDB::token(sqlite3_context *context, int argc, sqlite3_value **
     if (!text)
       return;
     unsigned int idx = sqlite3_value_int(argv[1]);
-    char delim = ' ';
+    unsigned char delim = ' ';
     if (argc > 2 && argv[2] && sqlite3_value_text(argv[2])[0])
       delim = (sqlite3_value_text(argv[2]))[0];
 
@@ -1184,10 +1186,10 @@ inline void SqliteDB::token(sqlite3_context *context, int argc, sqlite3_value **
 
     if (endpos > startpos)
     {
-      int len = endpos - startpos;
+      unsigned int len = endpos - startpos;
       char *result = new char[len];
       std::memcpy(result, text + startpos, len);
-      sqlite3_result_text(context, result, len, SQLITE_TRANSIENT);
+      sqlite3_result_text(context, result, static_cast<int>(len), SQLITE_TRANSIENT);
       bepaald::destroyPtr(&result, &len);
       return;
     }
