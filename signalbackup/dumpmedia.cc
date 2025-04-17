@@ -290,7 +290,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       //std::cout << filename << std::endl;
     }
     */
-    std::ofstream attachmentstream(std::string(targetdir).append("/").append(filename), std::ios_base::binary);
+    std::ofstream attachmentstream(bepaald::concat(targetdir, "/", filename), std::ios_base::binary);
 
     if (!attachmentstream.is_open())
     {
@@ -309,8 +309,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     attachmentstream.close(); // need to close, or the auto-close will change files mtime again.
     a->clearData();
 
-    if (!setFileTimeStamp(std::string(targetdir).append("/").append(filename), datum)) [[unlikely]]
-        Logger::warning("Failed to set timestamp for attachment '", targetdir, "/", filename, "'");
+    if (!setFileTimeStamp(bepaald::concat(targetdir, "/", filename), datum)) [[unlikely]]
+      Logger::warning("Failed to set timestamp for attachment '", targetdir, "/", filename, "'");
 
     // !! ifdef c++20
     //std::error_code ec;

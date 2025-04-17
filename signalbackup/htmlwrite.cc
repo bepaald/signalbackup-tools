@@ -2124,7 +2124,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     }
 
     std::string extension(MimeTypes::getExtension(content_type, "bin"));
-    std::string attachment_filename_on_disk = std::string("Attachment_").append(bepaald::toString(rowid)).append("_").append(bepaald::toString(uniqueid)).append(".").append(extension);
+    std::string attachment_filename_on_disk = bepaald::concat("Attachment_", bepaald::toString(rowid), "_", bepaald::toString(uniqueid), ".", extension);
     if (use_original_filenames)
     {
       attachment_filename_on_disk = sanitizeFilename(attachment_results(a, "file_name"));
@@ -2132,9 +2132,9 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
       {                                           // to sanitize (eg reserved name in windows 'COM1')
         long long int datum = attachment_results.valueAsInt(a, "date_received", -1);
         std::string datestr = (datum != -1) ? bepaald::toDateString(datum / 1000, "signal-%Y-%m-%d-%H%M%S") : "signal";
-        attachment_filename_on_disk = std::string(datestr).append(".").append(extension);
+        attachment_filename_on_disk = bepaald::concat(datestr, ".", extension);
       }
-      if (!makeFilenameUnique(std::string(directory).append("/").append(threaddir).append("/media"), &attachment_filename_on_disk))
+      if (!makeFilenameUnique(bepaald::concat(directory, "/", threaddir, "/media"), &attachment_filename_on_disk))
       {
         Logger::error("Getting unique filename for '", directory, "/", threaddir, "/media/", attachment_filename_on_disk, "'");
         continue;
@@ -2248,9 +2248,9 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
       // prefer 'MOBILE' (-> 'HOME' -> 'WORK' ?)
       for (int i = 0; i < phones; ++i)
       {
-        d_database.exec("SELECT "
-                        "json_extract('" + shared_contact + "', '$[0].phoneNumbers[" + bepaald::toString(i) + "].number') AS number, "
-                        "json_extract('" + shared_contact + "', '$[0].phoneNumbers[" + bepaald::toString(i) + "].type') AS type", &sc);
+        d_database.exec(bepaald::concat("SELECT "
+                                        "json_extract('", shared_contact, "', '$[0].phoneNumbers[", bepaald::toString(i), "].number') AS number, "
+                                        "json_extract('", shared_contact, "', '$[0].phoneNumbers[", bepaald::toString(i), "].type') AS type"), &sc);
 
         if (sc("type") == "CUSTOM" && contact_info.empty())
           contact_info = sc("number");
@@ -2270,9 +2270,9 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
       // prefer 'HOME' (-> 'WORK' -> 'MOBILE' ?)
       for (int i = 0; i < emails; ++i)
       {
-        d_database.exec("SELECT "
-                        "json_extract('" + shared_contact + "', '$[0].emails[" + bepaald::toString(i) + "].email') AS email, "
-                        "json_extract('" + shared_contact + "', '$[0].emails[" + bepaald::toString(i) + "].type') AS type", &sc);
+        d_database.exec(bepaald::concat("SELECT "
+                                        "json_extract('", shared_contact, "', '$[0].emails[", bepaald::toString(i), "].email') AS email, "
+                                        "json_extract('", shared_contact, "', '$[0].emails[", bepaald::toString(i), "].type') AS type"), &sc);
 
         if (sc("type") == "CUSTOM" && contact_info.empty())
           contact_info = sc("email");

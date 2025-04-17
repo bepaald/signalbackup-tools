@@ -28,6 +28,9 @@
 #include <cstring>
 #include <algorithm>
 #include <ctime>
+#include <initializer_list>
+#include <string_view>
+
 #if __cpp_lib_format >= 201907L
 #include <format>
 #endif
@@ -87,7 +90,9 @@ namespace bepaald
   inline std::string toUpper(std::string s);
   inline void replaceAll(std::string *in, char from, std::string const &to);
   inline void replaceAll(std::string *in, std::string const &from, std::string const &to);
-
+  inline std::string concat_helper(std::initializer_list<std::string_view> const &strs);
+  template <typename... Args>
+  inline std::string concat(Args const &... args);
   template <typename T, typename I>
   class container_has_contains
   {
@@ -306,6 +311,27 @@ inline void bepaald::replaceAll(std::string *in, std::string const &from, std::s
     in->replace(start_pos, from.length(), to);
     start_pos += to.length();
   }
+}
+
+inline std::string bepaald::concat_helper(std::initializer_list<std::string_view> const &strs)
+{
+  size_t len = 0;
+  for (auto const &s : strs)
+    len += s.size();
+
+  std::string result;
+  result.reserve(len);
+
+  for (auto const &s : strs)
+    result.append(s);
+
+  return result;
+}
+
+template <typename... Args>
+inline std::string bepaald::concat(Args const &... args)
+{
+  return concat_helper({args...});
 }
 
 template <typename T, typename U>

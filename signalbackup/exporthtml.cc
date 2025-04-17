@@ -299,36 +299,36 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     // now get all messages
     SqliteDB::QueryResults messages;
-    d_database.exec("SELECT "
-                    "_id, " + d_mms_recipient_id + ", "
-                    + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
-                    "MIN(date_received, " + d_mms_date_sent + ") AS bubble_date, "
-                    "date_received, " + d_mms_date_sent + ", " + d_mms_type + ", "
-                    + (!periodsplitformat.empty() ? "strftime('" + periodsplitformat + "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')" : "''") + " AS periodsplit, "
-                    "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
-                    "attcount, reactioncount, mentioncount, "
-                    + d_mms_delivery_receipts + ", " + d_mms_read_receipts + ", IFNULL(remote_deleted, 0) AS remote_deleted, "
-                    "IFNULL(view_once, 0) AS view_once, expires_in, " + d_mms_ranges + ", shared_contacts, "
-                    + (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : "") +
-                    + (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : "") +
-                    + (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : "") +
-                    + (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
-                    + (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, ") + // introduced in 117
-                    "json_extract(link_previews, '$[0].url') AS link_preview_url, "
-                    "json_extract(link_previews, '$[0].title') AS link_preview_title, "
-                    "json_extract(link_previews, '$[0].description') AS link_preview_description "
-                    "FROM " + d_mms_table + " "
-                    // get attachment count for message:
-                    "LEFT JOIN (SELECT " + d_part_mid + " AS message_id, COUNT(*) AS attcount FROM " + d_part_table + " GROUP BY message_id) AS attmnts ON " + d_mms_table + "._id = attmnts.message_id "
-                    // get reaction count for message:
-                    "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON " + d_mms_table + "._id = rctns.message_id "
-                    // get mention count for message:
-                    "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id "
-                    "WHERE thread_id = ?"
-                    + datewhereclause +
-                    + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " ") +
-                    + (d_database.tableContainsColumn(d_mms_table, "story_type") ? " AND story_type = 0 OR story_type IS NULL " : "") + // storytype NONE(0), STORY_WITH(OUT)_REPLIES(1/2), TEXT_...(3/4)
-                    " ORDER BY date_received ASC", t, &messages);
+    d_database.exec(bepaald::concat("SELECT "
+                                    "_id, ", d_mms_recipient_id, ", ",
+                                    (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1"), " AS to_recipient_id, body, "
+                                    "MIN(date_received, ", d_mms_date_sent, ") AS bubble_date, "
+                                    "date_received, ", d_mms_date_sent, ", ", d_mms_type, ", ",
+                                    (!periodsplitformat.empty() ? bepaald::concat("strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')") : "''"), " AS periodsplit, "
+                                    "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
+                                    "attcount, reactioncount, mentioncount, ",
+                                    d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", IFNULL(remote_deleted, 0) AS remote_deleted, "
+                                    "IFNULL(view_once, 0) AS view_once, expires_in, ", d_mms_ranges, ", shared_contacts, ",
+                                    (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : ""),
+                                    (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : ""),
+                                    (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : ""),
+                                    (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
+                                    (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "), // introduced in 117
+                                    "json_extract(link_previews, '$[0].url') AS link_preview_url, "
+                                    "json_extract(link_previews, '$[0].title') AS link_preview_title, "
+                                    "json_extract(link_previews, '$[0].description') AS link_preview_description "
+                                    "FROM ", d_mms_table, " "
+                                    // get attachment count for message:
+                                    "LEFT JOIN (SELECT ", d_part_mid, " AS message_id, COUNT(*) AS attcount FROM ", d_part_table, " GROUP BY message_id) AS attmnts ON ", d_mms_table, "._id = attmnts.message_id "
+                                    // get reaction count for message:
+                                    "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON ", d_mms_table, "._id = rctns.message_id "
+                                    // get mention count for message:
+                                    "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id "
+                                    "WHERE thread_id = ?",
+                                    datewhereclause,
+                                    (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " "),
+                                    (d_database.tableContainsColumn(d_mms_table, "story_type") ? " AND story_type = 0 OR story_type IS NULL " : ""), // storytype NONE(0), STORY_WITH(OUT)_REPLIES(1/2), TEXT_...(3/4)
+                                    " ORDER BY date_received ASC"), t, &messages);
     if (messages.rows() == 0)
     {
       if (d_verbose) [[unlikely]]
@@ -359,9 +359,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (compact) [[unlikely]]
       threaddir = "id" + bepaald::toString(thread_id);
 
-    if (bepaald::fileOrDirExists(std::string(directory).append("/").append(threaddir)))
+    if (bepaald::fileOrDirExists(bepaald::concat(directory, "/", threaddir)))
     {
-      if (!bepaald::isDir(std::string(directory).append("/").append(threaddir)))
+      if (!bepaald::isDir(bepaald::concat(directory, "/", threaddir)))
       {
         Logger::error("dir is regular file");
         return false;
@@ -372,7 +372,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         return false;
       }
     }
-    else if (!bepaald::createDir(std::string(directory).append("/").append(threaddir))) // try to create it
+    else if (!bepaald::createDir(bepaald::concat(directory, "/", threaddir))) // try to create it
     {
       Logger::error("Failed to create directory `", directory, "/", threaddir, "'",
                     " (errno: ", std::strerror(errno), ")"); // note: errno is not required to be set by std
@@ -404,9 +404,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (!periodsplitformat.empty())
     {
       SqliteDB::QueryResults pagenames;
-      if (d_database.exec("SELECT "
-                          "strftime('" + periodsplitformat + "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime') AS splitdate, date_received / 1000 AS date_secs "
-                          "FROM " + d_mms_table + " WHERE thread_id = ? " + datewhereclause + " GROUP BY splitdate", t, &pagenames))
+      if (d_database.exec(bepaald::concat("SELECT "
+                                          "strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime') AS splitdate, date_received / 1000 AS date_secs "
+                                          "FROM ", d_mms_table, " WHERE thread_id = ? ", datewhereclause, " GROUP BY splitdate"), t, &pagenames))
       {
         totalpages = pagenames.rows();
         for (unsigned int p = 0; p < pagenames.rows(); ++p)
@@ -440,9 +440,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         filename = bepaald::toString(pagenumber) + ".html";
       }
 
-      WIN_CHECK_PATH_LENGTH(std::string(directory).append("/").append(threaddir).append("/").append(filename));
+      WIN_CHECK_PATH_LENGTH(bepaald::concat(directory, "/", threaddir, "/", filename));
 
-      std::ofstream htmloutput(WIN_LONGPATH(std::string(directory).append("/").append(threaddir).append("/").append(filename)), std::ios_base::binary);
+      std::ofstream htmloutput(WIN_LONGPATH(bepaald::concat(directory, "/", threaddir, "/", filename)), std::ios_base::binary);
       if (!htmloutput.is_open())
       {
         Logger::error("Failed to open '", directory, "/", threaddir, "/", filename, "' for writing.");
@@ -489,40 +489,40 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         SqliteDB::QueryResults attachment_results;
         if (attachmentcount > 0)
-          d_database.exec("SELECT " +
-                          d_part_table + "._id, " +
-                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
-                          d_part_ct + ", "
-                          "file_name, "
-                          + d_part_pending + ", " +
-                          (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                          "sticker_pack_id, " +
-                          d_mms_table + ".date_received AS date_received "
-                          "FROM " + d_part_table + " "
-                          "LEFT JOIN " + d_mms_table + " ON " + d_mms_table + "._id = " + d_part_table + "." + d_part_mid + " "
-                          "WHERE " + d_part_mid + " IS ? "
-                          "AND quote IS ? "
-                          " ORDER BY display_order ASC, " + d_part_table + "._id ASC", {msg_id, 0}, &attachment_results);
+          d_database.exec(bepaald::concat("SELECT ",
+                                          d_part_table, "._id, ",
+                                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
+                                          d_part_ct, ", "
+                                          "file_name, ",
+                                          d_part_pending, ", ",
+                                          (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()),
+                                          "sticker_pack_id, ",
+                                          d_mms_table, ".date_received AS date_received "
+                                          "FROM ", d_part_table, " "
+                                          "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
+                                          "WHERE ", d_part_mid, " IS ? "
+                                          "AND quote IS ? "
+                                          " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
 
         // check attachments for long message body -> replace cropped body & remove from attachment results
         setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
         if (attachmentcount > 0)
-          d_database.exec("SELECT " +
-                          d_part_table + "._id, " +
-                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id") + ", " +
-                          d_part_ct + ", "
-                          "file_name, "
-                          + d_part_pending + ", " +
-                          (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()) +
-                          "sticker_pack_id, " +
-                          d_mms_table + ".date_received AS date_received "
-                          "FROM " + d_part_table + " "
-                          "LEFT JOIN " + d_mms_table + " ON " + d_mms_table + "._id = " + d_part_table + "." + d_part_mid + " "
-                          "WHERE " + d_part_mid + " IS ? "
-                          "AND quote IS ? "
-                          " ORDER BY display_order ASC, " + d_part_table + "._id ASC", {msg_id, 1}, &quote_attachment_results);
+          d_database.exec(bepaald::concat("SELECT ",
+                                          d_part_table, "._id, ",
+                                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
+                                          d_part_ct, ", "
+                                          "file_name, ",
+                                          d_part_pending, ", ",
+                                          (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()),
+                                          "sticker_pack_id, ",
+                                          d_mms_table, ".date_received AS date_received "
+                                          "FROM ", d_part_table, " "
+                                          "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
+                                          "WHERE ", d_part_mid, " IS ? "
+                                          "AND quote IS ? "
+                                          " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 1}, &quote_attachment_results);
 
         SqliteDB::QueryResults mention_results;
         if (mentioncount > 0)

@@ -93,10 +93,10 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
       filename = af->recipient() + extension;
 
     // make filename unique
-    while (bepaald::fileOrDirExists(std::string(dir).append("/").append(filename)))
+    while (bepaald::fileOrDirExists(bepaald::concat(dir, "/", filename)))
       filename += "(2)";
 
-    std::ofstream attachmentstream(std::string(dir).append("/").append(filename), std::ios_base::binary);
+    std::ofstream attachmentstream(bepaald::concat(dir, "/", filename), std::ios_base::binary);
 
     if (!attachmentstream.is_open())
     {

@@ -303,7 +303,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
         std::string thread_dir(sanitizeFilename(raw_thread_dir) + " (_id" + bepaald::toString(thread_id) + ")");
         if (compact) [[unlikely]]
           thread_dir = "id" + bepaald::toString(thread_id);
-        if (bepaald::fileOrDirExists(std::string(dir).append("/").append(thread_dir).append("/media/Avatar_").append(bepaald::toString(rec_id)).append(".").append(avatar_extension)))
+        if (bepaald::fileOrDirExists(bepaald::concat(dir, "/", thread_dir, "/media/Avatar_", bepaald::toString(rec_id), ".", avatar_extension)))
         {
           HTMLescapeUrl(&thread_dir);
           bepaald::replaceAll(&thread_dir, '\"', R"(\")");
@@ -313,7 +313,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
 
       if (avatarpath.empty()) // avatar not already present anywhere, write out own...
       {
-        if (!bepaald::fileOrDirExists(std::string(dir).append("/").append("/media/Avatar_").append(bepaald::toString(rec_id)).append(".").append(avatar_extension))) // maybe htmlroot/media/avatar was already
+        if (!bepaald::fileOrDirExists(bepaald::concat(dir, "/", "/media/Avatar_", bepaald::toString(rec_id), ".", avatar_extension))) // maybe htmlroot/media/avatar was already
           if (HTMLwriteAvatar(rec_id, dir, std::string(), overwrite, append).empty())                                     // written by writeblockedlist...
           {
             Logger::warning("Failed to set path or write avatar. Skipping");

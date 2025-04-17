@@ -207,7 +207,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     std::string filename = /*(is_note_to_self ? "Note to self (_id"s + bepaald::toString(thread_id) + ")"
                              : */sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ").txt")/*)*/;
 
-    if (bepaald::fileOrDirExists(std::string(directory).append("/").append(filename)))
+    if (bepaald::fileOrDirExists(bepaald::concat(directory, "/", filename)))
     {
       Logger::error("Refusing to overwrite existing file");
       if (databasemigrated)
@@ -215,7 +215,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       return false;
     }
 
-    std::ofstream txtoutput(std::string(directory).append("/").append(filename), std::ios_base::binary);
+    std::ofstream txtoutput(bepaald::concat(directory, "/", filename), std::ios_base::binary);
     if (!txtoutput.is_open())
     {
       Logger::error("Failed to open '", directory, "/", filename, "' for writing.");

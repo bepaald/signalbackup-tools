@@ -334,7 +334,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
   // add any missing columns to mms (from dbv 123 ( or hopefully -> 99)
   auto ensureColumns = [&](std::string const &table, std::string const &column, std::string const &columndefinition)
   {
-    if (!d_database.tableContainsColumn(table, column))
+    if (d_database.containsTable(table) && !d_database.tableContainsColumn(table, column))
       if (!d_database.exec("ALTER TABLE " + table + " ADD COLUMN " + column + " " + columndefinition))
         return false;
     return true;
@@ -389,6 +389,16 @@ bool SignalBackup::migrateDatabase(int from, int to) const
                         std::pair<std::string, std::string>{"hidden", "INTEGER DEFAULT 0"}})
   {
     if (!ensureColumns("recipient", p.first, p.second))
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return false;
+    }
+  }
+
+  // ensure part/attachment table has 'display_order' column (-> dbv 42)
+  for (auto const &p : {std::pair<std::string, std::string>{"display_order", "INTEGER DEFAULT 0"}})
+  {
+    if (!ensureColumns(d_part_table, p.first, p.second))
     {
       d_database.exec("ROLLBACK TRANSACTION");
       return false;

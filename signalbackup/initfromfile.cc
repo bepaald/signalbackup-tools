@@ -97,9 +97,10 @@ void SignalBackup::initFromFile()
           Logger::warning("Failed to execute statement: ", s->statement());
       }
 #ifdef BUILT_FOR_TESTING
-      else if (s->statement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
+      else if (s->bindStatement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {
-        // force early creation of sqlite_sequence table, this is completely unnecessary and only used
+        // force early creation of sqlite_sequence table,
+        // this is completely unnecessary and only used
         // to get byte-identical backups during testing
         Logger::message("BUILT_FOR_TESTING : Forcing early creation of sqlite_sequence");
         d_database.exec("CREATE TABLE dummy (_id INTEGER PRIMARY KEY AUTOINCREMENT)");

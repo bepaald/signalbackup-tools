@@ -72,7 +72,7 @@ void SqlStatementFrame::buildStatement()
           rep.replace(pos2, 1, "''");
           pos2 += 2;
         }
-        rep = std::string("'").append(rep).append("'");
+        rep = bepaald::concat("'", rep, "'");
 
         d_statement.replace(pos, 1, rep);
         pos += rep.length();

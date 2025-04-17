@@ -78,7 +78,7 @@ void SignalBackup::applyRanges(std::string *body, std::vector<Range> *ranges, st
       if (replacement.empty())
         replacement = body->substr(bodyidx, length);
 
-      body->replace(bodyidx, length, std::string(pre).append(replacement).append(post));
+      body->replace(bodyidx, length, bepaald::concat(pre, replacement, post));
 
       for (unsigned int i = 0; i < pre.size(); ++i)
         if (positions_excluded_from_escape)
