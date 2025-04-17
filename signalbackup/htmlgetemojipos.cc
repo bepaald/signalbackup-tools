@@ -35,7 +35,7 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
       // now that a (likely) emoji byte was found, lets see _which_ emoji it is.
       // many emoji start with the same byte sequence, so we check back to front
       for (unsigned int i = emoji_string.size(); i-- ;)
-        if ((pos + i) > str.size() || str[pos + i] != emoji_string[i])
+        if ((pos + i) >= str.size() || str[pos + i] != emoji_string[i])
         {
           hit = false;
           break;
