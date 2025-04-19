@@ -146,7 +146,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameBrute(std::ifstream &file, u
         }
         Logger::message("Good frame at offset ", offset, ". Frame number: ", frame->frameNumber(), " (Type: ", frame->frameTypeString(), ")");
         frame->printInfo();
-        delete[] encryptedframe.release();
+        encryptedframe.reset();
         break;
       }
       Logger::message_overwrite("Checking if we skipped ", skippedframes, " frames... nope! :(");

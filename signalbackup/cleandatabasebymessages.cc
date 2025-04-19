@@ -222,7 +222,7 @@ void SignalBackup::cleanDatabaseByMessages()
       if (!d_database.tableContainsColumn("groups", members))
         continue;
 
-      d_database.exec("SELECT "s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
+      d_database.exec(bepaald::concat("SELECT ", members, " FROM groups WHERE ", members, " IS NOT NULL"), &results);
       for (unsigned int i = 0; i < results.rows(); ++i)
       {
         std::string membersstr = results.getValueAs<std::string>(i, members);

@@ -61,25 +61,25 @@ ThreadTable::
       SqliteDB::QueryResults results2;
       if (d_database.containsTable("sms"))
       {
-        d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
-                        "(SELECT (SELECT count(*) FROM sms WHERE thread_id = " + threadid +
-                        ") + (SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ")) WHERE _id = " + threadid);
+        d_database.exec(bepaald::concat("UPDATE thread SET ", d_thread_message_count, " = "
+                                        "(SELECT (SELECT count(*) FROM sms WHERE thread_id = ", threadid,
+                                        ") + (SELECT count(*) FROM ", d_mms_table, " WHERE thread_id = ", threadid, ")) WHERE _id = ", threadid));
 
-        d_database.exec("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = " +
-                        threadid + " UNION SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
-                        d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
-                        " WHERE " + d_mms_table + ".thread_id = " + threadid +
-                        " AND (union_type & ?) = 0"
-                        " AND (union_type & ?) = 0"
-                        " AND (union_type & ?) != ?"
-                        " AND (union_type & ?) != ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " ORDER BY union_date DESC LIMIT 1",
+        d_database.exec(bepaald::concat("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = ",
+                                        threadid, " UNION SELECT ", d_mms_table, ".", d_mms_date_sent, " AS union_date, ", d_mms_table, ".", d_mms_type, " AS union_type, ",
+                                        d_mms_table, ".body AS union_body, '' AS [sms._id], ", d_mms_table, "._id AS [mms._id] FROM ", d_mms_table,
+                                        " WHERE ", d_mms_table, ".thread_id = ", threadid,
+                                        " AND (union_type & ?) = 0"
+                                        " AND (union_type & ?) = 0"
+                                        " AND (union_type & ?) != ?"
+                                        " AND (union_type & ?) != ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " ORDER BY union_date DESC LIMIT 1"),
                         {Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
                          Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT,
                          Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_REPORTED_SPAM,
@@ -93,31 +93,31 @@ ThreadTable::
       }
       else // dbv >= 168
       {
-        d_database.exec("UPDATE thread SET " + d_thread_message_count + " = "
-                        "(SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") WHERE _id = " + threadid);
+        d_database.exec(bepaald::concat("UPDATE thread SET ", d_thread_message_count, " = "
+                                        "(SELECT count(*) FROM ", d_mms_table, " WHERE thread_id = ", threadid, ") WHERE _id = ", threadid));
 
         // at dbv199, an active column was added to thread. When deleted, only a thread contents are actually deleted,
         // but the thread itself is simply marked inactive (preventing it from showing up in the thread list).
         // Since this only happens to deleted threads, inactive implies 0 messages (meaningful or otherwise) in the thread,
         // we set to active if _anything_ is there
         if (d_database.tableContainsColumn("thread", "active"))
-          d_database.exec("UPDATE thread SET active = "
-                          "((SELECT count(*) FROM " + d_mms_table + " WHERE thread_id = " + threadid + ") > 0) WHERE _id = " + threadid + " AND active = 0");
+          d_database.exec(bepaald::concat("UPDATE thread SET active = "
+                                          "((SELECT count(*) FROM ", d_mms_table, " WHERE thread_id = ", threadid, ") > 0) WHERE _id = ", threadid, " AND active = 0"));
 
-        d_database.exec("SELECT " + d_mms_table + "." + d_mms_date_sent + " AS union_date, " + d_mms_table + "." + d_mms_type + " AS union_type, " +
-                        d_mms_table + ".body AS union_body, '' AS [sms._id], " + d_mms_table + "._id AS [mms._id] FROM " + d_mms_table +
-                        " WHERE " + d_mms_table + ".thread_id = " + threadid +
-                        " AND (union_type & ?) = 0"
-                        " AND (union_type & ?) = 0"
-                        " AND (union_type & ?) != ?"
-                        " AND (union_type & ?) != ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " AND (union_type & ?) IS NOT ?"
-                        " ORDER BY union_date DESC LIMIT 1",
+        d_database.exec(bepaald::concat("SELECT ", d_mms_table, ".", d_mms_date_sent, " AS union_date, ", d_mms_table, ".", d_mms_type, " AS union_type, ",
+                                        d_mms_table, ".body AS union_body, '' AS [sms._id], ", d_mms_table, "._id AS [mms._id] FROM ", d_mms_table,
+                                        " WHERE ", d_mms_table, ".thread_id = ", threadid,
+                                        " AND (union_type & ?) = 0"
+                                        " AND (union_type & ?) = 0"
+                                        " AND (union_type & ?) != ?"
+                                        " AND (union_type & ?) != ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " AND (union_type & ?) IS NOT ?"
+                                        " ORDER BY union_date DESC LIMIT 1"),
                         {Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
                          Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT,
                          Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_REPORTED_SPAM,

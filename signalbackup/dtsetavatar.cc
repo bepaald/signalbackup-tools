@@ -45,10 +45,10 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const 
     DesktopAttachmentReader dar(version, fullpath, key, size);
 #if __cpp_lib_out_ptr >= 202106L
     std::unique_ptr<unsigned char[]> att_data;
-    if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+    if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != DesktopAttachmentReader::ReturnCode::OK)
 #else
     unsigned char *att_data = nullptr;
-    if (dar.getAttachmentData(&att_data, d_verbose) != 0)
+    if (dar.getAttachmentData(&att_data, d_verbose) != DesktopAttachmentReader::ReturnCode::OK)
 #endif
     {
       Logger::error("Failed to get avatar data");

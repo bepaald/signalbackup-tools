@@ -20,11 +20,20 @@
 #ifndef BASEATTACHMENTREADER_H_
 #define BASEATTACHMENTREADER_H_
 
+#include <cstdint>
+
 class FrameWithAttachment;
 
 class BaseAttachmentReader
 {
  public:
+  enum class ReturnCode : std::int8_t
+  {
+    BADMAC = -1,
+    OK = 0,
+    ERROR = 1,
+  };
+
   BaseAttachmentReader() = default;
   BaseAttachmentReader(BaseAttachmentReader const &other) = default;
   BaseAttachmentReader(BaseAttachmentReader &&other) = default;
@@ -33,7 +42,7 @@ class BaseAttachmentReader
   virtual ~BaseAttachmentReader() = default;
   virtual BaseAttachmentReader *clone() const = 0;
 
-  inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) = 0;
+  inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) = 0;
   // this can be overridden in attachment readers to do more cleanup if needed
   inline virtual void clearData() {};
 };
@@ -41,11 +50,15 @@ class BaseAttachmentReader
 template <typename T>
 class AttachmentReader : public BaseAttachmentReader
 {
+ private:
+  AttachmentReader() = default;
  public:
   virtual BaseAttachmentReader *clone() const override
   {
     return new T(static_cast<T const &>(*this));
   }
+
+  friend T;
 };
 
 #endif

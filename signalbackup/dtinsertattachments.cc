@@ -97,29 +97,29 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       jsonpath = "$.preview[0].image";
 
     // get the attachment info (content-type, size, path, ...)
-    if (!ddb.exec("SELECT "
-                  "json_extract(json, '" + jsonpath + ".path') AS path,"
-                  "json_extract(json, '" + jsonpath + ".contentType') AS content_type,"
-                  "json_extract(json, '" + jsonpath + ".size') AS size,"
-                  //"json_extract(json, '" + jsonpath + ".cdnKey') AS cdn_key,"
-                  "json_extract(json, '" + jsonpath + ".localKey') AS localKey,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".version'), 1) AS version,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".width'), 0) AS width,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".height'), 0) AS height,"
+    if (!ddb.exec(bepaald::concat("SELECT "
+                                  "json_extract(json, '", jsonpath, ".path') AS path,"
+                                  "json_extract(json, '", jsonpath, ".contentType') AS content_type,"
+                                  "json_extract(json, '", jsonpath, ".size') AS size,"
+                                  //"json_extract(json, '", jsonpath, ".cdnKey') AS cdn_key,"
+                                  "json_extract(json, '", jsonpath, ".localKey') AS localKey,"
+                                  "IFNULL(json_extract(json, '", jsonpath, ".version'), 1) AS version,"
+                                  "IFNULL(json_extract(json, '", jsonpath, ".width'), 0) AS width,"
+                                  "IFNULL(json_extract(json, '", jsonpath, ".height'), 0) AS height,"
 
-                  // only in sticker
-                  "json_extract(json, '" + jsonpath + ".emoji') AS sticker_emoji,"
-                  "json_extract(json, '" + jsonpath + ".packId') AS sticker_packid,"
-                  "json_extract(json, '" + jsonpath + ".id') AS sticker_id,"
+                                  // only in sticker
+                                  "json_extract(json, '", jsonpath, ".emoji') AS sticker_emoji,"
+                                  "json_extract(json, '", jsonpath, ".packId') AS sticker_packid,"
+                                  "json_extract(json, '", jsonpath, ".id') AS sticker_id,"
 
-                  // not when sticker
-                  "json_extract(json, '" + jsonpath + ".fileName') AS file_name,"
-                  "IFNULL(JSONLONG(json_extract(json, '" + jsonpath + ".uploadTimestamp')), 0) AS upload_timestamp,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".flags'), 0) AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
-                  "IFNULL(json_extract(json, '" + jsonpath + ".pending'), 0) AS pending,"
-                  "IFNULL(json_extract(json, '" + jsonpath + ".cdnNumber'), 0) AS cdn_number"
+                                  // not when sticker
+                                  "json_extract(json, '", jsonpath, ".fileName') AS file_name,"
+                                  "IFNULL(JSONLONG(json_extract(json, '", jsonpath, ".uploadTimestamp')), 0) AS upload_timestamp,"
+                                  "IFNULL(json_extract(json, '", jsonpath, ".flags'), 0) AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
+                                  "IFNULL(json_extract(json, '", jsonpath, ".pending'), 0) AS pending,"
+                                  "IFNULL(json_extract(json, '", jsonpath, ".cdnNumber'), 0) AS cdn_number"
 
-                  " FROM messages " + where, &results_attachment_data))
+                                  " FROM messages ", where), &results_attachment_data))
     {
       Logger::error("Failed to get attachment data from desktop database");
       continue;
@@ -217,7 +217,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
         bepaald::replaceAll(&description, '\v', R"(\v)");
 
         SqliteDB::QueryResults jsonstring;
-        ddb.exec("SELECT json_array(json_object('url', json('\"" + url + "\"'), 'title', json('\"" + title + "\"'), 'description', json('\"" + description + "\"'), 'date', 0, 'attachmentId', NULL)) AS link_previews",
+        ddb.exec(bepaald::concat("SELECT json_array(json_object('url', json('\"", url, "\"'), 'title', json('\"", title, "\"'), 'description', json('\"", description, "\"'), 'date', 0, 'attachmentId', NULL)) AS link_previews"),
                  &jsonstring);
         std::string linkpreview_as_string = jsonstring("link_previews");
 
@@ -269,10 +269,10 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
         DesktopAttachmentReader dar(version, fullpath, localkey, size);
 #if __cpp_lib_out_ptr >= 202106L
         std::unique_ptr<unsigned char[]> att_data;
-        if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+        if (dar.getAttachmentData(std::out_ptr(att_data), d_verbose) != DesktopAttachmentReader::ReturnCode::OK)
 #else
         unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
-        if (dar.getAttachmentData(&att_data, d_verbose) != 0)
+        if (dar.getAttachmentData(&att_data, d_verbose) != DesktopAttachmentReader::ReturnCode::OK)
 #endif
         {
           Logger::error("Failed to get attachment data");
@@ -432,18 +432,18 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       bepaald::replaceAll(&description, '\v', R"(\v)");
 
       SqliteDB::QueryResults jsonstring;
-      ddb.exec("SELECT json_array(json_object("
-               "'url', json('\"" + url + "\"'), "
-               "'title', json('\"" + title + "\"'), "
-               "'description', json('\"" + description + "\"'), "
-               "'date', 0, "
-               "'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', json('true')))) AS link_previews",
-               {new_part_id, unique_id}, &jsonstring);
+      ddb.exec(bepaald::concat("SELECT json_array(json_object("
+                               "'url', json('\"", url, "\"'), "
+                               "'title', json('\"", title, "\"'), "
+                               "'description', json('\"", description, "\"'), "
+                               "'date', 0, "
+                               "'attachmentId', json_object('rowId', ?, 'uniqueId', ?, 'valid', json('true')))) AS link_previews"),
+                               {new_part_id, unique_id}, &jsonstring);
       std::string linkpreview_as_string = jsonstring("link_previews");
 
       bepaald::replaceAll(&linkpreview_as_string, '\'', R"('')");
 
-      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_previews + " = '" + linkpreview_as_string + "' WHERE _id = ?", mms_id);
+      d_database.exec(bepaald::concat("UPDATE ", d_mms_table, " SET ", d_mms_previews, " = '", linkpreview_as_string, "' WHERE _id = ?"), mms_id);
       //d_database.print("SELECT _id,d_mms_previews FROM message WHERE _id = ?", mms_id);
     }
     /*

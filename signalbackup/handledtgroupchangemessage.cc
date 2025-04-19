@@ -67,7 +67,7 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     }
     bool incoming = bepaald::toLower(timer_results("sourceuuid")) != d_selfuuid;
     long long int timer = timer_results.getValueAs<long long int>(0, "expiretimer");
-    long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
+    uint64_t groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
       Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
     // at this point address is the group_recipient. This is good for outgoing messages,
     // but incoming should have individual_recipient
@@ -177,7 +177,7 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       source_uuid = std::move(realuuid);
   }
   bool incoming = source_uuid != d_selfuuid;
-  long long int groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
+  uint64_t groupv2type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | Types::GROUP_V2_BIT |
     Types::GROUP_UPDATE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENDING_TYPE);
   if (incoming)
   {
@@ -255,12 +255,12 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
       std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
       bepaald::hexStringToBytes(source_uuid, uuid_bytes.get(), uuid_bytes_size);
-      groupchange.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      groupchange.addField<1>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
 
       DecryptedMember newmember;
       uuid_bytes.reset(new unsigned char[uuid_bytes_size]);
       bepaald::hexStringToBytes(uuid, uuid_bytes.get(), uuid_bytes_size);
-      newmember.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      newmember.addField<1>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
       groupchange.addField<3>(newmember);
 
       addchange = true;
@@ -281,7 +281,7 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
       std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
       bepaald::hexStringToBytes(uuid, uuid_bytes.get(), uuid_bytes_size);
-      groupchange.addField<4>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      groupchange.addField<4>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
 
       addchange = true;
       //Logger::message("member remove: ", uuid);
@@ -295,11 +295,11 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
       std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
       bepaald::hexStringToBytes(source_uuid, uuid_bytes.get(), uuid_bytes_size);
-      groupchange.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      groupchange.addField<1>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
 
       // set new member = also source_uuid
       DecryptedMember newmember;
-      newmember.addField<1>(std::make_pair<unsigned char *, int>(uuid_bytes.get(), uuid_bytes_size));
+      newmember.addField<1>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
       groupchange.addField<3>(newmember);
 
       // explicitly set revision 0

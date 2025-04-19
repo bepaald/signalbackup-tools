@@ -361,7 +361,7 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
         // dont skip, this is a real message
         addvalue("skip", 0);
 
-        if (!d_database.exec("INSERT INTO smses (" + columns + ") VALUES (" + placeholders + ")", values))
+        if (!d_database.exec(bepaald::concat("INSERT INTO smses (", columns, ") VALUES (", placeholders, ")"), values))
           return;
 
         if (!attachments.empty())

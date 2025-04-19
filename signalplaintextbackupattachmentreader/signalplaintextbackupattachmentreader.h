@@ -43,8 +43,8 @@ class SignalPlainTextBackupAttachmentReader : public AttachmentReader<SignalPlai
   SignalPlainTextBackupAttachmentReader &operator=(SignalPlainTextBackupAttachmentReader &&other) = default;
   virtual ~SignalPlainTextBackupAttachmentReader() override = default;
 
-  inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) override;
-  inline int getAttachmentData(unsigned char **data, bool verbose);
+  inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
+  inline ReturnCode getAttachmentData(unsigned char **data, bool verbose);
   inline long long int dataSize();
   //inline virtual void clearData() override;
 };
@@ -59,16 +59,16 @@ SignalPlainTextBackupAttachmentReader::SignalPlainTextBackupAttachmentReader(std
   d_truesize(-1)
 {}
 
-inline int SignalPlainTextBackupAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual
+inline BaseAttachmentReader::ReturnCode SignalPlainTextBackupAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual
 {
   unsigned char *data = nullptr;
-  int ret = getAttachmentData(&data, verbose);
-  if (ret == 0)
+  ReturnCode ret = getAttachmentData(&data, verbose);
+  if (ret == ReturnCode::OK)
     frame->setAttachmentDataBacked(data, d_truesize); // NOTE: test this when d_filename.empty()
   return ret;
 }
 
-inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned char **data, bool verbose)
+inline BaseAttachmentReader::ReturnCode SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned char **data, bool verbose)
 {
   // read the data if needed
   std::string local_b64_data;
@@ -78,12 +78,12 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
     if (!file.is_open())
     {
       Logger::error("Failed to open file '", d_filename, "' for reading attachment");
-      return 1;
+      return ReturnCode::ERROR;
     }
     if (!file.seekg(d_pos))
     {
       Logger::error("Failed to seek to correct offset in file '", d_filename, " (", d_pos, ")");
-      return 1;
+      return ReturnCode::ERROR;
     }
 
     if (verbose) [[unlikely]]
@@ -95,14 +95,14 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
     if (file.tellg() != (d_pos + d_size - 1))
     {
       Logger::error("Failed to read base64-encoded attachment from \"", d_filename, "\"");
-      return 1;
+      return ReturnCode::ERROR;
     }
   }
 
   if (d_size > 0 && d_base64data.empty() && local_b64_data.empty()) // filename.empty(), but so is data, while size is > 0
   {
     Logger::error("SignalPlainTextBackupAttachmentReader has no base64 encoded data");
-    return 1;
+    return ReturnCode::ERROR;
   }
 
   unsigned char *attdata;
@@ -115,11 +115,11 @@ inline int SignalPlainTextBackupAttachmentReader::getAttachmentData(unsigned cha
     Logger::error_indent("Filename: '", d_filename, "'");
     Logger::error_indent("Offset: ", d_pos);
     Logger::error_indent("Size: ", d_size);
-    return 1;
+    return ReturnCode::ERROR;
   }
 
   *data = attdata;
-  return 0;
+  return ReturnCode::OK;
 }
 
 inline long long int SignalPlainTextBackupAttachmentReader::dataSize()

@@ -51,7 +51,7 @@ class AndroidAttachmentReader : public AttachmentReader<AndroidAttachmentReader>
   inline AndroidAttachmentReader &operator=(AndroidAttachmentReader const &other);
   inline AndroidAttachmentReader &operator=(AndroidAttachmentReader &&other) noexcept;
   inline virtual ~AndroidAttachmentReader() override;
-  inline virtual int getAttachment(FrameWithAttachment *frame,  bool verbose) override;
+  inline virtual ReturnCode getAttachment(FrameWithAttachment *frame,  bool verbose) override;
 };
 
 inline AndroidAttachmentReader::AndroidAttachmentReader(unsigned char const *iv, uint32_t iv_size,
@@ -223,7 +223,7 @@ inline AndroidAttachmentReader::~AndroidAttachmentReader()
   bepaald::destroyPtr(&d_cipherkey, &d_cipherkey_size);
 }
 
-inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual
+inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual
 {
   //std::cout << " *** REALLY GETTING ATTACHMENT (ANDROID) ***" << std::endl;
 
@@ -231,7 +231,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
   if (!file.is_open())
   {
     Logger::error("Failed to open backup file '", d_filename, "' for reading attachment");
-    return 1;
+    return ReturnCode::ERROR;
   }
 
   if (d_attachmentdata_size == 0) [[unlikely]]
@@ -254,7 +254,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
   {
     Logger::error("CTX INIT FAILED");
-    return 1;
+    return ReturnCode::ERROR;
   }
 
   // to calculate the MAC
@@ -275,7 +275,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
 #endif
   {
     Logger::error("Failed to initialize HMAC context");
-    return 1;
+    return ReturnCode::ERROR;
   }
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
   if (EVP_MAC_update(hctx.get(), d_iv, d_iv_size) != 1)
@@ -284,7 +284,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
 #endif
   {
     Logger::error("Failed to update HMAC");
-    return 1;
+    return ReturnCode::ERROR;
   }
 
   // read and process attachment data in 8MB chunks
@@ -298,7 +298,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
     if (!file.read(reinterpret_cast<char *>(encrypteddatabuffer), std::min(size - processed, BUFFERSIZE)))
     {
       Logger::error("STOPPING BEFORE END OF ATTACHMENT!!!", (file.eof() ? " (EOF) " : ""));
-      return 1;
+      return ReturnCode::ERROR;
     }
     uint32_t read = file.gcount();
 
@@ -310,7 +310,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
 #endif
     {
       Logger::error("Failed to update HMAC");
-      return 1;
+      return ReturnCode::ERROR;
     }
 
     // decrypt the read data;
@@ -318,7 +318,7 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
     if (EVP_DecryptUpdate(ctx.get(), decryptedattachmentdata.get() + processed, &spaceleft, encrypteddatabuffer, read) != 1)
     {
       Logger::error("Failed to decrypt data");
-      return 1;
+      return ReturnCode::ERROR;
     }
 
     processed += read;
@@ -337,14 +337,14 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
 #endif
   {
     Logger::error("Failed to finalize MAC");
-    return 1;
+    return ReturnCode::ERROR;
   }
 
   unsigned char theirMac[CryptBase::MACSIZE];
   if (!file.read(reinterpret_cast<char *>(theirMac), CryptBase::MACSIZE))
   {
     Logger::error("STOPPING BEFORE END OF ATTACHMENT!!! 2 ");
-    return 1;
+    return ReturnCode::ERROR;
   }
   DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, CryptBase::MACSIZE));
   DEBUGOUT("ourMac           : ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
@@ -363,10 +363,10 @@ inline int AndroidAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
   if (frame->setAttachmentDataBacked(decryptedattachmentdata.release(), d_attachmentdata_size))
   {
     if (badmac)
-      return -1;
-    return 0;
+      return ReturnCode::BADMAC;
+    return ReturnCode::OK;
   }
-  return 1;
+  return ReturnCode::ERROR;
 }
 
 #endif

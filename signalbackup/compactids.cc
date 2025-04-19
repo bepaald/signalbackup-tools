@@ -39,13 +39,13 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
   {
     long long int nid = results.getValueAs<long long int>(0, 0);
 
-    d_database.exec("SELECT MIN(" + col + ") FROM " + table + " WHERE " + col + " > ?", nid, &results);
+    d_database.exec(bepaald::concat("SELECT MIN(", col, ") FROM ", table, " WHERE ", col, " > ?"), nid, &results);
     if (results.rows() == 0 || !results.valueHasType<long long int>(0, 0))
       break;
     long long int valuetochange = results.getValueAs<long long int>(0, 0);
     //std::cout << "Changing _id : " << valuetochange << " -> " << nid << std::endl;
 
-    d_database.exec("UPDATE " + table + " SET " + col + " = ? WHERE " + col + " = ?", {nid, valuetochange});
+    d_database.exec(bepaald::concat("UPDATE ", table, " SET ", col, " = ? WHERE ", col, " = ?"), {nid, valuetochange});
 
     if (col == "_id") [[likely]]
     {
@@ -114,7 +114,7 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
     }
 
     // gets first available _id in table
-    d_database.exec("SELECT t1." + col + "+1 FROM " + table + " t1 LEFT OUTER JOIN " + table + " t2 ON t2." + col + "=t1." + col + "+1 WHERE t2." + col + " IS NULL AND t1." + col + " > 0 ORDER BY t1." + col + " LIMIT 1", &results);
+    d_database.exec(bepaald::concat("SELECT t1.", col, "+1 FROM ", table, " t1 LEFT OUTER JOIN ", table, " t2 ON t2.", col, "=t1.", col, "+1 WHERE t2.", col, " IS NULL AND t1.", col, " > 0 ORDER BY t1.", col, " LIMIT 1"), &results);
   }
   // d_database.exec("SELECT _id FROM " + table, &results);
   // results.prettyPrint();

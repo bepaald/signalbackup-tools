@@ -199,7 +199,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       }
 
       //build filename
-      filename = datestr + ((order) ? ("_" + bepaald::toString(order)) : "") + "." + ext;
+      filename = bepaald::concat(datestr, ((order) ? ("_" + bepaald::toString(order)) : ""), ".", ext);
     }
 
     // std::cout << "FILENAME: " << filename << std::endl;

@@ -191,7 +191,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-  delete[] encryptedframe.release(); // free up already....
+  encryptedframe.reset(); // dont need this anymore, lets reclaim the memory....
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
@@ -386,7 +386,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-  delete[] encryptedframe.release(); // free up already....
+  encryptedframe.reset(); // dont need this data anymore
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 

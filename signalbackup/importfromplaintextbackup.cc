@@ -477,10 +477,10 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     {
 #if __cpp_lib_out_ptr >= 202106L
       std::unique_ptr<unsigned char[]> att_data;
-      if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != 0)
+      if (ptar.getAttachmentData(std::out_ptr(att_data), d_verbose) != SignalPlainTextBackupAttachmentReader::ReturnCode::OK)
 #else
       unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
-      if (ptar.getAttachmentData(&att_data, d_verbose) != 0)
+      if (ptar.getAttachmentData(&att_data, d_verbose) != SignalPlainTextBackupAttachmentReader::ReturnCode::OK)
 #endif
       {
         Logger::error("Failed to get attachment data");

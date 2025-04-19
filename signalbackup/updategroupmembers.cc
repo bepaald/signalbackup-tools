@@ -31,7 +31,7 @@ void SignalBackup::updateGroupMembers(long long int id1, long long int id2) cons
     // get group members
     SqliteDB::QueryResults results;
     bool changed = false;
-    d_database.exec("SELECT _id,"s + members + " FROM groups WHERE " + members + " IS NOT NULL", &results);
+    d_database.exec(bepaald::concat("SELECT _id,", members, " FROM groups WHERE ", members, " IS NOT NULL"), &results);
     //d_database.prettyPrint("SELECT _id,members FROM groups");
     for (unsigned int i = 0; i < results.rows(); ++i)
     {

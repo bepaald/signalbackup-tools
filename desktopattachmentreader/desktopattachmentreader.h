@@ -52,12 +52,12 @@ class DesktopAttachmentReader : public AttachmentReader<DesktopAttachmentReader>
   inline DesktopAttachmentReader &operator=(DesktopAttachmentReader const &other) = default;
   inline DesktopAttachmentReader &operator=(DesktopAttachmentReader &&other) = default;
   inline virtual ~DesktopAttachmentReader() override = default;
-  inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) override;
-  int getAttachmentData(unsigned char **data, bool verbose);
+  inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
+  ReturnCode getAttachmentData(unsigned char **data, bool verbose);
   //decryptdata
  private:
-  int getEncryptedAttachment(FrameWithAttachment *frame, bool verbose);
-  inline int getRawAttachment(FrameWithAttachment *frame, bool verbose);
+  ReturnCode getEncryptedAttachment(FrameWithAttachment *frame, bool verbose);
+  inline ReturnCode getRawAttachment(FrameWithAttachment *frame, bool verbose);
 };
 
 inline DesktopAttachmentReader::DesktopAttachmentReader(std::string const &path)
@@ -73,7 +73,7 @@ inline DesktopAttachmentReader::DesktopAttachmentReader(int version, std::string
   d_version(version)
 {}
 
-inline int DesktopAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose)
+inline BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose)
 {
   if (d_version >= 2) [[likely]]
     return getEncryptedAttachment(frame, verbose);
@@ -81,7 +81,7 @@ inline int DesktopAttachmentReader::getAttachment(FrameWithAttachment *frame, bo
     return getRawAttachment(frame, verbose);
 }
 
-inline int DesktopAttachmentReader::getRawAttachment(FrameWithAttachment *frame, bool verbose)
+inline BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getRawAttachment(FrameWithAttachment *frame, bool verbose)
 {
   RawFileAttachmentReader raw(d_path);
   return raw.getAttachment(frame, verbose);

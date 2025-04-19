@@ -183,14 +183,14 @@ inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac, bool ver
   {
     if (d_attachmentreader)
     {
-      int result = d_attachmentreader->getAttachment(this, verbose);
-      if (result == -1) [[unlikely]]
+      BaseAttachmentReader::ReturnCode result = d_attachmentreader->getAttachment(this, verbose);
+      if (result == BaseAttachmentReader::ReturnCode::BADMAC) [[unlikely]]
       {
         if (badmac)
           *badmac = true;
         return nullptr;
       }
-      if (result == 1) [[unlikely]]
+      if (result == BaseAttachmentReader::ReturnCode::ERROR) [[unlikely]]
         return nullptr;
     }
     else [[unlikely]]

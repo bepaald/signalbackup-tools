@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,7 +36,7 @@ class RawFileAttachmentReader : public AttachmentReader<RawFileAttachmentReader>
   RawFileAttachmentReader &operator=(RawFileAttachmentReader &&other) = default;
   virtual ~RawFileAttachmentReader() override = default;
 
-  inline virtual int getAttachment(FrameWithAttachment *frame, bool verbose) override;
+  inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
 };
 
 inline RawFileAttachmentReader::RawFileAttachmentReader(std::string const &filename)
@@ -44,7 +44,7 @@ inline RawFileAttachmentReader::RawFileAttachmentReader(std::string const &filen
   d_filename(filename)
 {}
 
-int RawFileAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual
+inline BaseAttachmentReader::ReturnCode RawFileAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual
 {
   //std::cout << " *** REALLY GETTING ATTACHMENT (RAW) ***" << std::endl;
 
@@ -52,7 +52,7 @@ int RawFileAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verb
   if (!file.is_open())
   {
     Logger::error("Failed to open file '", d_filename, "' for reading attachment");
-    return 1;
+    return ReturnCode::ERROR;
   }
   //file.seekg(0, std::ios_base::end);
   //int64_t attachmentdata_size = file.tellg();
@@ -71,10 +71,10 @@ int RawFileAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verb
   if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), attachmentdata_size))
   {
     Logger::error("Failed to read raw attachment \"", d_filename, "\"");
-    return 1;
+    return ReturnCode::ERROR;
   }
   frame->setAttachmentDataBacked(decryptedattachmentdata.release(), attachmentdata_size);
-  return 0;
+  return ReturnCode::OK;
 }
 
 #endif
