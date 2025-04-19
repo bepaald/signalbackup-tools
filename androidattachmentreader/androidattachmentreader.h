@@ -231,7 +231,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
   if (!file.is_open())
   {
     Logger::error("Failed to open backup file '", d_filename, "' for reading attachment");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
 
   if (d_attachmentdata_size == 0) [[unlikely]]
@@ -254,7 +254,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
   if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
   {
     Logger::error("CTX INIT FAILED");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
 
   // to calculate the MAC
@@ -275,7 +275,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 #endif
   {
     Logger::error("Failed to initialize HMAC context");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
   if (EVP_MAC_update(hctx.get(), d_iv, d_iv_size) != 1)
@@ -284,7 +284,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 #endif
   {
     Logger::error("Failed to update HMAC");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
 
   // read and process attachment data in 8MB chunks
@@ -298,7 +298,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
     if (!file.read(reinterpret_cast<char *>(encrypteddatabuffer), std::min(size - processed, BUFFERSIZE)))
     {
       Logger::error("STOPPING BEFORE END OF ATTACHMENT!!!", (file.eof() ? " (EOF) " : ""));
-      return ReturnCode::ERROR;
+      return ReturnCode::ERR;
     }
     uint32_t read = file.gcount();
 
@@ -310,7 +310,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 #endif
     {
       Logger::error("Failed to update HMAC");
-      return ReturnCode::ERROR;
+      return ReturnCode::ERR;
     }
 
     // decrypt the read data;
@@ -318,7 +318,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
     if (EVP_DecryptUpdate(ctx.get(), decryptedattachmentdata.get() + processed, &spaceleft, encrypteddatabuffer, read) != 1)
     {
       Logger::error("Failed to decrypt data");
-      return ReturnCode::ERROR;
+      return ReturnCode::ERR;
     }
 
     processed += read;
@@ -337,14 +337,14 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 #endif
   {
     Logger::error("Failed to finalize MAC");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
 
   unsigned char theirMac[CryptBase::MACSIZE];
   if (!file.read(reinterpret_cast<char *>(theirMac), CryptBase::MACSIZE))
   {
     Logger::error("STOPPING BEFORE END OF ATTACHMENT!!! 2 ");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
   DEBUGOUT("theirMac         : ", bepaald::bytesToHexString(theirMac, CryptBase::MACSIZE));
   DEBUGOUT("ourMac           : ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
@@ -366,7 +366,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
       return ReturnCode::BADMAC;
     return ReturnCode::OK;
   }
-  return ReturnCode::ERROR;
+  return ReturnCode::ERR;
 }
 
 #endif

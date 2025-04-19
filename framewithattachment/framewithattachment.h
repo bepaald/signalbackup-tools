@@ -190,7 +190,7 @@ inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac, bool ver
           *badmac = true;
         return nullptr;
       }
-      if (result == BaseAttachmentReader::ReturnCode::ERROR) [[unlikely]]
+      if (result == BaseAttachmentReader::ReturnCode::ERR) [[unlikely]]
         return nullptr;
     }
     else [[unlikely]]

@@ -52,7 +52,7 @@ inline BaseAttachmentReader::ReturnCode RawFileAttachmentReader::getAttachment(F
   if (!file.is_open())
   {
     Logger::error("Failed to open file '", d_filename, "' for reading attachment");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
   //file.seekg(0, std::ios_base::end);
   //int64_t attachmentdata_size = file.tellg();
@@ -71,7 +71,7 @@ inline BaseAttachmentReader::ReturnCode RawFileAttachmentReader::getAttachment(F
   if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), attachmentdata_size))
   {
     Logger::error("Failed to read raw attachment \"", d_filename, "\"");
-    return ReturnCode::ERROR;
+    return ReturnCode::ERR;
   }
   frame->setAttachmentDataBacked(decryptedattachmentdata.release(), attachmentdata_size);
   return ReturnCode::OK;

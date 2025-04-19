@@ -27,11 +27,11 @@ class FrameWithAttachment;
 class BaseAttachmentReader
 {
  public:
-  enum class ReturnCode : std::int8_t
+  enum class ReturnCode : std::uint8_t
   {
-    BADMAC = -1,
-    OK = 0,
-    ERROR = 1,
+    BADMAC,
+    OK,
+    ERR // ! THE WINDOWS BUILD DOES NOT ALLOW 'ERROR' HERE...
   };
 
   BaseAttachmentReader() = default;
