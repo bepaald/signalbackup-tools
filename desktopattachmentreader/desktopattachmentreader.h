@@ -77,12 +77,13 @@ inline BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachment(F
 {
   if (d_version >= 2) [[likely]]
     return getEncryptedAttachment(frame, verbose);
-  else
-    return getRawAttachment(frame, verbose);
+  return getRawAttachment(frame, verbose);
 }
 
 inline BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getRawAttachment(FrameWithAttachment *frame, bool verbose)
 {
+  if (verbose) [[unlikely]]
+    Logger::message("Starting get raw DesktopAttachment data");
   RawFileAttachmentReader raw(d_path);
   return raw.getAttachment(frame, verbose);
 }

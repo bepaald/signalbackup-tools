@@ -24,7 +24,7 @@
 BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool verbose)
 {
   if (verbose) [[unlikely]]
-    Logger::message("Starting get DesktopAttachment data");
+    Logger::message("Starting get encrypted DesktopAttachment data");
 
   // set AES+MAC key
   auto [tmpdata, key_data_length] = Base64::base64StringToBytes(d_key);
