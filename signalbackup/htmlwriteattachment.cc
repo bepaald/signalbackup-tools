@@ -90,7 +90,7 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
   }
   else
   {
-    if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+    if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize()))
       return false;
     // write was succesfull. drop attachment data
     a->clearData();

@@ -62,7 +62,7 @@ class StickerFrame : public FrameWithAttachment
   inline std::string getHumanData() const override;
   inline unsigned int getField(std::string_view const &str) const;
   inline std::optional<std::string> mimetype() const;
-  inline unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false) override;
+  inline unsigned char *attachmentData(bool verbose, bool *badmac = nullptr) override;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -261,9 +261,9 @@ inline std::optional<std::string> StickerFrame::mimetype() const
   return d_mimetype;
 }
 
-inline unsigned char *StickerFrame::attachmentData(bool *badmac, bool verbose)
+inline unsigned char *StickerFrame::attachmentData(bool verbose, bool *badmac)
 {
-  unsigned char *data = FrameWithAttachment::attachmentData(badmac, verbose);
+  unsigned char *data = FrameWithAttachment::attachmentData(verbose, badmac);
   if (data && !d_mimetype) // try to get mimetype
   {
     AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), data, d_attachmentdata_size, true/*skiphash*/);

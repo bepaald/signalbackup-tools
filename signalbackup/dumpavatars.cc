@@ -83,7 +83,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
     // get avatar data, to get extension
     std::string extension;
-    unsigned char *avatardata = af->attachmentData();
+    unsigned char *avatardata = af->attachmentData(d_verbose);
     uint64_t avatarsize = af->attachmentSize();
     AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), avatardata, avatarsize, true/*skiphash*/);
     extension = "." + std::string(MimeTypes::getExtension(amd.filetype, "jpg"));
@@ -105,7 +105,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
       continue;
     }
 
-    if (!attachmentstream.write(reinterpret_cast<char *>(af->attachmentData()), af->attachmentSize()))
+    if (!attachmentstream.write(reinterpret_cast<char *>(af->attachmentData(d_verbose)), af->attachmentSize()))
     {
       Logger::error("Failed to write data to file: ", dir, "/", filename);
       af->clearData();

@@ -75,7 +75,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
       }
       else
       {
-        unsigned char const *data = a->attachmentData();
+        unsigned char const *data = a->attachmentData(d_verbose);
         if (!data) [[unlikely]]
         {
           Logger::error("Failed to retrieve attachment data for attachment (rowid: ", rowid, " uniqueid: ", uniqueid, ")");
@@ -130,7 +130,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
         continue;
       }
       else
-        if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize())) [[unlikely]]
+        if (!avatarstream.write(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize())) [[unlikely]]
         {
           Logger::error("Failed to write avatar data");
           exportok = false;
@@ -197,7 +197,7 @@ bool SignalBackup::exportBackupToDir(std::string const &directory, bool overwrit
         continue;
       }
       else
-        if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData()), s->attachmentSize())) [[unlikely]]
+        if (!stickerstream.write(reinterpret_cast<char *>(s->attachmentData(d_verbose)), s->attachmentSize())) [[unlikely]]
         {
           Logger::error("Failed to write sticker data");
           exportok = false;

@@ -737,7 +737,7 @@ bool SignalBackup::writeStickerToDisk(long long int id, std::string const &packi
   StickerFrame *s = it->second.get();
 
   // get the data, so the mimetype is determined
-  unsigned char const *stickerdata = s->attachmentData();
+  unsigned char const *stickerdata = s->attachmentData(d_verbose);
   ScopeGuard clear_sticker_data([&](){s->clearData();});
 
   std::optional<std::string> mimetype = s->mimetype();

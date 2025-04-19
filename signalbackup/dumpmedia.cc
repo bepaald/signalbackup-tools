@@ -299,7 +299,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     }
 
     ++count;
-    if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize()))
+    if (!attachmentstream.write(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize()))
     {
       Logger::error("Failed to write data to file: '", targetdir, "/", filename, "'");
       a->clearData();

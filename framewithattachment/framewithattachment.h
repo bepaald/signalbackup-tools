@@ -51,7 +51,7 @@ class FrameWithAttachment : public BackupFrame
   //inline void setLength(int32_t l);
   inline void setReader(BaseAttachmentReader *reader);
   inline BaseAttachmentReader *reader() const;
-  inline virtual unsigned char *attachmentData(bool *badmac = nullptr, bool verbose = false);
+  inline virtual unsigned char *attachmentData(bool verbose, bool *badmac = nullptr);
   inline void clearData();
 };
 
@@ -177,7 +177,7 @@ inline BaseAttachmentReader *FrameWithAttachment::reader() const
   return d_attachmentreader;
 }
 
-inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac, bool verbose)
+inline unsigned char *FrameWithAttachment::attachmentData(bool verbose, bool *badmac)
 {
   if (!d_attachmentdata)
   {
@@ -190,7 +190,7 @@ inline unsigned char *FrameWithAttachment::attachmentData(bool *badmac, bool ver
           *badmac = true;
         return nullptr;
       }
-      if (result == BaseAttachmentReader::ReturnCode::ERR) [[unlikely]]
+      if (result == BaseAttachmentReader::ReturnCode::ERROR) [[unlikely]]
         return nullptr;
     }
     else [[unlikely]]

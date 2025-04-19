@@ -42,7 +42,7 @@ void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults 
       AttachmentFrame *a = ait->second.get();
 
       // set body
-      *body = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+      *body = std::string(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize());
       a->clearData();
       break; // always max 1?
     }

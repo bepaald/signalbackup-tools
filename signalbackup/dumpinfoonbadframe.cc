@@ -106,7 +106,7 @@ void SignalBackup::dumpInfoOnBadFrame(std::unique_ptr<BackupFrame> *frame)
     Logger::message("Trying to dump decoded attachment to file '", afilename, "'");
 
     std::ofstream bindump(afilename, std::ios_base::binary);
-    bindump.write(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+    bindump.write(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize());
 
   }
   else

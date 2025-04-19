@@ -618,7 +618,8 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
                  << "ctt_t=\"" << ctt_t << "\" "
                  << "text=\"" << "null" << "\"";
       // add this for testing, or your xml file will be huge
-      outputfile << " data=\"" << Base64::bytesToBase64String(attachment->second->attachmentData(), attachment->second->attachmentSize())/*.substr(0, 50)*/ << "\" ";
+      outputfile << " data=\"" << Base64::bytesToBase64String(attachment->second->attachmentData(d_verbose),
+                                                              attachment->second->attachmentSize())/*.substr(0, 50)*/ << "\" ";
       if (!keepattachmentdatainmemory)
         attachment->second.get()->clearData();
     }

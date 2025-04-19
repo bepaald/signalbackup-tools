@@ -425,6 +425,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     unsigned int daterangeidx = 0;
 
+    if (d_verbose) [[unlikely]]
+      Logger::message("Starting importing ", messages.rows(), " messages...");
+
     while (true)
     {
       std::string previous_period_split_string(messages(messagecount, "periodsplit"));
@@ -716,7 +719,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                 long long int rowid = search_idx_results.valueAsInt(0, "rowid");
                 long long int uniqueid = search_idx_results.valueAsInt(0, "uniqueid");
                 AttachmentFrame *a = d_attachments.at({rowid, uniqueid}).get();
-                std::string longbody = std::string(reinterpret_cast<char *>(a->attachmentData()), a->attachmentSize());
+                std::string longbody = std::string(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize());
                 a->clearData();
 
                 longbody = d_database.getSingleResultAs<std::string>("SELECT json_set(?, '$.b', ?)", {line, longbody}, std::string());

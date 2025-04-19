@@ -31,7 +31,7 @@ class BaseAttachmentReader
   {
     BADMAC,
     OK,
-    ERR // ! THE WINDOWS BUILD DOES NOT ALLOW 'ERROR' HERE...
+    ERROR // note, windows defines 'ERROR' and error macro in wingdi.h. This is disabled by #define NOGDI in this tool
   };
 
   BaseAttachmentReader() = default;

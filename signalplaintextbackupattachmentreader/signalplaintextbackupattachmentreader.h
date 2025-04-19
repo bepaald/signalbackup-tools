@@ -78,12 +78,12 @@ inline BaseAttachmentReader::ReturnCode SignalPlainTextBackupAttachmentReader::g
     if (!file.is_open())
     {
       Logger::error("Failed to open file '", d_filename, "' for reading attachment");
-      return ReturnCode::ERR;
+      return ReturnCode::ERROR;
     }
     if (!file.seekg(d_pos))
     {
       Logger::error("Failed to seek to correct offset in file '", d_filename, " (", d_pos, ")");
-      return ReturnCode::ERR;
+      return ReturnCode::ERROR;
     }
 
     if (verbose) [[unlikely]]
@@ -95,14 +95,14 @@ inline BaseAttachmentReader::ReturnCode SignalPlainTextBackupAttachmentReader::g
     if (file.tellg() != (d_pos + d_size - 1))
     {
       Logger::error("Failed to read base64-encoded attachment from \"", d_filename, "\"");
-      return ReturnCode::ERR;
+      return ReturnCode::ERROR;
     }
   }
 
   if (d_size > 0 && d_base64data.empty() && local_b64_data.empty()) // filename.empty(), but so is data, while size is > 0
   {
     Logger::error("SignalPlainTextBackupAttachmentReader has no base64 encoded data");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   unsigned char *attdata;
@@ -115,7 +115,7 @@ inline BaseAttachmentReader::ReturnCode SignalPlainTextBackupAttachmentReader::g
     Logger::error_indent("Filename: '", d_filename, "'");
     Logger::error_indent("Offset: ", d_pos);
     Logger::error_indent("Size: ", d_size);
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   *data = attdata;

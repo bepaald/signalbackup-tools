@@ -36,7 +36,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     ScopeGuard clear_avatar_data([&](){a->clearData();});
     std::optional<std::string> mimetype = a->mimetype();
     if (!mimetype)
-      a->attachmentData();  // get the data, so the mimetype gets set.
+      a->attachmentData(d_verbose);  // get the data, so the mimetype gets set.
 
     std::string ext("bin");
     mimetype = a->mimetype();
@@ -80,7 +80,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     }
     else
     {
-      unsigned char const *avatardata = a->attachmentData();
+      unsigned char const *avatardata = a->attachmentData(d_verbose);
       if (!avatardata || !avatarstream.write(reinterpret_cast<char const *>(avatardata), a->attachmentSize()))
         return std::string();
     }

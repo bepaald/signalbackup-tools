@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,6 +24,7 @@
 
 #if defined(_WIN32) || defined(__MINGW64__)
 #define WIN32_LEAN_AND_MEAN 1
+#define NOGDI 1
 #include <windows.h>
 #include <conio.h>
 #else // !windows

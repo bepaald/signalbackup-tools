@@ -29,9 +29,8 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   // set AES+MAC key
   auto [tmpdata, key_data_length] = Base64::base64StringToBytes(d_key);
   std::unique_ptr<unsigned char[]> key_data(tmpdata);
-  //uint64_t aeskey_length = 32;
   unsigned char *aeskey = key_data.get();
-  uint64_t mackey_length = 32;
+  uint64_t constexpr mackey_length = 32;
   unsigned char *mackey = key_data.get() + 32;
 
   // open file
@@ -39,11 +38,11 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (!file.is_open()) [[unlikely]]
   {
     Logger::error("Failed to open file '", d_path, "'");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   // set iv/data length.
-  int64_t iv_length = 16;
+  int64_t constexpr iv_length = 16;
   //file.seekg(0, std::ios_base::end);
   //int64_t data_length = file.tellg() - static_cast<int64_t>(iv_length + mackey_length);
   //file.seekg(0, std::ios_base::beg);
@@ -51,7 +50,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (data_length <= 0) [[unlikely]]
   {
     Logger::error("Got bad data length (", data_length, ")");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   if (verbose) [[unlikely]]
@@ -63,7 +62,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
       file.gcount() != iv_length) [[unlikely]]
   {
     Logger::error("Failed to read iv");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
   if (verbose) [[unlikely]]
     Logger::message("Read IV: ", bepaald::bytesToHexString(iv.get(), iv_length));
@@ -74,7 +73,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
       file.gcount() != data_length) [[unlikely]]
   {
     Logger::error("Failed to read in file data");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
   if (verbose) [[unlikely]]
     Logger::message("Read data: ", bepaald::bytesToHexString(data.get(), data_length > 32 ? 32 : data_length), "... (", data_length, " bytes total)");
@@ -86,7 +85,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
       file.gcount() != theirmac_length) [[unlikely]]
   {
     Logger::error("Failed to read theirmac");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
   if (verbose) [[unlikely]]
     Logger::message("Read MAC: ", bepaald::bytesToHexString(theirmac.get(), theirmac_length));
@@ -101,7 +100,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (EVP_MAC_init(hctx.get(), mackey, mackey_length, params) != 1) [[unlikely]]
   {
     Logger::error("Failed to initialize HMAC context");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
   std::unique_ptr<unsigned char[]> calculatedmac(new unsigned char[EVP_MD_size(digest)]);
   if (EVP_MAC_update(hctx.get(), iv.get(), iv_length) != 1 ||
@@ -109,14 +108,14 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
       EVP_MAC_final(hctx.get(), calculatedmac.get(), nullptr, EVP_MD_size(digest)) != 1) [[unlikely]]
   {
     Logger::error("Failed to update/finalize hmac");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 #else
   std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
   if (HMAC_Init_ex(hctx.get(), mackey, mackey_length, digest, nullptr) != 1) [[unlikely]]
   {
     Logger::error("Failed to initialize HMAC context");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
   std::unique_ptr<unsigned char[]> calculatedmac(new unsigned char[32]);
   unsigned int finalsize = EVP_MD_size(digest);
@@ -125,7 +124,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
       HMAC_Final(hctx.get(), calculatedmac.get(), &finalsize) != 1) [[unlikely]]
   {
     Logger::error("Failed to update/finalize hmac");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 #endif
 
@@ -145,14 +144,14 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (!ctx) [[unlikely]]
   {
     Logger::error("Failed to create decryption context");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   // init decrypt
   if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_cbc(), nullptr, aeskey, iv.get())) [[unlikely]]
   {
     Logger::error("Failed to initialize decryption operation");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   // decrypt update
@@ -162,7 +161,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (EVP_DecryptUpdate(ctx.get(), output.get(), &out_len, data.get(), output_length) != 1) [[unlikely]]
   {
     Logger::error("Failed to update decryption");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
 
   // decrypt final
@@ -170,7 +169,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1) [[unlikely]]
   {
     Logger::error("Failed to finalize decryption");
-    return ReturnCode::ERR;
+    return ReturnCode::ERROR;
   }
   out_len += tail_len;
   //std::cout << out_len << std::endl;
