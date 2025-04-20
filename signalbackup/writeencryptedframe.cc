@@ -60,7 +60,7 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
 
     bool badmac = false;
 
-    unsigned char *attachmentdata = f->attachmentData(&badmac);
+    unsigned char *attachmentdata = f->attachmentData(d_verbose, &badmac);
 
     if (!attachmentdata)
     {
