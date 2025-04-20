@@ -2649,4 +2649,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
     htmloutput << "          </div>\n";
   htmloutput << '\n';
+
+  if (d_verbose) [[unlikely]]
+    htmloutput << std::flush;
 }
