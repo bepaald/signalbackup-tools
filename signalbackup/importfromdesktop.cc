@@ -1672,13 +1672,13 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         // insert message attachments
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting attachments...");
         dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
-                          rowid, dtdb->d_database, "WHERE rowid = " + bepaald::toString(rowid), databasedir, false, issticker, targetisdummy);
+                          rowid, dtdb->d_database, "WHERE messages.rowid = " + bepaald::toString(rowid), databasedir, false, issticker, targetisdummy);
         if (hasquote && !mmsquote_missing)
         {
           // insert quotes attachments
           dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, dtdb->d_database,
                             //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
-                            "WHERE JSONLONG(sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/, targetisdummy);
+                            "WHERE JSONLONG(messages.sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/, targetisdummy);
         }
         if (d_verbose) [[unlikely]] Logger::message_end("done");
 

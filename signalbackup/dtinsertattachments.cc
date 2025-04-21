@@ -97,29 +97,40 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       jsonpath = "$.preview[0].image";
 
     // get the attachment info (content-type, size, path, ...)
+
+    // the size of a sticker in the messages table can be incorrect,
+    // so lets get it from the stickers table...
+    // in one single instance in my Desktop database, one sticker has
+    // its size set to the encrypted filesize (13600) instead of the
+    // real filesize (13062) in messages.json<$.sticker.data.size>,
+    // this woud cause a bufffer overflow when getting the data from
+    // DesktopAttachmentReader. So here, we COALESCE with stickers.size
+    // on packid and stickerid, to get the correct size.
     if (!ddb.exec(bepaald::concat("SELECT "
-                                  "json_extract(json, '", jsonpath, ".path') AS path,"
-                                  "json_extract(json, '", jsonpath, ".contentType') AS content_type,"
-                                  "json_extract(json, '", jsonpath, ".size') AS size,"
+                                  "json_extract(messages.json, '", jsonpath, ".path') AS path,"
+                                  "json_extract(messages.json, '", jsonpath, ".contentType') AS content_type,"
+                                  "COALESCE(stickers.size, json_extract(messages.json, '", jsonpath, ".size')) AS size,"
                                   //"json_extract(json, '", jsonpath, ".cdnKey') AS cdn_key,"
-                                  "json_extract(json, '", jsonpath, ".localKey') AS localKey,"
-                                  "IFNULL(json_extract(json, '", jsonpath, ".version'), 1) AS version,"
-                                  "IFNULL(json_extract(json, '", jsonpath, ".width'), 0) AS width,"
-                                  "IFNULL(json_extract(json, '", jsonpath, ".height'), 0) AS height,"
+                                  "json_extract(messages.json, '", jsonpath, ".localKey') AS localKey,"
+                                  "IFNULL(json_extract(messages.json, '", jsonpath, ".version'), 1) AS version,"
+                                  "IFNULL(json_extract(messages.json, '", jsonpath, ".width'), 0) AS width,"
+                                  "IFNULL(json_extract(messages.json, '", jsonpath, ".height'), 0) AS height,"
 
                                   // only in sticker
-                                  "json_extract(json, '", jsonpath, ".emoji') AS sticker_emoji,"
-                                  "json_extract(json, '", jsonpath, ".packId') AS sticker_packid,"
-                                  "json_extract(json, '", jsonpath, ".id') AS sticker_id,"
+                                  "json_extract(messages.json, '", jsonpath, ".emoji') AS sticker_emoji,"
+                                  "json_extract(messages.json, '", jsonpath, ".packId') AS sticker_packid,"
+                                  "json_extract(messages.json, '", jsonpath, ".id') AS sticker_id,"
 
                                   // not when sticker
-                                  "json_extract(json, '", jsonpath, ".fileName') AS file_name,"
-                                  "IFNULL(JSONLONG(json_extract(json, '", jsonpath, ".uploadTimestamp')), 0) AS upload_timestamp,"
-                                  "IFNULL(json_extract(json, '", jsonpath, ".flags'), 0) AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
-                                  "IFNULL(json_extract(json, '", jsonpath, ".pending'), 0) AS pending,"
-                                  "IFNULL(json_extract(json, '", jsonpath, ".cdnNumber'), 0) AS cdn_number"
+                                  "json_extract(messages.json, '", jsonpath, ".fileName') AS file_name,"
+                                  "IFNULL(JSONLONG(json_extract(messages.json, '", jsonpath, ".uploadTimestamp')), 0) AS upload_timestamp,"
+                                  "IFNULL(json_extract(messages.json, '", jsonpath, ".flags'), 0) AS flags," // currently, the only flag implemented in Signal is:  VOICE_NOTE = 1
+                                  "IFNULL(json_extract(messages.json, '", jsonpath, ".pending'), 0) AS pending,"
+                                  "IFNULL(json_extract(messages.json, '", jsonpath, ".cdnNumber'), 0) AS cdn_number"
 
-                                  " FROM messages ", where), &results_attachment_data))
+                                  " FROM messages "
+                                  "LEFT JOIN stickers ON stickers.packId = sticker_packid AND stickers.id = sticker_id ", where),
+                  &results_attachment_data))
     {
       Logger::error("Failed to get attachment data from desktop database");
       continue;
@@ -469,7 +480,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
                                                       "ATTACHMENTID:uint64:" + bepaald::toString(unique_id) : ""),
                                                      "LENGTH:uint32:" + bepaald::toString(filesize)}))
     {
-      new_attachment_frame->setReader(new DesktopAttachmentReader(version, fullpath, localkey, size));
+      new_attachment_frame->setReader(new DesktopAttachmentReader(version, fullpath, localkey, filesize));
       d_attachments.emplace(std::make_pair(new_part_id,
                                            d_database.tableContainsColumn(d_part_table, "unique_id") ?
                                            unique_id : -1), new_attachment_frame.release());

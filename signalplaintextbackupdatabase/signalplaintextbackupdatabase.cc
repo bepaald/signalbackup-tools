@@ -151,16 +151,10 @@ SignalPlaintextBackupDatabase::SignalPlaintextBackupDatabase(std::vector<std::st
 
   // create message table
   std::string tablecreate;
-#if __cplusplus > 201703L
-  for (unsigned int i = 0; auto const &rc : columninfo)
-#else
-    unsigned int i = 0;
   for (auto const &rc : columninfo)
-#endif
   {
     if (rc.columnname.empty()) [[likely]]
       tablecreate += (tablecreate.empty() ? "CREATE TABLE smses (" : ", ") + rc.name + " " + rc.type + " DEFAULT NULL";
-    ++i;
   }
   tablecreate += ")";
   if (!d_database.exec(tablecreate))

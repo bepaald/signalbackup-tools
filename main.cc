@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
 
     MEMINFO("Before importfromdesktop");
     if (!sb->importFromDesktop(ddb, arg.skipmessagereorder(), arg.limittodates(),
-                               (arg.addincompletedataforhtmlexport() | arg.importdesktopcontacts()),
+                               (arg.addincompletedataforhtmlexport() || arg.importdesktopcontacts()),
                                arg.importdesktopcontacts(), arg.autolimitdates(),  arg.importstickers(),
                                arg.setselfid(), arg.targetisdummy()))
       return 1;
