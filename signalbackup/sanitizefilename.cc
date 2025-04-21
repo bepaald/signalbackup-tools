@@ -19,17 +19,34 @@
 
 #include "signalbackup.ih"
 
-std::string SignalBackup::sanitizeFilename(std::string const &filename) const
+std::string SignalBackup::sanitizeFilename(std::string const &filename, bool aggressive [[maybe_unused]]) const
 {
   std::string result;
 
 #if !defined(_WIN32) && !defined(__MINGW64__)
 
-  // filter disallowed characters. (Note this is not an exact science)
-  for (char c : filename)
-    result += ((c == '/' || c == '\0' || c == '\n') ? '_' : c); // newline is technically allowed I think
+  /*
+  // attempt to determine target filesystem
+  static std::string filesystem_type;
+  if (filesystem_type.empty())
+  {
+    Logger::message("Attempting to get type of filesystem...");
 
-#else // WINDOWS, NOT TESTED
+    filesystem_type = "Unknown";
+
+    Logger::message("Got filesystem type '", filesystem_type, "'");
+  }
+  */
+
+  if (!aggressive)
+  {
+    // filter disallowed characters. (Note this is not an exact science)
+    for (char c : filename)
+      result += ((c == '/' || c == '\0' || c == '\n') ? '_' : c); // newline is technically allowed I think
+  }
+  else // aggressive sanitizing
+  {
+#endif // WINDOWS || aggressive_sanitizing = true
 
   auto icasecmp = [](char a, char b) STATICLAMBDA
   {
@@ -82,7 +99,10 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename) const
          result.back() == '.')
     result.pop_back();
 
+#if !defined(_WIN32) && !defined(__MINGW64__)
+  }
 #endif
+
 
   return result;
 }

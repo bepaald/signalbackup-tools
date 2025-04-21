@@ -30,6 +30,7 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   d_selfid(-1),
   d_databaseversion(-1),
   d_backupfileversion(-1),
+  d_aggressive_filename_sanitizing(false),
   d_showprogress(showprogress),
   d_stoponerror(stoponerror),
   d_verbose(verbose),

@@ -24,7 +24,7 @@
 
 bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long int> const &limittothreads,
                              std::vector<std::string> const &daterangelist, std::string const &selfphone [[maybe_unused]],
-                             bool migrate, bool overwrite)
+                             bool migrate, bool aggressive_sanitizing, bool overwrite)
 {
   Logger::message("Starting plaintext export to '", directory, "'");
 
@@ -86,6 +86,9 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       SqliteDB::copyDb(backup_database, d_database);
     return false;
   }
+
+  // see if we need aggressive filename sanitizing
+  d_aggressive_filename_sanitizing = aggressive_sanitizing || !specialCharsSupported(directory);
 
   // check and warn about selfid & note-to-self thread
   d_selfid = selfphone.empty() ? scanSelf() : d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfphone, -1);
@@ -204,8 +207,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
       continue;
     }
 
-    std::string filename = /*(is_note_to_self ? "Note to self (_id"s + bepaald::toString(thread_id) + ")"
-                             : */sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ").txt")/*)*/;
+    std::string filename = sanitizeFilename(recipient_info[thread_recipient_id].display_name + " (_id" + bepaald::toString(thread_id) + ").txt",
+                                            d_aggressive_filename_sanitizing);
 
     if (bepaald::fileOrDirExists(bepaald::concat(directory, "/", filename)))
     {

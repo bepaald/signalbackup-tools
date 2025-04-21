@@ -30,7 +30,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders,
                                       bool compact) const
 {
-  std::string filename(sanitizeFilename(basename) + ".html");
+  std::string filename(sanitizeFilename(basename, d_aggressive_filename_sanitizing) + ".html");
 
   Logger::message("Writing ", filename, "...");
   if (bepaald::fileOrDirExists(directory + "/" + filename))
@@ -359,7 +359,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       std::string raw_avatar_path(results.getValueAs<long long int>(i, "_id") == note_to_self_tid ?
                                   "Note to Self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_avatar_path);
-      std::string avatar_path(sanitizeFilename(raw_avatar_path) + " (_id" + results(i, "_id") + ")");
+      std::string avatar_path(sanitizeFilename(raw_avatar_path, d_aggressive_filename_sanitizing) + " (_id" + results(i, "_id") + ")");
       if (compact) [[unlikely]]
         avatar_path = "id" + results(i, "_id");
 
@@ -1089,7 +1089,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
 
     std::string raw_convo_url_path(isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name);
     WIN_LIMIT_FILENAME_LENGTH(raw_convo_url_path);
-    std::string convo_url_path(sanitizeFilename(raw_convo_url_path) + " (_id" + bepaald::toString(t_id) + ")");
+    std::string convo_url_path(sanitizeFilename(raw_convo_url_path, d_aggressive_filename_sanitizing) + " (_id" + bepaald::toString(t_id) + ")");
     if (compact) [[unlikely]]
     {
       raw_convo_url_path.clear();
@@ -1097,7 +1097,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     }
     HTMLescapeUrl(&convo_url_path);
 
-    std::string convo_url_location(sanitizeFilename(raw_convo_url_path) + ".html");
+    std::string convo_url_location(sanitizeFilename(raw_convo_url_path, d_aggressive_filename_sanitizing) + ".html");
     if (compact) [[unlikely]]
       convo_url_location = "0.html";
     HTMLescapeUrl(&convo_url_location);

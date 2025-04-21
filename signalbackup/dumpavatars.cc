@@ -23,7 +23,8 @@
 #include "../attachmentmetadata/attachmentmetadata.h"
 #include "../common_filesystem.h"
 
-bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const
+bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts,
+                               bool aggressive_sanitizing, bool overwrite) const
 {
   Logger::message_overwrite("Dumping avatars to dir '", dir, "'...");
 
@@ -35,6 +36,9 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
 
   if (!prepareOutputDirectory(dir, overwrite))
     return false;
+
+  // see if we need aggressive filename sanitizing
+  bool aggressive_filename_sanitizing = aggressive_sanitizing || !specialCharsSupported(dir);
 
 #if __cplusplus > 201703L
   for (int count = 0; auto const &avframe : d_avatars)
@@ -87,7 +91,7 @@ bool SignalBackup::dumpAvatars(std::string const &dir, std::vector<std::string> 
     uint64_t avatarsize = af->attachmentSize();
     AttachmentMetadata amd = AttachmentMetadata::getAttachmentMetaData(std::string(), avatardata, avatarsize, true/*skiphash*/);
     extension = "." + std::string(MimeTypes::getExtension(amd.filetype, "jpg"));
-    std::string filename = sanitizeFilename(name + extension);
+    std::string filename = sanitizeFilename(name + extension, aggressive_filename_sanitizing);
     if (filename.empty() || filename == extension) // filename was not set in database or was not impossible
                                                    // to sanitize (eg reserved name in windows 'COM1')
       filename = af->recipient() + extension;

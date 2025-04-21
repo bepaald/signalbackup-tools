@@ -341,7 +341,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
           continue;
         std::string raw_avatar_path(getRecipientInfoFromMap(recipientinfo, peer).display_name);
         WIN_LIMIT_FILENAME_LENGTH(raw_avatar_path);
-        std::string avatar_path(sanitizeFilename(raw_avatar_path) + " (_id" + bepaald::toString(threadid) + ")");
+        std::string avatar_path(sanitizeFilename(raw_avatar_path, d_aggressive_filename_sanitizing) + " (_id" + bepaald::toString(threadid) + ")");
         if (compact) [[unlikely]]
           avatar_path = "id" + bepaald::toString(threadid);
         HTMLescapeUrl(&avatar_path);

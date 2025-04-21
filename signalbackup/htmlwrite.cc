@@ -2127,7 +2127,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     std::string attachment_filename_on_disk = bepaald::concat("Attachment_", bepaald::toString(rowid), "_", bepaald::toString(uniqueid), ".", extension);
     if (use_original_filenames)
     {
-      attachment_filename_on_disk = sanitizeFilename(attachment_results(a, "file_name"));
+      attachment_filename_on_disk = sanitizeFilename(attachment_results(a, "file_name"), d_aggressive_filename_sanitizing);
       if (attachment_filename_on_disk.empty())    // filename was not set in database or was not impossible
       {                                           // to sanitize (eg reserved name in windows 'COM1')
         long long int datum = attachment_results.valueAsInt(a, "date_received", -1);

@@ -36,7 +36,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
-                              bool compact, bool pagemenu, std::vector<std::string> const &ignoremediatypes)
+                              bool compact, bool pagemenu, bool aggressive_sanitizing,
+                              std::vector<std::string> const &ignoremediatypes)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -63,6 +64,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   // // check if dir exists, create if not
   if (!prepareOutputDirectory(directory, overwrite, !originalfilenames /*allowappend only allowed when not using original filenames*/, append))
     return false;
+
+  // see if we need aggressive filename sanitizing
+  d_aggressive_filename_sanitizing = aggressive_sanitizing || !specialCharsSupported(directory);
 
   // check and warn about selfid & note-to-self thread
   long long int note_to_self_thread_id = -1;
@@ -355,7 +359,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     std::string basethreaddir(is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
     WIN_LIMIT_FILENAME_LENGTH(basethreaddir);
-    std::string threaddir(sanitizeFilename(basethreaddir) + " (_id"s + bepaald::toString(thread_id) + ")");
+    std::string threaddir(sanitizeFilename(basethreaddir, d_aggressive_filename_sanitizing) + " (_id"s + bepaald::toString(thread_id) + ")");
     if (compact) [[unlikely]]
       threaddir = "id" + bepaald::toString(thread_id);
 
@@ -435,7 +439,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // create output-file
       std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_base_filename);
-      std::string sanitized_base_filename(sanitizeFilename(raw_base_filename));
+      std::string sanitized_base_filename(sanitizeFilename(raw_base_filename, d_aggressive_filename_sanitizing));
       std::string filename(sanitized_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
       if (compact) [[unlikely]]
       {

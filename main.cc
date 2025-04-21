@@ -200,12 +200,12 @@ int main(int argc, char *argv[])
                               arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                               arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
-                              arg.htmlpagemenu(), arg.htmlignoremediatypes()))
+                              arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.htmlignoremediatypes()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
       if (!dummydb.exportTxt(arg.exportdesktoptxt(), {} /*limittothreads*/, arg.limittodates(), arg.setselfid(),
-                             arg.migratedb(), arg.overwrite()))
+                             arg.migratedb(), arg.aggressivefilenamesanitizing(), arg.overwrite()))
         return 1;
   }
 
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                             arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
-                            arg.htmlpagemenu(), arg.htmlignoremediatypes()))
+                            arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.htmlignoremediatypes()))
       return 1;
   }
 
@@ -499,11 +499,11 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.dumpmedia().empty())
-    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.excludestickers(), arg.overwrite()))
+    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.excludestickers(), arg.aggressivefilenamesanitizing(),  arg.overwrite()))
       return 1;
 
   if (!arg.dumpavatars().empty())
-    if (!sb->dumpAvatars(arg.dumpavatars(), arg.limitcontacts(), arg.overwrite()))
+    if (!sb->dumpAvatars(arg.dumpavatars(), arg.limitcontacts(), arg.aggressivefilenamesanitizing(), arg.overwrite()))
       return 1;
 
   if (arg.deleteattachments() || !arg.replaceattachments().empty())
@@ -535,12 +535,13 @@ int main(int argc, char *argv[])
                         arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
                         arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
                         arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames(),
-                        arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.htmlpagemenu(), arg.htmlignoremediatypes()))
+                        arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(),
+                        arg.htmlignoremediatypes()))
       return 1;
 
   if (!arg.exporttxt().empty())
     if (!sb->exportTxt(arg.exporttxt(), limittothreads, arg.limittodates(), arg.setselfid(),
-                       arg.migratedb(), arg.overwrite()))
+                       arg.migratedb(), arg.aggressivefilenamesanitizing(), arg.overwrite()))
       return 1;
 
   if (!arg.exportcsv().empty())

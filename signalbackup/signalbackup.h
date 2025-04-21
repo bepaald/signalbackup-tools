@@ -144,6 +144,7 @@ class SignalBackup
   long long int d_selfid;
   unsigned int d_databaseversion;
   unsigned int d_backupfileversion;
+  bool d_aggressive_filename_sanitizing;
   bool d_showprogress;
   bool d_stoponerror;
   bool d_verbose;
@@ -266,8 +267,9 @@ class SignalBackup
   bool summarize() const;
   bool reorderMmsSmsIds() const;
   bool dumpMedia(std::string const &dir, std::vector<std::string> const &dateranges,
-                 std::vector<long long int> const &threads, bool excludestickers, bool overwrite) const;
-  bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool overwrite) const;
+                 std::vector<long long int> const &threads, bool excludestickers,
+                 bool aggressive_sanitizing, bool overwrite) const;
+  bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool aggressive_sanitizing, bool overwrite) const;
   bool deleteAttachments(std::vector<long long int> const &threadids, std::string const &before,
                          std::string const &after, long long int filesize,
                          std::vector<std::string> const &mimetypes, std::string const &append,
@@ -295,10 +297,11 @@ class SignalBackup
                   bool stickerpacks, bool migrate, bool overwrite, bool append, bool theme,
                   bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                   bool settings, bool receipts, bool use_original_filenames, bool linkify,
-                  bool chatfolders, bool compact, bool pagemenu,
+                  bool chatfolders, bool compact, bool pagemenu, bool aggressive_sanitizing,
                   std::vector<std::string> const &ignoremediatypes);
   bool exportTxt(std::string const &directory, std::vector<long long int> const &threads,
-                 std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate, bool overwrite);
+                 std::vector<std::string> const &dateranges, std::string const &selfid, bool migrate,
+                 bool aggressive_sanitizing, bool overwrite);
   bool findRecipient(long long int id) const;
   long long int getRecipientIdFromName(std::string const &name, bool withthread) const;
   long long int getRecipientIdFromPhone(std::string const &phone, bool withthread) const;
@@ -394,7 +397,7 @@ class SignalBackup
   //                     std::string const &message, std::string const &selfid, bool isgroup,
   //                     std::map<std::string, std::string> const &name_to_recipientid);
   bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
-  std::string sanitizeFilename(std::string const &filename) const;
+  std::string sanitizeFilename(std::string const &filename, bool aggressive) const;
   bool setColumnNames();
   void dtSetColumnNames(SqliteDB *ddb);
   long long int scanSelf() const;
@@ -560,6 +563,7 @@ class SignalBackup
   std::string unicodeToUtf8(uint32_t unicode) const;
   int utf16ToUnicodeCodepoint(uint16_t utf16, uint32_t *codepoint) const;
   std::string makePrintable(std::string const &in) const;
+  bool specialCharsSupported(std::string const &path) const;
 };
 
 // ONLY FOR DUMMYBACKUP
@@ -568,6 +572,7 @@ inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress
   d_selfid(-1),
   d_databaseversion(-1),
   d_backupfileversion(-1),
+  d_aggressive_filename_sanitizing(false),
   d_showprogress(showprogress),
   d_stoponerror(false),
   d_verbose(verbose),

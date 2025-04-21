@@ -24,7 +24,8 @@
 #include "../mimetypes/mimetypes.h"
 
 bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> const &daterangelist,
-                             std::vector<long long int> const &threads, bool excludestickers, bool overwrite) const
+                             std::vector<long long int> const &threads, bool excludestickers,
+                             bool aggressive_sanitizing, bool overwrite) const
 {
   Logger::message("Dumping media to dir '", dir, "'");
 
@@ -37,6 +38,9 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
   // check if dir exists, create if not
   if (!prepareOutputDirectory(dir, overwrite))
     return false;
+
+  // see if we need aggressive filename sanitizing
+  bool aggressive_filename_sanitizing = aggressive_sanitizing || !specialCharsSupported(dir);
 
   std::pair<std::vector<int>, std::vector<std::string>> conversations; // links thread_id to thread title, if the
                                                                        // folder already exists, but from another _id,
@@ -183,7 +187,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     long long int order = results.getValueAs<long long int>(0, "display_order");
 
     if (!results.isNull(0, "file_name")) // file name IS SET in database
-      filename = sanitizeFilename(results.valueAsString(0, "file_name"));
+      filename = sanitizeFilename(results.valueAsString(0, "file_name"), aggressive_filename_sanitizing);
 
     if (filename.empty()) // filename was not set in database or was not impossible
     {                     // to sanitize (eg reserved name in windows 'COM1')
@@ -208,7 +212,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
         && !results.isNull(0, d_mms_type))
     {
       long long int tid = results.getValueAs<long long int>(0, "thread_id");
-      std::string chatpartner = sanitizeFilename(results.valueAsString(0, "chatpartner"));
+      std::string chatpartner = sanitizeFilename(results.valueAsString(0, "chatpartner"), aggressive_filename_sanitizing);
       if (chatpartner.empty())
         chatpartner = "Contact " + bepaald::toString(tid);
 
