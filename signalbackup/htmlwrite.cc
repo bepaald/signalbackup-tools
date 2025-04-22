@@ -2375,7 +2375,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << (msg_info.story_reply ? " &middot; Story" : "")
                << "</span>\n";
     if (!msg_info.quote_body.empty())
-      htmloutput << std::string(extraindent, ' ') << "                <pre>" << msg_info.quote_body << "</pre>\n";
+      htmloutput << std::string(extraindent, ' ') << "                <pre dir=\"auto\">" << msg_info.quote_body << "</pre>\n";
     if (msg_info.story_reply && msg_info.quote_missing)
       htmloutput << std::string(extraindent, ' ') << "                <pre>No longer available</pre>\n";
     htmloutput << std::string(extraindent, ' ') << "              </div>\n";
@@ -2439,7 +2439,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << (Types::isStatusMessage(msg_info.type) ? " class=\"status-text" +
                    (Types::isMissedCall(msg_info.type) || Types::isMissedVideoCall(msg_info.type) ? " status-text-red"s : "") + "\"" : "")
                << ">\n";
-    htmloutput << std::string(extraindent, ' ') << "              <pre>";
+    htmloutput << std::string(extraindent, ' ') << "              <pre dir=\"auto\">";
     if (Types::isEndSession(msg_info.type) || Types::isIdentityDefault(msg_info.type)) // info-icon
       htmloutput << "<span class=\"msg-info-icon\"></span>";
     else if (Types::isIdentityUpdate(msg_info.type))

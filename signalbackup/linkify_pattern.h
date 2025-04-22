@@ -20,8 +20,6 @@
 // Modified (slightly) from The Android Open Source Project
 // (https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/util/Patterns.java)
 
-#include <regex>
-
 #define IANA_TOP_LEVEL_DOMAINS "(?:"                                    \
     "(?:aaa|aarp|abb|abbott|abogado|academy|accenture|accountant|accountants|aco|active" \
     "|actor|ads|adult|aeg|aero|afl|agency|aig|airforce|airtel|allfinanz|alsace|amica|amsterdam" \
@@ -218,9 +216,30 @@
     WORD_BOUNDARY                                       \
     ")"
 
+#if false && __has_include("boost/regex.hpp")
+#pragma message("USING BOOST REGEX!")
+
+#define BOOST_REGEX_NO_LIB
+#include <boost/regex.hpp>
+
+#define REGEX boost::regex
+#define SMATCH boost::smatch
+#define REGEX_SEARCH boost::regex_search
+#define REGEX_FLAGS boost::regex::icase | boost::regex::ECMAScript | boost::regex::no_mod_m
+
+#else
+
+#include <regex>
+
+#define REGEX std::regex
+#define SMATCH std::smatch
+#define REGEX_SEARCH std::regex_search
+#define REGEX_FLAGS std::regex_constants::icase | std::regex_constants::ECMAScript
+#endif
+
 namespace HTMLLinkify
 {
-  static std::regex const pattern("(" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", std::regex_constants::icase);
+  static REGEX const pattern("(" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", REGEX_FLAGS);
 }
 
 #undef IANA_TOP_LEVEL_DOMAINS

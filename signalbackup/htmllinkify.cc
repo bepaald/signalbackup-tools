@@ -42,10 +42,13 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
   if (!possible_link) [[likely]]
     return;
 
+  if (d_verbose) [[unlikely]]
+    Logger::message("Searching for possible URL in message body");
+
   pos = 0;
-  std::smatch url_match_result;
+  SMATCH url_match_result;
   std::string bodycopy(body);
-  while (std::regex_search(bodycopy, url_match_result, HTMLLinkify::pattern))
+  while (REGEX_SEARCH(bodycopy, url_match_result, HTMLLinkify::pattern))
   {
     //std::cout << "MATCH : " << url_match_result[0] << " (" << url_match_result.size() << " matches total)"
     //          << " : " << pos + url_match_result.position(0) << " " << url_match_result.length(0) << std::endl;
@@ -55,7 +58,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
 
     // get offset+length if string was utf16
     long long int match_start = 0;
-    for (unsigned int i = 0; i < pos + url_match_result.position(0); )
+    for (unsigned int i = 0; i < pos + url_match_result.position(); )
     {
       int utf8size = bytesToUtf8CharSize(body, i);
       match_start += utf16CharSize(body, i);
@@ -64,7 +67,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     //std::cout << "startpos : " << match_start << std::endl;
 
     long long int match_length = 0;
-    for (unsigned int i = pos + url_match_result.position(0); i < pos + url_match_result.position(0) + url_match_result.length(0); )
+    for (unsigned int i = pos + url_match_result.position(); i < pos + url_match_result.position() + url_match_result.length(0); )
     {
       int utf8size = bytesToUtf8CharSize(body, i);
       match_length += utf16CharSize(body, i);
@@ -124,7 +127,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
                            true);
 
 
-    pos += url_match_result.position(0) + url_match_result.length(0);
+    pos += url_match_result.position() + url_match_result.length(0);
     bodycopy = url_match_result.suffix();
   }
 
