@@ -57,7 +57,7 @@ bool SignalBackup::specialCharsSupported(std::string const &path) const
   std::error_code ec;
   std::string canonicalpath = std::filesystem::canonical(path, ec);
   if (ec)
-    return false;
+    return true;
 
   // std::cout << "Got canonical path: " << canonicalpath << std::endl;
 

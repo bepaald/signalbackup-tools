@@ -520,6 +520,15 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
         return false;
       }
     }
+    else if (isType<std::pair<unsigned char *, uint64_t>>(p))
+    {
+      if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, uint64_t>>(p)) != SQLITE_OK) [[unlikely]]
+      {
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
+        return false;
+      }
+    }
     else if (isType<std::pair<unsigned char *, size_t>>(p))
     {
       if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, size_t>>(p)) != SQLITE_OK) [[unlikely]]
