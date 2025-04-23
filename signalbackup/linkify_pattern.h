@@ -20,6 +20,8 @@
 // Modified (slightly) from The Android Open Source Project
 // (https://android.googlesource.com/platform/frameworks/base/+/refs/heads/main/core/java/android/util/Patterns.java)
 
+#include "../common_regex.h"
+
 #define IANA_TOP_LEVEL_DOMAINS "(?:"                                    \
     "(?:aaa|aarp|abb|abbott|abogado|academy|accenture|accountant|accountants|aco|active" \
     "|actor|ads|adult|aeg|aero|afl|agency|aig|airforce|airtel|allfinanz|alsace|amica|amsterdam" \
@@ -135,9 +137,9 @@
     "|xn\\-\\-ygbi2ammx|xn\\-\\-zfr164b|xperia|xxx|xyz)"                \
     "|(?:yachts|yamaxun|yandex|yodobashi|yoga|yokohama|youtube|y[et])"  \
     "|(?:zara|zip|zone|zuerich|z[amw]))"
-#define IP_ADDRESS "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]" \
-    "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]" \
-    "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}" \
+#define IP_ADDRESS "(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(?:25[0-5]|2[0-4]" \
+    "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(?:25[0-5]|2[0-4][0-9]|[0-1]" \
+    "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}" \
     "|[1-9][0-9]|[0-9]))"
   /* translated ECMAScript version of original (which had nested [[]] and intersection &&). may have errors... */
 #define UCS_CHAR "\u00A1-\u1FFF\u200B-\u2027\u2030-\u202E\u2030-\u2FFF\u3001-\uD7FF" \
@@ -158,12 +160,12 @@
     "\U000D0000-\U000DFFFD"                                             \
     "\U000E1000-\U000EFFFD"
 #define LABEL_CHAR "a-zA-Z0-9" UCS_CHAR
-#define TLD_CHAR "a-zA-Z" UCS_CHAR
+//#define TLD_CHAR "a-zA-Z" UCS_CHAR
 #define IRI_LABEL "[" LABEL_CHAR "](?:[" LABEL_CHAR "_\\-]{0,61}[" LABEL_CHAR "]){0,1}"
 #define PUNYCODE_TLD "xn\\-\\-[\\w\\-]{0,58}\\w"
-#define TLD "(" PUNYCODE_TLD "|[" TLD_CHAR "]{2,63})"
-#define HOST_NAME "(" IRI_LABEL "\\.)+" TLD
-#define DOMAIN_NAME "(" HOST_NAME "|" IP_ADDRESS ")"
+//#define TLD "(" PUNYCODE_TLD "|[" TLD_CHAR "]{2,63})"
+//#define HOST_NAME "(" IRI_LABEL "\\.)+" TLD
+//#define DOMAIN_NAME "(" HOST_NAME "|" IP_ADDRESS ")"
 #define PROTOCOL "(?:http|https|rtsp|ftp):\\/\\/" // NOTE originally started with (?i:  -> non capturing group with i (case insensitive flag) not valid ECMAScript (its PCRE) (we add icase to std::regex object)
 #define WORD_BOUNDARY "(?:\\b|$|^)"
 #define USER_INFO "(?:[a-zA-Z0-9\\$\\-_\\.\\+\\!\\*\\'\\(\\)"           \
@@ -179,18 +181,18 @@
 #define STRICT_DOMAIN_NAME "(?:" STRICT_HOST_NAME "|" IP_ADDRESS ")"
 #define RELAXED_DOMAIN_NAME "(?:(?:" IRI_LABEL "(?:\\.(?=\\S))?)+|" IP_ADDRESS ")"
 
-#define EMAIL_PATTERN "[a-zA-Z0-9\\+\\._\\%\\-\\+]{1,256}"              \
+#define EMAIL_PATTERN "([a-zA-Z0-9\\+\\._\\%\\-\\+]{1,256}"             \
   "\\@"                                                                 \
   "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}"                                     \
-  "("                                                                   \
+  "(?:"                                                                 \
   "\\."                                                                 \
   "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}"                                     \
-  ")+"
+  ")+)"
 
 #define  WEB_URL_WITHOUT_PROTOCOL "("                                   \
     WORD_BOUNDARY                                                       \
     "(?!:\\/\\/)"   /* NOTE: was originally (?<!:\\/\\/) but std::regex does not support (negative) lookbehind, this is not completely equivalent, but it will have to do */ \
-    "((?:"                                                              \
+    "(?:(?:"                                                              \
     STRICT_DOMAIN_NAME                                                  \
     ")(?:"                                                              \
     PORT_NUMBER                                                         \
@@ -216,42 +218,21 @@
     WORD_BOUNDARY                                       \
     ")"
 
-#if false && __has_include("boost/regex.hpp")
-#pragma message("USING BOOST REGEX!")
-
-#define BOOST_REGEX_NO_LIB
-#include <boost/regex.hpp>
-
-#define REGEX boost::regex
-#define SMATCH boost::smatch
-#define REGEX_SEARCH boost::regex_search
-#define REGEX_FLAGS boost::regex::icase | boost::regex::ECMAScript | boost::regex::no_mod_m
-
-#else
-
-#include <regex>
-
-#define REGEX std::regex
-#define SMATCH std::smatch
-#define REGEX_SEARCH std::regex_search
-#define REGEX_FLAGS std::regex_constants::icase | std::regex_constants::ECMAScript
-#endif
-
 namespace HTMLLinkify
 {
-  static REGEX const pattern("(" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", REGEX_FLAGS);
+  static REGEX const pattern("(?:" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", REGEX_FLAGS);
 }
 
 #undef IANA_TOP_LEVEL_DOMAINS
 #undef IP_ADDRESS
 #undef UCS_CHAR
 #undef LABEL_CHAR
-#undef TLD_CHAR
+//#undef TLD_CHAR
 #undef IRI_LABEL
 #undef PUNYCODE_TLD
-#undef TLD
-#undef HOST_NAME
-#undef DOMAIN_NAME
+//#undef TLD
+//#undef HOST_NAME
+//#undef DOMAIN_NAME
 #undef PROTOCOL
 #undef WORD_BOUNDARY
 #undef USER_INFO

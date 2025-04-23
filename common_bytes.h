@@ -20,6 +20,10 @@
 #ifndef COMMON_BYTES_H_
 #define COMMON_BYTES_H_
 
+#if defined(__has_include) && __has_include("version")
+#include <version>
+#endif
+
 #include <climits>
 #include <memory>
 #include <algorithm>

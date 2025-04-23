@@ -19,8 +19,6 @@
 
 #include "signalbackup.ih"
 
-#include <regex>
-
 #include "../reactionlist/reactionlist.h"
 
 bool SignalBackup::migrateDatabase(int from, int to) const
@@ -144,10 +142,8 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       std::vector<std::string> individual_groupmembers;
 
       std::string membersstring(groupmembers(i, "members"));
-      std::regex comma(",");
-      std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
-      std::transform(iter, std::sregex_token_iterator(), std::back_inserter(individual_groupmembers),
-                     [](std::string const &m) STATICLAMBDA -> std::string { return m; });
+      oldGroupMemberTokenizer(membersstring, &individual_groupmembers);
+
       for (auto const &m : individual_groupmembers)
         if (!m.empty() &&
             d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient_preferences WHERE recipient_ids = ?", m, -1) == -1)
@@ -176,10 +172,7 @@ bool SignalBackup::migrateDatabase(int from, int to) const
       long long int gid = groupmembers.getValueAs<long long int>(i, "_id");
       std::vector<std::string> individual_groupmembers;
       std::string membersstring(groupmembers(i, "members"));
-      std::regex comma(",");
-      std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
-      std::transform(iter, std::sregex_token_iterator(), std::back_inserter(individual_groupmembers),
-                     [](std::string const &m) STATICLAMBDA -> std::string { return m; });
+      oldGroupMemberTokenizer(membersstring, &individual_groupmembers);
       std::string members_id_str;
 
       for (auto const &m : individual_groupmembers)

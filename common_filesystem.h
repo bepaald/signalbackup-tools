@@ -20,6 +20,10 @@
 #ifndef COMMON_FILESYSTEM_H_
 #define COMMON_FILESYSTEM_H_
 
+#if defined(__has_include) && __has_include("version")
+#include <version>
+#endif
+
 #include <filesystem>
 
 #include "logger/logger.h"

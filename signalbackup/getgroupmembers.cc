@@ -19,8 +19,6 @@
 
 #include "signalbackup.ih"
 
-#include <regex>
-
 bool SignalBackup::getGroupMembersModern(std::vector<long long int> *members, std::string const &group_id) const
 {
   SqliteDB::QueryResults r;
@@ -59,11 +57,12 @@ bool SignalBackup::getGroupMembersOld(std::vector<long long int> *members, std::
 
   // tokenize
   std::string membersstring(r.valueAsString(0, column));
-  std::regex comma(",");
-  std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
-
-  std::transform(iter, std::sregex_token_iterator(), std::back_inserter(*members),
-                 [](std::string const &m) STATICLAMBDA -> long long int { return bepaald::toNumber<long long int>(m); });
+  oldGroupMemberTokenizer(membersstring, members);
+  // // old regex based version (slower, and doubled in multiple functions):
+  // std::regex comma(",");
+  // std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
+  // std::transform(iter, std::sregex_token_iterator(), std::back_inserter(*members),
+  //                [](std::string const &m) STATICLAMBDA -> long long int { return bepaald::toNumber<long long int>(m); });
 
   // std::cout << "=====" << std::endl;
   // std::cout << "Set group members:" << std::endl;

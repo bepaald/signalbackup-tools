@@ -21,12 +21,12 @@
 
 #include "desktopdatabase.ih"
 
+#include "../common_regex.h"
 #include "../base64/base64.h"
 
 #include <dpapi.h>
 #include <openssl/core_names.h>
 
-#include <regex>
 #include <fstream>
 
 bool DesktopDatabase::getKeyFromEncrypted_win()
@@ -57,13 +57,13 @@ bool DesktopDatabase::getKeyFromEncrypted_win()
     return false;
   }
   std::string line;
-  std::regex keyregex(".*\"encrypted_key\":\\s*\"([^\"]*)\".*");
-  std::smatch m;
+  REGEX keyregex(".*\"encrypted_key\":\\s*\"([^\"]*)\".*", REGEX_FLAGS);
+  REGEX_SMATCH_RESULTS m;
   bool found = false;
   while (std::getline(localstate, line))
   {
     //std::cout << "Line: " << line << std::endl;
-    if (std::regex_match(line, m, keyregex))
+    if (REGEX_MATCH(line, m, keyregex))
       if (m.size() == 2) // m[0] is full match, m[1] is first submatch (which we want)
       {
         found = true;

@@ -44,6 +44,10 @@
 #include <algorithm>
 #include <array>
 
+#if __cpp_lib_ranges >= 201911L
+#include <ranges>
+#endif
+
 #if defined WIN32 || MINGW
 // Windows has all sorts of issues with 'long' paths. While this tool can (probably)
 // work around that (see WIN_LONGPATH in common_filesystem), it does not help much
@@ -564,6 +568,8 @@ class SignalBackup
   int utf16ToUnicodeCodepoint(uint16_t utf16, uint32_t *codepoint) const;
   std::string makePrintable(std::string const &in) const;
   bool specialCharsSupported(std::string const &path) const;
+  template <typename T>
+  inline void oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const;
 };
 
 // ONLY FOR DUMMYBACKUP
@@ -1010,6 +1016,36 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
       *out << "; ";
   }
   *out << ")";
+}
+
+template <typename T>
+inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const
+{
+#if __cpp_lib_ranges >= 201911L
+  for (auto const m : std::ranges::views::split(membersstring, ','))
+    if constexpr (std::is_integral<T>::value)
+      members->emplace_back(bepaald::toNumber<T>(std::string_view(m)));
+    else
+      members->emplace_back(std::string_view(m));
+#else
+  std::string_view::size_type start = 0;
+  std::string_view::size_type pos;
+  while ((pos = membersstring.find(',', start)) != std::string_view::npos)
+  {
+    if constexpr (std::is_integral<T>::value)
+      members->emplace_back(bepaald::toNumber<T>(membersstring.substr(start, pos - start)));
+    else
+      members->emplace_back(membersstring.substr(start, pos - start));
+    start = pos + 1;
+  }
+  if (!membersstring.substr(start).empty()) [[likely]]
+  {
+    if constexpr (std::is_integral<T>::value)
+      members->emplace_back(bepaald::toNumber<T>(membersstring.substr(start)));
+    else
+      members->emplace_back(membersstring.substr(start));
+  }
+#endif
 }
 
 #endif

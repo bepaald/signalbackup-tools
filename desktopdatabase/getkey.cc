@@ -19,7 +19,8 @@
 
 #include "desktopdatabase.ih"
 
-#include <regex>
+#include "../common_regex.h"
+
 #include <fstream>
 
 bool DesktopDatabase::getKey()
@@ -45,13 +46,13 @@ bool DesktopDatabase::getKey()
     $ cat ~/.config/Signal/config.json | pcregrep -o1 "^\s*\"key\":\s*\"([a-z0-9]{64})\"$"
     aac2f422c149db6180b1a76df1ee462101c11d2d2347044ef055a956dfcbfa98
   */
-  std::regex keyregex("^\\s*\"key\":\\s*\"([a-zA-Z0-9]{64})\",?$");
-  std::smatch m;
+  REGEX keyregex("^\\s*\"key\":\\s*\"([a-zA-Z0-9]{64})\",?$", REGEX_FLAGS);
+  REGEX_SMATCH_RESULTS m;
   bool found = false;
   while (std::getline(config, line))
   {
     //std::cout << "Line: " << line << std::endl;
-    if (std::regex_match(line, m, keyregex))
+    if (REGEX_MATCH(line, m, keyregex))
       if (m.size() == 2) // m[0] is full match, m[1] is first submatch (which we want)
       {
         found = true;

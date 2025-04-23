@@ -20,6 +20,10 @@
 #ifndef COMMON_BE_H_
 #define COMMON_BE_H_
 
+#if defined(__has_include) && __has_include("version")
+#include <version>
+#endif
+
 #include <cstddef>
 #include <cstdint>
 #include <iomanip>

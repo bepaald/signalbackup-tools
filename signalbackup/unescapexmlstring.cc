@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-#include <regex>
+#include "../common_regex.h"
 
 bool SignalBackup::unescapeXmlString(std::string *s) const
 {
@@ -34,14 +34,14 @@ bool SignalBackup::unescapeXmlString(std::string *s) const
   bepaald::replaceAll(s, "&lt;", "<");
   bepaald::replaceAll(s, "&gt;", ">");
 
-  std::regex entity_regex("&#(x?[0-9a-fA-F]+);");
-  std::smatch m;
+  REGEX entity_regex("&#(x?[0-9a-fA-F]+);", REGEX_FLAGS);
+  REGEX_SMATCH_RESULTS m;
   std::string searchstr(*s);
   int codepointcomplete = 0;
   uint32_t unicode_codepoint = 0;
   int match_position = 0;
   int match_length = 0;
-  while (std::regex_search(searchstr, m, entity_regex))
+  while (REGEX_SEARCH(searchstr, m, entity_regex))
   {
     // digits
     std::string utf16str(m[1]); // value-part of the match
@@ -50,7 +50,7 @@ bool SignalBackup::unescapeXmlString(std::string *s) const
       match_length += m.length(0);
     else
     {
-      match_position = m.position(0); // pos and length of entire
+      match_position = m.position(); // pos and length of entire
       match_length = m.length(0);     // match (including &#;)
     }
     // check leading x, interpret as hex...

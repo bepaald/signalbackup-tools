@@ -22,6 +22,8 @@
 #include "linkify_pattern.h"
 #include "msgrange.h"
 
+#include "../common_regex.h"
+
 void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const
 {
   bool possible_link = false;
@@ -46,7 +48,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     Logger::message("Searching for possible URL in message body");
 
   pos = 0;
-  SMATCH url_match_result;
+  REGEX_SMATCH_RESULTS url_match_result;
   std::string bodycopy(body);
   while (REGEX_SEARCH(bodycopy, url_match_result, HTMLLinkify::pattern))
   {
@@ -97,14 +99,14 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
       }
     }
 
-    if (url_match_result.length(3) > 0) // -> URL_WITH_PROTOCOL
+    if (url_match_result.length(2) > 0) // -> URL_WITH_PROTOCOL
       ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"" + match_link + "\">",
                            "",
                            "</a>",
                            true);
-    else if (url_match_result.length(9) > 0) // -> URL_WITHOUT_PROTOCOL
+    else if (url_match_result.length(3) > 0) // -> URL_WITHOUT_PROTOCOL
       /* Here, we add the protocol manually (guessing it to be https),
          without a protocol, the 'link' will be interpreted as a location
          in the current domain (file://HTMLDIR/Conversation/Page.html/www.example.com),
@@ -118,7 +120,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
                            "",
                            "</a>",
                            true);
-    else if (url_match_result.length(2) > 0) // -> EMAIL
+    else if (url_match_result.length(1) > 0) // -> EMAIL
       ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"mailto:" + match_link + "\">",

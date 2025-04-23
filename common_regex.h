@@ -17,9 +17,30 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#ifndef COMMON_REGEX_H_
+#define COMMON_REGEX_H_
 
-#define VERSIONDATE "20250423.144808"
+#if defined USE_BOOST_REGEX && __has_include("boost/regex.hpp")
+#pragma message("USING BOOST REGEX!")
+
+#define BOOST_REGEX_NO_LIB
+#include <boost/regex.hpp>
+
+#define REGEX boost::regex
+#define REGEX_SMATCH_RESULTS boost::smatch
+#define REGEX_MATCH boost::regex_match
+#define REGEX_SEARCH boost::regex_search
+#define REGEX_FLAGS boost::regex::icase | boost::regex::ECMAScript | boost::regex::no_mod_m
+
+#else
+
+#include <regex>
+
+#define REGEX std::regex
+#define REGEX_SMATCH_RESULTS std::smatch
+#define REGEX_MATCH std::regex_match
+#define REGEX_SEARCH std::regex_search
+#define REGEX_FLAGS std::regex_constants::icase | std::regex_constants::ECMAScript
+#endif
 
 #endif

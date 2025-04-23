@@ -31,7 +31,6 @@
 
 #include "signalbackup.ih"
 
-#include <regex>
 #include <openssl/rand.h>
 
 #if __cpp_lib_format >= 201907L
@@ -1552,11 +1551,8 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         return false;
 
       std::string membersstring(res.valueAsString(i, "members"));
-      std::regex comma(",");
-      std::sregex_token_iterator iter(membersstring.begin(), membersstring.end(), comma, -1);
       std::vector<long long int> members_list;
-      std::transform(iter, std::sregex_token_iterator(), std::back_inserter(members_list),
-                     [](std::string const &m) STATICLAMBDA -> long long int { return bepaald::toNumber<long long int>(m); });
+      oldGroupMemberTokenizer(membersstring, &members_list);
 
       for (unsigned int j = 0; j < members_list.size(); ++j)
         if (!d_database.exec("INSERT INTO group_membership (group_id, recipient_id) VALUES (?, ?)", {group_id, members_list[j]}))
@@ -1807,7 +1803,9 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
         std::string statement(res(i, "sql"));
         if (!statement.empty())
         {
-          statement = std::regex_replace(statement, std::regex("CREATE INDEX mms_"), "CREATE INDEX message_");
+          std::string::size_type pos;
+          if (statement.find((pos = statement.find("CREATE INDEX mms_")) != std::string::npos))
+            statement.replace(pos, STRLEN("CREATE INDEX mms_"), "CREATE INDEX message_");
           if (!d_database.exec(statement))
             return false;
         }
