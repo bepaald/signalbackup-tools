@@ -59,6 +59,8 @@ class Logger
     BOLD,
     NORMAL,
     ENDOVERWRITE,
+    GREEN,
+    RED,
   };
   struct ControlChar
   {
@@ -503,6 +505,12 @@ inline void Logger::outputMsg(Flags flags, Control c, Rest const &... r)
           std::cout << std::endl;
         }
         break;
+      case Control::GREEN:
+        std::cout << "\033[1;32m";
+        break;
+      case Control::RED:
+        std::cout << "\033[1;31m";
+        break;
     }
   }
 
@@ -537,6 +545,12 @@ inline void Logger::outputMsg(Flags flags, Control c)
           }
           std::cout << std::endl;
         }
+        break;
+      case Control::GREEN:
+        std::cout << "\033[1;32m";
+        break;
+      case Control::RED:
+        std::cout << "\033[1;31m";
         break;
     }
   }

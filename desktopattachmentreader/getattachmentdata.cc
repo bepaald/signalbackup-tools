@@ -54,7 +54,10 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   }
 
   if (verbose) [[unlikely]]
+  {
     Logger::message("Attachment length (iv + data + mackey): ", iv_length, " + ", data_length, " + ", mackey_length);
+    Logger::message("                                d_size: ", d_size);
+  }
 
   // set iv
   std::unique_ptr<unsigned char[]> iv(new unsigned char[iv_length]);
@@ -180,6 +183,16 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   if (verbose) [[unlikely]]
     Logger::message("Successfully got DesktopAttachment data");
 
+  // I have a single sticker in the database with an incorrect 'size' column (in the message).
+  // All attachments need their real (decrypted) size known in order to decrypt properly, the
+  // encrypted size has iv+mac+an unknown amount of padding. This could cause a buffer overflow.
+  // For the above mentioned sticker, the real size was in the 'sticker' table (as opposed to
+  // the message), but this check is here to maybe catch other similar cases...
+  if (d_size >= static_cast<uint64_t>(out_len)) [[unlikely]]
+  {
+    Logger::warning("Decrypted size is larger or equal to total data size.");
+    Logger::warning_indent("The total size was likely imported from Desktop incorrectly");
+  }
   return ReturnCode::OK;
 }
 
