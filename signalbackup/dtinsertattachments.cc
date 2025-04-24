@@ -19,6 +19,7 @@
 
 #include "signalbackup.ih"
 
+#include "../common_filesystem.h"
 #include "../desktopattachmentreader/desktopattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
@@ -322,6 +323,12 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       filesize = amd.filesize;
       hash = amd.hash;
     }
+    else if (targetisdummy)
+      if (!bepaald::fileOrDirExists(fullpath))
+      {
+        Logger::warning("Skipping attachment: '", fullpath, "'. File not found.");
+        continue;
+      }
 
     //insert into part
     std::any retval;

@@ -32,9 +32,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
   {
     ++pos;
     if (pos < body.size() &&
-        //((body[pos] >= 'A' && body[pos] <= 'Z') || // this is slightly faster, but likely prevents
-        //(body[pos] >= 'a' && body[pos] <= 'z')))   // some urls from linkifying (with unicode
-        body[pos] >= 'A')                            // char in TLD)
+        body[pos] >= 'A')
     {
       possible_link = true;
       break;
@@ -47,11 +45,10 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
   if (d_verbose) [[unlikely]]
     Logger::message("Searching for possible URL in message body");
 
-  pos = 0;
+  pos = 0; // to save position from start of string (only the suffix is passed to the search each iteration)
   REGEX_SMATCH_RESULTS url_match_result;
-  std::string bodycopy(body);
-  std::string &bodycopy_reference(bodycopy);
-  while (REGEX_SEARCH(bodycopy_reference, url_match_result, HTMLLinkify::pattern))
+  auto start = body.begin();
+  while (start != body.end() && REGEX_SEARCH(start, body.end(), url_match_result, HTMLLinkify::pattern))
   {
     // std::cout << "MATCH : " << url_match_result[0] << " (" << url_match_result.size() << " matches total)"
     //           << " : " << pos + url_match_result.position(0) << " " << url_match_result.length(0) << std::endl;
@@ -99,7 +96,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     /*
       This really shouldn't happen I think, but I have a link with multiple # signs
       in my backup. This is not valid, and causes the HTML to not be valid, so
-      we escape it.
+      we escape any '#' after the first...
       Other such issues may also appear in the future
     */
     size_t escapepos = 0;
@@ -180,8 +177,8 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
                            true);
 
 
-    pos += url_match_result.position() + url_match_result.length(0);
-    bodycopy_reference = url_match_result.suffix();
+    pos   += url_match_result.position() + url_match_result.length(0);
+    start += url_match_result.position() + url_match_result.length(0);
   }
 }
 
