@@ -50,17 +50,34 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
   pos = 0;
   REGEX_SMATCH_RESULTS url_match_result;
   std::string bodycopy(body);
-  while (REGEX_SEARCH(bodycopy, url_match_result, HTMLLinkify::pattern))
+  std::string &bodycopy_reference(bodycopy);
+  while (REGEX_SEARCH(bodycopy_reference, url_match_result, HTMLLinkify::pattern))
   {
-    //std::cout << "MATCH : " << url_match_result[0] << " (" << url_match_result.size() << " matches total)"
-    //          << " : " << pos + url_match_result.position(0) << " " << url_match_result.length(0) << std::endl;
+    // std::cout << "MATCH : " << url_match_result[0] << " (" << url_match_result.size() << " matches total)"
+    //           << " : " << pos + url_match_result.position(0) << " " << url_match_result.length(0) << std::endl;
     // for (const auto &res : url_match_result)
-    //   std::cout << (res.str().empty() ? "0" : "1");
+    //   std::cout << " : " << res.str() << std::endl;
     // std::cout << std::endl;
+
+    // url_match_result.length(1) > 0 -> EMAIL
+    // url_match_result.length(2) > 0 -> URL_WITH_PROTOCOL
+    // url_match_result.length(3) > 0 -> URL_NO_PROTOCOL
+    unsigned int match_index = 0;
+    if (url_match_result.length(URL_WITH_PROTOCOL_MATCH) > 0)
+      match_index = URL_WITH_PROTOCOL_MATCH;
+    else if (url_match_result.length(URL_WITHOUT_PROTOCOL_MATCH) > 0)
+      match_index = URL_WITHOUT_PROTOCOL_MATCH;
+    else if (url_match_result.length(EMAIL_MATCH) > 0)
+      match_index = EMAIL_MATCH;
+    else [[unlikely]]
+    {
+      Logger::warning("Unexpected match result while linkifying message body. Skipping.");
+      return;
+    }
 
     // get offset+length if string was utf16
     long long int match_start = 0;
-    for (unsigned int i = 0; i < pos + url_match_result.position(); )
+    for (unsigned int i = 0; i < pos + url_match_result.position(match_index); )
     {
       int utf8size = bytesToUtf8CharSize(body, i);
       match_start += utf16CharSize(body, i);
@@ -69,7 +86,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     //std::cout << "startpos : " << match_start << std::endl;
 
     long long int match_length = 0;
-    for (unsigned int i = pos + url_match_result.position(); i < pos + url_match_result.position() + url_match_result.length(0); )
+    for (unsigned int i = pos + url_match_result.position(match_index); i < pos + url_match_result.position(match_index) + url_match_result.length(match_index); )
     {
       int utf8size = bytesToUtf8CharSize(body, i);
       match_length += utf16CharSize(body, i);
@@ -77,11 +94,8 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     }
     //std::cout << "match length : " << match_length << std::endl;
 
-    // url_match_result.length(2) > 0 -> EMAIL
-    // url_match_result.length(3) > 0 -> URL_WITH_PROTOCOL
-    // url_match_result.length(9/10) > 0 -> URL_NO_PROTOCOL
 
-    std::string match_link(url_match_result.str(0));
+    std::string match_link(url_match_result.str(match_index));
     /*
       This really shouldn't happen I think, but I have a link with multiple # signs
       in my backup. This is not valid, and causes the HTML to not be valid, so
@@ -96,23 +110,60 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
       {
         match_link.replace(start_pos, 1, "%23");
         start_pos += STRLEN("%23");
+        match_length += 2; // (len("%23") - len("#"))
       }
     }
 
-    if (url_match_result.length(2) > 0) // -> URL_WITH_PROTOCOL
+    // let's assume the url does not end in some characters
+    while (match_link.back() == ':' ||
+           match_link.back() == '.' ||
+           match_link.back() == ',')
+    {
+      match_link.pop_back();
+      --match_length;
+    }
+
+    // special case for url with trailing ')'. Lets assume it does not belong to
+    // the url if it does not contain a unclosed '('
+    if (match_link.back() == ')') [[unlikely]]
+    {
+      int openbrackets = 0;
+      bool belongs_in_url = false;
+      for (unsigned int ri = match_link.size() - 1; ri--; )
+      {
+        if (match_link[ri] == '(')
+          ++openbrackets;
+        else if (match_link[ri] == ')')
+          --openbrackets;
+
+        if (openbrackets == 1)
+        {
+          belongs_in_url = true;
+          break;
+        }
+      }
+
+      if (!belongs_in_url)
+      {
+        match_link.pop_back();
+        --match_length;
+      }
+    }
+
+    if (match_index == URL_WITH_PROTOCOL_MATCH) // -> URL_WITH_PROTOCOL
       ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"" + match_link + "\">",
                            "",
                            "</a>",
                            true);
-    else if (url_match_result.length(3) > 0) // -> URL_WITHOUT_PROTOCOL
+    else if (match_index == URL_WITHOUT_PROTOCOL_MATCH) // -> URL_WITHOUT_PROTOCOL
       /* Here, we add the protocol manually (guessing it to be https),
          without a protocol, the 'link' will be interpreted as a location
          in the current domain (file://HTMLDIR/Conversation/Page.html/www.example.com),
          a workaround, using just "//" as the protocol does signal that the link
          is at a new root, but automatically uses the current protocol (which is file://,
-         which is not correct.
+         which is also not correct.
       */
       ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
@@ -120,7 +171,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
                            "",
                            "</a>",
                            true);
-    else if (url_match_result.length(1) > 0) // -> EMAIL
+    else if (match_index == EMAIL_MATCH) // -> EMAIL
       ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"mailto:" + match_link + "\">",
@@ -130,9 +181,8 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
 
 
     pos += url_match_result.position() + url_match_result.length(0);
-    bodycopy = url_match_result.suffix();
+    bodycopy_reference = url_match_result.suffix();
   }
-
 }
 
 

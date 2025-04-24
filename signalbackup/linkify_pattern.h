@@ -142,6 +142,7 @@
     "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}" \
     "|[1-9][0-9]|[0-9]))"
   /* translated ECMAScript version of original (which had nested [[]] and intersection &&). may have errors... */
+/*
 #define UCS_CHAR "\u00A1-\u1FFF\u200B-\u2027\u2030-\u202E\u2030-\u2FFF\u3001-\uD7FF" \
     "\uF900-\uFDCF"                                                     \
     "\uFDF0-\uFFEF"                                                     \
@@ -159,6 +160,9 @@
     "\U000C0000-\U000CFFFD"                                             \
     "\U000D0000-\U000DFFFD"                                             \
     "\U000E1000-\U000EFFFD"
+*/
+#define UCS_CHAR "\x80-\xFF" // mutlibyte ranges dont work of course...
+
 #define LABEL_CHAR "a-zA-Z0-9" UCS_CHAR
 //#define TLD_CHAR "a-zA-Z" UCS_CHAR
 #define IRI_LABEL "[" LABEL_CHAR "](?:[" LABEL_CHAR "_\\-]{0,61}[" LABEL_CHAR "]){0,1}"
@@ -167,7 +171,8 @@
 //#define HOST_NAME "(" IRI_LABEL "\\.)+" TLD
 //#define DOMAIN_NAME "(" HOST_NAME "|" IP_ADDRESS ")"
 #define PROTOCOL "(?:http|https|rtsp|ftp):\\/\\/" // NOTE originally started with (?i:  -> non capturing group with i (case insensitive flag) not valid ECMAScript (its PCRE) (we add icase to std::regex object)
-#define WORD_BOUNDARY "(?:\\b|$|^)"
+//#define WORD_BOUNDARY "(?:\\b|$|^)"
+#define WORD_BOUNDARY "(?:[^" LABEL_CHAR "]|$|^)"
 #define USER_INFO "(?:[a-zA-Z0-9\\$\\-_\\.\\+\\!\\*\\'\\(\\)"           \
   "\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,64}(?:\\:(?:[a-zA-Z0-9\\$\\-_" \
   "\\.\\+\\!\\*\\'\\(\\)\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,25})?\\@"
@@ -189,21 +194,24 @@
   "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}"                                     \
   ")+)"
 
-#define  WEB_URL_WITHOUT_PROTOCOL "("                                   \
+#define  WEB_URL_WITHOUT_PROTOCOL "(?:"                                 \
     WORD_BOUNDARY                                                       \
     "(?!:\\/\\/)"   /* NOTE: was originally (?<!:\\/\\/) but std::regex does not support (negative) lookbehind, this is not completely equivalent, but it will have to do */ \
-    "(?:(?:"                                                              \
+    "("                                                                 \
+    "(?:(?:"                                                            \
     STRICT_DOMAIN_NAME                                                  \
     ")(?:"                                                              \
     PORT_NUMBER                                                         \
     ")?)(?:"                                                            \
     PATH_AND_QUERY                                                      \
     ")?"                                                                \
+    ")"                                                                 \
     WORD_BOUNDARY                                                       \
     ")"
 
-#define WEB_URL_WITH_PROTOCOL "("                       \
+#define WEB_URL_WITH_PROTOCOL "(?:"                     \
     WORD_BOUNDARY                                       \
+    "("                                                 \
     "(?:(?:"                                            \
     PROTOCOL                                            \
     "(?:"                                               \
@@ -215,6 +223,7 @@
     ")?)(?:"                                            \
     PATH_AND_QUERY                                      \
     ")?"                                                \
+    ")"                                                 \
     WORD_BOUNDARY                                       \
     ")"
 
@@ -222,6 +231,10 @@ namespace HTMLLinkify
 {
   static REGEX const pattern("(?:" EMAIL_PATTERN "|" WEB_URL_WITH_PROTOCOL "|" WEB_URL_WITHOUT_PROTOCOL ")", REGEX_FLAGS);
 }
+
+static int constexpr EMAIL_MATCH{1};
+static int constexpr URL_WITH_PROTOCOL_MATCH{2};
+static int constexpr URL_WITHOUT_PROTOCOL_MATCH{3};
 
 #undef IANA_TOP_LEVEL_DOMAINS
 #undef IP_ADDRESS
