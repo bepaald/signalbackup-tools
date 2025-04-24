@@ -28,6 +28,11 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
 
   // set AES+MAC key
   auto [tmpdata, key_data_length] = Base64::base64StringToBytes(d_key);
+  if (!tmpdata || key_data_length != 64) [[unlikely]]
+  {
+    Logger::error("Failed to get key data for decrypting attachment.");
+    return ReturnCode::ERROR;
+  }
   std::unique_ptr<unsigned char[]> key_data(tmpdata);
   unsigned char *aeskey = key_data.get();
   uint64_t constexpr mackey_length = 32;
@@ -113,7 +118,7 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
     Logger::error("Failed to update/finalize hmac");
     return ReturnCode::ERROR;
   }
-#else
+#else // OPENSSL 1.x
   std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
   if (HMAC_Init_ex(hctx.get(), mackey, mackey_length, digest, nullptr) != 1) [[unlikely]]
   {
