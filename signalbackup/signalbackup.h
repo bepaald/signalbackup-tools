@@ -522,7 +522,7 @@ class SignalBackup
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string_view line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
-  inline int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
+  inline constexpr int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, unsigned int idx) const;
   inline int utf8Chars(std::string const &body) const;
   inline void resizeToNUtf8Chars(std::string &body, unsigned long size) const;
@@ -923,7 +923,7 @@ inline int SignalBackup::utf16CharSize(std::string const &body, unsigned int idx
   return codepoint >= 0x10000 ? 2 : 1;
 }
 
-inline int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const
+inline constexpr int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const
 {
   int utf16count = 0;
   int bytecount = 0;

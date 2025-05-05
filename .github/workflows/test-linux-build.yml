@@ -46,19 +46,19 @@ jobs:
         run: |
           bash BUILDSCRIPT.bash
           
-#  do-build-tests-legacy:
-#    runs-on: ubuntu-22.04
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Install dependencies
-#        run: |
-#          set -x
-#          sudo apt-get update
-#          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
-#
-#      - name: Build new script (legacy)
-#        run: |
-#          bash BUILDSCRIPT.bash
+  do-build-tests-legacy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+
+      - name: Build new script (legacy)
+        run: |
+          CXX=g++-9 CXXFLAGSEXTRA=-Wno-attributes CXXSTD="-std=c++2a" bash BUILDSCRIPT.bash
 
 #  do-build-tests-legacy:
 #    runs-on: ubuntu-20.04

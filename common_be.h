@@ -74,29 +74,35 @@ namespace bepaald
   inline void log(Args && ...args);
 #endif
   template <typename T, typename S>
-  T toNumber(S const &str, T def = 0, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *dummy = nullptr);
+  constexpr T toNumber(S const &str, T def = 0, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *dummy = nullptr);
   template <typename T>
-  T toNumber(std::string const &str, T def = 0, typename std::enable_if<!std::is_integral<T>::value>::type *dummy = nullptr);
+  constexpr T toNumber(std::string const &str, T def = 0, typename std::enable_if<!std::is_integral<T>::value>::type *dummy = nullptr);
   template <typename T>
-  T toNumberFromHex(std::string const &str, T def = 0);
+  constexpr T toNumberFromHex(std::string const &str, T def = 0);
   template <typename P, typename T>
-  void destroyPtr(P **p, T *psize);
+  constexpr void destroyPtr(P **p, T *psize);
   template <typename T>
-  inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  inline constexpr std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   template <typename T>
   inline std::string toHexString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
   inline constexpr int strlitLength(char const *str, int pos = 0);
   //inline int strlitLength(std::string const &str);
-  inline int numDigits(long long int num);
+  inline constexpr int numDigits(long long int num);
   inline std::string toDateString(std::time_t epoch, std::string const &format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
   inline void replaceAll(std::string *in, char from, std::string const &to);
   inline void replaceAll(std::string *in, std::string const &from, std::string const &to);
+#if __cpp_constexpr >= 202110L
+  inline constexpr std::string concat_helper(std::initializer_list<std::string_view> const &strs);
+  template <typename... Args>
+  inline constexpr std::string concat(Args const &... args);
+#else
   inline std::string concat_helper(std::initializer_list<std::string_view> const &strs);
   template <typename... Args>
   inline std::string concat(Args const &... args);
+#endif
   template <typename T, typename I>
   class container_has_contains
   {
@@ -138,7 +144,7 @@ namespace bepaald
   }
 
   template <typename T, typename U>
-  inline int findIdxOf(T const &container, U const &value);
+  inline constexpr int findIdxOf(T const &container, U const &value);
 }
 
 #if defined DEBUGMSG || DEBUGISSUE
@@ -151,7 +157,7 @@ inline void bepaald::log(Args && ...args)
 #endif
 
 template <typename T, typename S>
-T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *)
+constexpr T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *)
 {
   if (str.empty()) [[unlikely]]
     return def;
@@ -186,7 +192,7 @@ T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::is_integra
 
 // non-integral to number, not ever called I dont think
 template <typename T>
-T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<!std::is_integral<T>::value>::type *)
+constexpr T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<!std::is_integral<T>::value>::type *)
 {
   std::istringstream s(str);
   T i = def;
@@ -196,7 +202,7 @@ T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<!std:
 }
 
 template <typename T>
-T bepaald::toNumberFromHex(std::string const &str, T def)
+constexpr T bepaald::toNumberFromHex(std::string const &str, T def)
 {
   std::istringstream s(str);
   T i = def;
@@ -206,7 +212,7 @@ T bepaald::toNumberFromHex(std::string const &str, T def)
 }
 
 template <typename P, typename T>
-inline void bepaald::destroyPtr(P **p, T *psize)
+inline constexpr void bepaald::destroyPtr(P **p, T *psize)
 {
   if (*p)
   {
@@ -217,7 +223,7 @@ inline void bepaald::destroyPtr(P **p, T *psize)
 }
 
 template <typename T>
-inline std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
+inline constexpr std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
 {
   return std::to_string(num);
   //std::ostringstream oss;
@@ -254,7 +260,7 @@ inline constexpr int bepaald::strlitLength(char const *str, int pos)
 //   return str.size();
 // }
 
-inline int bepaald::numDigits(long long int num)
+inline constexpr int bepaald::numDigits(long long int num)
 {
   int count = 1;
   while (num /= 10)
@@ -317,7 +323,11 @@ inline void bepaald::replaceAll(std::string *in, std::string const &from, std::s
   }
 }
 
+#if __cpp_constexpr >= 202110L
+inline constexpr std::string bepaald::concat_helper(std::initializer_list<std::string_view> const &strs)
+#else
 inline std::string bepaald::concat_helper(std::initializer_list<std::string_view> const &strs)
+#endif
 {
   size_t len = 0;
   for (auto const &s : strs)
@@ -332,14 +342,18 @@ inline std::string bepaald::concat_helper(std::initializer_list<std::string_view
   return result;
 }
 
+#if __cpp_constexpr >= 202110L
 template <typename... Args>
+inline constexpr std::string bepaald::concat(Args const &... args)
+#else
 inline std::string bepaald::concat(Args const &... args)
+#endif
 {
   return concat_helper({args...});
 }
 
 template <typename T, typename U>
-inline int bepaald::findIdxOf(T const &container, U const &value)
+inline constexpr int bepaald::findIdxOf(T const &container, U const &value)
 {
   auto it = std::find(container.begin(), container.end(), value);
   if (it == container.end())

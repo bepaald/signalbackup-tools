@@ -42,6 +42,7 @@ bool SignalBackup::specialCharsSupported(std::string const &path) const
   std::string dummy, mpath, mtype;
   while (!mounts.eof())
   {
+    //     >> proc  >> /proc >> proc  >> rw,nosuid,nodev,noexec,relatime >> 0 >> 0
     mounts >> dummy >> mpath >> mtype >> dummy >> dummy >> dummy;
     if (mtype != "autofs")
       mount_info.emplace_back(mpath, mtype);
@@ -77,10 +78,10 @@ bool SignalBackup::specialCharsSupported(std::string const &path) const
       else
         return false;
     }
-  return false;
+  return true;
 }
 
-#else
+#else // ON WINDOWS
 
 bool SignalBackup::specialCharsSupported(std::string const &) const
 {
