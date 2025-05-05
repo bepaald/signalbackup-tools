@@ -76,13 +76,13 @@ namespace bepaald
   template <typename T, typename S>
   constexpr T toNumber(S const &str, T def = 0, typename std::enable_if<std::is_integral<T>::value && (std::is_same_v<S, std::string> || std::is_same_v<S, std::string_view>)>::type *dummy = nullptr);
   template <typename T>
-  constexpr T toNumber(std::string const &str, T def = 0, typename std::enable_if<!std::is_integral<T>::value>::type *dummy = nullptr);
+  T toNumber(std::string const &str, T def = 0, typename std::enable_if<!std::is_integral<T>::value>::type *dummy = nullptr);
   template <typename T>
-  constexpr T toNumberFromHex(std::string const &str, T def = 0);
+  T toNumberFromHex(std::string const &str, T def = 0);
   template <typename P, typename T>
   constexpr void destroyPtr(P **p, T *psize);
   template <typename T>
-  inline constexpr std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
+  inline std::string toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   template <typename T>
   inline std::string toHexString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
@@ -192,7 +192,7 @@ constexpr T bepaald::toNumber(S const &str, T def, typename std::enable_if<std::
 
 // non-integral to number, not ever called I dont think
 template <typename T>
-constexpr T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<!std::is_integral<T>::value>::type *)
+T bepaald::toNumber(std::string const &str, T def, typename std::enable_if<!std::is_integral<T>::value>::type *)
 {
   std::istringstream s(str);
   T i = def;
@@ -202,7 +202,7 @@ constexpr T bepaald::toNumber(std::string const &str, T def, typename std::enabl
 }
 
 template <typename T>
-constexpr T bepaald::toNumberFromHex(std::string const &str, T def)
+T bepaald::toNumberFromHex(std::string const &str, T def)
 {
   std::istringstream s(str);
   T i = def;
@@ -223,7 +223,7 @@ inline constexpr void bepaald::destroyPtr(P **p, T *psize)
 }
 
 template <typename T>
-inline constexpr std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
+inline std::string bepaald::toString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *)
 {
   return std::to_string(num);
   //std::ostringstream oss;
@@ -342,8 +342,8 @@ inline std::string bepaald::concat_helper(std::initializer_list<std::string_view
   return result;
 }
 
-#if __cpp_constexpr >= 202110L
 template <typename... Args>
+#if __cpp_constexpr >= 202110L
 inline constexpr std::string bepaald::concat(Args const &... args)
 #else
 inline std::string bepaald::concat(Args const &... args)
