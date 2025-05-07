@@ -233,7 +233,7 @@ inline bool BackupFrame::ok()
 
 inline constexpr int BackupFrame::getFieldnumber(unsigned char head) // static
 {
-  if (head & 0b10000000)
+  if (head & 0b10000000) [[unlikely]]
     return -1;
   return (head & 0b01111000) >> 3;
 }

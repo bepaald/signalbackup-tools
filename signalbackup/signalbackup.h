@@ -893,34 +893,40 @@ inline bool SignalBackup::HTMLwriteChatFolder(std::vector<long long int> const &
 
 inline int SignalBackup::utf16CharSize(std::string const &body, unsigned int idx) const
 {
-  // get code point
-  uint32_t codepoint = 0;
-  if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
-    /*
-    codepoint =
-      (static_cast<uint8_t>(body[idx]) & 0b00000111) << 18 |
-      (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 12 |
-      (static_cast<uint8_t>(body[idx + 2]) & 0b00111111) << 6 |
-      (static_cast<uint8_t>(body[idx + 3]) & 0b00111111);
-    */
-    return 2; // all 4 byte utf8 chars are 2 bytes in utf16
-  else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
-    codepoint =
-      (static_cast<uint8_t>(body[idx]) & 0b00001111) << 12 |
-      (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 6 |
-      (static_cast<uint8_t>(body[idx + 2]) & 0b00111111);
-  /*
-  else if ((static_cast<uint8_t>(body[idx]) & 0b11100000) == 0b11000000) // 2 byte char
-    codepoint =
-      (static_cast<uint8_t>(body[idx]) & 0b00011111) << 6 |
-      (static_cast<uint8_t>(body[idx + 1]) & 0b00111111);
-  else
-    codepoint = static_cast<uint8_t>(body[idx]);
-  */
-  else // all 1 and two byte utf-8 chars are 1 utf-16 char (max is 0b11111111111 which < 0x10000)
-    return 1;
 
-  return codepoint >= 0x10000 ? 2 : 1;
+  if ((static_cast<uint8_t>(body[idx]) & 0b1110'0000) <= 0b1100'0000 || // 1/2 byte utf8 -> 1 byte utf16
+      (static_cast<uint8_t>(body[idx]) & 0b1111'0000) == 0b1110'0000) [[likely]] // 3 byte utf8 char -> 1 byte utf-16
+    return 1;
+  return 2;
+
+  // // get code point
+  // uint32_t codepoint = 0;
+  // if ((static_cast<uint8_t>(body[idx]) & 0b11111000) == 0b11110000) // 4 byte char
+  //   /*
+  //   codepoint =
+  //     (static_cast<uint8_t>(body[idx]) & 0b00000111) << 18 |
+  //     (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 12 |
+  //     (static_cast<uint8_t>(body[idx + 2]) & 0b00111111) << 6 |
+  //     (static_cast<uint8_t>(body[idx + 3]) & 0b00111111);
+  //   */
+  //   return 2; // all 4 byte utf8 chars are 2 bytes in utf16
+  // else if ((static_cast<uint8_t>(body[idx]) & 0b11110000) == 0b11100000) // 3 byte char
+  //   codepoint =
+  //     (static_cast<uint8_t>(body[idx]) & 0b00001111) << 12 |
+  //     (static_cast<uint8_t>(body[idx + 1]) & 0b00111111) << 6 |
+  //     (static_cast<uint8_t>(body[idx + 2]) & 0b00111111);
+  // /*
+  // else if ((static_cast<uint8_t>(body[idx]) & 0b11100000) == 0b11000000) // 2 byte char
+  //   codepoint =
+  //     (static_cast<uint8_t>(body[idx]) & 0b00011111) << 6 |
+  //     (static_cast<uint8_t>(body[idx + 1]) & 0b00111111);
+  // else
+  //   codepoint = static_cast<uint8_t>(body[idx]);
+  // */
+  // else // all 1 and two byte utf-8 chars are 1 utf-16 char (max is 0b11111111111 which < 0x10000)
+  //   return 1;
+
+  // return codepoint >= 0x10000 ? 2 : 1;
 }
 
 inline constexpr int SignalBackup::numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const
