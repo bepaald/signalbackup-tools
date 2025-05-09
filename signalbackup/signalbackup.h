@@ -1027,7 +1027,7 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
 template <typename T>
 inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const
 {
-#if __cpp_lib_ranges >= 201911L && __cplusplus >= 202302L
+#if __cpp_lib_ranges >= 201911L
   for (auto const m : std::ranges::views::split(membersstring, ','))
     if constexpr (std::is_integral<T>::value)
       // cant use `std:string_view(m)', because of older compilers not fully implementing c++23 (which
