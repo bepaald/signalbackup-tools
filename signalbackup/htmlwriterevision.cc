@@ -31,13 +31,16 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                        d_mms_date_sent, ", ",
                                        d_mms_type, ", "
                                        "body, quote_missing, quote_author, quote_body, ", d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", "
+                                       "attcount, "
                                        "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                                        "json_extract(link_previews, '$[0].description') AS link_preview_description, ",
                                        (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "),
                                        (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
                                        "shared_contacts, quote_id, expires_in, ", d_mms_ranges, ", quote_mentions "
-                                       "FROM message WHERE _id = ?"), msg_id, &revision) || revision.rows() != 1)
+                                       "FROM ", d_mms_table, " ",
+                                       "LEFT JOIN (SELECT ", d_part_mid, " AS message_id, COUNT(*) AS attcount FROM ", d_part_table, " GROUP BY message_id) AS attmnts ON ", d_mms_table, "._id = attmnts.message_id "
+                                       "WHERE _id = ?"), msg_id, &revision) || revision.rows() != 1)
     return;
 
   long long int msg_recipient_id = revision.valueAsInt(0, d_mms_recipient_id);
@@ -52,41 +55,44 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   long long int expires_in = revision.getValueAs<long long int>(0, "expires_in");
   bool hasquote = !revision.isNull(0, "quote_id") && revision.getValueAs<long long int>(0, "quote_id");
   bool quote_missing = revision.valueAsInt(0, "quote_missing", 0) != 0;
+  long long int attachmentcount = revision.valueAsInt(0, "attcount", 0);
 
   SqliteDB::QueryResults attachment_results;
-  d_database.exec(bepaald::concat("SELECT ",
-                                  d_part_table, "._id, ",
-                                  (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
-                                  d_part_ct, ", "
-                                  "file_name, ",
-                                  d_part_pending, ", ",
-                                  (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()),
-                                  "sticker_pack_id, ",
-                                  d_mms_table, ".date_received AS date_received "
-                                  "FROM ", d_part_table, " "
-                                  "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
-                                  "WHERE ", d_part_mid, " IS ? "
-                                  "AND quote IS ? "
-                                  "ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
+  if (attachmentcount > 0)
+    d_database.exec(bepaald::concat("SELECT ",
+                                    d_part_table, "._id, ",
+                                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
+                                    d_part_ct, ", "
+                                    "file_name, ",
+                                    d_part_pending, ", ",
+                                    (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()),
+                                    "sticker_pack_id, ",
+                                    d_mms_table, ".date_received AS date_received "
+                                    "FROM ", d_part_table, " "
+                                    "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
+                                    "WHERE ", d_part_mid, " IS ? "
+                                    "AND quote IS ? "
+                                    "ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
 
   // check attachments for long message body -> replace cropped body & remove from attachment results
   setLongMessageBody(&body, &attachment_results);
 
   SqliteDB::QueryResults quote_attachment_results;
-  d_database.exec(bepaald::concat("SELECT ",
-                                  d_part_table, "._id, ",
-                                  (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
-                                  d_part_ct, ", "
-                                  "file_name, ",
-                                  d_part_pending, ", ",
-                                  (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()),
-                                  "sticker_pack_id, ",
-                                  d_mms_table, ".date_received AS date_received "
-                                  "FROM ", d_part_table, " "
-                                  "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
-                                  "WHERE ", d_part_mid, " IS ? "
-                                  "AND quote IS ? "
-                                  "ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 1}, &quote_attachment_results);
+  if (attachmentcount > 0)
+    d_database.exec(bepaald::concat("SELECT ",
+                                    d_part_table, "._id, ",
+                                    (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
+                                    d_part_ct, ", "
+                                    "file_name, ",
+                                    d_part_pending, ", ",
+                                    (d_database.tableContainsColumn(d_part_table, "caption") ? "caption, "s : std::string()),
+                                    "sticker_pack_id, ",
+                                    d_mms_table, ".date_received AS date_received "
+                                    "FROM ", d_part_table, " "
+                                    "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
+                                    "WHERE ", d_part_mid, " IS ? "
+                                    "AND quote IS ? "
+                                    "ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 1}, &quote_attachment_results);
 
   SqliteDB::QueryResults mention_results;
   d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);

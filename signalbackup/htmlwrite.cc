@@ -2554,7 +2554,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     if (msg_info.edit_revisions->rows())
     {
       htmloutput << "<div class=\"edited-info\">";
-      for (unsigned int i = 0; i < msg_info.edit_revisions->rows() - 1; ++i) // -1, skip last one: it is current message
+      for (unsigned int i = 0; i < msg_info.edit_revisions->rows() - 1; ++i) // -1, skip last one: it is the current message
       {
 
         if (i == 0)

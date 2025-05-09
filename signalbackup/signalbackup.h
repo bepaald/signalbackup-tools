@@ -1027,12 +1027,14 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
 template <typename T>
 inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const
 {
-#if __cpp_lib_ranges >= 201911L
+#if __cpp_lib_ranges >= 201911L && __cplusplus >= 202302L
   for (auto const m : std::ranges::views::split(membersstring, ','))
     if constexpr (std::is_integral<T>::value)
-      members->emplace_back(bepaald::toNumber<T>(std::string_view(m)));
+      // cant use `std:string_view(m)', because of older compilers not fully implementing c++23 (which
+      // is where the range-cstor for string_view was introduced). (for example g++12 (on debian 12))
+      members->emplace_back(bepaald::toNumber<T>(std::string_view(m.begin(), m.end())));
     else
-      members->emplace_back(std::string_view(m));
+      members->emplace_back(std::string_view(m.begin(), m.end()));
 #else
   std::string_view::size_type start = 0;
   std::string_view::size_type pos;
