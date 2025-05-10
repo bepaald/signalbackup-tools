@@ -145,7 +145,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
         ids_in_saved_messages.rows() == 1)
     {
       if (d_verbose) [[unlikely]]
-        Logger::message("Found json contact from saved_messages (self): ", ids_in_saved_messages("from_id"), " -> ", d_selfid);
+        Logger::message("Found json contact from saved_messages (self-msg-from-id): ", ids_in_saved_messages("from_id"), " -> ", d_selfid);
 
       realcontactmap.push_back({{ids_in_saved_messages("from_id")}, d_selfid});
       // copy aliases and erase from not found
@@ -158,7 +158,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
         saved_messages_id.rows() == 1)
     {
       if (d_verbose) [[unlikely]]
-        Logger::message("Found json contact from saved_messages (self): ", saved_messages_id("id"), " -> ", d_selfid);
+        Logger::message("Found json contact from saved_messages (self-chat-id): ", saved_messages_id("id"), " -> ", d_selfid);
 
       realcontactmap.push_back({{saved_messages_id("id")}, d_selfid});
       // copy aliases and erase from not found
