@@ -40,7 +40,10 @@ long long int SignalBackup::scanSelf() const
                                                                        "(SELECT address FROM identities WHERE identity_key IS ?)",
                                                                        identity_public_key, -1);
     if (selfid != -1)
+    {
+      //std::cout << "RETURN 1: " << selfid << std::endl;
       return selfid;
+    }
   }
 
   ///// NEXT TRY BY GETTING KEY 'account.aci_identity_public_key' FROM KeyValues, and matching it to uuid from identites-table
@@ -57,7 +60,10 @@ long long int SignalBackup::scanSelf() const
                                                                        "(SELECT address FROM identities WHERE identity_key IS ?)",
                                                                        identity_public_key, -1);
     if (selfid != -1)
+    {
+      //std::cout << "RETURN 2: " << selfid << std::endl;
       return selfid;
+    }
   }
 
 
@@ -75,7 +81,10 @@ long long int SignalBackup::scanSelf() const
                                                                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK ,
                                                                       Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, -1);
   if (selfid != -1)
+  {
+    //std::cout << "RETURN 3: " << selfid << std::endl;
     return selfid;
+  }
 
   // get thread ids of all 1-on-1 conversations
   SqliteDB::QueryResults res;
@@ -260,7 +269,10 @@ long long int SignalBackup::scanSelf() const
   //   std::cout << "Option: " << o << std::endl;
 
   if (options.size() == 1)
+  {
+    //std::cout << "RETURN 4: " << *options.begin() << std::endl;
     return *options.begin();
+  }
 
   return -1;
 }

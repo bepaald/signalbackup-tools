@@ -31,7 +31,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     for (unsigned int i = 0; i < contactmap->size(); ++i)
     {
       std::string name = getNameFromRecipientId((*contactmap)[i].second);
-      Logger::message(" * ", (*contactmap)[i].first, " -> ", (*contactmap)[i].second, "(", name, ")");
+      Logger::message(" * ", (*contactmap)[i].first, " -> ", (*contactmap)[i].second, " (", name, ")");
     }
   }
 
@@ -97,7 +97,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
       if (bepaald::contains(inhibitmappping, aliases(j, "name")))
         continue;
 
-      // if the contact is already in contactmap by alias, we are done again
+      // if the contact is already in contactmap (by alias), we are done again
       long long int contactidx = -1;
       if ((contactidx = find_in_contactmap(aliases(j, "name"))) != -1)
         found_id = realcontactmap[contactidx].second;
@@ -112,9 +112,6 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     }
     if (found_id != -1)
     {
-      if (d_verbose) [[unlikely]]
-        Logger::message("Found json contact by name: ", contact, " -> ", found_id);
-
       // we found this contact, add it (and all names) to map
       realcontactmap.push_back({{contact}, found_id});
       for (unsigned int j = 0; j < aliases.rows(); ++j)
@@ -147,6 +144,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     if (jsondb.d_database.exec("SELECT DISTINCT from_id FROM messages WHERE chatidx IN (SELECT DISTINCT idx FROM chats WHERE type = 'saved_messages')", &ids_in_saved_messages) &&
         ids_in_saved_messages.rows() == 1)
     {
+      if (d_verbose) [[unlikely]]
+        Logger::message("Found json contact from saved_messages (self): ", ids_in_saved_messages("from_id"), " -> ", d_selfid);
+
       realcontactmap.push_back({{ids_in_saved_messages("from_id")}, d_selfid});
       // copy aliases and erase from not found
       move_from_not_found_to_contactmap(json_contacts, ids_in_saved_messages("from_id"));
@@ -157,6 +157,9 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     if (jsondb.d_database.exec("SELECT DISTINCT id FROM chats WHERE type = 'saved_messages'", &saved_messages_id) &&
         saved_messages_id.rows() == 1)
     {
+      if (d_verbose) [[unlikely]]
+        Logger::message("Found json contact from saved_messages (self): ", saved_messages_id("id"), " -> ", d_selfid);
+
       realcontactmap.push_back({{saved_messages_id("id")}, d_selfid});
       // copy aliases and erase from not found
       move_from_not_found_to_contactmap(json_contacts, saved_messages_id("id"));
@@ -195,7 +198,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     if (!jsondb.d_database.exec("SELECT DISTINCT from_id, chatidx FROM messages "
                                 "WHERE type = 'message' "
                                 //"AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')",
-                                "AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat'" + (chatlist.empty() ? "" : "AND idx IN " + chatlist) + ")",
+                                "AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat'" + (chatlist.empty() ? "" : " AND idx IN " + chatlist) + ")",
                                 &personal_chat_contacts))
       return false;
 
@@ -222,7 +225,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
       if (contactidx != -1)
       {
         if (d_verbose) [[unlikely]]
-          Logger::message("Linking contacts: ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
+          Logger::message("Linking contacts (contactidx was found): ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
 
         realcontactmap.push_back({{linkchat}, realcontactmap[contactidx].second});
         // copy aliases and erase from not found
@@ -233,7 +236,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
       if (chatidx != -1)
       {
         if (d_verbose) [[unlikely]]
-          Logger::message("Linking contacts: ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
+          Logger::message("Linking contacts (chatidx was found): ", personal_chat_contacts(i, "from_id"), " == ", linkchat);
 
         realcontactmap.push_back({{personal_chat_contacts(i, "from_id")}, realcontactmap[chatidx].second});
         // copy aliases and erase from not found

@@ -554,13 +554,13 @@ body {
       var lastbutton = document.getElementById("searchlast");
 
       /* fill recipient selection list */
-      recipient_idx.sort((a, b) => (a.display_name > b.display_name));
+      recipient_idx.sort((a, b) => (a.dn > b.dn));
       for (i = 0; i < recipient_idx.length; ++i)
       {
           var list = document.getElementById("recipientselector");
           var listoption = document.createElement('option');
-          listoption.setAttribute('value', recipient_idx[i]._id);
-          listoption.append(recipient_idx[i].display_name);
+          listoption.setAttribute('value', recipient_idx[i].i);
+          listoption.append(recipient_idx[i].dn);
           list.append(listoption);
       }
 
@@ -706,16 +706,16 @@ body {
 
         return obj.filter(element => regex.test(element.b) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.tr == recipient))).sort((r1, r2) => r1.d - r2.d);
+                                     (document.getElementById('enable_recipient').checked === false || (element.f == recipient || element.t == recipient))).sort((r1, r2) => r1.d - r2.d);
       }
       if (case_sensitive == false)
         return obj.filter(element => element.b.toUpperCase().includes(term.toUpperCase()) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.d - r2.d);
+                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.t == recipient))).sort((r1, r2) => r1.d - r2.d);
       else
         return obj.filter(element => element.b.includes(term) &&
                                      (document.getElementById('enable_date').checked === false || (element.d >= mindate && element.d <= maxdate)) &&
-                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.tr == recipient))).sort((r1, r2) => r1.d - r2.d);
+                                     (document.getElementById('enable_recipient').checked === false || ((onlythread === false && element.f == recipient) || element.t == recipient))).sort((r1, r2) => r1.d - r2.d);
     }
 
     function stringinsert(str, index, value)
@@ -768,21 +768,21 @@ body {
       {
         // get displayname of 'from' id
         var index = recipient_idx.findIndex(function(item) {
-          return item._id === global_results[i].f;
+          return item.i === global_results[i].f;
         });
-        var displayname = recipient_idx[index].display_name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var displayname = recipient_idx[index].dn.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         // get name of 'thread' id
         var index = recipient_idx.findIndex(function(item){
-          return item._id === global_results[i].tr;
+          return item.i === global_results[i].t;
         });
-        var threadname = recipient_idx[index].display_name.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var threadname = recipient_idx[index].dn.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
         // get base_filename of id
         var index = page_idx.findIndex(function(item){
-          return item._id === global_results[i].p;
+          return item.i === global_results[i].p;
         });
-        var base_filename = page_idx[index].bn;
+        var base_filename = page_idx[index].f;
 
         // add searchresults
         var elem = document.createElement('a');
@@ -792,7 +792,7 @@ body {
           elem.classList.add("msg-outgoing");
         else
           elem.classList.add("msg-incoming");
-        elem.setAttribute('href', encodeURI(base_filename + )code" << (compact ? "global_results[i].n + '.html#'" : "(global_results[i].n > 0 ? '_' + global_results[i].n + '.html#' : '.html#')") << R"code( + global_results[i].id));
+        elem.setAttribute('href', encodeURI(base_filename + )code" << (compact ? "global_results[i].n + '.html#'" : "(global_results[i].n > 0 ? '_' + global_results[i].n + '.html#' : '.html#')") << R"code( + global_results[i].i));
 
         var linkdiv = document.createElement('div');
 
@@ -805,7 +805,7 @@ body {
           fromspan.innerHTML = displayname + ' (to <span style="font-style: italic; font-synthesis: none;">' + threadname + '</span>)';
         else
         {
-          if (global_results[i].f === global_results[i].tr)
+          if (global_results[i].f === global_results[i].t)
             fromspan.innerHTML = displayname;
           else
             fromspan.innerHTML = displayname + ' (in <span style="font-style: italic; font-synthesis: none;">' + threadname + '</span>)';

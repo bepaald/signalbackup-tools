@@ -666,10 +666,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
           if (!d_database.exec("SELECT json_object("
-                               "'id', ?, "
+                               "'i', ?, "
                                "'b', " + d_mms_table + ".body, "
                                "'f', ?, "
-                               "'tr', ?, "
+                               "'t', ?, "
                                "'o', ?, "
                                "'d', ?, "
                                "'p', ?, "
@@ -922,12 +922,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (searchidx_write_started) [[likely]]
       searchidx << "\n];\n";
 
-    // write recipient info:
+    // write recipient info, maps recipient_ids to display name.
     //std::map<long long int, RecipientInfo> recipient_info;
     searchidx << "recipient_idx = [\n";
     for (auto r = recipient_info.begin(); r != recipient_info.end(); ++r)
     {
-      std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'display_name', ?)", {r->first, r->second.display_name}, std::string());
+      std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('i', ?, 'dn', ?)", {r->first, r->second.display_name}, std::string());
       if (line.empty()) [[unlikely]]
         continue;
       searchidx << "  " << line;
@@ -937,11 +937,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         searchidx << "\n];\n";
     }
 
-    // write page info:
+    // write page info, maps threads to base filename (html without ' (NN).html')
     searchidx << "page_idx = [\n";
     for (auto pi = searchidx_page_idx_map.begin() ; pi != searchidx_page_idx_map.end(); ++pi)
     {
-      std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('_id', ?, 'bn', ?)", {pi->second, pi->first}, std::string());
+      std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('i', ?, 'f', ?)", {pi->second, pi->first}, std::string());
       if (line.empty()) [[unlikely]]
         continue;
       searchidx << "  " << line;
