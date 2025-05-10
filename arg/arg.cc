@@ -48,78 +48,78 @@ Arg::Arg(int argc, char *argv[])
   d_logfile(std::string()),
   d_exporthtml(std::string()),
   d_exportdesktophtml(std::string()),
+  d_jsonshowcontactmap(std::string()),
   d_listjsonchats(std::string()),
   d_importtelegram(std::string()),
   d_split_by(std::string()),
   d_exporttxt(std::string()),
   d_exportdesktoptxt(std::string()),
+  d_passphrase(std::string()),
   d_dumpdesktopdb(std::string()),
   d_sourcepassphrase(std::string()),
   d_source(std::string()),
   d_opassphrase(std::string()),
-  d_output(std::string()),
   d_exportxml(std::string()),
   d_querymode(std::string()),
-  d_passphrase(std::string()),
+  d_output(std::string()),
   d_input(std::string()),
-  d_croptothreadsbyname(std::vector<std::string>()),
-  d_limittothreadsbyname(std::vector<std::string>()),
   d_onlytype(std::vector<std::string>()),
+  d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>()),
+  d_croptothreadsbyname(std::vector<std::string>()),
   d_croptothreads(std::vector<long long int>()),
-  d_editattachmentsize(std::vector<long long int>()),
   d_replaceattachments(std::vector<std::pair<std::string,std::string>>()),
   d_selectxmlchats(std::vector<std::string>()),
   d_listxmlcontacts(std::vector<std::string>()),
   d_mapxmlcontacts(std::vector<std::pair<std::string,long long int>>()),
   d_limittodates(std::vector<std::string>()),
   d_importthreads(std::vector<long long int>()),
-  d_exportplaintextbackuphtml(std::vector<std::string>()),
   d_importthreadsbyname(std::vector<std::string>()),
+  d_exportplaintextbackuphtml(std::vector<std::string>()),
   d_limittothreads(std::vector<long long int>()),
+  d_limittothreadsbyname(std::vector<std::string>()),
   d_importplaintextbackup(std::vector<std::string>()),
-  d_preventjsonmapping(std::vector<std::string>()),
-  d_mapjsoncontacts(std::vector<std::pair<std::string, long long int>>()),
   d_selectjsonchats(std::vector<long long int>()),
-  d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
+  d_preventjsonmapping(std::vector<std::string>()),
+  d_runsqlquery(std::vector<std::string>()),
+  d_editattachmentsize(std::vector<long long int>()),
   d_limitcontacts(std::vector<std::string>()),
   d_rundtprettysqlquery(std::vector<std::string>()),
-  d_rundtsqlquery(std::vector<std::string>()),
   d_htmlignoremediatypes(std::vector<std::string>()),
+  d_rundtsqlquery(std::vector<std::string>()),
   d_runprettysqlquery(std::vector<std::string>()),
-  d_runsqlquery(std::vector<std::string>()),
+  d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
   d_croptodates(std::vector<std::string>()),
   d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_mergegroups(std::vector<std::string>()),
-  d_onlyinthreads(std::vector<long long int>()),
-  d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
   d_mergerecipients(std::vector<std::string>()),
   d_mapxmladdresses(std::vector<std::pair<std::string, std::string>>()),
+  d_onlyinthreads(std::vector<long long int>()),
+  d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
   d_mapxmlcontactnames(std::vector<std::pair<std::string, std::string>>()),
   d_onlylargerthan(-1),
   d_desktopdbversion(4),
-  d_split(1000),
   d_findrecipient(-1),
+  d_split(1000),
   d_hiperfall(-1),
   d_removedoubles(0),
-  d_fulldecode(false),
-  d_migrate_to_191(false),
-  d_skipmessagereorder(false),
-  d_append(false),
-  d_truncate(true),
+  d_jsonprependforward(false),
   d_migratedb(false),
   d_importstickers(false),
   d_htmlpagemenu(true),
-  d_custom_hugogithubs(false),
-  d_xmlautogroupnames(false),
-  d_xmlmarkread(false),
-  d_compactfilenames(false),
-  d_aggressivefilenamesanitizing(false),
   d_targetisdummy(false),
   d_linkify(true),
-  d_jsonprependforward(false),
+  d_migrate_to_191(false),
   d_jsonmarkdelivered(true),
   d_jsonmarkread(false),
   d_xmlmarkdelivered(true),
+  d_xmlmarkread(false),
+  d_aggressivefilenamesanitizing(false),
+  d_compactfilenames(false),
+  d_xmlautogroupnames(false),
+  d_fulldecode(false),
+  d_custom_hugogithubs(false),
+  d_truncate(true),
+  d_skipmessagereorder(false),
   d_reordermmssmsids(false),
   d_importfromdesktop(false),
   d_scramble(false),
@@ -140,7 +140,8 @@ Arg::Arg(int argc, char *argv[])
   d_excludestickers(false),
   d_showdesktopkey(false),
   d_assumebadframesizeonbadmac(false),
-  d_includefullcontactlist(false),
+  d_themeswitching(false),
+  d_light(false),
   d_importdesktopcontacts(false),
   d_addincompletedataforhtmlexport(false),
   d_originalfilenames(false),
@@ -148,8 +149,8 @@ Arg::Arg(int argc, char *argv[])
   d_includereceipts(false),
   d_stickerpacks(false),
   d_searchpage(false),
-  d_themeswitching(false),
-  d_light(false),
+  d_append(false),
+  d_includefullcontactlist(false),
   d_includesettings(false),
   d_includeblockedlist(false),
   d_includecalllog(false),
@@ -473,6 +474,20 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "--jsonshowcontactmap")
+    {
+      if (i < argsize - 1)
+      {
+        d_jsonshowcontactmap = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
     if (option == "--listjsonchats")
     {
       if (i < argsize - 1)
@@ -549,6 +564,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "-p" || option == "--passphrase" || option == "--password")
+    {
+      if (i < argsize - 1)
+      {
+        d_passphrase = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--dumpdesktopdb")
     {
       if (i < argsize - 1)
@@ -601,20 +629,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "-o" || option == "--output")
-    {
-      if (i < argsize - 1)
-      {
-        d_output = std::move(arguments[++i]);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      d_input_required = true;
-      continue;
-    }
     if (option == "--exportxml")
     {
       if (i < argsize - 1)
@@ -649,11 +663,25 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "-p" || option == "--passphrase" || option == "--password")
+    if (option == "-o" || option == "--output")
     {
       if (i < argsize - 1)
       {
-        d_passphrase = std::move(arguments[++i]);
+        d_output = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
+    if (option == "-i" || option == "--input")
+    {
+      if (i < argsize - 1)
+      {
+        d_input = std::move(arguments[++i]);
       }
       else
       {
@@ -662,11 +690,29 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "-i" || option == "--input")
+    if (option == "--onlytype")
     {
       if (i < argsize - 1)
       {
-        d_input = std::move(arguments[++i]);
+        parseStringList(arguments[++i], &d_onlytype);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapjsoncontacts")
+    {
+      if (i < argsize - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapjsoncontacts, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
       }
       else
       {
@@ -689,32 +735,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--limittothreadsbyname")
-    {
-      if (i < argsize - 1)
-      {
-        parseStringList(arguments[++i], &d_limittothreadsbyname);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--onlytype")
-    {
-      if (i < argsize - 1)
-      {
-        parseStringList(arguments[++i], &d_onlytype);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--croptothreads")
     {
       if (i < argsize - 1)
@@ -731,23 +751,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
-      continue;
-    }
-    if (option == "--editattachmentsize")
-    {
-      if (i < argsize - 1)
-      {
-        if (!parseNumberList(arguments[++i], &d_editattachmentsize, false))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
       continue;
     }
     if (option == "--replaceattachments")
@@ -863,19 +866,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--exportplaintextbackuphtml")
-    {
-      while (i < argsize - 1 && !isOption(arguments[i + 1]))
-      {
-        d_exportplaintextbackuphtml.emplace_back(std::move(arguments[++i]));
-      }
-      if (d_exportplaintextbackuphtml.size() < 2)
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': 2 arguments required, " << d_exportplaintextbackuphtml.size() << " provided ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--importthreadsbyname")
     {
       if (i < argsize - 1)
@@ -890,6 +880,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
+    if (option == "--exportplaintextbackuphtml")
+    {
+      while (i < argsize - 1 && !isOption(arguments[i + 1]))
+      {
+        d_exportplaintextbackuphtml.emplace_back(std::move(arguments[++i]));
+      }
+      if (d_exportplaintextbackuphtml.size() < 2)
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': 2 arguments required, " << d_exportplaintextbackuphtml.size() << " provided ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--limittothreads")
     {
       if (i < argsize - 1)
@@ -899,6 +902,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
         }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limittothreadsbyname")
+    {
+      if (i < argsize - 1)
+      {
+        parseStringList(arguments[++i], &d_limittothreadsbyname);
       }
       else
       {
@@ -921,37 +937,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--preventjsonmapping")
-    {
-      if (i < argsize - 1)
-      {
-        parseStringList(arguments[++i], &d_preventjsonmapping);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--mapjsoncontacts")
-    {
-      if (i < argsize - 1)
-      {
-        std::string error;
-        if (!parsePairList(arguments[++i], "=", &d_mapjsoncontacts, &error))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--selectjsonchats")
     {
       if (i < argsize - 1)
@@ -969,14 +954,40 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--mapcsvfields")
+    if (option == "--preventjsonmapping")
     {
       if (i < argsize - 1)
       {
-        std::string error;
-        if (!parsePairList(arguments[++i], "=", &d_mapcsvfields, &error))
+        parseStringList(arguments[++i], &d_preventjsonmapping);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--runsqlquery")
+    {
+      if (i < argsize - 1)
+      {
+        d_runsqlquery.emplace_back(std::move(arguments[++i]));
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--editattachmentsize")
+    {
+      if (i < argsize - 1)
+      {
+        if (!parseNumberList(arguments[++i], &d_editattachmentsize, false))
         {
-          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
           ok = false;
         }
       }
@@ -1013,11 +1024,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--rundtsqlquery")
+    if (option == "--htmlignoremediatypes")
     {
       if (i < argsize - 1)
       {
-        d_rundtsqlquery.emplace_back(std::move(arguments[++i]));
+        parseStringList(arguments[++i], &d_htmlignoremediatypes);
       }
       else
       {
@@ -1026,11 +1037,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--htmlignoremediatypes")
+    if (option == "--rundtsqlquery")
     {
       if (i < argsize - 1)
       {
-        parseStringList(arguments[++i], &d_htmlignoremediatypes);
+        d_rundtsqlquery.emplace_back(std::move(arguments[++i]));
       }
       else
       {
@@ -1053,18 +1064,22 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--runsqlquery")
+    if (option == "--mapcsvfields")
     {
       if (i < argsize - 1)
       {
-        d_runsqlquery.emplace_back(std::move(arguments[++i]));
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapcsvfields, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
       }
       else
       {
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
-      d_input_required = true;
       continue;
     }
     if (option == "--croptodates")
@@ -1121,6 +1136,38 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
+    if (option == "--mergerecipients")
+    {
+      if (i < argsize - 1)
+      {
+        parseStringList(arguments[++i], &d_mergerecipients);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--mapxmladdresses")
+    {
+      if (i < argsize - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--onlyinthreads")
     {
       if (i < argsize - 1)
@@ -1144,38 +1191,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_setchatcolors, &error))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--mergerecipients")
-    {
-      if (i < argsize - 1)
-      {
-        parseStringList(arguments[++i], &d_mergerecipients);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--mapxmladdresses")
-    {
-      if (i < argsize - 1)
-      {
-        std::string error;
-        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
@@ -1240,20 +1255,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--split")
-    {
-      d_split_bool = true;
-      if (i < argsize - 1 && !isOption(arguments[i + 1]))
-      {
-        if (!ston(&d_split, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      d_split_by.clear();
-      continue;
-    }
     if (option == "--findrecipient")
     {
       if (i < argsize - 1)
@@ -1269,6 +1270,20 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
+      continue;
+    }
+    if (option == "--split")
+    {
+      d_split_bool = true;
+      if (i < argsize - 1 && !isOption(arguments[i + 1]))
+      {
+        if (!ston(&d_split, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      d_split_by.clear();
       continue;
     }
     if (option == "--hiperfall")
@@ -1302,56 +1317,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--fulldecode")
+    if (option == "--jsonprependforward")
     {
-      d_fulldecode = true;
-      d_input_required = true;
+      d_jsonprependforward = true;
       continue;
     }
-    if (option == "--no-fulldecode")
+    if (option == "--no-jsonprependforward")
     {
-      d_fulldecode = false;
-      continue;
-    }
-    if (option == "--migrate_to_191")
-    {
-      d_migrate_to_191 = true;
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--no-migrate_to_191")
-    {
-      d_migrate_to_191 = false;
-      continue;
-    }
-    if (option == "--skipmessagereorder")
-    {
-      d_skipmessagereorder = true;
-      continue;
-    }
-    if (option == "--no-skipmessagereorder")
-    {
-      d_skipmessagereorder = false;
-      continue;
-    }
-    if (option == "--append")
-    {
-      d_append = true;
-      continue;
-    }
-    if (option == "--no-append")
-    {
-      d_append = false;
-      continue;
-    }
-    if (option == "--truncate")
-    {
-      d_truncate = true;
-      continue;
-    }
-    if (option == "--no-truncate")
-    {
-      d_truncate = false;
+      d_jsonprependforward = false;
       continue;
     }
     if (option == "--migratedb")
@@ -1384,57 +1357,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_htmlpagemenu = false;
       continue;
     }
-    if (option == "--custom_hugogithubs" || option == "--migrate214to215")
-    {
-      d_custom_hugogithubs = true;
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--no-custom_hugogithubs")
-    {
-      d_custom_hugogithubs = false;
-      continue;
-    }
-    if (option == "--xmlautogroupnames")
-    {
-      d_xmlautogroupnames = true;
-      continue;
-    }
-    if (option == "--no-xmlautogroupnames")
-    {
-      d_xmlautogroupnames = false;
-      continue;
-    }
-    if (option == "--xmlmarkread")
-    {
-      d_xmlmarkread = true;
-      continue;
-    }
-    if (option == "--no-xmlmarkread")
-    {
-      d_xmlmarkread = false;
-      continue;
-    }
-    if (option == "--compactfilenames")
-    {
-      d_compactfilenames = true;
-      continue;
-    }
-    if (option == "--no-compactfilenames")
-    {
-      d_compactfilenames = false;
-      continue;
-    }
-    if (option == "--aggressivefilenamesanitizing")
-    {
-      d_aggressivefilenamesanitizing = true;
-      continue;
-    }
-    if (option == "--no-aggressivefilenamesanitizing")
-    {
-      d_aggressivefilenamesanitizing = false;
-      continue;
-    }
     if (option == "--targetisdummy")
     {
       d_targetisdummy = true;
@@ -1457,14 +1379,15 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_linkify = false;
       continue;
     }
-    if (option == "--jsonprependforward")
+    if (option == "--migrate_to_191")
     {
-      d_jsonprependforward = true;
+      d_migrate_to_191 = true;
+      d_input_required = true;
       continue;
     }
-    if (option == "--no-jsonprependforward")
+    if (option == "--no-migrate_to_191")
     {
-      d_jsonprependforward = false;
+      d_migrate_to_191 = false;
       continue;
     }
     if (option == "--jsonmarkdelivered")
@@ -1495,6 +1418,88 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-xmlmarkdelivered")
     {
       d_xmlmarkdelivered = false;
+      continue;
+    }
+    if (option == "--xmlmarkread")
+    {
+      d_xmlmarkread = true;
+      continue;
+    }
+    if (option == "--no-xmlmarkread")
+    {
+      d_xmlmarkread = false;
+      continue;
+    }
+    if (option == "--aggressivefilenamesanitizing")
+    {
+      d_aggressivefilenamesanitizing = true;
+      continue;
+    }
+    if (option == "--no-aggressivefilenamesanitizing")
+    {
+      d_aggressivefilenamesanitizing = false;
+      continue;
+    }
+    if (option == "--compactfilenames")
+    {
+      d_compactfilenames = true;
+      continue;
+    }
+    if (option == "--no-compactfilenames")
+    {
+      d_compactfilenames = false;
+      continue;
+    }
+    if (option == "--xmlautogroupnames")
+    {
+      d_xmlautogroupnames = true;
+      continue;
+    }
+    if (option == "--no-xmlautogroupnames")
+    {
+      d_xmlautogroupnames = false;
+      continue;
+    }
+    if (option == "--fulldecode")
+    {
+      d_fulldecode = true;
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--no-fulldecode")
+    {
+      d_fulldecode = false;
+      continue;
+    }
+    if (option == "--custom_hugogithubs" || option == "--migrate214to215")
+    {
+      d_custom_hugogithubs = true;
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--no-custom_hugogithubs")
+    {
+      d_custom_hugogithubs = false;
+      continue;
+    }
+    if (option == "--truncate")
+    {
+      d_truncate = true;
+      continue;
+    }
+    if (option == "--no-truncate")
+    {
+      d_truncate = false;
+      continue;
+    }
+    if (option == "--skipmessagereorder")
+    {
+      d_skipmessagereorder = true;
+      continue;
+    }
+    if (option == "--no-skipmessagereorder")
+    {
+      d_skipmessagereorder = false;
       continue;
     }
     if (option == "--reordermmssmsids")
@@ -1705,14 +1710,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_assumebadframesizeonbadmac = false;
       continue;
     }
-    if (option == "--includefullcontactlist")
+    if (option == "--themeswitching")
     {
-      d_includefullcontactlist = true;
+      d_themeswitching = true;
       continue;
     }
-    if (option == "--no-includefullcontactlist")
+    if (option == "--no-themeswitching")
     {
-      d_includefullcontactlist = false;
+      d_themeswitching = false;
+      continue;
+    }
+    if (option == "--light")
+    {
+      d_light = true;
+      continue;
+    }
+    if (option == "--no-light")
+    {
+      d_light = false;
       continue;
     }
     if (option == "--importdesktopcontacts")
@@ -1785,24 +1800,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_searchpage = false;
       continue;
     }
-    if (option == "--themeswitching")
+    if (option == "--append")
     {
-      d_themeswitching = true;
+      d_append = true;
       continue;
     }
-    if (option == "--no-themeswitching")
+    if (option == "--no-append")
     {
-      d_themeswitching = false;
+      d_append = false;
       continue;
     }
-    if (option == "--light")
+    if (option == "--includefullcontactlist")
     {
-      d_light = true;
+      d_includefullcontactlist = true;
       continue;
     }
-    if (option == "--no-light")
+    if (option == "--no-includefullcontactlist")
     {
-      d_light = false;
+      d_includefullcontactlist = false;
       continue;
     }
     if (option == "--includesettings")

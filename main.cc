@@ -457,7 +457,13 @@ int main(int argc, char *argv[])
   if (!arg.importtelegram().empty())
     if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
                                 arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(),
-                                arg.setselfid()))
+                                arg.setselfid(), false /*onlyshowmapping*/))
+      return 1;
+
+  if (!arg.jsonshowcontactmap().empty())
+    if (!sb->importTelegramJson(arg.jsonshowcontactmap(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
+                                arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(),
+                                arg.setselfid(), true /*onlyshowmapping*/))
       return 1;
 
   if (arg.removedoubles_bool())

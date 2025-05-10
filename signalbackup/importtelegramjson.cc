@@ -40,9 +40,12 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
                                       std::vector<std::pair<std::string, long long int>> contactmap,
                                       std::vector<std::string> const &inhibitmapping, bool prependforwarded,
                                       bool skipmessagereorder, bool markdelivered, bool markread,
-                                      std::string const &selfphone)
+                                      std::string const &selfphone, bool onlyshowmapping)
 {
-  Logger::message("Import from Telegram json export");
+  if (onlyshowmapping)
+    Logger::message("Show json contact-mapping");
+  else
+    Logger::message("Import from Telegram json export");
 
   if (bepaald::isDir(file))
   {
@@ -83,7 +86,18 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
   std::vector<std::pair<std::vector<std::string>, long long int>> finalcontactmap;
   for (unsigned int i = 0; i < contactmap.size(); ++i)
     finalcontactmap.push_back({{contactmap[i].first}, contactmap[i].second});
-  if (!tgMapContacts(jsondb, chatlist, &finalcontactmap, inhibitmapping))
+  bool mapok = tgMapContacts(jsondb, chatlist, &finalcontactmap, inhibitmapping);
+  if (onlyshowmapping)
+  {
+    Logger::message("Json contact-map: ");
+    for (unsigned int i = 0; i < finalcontactmap.size(); ++i)
+    {
+      std::string name = getNameFromRecipientId(finalcontactmap[i].second);
+      Logger::message(" * ", Logger::VECTOR(finalcontactmap[i].first, ", "), " -> ", finalcontactmap[i].second, " (", name, ")");
+    }
+    return mapok;
+  }
+  else if (!mapok)
     return false;
 
   SqliteDB::QueryResults chats;

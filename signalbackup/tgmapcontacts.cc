@@ -292,6 +292,8 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     }
   }
 
+  *contactmap = std::move(realcontactmap);
+
   if (!recipientsnotfound.empty())
   {
     Logger::error("The following contacts in the JSON input were not found in the Android backup:");
@@ -308,6 +310,5 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     return false;
   }
 
-  *contactmap = std::move(realcontactmap);
   return recipientsnotfound.empty();
 }
