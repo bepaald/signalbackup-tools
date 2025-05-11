@@ -89,6 +89,9 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
   bool mapok = tgMapContacts(jsondb, chatlist, &finalcontactmap, inhibitmapping);
   if (onlyshowmapping)
   {
+    if (!d_verbose) // a little hacky, but when verbose == true, tgMapContacts already sorts the map...
+      std::sort(finalcontactmap.begin(), finalcontactmap.end(), [](auto const &a, auto const &b) { return a.second < b.second; });
+
     Logger::message("Json contact-map: ");
     for (unsigned int i = 0; i < finalcontactmap.size(); ++i)
     {

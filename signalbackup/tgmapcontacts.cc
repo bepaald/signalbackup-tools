@@ -127,71 +127,84 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   }
 
   // now let's try to find self
-  std::vector<std::string> self_json_id;
+  std::vector<std::string> self_json_ids;
   // check if we have already (maybe passed in map, maybe matched by name)
   for (unsigned int i = 0; i < realcontactmap.size(); ++i)
     if (realcontactmap[i].second == d_selfid)
-    {
-      self_json_id = realcontactmap[i].first;
-      break;
-    }
+      for (auto const &sid : realcontactmap[i].first)
+        if (!bepaald::contains(self_json_ids, sid))
+          self_json_ids.emplace_back(sid);
 
-  // try to determine: 1. If the database has a 'saved_messages' type chat, it should only contain messages "from": self (messages.from_id => self)
-  // also, the chat itself should be self (chat.id => self)
-  if (self_json_id.empty())
+  // try to determine: 1. If the database has a 'saved_messages' type chat, it should only contain
+  // messages "from": self (messages.from_id => self) + the chat itself should be self (chat.id => self)
+
+  //if (self_json_ids.empty())
   {
     SqliteDB::QueryResults ids_in_saved_messages;
     if (jsondb.d_database.exec("SELECT DISTINCT from_id FROM messages WHERE chatidx IN (SELECT DISTINCT idx FROM chats WHERE type = 'saved_messages')", &ids_in_saved_messages) &&
         ids_in_saved_messages.rows() == 1)
     {
-      if (d_verbose) [[unlikely]]
-        Logger::message("Found json contact from saved_messages (self-msg-from-id): ", ids_in_saved_messages("from_id"), " -> ", d_selfid);
+      if (!find_in_contactmap(ids_in_saved_messages("from_id")))
+      {
+        if (d_verbose) [[unlikely]]
+          Logger::message("Found json contact from saved_messages (self-msg-from-id): ", ids_in_saved_messages("from_id"), " -> ", d_selfid);
 
-      realcontactmap.push_back({{ids_in_saved_messages("from_id")}, d_selfid});
-      // copy aliases and erase from not found
-      move_from_not_found_to_contactmap(json_contacts, ids_in_saved_messages("from_id"));
-      self_json_id = realcontactmap.back().first;
+        realcontactmap.push_back({{ids_in_saved_messages("from_id")}, d_selfid});
+        // copy aliases and erase from not found
+        move_from_not_found_to_contactmap(json_contacts, ids_in_saved_messages("from_id"));
+
+        for (auto const &sid : realcontactmap.back().first)
+          if (!bepaald::contains(self_json_ids, sid))
+            self_json_ids.emplace_back(sid);
+      }
     }
 
     SqliteDB::QueryResults saved_messages_id;
     if (jsondb.d_database.exec("SELECT DISTINCT id FROM chats WHERE type = 'saved_messages'", &saved_messages_id) &&
         saved_messages_id.rows() == 1)
     {
-      if (d_verbose) [[unlikely]]
-        Logger::message("Found json contact from saved_messages (self-chat-id): ", saved_messages_id("id"), " -> ", d_selfid);
+      if (!find_in_contactmap(saved_messages_id("id")))
+      {
+        if (d_verbose) [[unlikely]]
+          Logger::message("Found json contact from saved_messages (self-chat-id): ", saved_messages_id("id"), " -> ", d_selfid);
 
-      realcontactmap.push_back({{saved_messages_id("id")}, d_selfid});
-      // copy aliases and erase from not found
-      move_from_not_found_to_contactmap(json_contacts, saved_messages_id("id"));
-      self_json_id = realcontactmap.back().first;
+        realcontactmap.push_back({{saved_messages_id("id")}, d_selfid});
+        // copy aliases and erase from not found
+        move_from_not_found_to_contactmap(json_contacts, saved_messages_id("id"));
+
+        for (auto const &sid : realcontactmap.back().first)
+          if (!bepaald::contains(self_json_ids, sid))
+            self_json_ids.emplace_back(sid);
+      }
     }
   }
 
   // try to determine: 2. only one from_id will be present in multiple 1-on-1 chats
-  if (self_json_id.empty())
+  SqliteDB::QueryResults ids_in_personal_chats;
+  jsondb.d_database.exec("SELECT from_id, COUNT(from_id) AS idcount FROM (SELECT DISTINCT from_id, chatidx FROM messages WHERE type = 'message' AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')) GROUP BY from_id HAVING idcount > 1", &ids_in_personal_chats);
+
+  //ids_in_personal_chats.prettyPrint(d_truncate);
+
+  // if all ids except one occur only once, the exception surely is self
+  if (ids_in_personal_chats.rows() == 1)
   {
-    SqliteDB::QueryResults ids_in_personal_chats;
-    //jsondb.d_database.exec("SELECT from_id, COUNT(from_id) AS idcount FROM (SELECT DISTINCT from_id, chatidx FROM messages WHERE type = 'message' AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')) GROUP BY from_id", &ids_in_personal_chats);
-    //jsondb.d_database.exec("SELECT from_id, COUNT(from_id) AS idcount FROM (SELECT DISTINCT from_id, chatidx FROM messages WHERE type = 'message' AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')) GROUP BY from_id HAVING idcount == 1", &ids_in_personal_chats);
-    jsondb.d_database.exec("SELECT from_id, COUNT(from_id) AS idcount FROM (SELECT DISTINCT from_id, chatidx FROM messages WHERE type = 'message' AND chatidx IN (SELECT idx FROM chats WHERE type = 'personal_chat')) GROUP BY from_id HAVING idcount > 1", &ids_in_personal_chats);
-    //ids_in_personal_chats.prettyPrint();
-
-    // if all ids except one occur only once, the exception surely is self
-    if (ids_in_personal_chats.rows() == 1)
+    if (!find_in_contactmap(ids_in_personal_chats("from_id")))
     {
-
       if (d_verbose) [[unlikely]]
         Logger::message("Found json contact for self: ", ids_in_personal_chats(0, "from_id"), " -> ", d_selfid);
 
       realcontactmap.push_back({{ids_in_personal_chats("from_id")}, d_selfid});
       // copy aliases and erase from not found
       move_from_not_found_to_contactmap(json_contacts, ids_in_personal_chats("from_id"));
-      self_json_id = realcontactmap.back().first;
+
+      for (auto const &sid : realcontactmap.back().first)
+        if (!bepaald::contains(self_json_ids, sid))
+          self_json_ids.emplace_back(sid);
     }
   }
 
   // if we have self, we can probably merge some chatids and userids (somehow)...
-  if (!self_json_id.empty())
+  if (!self_json_ids.empty())
   {
     // for each chat id that is personal_chat
     SqliteDB::QueryResults personal_chat_contacts;
@@ -202,11 +215,26 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
                                 &personal_chat_contacts))
       return false;
 
-    //personal_chat_contacts.prettyPrint();
+    //Logger::message("json self: ", Logger::VECTOR(self_json_ids, ", "));
+    //personal_chat_contacts.prettyPrint(d_truncate);
+    /*
+      results, for example:
+
+      ----------------------------
+      | from_id        | chatidx |
+      ----------------------------
+      | user6805890839 | 2       | <- self
+      | user1234567890 | 2       | <- other in chat 2
+      | user6805890839 | 6       | <- self
+      | user9876543210 | 6       | <- other in chat 6
+      ----------------------------
+    */
+
 
     for (unsigned int i = 0; i < personal_chat_contacts.rows(); ++i)
     {
-      if (bepaald::contains(self_json_id, personal_chat_contacts(i, "from_id")))
+      // each personal chat has at most two participants, one is 'self', skip that one...
+      if (bepaald::contains(self_json_ids, personal_chat_contacts(i, "from_id")))
         continue;
 
       std::string linkchat = jsondb.d_database.getSingleResultAs<std::string>("SELECT id FROM chats WHERE idx = ?", personal_chat_contacts.value(i, "chatidx"), std::string());
@@ -284,6 +312,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
 
   if (d_verbose) [[unlikely]]
   {
+    std::sort(realcontactmap.begin(), realcontactmap.end(), [](auto const &a, auto const &b) { return a.second < b.second; });
     Logger::message("[FINAL CONTACT MAP] ");
     for (unsigned int i = 0; i < realcontactmap.size(); ++i)
     {
