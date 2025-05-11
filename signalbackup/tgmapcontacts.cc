@@ -144,7 +144,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     if (jsondb.d_database.exec("SELECT DISTINCT from_id FROM messages WHERE chatidx IN (SELECT DISTINCT idx FROM chats WHERE type = 'saved_messages')", &ids_in_saved_messages) &&
         ids_in_saved_messages.rows() == 1)
     {
-      if (!find_in_contactmap(ids_in_saved_messages("from_id")))
+      if (find_in_contactmap(ids_in_saved_messages("from_id")) != -1)
       {
         if (d_verbose) [[unlikely]]
           Logger::message("Found json contact from saved_messages (self-msg-from-id): ", ids_in_saved_messages("from_id"), " -> ", d_selfid);
@@ -163,7 +163,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
     if (jsondb.d_database.exec("SELECT DISTINCT id FROM chats WHERE type = 'saved_messages'", &saved_messages_id) &&
         saved_messages_id.rows() == 1)
     {
-      if (!find_in_contactmap(saved_messages_id("id")))
+      if (find_in_contactmap(saved_messages_id("id")) != -1)
       {
         if (d_verbose) [[unlikely]]
           Logger::message("Found json contact from saved_messages (self-chat-id): ", saved_messages_id("id"), " -> ", d_selfid);
@@ -188,7 +188,7 @@ bool SignalBackup::tgMapContacts(JsonDatabase const &jsondb, std::string const &
   // if all ids except one occur only once, the exception surely is self
   if (ids_in_personal_chats.rows() == 1)
   {
-    if (!find_in_contactmap(ids_in_personal_chats("from_id")))
+    if (find_in_contactmap(ids_in_personal_chats("from_id")) != -1)
     {
       if (d_verbose) [[unlikely]]
         Logger::message("Found json contact for self: ", ids_in_personal_chats(0, "from_id"), " -> ", d_selfid);
