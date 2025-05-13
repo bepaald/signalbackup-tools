@@ -285,41 +285,44 @@ be removed.
 //                                               stupidly still needs an <INPUT> and <PASSPHRASE> parameter
 //                                               to actually run.
 std::cout << R"*(
---assumebadframesizeonbadmac                  Used to fix a specific (long fixed) bug in Signal. See
-                                              https://github.com/signalapp/Signal-Android/issues/9154
---editattachmentsize                          Modifier for `--assumebadframesizeonbadmac'
---removedoubles [N]                           Attempt to remove doubled messages from the database. May be
-                                              useful when importing partially overlapping backup files.
-                                              Optional N: time in milliseconds for messages to be
-                                              considered potential duplicates (default 0).
---reordersmsmmsids                            Makes sure sms and mms entries are sorted chronologically
-                                              in the database. This option exists for backups edited by
-                                              this program before this was done automatically (as it is
-                                              now)
---stoponerror                                 Do not try to recover automatically when encountering bad
-                                              data.
--v, --verbose                                 Makes the output even more verbose than it already is.
---mergerecipients <OLDNUMBER,NEWNUMBER>       Can be used to change a contacts number (for example when
-                                              they get a new phone). Messages from OLDNUMBER are changed
-                                              so they appear as coming from NEWNUMBER, and the threads
-                                              are merged.
---mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
---migrate214to215                             Migrate a v214 database to v215. Changes in the database
-                                              prevent v214 and v215 from being compatible for merging. This
-                                              function attempts to migrate the older database so it can be
-                                              used as a source for `--importthreads'. See also
-                                              https://github.com/bepaald/signalbackup-tools/issues/184
---checkdbintegrity                            Does a full integrity check on the SQLite database in the
-                                              backup file.
+--assumebadframesizeonbadmac               Used to fix a specific (long fixed) bug in Signal. See
+                                           https://github.com/signalapp/Signal-Android/issues/9154
+--editattachmentsize                       Modifier for `--assumebadframesizeonbadmac'
+--removedoubles [N]                        Attempt to remove doubled messages from the database. May be
+                                           useful when importing partially overlapping backup files.
+                                           Optional N: time in milliseconds for messages to be
+                                           considered potential duplicates (default 0).
+--reordersmsmmsids                         Makes sure sms and mms entries are sorted chronologically
+                                           in the database. This option exists for backups edited by
+                                           this program before this was done automatically (as it is
+                                           now)
+--stoponerror                              Do not try to recover automatically when encountering bad
+                                           data.
+-v, --verbose                              Makes the output even more verbose than it already is.
+--mergerecipients <OLDNUMBER,NEWNUMBER>    Can be used to change a contacts number (for example when
+                                           they get a new phone). Messages from OLDNUMBER are changed
+                                           so they appear as coming from NEWNUMBER, and the threads
+                                           are merged.)*";
+//--mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
+std::cout << R"*(
+--migrate214to215                          Migrate a v214 database to v215. Changes in the database
+                                           prevent v214 and v215 from being compatible for merging. This
+                                           function attempts to migrate the older database so it can be
+                                           used as a source for `--importthreads'. See also
+                                           https://github.com/bepaald/signalbackup-tools/issues/184
+--checkdbintegrity                         Does a full integrity check on the SQLite database in the
+                                           backup file.
 )*";
-   // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
-   //                                            groups members from OLDNUMBER to NEWNUMBER. Might not
-   //                                            always be wanted if the NEWNUMBER was already added to the
-   //                                            group.
+
+// --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
+//                                            groups members from OLDNUMBER to NEWNUMBER. Might not
+//                                            always be wanted if the NEWNUMBER was already added to the
+//                                            group.
 //--sleepyh34d <FILE[,PASSWD]>                  Try to import messages from a truncated backup file into a
 //                                              complete one. See
 //                                              https://github.com/bepaald/signalbackup-tools/issues/32
 //std::cout << R"*(
 //--hhenkel <STRING>                            See https://github.com/bepaald/signalbackup-tools/issues/17
 //)*";
+
 }
