@@ -682,18 +682,24 @@ This function has some limitations to what gets imported, for example, some stat
 
 The program has successfully been used to import messages from a Telegram export (in JSON format). Telegram's JSON format is [publically documented](https://core.telegram.org/import-export), so any data that can be converted to this format can be imported.
 
-This feature will be better documented in the future. For now, more details are available [here](https://github.com/bepaald/signalbackup-tools/issues/153), and any questions and remarks can be added there. General usage:
+General usage:
 
 ```
 signalbackup-tools [INPUT] [PASSPHRASE] --importtelegram [JSONFILE] -o [OUTPUT]
 ```
 
-The program will attempt to map the contacts present in the JSON file to those present in the Android backup. It is important all contacts exist in the Android backup, new contacts can not be created. For any JSON contact that the program can not automatically map, this mapping must be done manually using `--mapjsoncontacts`.
+The program will attempt to map the contacts present in the JSON file to those present in the Android backup. It is important all contacts exist in the Android backup, new contacts can not be created. For any JSON contact that the program can not automatically map or is mapped incorrectly, this mapping must be done manually using `--mapjsoncontacts "Name1=id1,Name2=id2,..."`. Here, the `Name` is the exact name of a contact as it appears in the JSON file, and the `id` is a recipient-id as it exists in the input Android backup (which can be listed with `--listrecipients`). Note the same contact can appear under mulitple names (or other identifiers) in the JSON file, though it may not be necessary it can't hurt to specify all aliases explicitly when manually mapping contacts. It is advisable to use `--jsonshowcontactmap` to inspect the mapping before importing the data:
+
+```
+signalbackup-tools [INPUT] [PASSPHRASE] --jsonshowcontactmap [JSONFILE] (--mapjsoncontacts "Name=id,...")
+```
+
+Any contact that can not be mapped to an existing Signal contact, must be prevented from being imported (see `--selectjsonchats` below).
 
 Other related options:
 - `--importjson [JSONFILE]` Simply an alias for `--importtelegram`.
 - `--listjsonchats [JSONFILE]` Lists the chats found in the JSON file. This option does not require an Android backup to be passed as `[INPUT]`.
-- `--selectjsonchats [list-of-indices]` Only import chat in the list. The indices are obtained from `--listjsonchats`.
+- `--selectjsonchats [list-of-indices]` Only import chats in the given list. The indices are obtained from `--listjsonchats`.
 - `--jsonprependforward` Forwarded messages are marked as such in Telegram, but not in Signal. This option prepends forwarded messages with the string "_Forwarded from NAME:_". 
 - `--preventjsonmapping` If the auto mapping makes a mistake for any reason (for example, multiple contacts with the same name), `--preventjsonmapping "Bob Smith"` will prevent the auto mapping of that specific name. It will then need to be mapped manually (using a unique identifier such as the id) with `--mapjsoncontacts`.
 - `--jsonmarkdelivered` The Telegram export does not contain message delivery information. This option marks all messages imported from the JSON file as 'delivered'. Defaults to true.
@@ -1025,7 +1031,8 @@ Done! Wrote 10940302 bytes.
 </details>
 </ul>
 
-- `--removedoubles <ms>` Removes doubled messages from a backup file. The supplied argument `ms` is optional (default 0) and sets the maximum number of milliseconds the timestamps of two messages can be apart and still be considered potential doubles. Note, in any somewhat recent backups true doubles (with a timestamp difference of 0) are not possible, as the database does not allow the insertion of messages in the same thread, from the same recipient with the same timestamp. This function also considers the message body and number of attachments when determining if a message is doubled. Could be useful after having merged older, overlapping backups or imported overlapping data from Signal Desktop without using the `--limittodates/--autolimitdates` option, and no possibility to redo the process. _This function is experimental but has been used successfully at least once._
+- `--removedoubles <ms>` Removes doubled messages from a backup file. The supplied argument `ms` is optional (default 0) and sets the maximum number of milliseconds the timestamps of two messages can be apart and still be considered potential doubles. Note, in any somewhat recent backups true doubles (with a timestamp difference of 0) are not possible, as the database does not allow the insertion of messages in the same thread, from the same recipient with the same timestamp. This function also considers the message body and number of attachments when determining if a message is doubled. Could be useful after having merged older, overlapping backups or imported overlapping data from Signal Desktop without using the `--limittodates/--autolimitdates` option, and no possibility to redo the process. _This function is experimental, but has been used successfully at least once._
+- `--mergerecipients <OLDNUMBER> <NEWNUMBER>` Can be used to change a contacts' number (for example when they get a new phone resulting in the conversation being split in two). Messages from OLDNUMBER are changed so they appear as coming from NEWNUMBER, and the threads are merged.
 
 **<span id="advanced">Advanced options</span>**
 

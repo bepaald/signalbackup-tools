@@ -192,14 +192,15 @@ R"*(
                                          which to import threads (see `--importthreads'). The input can be
                                          a file or directory. When it is a file, a passphrase is required
    -sp, --sourcepassphrase <PASSPHRASE>  The 30 digit passphrase for the backup file specified by `--source'.
---importfromdesktop                      Import messages from Signal Desktop. If the program fails to find
-                                         your Signal-Desktop installation or it is in a non-standard location,
-                                         the optional [DIR1] and [DIR2] can be provided. See the README for
-                                         more information.
---dumpdesktopdb <OUTPUT>                 Decrypt the Signal Desktop database and saves it to <OUTPUT>.
+--importfromdesktop                      Import messages from Signal Desktop. See the README for more
+                                         information.
+   --importdesktopcontacts               Optional modifier for `--importfromdesktop`. Normally, threads are
+                                         only imported when they can be matched to existing recipients in
+                                         the Android backup. This option allows to create recipients from
+                                         the desktop data.
    --desktopdir <DIR>                    Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
                                          If the program fails to find your Signal-Desktop installation or it
-                                         is in a non-standard location <DIR> can be provided. See the README
+                                         is not in a standard location, <DIR> can be provided. See the README
                                          for more information about default locations.
    --ignorewal                           Optional modifier for `--importfromdesktop' and `--dumpdesktopdb`.
                                          Ignores an existing WAL file when opening Signal Desktop database.
@@ -209,9 +210,9 @@ R"*(
    --autolimitdates                      Optional modifier for `--importfromdesktop'. Automatically limit
                                          the import of messages to those older than the first message in the
                                          INPUT backup file.
---desktopkey <HEXKEY>                    Provide the decrypted SQLCipher key for decrypting the desktop
+   --desktopkey <HEXKEY>                 Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
+                                         Provide the decrypted SQLCipher key for decrypting the desktop
                                          database (see README).
---showdesktopkey                         Show the (hex) SQLCipher key used for the desktop database.
 --deleteattachments                      Delete attachments from backup file.
    --onlyinthreads <LIST_OF_THREADS>     Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. Only deal with attachments within these
@@ -237,6 +238,25 @@ R"*(
                                          deleted/replaced, prepend STRING to the message body.
 --replaceattachments [LIST]              Replace attachments of type with placeholder image. Argument:
                                          "default=filename,mimetype1=filename1,mimetype2=filename2,.."
+--importtelegram <JSONFILE>              Import messages from a JSON file as exported by Telegram.
+   --jsonshowcontactmap <JSONFILE>       Show the mapping of contacts found in the JSON file to those
+                                         in the Android backup.
+   --mapjsoncontacts <Name1=id1,...>     Optional modifier for `--importtelegram' and `--jsonshowcontactmap'.
+                                         Maps contacts found in the JSON file to those in the input backup
+                                         file.
+   --listjsonchats <JSONFILE>            Lists the chats found in JSON file.
+   --selectjsonchats <LIST_OF_IDX>       Optional modifier for `--importtelegram'. Only import the given
+                                         chats into the backup file. The indices are obtained from
+                                         `--listjsonchats'.
+   --jsonprependforward                  Optional modifier for `--importtelegram'. Causes forwarded messages
+                                         in the JSON file to be prepended with the text "Forwarded from
+                                         [name]:".
+   --preventjsonmapping <Name1,...>      Optional modifier for `--importtelegram'. Prevents the automatic
+                                         mapping of the listed JSON contacts to Signal contacts.
+   --jsonmarkdelivered                   Optional modifier for `--importtelegram'. Mark imported messages
+                                         as delivered.
+   --jsonmarkread                        Optional modifier for `--importtelegram'. Mark imported messages
+                                         as read."
 
  = VARIOUS =
 The following options are also supported in this program, and listed here for completeness. Some of them
@@ -246,6 +266,8 @@ possibly outdated. Some will probably eventually be renamed and more thoroughly 
 be removed.
 --showdbinfo                                  Prints a list of all tables and columns in the backups
                                               SQLite database.
+--showdesktopkey                              Show the (hex) SQLCipher key used for the desktop database.
+--dumpdesktopdb <OUTPUT>                      Decrypt the Signal Desktop database and saves it to <OUTPUT>.
 --scramble                                    Poorly censors backups, replacing all characters with 'x'.
                                               Useful to make screenshots.
 --scanmissingattachments                      If you see "warning attachment data not found" messages,
@@ -281,21 +303,19 @@ std::cout << R"*(
                                               they get a new phone). Messages from OLDNUMBER are changed
                                               so they appear as coming from NEWNUMBER, and the threads
                                               are merged.
+--mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
 --migrate214to215                             Migrate a v214 database to v215. Changes in the database
                                               prevent v214 and v215 from being compatible for merging. This
                                               function attempts to migrate the older database so it can be
                                               used as a source for `--importthreads'. See also
                                               https://github.com/bepaald/signalbackup-tools/issues/184
---importtelegram <JSONFILE>                   Import messages from a JSON file as exported by Telegram. This
-                                              may be a somewhat complicated procedure. For details, see
-                                              https://github.com/bepaald/signalbackup-tools/issues/153)*";
+--checkdbintegrity                            Does a full integrity check on the SQLite database in the
+                                              backup file.
+)*";
    // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
    //                                            groups members from OLDNUMBER to NEWNUMBER. Might not
    //                                            always be wanted if the NEWNUMBER was already added to the
    //                                            group.
-std::cout << R"*(
---mergegroups <OLD_GROUP_ID,NEW_GROUPD_ID>    Merge all messages from OLD_GROUP into NEW_GROUP.
-)*";
 //--sleepyh34d <FILE[,PASSWD]>                  Try to import messages from a truncated backup file into a
 //                                              complete one. See
 //                                              https://github.com/bepaald/signalbackup-tools/issues/32
@@ -303,6 +323,3 @@ std::cout << R"*(
 //--hhenkel <STRING>                            See https://github.com/bepaald/signalbackup-tools/issues/17
 //)*";
 }
-
-
-// checkdbintegrity
