@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,7 +22,7 @@
 bool CryptBase::getBackupKey(std::string const &passphrase)
 {
   // convert passwords digits to unsigned char *
-  size_t const passlength = 30;
+  size_t constexpr passlength = 30;
   unsigned char pass[passlength];
   unsigned int i = 0;
   unsigned int j = 0;

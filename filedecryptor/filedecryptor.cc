@@ -49,9 +49,9 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   // read first four bytes, they are the header size of the file:
   int32_t headerlength = getNextFrameBlockSize(file);
   DEBUGOUT("headerlength: ", headerlength);
-  if (headerlength == 0)
+  if (headerlength < 2 || headerlength > 10240 /* 10MB, this is probably still needlessly large */) [[unlikely]]
   {
-    Logger::error("got got length of headerframe == 0");
+    Logger::error("Invalid headerframe length (", headerlength, ")");
     return;
   }
 
@@ -89,7 +89,6 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   {
     //std::cout << "Error: Failed to get backupkey from passphrase" << std::endl;
     Logger::error("Failed to get backupkey from passphrase");
-    delete headerframe;
     return;
   }
 
