@@ -89,6 +89,7 @@ FileDecryptor::FileDecryptor(std::string const &filename, std::string const &pas
   {
     //std::cout << "Error: Failed to get backupkey from passphrase" << std::endl;
     Logger::error("Failed to get backupkey from passphrase");
+    delete headerframe;
     return;
   }
 
