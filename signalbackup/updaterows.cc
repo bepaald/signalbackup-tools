@@ -68,7 +68,6 @@ bool SignalBackup::updateRows(std::string const &table,
   // when concat_view gets implemented...
   // - https://en.cppreference.com/w/cpp/utility/feature_test
 #if __cpp_lib_ranges >= 201911L && __cpp_lib_ranges_concat >= 202403L
-  #warning this is currently untested
   bool ret = d_database.exec(query, std::ranges::views::values(std::ranges::views::concat(data, whereclause)), &res, d_verbose);
 #else
   std::vector<std::any> values;

@@ -228,13 +228,19 @@ struct Types
     return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED;
   }
 
+  inline static bool isReportedSpam(uint64_t type)
+  {
+    return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_REPORTED_SPAM;
+  }
+
   inline static bool isStatusMessage(uint64_t type)
   {
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
       isGroupQuit(type) || isIdentityUpdate(type) || isIdentityVerified(type) ||
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
       isProfileChange(type) || isEndSession(type) || type == GV1_MIGRATION_TYPE ||
-      isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type);
+      isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type) ||
+      isReportedSpam(type);
   }
 };
 

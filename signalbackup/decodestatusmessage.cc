@@ -175,7 +175,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   {
     return "You accepted the message request";
   }
-
+  if (Types::isReportedSpam(type))
+  {
+    return "Reported as spam";
+  }
 
 
 

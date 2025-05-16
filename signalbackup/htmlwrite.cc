@@ -1125,6 +1125,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         filter: var(--icon-f);
       }
 
+      .msg-status .msg-spam-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 6.5c-.7 0-1.24.6-1.2 1.29l.43 5.5c.03.4.37.71.77.71s.74-.31.77-.71l.42-5.5c.05-.7-.49-1.29-1.19-1.29zm0 8.75a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 1 0 0-2.5zm3.1-13.62H8.9c-.77 0-1.5.3-2.04.84l-4.4 4.39c-.52.54-.82 1.27-.82 2.03v6.22a2.87 2.87 0 0 0 .84 2.03l4.39 4.4a2.91 2.91 0 0 0 2.03.84h6.22c.76 0 1.49-.3 2.03-.85l4.4-4.39a2.91 2.91 0 0 0 .84-2.03V8.89c0-.76-.3-1.49-.85-2.03l-4.39-4.4a2.9 2.9 0 0 0-2.03-.83zM8.9 3.38h6.2a1.11 1.11 0 0 1 .8.32l4.4 4.4c.2.2.32.5.32.8v6.2a1.11 1.11 0 0 1-.32.8l-4.4 4.4c-.2.2-.5.32-.8.32H8.9a1.11 1.11 0 0 1-.8-.32l-4.4-4.4a1.16 1.16 0 0 1-.33-.8V8.9c0-.3.12-.6.33-.8l4.4-4.4a1.16 1.16 0 0 1 .8-.33z"/></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-pencil-icon {
         background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M21.561,4.561 L19.439,2.439a1.5,1.5 0,0 0,-2.121 0L3.823,15.934a1.5,1.5 0,0 0,-0.394 0.7L2.317,21.076a0.5,0.5 0,0 0,0.607 0.607l4.445,-1.112a1.5,1.5 0,0 0,0.7 -0.394l13.5,-13.495A1.5,1.5 0,0 0,21.561 4.561ZM7.005,19.116l-2.828,0.707L4.884,17l9.772,-9.773 2.122,2.122ZM17.838,8.283 L15.717,6.162 18.379,3.5 20.5,5.621Z"/></svg>');
         filter: var(--icon-f);
@@ -1209,6 +1214,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-info-icon,
       .msg-status .msg-security-icon,
       .thread-subtitle .msg-security-icon,
+      .msg-status .msg-spam-icon,
       .msg-status .msg-pencil-icon,
       .msg-status .msg-thread-icon,
       .msg-status .msg-megaphone-icon,
@@ -1228,7 +1234,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         height: 18px;
         aspect-ratio: 1 / 1;
         margin-right: 8px;
-        top: 2px;
+        top: 3px;
         position: relative;
       }
 
@@ -1716,6 +1722,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-status .msg-group-call, .msg-status .msg-call-incoming,
       .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
       .msg-status .msg-info-icon, .msg-status .msg-security-icon,
+      .msg-status .msg-spam-icon,
       .msg-status .msg-pencil-icon, .msg-status .msg-megaphone-icon,
       .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
       .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
@@ -2475,6 +2482,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-member-add-icon\"></span>";
     else if (Types::isMessageRequestAccepted(msg_info.type))
       htmloutput << "<span class=\"msg-thread-icon\"></span>";
+    else if (Types::isReportedSpam(msg_info.type))
+      htmloutput << "<span class=\"msg-spam-icon\"></span>";
     else if (msg_info.type == Types::GV1_MIGRATION_TYPE)
     {
       if (msg_info.icon == IconType::MEMBER_ADD)
@@ -2493,29 +2502,31 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-phone-icon\"></span>";
 
     // group v2 status msgs
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::TIMER_UPDATE)
-      htmloutput << "<span class=\"msg-expiration-timer-set\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::TIMER_DISABLE)
-      htmloutput << "<span class=\"msg-expiration-timer-disabled\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::PENCIL)
-      htmloutput << "<span class=\"msg-pencil-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::THREAD)
-      htmloutput << "<span class=\"msg-thread-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEGAPHONE)
-      htmloutput << "<span class=\"msg-megaphone-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBERS)
-      htmloutput << "<span class=\"msg-members-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_APPROVED)
-      htmloutput << "<span class=\"msg-member-approved-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_REJECTED)
-      htmloutput << "<span class=\"msg-member-rejected-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_ADD)
-      htmloutput << "<span class=\"msg-member-add-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::MEMBER_REMOVE)
-      htmloutput << "<span class=\"msg-member-remove-icon\"></span>";
-    else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::AVATAR_UPDATE)
-      htmloutput << "<span class=\"msg-avatar-update-icon\"></span>";
-
+    else if (Types::isGroupV2(msg_info.type))
+    {
+      if (msg_info.icon == IconType::TIMER_UPDATE)
+        htmloutput << "<span class=\"msg-expiration-timer-set\"></span>";
+      else if (msg_info.icon == IconType::TIMER_DISABLE)
+        htmloutput << "<span class=\"msg-expiration-timer-disabled\"></span>";
+      else if (msg_info.icon == IconType::PENCIL)
+        htmloutput << "<span class=\"msg-pencil-icon\"></span>";
+      else if (msg_info.icon == IconType::THREAD)
+        htmloutput << "<span class=\"msg-thread-icon\"></span>";
+      else if (msg_info.icon == IconType::MEGAPHONE)
+        htmloutput << "<span class=\"msg-megaphone-icon\"></span>";
+      else if (msg_info.icon == IconType::MEMBERS)
+        htmloutput << "<span class=\"msg-members-icon\"></span>";
+      else if (msg_info.icon == IconType::MEMBER_APPROVED)
+        htmloutput << "<span class=\"msg-member-approved-icon\"></span>";
+      else if (msg_info.icon == IconType::MEMBER_REJECTED)
+        htmloutput << "<span class=\"msg-member-rejected-icon\"></span>";
+      else if (msg_info.icon == IconType::MEMBER_ADD)
+        htmloutput << "<span class=\"msg-member-add-icon\"></span>";
+      else if (msg_info.icon == IconType::MEMBER_REMOVE)
+        htmloutput << "<span class=\"msg-member-remove-icon\"></span>";
+      else if (msg_info.icon == IconType::AVATAR_UPDATE)
+        htmloutput << "<span class=\"msg-avatar-update-icon\"></span>";
+    }
     // else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::)
     //   htmloutput << "<span class=\"msg-\"></span>";
 

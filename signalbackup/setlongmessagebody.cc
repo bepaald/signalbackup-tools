@@ -21,7 +21,7 @@
 
 #include "../common_be.h"
 
-void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const
+bool SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const
 {
   for (unsigned int ai = 0; ai < attachment_results->rows(); ++ai)
   {
@@ -44,7 +44,8 @@ void SignalBackup::setLongMessageBody(std::string *body, SqliteDB::QueryResults 
       // set body
       *body = std::string(reinterpret_cast<char *>(a->attachmentData(d_verbose)), a->attachmentSize());
       a->clearData();
-      break; // always max 1?
+      return true; // always max 1?
     }
   }
+  return false;
 }

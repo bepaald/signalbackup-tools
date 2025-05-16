@@ -512,7 +512,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                           " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
 
         // check attachments for long message body -> replace cropped body & remove from attachment results
-        setLongMessageBody(&body, &attachment_results);
+        bool haslongbody = setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults quote_attachment_results;
         if (attachmentcount > 0)
@@ -666,27 +666,31 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
           if (!d_database.exec("SELECT json_object("
-                               "'i', ?, "
+                               "'i', ?1, "
                                "'b', " + d_mms_table + ".body, "
-                               "'f', ?, "
-                               "'t', ?, "
-                               "'o', ?, "
-                               "'d', ?, "
-                               "'p', ?, "
-                               "'n', ?) AS line,"
-                               + d_part_table + "._id AS rowid, " +
-                               (d_database.tableContainsColumn(d_part_table, "unique_id") ?
-                                d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") +
+                               "'f', ?2, "
+                               "'t', ?3, "
+                               "'o', ?4, "
+                               "'d', ?5, "
+                               "'p', ?6, "
+                               "'n', ?7) AS line," +
+                               (haslongbody ?
+                                d_part_table + "._id AS rowid, " +
+                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") :
+                                " -1 AS rowid, -1 AS uniqueid") +
                                " FROM " + d_mms_table + " "
-                               "LEFT JOIN thread ON thread._id IS ? "
-                               "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS ? AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 "
-                               "WHERE " + d_mms_table + "._id = ?",
+                               "LEFT JOIN thread ON thread._id IS ?8 " +
+                               (haslongbody ?
+                                "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS ?1 AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 " : "") +
+                               "WHERE " + d_mms_table + "._id = ?1",
                                {msg_id, msg_recipient_id, thread_recipient_id, incoming ? 0 : 1,
                                 messages.valueAsInt(messagecount, "date_received", 0) / 1000 - 1404165600, // lose the last three digits (miliseconds, they are never displayed anyway).
                                                                                                            // subtract "2014-07-01". Signals initial release was 2014-07-29, negative
                                                                                                            // numbers should work otherwise anyway.
-                                searchidx_page_idx, pagenumber, t, msg_id, msg_id}, &search_idx_results) ||
-              search_idx_results.rows() < 1) [[unlikely]]
+                                searchidx_page_idx, pagenumber, t},
+                               &search_idx_results) ||
+                               search_idx_results.rows() < 1) [[unlikely]]
           {
             Logger::warning("Search_idx query failed or no results");
           }
@@ -699,7 +703,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             std::string line = search_idx_results("line");
             if (!line.empty()) [[likely]]
             {
-              if (search_idx_results.valueAsInt(0, "rowid") != -1
+              if (haslongbody && search_idx_results.valueAsInt(0, "rowid") != -1
                   /* && search_idx_results.valueAsInt(0, "uniqueid") != -1*/)
               {
                 long long int rowid = search_idx_results.valueAsInt(0, "rowid");
@@ -710,7 +714,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
                 longbody = d_database.getSingleResultAs<std::string>("SELECT json_set(?, '$.b', ?)", {line, longbody}, std::string());
                 if (!longbody.empty()) [[likely]]
-                  line = longbody;
+                  line = std::move(longbody);
               }
 
               if (searchidx_write_started) [[likely]]

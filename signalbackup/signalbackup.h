@@ -545,7 +545,7 @@ class SignalBackup
   std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
   inline void TXTaddReactions(SqliteDB::QueryResults const *const reaction_results, std::ofstream *out) const;
-  void setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
+  bool setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
   bool tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
                         std::string const &datapath, std::string const &threadname, long long int chat_idx,
                         bool prependforwarded, bool markdelivered, bool markread, bool isgroup);
