@@ -22,6 +22,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -138,11 +139,11 @@ class Logger
   static std::ostream &dispTime(std::ostream &stream);
   inline static void messagePre();
   void outputHead(std::string const &file, std::string const &stdandardout, bool overwrite = false,
-                  std::pair<std::string, std::string> const &prepost = std::pair<std::string, std::string>(),
-                  std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
+                  std::pair<std::string_view, std::string_view> const &prepost = std::pair<std::string_view, std::string_view>(),
+                  std::pair<std::string_view, std::string_view> const &control = std::pair<std::string_view, std::string_view>());
   void outputHead(std::string const &head, bool overwrite = false,
-                  std::pair<std::string, std::string> const &prepost = std::pair<std::string, std::string>(),
-                  std::pair<std::string, std::string> const &control = std::pair<std::string, std::string>());
+                  std::pair<std::string_view, std::string_view> const &prepost = std::pair<std::string_view, std::string_view>(),
+                  std::pair<std::string_view, std::string_view> const &control = std::pair<std::string_view, std::string_view>());
 
   template <typename First, typename... Rest>
   inline void outputMsg(Flags flags, First const &f, Rest const &... r);
@@ -332,7 +333,7 @@ inline void Logger::warning(First const &f, Rest const &... r) // static
 {
   messagePre();
   //outputHead("[WARNING] ", "[\033[38;5;37mWARNING\033[0m] ");
-  s_instance->outputHead("Warning", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
+  s_instance->outputHead("Warning", false, {"[", "]: "}, {"\033[1m", "\033[0m"});
   s_instance->outputMsg(Flags::NONE, f, r...);
 }
 
@@ -340,7 +341,7 @@ template <typename First, typename... Rest>
 inline void Logger::warning_start(First const &f, Rest const &... r) // static
 {
   messagePre();
-  s_instance->outputHead("Warning", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
+  s_instance->outputHead("Warning", false, {"[", "]: "}, {"\033[1m", "\033[0m"});
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 
@@ -357,7 +358,7 @@ inline void Logger::error(First const &f, Rest const &... r) // static
 {
   messagePre();
   //outputHead("[ ERROR ] ", "[ \033[1;31mERROR\033[0m ] ");
-  s_instance->outputHead("Error", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
+  s_instance->outputHead("Error", false, {"[", "]: "}, {"\033[1m", "\033[0m"});
   s_instance->outputMsg(Flags::NONE, f, r...);
 }
 
@@ -365,7 +366,7 @@ template <typename First, typename... Rest>
 inline void Logger::error_start(First const &f, Rest const &... r) // static
 {
   messagePre();
-  s_instance->outputHead("Error", false, {"[", "]: "}, std::make_pair<std::string, std::string>("\033[1m", "\033[0m"));
+  s_instance->outputHead("Error", false, {"[", "]: "}, {"\033[1m", "\033[0m"});
   s_instance->outputMsg(Flags::NONEWLINE, f, r...);
 }
 

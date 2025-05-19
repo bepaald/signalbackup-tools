@@ -1028,15 +1028,29 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
 template <typename T>
 inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const
 {
-#if __cpp_lib_ranges >= 201911L
+  /*
+
+  //much nicer looking, and faster, but is hard to get working across compilers:
+
   for (auto const m : std::ranges::views::split(membersstring, ','))
     if constexpr (std::is_integral<T>::value)
-      // cant use `std:string_view(m)', because of older compilers not fully implementing c++23 (which
-      // is where the range-cstor for string_view was introduced). (for example g++12 (on debian 12))
-      members->emplace_back(bepaald::toNumber<T>(std::string_view(m.begin(), m.end())));
+      members->emplace_back(bepaald::toNumber<T>(std::string_view(m)));
     else
-      members->emplace_back(std::string_view(m.begin(), m.end()));
-#else
+      members->emplace_back(m);
+
+  // the above should first of all be wrapped in #if __cpp_lib_ranges >= 201911L to handle
+  // compilers without ranges (gcc-9)
+  // Next, the std::string_view(m) constructor is not available prior to gcc-15, so we switch
+  // to std::string_view(m.begin(), m.end()). This works on gcc-12 and up.
+  // However, to create a string_view from a range at all, the range must be contiguous, and sized,
+  // the initial implementation of split_view did not return ranges with those properties. This
+  // applies to gcc-10 and gcc-11. Here we can check for the properties of the returned range by
+  // if constexpr (std::ranges::contiguous_range<std::ranges::range_reference_t<std::ranges::split_view<std::string_view, std::string_view>>> &&
+                   std::ranges::sized_range<std::ranges::range_reference_t<std::ranges::split_view<std::string_view, std::string_view>>>)
+  // But this does not seem to work on clang 15 and lower...
+
+  */
+
   std::string_view::size_type start = 0;
   std::string_view::size_type pos;
   while ((pos = membersstring.find(',', start)) != std::string_view::npos)
@@ -1047,14 +1061,13 @@ inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &member
       members->emplace_back(membersstring.substr(start, pos - start));
     start = pos + 1;
   }
-  if (!membersstring.substr(start).empty()) [[likely]]
+  if (start < membersstring.size()) // get the last one
   {
     if constexpr (std::is_integral<T>::value)
       members->emplace_back(bepaald::toNumber<T>(membersstring.substr(start)));
     else
       members->emplace_back(membersstring.substr(start));
   }
-#endif
 }
 
 #endif

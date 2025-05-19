@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -20,8 +20,8 @@
 #include "logger.h"
 
 void Logger::outputHead(std::string const &file, std::string const &standardout, bool overwrite,
-                        std::pair<std::string, std::string> const &prepost,
-                        std::pair<std::string, std::string> const &control)
+                        std::pair<std::string_view, std::string_view> const &prepost,
+                        std::pair<std::string_view, std::string_view> const &control)
 {
   if (d_currentoutput)
   {
@@ -60,8 +60,8 @@ void Logger::outputHead(std::string const &file, std::string const &standardout,
 }
 
 void Logger::outputHead(std::string const &head, bool overwrite,
-                        std::pair<std::string, std::string> const &prepost,
-                        std::pair<std::string, std::string> const &control)
+                        std::pair<std::string_view, std::string_view> const &prepost,
+                        std::pair<std::string_view, std::string_view> const &control)
 {
   outputHead(head, head, overwrite, prepost, control);
 }
