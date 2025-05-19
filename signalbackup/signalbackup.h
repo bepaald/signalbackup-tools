@@ -1040,7 +1040,7 @@ inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &member
 
   // the above should first of all be wrapped in #if __cpp_lib_ranges >= 201911L to handle
   // compilers without ranges (gcc-9)
-  // Next, the std::string_view(m) constructor is not available prior to gcc-15, so we switch
+  // Next, the std::string_view(m) constructor is not available prior to c++23, so we switch
   // to std::string_view(m.begin(), m.end()). This works on gcc-12 and up.
   // However, to create a string_view from a range at all, the range must be contiguous, and sized,
   // the initial implementation of split_view did not return ranges with those properties. This
