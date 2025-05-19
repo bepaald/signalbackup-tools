@@ -45,31 +45,18 @@ jobs:
       - name: Build new script
         run: |
           bash BUILDSCRIPT.bash
-          
-  do-build-tests-legacy:
-    runs-on: ubuntu-22.04
+
+  do-build-tests-cmake:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+          sudo apt-get install --yes --no-install-recommends -V g++ cmake pkg-config libsqlite3-dev libssl-dev libdbus-1-dev
 
-      - name: Build new script (legacy)
+      - name: Build new script
         run: |
-          CXX=g++-9 CXXFLAGSEXTRA=-Wno-attributes CXXSTD="-std=c++2a" bash BUILDSCRIPT.bash
-
-#  do-build-tests-legacy:
-#    runs-on: ubuntu-20.04
-#    steps:
-#      - uses: actions/checkout@v4
-#      - name: Install dependencies
-#        run: |
-#          set -x
-#          sudo apt-get update
-#          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
-#
-#      - name: Build new script (legacy)
-#        run: |
-#          CXXFLAGSEXTRA=-Wno-attributes CXXSTD="-std=c++2a" bash BUILDSCRIPT.bash
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/ -j $(nproc)

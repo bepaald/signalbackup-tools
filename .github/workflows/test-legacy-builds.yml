@@ -1,0 +1,92 @@
+name: Test Linux build
+
+on:
+  workflow_dispatch:
+  push:
+    tags-ignore:
+      - '[0-9]*'
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
+      - '**/autoversion.h'
+      - '.github/workflows/*.yml'
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  do-build-tests-gcc-13:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+
+      - name: Build new script (legacy)
+        run: |
+          CXX=g++-13 CXXSTD="-std=c++23" bash BUILDSCRIPT.bash
+          
+  do-build-tests-gcc-12:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+
+      - name: Build new script (legacy)
+        run: |
+          CXX=g++-12 CXXSTD="-std=c++23" bash BUILDSCRIPT.bash
+          
+  do-build-tests-gcc-11:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+
+      - name: Build new script (legacy)
+        run: |
+          CXX=g++-11 CXXSTD="-std=c++23" bash BUILDSCRIPT.bash
+          
+  do-build-tests-gcc-10:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+
+      - name: Build new script (legacy)
+        run: |
+          CXX=g++-10 CXXSTD="-std=c++20" bash BUILDSCRIPT.bash
+
+  # note, the doc says only 10, 11, and 12 are available
+  # (https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md)
+  # still this works for now...
+  do-build-tests-gcc-9:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          set -x
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+
+      - name: Build new script (legacy)
+        run: |
+          CXX=g++-9 CXXFLAGSEXTRA=-Wno-attributes CXXSTD="-std=c++2a" bash BUILDSCRIPT.bash
