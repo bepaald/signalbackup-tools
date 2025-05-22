@@ -87,17 +87,17 @@ void SignalBackup::initFromFile()
     {
       SqlStatementFrame *s = reinterpret_cast<SqlStatementFrame *>(frame.get());
 
-      if (!STRING_STARTS_WITH(s->bindStatement(), "CREATE TABLE sqlite_")) [[likely]] // skip creation of sqlite_ internal db's
+      if (!STRING_STARTS_WITH(s->bindStatementView(), "CREATE TABLE sqlite_")) [[likely]] // skip creation of sqlite_ internal db's
       {
         // NOTE: in the official import, there are other tables that are skipped (virtual tables for search data)
         // we lazily do not check for them here, since we are dealing with official exported files which do not contain
         // these tables as they are excluded on the export-side as well. Additionally, the official import should be able
         // to properly deal with them anyway (that is: ignore them)
-        if (!d_database.exec(s->bindStatement(), s->parameters())) [[unlikely]]
+        if (!d_database.exec(s->bindStatementView(), s->parametersView())) [[unlikely]]
           Logger::warning("Failed to execute statement: ", s->statement());
       }
 #ifdef BUILT_FOR_TESTING
-      else if (s->bindStatement().find("CREATE TABLE sqlite_sequence") != std::string::npos)
+      else if (s->bindStatementView().find("CREATE TABLE sqlite_sequence") != std::string::npos)
       {
         // force early creation of sqlite_sequence table,
         // this is completely unnecessary and only used

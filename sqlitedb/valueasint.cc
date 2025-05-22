@@ -48,7 +48,7 @@ long long int SqliteDB::QueryResults::valueAsInt(size_t row, size_t column, long
   return def;
 }
 
-long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string const &header, long long int def) const
+long long int SqliteDB::QueryResults::valueAsInt(size_t row, std::string_view header, long long int def) const
 {
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]

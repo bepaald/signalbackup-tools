@@ -60,7 +60,7 @@ class AttachmentFrame : public FrameWithAttachment
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate(uint64_t available) const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string_view const &str) const;
+  inline unsigned int getField(std::string_view str) const;
   inline void setLengthField(uint32_t newlength);
  private:
   inline uint64_t dataSize() const override;
@@ -287,7 +287,7 @@ inline std::string AttachmentFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int AttachmentFrame::getField(std::string_view const &str) const
+inline unsigned int AttachmentFrame::getField(std::string_view str) const
 {
   if (str == "ROWID")
     return FIELD::ROWID;

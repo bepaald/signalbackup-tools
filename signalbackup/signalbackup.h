@@ -570,7 +570,7 @@ class SignalBackup
   std::string makePrintable(std::string const &in) const;
   bool specialCharsSupported(std::string const &path) const;
   template <typename T>
-  inline void oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const;
+  inline void oldGroupMemberTokenizer(std::string_view membersstring, std::vector<T> *members) const;
 };
 
 // ONLY FOR DUMMYBACKUP
@@ -1026,7 +1026,7 @@ inline void SignalBackup::TXTaddReactions(SqliteDB::QueryResults const *const re
 }
 
 template <typename T>
-inline void SignalBackup::oldGroupMemberTokenizer(std::string_view const &membersstring, std::vector<T> *members) const
+inline void SignalBackup::oldGroupMemberTokenizer(std::string_view membersstring, std::vector<T> *members) const
 {
   /*
 

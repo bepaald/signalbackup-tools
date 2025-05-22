@@ -52,7 +52,7 @@ class DatabaseVersionFrame : public BackupFrame
   inline virtual bool validate(uint64_t) const override;
   inline std::string getHumanData() const override;
   //inline virtual bool setNewData(std::string const &field, std::string const &data) override;
-  inline unsigned int getField(std::string_view const &str) const;
+  inline unsigned int getField(std::string_view str) const;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -189,7 +189,7 @@ inline bool DatabaseVersionFrame::setNewData(std::string const &field, std::stri
 }
 */
 
-inline unsigned int DatabaseVersionFrame::getField(std::string_view const &str) const
+inline unsigned int DatabaseVersionFrame::getField(std::string_view str) const
 {
   if (str == "VERSION")
     return FIELD::VERSION;

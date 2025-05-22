@@ -63,7 +63,7 @@ class AvatarFrame : public FrameWithAttachment
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate(uint64_t available) const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string_view const &str) const;
+  inline unsigned int getField(std::string_view str) const;
   inline std::optional<std::string> mimetype() const;
   inline unsigned char *attachmentData(bool verbose, bool *badmac = nullptr) override;
  private:
@@ -278,7 +278,7 @@ inline std::string AvatarFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int AvatarFrame::getField(std::string_view const &str) const
+inline unsigned int AvatarFrame::getField(std::string_view str) const
 {
   if (str == "RECIPIENT")
     return FIELD::RECIPIENT;

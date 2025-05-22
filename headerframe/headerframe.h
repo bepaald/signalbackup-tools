@@ -61,7 +61,7 @@ class HeaderFrame : public BackupFrame
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline std::string getHumanData() const override;
   inline virtual bool validate(uint64_t) const override;
-  inline unsigned int getField(std::string_view const &str) const;
+  inline unsigned int getField(std::string_view str) const;
  private:
   inline uint64_t dataSize() const override;
 };
@@ -254,7 +254,7 @@ inline bool HeaderFrame::validate(uint64_t) const
   return foundsalt == 1 && foundiv == 1 && salt_length() == 32 && iv_length() == 16;
 }
 
-inline unsigned int HeaderFrame::getField(std::string_view const &str) const
+inline unsigned int HeaderFrame::getField(std::string_view str) const
 {
   if (str == "IV")
     return FIELD::IV;

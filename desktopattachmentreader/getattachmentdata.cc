@@ -28,12 +28,12 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
 
   // set AES+MAC key
   auto [tmpdata, key_data_length] = Base64::base64StringToBytes(d_key);
+  std::unique_ptr<unsigned char[]> key_data(tmpdata);
   if (!tmpdata || key_data_length != 64) [[unlikely]]
   {
     Logger::error("Failed to get key data for decrypting attachment.");
     return ReturnCode::ERROR;
   }
-  std::unique_ptr<unsigned char[]> key_data(tmpdata);
   unsigned char *aeskey = key_data.get();
   uint64_t constexpr mackey_length = 32;
   unsigned char *mackey = key_data.get() + 32;

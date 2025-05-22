@@ -56,7 +56,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends -V g++ cmake pkg-config libsqlite3-dev libssl-dev libdbus-1-dev
 
-      - name: Build new script
+      - name: Build cmake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build/ -j $(nproc)

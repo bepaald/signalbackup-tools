@@ -87,7 +87,8 @@ class SqlStatementFrame : public BackupFrame
   inline void addParameterField(PARAMETER_FIELD field, std::string const &val);
 
   inline std::string bindStatement() const;
-  inline std::vector<std::any> parameters() const;
+  inline std::string_view bindStatementView() const;
+  inline std::vector<std::any> parametersView() const;
 
   // inline void setParameter(unsigned int idx, unsigned char *data, uint32_t length);
   // inline void getParameter(unsigned int idx) const;
@@ -588,7 +589,15 @@ inline std::string SqlStatementFrame::bindStatement() const
   return std::string();
 }
 
-inline std::vector<std::any> SqlStatementFrame::parameters() const
+inline std::string_view SqlStatementFrame::bindStatementView() const
+{
+  for (auto const &p : d_framedata)
+    if (std::get<0>(p) == FIELD::STATEMENT)
+      return std::string_view(reinterpret_cast<char const *>(std::get<1>(p)), std::get<2>(p));
+  return std::string_view();
+}
+
+inline std::vector<std::any> SqlStatementFrame::parametersView() const
 {
   std::vector<std::any> parameters;
   for (auto const &p : d_parameterdata)
@@ -611,7 +620,11 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
       {
         //if ()
         //std::cout << "Returning string parameter: " << bepaald::bytesToString(std::get<1>(p), std::get<2>(p)) << std::endl;
-        parameters.emplace_back(bepaald::bytesToString(std::get<1>(p), std::get<2>(p)));
+
+        // copying version:
+        //parameters.emplace_back(bepaald::bytesToString(std::get<1>(p), std::get<2>(p)));
+        parameters.emplace_back(std::string_view(reinterpret_cast<char const *>(std::get<1>(p)), std::get<2>(p)));
+
         /*
           std::string rep = bepaald::bytesToString(std::get<1>(p), std::get<2>(p));
           std::string::size_type pos2 = 0;
@@ -629,9 +642,14 @@ inline std::vector<std::any> SqlStatementFrame::parameters() const
       }
       case PARAMETER_FIELD::BLOB:
       {
-        std::pair<std::shared_ptr<unsigned char []>, size_t> data{new unsigned char[std::get<2>(p)], std::get<2>(p)};
+        /*
+        // copying version:
+        std::pair<std::shared_ptr<unsigned char []>, uint64_t> data{new unsigned char[std::get<2>(p)], std::get<2>(p)};
         std::memcpy(data.first.get(), std::get<1>(p), std::get<2>(p));
         parameters.emplace_back(std::move(data));
+        break;
+        */
+        parameters.emplace_back(std::pair<unsigned char *, uint64_t>{std::get<1>(p), std::get<2>(p)});
         break;
       }
       case PARAMETER_FIELD::DOUBLE:

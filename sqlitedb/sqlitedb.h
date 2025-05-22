@@ -49,17 +49,17 @@ class SqliteDB
     inline std::string const &header(size_t idx) const;
     inline bool hasColumn(std::string const &h) const;
     inline void emplaceValue(size_t row, std::any &&a);
-    inline std::any value(size_t row, std::string const &header) const;
+    inline std::any value(size_t row, std::string_view header) const;
     template <typename T>
-    inline T getValueAs(size_t row, std::string const &header) const;
+    inline T getValueAs(size_t row, std::string_view header) const;
     inline std::any const &value(size_t row, size_t idx) const;
     inline std::vector<std::any> const &row(size_t row) const;
     template <typename T>
     inline bool valueHasType(size_t row, size_t idx) const;
     template <typename T>
-    inline bool valueHasType(size_t row, std::string const &header) const;
+    inline bool valueHasType(size_t row, std::string_view header) const;
     inline bool isNull(size_t row, size_t idx) const;
-    inline bool isNull(size_t row, std::string const &header) const;
+    inline bool isNull(size_t row, std::string_view header) const;
     template <typename T>
     inline T getValueAs(size_t row, size_t idx) const;
     inline bool empty() const;
@@ -71,11 +71,11 @@ class SqliteDB
     void prettyPrint(bool truncate, long long int row = -1) const;
     void print(long long int row = -1, bool printheader = true) const;
     std::string valueAsString(size_t row, size_t column) const;
-    std::string valueAsString(size_t row, std::string const &header) const;
+    std::string valueAsString(size_t row, std::string_view header) const;
     long long int valueAsInt(size_t row, size_t column, long long int def = -1) const;
-    long long int valueAsInt(size_t row, std::string const &header, long long int def = -1) const;
-    inline std::string operator()(size_t row, std::string const &header) const;
-    inline std::string operator()(std::string const &header) const;
+    long long int valueAsInt(size_t row, std::string_view header, long long int def = -1) const;
+    inline std::string operator()(size_t row, std::string_view header) const;
+    inline std::string operator()(std::string_view header) const;
     template <typename T>
     inline bool contains(T const &value) const;
     bool removeColumn(unsigned int idx);
@@ -84,7 +84,7 @@ class SqliteDB
     inline QueryResults getRow(unsigned int idx);
 
    private:
-    inline int idxOfHeader(std::string const &header) const;
+    inline int idxOfHeader(std::string_view header) const;
     int availableWidth() const;
     inline uint64_t charCount(std::string const &utf8) const;
   };
@@ -126,31 +126,31 @@ class SqliteDB
  public:
   inline bool ok() const;
   inline bool saveToFile(std::string const &filename) const;
-  inline bool exec(std::string const &q, QueryResults *results = nullptr, bool verbose = false) const;
-  inline bool exec(std::string const &q, std::any const &param, QueryResults *results = nullptr, bool verbose = false) const;
+  inline bool exec(std::string_view q, QueryResults *results = nullptr, bool verbose = false) const;
+  inline bool exec(std::string_view q, std::any const &param, QueryResults *results = nullptr, bool verbose = false) const;
 #if __cpp_lib_ranges >= 201911L
   template <typename R> requires std::ranges::input_range<R> && std::is_same<std::any, std::ranges::range_value_t<R>>::value
-  inline bool exec(std::string const &q, R &&params, QueryResults *results = nullptr, bool verbose = false) const;
+  inline bool exec(std::string_view q, R &&params, QueryResults *results = nullptr, bool verbose = false) const;
 #endif
-  inline bool exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results = nullptr, bool verbose = false) const;
+  inline bool exec(std::string_view q, std::vector<std::any> const &params, QueryResults *results = nullptr, bool verbose = false) const;
   template <typename T>
-  inline T getSingleResultAs(std::string const &q, T const &defaultval) const;
+  inline T getSingleResultAs(std::string_view q, T const &defaultval) const;
   template <typename T>
-  inline T getSingleResultAs(std::string const &q, std::any const &param, T const &defaultval) const;
+  inline T getSingleResultAs(std::string_view q, std::any const &param, T const &defaultval) const;
   template <typename T>
-  inline T getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T const &defaultval) const;
-  inline bool print(std::string const &q) const;
-  inline bool print(std::string const &q, std::any const &param) const;
-  inline bool print(std::string const &q, std::vector<std::any> const &params) const;
-  inline bool prettyPrint(bool truncate, std::string const &q) const;
-  inline bool prettyPrint(bool truncate, std::string const &q, std::any const &param) const;
-  inline bool prettyPrint(bool truncate, std::string const &q, std::vector<std::any> const &params) const;
-  inline bool printLineMode(std::string const &q) const;
-  inline bool printLineMode(std::string const &q, std::any const &param) const;
-  inline bool printLineMode(std::string const &q, std::vector<std::any> const &params) const;
-  inline bool printSingleLine(std::string const &q) const;
-  inline bool printSingleLine(std::string const &q, std::any const &param) const;
-  inline bool printSingleLine(std::string const &q, std::vector<std::any> const &params) const;
+  inline T getSingleResultAs(std::string_view q, std::vector<std::any> const &params, T const &defaultval) const;
+  inline bool print(std::string_view q) const;
+  inline bool print(std::string_view q, std::any const &param) const;
+  inline bool print(std::string_view q, std::vector<std::any> const &params) const;
+  inline bool prettyPrint(bool truncate, std::string_view q) const;
+  inline bool prettyPrint(bool truncate, std::string_view q, std::any const &param) const;
+  inline bool prettyPrint(bool truncate, std::string_view q, std::vector<std::any> const &params) const;
+  inline bool printLineMode(std::string_view q) const;
+  inline bool printLineMode(std::string_view q, std::any const &param) const;
+  inline bool printLineMode(std::string_view q, std::vector<std::any> const &params) const;
+  inline bool printSingleLine(std::string_view q) const;
+  inline bool printSingleLine(std::string_view q, std::any const &param) const;
+  inline bool printSingleLine(std::string_view q, std::vector<std::any> const &params) const;
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
   inline long long int lastId() const;
@@ -167,6 +167,7 @@ class SqliteDB
   inline bool initFromMemory();
   inline void destroy();
   inline int execParamFiller(int count, std::string const &param) const;
+  inline int execParamFiller(int count, std::string_view param) const;
   inline int execParamFiller(int count, char const *param) const;
   inline int execParamFiller(int count, unsigned char const *param) const;
   inline int execParamFiller(int count, int param) const;
@@ -323,21 +324,21 @@ inline bool SqliteDB::saveToFile(std::string const &filename) const
   return true;
 }
 
-inline bool SqliteDB::exec(std::string const &q, QueryResults *results, bool verbose) const
+inline bool SqliteDB::exec(std::string_view q, QueryResults *results, bool verbose) const
 {
   return exec(q, std::vector<std::any>(), results, verbose);
 }
 
-inline bool SqliteDB::exec(std::string const &q, std::any const &param, QueryResults *results, bool verbose) const
+inline bool SqliteDB::exec(std::string_view q, std::any const &param, QueryResults *results, bool verbose) const
 {
   return exec(q, std::vector<std::any>{param}, results, verbose);
 }
 
 #if __cpp_lib_ranges >= 201911L
 template <typename R> requires std::ranges::input_range<R> && std::is_same<std::any, std::ranges::range_value_t<R>>::value
-inline bool SqliteDB::exec(std::string const &q, R &&params, QueryResults *results, bool verbose) const
+inline bool SqliteDB::exec(std::string_view q, R &&params, QueryResults *results, bool verbose) const
 #else
-inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results, bool verbose) const
+inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &params, QueryResults *results, bool verbose) const
 #endif
 {
   if (verbose) [[unlikely]]
@@ -351,7 +352,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     sqlite3_finalize(d_stmt);
 
     // create new statement
-    if (sqlite3_prepare_v2(d_db, q.c_str(), -1, &d_stmt, &d_error_tail) != SQLITE_OK) [[unlikely]]
+    if (sqlite3_prepare_v2(d_db, q.data(), q.size(), &d_stmt, &d_error_tail) != SQLITE_OK) [[unlikely]]
     {
       Logger::error("During sqlite3_prepare_v2(): ", sqlite3_errmsg(d_db));
       //// old way: just print the error
@@ -370,7 +371,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
       //                      "\"");
 
       // attempt to mark the token that sqlite choked on
-      long long int error_pos = std::distance(q.c_str(), d_error_tail);
+      long long int error_pos = std::distance(q.data(), d_error_tail);
       long long int error_start = error_pos; // find the token where the error starts...
       while (error_start > 0 &&
              ((q[error_start - 1] >= 'a' && q[error_start - 1] <= 'z') ||
@@ -414,6 +415,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     // order empirically determined
     if (isType<long long int>(p))
     {
+      //std::cout << std::endl << "PARAM LONGLONGINT" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<long long int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
@@ -423,7 +425,38 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<std::nullptr_t>(p))
     {
+      //std::cout << std::endl << "PARAM NULL" << std::endl;
       if (execParamFiller(i + 1, nullptr) != SQLITE_OK) [[unlikely]]
+      {
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
+        return false;
+      }
+    }
+    else if (isType<std::string_view>(p))
+    {
+      //std::cout << std::endl << "PARAM SV" << std::endl;
+      if (execParamFiller(i + 1, std::any_cast<std::string_view>(p)) != SQLITE_OK) [[unlikely]]
+      {
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
+        return false;
+      }
+    }
+    else if (isType<std::pair<unsigned char *, uint64_t>>(p))
+    {
+      //std::cout << std::endl << "PARAM PAIR UCHAR*,UINT64" << std::endl;
+      if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, uint64_t>>(p)) != SQLITE_OK) [[unlikely]]
+      {
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
+        return false;
+      }
+    }
+    else if (isType<int>(p))
+    {
+      //std::cout << std::endl << "PARAM INT" << std::endl;
+      if (execParamFiller(i + 1, std::any_cast<int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -432,7 +465,18 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<std::string>(p))
     {
+      //std::cout << std::endl << "PARAM S" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<std::string>(p)) != SQLITE_OK) [[unlikely]]
+      {
+        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+        Logger::error_indent("-> Query: \"", q, "\"");
+        return false;
+      }
+    }
+    else if (isType<unsigned long>(p))
+    {
+      //std::cout << std::endl << "PARAM ULONG" << std::endl;
+      if (execParamFiller(i + 1, std::any_cast<unsigned long>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -441,6 +485,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(p))
     {
+      //std::cout << std::endl << "PARAM PAIR SHAREDPTR,SIZET" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, size_t>>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
@@ -450,16 +495,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<double>(p))
     {
+      //std::cout << std::endl << "PARAM DOUBLE" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<double>(p)) != SQLITE_OK) [[unlikely]]
-      {
-        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
-        Logger::error_indent("-> Query: \"", q, "\"");
-        return false;
-      }
-    }
-    else if (isType<int>(p))
-    {
-      if (execParamFiller(i + 1, std::any_cast<int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -468,6 +505,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<unsigned int>(p))
     {
+      //std::cout << std::endl << "PARAM UINT" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<unsigned int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
@@ -477,16 +515,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<long>(p))
     {
+      //std::cout << std::endl << "PARAM LONG" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<long>(p)) != SQLITE_OK) [[unlikely]]
-      {
-        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
-        Logger::error_indent("-> Query: \"", q, "\"");
-        return false;
-      }
-    }
-    else if (isType<unsigned long>(p))
-    {
-      if (execParamFiller(i + 1, std::any_cast<unsigned long>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -495,6 +525,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<unsigned long long int>(p))
     {
+      //std::cout << std::endl << "PARAM ULONGLONG" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<unsigned long long int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
@@ -504,6 +535,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<char const *>(p))
     {
+      //std::cout << std::endl << "PARAM CHAR *" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<char const *>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
@@ -513,25 +545,8 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<unsigned char const *>(p))
     {
+      //std::cout << std::endl << "PARAM UCHAR *" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<unsigned char const *>(p)) != SQLITE_OK) [[unlikely]]
-      {
-        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
-        Logger::error_indent("-> Query: \"", q, "\"");
-        return false;
-      }
-    }
-    else if (isType<std::pair<unsigned char *, uint64_t>>(p))
-    {
-      if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, uint64_t>>(p)) != SQLITE_OK) [[unlikely]]
-      {
-        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
-        Logger::error_indent("-> Query: \"", q, "\"");
-        return false;
-      }
-    }
-    else if (isType<std::pair<unsigned char *, size_t>>(p))
-    {
-      if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, size_t>>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -540,6 +555,7 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
     }
     else if (isType<StaticTextParam>(p))
     {
+      //std::cout << std::endl << "PARAM STATIC TEXT" << std::endl;
       if (execParamFiller(i + 1, std::any_cast<StaticTextParam>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
@@ -615,26 +631,26 @@ inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &pa
 }
 
 #if __cpp_lib_ranges >= 201911L
-inline bool SqliteDB::exec(std::string const &q, std::vector<std::any> const &params, QueryResults *results, bool verbose) const
+inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &params, QueryResults *results, bool verbose) const
 {
   return exec(q, std::views::all(params), results, verbose);
 }
 #endif
 
 template <typename T>
-inline T SqliteDB::getSingleResultAs(std::string const &q, T const &defaultval) const
+inline T SqliteDB::getSingleResultAs(std::string_view q, T const &defaultval) const
 {
   return getSingleResultAs<T>(q, std::vector<std::any>(), defaultval);
 }
 
 template <typename T>
-inline T SqliteDB::getSingleResultAs(std::string const &q, std::any const &param, T const &defaultval) const
+inline T SqliteDB::getSingleResultAs(std::string_view q, std::any const &param, T const &defaultval) const
 {
   return getSingleResultAs<T>(q, std::vector<std::any>{param}, defaultval);
 }
 
 template <typename T>
-inline T SqliteDB::getSingleResultAs(std::string const &q, std::vector<std::any> const &params, T const &defaultval) const
+inline T SqliteDB::getSingleResultAs(std::string_view q, std::vector<std::any> const &params, T const &defaultval) const
 {
   QueryResults tmp;
   if (!exec(q, params, &tmp))
@@ -651,17 +667,17 @@ inline T SqliteDB::getSingleResultAs(std::string const &q, std::vector<std::any>
   return tmp.getValueAs<T>(0, 0);
 }
 
-inline bool SqliteDB::print(std::string const &q) const
+inline bool SqliteDB::print(std::string_view q) const
 {
   return print(q, std::vector<std::any>());
 }
 
-inline bool SqliteDB::print(std::string const &q, std::any const &param) const
+inline bool SqliteDB::print(std::string_view q, std::any const &param) const
 {
   return print(q, std::vector<std::any>{param});
 }
 
-inline bool SqliteDB::print(std::string const &q, std::vector<std::any> const &params) const
+inline bool SqliteDB::print(std::string_view q, std::vector<std::any> const &params) const
 {
   QueryResults results;
   bool ret = exec(q, params, &results);
@@ -669,17 +685,17 @@ inline bool SqliteDB::print(std::string const &q, std::vector<std::any> const &p
   return ret;
 }
 
-inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q) const
+inline bool SqliteDB::prettyPrint(bool truncate, std::string_view q) const
 {
   return prettyPrint(truncate, q, std::vector<std::any>());
 }
 
-inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q, std::any const &param) const
+inline bool SqliteDB::prettyPrint(bool truncate, std::string_view q, std::any const &param) const
 {
   return prettyPrint(truncate, q, std::vector<std::any>{param});
 }
 
-inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q, std::vector<std::any> const &params) const
+inline bool SqliteDB::prettyPrint(bool truncate, std::string_view q, std::vector<std::any> const &params) const
 {
   QueryResults results;
   bool ret = exec(q, params, &results);
@@ -687,17 +703,17 @@ inline bool SqliteDB::prettyPrint(bool truncate, std::string const &q, std::vect
   return ret;
 }
 
-inline bool SqliteDB::printLineMode(std::string const &q) const
+inline bool SqliteDB::printLineMode(std::string_view q) const
 {
   return printLineMode(q, std::vector<std::any>());
 }
 
-inline bool SqliteDB::printLineMode(std::string const &q, std::any const &param) const
+inline bool SqliteDB::printLineMode(std::string_view q, std::any const &param) const
 {
   return printLineMode(q, std::vector<std::any>{param});
 }
 
-inline bool SqliteDB::printLineMode(std::string const &q, std::vector<std::any> const &params) const
+inline bool SqliteDB::printLineMode(std::string_view q, std::vector<std::any> const &params) const
 {
   QueryResults results;
   bool ret = exec(q, params, &results);
@@ -705,17 +721,17 @@ inline bool SqliteDB::printLineMode(std::string const &q, std::vector<std::any> 
   return ret;
 }
 
-inline bool SqliteDB::printSingleLine(std::string const &q) const
+inline bool SqliteDB::printSingleLine(std::string_view q) const
 {
   return printSingleLine(q, std::vector<std::any>());
 }
 
-inline bool SqliteDB::printSingleLine(std::string const &q, std::any const &param) const
+inline bool SqliteDB::printSingleLine(std::string_view q, std::any const &param) const
 {
   return printSingleLine(q, std::vector<std::any>{param});
 }
 
-inline bool SqliteDB::printSingleLine(std::string const &q, std::vector<std::any> const &params) const
+inline bool SqliteDB::printSingleLine(std::string_view q, std::vector<std::any> const &params) const
 {
   QueryResults results;
   bool ret = exec(q, params, &results);
@@ -733,6 +749,12 @@ inline int SqliteDB::execParamFiller(int count, std::string const &param) const
 {
   //std::cout << "Binding STRING at " << count << ": " << param.c_str() << std::endl;
   return sqlite3_bind_text(d_stmt, count, param.c_str(), -1, SQLITE_TRANSIENT);
+}
+
+inline int SqliteDB::execParamFiller(int count, std::string_view param) const
+{
+  //std::cout << "Binding STRING_VIEW at " << count << ": " << param << std::endl;
+  return sqlite3_bind_text(d_stmt, count, param.data(), param.size(), SQLITE_TRANSIENT);
 }
 
 inline int SqliteDB::execParamFiller(int count, char const *param) const
@@ -914,7 +936,7 @@ inline std::any const &SqliteDB::QueryResults::value(size_t row, size_t idx) con
   return d_values[row][idx];
 }
 
-inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
+inline int SqliteDB::QueryResults::idxOfHeader(std::string_view header) const
 {
   for (int i = 0; i < static_cast<int>(d_headers.size()); ++i)
     if (d_headers[i] == header)
@@ -922,7 +944,7 @@ inline int SqliteDB::QueryResults::idxOfHeader(std::string const &header) const
   [[unlikely]] return -1;
 }
 
-inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &header) const
+inline std::any SqliteDB::QueryResults::value(size_t row, std::string_view header) const
 {
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
@@ -934,7 +956,7 @@ inline std::any SqliteDB::QueryResults::value(size_t row, std::string const &hea
 }
 
 template <typename T>
-inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &header) const
+inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string_view header) const
 {
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
@@ -953,7 +975,7 @@ inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string const &heade
 }
 
 template <typename T>
-inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string const &header) const
+inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string_view header) const
 {
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]
@@ -975,7 +997,7 @@ inline bool SqliteDB::QueryResults::isNull(size_t row, size_t idx) const
   return valueHasType<std::nullptr_t>(row, idx);
 }
 
-inline bool SqliteDB::QueryResults::isNull(size_t row, std::string const &header) const
+inline bool SqliteDB::QueryResults::isNull(size_t row, std::string_view header) const
 {
   return valueHasType<std::nullptr_t>(row, header);
 }
@@ -1007,12 +1029,12 @@ inline void SqliteDB::QueryResults::clear()
   d_values.clear();
 }
 
-inline std::string SqliteDB::QueryResults::operator()(size_t row, std::string const &header) const
+inline std::string SqliteDB::QueryResults::operator()(size_t row, std::string_view header) const
 {
   return valueAsString(row, header);
 }
 
-inline std::string SqliteDB::QueryResults::operator()(std::string const &header) const
+inline std::string SqliteDB::QueryResults::operator()(std::string_view header) const
 {
   return valueAsString(0, header);
 }

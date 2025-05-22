@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -50,7 +50,7 @@ std::string SqliteDB::QueryResults::valueAsString(size_t row, size_t column) con
     return "(unhandled type)";
 }
 
-std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string const &header) const
+std::string SqliteDB::QueryResults::valueAsString(size_t row, std::string_view header) const
 {
   int i = idxOfHeader(header);
   if (i == -1) [[unlikely]]

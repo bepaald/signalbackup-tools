@@ -1115,7 +1115,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //   std::cout << std::endl;
       // }
       SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
-      d_database.exec(newframe.bindStatement(), newframe.parameters());
+      d_database.exec(newframe.bindStatementView(), newframe.parametersView());
       //newframe.printInfo();
     }
     Logger::message_end(" ...done");

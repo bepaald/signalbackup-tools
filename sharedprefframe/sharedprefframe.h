@@ -55,7 +55,7 @@ class SharedPrefFrame : public BackupFrame
   inline std::pair<unsigned char *, uint64_t> getData() const override;
   inline virtual bool validate(uint64_t) const override;
   inline std::string getHumanData() const override;
-  inline unsigned int getField(std::string_view const &str) const;
+  inline unsigned int getField(std::string_view str) const;
   inline std::string key() const;
   inline std::vector<std::string> value() const;
   inline std::string valueType() const;
@@ -243,7 +243,7 @@ inline std::string SharedPrefFrame::getHumanData() const
   return data;
 }
 
-inline unsigned int SharedPrefFrame::getField(std::string_view const &str) const
+inline unsigned int SharedPrefFrame::getField(std::string_view str) const
 {
   if (str == "FILE")
     return FIELD::FILE;
