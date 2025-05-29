@@ -962,21 +962,21 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         */
 
 
-        case Types::INCOMING_CALL_TYPE:
+        case Types::INCOMING_AUDIO_CALL_TYPE:
         {
-          uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+          uint64_t newtype = setType(type, Types::OUTGOING_AUDIO_CALL_TYPE);
           d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
           break;
         }
-        case Types::OUTGOING_CALL_TYPE:
+        case Types::OUTGOING_AUDIO_CALL_TYPE:
         {
-          uint64_t newtype = setType(type, Types::INCOMING_CALL_TYPE);
+          uint64_t newtype = setType(type, Types::INCOMING_AUDIO_CALL_TYPE);
           d_database.exec("UPDATE sms SET type = ? WHERE _id IS ?", {newtype, i});
           break;
         }
-        case Types::MISSED_CALL_TYPE:
+        case Types::MISSED_AUDIO_CALL_TYPE:
         {
-          uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+          uint64_t newtype = setType(type, Types::OUTGOING_AUDIO_CALL_TYPE);
           if (!d_database.exec("UPDATE sms SET"
                                " type = ?,"
                                " reactions_last_seen = ?,"
@@ -1326,21 +1326,21 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
         d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", i);
         break;
       }
-      case Types::INCOMING_CALL_TYPE:
+      case Types::INCOMING_AUDIO_CALL_TYPE:
       {
-        uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+        uint64_t newtype = setType(type, Types::OUTGOING_AUDIO_CALL_TYPE);
         d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = ? WHERE _id IS ?", {newtype, i});
         break;
       }
-      case Types::OUTGOING_CALL_TYPE:
+      case Types::OUTGOING_AUDIO_CALL_TYPE:
       {
-        uint64_t newtype = setType(type, Types::INCOMING_CALL_TYPE);
+        uint64_t newtype = setType(type, Types::INCOMING_AUDIO_CALL_TYPE);
         d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = ? WHERE _id IS ?", {newtype, i});
         break;
       }
-      case Types::MISSED_CALL_TYPE:
+      case Types::MISSED_AUDIO_CALL_TYPE:
       {
-        uint64_t newtype = setType(type, Types::OUTGOING_CALL_TYPE);
+        uint64_t newtype = setType(type, Types::OUTGOING_AUDIO_CALL_TYPE);
         if (!d_database.exec("UPDATE " + d_mms_table + " SET"
                              " " + d_mms_type + " = ?,"
                              " reactions_last_seen = ?,"

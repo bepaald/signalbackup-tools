@@ -28,11 +28,11 @@ struct Types
 {
   static uint64_t constexpr BASE_TYPE_MASK                     = 0x1F;
 
-  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1; // LATER: INCOMING_AUDIO_CALL_TYPE
+  //  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1;
   static uint64_t constexpr INCOMING_AUDIO_CALL_TYPE           = 1;
-  static uint64_t constexpr OUTGOING_CALL_TYPE                 = 2; // LATER: OUTGOING_AUDIO_CALL_TYPE
+  //  static uint64_t constexpr OUTGOING_CALL_TYPE                 = 2;
   static uint64_t constexpr OUTGOING_AUDIO_CALL_TYPE           = 2;
-  static uint64_t constexpr MISSED_CALL_TYPE                   = 3; // LATER: MISSED_AUDIO_CALL_TYPE
+  //  static uint64_t constexpr MISSED_CALL_TYPE                   = 3;
   static uint64_t constexpr MISSED_AUDIO_CALL_TYPE             = 3;
   static uint64_t constexpr JOINED_TYPE                        = 4;
   static uint64_t constexpr UNSUPPORTED_MESSAGE_TYPE           = 5;
@@ -62,7 +62,7 @@ struct Types
                                                         BASE_SENDING_TYPE, BASE_SENT_FAILED_TYPE,
                                                         BASE_PENDING_SECURE_SMS_FALLBACK,
                                                         BASE_PENDING_INSECURE_SMS_FALLBACK,
-                                                        OUTGOING_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE};
+                                                        OUTGOING_AUDIO_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE};
 
   static uint64_t constexpr KEY_EXCHANGE_MASK                  = 0xFF00;
   static uint64_t constexpr KEY_EXCHANGE_BIT                   = 0x8000;
@@ -75,11 +75,11 @@ struct Types
   static uint64_t constexpr KEY_EXCHANGE_CONTENT_FORMAT        = 0x100;
 
   static uint64_t constexpr GROUP_UPDATE_BIT            = 0x10000;
-  static uint64_t constexpr GROUP_LEAVE_BIT             = 0x20000;
-  static uint64_t constexpr GROUP_QUIT_BIT              = GROUP_LEAVE_BIT;
+  //  static uint64_t constexpr GROUP_LEAVE_BIT             = 0x20000;
+  static uint64_t constexpr GROUP_QUIT_BIT              = 0x20000;
   static uint64_t constexpr EXPIRATION_TIMER_UPDATE_BIT = 0x40000;
   static uint64_t constexpr GROUP_V2_BIT                = 0x80000;
-  static uint64_t constexpr GROUP_V2_LEAVE_BITS         = GROUP_V2_BIT | GROUP_LEAVE_BIT | GROUP_UPDATE_BIT;
+  static uint64_t constexpr GROUP_V2_LEAVE_BITS         = GROUP_V2_BIT | GROUP_QUIT_BIT | GROUP_UPDATE_BIT;
 
   static uint64_t constexpr SECURE_MESSAGE_BIT = 0x800000;
   static uint64_t constexpr END_SESSION_BIT    = 0x400000;
@@ -145,17 +145,17 @@ struct Types
 
   inline static bool isIncomingCall(uint64_t type)
   {
-    return type == INCOMING_CALL_TYPE;
+    return type == INCOMING_AUDIO_CALL_TYPE;
   }
 
   inline static bool isOutgoingCall(uint64_t type)
   {
-    return type == OUTGOING_CALL_TYPE;
+    return type == OUTGOING_AUDIO_CALL_TYPE;
   }
 
   inline static bool isMissedCall(uint64_t type)
   {
-    return type == MISSED_CALL_TYPE;
+    return type == MISSED_AUDIO_CALL_TYPE;
   }
 
   inline static bool isIncomingVideoCall(uint64_t type)

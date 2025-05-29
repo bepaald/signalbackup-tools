@@ -67,15 +67,15 @@ void SignalBackup::handleSms(SqliteDB::QueryResults const &results, std::ofstrea
 
     switch (realtype & Types::BASE_TYPE_MASK)
     {
-      case Types::INCOMING_CALL_TYPE:
+      case Types::INCOMING_AUDIO_CALL_TYPE:
       case Types::BASE_INBOX_TYPE:
         type = 1;
         break;
-      case Types::OUTGOING_CALL_TYPE:
+      case Types::OUTGOING_AUDIO_CALL_TYPE:
       case Types::BASE_SENT_TYPE:
         type = 2;
         break;
-      case Types::MISSED_CALL_TYPE:
+      case Types::MISSED_AUDIO_CALL_TYPE:
       case Types::BASE_DRAFT_TYPE:
         type = 3;
         break;
@@ -751,7 +751,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                        Types::KEY_EXCHANGE_MASK, Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT, Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT, Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
                        Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,
                        Types::PROFILE_CHANGE_TYPE, Types::JOINED_TYPE,
-                       Types::GROUP_CALL_TYPE, Types::INCOMING_CALL_TYPE, Types::OUTGOING_CALL_TYPE, Types::MISSED_CALL_TYPE, Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE, Types::MISSED_VIDEO_CALL_TYPE, Types::GV1_MIGRATION_TYPE, Types::CHANGE_NUMBER_TYPE, Types::BOOST_REQUEST_TYPE},
+                       Types::GROUP_CALL_TYPE, Types::INCOMING_AUDIO_CALL_TYPE, Types::OUTGOING_AUDIO_CALL_TYPE, Types::MISSED_AUDIO_CALL_TYPE, Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE, Types::MISSED_VIDEO_CALL_TYPE, Types::GV1_MIGRATION_TYPE, Types::CHANGE_NUMBER_TYPE, Types::BOOST_REQUEST_TYPE},
                       &mms_results);
     else
       d_database.exec("SELECT _id,thread_id,date_received," + d_mms_date_sent + "," + d_mms_recipient_id + "," + d_mms_type + ","
@@ -771,7 +771,7 @@ bool SignalBackup::exportXml(std::string const &filename, bool overwrite, std::s
                        Types::KEY_EXCHANGE_MASK, Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT, Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT, Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
                        Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,
                        Types::PROFILE_CHANGE_TYPE, Types::JOINED_TYPE,
-                       Types::GROUP_CALL_TYPE, Types::INCOMING_CALL_TYPE, Types::OUTGOING_CALL_TYPE, Types::MISSED_CALL_TYPE, Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE, Types::MISSED_VIDEO_CALL_TYPE, Types::GV1_MIGRATION_TYPE, Types::CHANGE_NUMBER_TYPE, Types::BOOST_REQUEST_TYPE},
+                       Types::GROUP_CALL_TYPE, Types::INCOMING_AUDIO_CALL_TYPE, Types::OUTGOING_AUDIO_CALL_TYPE, Types::MISSED_AUDIO_CALL_TYPE, Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE, Types::MISSED_VIDEO_CALL_TYPE, Types::GV1_MIGRATION_TYPE, Types::CHANGE_NUMBER_TYPE, Types::BOOST_REQUEST_TYPE},
                       &mms_results);
   }
 

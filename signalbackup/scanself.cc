@@ -79,7 +79,7 @@ long long int SignalBackup::scanSelf() const
                                                                      {Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE,
                                                                       Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
                                                                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK ,
-                                                                      Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, -1);
+                                                                      Types::OUTGOING_AUDIO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, -1);
   if (selfid != -1)
   {
     //std::cout << "RETURN 3: " << selfid << std::endl;
@@ -236,7 +236,7 @@ long long int SignalBackup::scanSelf() const
         //                      ")",
         //                      {gid, tid,
         //                       Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
-        //                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
+        //                       Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_AUDIO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
         //   for (unsigned int j = 0; j < res3.rows(); ++j)
         //   {
         //     std::cout << "  From group membership (NEW):" << res3(j, "recipeint_id") << std::endl;
@@ -250,7 +250,7 @@ long long int SignalBackup::scanSelf() const
                              ")",
                              {gid, tid, Types::GROUP_CALL_TYPE,
                               Types::BASE_OUTBOX_TYPE, Types::BASE_SENT_TYPE, Types::BASE_SENDING_TYPE, Types::BASE_SENT_FAILED_TYPE,
-                              Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
+                              Types::BASE_PENDING_SECURE_SMS_FALLBACK,Types:: BASE_PENDING_INSECURE_SMS_FALLBACK , Types::OUTGOING_AUDIO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE}, &res3))
           continue;
         else
         {

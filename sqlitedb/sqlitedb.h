@@ -52,6 +52,8 @@ class SqliteDB
     inline std::any value(size_t row, std::string_view header) const;
     template <typename T>
     inline T getValueAs(size_t row, std::string_view header) const;
+    template <typename T>
+    inline T getValueAs(size_t row, size_t idx) const;
     inline std::any const &value(size_t row, size_t idx) const;
     inline std::vector<std::any> const &row(size_t row) const;
     template <typename T>
@@ -60,8 +62,6 @@ class SqliteDB
     inline bool valueHasType(size_t row, std::string_view header) const;
     inline bool isNull(size_t row, size_t idx) const;
     inline bool isNull(size_t row, std::string_view header) const;
-    template <typename T>
-    inline T getValueAs(size_t row, size_t idx) const;
     inline bool empty() const;
     inline size_t rows() const;
     inline size_t columns() const;
@@ -383,7 +383,8 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
                            Logger::Control::BOLD,
                            q.substr(error_start, error_pos - error_start),
                            Logger::Control::NORMAL,
-                           q.substr(error_pos));
+                           q.substr(error_pos),
+                           "\"");
 
       return false;
     }
@@ -964,14 +965,19 @@ inline T SqliteDB::QueryResults::getValueAs(size_t row, std::string_view header)
     Logger::warning("Column `", header, "' not found in query results");
     return T{};
   }
+  return getValueAs<T>(row, i);
+}
 
-  if (d_values[row][i].type() != typeid(T)) [[unlikely]]
+template <typename T>
+inline T SqliteDB::QueryResults::getValueAs(size_t row, size_t idx) const
+{
+  if (d_values[row][idx].type() != typeid(T)) [[unlikely]]
   {
-    Logger::message("Getting value of field '", header, "' (idx ", i, "). Value as string: ", valueAsString(row, i));
-    Logger::message("Type: ", d_values[row][i].type().name(), " Requested type: ", typeid(T).name());
+    Logger::message("Getting value of field '", d_headers[idx], "' (idx ", idx, "). Value as string: ", valueAsString(row, idx));
+    Logger::message("Type: ", d_values[row][idx].type().name(), " Requested type: ", typeid(T).name());
     //return T{};
   }
-  return std::any_cast<T>(d_values[row][i]);
+  return std::any_cast<T>(d_values[row][idx]);
 }
 
 template <typename T>
@@ -983,7 +989,7 @@ inline bool SqliteDB::QueryResults::valueHasType(size_t row, std::string_view he
     Logger::warning("Column `", header, "' not found in query results");
     return false;
   }
-  return (d_values[row][i].type() == typeid(T));
+  return valueHasType<T>(row, i);
 }
 
 template <typename T>
@@ -1000,12 +1006,6 @@ inline bool SqliteDB::QueryResults::isNull(size_t row, size_t idx) const
 inline bool SqliteDB::QueryResults::isNull(size_t row, std::string_view header) const
 {
   return valueHasType<std::nullptr_t>(row, header);
-}
-
-template <typename T>
-inline T SqliteDB::QueryResults::getValueAs(size_t row, size_t idx) const
-{
-  return std::any_cast<T>(d_values[row][idx]);
 }
 
 inline bool SqliteDB::QueryResults::empty() const

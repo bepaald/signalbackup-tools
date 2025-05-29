@@ -77,12 +77,12 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
         if (calldetails.valueAsString(0, "direction") == "Incoming")
         {
           if (calldetails.valueAsString(0, "status") == "Accepted")
-            calltype = Types::INCOMING_CALL_TYPE;
+            calltype = Types::INCOMING_AUDIO_CALL_TYPE;
           else
-            calltype = Types::MISSED_CALL_TYPE;
+            calltype = Types::MISSED_AUDIO_CALL_TYPE;
         }
         else// direction = outgoing
-          calltype = Types::OUTGOING_CALL_TYPE;
+          calltype = Types::OUTGOING_AUDIO_CALL_TYPE;
       }
     }
     else if (calldetails.valueAsString(0, "mode") == "Group")
@@ -148,12 +148,12 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
         if (calldetails.getValueAs<long long int>(0, "incoming"))
         {
           if (calldetails.getValueAs<long long int>(0, "accepted") >= 0)
-            calltype = Types::INCOMING_CALL_TYPE;
+            calltype = Types::INCOMING_AUDIO_CALL_TYPE;
           else
-            calltype = Types::MISSED_CALL_TYPE;
+            calltype = Types::MISSED_AUDIO_CALL_TYPE;
         }
         else
-          calltype = Types::OUTGOING_CALL_TYPE;
+          calltype = Types::OUTGOING_AUDIO_CALL_TYPE;
       }
     }
     else if (calldetails.valueAsString(0, "mode") == "Group")
