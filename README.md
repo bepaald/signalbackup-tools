@@ -49,7 +49,8 @@ For the most recent Windows executable, check [the releases page](https://github
 Note for Windows users: this is a command line application. This means you can not just double-click the executable to run it, you need to run it from a terminal. Common terminals for Windows are `cmd` (Command Prompt) and `PowerShell`. An example of running the program on Windows 10 can be seen [here](https://github.com/bepaald/signalbackup-tools/issues/148#issuecomment-1732375861).
 
 **<span id="linux_packages">Linux packages</span>**
-- For **Arch** users, an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
+- For **Arch** users an AUR package [is available](https://aur.archlinux.org/packages/signalbackup-tools-git).
+- For **Ubuntu and derivatives** a PPA is provided [here](https://launchpad.net/~olek-osikowicz/+archive/ubuntu/signalbackup-tools), thanks to @olek-osikowicz (https://github.com/bepaald/signalbackup-tools/issues/312).
 - A pre-built rpm for **openSUSE** is available [here](https://software.opensuse.org/package/signalbackup-tools?search_term=signalbackup-tools), thanks to @marfrh (https://github.com/bepaald/signalbackup-tools/issues/205).
 - The program is also available in `nixpkgs` as [`signalbackup-tools`](https://search.nixos.org/packages?channel=unstable&type=packages&query=signalbackup-tools) and can be installed on **NixOS** or any system that supports the [Nix package manager](https://nixos.org/manual/nix/stable/). For those looking for more information on installing and running the Nix package, or those wanting to help others, there is an issue where information can be found and posted [here](https://github.com/bepaald/signalbackup-tools/issues/149).
 - Alternatively, a Dockerfile has been kindly provided by David J. Meier, and is available at his gitlab page: <https://gitlab.com/splatops/cntn-signalbackup-tools>.
