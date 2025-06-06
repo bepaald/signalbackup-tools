@@ -195,21 +195,26 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
   std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
 
-  if (!d_editattachments.empty() && frame && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT) [[unlikely]]
-    for (unsigned int i = 0; i < d_editattachments.size(); i += 2)
-      if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
-      {
-        auto oldlength = reinterpret_cast<AttachmentFrame *>(frame.get())->length();
+  /*
+    This was originally used to work around a short-lived bug in Signal (#9154).
+    Let's disable for newer backups. (note if ever re-enabling: there is a little
+    more commented code below (search for #9154)
+  */
+  // if (!d_editattachments.empty() && frame && frame->frameType() == BackupFrame::FRAMETYPE::ATTACHMENT) [[unlikely]]
+  //   for (unsigned int i = 0; i < d_editattachments.size(); i += 2)
+  //     if (frame->frameNumber() == static_cast<uint64_t>(d_editattachments[i]))
+  //     {
+  //       auto oldlength = reinterpret_cast<AttachmentFrame *>(frame.get())->length();
 
-        // set new length
-        reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
+  //       // set new length
+  //       reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
 
-        Logger::message("Editing attachment data size in AttachmentFrame ", oldlength, " -> ",
-                        reinterpret_cast<AttachmentFrame *>(frame.get())->length(),
-                        "\nFrame has _id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->rowId(),
-                        ", unique_id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId());
-        break;
-      }
+  //       Logger::message("Editing attachment data size in AttachmentFrame ", oldlength, " -> ",
+  //                       reinterpret_cast<AttachmentFrame *>(frame.get())->length(),
+  //                       "\nFrame has _id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->rowId(),
+  //                       ", unique_id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId());
+  //       break;
+  //     }
 
   if (!frame) [[unlikely]]
   {
@@ -250,11 +255,14 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
   {
 
     if ((file.tellg() < 0 && file.eof()) || (attsize + static_cast<uint64_t>(file.tellg()) > d_filesize)) [[unlikely]]
-      if (!d_assumebadframesize)
-      {
-        Logger::error("Unexpectedly hit end of file while reading attachment!");
-        return std::unique_ptr<BackupFrame>(nullptr);
-      }
+    {
+      /* needed for #9154 */
+      //if (!d_assumebadframesize)
+      //{
+      Logger::error("Unexpectedly hit end of file while reading attachment!");
+      return std::unique_ptr<BackupFrame>(nullptr);
+      //}
+    }
 
     uintToFourBytes(d_iv, d_counter++);
 
@@ -403,12 +411,6 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrameOld(std::ifstream &file)
                         reinterpret_cast<AttachmentFrame *>(frame.get())->length(),
                         "\nFrame has _id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->rowId(),
                         ", unique_id = ", reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId());
-        // std::cout << "Editing attachment data size in AttachmentFrame "
-        //           << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << " -> ";
-        // reinterpret_cast<AttachmentFrame *>(frame.get())->setLengthField(d_editattachments[i + 1]);
-        // std::cout << reinterpret_cast<AttachmentFrame *>(frame.get())->length() << std::endl;
-        // std::cout << "Frame has _id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->rowId()
-        //           << ", unique_id = " << reinterpret_cast<AttachmentFrame *>(frame.get())->attachmentId() << std::endl;
         break;
       }
 

@@ -33,9 +33,10 @@ struct Base64
  public:
   inline static std::string bytesToBase64String(unsigned char const *data, size_t size);
   inline static std::string bytesToBase64String(std::pair<unsigned char const *, size_t> const &data);
-  template <typename T>
-  inline static std::pair<unsigned char*, size_t> base64StringToBytes(T const &str,
-                                                                      typename std::enable_if<std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>>::type *dummy = nullptr);
+  // template <typename T>
+  // inline static std::pair<unsigned char*, size_t> base64StringToBytes(T const &str,
+  //                                                                     typename std::enable_if<std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>>::type *dummy = nullptr);
+  inline static std::pair<unsigned char*, size_t> base64StringToBytes(std::string_view str);
 };
 
 inline std::string Base64::bytesToBase64String(unsigned char const *data, size_t size)
@@ -55,9 +56,7 @@ inline std::string Base64::bytesToBase64String(std::pair<unsigned char const *, 
   return bytesToBase64String(data.first, data.second);
 }
 
-template <typename T>
-inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(T const &str,
-                                                                     typename std::enable_if<std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>>::type *)
+inline std::pair<unsigned char*, size_t> Base64::base64StringToBytes(std::string_view str)
 {
   int binarylength = str.size() / 4 * 3;
   std::unique_ptr<unsigned char[]> output(new unsigned char[binarylength]);

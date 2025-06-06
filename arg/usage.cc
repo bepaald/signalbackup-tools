@@ -287,6 +287,9 @@ be removed.
 std::cout << R"*(
 --assumebadframesizeonbadmac               Used to fix a specific (long fixed) bug in Signal. See
                                            https://github.com/signalapp/Signal-Android/issues/9154
+                                           This option and the modifier below should be considered
+                                           deprecated and are disabled for newer backups. Contact the
+                                           developer if you believe you need this on a newer backup file.
 --editattachmentsize                       Modifier for `--assumebadframesizeonbadmac'
 --removedoubles [N]                        Attempt to remove doubled messages from the database. May be
                                            useful when importing partially overlapping backup files.
