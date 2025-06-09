@@ -44,22 +44,27 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
   }
 
   SqliteDB::QueryResults results;
-  if (!d_database.exec("SELECT _id, " +
+  if (!d_database.exec("SELECT recipient._id AS recipient_id, " +
                        (d_database.tableContainsColumn("recipient", d_recipient_type) ? d_recipient_type : "-1") + " AS 'group_type', " +
                        d_recipient_e164 + " AS 'phone', " +
+                       d_recipient_system_joined_name + " AS 'system_name', " +
+                       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "profile_joined_name AS profile_joined_name, " : "'' AS profile_joined_name, ") +
+                       (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "nickname_joined_name AS nickname_joined_name, " : "'' AS nickname_joined_name, ") +
+                       (d_database.tableContainsColumn("recipient", "note") ? "note AS note, " : "'' AS note, ") +
                        (d_database.tableContainsColumn("recipient", "username") ? "username, " : "") +
-                       "registered, blocked, hidden "
-                       "FROM recipient", &results))
+                       "registered, blocked, hidden , groups._id AS groups_id "
+                       "FROM recipient "
+                       "LEFT JOIN groups ON groups.group_id = recipient.group_id", &results))
   {
     Logger::error("Failed to query database for contacts.");
     return false;
   }
+  //results.prettyPrint(d_truncate);
 
   std::vector<std::pair<std::string, long long int>> order;
   order.reserve(results.rows());
   for (unsigned int i = 0; i < results.rows(); ++i)
-    order.push_back({getRecipientInfoFromMap(recipient_info, results.valueAsInt(i, "_id")).display_name, i});
-
+    order.push_back({getRecipientInfoFromMap(recipient_info, results.valueAsInt(i, "recipient_id")).display_name, i});
   std::sort(order.begin(), order.end());
 
   // write start of html
@@ -247,11 +252,12 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     "        flex-direction: row;\n"
     "        padding: 10px;\n"
     "        margin: 5px auto;\n"
-    "        justify-content: center;\n"
+    // "        justify-content: center;\n"
     // "        align-items: center;\n"
     "        align-content: center;\n"
     "        background-color: var(--conversationlistitem-bc);\n"
     "        border-radius: 9px;\n"
+    "        width: calc(100% - 20px);\n"
     "      }\n"
     "\n"
     "      .avatar {\n"
@@ -290,7 +296,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
 
   for (unsigned int i = 0; i < results.rows(); ++i)
   {
-    long long int rec_id = results.valueAsInt(i, "_id");
+    long long int rec_id = results.valueAsInt(i, "recipient_id");
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
       std::string avatarpath;
@@ -350,11 +356,11 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     "        position: relative;\n"
     "        display: flex;\n"
     "        flex-direction: column;\n"
-    "        padding-left: 30px;\n"
+    "        padding-left: 15px;\n"
     "        padding-right: 10px;\n"
     "        justify-content: center;\n"
     "        align-content: center;\n"
-    "        width: 350px;\n"
+    "        min-width: 350px;\n"
     "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
     "        margin: 0px;\n"
     "      }\n"
@@ -487,14 +493,18 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
   // write blocked list
   for (unsigned int ii = 0; ii < order.size(); ++ii)
   {
-    long long int rec_id = results.valueAsInt(order[ii].second, "_id");
+    long long int rec_id = results.valueAsInt(order[ii].second, "recipient_id");
     long long int registered = results.valueAsInt(order[ii].second, "registered");
     long long int blocked = results.valueAsInt(order[ii].second, "blocked");
     long long int hidden = results.valueAsInt(order[ii].second, "hidden");
     std::string phone = results(order[ii].second, "phone");
     std::string username = results(order[ii].second, "username");
+    std::string system_name = results(order[ii].second, "system_name");
+    std::string profile_name = results(order[ii].second, "profile_joined_name");
+    std::string nickname = results(order[ii].second, "nickname_joined_name");
+    std::string note = results(order[ii].second, "note");
     bool hasavatar = getRecipientInfoFromMap(recipient_info, rec_id).hasavatar;
-    bool isgroup = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM groups WHERE group_id = (SELECT IFNULL(group_id, 0) FROM recipient WHERE _id = ?)", rec_id, -1) == 1;
+    bool isgroup = results.valueAsInt(order[ii].second, "groups_id", -1) == -1 ? false : true;
     if (d_database.containsTable("distribution_list"))
       isgroup |= d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM distribution_list WHERE recipient_id = ?", rec_id, -1) == 1;
     bool emoji_initial = getRecipientInfoFromMap(recipient_info, rec_id).initial_is_emoji;
@@ -521,6 +531,18 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     if (!phone.empty())
       outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Phone:</span> " << phone << "</div>\n";
 
+    if (!system_name.empty())
+      outputfile << "            <div class=\"extrainfo\"><span class=\"key\">System name:</span> " << system_name << "</div>\n";
+
+    if (!profile_name.empty())
+      outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Profile name:</span> " << profile_name << "</div>\n";
+
+    if (!nickname.empty())
+      outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Nickname:</span> " << nickname << "</div>\n";
+
+    if (!note.empty())
+      outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Note:</span> " << note << "</div>\n";
+
     if (!username.empty())
       outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Username:</span> " << username << "</div>\n";
 
@@ -539,7 +561,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
           break;
         }
         case 2: // Registration status NOT REGISTERED
-        {
+       {
           outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Registered:</span> no</div>\n";
           break;
         }
@@ -550,43 +572,51 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
 
     if (isgroup)
     {
+      GroupInfo groupinfo;
+      getGroupInfo(rec_id, &groupinfo);
+
+      if (!groupinfo.description.empty())
+        outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Description:</span> " << groupinfo.description << "</div>\n";
+
+      // maybe show members?
+
       long long int grouptype = results.valueAsInt(order[ii].second, "group_type");
-      outputfile << "            <div class=\"extrainfo\">" << "<span class=\"key\">Group type:</span> ";
+      outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Group type:</span> ";
       switch (grouptype)
       {
         case 0: // GROUP TYPE NONE (should not occur, because of if (isgroup) {...})
         {
-          outputfile << " (none)";
+          outputfile << "(none)";
           break;
         }
         case 1: // GROUP TYPE MMS
         {
-          outputfile << " MMS";
+          outputfile << "MMS";
           break;
         }
         case 2: // GROUP TYPE GROUP v1
         {
-          outputfile << " version 1";
+          outputfile << "version 1";
           break;
         }
         case 3: // GROUP TYPE GROUP v2
         {
-          outputfile << " version 2";
+          outputfile << "version 2";
           break;
         }
         case 4: // GROUP TYPE DISTRIBUTION LIST (story recipients)
         {
-          outputfile << " distribution list";
+          outputfile << "distribution list";
           break;
         }
         case 5: // GROUP TYPE CALL LINK (dont know what this is)
         {
-          outputfile << " call link";
+          outputfile << "call link";
           break;
         }
         default: // could happen if recipient.(group_)type does not exist (dbv < 79?)
         {
-          outputfile << " (unknown)";
+          outputfile << "(unknown)";
           break;
         }
       }
