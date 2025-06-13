@@ -470,9 +470,11 @@ class SignalBackup
                        bool linkify, bool isquote) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
-  void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<long long int, RecipientInfo> *recipientinfo,
-                        bool searchpage, bool writereceipts, std::vector<std::string> const &ignoremediatypes) const;
+  void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
+                        std::map<long long int, RecipientInfo> *recipientinfo, bool searchpage, bool writereceipts,
+                        std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
+                         std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                          std::map<long long int, RecipientInfo> *recipientinfo, bool linkify,
                          std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,

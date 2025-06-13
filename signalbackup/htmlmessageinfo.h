@@ -44,17 +44,18 @@ struct HTMLMessageInfo
   long long int msg_id;
   long long int msg_recipient_id;
   long long int original_message_id;
+  long long int quote_id; // 0 if none
 
   IconType icon; //size: 4
   unsigned int idx;
 
   bool only_emoji;
+  bool is_quoted;
   bool is_deleted;
   bool is_viewonce;
   bool isgroup;
   bool incoming;
   bool nobackground;
-  bool hasquote;
   bool quote_missing;
   bool orig_filename;
   bool overwrite;

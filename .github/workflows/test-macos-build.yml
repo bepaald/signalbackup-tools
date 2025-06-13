@@ -29,5 +29,6 @@ jobs:
 
       - name: Build
         run: |
-          brew install --HEAD --formula homebrew/signalbackup-tools.rb
-          brew test homebrew/signalbackup-tools.rb
+          brew tap bepaald/signalbackup-tools https://github.com/bepaald/signalbackup-tools
+          brew install --HEAD HomebrewFormula/signalbackup-tools.rb
+          brew test HomebrewFormula/signalbackup-tools.rb

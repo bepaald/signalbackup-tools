@@ -326,13 +326,11 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
   }
   DEBUGOUT("Read ", processed, " bytes");
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  unsigned long int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
-  if (EVP_MAC_final(hctx.get(), hash, nullptr, digest_size) != 1)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  if (EVP_MAC_final(hctx.get(), hash, nullptr, SHA256_DIGEST_LENGTH) != 1)
 #else
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
-  unsigned char hash[SHA256_DIGEST_LENGTH];
   if (HMAC_Final(hctx.get(), hash, &digest_size) != 1)
 #endif
   {

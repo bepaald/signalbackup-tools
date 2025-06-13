@@ -301,6 +301,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (groupcheck.rows())
       isgroup = true;
 
+    std::map<int64_t, std::pair<std::string, int64_t>> quotemap; // maps date_sent (=quote_id) of quoted message to page it is on and _id of message.
+
     // now get all messages
     SqliteDB::QueryResults messages;
     d_database.exec(bepaald::concat("SELECT "
@@ -310,7 +312,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     "date_received, ", d_mms_date_sent, ", ", d_mms_type, ", ",
                                     (!periodsplitformat.empty() ? bepaald::concat("strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')") : "''"), " AS periodsplit, "
                                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
-                                    "attcount, reactioncount, mentioncount, ",
+                                    "attcount, reactioncount, mentioncount, "
+                                    "IFNULL(", d_mms_date_sent, " IN (SELECT DISTINCT quote_id FROM ", d_mms_table, " WHERE thread_id = ?1), 0) AS is_quoted, ",
                                     d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                                     "IFNULL(view_once, 0) AS view_once, expires_in, ", d_mms_ranges, ", shared_contacts, ",
                                     (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : ""),
@@ -328,7 +331,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON ", d_mms_table, "._id = rctns.message_id "
                                     // get mention count for message:
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id "
-                                    "WHERE thread_id = ?",
+                                    "WHERE thread_id = ?1",
                                     datewhereclause,
                                     (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " "),
                                     (d_database.tableContainsColumn(d_mms_table, "story_type") ? " AND story_type = 0 OR story_type IS NULL " : ""), // storytype NONE(0), STORY_WITH(OUT)_REPLIES(1/2), TEXT_...(3/4)
@@ -487,15 +490,17 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::string quote_body = messages.valueAsString(messagecount, "quote_body");
         long long int expires_in = messages.getValueAs<long long int>(messagecount, "expires_in");
         long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
-        bool hasquote = !messages.isNull(messagecount, "quote_id") && messages.getValueAs<long long int>(messagecount, "quote_id");
+        long long int quote_id = messages.valueAsInt(messagecount, "quote_id", 0);
         bool quote_missing = messages.valueAsInt(messagecount, "quote_missing", 0) != 0;
         bool story_reply = (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? messages.valueAsInt(messagecount, "parent_story_id", 0) : 0);
-        long long int attachmentcount = messages.valueAsInt(messagecount, "attcount", 0);
-        long long int reactioncount = messages.valueAsInt(messagecount, "reactioncount", 0);
-        long long int mentioncount = messages.valueAsInt(messagecount, "mentioncount", 0);
+        //long long int attachmentcount = messages.valueAsInt(messagecount, "attcount", 0);
+        //long long int reactioncount = messages.valueAsInt(messagecount, "reactioncount", 0);
+        //long long int mentioncount = messages.valueAsInt(messagecount, "mentioncount", 0);
 
         SqliteDB::QueryResults attachment_results;
-        if (attachmentcount > 0)
+        SqliteDB::QueryResults quote_attachment_results;
+        if (messages.valueAsInt(messagecount, "attcount", 0) > 0)
+        {
           d_database.exec(bepaald::concat("SELECT ",
                                           d_part_table, "._id, ",
                                           (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
@@ -511,11 +516,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                           "AND quote IS ? "
                                           " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
 
-        // check attachments for long message body -> replace cropped body & remove from attachment results
-        bool haslongbody = setLongMessageBody(&body, &attachment_results);
-
-        SqliteDB::QueryResults quote_attachment_results;
-        if (attachmentcount > 0)
           d_database.exec(bepaald::concat("SELECT ",
                                           d_part_table, "._id, ",
                                           (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
@@ -530,13 +530,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                           "WHERE ", d_part_mid, " IS ? "
                                           "AND quote IS ? "
                                           " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 1}, &quote_attachment_results);
+        }
+        // check attachments for long message body -> replace cropped body & remove from attachment results
+        bool haslongbody = setLongMessageBody(&body, &attachment_results);
 
         SqliteDB::QueryResults mention_results;
-        if (mentioncount > 0)
+        if (messages.valueAsInt(messagecount, "mentioncount", 0) > 0)
           d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
 
         SqliteDB::QueryResults reaction_results;
-        if (reactioncount > 0)
+        if (messages.valueAsInt(messagecount, "reactioncount", 0) > 0)
           d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
                           "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
@@ -592,7 +595,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         bool only_emoji = HTMLprepMsgBody(&body, mentions, &recipient_info, incoming, brdata, linkify, false /*isquote*/);
 
         bool nobackground = false;
-        if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
+        if ((only_emoji && quote_id == 0 && !attachment_results.rows()) ||  // if no quote etc
             issticker) // or sticker
           nobackground = true;
 
@@ -601,7 +604,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
         if (!messages.isNull(messagecount, "quote_mentions"))
           quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
-        HTMLprepMsgBody(&quote_body, mentions, &recipient_info, incoming, quote_mentions, linkify, true);
+        HTMLprepMsgBody(&quote_body, mentions, &recipient_info, incoming, quote_mentions, false /*linkify*/, true);
 
         // insert date-change message
         if (readable_date_day != previous_day_change)
@@ -639,23 +642,27 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   msg_id,
                                   msg_recipient_id,
                                   original_message_id,
+                                  quote_id,
 
                                   icon,
                                   messagecount,
 
                                   only_emoji,
+                                  messages.valueAsInt(messagecount, "is_quoted", 0) != 0,
                                   is_deleted,
                                   is_viewonce,
                                   isgroup,
                                   incoming,
                                   nobackground,
-                                  hasquote,
                                   quote_missing,
                                   originalfilenames,
                                   overwrite,
                                   append,
                                   story_reply});
-        HTMLwriteMessage(htmloutput, msg_info, &recipient_info, searchpage, receipts, ignoremediatypes);
+        HTMLwriteMessage(htmloutput, msg_info, quotemap, &recipient_info, searchpage, receipts, ignoremediatypes);
+
+        if (msg_info.is_quoted)
+          quotemap.emplace(messages.valueAsInt(messagecount, d_mms_date_sent, 0), std::pair(msg_info.filename, msg_info.msg_id));
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {

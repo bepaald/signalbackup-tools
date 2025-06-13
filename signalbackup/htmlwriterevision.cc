@@ -20,6 +20,7 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
+                                     std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                                      std::map<long long int, RecipientInfo> *recipient_info, bool linkify,
                                      std::vector<std::string> const &ignoremediatypes) const
 {
@@ -31,7 +32,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                        d_mms_date_sent, ", ",
                                        d_mms_type, ", "
                                        "body, quote_missing, quote_author, quote_body, ", d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", "
-                                       "attcount, "
+                                       "attcount, reactioncount, mentioncount, "
                                        "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                                        "json_extract(link_previews, '$[0].description') AS link_preview_description, ",
@@ -39,7 +40,12 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                        (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
                                        "shared_contacts, quote_id, expires_in, ", d_mms_ranges, ", quote_mentions "
                                        "FROM ", d_mms_table, " ",
+                                       // get attachment count for message:
                                        "LEFT JOIN (SELECT ", d_part_mid, " AS message_id, COUNT(*) AS attcount FROM ", d_part_table, " GROUP BY message_id) AS attmnts ON ", d_mms_table, "._id = attmnts.message_id "
+                                       // get reaction count for message:
+                                       "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON ", d_mms_table, "._id = rctns.message_id "
+                                       // get mention count for message:
+                                       "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id "
                                        "WHERE _id = ?"), msg_id, &revision) || revision.rows() != 1)
     return;
 
@@ -53,12 +59,14 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   std::string quote_body = revision.valueAsString(0, "quote_body");
   long long int type = revision.getValueAs<long long int>(0, d_mms_type);
   long long int expires_in = revision.getValueAs<long long int>(0, "expires_in");
-  bool hasquote = !revision.isNull(0, "quote_id") && revision.getValueAs<long long int>(0, "quote_id");
+  long long int quote_id = revision.valueAsInt(0, "quote_id", 0);
   bool quote_missing = revision.valueAsInt(0, "quote_missing", 0) != 0;
-  long long int attachmentcount = revision.valueAsInt(0, "attcount", 0);
+  //long long int attachmentcount = revision.valueAsInt(0, "attcount", 0);
 
   SqliteDB::QueryResults attachment_results;
-  if (attachmentcount > 0)
+  SqliteDB::QueryResults quote_attachment_results;
+  if (revision.valueAsInt(0, "attcount", 0) > 0)
+  {
     d_database.exec(bepaald::concat("SELECT ",
                                     d_part_table, "._id, ",
                                     (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
@@ -74,11 +82,9 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                     "AND quote IS ? "
                                     "ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
 
-  // check attachments for long message body -> replace cropped body & remove from attachment results
-  setLongMessageBody(&body, &attachment_results);
+    // check attachments for long message body -> replace cropped body & remove from attachment results
+    setLongMessageBody(&body, &attachment_results);
 
-  SqliteDB::QueryResults quote_attachment_results;
-  if (attachmentcount > 0)
     d_database.exec(bepaald::concat("SELECT ",
                                     d_part_table, "._id, ",
                                     (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"), ", ",
@@ -93,13 +99,16 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                     "WHERE ", d_part_mid, " IS ? "
                                     "AND quote IS ? "
                                     "ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 1}, &quote_attachment_results);
+  }
 
   SqliteDB::QueryResults mention_results;
-  d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
+  if (revision.valueAsInt(0, "mentioncount", 0) > 0)
+    d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
 
   SqliteDB::QueryResults reaction_results;
-  d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received'"
-                  " FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+  if (revision.valueAsInt(0, "reactioncount", 0) > 0)
+    d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received'"
+                    " FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
   SqliteDB::QueryResults edit_revisions; // leave empty
 
@@ -136,7 +145,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, linkify, false /*isquote*/);
 
   bool nobackground = false;
-  if ((only_emoji && !hasquote && !attachment_results.rows()) ||  // if no quote etc
+  if ((only_emoji && quote_id == 0 && !attachment_results.rows()) ||  // if no quote etc
       issticker) // or sticker
     nobackground = true;
 
@@ -169,22 +178,23 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             msg_id,
                             msg_recipient_id,
                             -1, //original_message_id,
+                            quote_id, // quote_id
 
                             icon,
                             0, // messagecount, // idx of current message in &messages
 
                             only_emoji,
+                            false, //is_quoted,
                             false, //is_deleted,
                             false, //is_viewonce,
                             parent_info.isgroup,
                             incoming,
                             nobackground,
-                            hasquote,
                             quote_missing,
                             parent_info.orig_filename,
                             parent_info.overwrite, // ?
                             parent_info.append,    // ?
                             parent_info.story_reply});
 
-  HTMLwriteMessage(filt, msg_info, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
+  HTMLwriteMessage(filt, msg_info, quotemap, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
 }

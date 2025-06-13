@@ -64,9 +64,8 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   }
 
   // calc mac
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  unsigned long int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
   std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
   std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
   char digest[] = "SHA256";
@@ -78,14 +77,13 @@ std::pair<unsigned char *, uint64_t> FileEncryptor::encryptAttachment(unsigned c
   }
   if (EVP_MAC_update(hctx.get(), d_iv, d_iv_size) != 1 ||
       EVP_MAC_update(hctx.get(), encryptedframe.get(), length) != 1 ||
-      EVP_MAC_final(hctx.get(), hash, nullptr, digest_size) != 1) [[unlikely]]
+      EVP_MAC_final(hctx.get(), hash, nullptr, SHA256_DIGEST_LENGTH) != 1) [[unlikely]]
   {
     Logger::error("Failed to update/finalize hmac");
     return {nullptr, 0};
   }
 #else
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
-  unsigned char hash[SHA256_DIGEST_LENGTH];
   std::unique_ptr<HMAC_CTX, decltype(&::HMAC_CTX_free)> hctx(HMAC_CTX_new(), &::HMAC_CTX_free);
   if (HMAC_Init_ex(hctx.get(), d_mackey, d_mackey_size, EVP_sha256(), nullptr) != 1) [[unlikely]]
   {

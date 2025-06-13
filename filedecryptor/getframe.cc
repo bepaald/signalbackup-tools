@@ -38,7 +38,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-  if (d_headerframe)
+  if (d_headerframe) [[unlikely]]
   {
     file.seekg(4 + d_headerframe->dataSize());
     return std::unique_ptr<BackupFrame>(d_headerframe.release());
@@ -53,7 +53,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
-  // set up context for caclulating MAC
+  // set up context for calculating MAC
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
   std::unique_ptr<EVP_MAC, decltype(&::EVP_MAC_free)> mac(EVP_MAC_fetch(nullptr, "hmac", nullptr), &::EVP_MAC_free);
   std::unique_ptr<EVP_MAC_CTX, decltype(&::EVP_MAC_CTX_free)> hctx(EVP_MAC_CTX_new(mac.get()), &::EVP_MAC_CTX_free);
@@ -113,7 +113,7 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
   if (d_verbose) [[unlikely]]
     Logger::message("Framelength: ", encryptedframelength);
 
-  if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11)
+  if (encryptedframelength > 115343360 /*110MB*/ || encryptedframelength < 11) [[unlikely]]
   {
     Logger::error("Failed to read next frame (", encryptedframelength, " bytes at filepos ", filepos, ")");
 
@@ -133,9 +133,9 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
   // update MAC with read data
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  if (EVP_MAC_update(hctx.get(), encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
+  if (EVP_MAC_update(hctx.get(), encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
 #else
-  if (HMAC_Update(hctx.get(), encryptedframe.get(), encryptedframelength - MACSIZE) != 1)
+  if (HMAC_Update(hctx.get(), encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
 #endif
   {
     Logger::error("Failed to update HMAC");
@@ -143,14 +143,12 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
   }
 
   // finalize MAC
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  unsigned long int digest_size = SHA256_DIGEST_LENGTH;
   unsigned char hash[SHA256_DIGEST_LENGTH];
-  if (EVP_MAC_final(hctx.get(), hash, nullptr, digest_size) != 1)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+  if (EVP_MAC_final(hctx.get(), hash, nullptr, SHA256_DIGEST_LENGTH) != 1) [[unlikely]]
 #else
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
-  unsigned char hash[SHA256_DIGEST_LENGTH];
-  if (HMAC_Final(hctx.get(), hash, &digest_size) != 1)
+  if (HMAC_Final(hctx.get(), hash, &digest_size) != 1) [[unlikely]]
 #endif
   {
     Logger::error("Failed to finalize MAC");
@@ -170,14 +168,11 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
     d_badmac = true;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
-  else
+
+  if (d_verbose) [[unlikely]]
   {
-    d_badmac = false;
-    if (d_verbose) [[unlikely]]
-    {
-      Logger::message("Calculated mac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
-      Logger::message("Mac in file   : ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
-    }
+    Logger::message("Calculated mac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));
+    Logger::message("Mac in file   : ", bepaald::bytesToHexString(encryptedframe.get() + (encryptedframelength - MACSIZE), MACSIZE));
   }
 
   // decode frame data

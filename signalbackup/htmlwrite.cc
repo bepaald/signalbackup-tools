@@ -1250,12 +1250,29 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         left: 20px;
       }
 
+      .quote-link,
       #menu a:link,
       #menu a:visited,
       #menu a:hover,
       #menu a:active {
-        color: #FFFFFF;
+        color: inherit;
         text-decoration: none;
+      }
+
+      .quote-link .msg-name::after
+      {
+        width: 5px;
+        display: inline-block;
+      }
+
+      .quote-link:not(:hover) .msg-name::after
+      {
+        content: "";
+      }
+
+      .quote-link:hover .msg-name::after
+      {
+        content: "\a0\21d2\a0"; /* other arrow options: \1F872 \1F87A */
       }
 
       .menu-item .nav-up
@@ -2319,6 +2336,7 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
 }
 
 void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info,
+                                    std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                                     std::map<long long int, RecipientInfo> *recipient_info,
                                     bool searchpage, bool writereceipts,
                                     std::vector<std::string> const &ignoremediatypes) const
@@ -2330,7 +2348,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   htmloutput << "          <!-- Message: _id:" << msg_info.msg_id <<",type:" << msg_info.type << " -->\n";
 
-  if (searchpage) // output an anchor to link to in search results
+  if (searchpage || msg_info.is_quoted) // output an anchor to link to in search results or quotes
     htmloutput << "          <a id=\"" << msg_info.msg_id << "\"></a>\n";
 
   // for incoming group (normal) message: insert avatar with initial
@@ -2371,9 +2389,18 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name\">Reacted to your story</span>\n";
 
   // insert quote
-  if (msg_info.hasquote)
+  if (msg_info.quote_id != 0)
   {
     htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-quote\">\n";
+
+    auto quote_info = quotemap.find(msg_info.quote_id);
+    if (quote_info != quotemap.end())
+    {
+      htmloutput << std::string(extraindent, ' ') << "              <a class=\"quote-link\" href=\""
+                 << (quote_info->second.first == msg_info.filename ? "" : HTMLescapeUrl(quote_info->second.first))
+                 << "#" << quote_info->second.second << "\">\n";
+      extraindent += 2;
+    }
 
     // quote message
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">\n";
@@ -2386,6 +2413,12 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     if (msg_info.story_reply && msg_info.quote_missing)
       htmloutput << std::string(extraindent, ' ') << "                <pre>No longer available</pre>\n";
     htmloutput << std::string(extraindent, ' ') << "              </div>\n";
+
+    if (quote_info != quotemap.end())
+    {
+      htmloutput << std::string(extraindent, ' ') << "              </a>\n";
+      extraindent -= 2;
+    }
 
     // quote attachment
     if (msg_info.quote_attachment_results->rows())
@@ -2572,7 +2605,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
           htmloutput << "<div class=\"history-header\">Edit history</div>";
 
         // add earlier revision
-        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, recipient_info, false, ignoremediatypes);
+        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, quotemap, recipient_info, false, ignoremediatypes);
 
         if (i < msg_info.edit_revisions->rows() - 2)
           htmloutput << "<hr>";
