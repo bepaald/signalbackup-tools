@@ -988,7 +988,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         padding: 5px 0px 5px 0px;
         border-radius: .3em;
         margin-bottom: 5px;
-        margin-right: 10px;
+        margin-right: 2px;
         justify-content: space-between;
         border-left: 5px solid #FFFFFF;
       }
@@ -1261,18 +1261,17 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .quote-link .msg-name::after
       {
-        width: 5px;
+        width: 1em;
+        aspect-ratio: 1 / 1;
         display: inline-block;
-      }
-
-      .quote-link:not(:hover) .msg-name::after
-      {
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        transform: rotateY(180deg);
+        vertical-align: middle;
+        margin-bottom: 2px;
+        margin-left: 2px;
         content: "";
-      }
-
-      .quote-link:hover .msg-name::after
-      {
-        content: "\a0\21d2\a0"; /* other arrow options: \1F872 \1F87A */
       }
 
       .menu-item .nav-up
@@ -1492,6 +1491,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   }
 
     file << R"(
+    .quote-link:hover .msg-name::after,
     .nav-up {
       background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"/></svg>');
       filter: var(--icon-f);
