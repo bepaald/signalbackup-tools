@@ -842,7 +842,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
   }
   else
   {
-    if (!d_database.exec("SELECT _id FROM recipient WHERE phone = ?", selfid, &results))
+    if (!d_database.exec("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", selfid, &results))
       return false;
     if (results.rows() != 1)
     {
