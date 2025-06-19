@@ -13,6 +13,8 @@
 !*/*.h
 !*/*.ih
 tests
+.#*
+*/.#*
 !.github/*
 !.github/workflows/*.yml
 !.gitignore

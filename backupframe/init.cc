@@ -21,7 +21,7 @@
 
 #include "../common_bytes.h"
 
-bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata)
+bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<FrameData> *framedata)
 {
   //std::cout << "INITIALIZING FRAME OF " << l << " BYTES" << std::endl;
 
@@ -71,24 +71,17 @@ bool BackupFrame::init(unsigned char const *data, size_t l, std::vector<std::tup
         break;
       }
       [[unlikely]] case FIXED32: // Note this does not occur in normal backup files
-      {
-        //std::cout << "BIT32 TYPE" << std::endl;
-        unsigned int length = 4;
-        if (processed + length > l) // more then we have
-          return false;
-        processed += length; // ????
-        break;
-      }
       [[unlikely]] case FIXED64: // Note this does not occur in normal backup files
       {
-        unsigned int length = 8;
+        //std::cout << "BIT32 TYPE" << std::endl;
+        unsigned int length = (type == FIXED64) ? 8 : 4;
         if (processed + length > l) // more then we have
           return false;
         unsigned char *fielddata = new unsigned char[length];
         std::memcpy(fielddata, data + processed, length);
         //DEBUGOUT("FIELDDATA: ", bepaald::bytesToHexString(fielddata, length));
         framedata->emplace_back(fieldnumber, fielddata, length);
-        processed += length;
+        processed += length; // ????
         break;
       }
       [[unlikely]] case STARTTYPE: // Note this does not occur in normal backup files

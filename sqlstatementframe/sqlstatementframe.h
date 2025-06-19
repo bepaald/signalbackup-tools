@@ -57,7 +57,8 @@ class SqlStatementFrame : public BackupFrame
   static Registrar s_registrar;
 
   std::string d_statement;
-  std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> d_parameterdata; // PARAMETER_FIELD, bytes, size
+
+  std::vector<FrameData> d_parameterdata; // PARAMETER_FIELD, bytes, size
 
  public:
   inline SqlStatementFrame();
@@ -153,15 +154,15 @@ inline SqlStatementFrame::SqlStatementFrame(SqlStatementFrame const &other)
   BackupFrame(other),
   d_statement(other.d_statement)
 {
-  for (unsigned int i = 0; i < other.d_parameterdata.size(); ++i)
+  for (auto const &otherparam : other.d_parameterdata)
   {
     unsigned char *datacpy = nullptr;
-    if (std::get<1>(other.d_parameterdata[i]))
+    if (std::get<1>(otherparam))
     {
-      datacpy = new unsigned char[std::get<2>(other.d_parameterdata[i])];
-      std::memcpy(datacpy, std::get<1>(other.d_parameterdata[i]), std::get<2>(other.d_parameterdata[i]));
+      datacpy = new unsigned char[std::get<2>(otherparam)];
+      std::memcpy(datacpy, std::get<1>(otherparam), std::get<2>(otherparam));
     }
-    d_parameterdata.emplace_back(std::make_tuple(std::get<0>(other.d_parameterdata[i]), datacpy, std::get<2>(other.d_parameterdata[i])));
+    d_parameterdata.emplace_back(std::make_tuple(std::get<0>(otherparam), datacpy, std::get<2>(otherparam)));
   }
 }
 
@@ -171,15 +172,15 @@ inline SqlStatementFrame &SqlStatementFrame::operator=(SqlStatementFrame const &
   {
     BackupFrame::operator=(other);
     d_statement = other.d_statement;
-    for (unsigned int i = 0; i < other.d_parameterdata.size(); ++i)
+    for (auto const &otherparam : other.d_parameterdata)
     {
       unsigned char *datacpy = nullptr;
-      if (std::get<1>(other.d_parameterdata[i]))
+      if (std::get<1>(otherparam))
       {
-        datacpy = new unsigned char[std::get<2>(other.d_parameterdata[i])];
-        std::memcpy(datacpy, std::get<1>(other.d_parameterdata[i]), std::get<2>(other.d_parameterdata[i]));
+        datacpy = new unsigned char[std::get<2>(otherparam)];
+        std::memcpy(datacpy, std::get<1>(otherparam), std::get<2>(otherparam));
       }
-      d_parameterdata.emplace_back(std::make_tuple(std::get<0>(other.d_parameterdata[i]), datacpy, std::get<2>(other.d_parameterdata[i])));
+      d_parameterdata.emplace_back(std::make_tuple(std::get<0>(otherparam), datacpy, std::get<2>(otherparam)));
     }
   }
   return *this;
@@ -220,7 +221,6 @@ inline void SqlStatementFrame::printInfo() const
   Logger::message("Frame number: ", d_count);
   Logger::message("        Size: ", d_constructedsize);
   Logger::message("        Type: SQLSTATEMENT");
-  unsigned int param_ctr = 0;
 
   for (auto const &p : d_framedata)
     if (std::get<0>(p) == FIELD::STATEMENT)
@@ -229,6 +229,7 @@ inline void SqlStatementFrame::printInfo() const
       break; // ONLY ONE FIELD::STATEMENT
     }
 
+  unsigned int param_ctr = 0;
   for (auto const &p : d_framedata)
   {
     if (std::get<0>(p) == FIELD::PARAMETERS)
@@ -401,8 +402,6 @@ inline std::pair<unsigned char *, uint64_t> SqlStatementFrame::getData() const
   datapos += setFieldAndWire(FRAMETYPE::SQLSTATEMENT, WIRETYPE::LENGTHDELIM, data + datapos);
   datapos += setFrameSize(size, data + datapos);
 
-  unsigned int param_ctr = 0;
-
   for (auto const &fd : d_framedata)
     if (std::get<0>(fd) == FIELD::STATEMENT)
     {
@@ -410,6 +409,7 @@ inline std::pair<unsigned char *, uint64_t> SqlStatementFrame::getData() const
       break; // only one FIELD::STATEMENT
     }
 
+  unsigned int param_ctr = 0;
   for (auto const &fd : d_framedata)
   {
     if (std::get<0>(fd) == FIELD::PARAMETERS)
@@ -612,7 +612,6 @@ inline std::vector<std::any> SqlStatementFrame::parametersView() const
       }
       case PARAMETER_FIELD::NULLPARAMETER:
       {
-        //parameters.emplace_back(static_cast<long long int>(bytesToUint64(std::get<1>(p), std::get<2>(p))));
         parameters.emplace_back(nullptr);
         break;
       }

@@ -68,7 +68,9 @@ class BackupFrame
       s_registry()[ft] = func;
     }
   };
-  std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> d_framedata; // field number, field data, length
+
+  typedef std::tuple<unsigned int, unsigned char *, uint64_t> FrameData; // field number, field data, length
+  std::vector<FrameData> d_framedata;
   uint64_t d_count;
   size_t d_constructedsize;
   bool d_ok;
@@ -104,17 +106,17 @@ class BackupFrame
   inline constexpr uint64_t bytesToUint64(unsigned char const *data, size_t len) const;
   inline constexpr int32_t bytesToInt32(unsigned char const *data, size_t len) const;
   inline constexpr int64_t bytesToInt64(unsigned char const *data, size_t len) const;
-  bool init(unsigned char const *data, size_t length, std::vector<std::tuple<unsigned int, unsigned char *, uint64_t>> *framedata);
+  bool init(unsigned char const *data, size_t length, std::vector<FrameData> *framedata);
   template <typename T>
   inline constexpr void intTypeToBytes(T val, unsigned char *b);
   inline constexpr uint64_t putVarInt(uint64_t val, unsigned char *mem) const;
   inline constexpr uint64_t varIntSize(uint64_t val) const;
   inline constexpr uint64_t setFieldAndWire(unsigned int field, unsigned int type, unsigned char *mem) const;
   inline constexpr uint64_t setFrameSize(uint64_t totalsize, unsigned char *mem) const;
-  inline uint64_t putLengthDelimType(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
-  inline uint64_t putVarIntType(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
-  inline uint64_t putFixed32Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
-  inline uint64_t putFixed64Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const;
+  inline uint64_t putLengthDelimType(FrameData const &data, unsigned char *mem) const;
+  inline uint64_t putVarIntType(FrameData const &data, unsigned char *mem) const;
+  inline uint64_t putFixed32Type(FrameData const &data, unsigned char *mem) const;
+  inline uint64_t putFixed64Type(FrameData const &data, unsigned char *mem) const;
 
  private:
   inline static constexpr int64_t getLengthOrVarint(unsigned char const *data, unsigned int *offset, unsigned int totallength);
@@ -542,7 +544,7 @@ inline constexpr uint64_t BackupFrame::setFrameSize(uint64_t totalsize, unsigned
   return putVarInt(totalsize - 11, mem);
 }
 
-inline uint64_t BackupFrame::putLengthDelimType(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const
+inline uint64_t BackupFrame::putLengthDelimType(FrameData const &data, unsigned char *mem) const
 {
   uint64_t datapos = 0;
   datapos += setFieldAndWire(std::get<0>(data), WIRETYPE::LENGTHDELIM, mem + datapos);
@@ -552,7 +554,7 @@ inline uint64_t BackupFrame::putLengthDelimType(std::tuple<unsigned int, unsigne
   return datapos;
 }
 
-inline uint64_t BackupFrame::putVarIntType(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const
+inline uint64_t BackupFrame::putVarIntType(FrameData const &data, unsigned char *mem) const
 {
   uint64_t datapos = 0;
   uint64_t value = bytesToUint64(std::get<1>(data), std::get<2>(data));
@@ -561,7 +563,7 @@ inline uint64_t BackupFrame::putVarIntType(std::tuple<unsigned int, unsigned cha
   return datapos;
 }
 
-inline uint64_t BackupFrame::putFixed32Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const
+inline uint64_t BackupFrame::putFixed32Type(FrameData const &data, unsigned char *mem) const
 {
   uint64_t datapos = 0;
   datapos += setFieldAndWire(std::get<0>(data), WIRETYPE::FIXED32, mem + datapos);
@@ -570,7 +572,7 @@ inline uint64_t BackupFrame::putFixed32Type(std::tuple<unsigned int, unsigned ch
   return datapos;
 }
 
-inline uint64_t BackupFrame::putFixed64Type(std::tuple<unsigned int, unsigned char *, size_t> const &data, unsigned char *mem) const
+inline uint64_t BackupFrame::putFixed64Type(FrameData const &data, unsigned char *mem) const
 {
   uint64_t datapos = 0;
   datapos += setFieldAndWire(std::get<0>(data), WIRETYPE::FIXED64, mem + datapos);

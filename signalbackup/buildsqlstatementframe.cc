@@ -28,25 +28,20 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
 
   SqlStatementFrame newframe;
 
-  std::string newstatement = "INSERT INTO " + table + " (";
+  std::string newstatement("INSERT INTO " + table + " (");
 
   for (unsigned int i = 0; i < headers.size(); ++i)
   {
     newstatement.append(headers[i]);
-    if (i < headers.size() - 1)
-      newstatement.append(",");
-    else
-      newstatement.append(")");
+    newstatement.push_back(i < headers.size() - 1 ? ',' : ')');
   }
 
   newstatement += " VALUES (";
+  newstatement.reserve(newstatement.size() + 2 * result.size());
 
   for (unsigned int j = 0; j < result.size(); ++j)
   {
-    if (j < result.size() - 1)
-      newstatement.append("?,");
-    else
-      newstatement.append("?)");
+    newstatement.append(j < result.size() - 1 ? "?," : "?)");
 
     if (result[j].type() == typeid(long long int))
       newframe.addIntParameter(std::any_cast<long long int>(result[j]));
@@ -74,13 +69,12 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
   //std::cout << "Building new frame:" << std::endl;
 
   SqlStatementFrame newframe;
-  std::string newstatement = "INSERT INTO " + table + " VALUES (";
+  std::string newstatement("INSERT INTO " + table + " VALUES (");
+  newstatement.reserve(newstatement.size() + 2 * result.size());
+
   for (unsigned int j = 0; j < result.size(); ++j)
   {
-    if (j < result.size() - 1)
-      newstatement.append("?,");
-    else
-      newstatement.append("?)");
+    newstatement.append(j < result.size() - 1 ? "?," : "?)");
 
     if (result[j].type() == typeid(long long int))
       newframe.addIntParameter(std::any_cast<long long int>(result[j]));

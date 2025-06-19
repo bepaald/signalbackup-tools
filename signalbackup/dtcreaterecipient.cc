@@ -133,7 +133,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     }
     long long int new_rec_id = std::any_cast<long long int>(new_rid);
 
-    std::pair<unsigned char *, size_t>  masterkey = Base64::base64StringToBytes(res("masterKey"));
+    std::pair<unsigned char *, size_t> masterkey = Base64::base64StringToBytes(res("masterKey"));
     if (!insertRow("groups",
                    {{"title", res.value(0, "name")},
                     {"group_id", group_id},

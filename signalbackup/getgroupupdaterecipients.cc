@@ -76,7 +76,7 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 
   if (uuids.size())
   {
-    std::string q = "SELECT DISTINCT _id FROM recipient WHERE LOWER(" + d_recipient_aci + ") IN (";
+    std::string q("SELECT DISTINCT _id FROM recipient WHERE LOWER(" + d_recipient_aci + ") IN (");
 #if __cplusplus > 201703L
     for (int pos = 0; std::string uuid : uuids)
 #else
