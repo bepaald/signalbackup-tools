@@ -36,8 +36,8 @@ SqlStatementFrame SignalBackup::buildSqlStatementFrame(std::string const &table,
     newstatement.push_back(i < headers.size() - 1 ? ',' : ')');
   }
 
+  newstatement.reserve(STRLEN(" VALUES (") + newstatement.size() + 2 * result.size());
   newstatement += " VALUES (";
-  newstatement.reserve(newstatement.size() + 2 * result.size());
 
   for (unsigned int j = 0; j < result.size(); ++j)
   {

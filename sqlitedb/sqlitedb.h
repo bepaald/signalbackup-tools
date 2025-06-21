@@ -42,8 +42,10 @@ class SqliteDB
   {
     std::vector<std::string> d_headers;
     std::vector<std::vector<std::any>> d_values;
+    int d_columncount{0};
 
    public:
+    inline void reserveColumnCount(int cnt);
     inline void emplaceHeader(std::string &&h);
     inline std::vector<std::string> const &headers() const;
     inline std::string const &header(size_t idx) const;
@@ -114,7 +116,8 @@ class SqliteDB
   uint32_t d_databasewriteversion;
   bool d_readonly;
   bool d_ok;
-  mutable char d_previous_schema_version[11]; // 11 = maximum chars in string representing 4 byte number (+ '\0')
+  //mutable char d_previous_schema_version[11]; // 11 = maximum chars in string representing 4 byte number (+ '\0')
+  mutable bool d_schema_changed;
 
  protected:
   inline explicit SqliteDB();
@@ -185,8 +188,10 @@ class SqliteDB
   inline int execParamFiller(int count, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
-  inline bool schemaVersionChanged() const;
+  //inline bool schemaVersionChanged(/*std::string_view q*/) const;
   void setDatabaseWriteVersion();
+
+  static inline int authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *);
 
   inline bool registerCustoms() const;
   static inline void tokencount(sqlite3_context *context, int argc, sqlite3_value **argv);
@@ -210,7 +215,8 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_databasewriteversion(0),
   d_readonly(readonly),
   d_ok(false),
-  d_previous_schema_version{}
+  //d_previous_schema_version{},
+  d_schema_changed(false)
 {
   d_ok = initFromFile();
 }
@@ -225,7 +231,8 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   d_databasewriteversion(0),
   d_readonly(true),
   d_ok(false),
-  d_previous_schema_version{}
+  //d_previous_schema_version{},
+  d_schema_changed(false)
 {
   d_ok = initFromMemory();
 }
@@ -255,7 +262,8 @@ inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
     d_databasewriteversion = other.d_databasewriteversion;
     d_readonly = other.d_readonly;
     d_ok = initFromFile();
-    std::strncpy(d_previous_schema_version, other.d_previous_schema_version, 11);
+    //std::strncpy(d_previous_schema_version, other.d_previous_schema_version, 11);
+    d_schema_changed = other.d_schema_changed;
     if (d_ok)
       d_ok = copyDb(other, *this);
   }
@@ -280,6 +288,8 @@ inline bool SqliteDB::initFromFile()
 
   setDatabaseWriteVersion();
 
+  sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
+
   return registerCustoms();
 }
 
@@ -293,6 +303,8 @@ inline bool SqliteDB::initFromMemory()
     return false;
 
   setDatabaseWriteVersion();
+
+  sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
 
   return registerCustoms();
 }
@@ -596,10 +608,14 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
   }
 
   if (results)
+  {
     results->clear();
+    results->reserveColumnCount(sqlite3_column_count(d_stmt));
+  }
 
   int rc;
   int row = 0;
+
   while ((rc = sqlite3_step(d_stmt)) == SQLITE_ROW)
   {
     if (!results)
@@ -634,7 +650,8 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     }
     ++row;
   }
-  if (rc != SQLITE_DONE)
+
+  if (rc != SQLITE_DONE) [[unlikely]]
   {
     Logger::error("After sqlite3_step(): ", sqlite3_errmsg(d_db));
     char *expanded_query = sqlite3_expanded_sql(d_stmt);
@@ -647,8 +664,16 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     return false;
   }
 
-  if (schemaVersionChanged()) [[unlikely]]
+  if (d_schema_changed) [[unlikely]]
+  {
+    d_schema_changed = false;
+    //if (schemaVersionChanged())
+    //{
+    //Logger::message("QUERY CHANGED SCHEMA VERSION: ", q);
+    //Logger::message("VERSION NOW AT: ");
     clearTableCache();
+    //}
+  }
 
   return true;
 }
@@ -938,6 +963,12 @@ inline void SqliteDB::freeMemory()
   sqlite3_db_release_memory(d_db);
 }
 
+inline void SqliteDB::QueryResults::reserveColumnCount(int cnt)
+{
+  d_columncount = cnt;
+  d_headers.reserve(d_columncount);
+}
+
 inline void SqliteDB::QueryResults::emplaceHeader(std::string &&h)
 {
   d_headers.emplace_back(h);
@@ -961,7 +992,10 @@ inline bool SqliteDB::QueryResults::hasColumn(std::string const &h) const
 inline void SqliteDB::QueryResults::emplaceValue(size_t row, std::any &&a)
 {
   if (d_values.size() < row + 1)
+  {
     d_values.resize(row + 1);
+    d_values[row].reserve(d_columncount);
+  }
 
   d_values[row].emplace_back(a);
 }
@@ -1132,25 +1166,75 @@ inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(unsigned int idx)
   return tmp;
 }
 
-inline bool SqliteDB::schemaVersionChanged() const
-{
-  std::pair<bool, char *> sv_data = {false, d_previous_schema_version};
-  sqlite3_exec(d_db, "SELECT schema_version FROM PRAGMA_SCHEMA_VERSION;",
-               [](void *sv, int /*count*/, char **data, char **) STATICLAMBDA
-               {
-                 // assert(count == 1);
+// inline bool SqliteDB::schemaVersionChanged(/*std::string_view q*/) const
+// {
+//   /*
+//     - a query is a sql-stmt-list:
 
-                 // compare the new schema_version (data[0]) with the old one (passed through sv_data.second)
-                 if (strncmp(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11) != 0) [[unlikely]]
-                 {
-                   // if not equal, set changed and copy the new version
-                   reinterpret_cast<std::pair<bool, char *> *>(sv)->first = true;
-                   std::strncpy(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11);
-                 }
-                 return 0;
-               }, &sv_data, nullptr);
-  return sv_data.first;
-}
+//     sql-stmt [; sql-stmt...]
+
+//     - sql-stmt is:
+
+//     [EXPLAIN [QUERY PLAN]] [CREATE/INSERT/UPDATE/etc...]
+
+//     Since [explain [query plan]] will never occur in our db, we need to only
+//     check first non-whitespace characters from start and after each ';'
+//   */
+
+//   // auto querycontains = [](std::string_view first, std::string_view second) STATICLAMBDA -> bool
+//   // {
+//   //   //std::cout << "Query: '" << first << "'" << std::endl;
+//   //   std::string_view::size_type pos = 0;
+//   //   while (pos < first.size())
+//   //   {
+//   //     if (std::isspace(first[pos]))
+//   //     {
+//   //       ++pos;
+//   //       continue;
+//   //     }
+
+//   //     unsigned int pos2 = pos;
+//   //     unsigned int pos3 = 0;
+//   //     while (pos2 < first.size() && pos3 < second.size())
+//   //       if (std::toupper(first[pos2++]) != second[pos3++])
+//   //         break;
+
+//   //     if (pos3 == second.size())
+//   //       return true;
+
+//   //     pos = first.find(';', pos);
+//   //     if (pos == std::string_view::npos)
+//   //       return false;
+
+//   //     ++pos;
+//   //   }
+//   //   return false;
+//   // };
+
+//   // if (!querycontains(q, "CREATE") &&
+//   //     !querycontains(q, "ALTER") &&
+//   //     !querycontains(q, "DROP")// &&
+//   //     /*!querycontains(q, "VACUUM")*/) [[likely]] // technichally 'VACUUM' does change the schema_version but
+//   //                                                 // it should not invalidate any of our cached tables/columns
+//   //   return false;
+
+//   std::pair<bool, char *> sv_data = {false, d_previous_schema_version};
+//   sqlite3_exec(d_db, "PRAGMA schema_version",
+//                [](void *sv, int /*count*/, char **data, char **) STATICLAMBDA
+//                {
+//                  // assert(count == 1);
+
+//                  // compare the new schema_version (data[0]) with the old one (passed through sv_data.second)
+//                  if (strncmp(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11) != 0) [[unlikely]]
+//                  {
+//                    // if not equal, set changed and copy the new version
+//                    reinterpret_cast<std::pair<bool, char *> *>(sv)->first = true;
+//                    std::strncpy(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11);
+//                  }
+//                  return 0;
+//                }, &sv_data, nullptr);
+//   return sv_data.first;
+// }
 
 inline bool SqliteDB::registerCustoms() const
 {
@@ -1304,6 +1388,32 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
   }
   //std::cout << "No results, returning null (" << argc << ")" << std::endl;
   sqlite3_result_null(context);
+}
+
+inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)
+{
+  // 9  SQLITE_DELETE
+  // 18 SQLITE_INSERT
+  // 19 SQLITE_PRAGMA
+  // 20 SQLITE_READ
+  // 21 SQLITE_SELECT
+  // 22 SQLITE_TRANSACTION
+  // 23 SQLITE_UPDATE
+  // 24 SQLITE_ATTACH
+  // 25 SQLITE_DETACH
+  // 31 SQLITE_FUNCTION
+  // 33 SQLITE_RECURSIVE
+  if (actioncode <= 8 ||
+      (actioncode >= 10 && actioncode <= 17) ||
+      (actioncode >= 26 && actioncode <= 30) ||
+      actioncode == 32 ||
+      actioncode >= 34)
+  {
+    //Logger::message("CHANGE! ", actioncode);
+    *(reinterpret_cast<bool *>(userdata)) = true;
+  }
+
+  return SQLITE_OK;
 }
 
 #endif

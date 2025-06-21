@@ -40,12 +40,19 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
       ++it;
   }
 
-  std::string query = "INSERT INTO " + table + " (";
+  std::string query("INSERT INTO " + table + " (");
   for (unsigned int i = 0; i < data.size(); ++i)
     query += data[i].first + (i < data.size() -1 ? ", " : ") ");
+
+#if SQLITE_VERSION_NUMBER >= 3035000 // RETURNING was not available prior to 3.35.0
+  query.reserve(query.size() + STRLEN("VALUES (") + data.size() * 2 + (!returnfield.empty() && returnvalue ? STRLEN(" RETURNING ") + returnfield.size() : 0));
+#else
+  query.reserve(query.size() + STRLEN("VALUES (") + data.size() * 2);
+#endif
+
   query += "VALUES (";
   for (unsigned int i = 0; i < data.size(); ++i)
-    query += "?"s + (i < data.size() -1 ? ", " : ")");
+    query.append(i < data.size() -1 ? "?," : "?)");
 #if SQLITE_VERSION_NUMBER >= 3035000 // RETURNING was not available prior to 3.35.0
   if (!returnfield.empty() && returnvalue)
     query += " RETURNING " + returnfield;

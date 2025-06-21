@@ -108,9 +108,9 @@ void SignalBackup::removeDoubles(long long int milliseconds)
                          "to_delete AS "
                          "("
                          "  SELECT _id FROM candidates C WHERE "
-                         "  _id > "
+                         "  _id < "
                          "  ("
-                         "    SELECT min(_id) FROM candidates WHERE "
+                         "    SELECT max(_id) FROM candidates WHERE "
                          "      COALESCE(body, '') = COALESCE(C.body, '') AND "
                          "      numattachments = C.numattachments AND"
                          "      totalfilesize = C.totalfilesize AND"
@@ -135,6 +135,45 @@ void SignalBackup::removeDoubles(long long int milliseconds)
   // auto t2 = std::chrono::high_resolution_clock::now();
   // auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
   // std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+
+
+  // It is possible one of a doubled pair of message has edits, and the
+  // other does not (for example when the doubled messages are imported
+  // from Signal Desktop, which currently does not import edits).
+  // After this function removes a random one, it is possible there is now
+  // a dangling 'latest_revision_id' pointers in the database.
+  if (d_database.tableContainsColumn(d_mms_table, "latest_revision_id"))
+  {
+    // this should be rare, as the choice of which double to remove
+    // (id < max instead of id > min), should usually delete the
+    // imported desktop message
+    d_database.exec("DELETE FROM " + d_mms_table + " WHERE latest_revision_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+    Logger::message("  Removed ", d_database.changed(), " dangling latest_revision_id pointers.");
+  }
+
+  // Similarly, in one known case in my own backups, an edit never arrived
+  // at the Desktop instance. This causes the *original version* of the
+  // message to be doubled.
+  // When this function then removes the wrong double, the edited version
+  // (which only existed in one of the sources), will have a 'original_message_id'
+  // pointing to a non-existing message.
+  if (d_database.tableContainsColumn(d_mms_table, "original_message_id"))
+  {
+    // not sure if I should just delete this message, or if I should clear the
+    // 'original_message_id' value.
+    // Clearing for now. This means the edited version appears as a separate
+    // message (as it does in one of the sources), but at least the latest
+    // revision of the message is not lost. Likely the newer revision appears
+    // _before_ the old version, which is unfortunate.
+    // This should be a rare occurrence however, since it depends on the
+    // sources which caused the doubling disagree about whether the message
+    // was edited at all. And (at least in case of importfromdesktop()), the
+    // choice of which double to remove (id < max instead of id > min), should
+    // usually delete the desktop message, which is more likely to be the
+    // incorrect one.
+    d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = NULL WHERE original_message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+    Logger::message("  Cleared ", d_database.changed(), " dangling original_message_id pointers.");
+  }
 
 
   //cleanDatabaseByMessages();
@@ -248,5 +287,4 @@ void SignalBackup::removeDoubles(long long int milliseconds)
     d_database.exec("DELETE FROM story_sends WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
     Logger::message_end(" (", d_database.changed(), ")");
   }
-
 }
