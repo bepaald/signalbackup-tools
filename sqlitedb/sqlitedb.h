@@ -92,6 +92,7 @@ class SqliteDB
   };
 
  public:
+ /*
   struct StaticTextParam
   {
     char *ptr;
@@ -102,7 +103,7 @@ class SqliteDB
       size(s)
     {}
   };
-
+ */
  private:
   mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
   mutable std::map<std::string, std::map<std::string, bool>> d_columns;
@@ -110,14 +111,13 @@ class SqliteDB
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
   mutable sqlite3_stmt *d_stmt; // cache a (prepared) statement for reuse in subsequent transactions
+  sqlite3_stmt *d_stmt_pragma_schema_version;
   mutable char const *d_error_tail;
-  // non-owning pointer!
-  std::pair<unsigned char *, uint64_t> *d_data;
+  std::pair<unsigned char *, uint64_t> *d_data;  // non-owning pointer!
   uint32_t d_databasewriteversion;
   bool d_readonly;
   bool d_ok;
-  //mutable char d_previous_schema_version[11]; // 11 = maximum chars in string representing 4 byte number (+ '\0')
-  mutable bool d_schema_changed;
+  mutable int32_t d_schema_version;
 
  protected:
   inline explicit SqliteDB();
@@ -184,14 +184,14 @@ class SqliteDB
   inline int execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, unsigned long long> const &param) const;
   inline int execParamFiller(int count, std::pair<unsigned char *, unsigned long> const &param) const;
   inline int execParamFiller(int count, std::pair<unsigned char *, unsigned long long> const &param) const;
-  inline int execParamFiller(int count, StaticTextParam const &param) const;
+  //inline int execParamFiller(int count, StaticTextParam const &param) const;
   inline int execParamFiller(int count, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
-  //inline bool schemaVersionChanged(/*std::string_view q*/) const;
+  inline bool prepareSchemaVersionStatement();
+  inline bool schemaVersionChanged() const;
   void setDatabaseWriteVersion();
-
-  static inline int authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *);
+  //static inline int authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *);
 
   inline bool registerCustoms() const;
   static inline void tokencount(sqlite3_context *context, int argc, sqlite3_value **argv);
@@ -210,13 +210,13 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_db(nullptr),
   d_vfs(nullptr),
   d_stmt(nullptr),
+  d_stmt_pragma_schema_version(nullptr),
   d_error_tail(nullptr),
   d_data(nullptr),
   d_databasewriteversion(0),
   d_readonly(readonly),
   d_ok(false),
-  //d_previous_schema_version{},
-  d_schema_changed(false)
+  d_schema_version(std::numeric_limits<int32_t>::min())
 {
   d_ok = initFromFile();
 }
@@ -226,13 +226,13 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   d_db(nullptr),
   d_vfs(MemFileDB::sqlite3_memfilevfs(data)),
   d_stmt(nullptr),
+  d_stmt_pragma_schema_version(nullptr),
   d_error_tail(nullptr),
   d_data(data),
   d_databasewriteversion(0),
   d_readonly(true),
   d_ok(false),
-  //d_previous_schema_version{},
-  d_schema_changed(false)
+  d_schema_version(std::numeric_limits<int32_t>::min())
 {
   d_ok = initFromMemory();
 }
@@ -243,6 +243,7 @@ inline SqliteDB::SqliteDB(SqliteDB const &other)
 {
   if (d_ok)
     d_ok = copyDb(other, *this);
+  d_ok &= prepareSchemaVersionStatement();
 }
 
 inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
@@ -256,16 +257,17 @@ inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
     d_db = nullptr;
     d_vfs = nullptr;
     d_stmt = nullptr;
+    d_stmt_pragma_schema_version = nullptr;
     d_error_tail = nullptr;
     d_name = ":memory:";
     d_data = nullptr;
     d_databasewriteversion = other.d_databasewriteversion;
     d_readonly = other.d_readonly;
     d_ok = initFromFile();
-    //std::strncpy(d_previous_schema_version, other.d_previous_schema_version, 11);
-    d_schema_changed = other.d_schema_changed;
+    d_schema_version = other.d_schema_version;
     if (d_ok)
       d_ok = copyDb(other, *this);
+    d_ok &= prepareSchemaVersionStatement();
   }
   return *this;
 }
@@ -288,7 +290,10 @@ inline bool SqliteDB::initFromFile()
 
   setDatabaseWriteVersion();
 
-  sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
+  if (!prepareSchemaVersionStatement())
+    return false;
+
+  //sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
 
   return registerCustoms();
 }
@@ -304,7 +309,10 @@ inline bool SqliteDB::initFromMemory()
 
   setDatabaseWriteVersion();
 
-  sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
+  if (!prepareSchemaVersionStatement())
+    return false;
+
+  //sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
 
   return registerCustoms();
 }
@@ -313,6 +321,9 @@ inline void SqliteDB::destroy()
 {
   if (d_stmt)
     sqlite3_finalize(d_stmt);
+
+  if (d_stmt_pragma_schema_version)
+    sqlite3_finalize(d_stmt_pragma_schema_version);
 
   if (d_vfs)
     sqlite3_vfs_unregister(d_vfs);
@@ -588,16 +599,16 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
         return false;
       }
     }
-    else if (isType<StaticTextParam>(p))
-    {
-      //std::cout << std::endl << "PARAM STATIC TEXT" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<StaticTextParam>(p)) != SQLITE_OK) [[unlikely]]
-      {
-        Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
-        Logger::error_indent("-> Query: \"", q, "\"");
-        return false;
-      }
-    }
+    // else if (isType<StaticTextParam>(p))
+    // {
+    //   //std::cout << std::endl << "PARAM STATIC TEXT" << std::endl;
+    //   if (execParamFiller(i + 1, std::any_cast<StaticTextParam>(p)) != SQLITE_OK) [[unlikely]]
+    //   {
+    //     Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
+    //     Logger::error_indent("-> Query: \"", q, "\"");
+    //     return false;
+    //   }
+    // }
     else
     {
       Logger::error("Unhandled parameter type ", p.type().name());
@@ -664,15 +675,11 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     return false;
   }
 
-  if (d_schema_changed) [[unlikely]]
+  if (schemaVersionChanged()) [[unlikely]]
   {
-    d_schema_changed = false;
-    //if (schemaVersionChanged())
-    //{
     //Logger::message("QUERY CHANGED SCHEMA VERSION: ", q);
-    //Logger::message("VERSION NOW AT: ");
+    //Logger::message("VERSION NOW AT: ", d_schema_version);
     clearTableCache();
-    //}
   }
 
   return true;
@@ -841,11 +848,11 @@ inline int SqliteDB::execParamFiller(int count, std::pair<unsigned char *, unsig
   return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, StaticTextParam const &param) const
-{
-  //std::cout << "Binding STATIC TEXT at " << count << std::endl;
-  return sqlite3_bind_text(d_stmt, count, param.ptr, static_cast<int>(param.size), SQLITE_STATIC);
-}
+// inline int SqliteDB::execParamFiller(int count, StaticTextParam const &param) const
+// {
+//   //std::cout << "Binding STATIC TEXT at " << count << std::endl;
+//   return sqlite3_bind_text(d_stmt, count, param.ptr, static_cast<int>(param.size), SQLITE_STATIC);
+// }
 
 inline int SqliteDB::execParamFiller(int count, int param) const
 {
@@ -1166,75 +1173,45 @@ inline SqliteDB::QueryResults SqliteDB::QueryResults::getRow(unsigned int idx)
   return tmp;
 }
 
-// inline bool SqliteDB::schemaVersionChanged(/*std::string_view q*/) const
-// {
-//   /*
-//     - a query is a sql-stmt-list:
+inline bool SqliteDB::prepareSchemaVersionStatement()
+{
+  if (!d_stmt_pragma_schema_version) [[likely]]
+    return (sqlite3_prepare_v2(d_db,
+                               "PRAGMA schema_version",
+                               STRLEN("PRAGMA schema_version"),
+                               &d_stmt_pragma_schema_version,
+                               nullptr) == SQLITE_OK);
+  else
+    return (sqlite3_reset(d_stmt_pragma_schema_version) == SQLITE_OK);
+}
 
-//     sql-stmt [; sql-stmt...]
+inline bool SqliteDB::schemaVersionChanged() const
+{
+  // step, verify column count
+  if (sqlite3_step(d_stmt_pragma_schema_version) != SQLITE_ROW ||
+      sqlite3_column_count(d_stmt_pragma_schema_version) != 1) [[unlikely]]
+  {
+    Logger::error("Failed to step schema_version query or unexpected column count");
+    return true;
+  }
 
-//     - sql-stmt is:
+  // get current version
+  int32_t schema_version = sqlite3_column_int(d_stmt_pragma_schema_version, 0);
 
-//     [EXPLAIN [QUERY PLAN]] [CREATE/INSERT/UPDATE/etc...]
+  // reset for next call (and to unlock database (since we dont continue stepping until SQLITE_DONE))
+  if (sqlite3_reset(d_stmt_pragma_schema_version) != SQLITE_OK) [[unlikely]]
+  {
+    Logger::error("Failed to reset schema_version statement");
+    return true;
+  }
 
-//     Since [explain [query plan]] will never occur in our db, we need to only
-//     check first non-whitespace characters from start and after each ';'
-//   */
-
-//   // auto querycontains = [](std::string_view first, std::string_view second) STATICLAMBDA -> bool
-//   // {
-//   //   //std::cout << "Query: '" << first << "'" << std::endl;
-//   //   std::string_view::size_type pos = 0;
-//   //   while (pos < first.size())
-//   //   {
-//   //     if (std::isspace(first[pos]))
-//   //     {
-//   //       ++pos;
-//   //       continue;
-//   //     }
-
-//   //     unsigned int pos2 = pos;
-//   //     unsigned int pos3 = 0;
-//   //     while (pos2 < first.size() && pos3 < second.size())
-//   //       if (std::toupper(first[pos2++]) != second[pos3++])
-//   //         break;
-
-//   //     if (pos3 == second.size())
-//   //       return true;
-
-//   //     pos = first.find(';', pos);
-//   //     if (pos == std::string_view::npos)
-//   //       return false;
-
-//   //     ++pos;
-//   //   }
-//   //   return false;
-//   // };
-
-//   // if (!querycontains(q, "CREATE") &&
-//   //     !querycontains(q, "ALTER") &&
-//   //     !querycontains(q, "DROP")// &&
-//   //     /*!querycontains(q, "VACUUM")*/) [[likely]] // technichally 'VACUUM' does change the schema_version but
-//   //                                                 // it should not invalidate any of our cached tables/columns
-//   //   return false;
-
-//   std::pair<bool, char *> sv_data = {false, d_previous_schema_version};
-//   sqlite3_exec(d_db, "PRAGMA schema_version",
-//                [](void *sv, int /*count*/, char **data, char **) STATICLAMBDA
-//                {
-//                  // assert(count == 1);
-
-//                  // compare the new schema_version (data[0]) with the old one (passed through sv_data.second)
-//                  if (strncmp(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11) != 0) [[unlikely]]
-//                  {
-//                    // if not equal, set changed and copy the new version
-//                    reinterpret_cast<std::pair<bool, char *> *>(sv)->first = true;
-//                    std::strncpy(reinterpret_cast<std::pair<bool, char *> *>(sv)->second, data[0], 11);
-//                  }
-//                  return 0;
-//                }, &sv_data, nullptr);
-//   return sv_data.first;
-// }
+  if (d_schema_version != schema_version)
+  {
+    d_schema_version = schema_version;
+    return true;
+  }
+  return false;
+}
 
 inline bool SqliteDB::registerCustoms() const
 {
@@ -1390,30 +1367,30 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
   sqlite3_result_null(context);
 }
 
-inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)
-{
-  // 9  SQLITE_DELETE
-  // 18 SQLITE_INSERT
-  // 19 SQLITE_PRAGMA
-  // 20 SQLITE_READ
-  // 21 SQLITE_SELECT
-  // 22 SQLITE_TRANSACTION
-  // 23 SQLITE_UPDATE
-  // 24 SQLITE_ATTACH
-  // 25 SQLITE_DETACH
-  // 31 SQLITE_FUNCTION
-  // 33 SQLITE_RECURSIVE
-  if (actioncode <= 8 ||
-      (actioncode >= 10 && actioncode <= 17) ||
-      (actioncode >= 26 && actioncode <= 30) ||
-      actioncode == 32 ||
-      actioncode >= 34)
-  {
-    //Logger::message("CHANGE! ", actioncode);
-    *(reinterpret_cast<bool *>(userdata)) = true;
-  }
+// inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)
+// {
+//   // 9  SQLITE_DELETE
+//   // 18 SQLITE_INSERT
+//   // 19 SQLITE_PRAGMA
+//   // 20 SQLITE_READ
+//   // 21 SQLITE_SELECT
+//   // 22 SQLITE_TRANSACTION
+//   // 23 SQLITE_UPDATE
+//   // 24 SQLITE_ATTACH
+//   // 25 SQLITE_DETACH
+//   // 31 SQLITE_FUNCTION
+//   // 33 SQLITE_RECURSIVE
+//   if (actioncode <= 8 ||
+//       (actioncode >= 10 && actioncode <= 17) ||
+//       (actioncode >= 26 && actioncode <= 30) ||
+//       actioncode == 32 ||
+//       actioncode >= 34)
+//   {
+//     //Logger::message("CHANGE! ", actioncode);
+//     *(reinterpret_cast<bool *>(userdata)) = true;
+//   }
 
-  return SQLITE_OK;
-}
+//   return SQLITE_OK;
+// }
 
 #endif

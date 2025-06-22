@@ -76,7 +76,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "json_extract(value, '$.name') AS name, "
                        "json_extract(value, '$.type') AS type "
                        "FROM json_each(?, '$.chats.list')",
-                       SqliteDB::StaticTextParam(data.get(), datasize)))
+                       std::string_view(data.get(), datasize)))
   {
     Logger::error("Failed to fill sql table");
     return;
@@ -95,7 +95,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                          "json_extract(?1, '$.id') AS id, "
                          "json_extract(?1, '$.name') AS name, "
                          "json_extract(?1, '$.type') AS type",
-                          SqliteDB::StaticTextParam(data.get(), datasize)))
+                         std::string_view(data.get(), datasize)))
     {
       Logger::error("Failed to fill sql table");
       return;
@@ -103,6 +103,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
   }
   if (d_verbose) [[unlikely]]
     Logger::message_end("done! (", d_database.changed(), ")");
+
   // std::cout << std::endl << "CHATS: " << std::endl;
   // d_database.prettyPrint(d_truncate, "SELECT COUNT(*) FROM chats");
   // d_database.prettyPrint(d_truncate, "SELECT * FROM chats LIMIT 10");
@@ -114,7 +115,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
   if (d_verbose) [[unlikely]]
     Logger::message_start("Inserting messages from json...");
   if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, path "
-                       "FROM json_tree(?) WHERE path GLOB '$.chats.list[[][0-9]*].messages'", SqliteDB::StaticTextParam(data.get(), datasize)))
+                       "FROM json_tree(?) WHERE path GLOB '$.chats.list[[][0-9]*].messages'", std::string_view(data.get(), datasize)))
     return;
   if (d_database.changed() == 0)
   {
@@ -125,7 +126,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
     }
 
     if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, '$.chats.list[0].messages' AS path "
-                         "FROM json_tree(?) WHERE path = '$.messages'", SqliteDB::StaticTextParam(data.get(), datasize)))
+                         "FROM json_tree(?) WHERE path = '$.messages'", std::string_view(data.get(), datasize)))
       return;
   }
 
