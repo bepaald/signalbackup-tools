@@ -27,6 +27,7 @@
 #include <vector>
 #include <any>
 #include <iterator>
+#include <limits>
 #if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
