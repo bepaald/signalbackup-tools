@@ -28,6 +28,7 @@
 #include <any>
 #include <iterator>
 #include <limits>
+#include <list>
 #if __cpp_lib_ranges >= 201911L
 #include <ranges>
 #endif
@@ -92,26 +93,14 @@ class SqliteDB
     inline uint64_t charCount(std::string const &utf8) const;
   };
 
- public:
- /*
-  struct StaticTextParam
-  {
-    char *ptr;
-    uint64_t size;
-    StaticTextParam(char *p, uint64_t s)
-      :
-      ptr(p),
-      size(s)
-    {}
-  };
- */
  private:
   mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
   mutable std::map<std::string, std::map<std::string, bool>> d_columns;
   std::string d_name;
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
-  mutable sqlite3_stmt *d_stmt; // cache a (prepared) statement for reuse in subsequent transactions
+  mutable std::list<sqlite3_stmt *> d_stmt_cache; // cache (prepared) statements for reuse in subsequent transactions
+  unsigned int d_cache_size;
   sqlite3_stmt *d_stmt_pragma_schema_version;
   mutable char const *d_error_tail;
   std::pair<unsigned char *, uint64_t> *d_data;  // non-owning pointer!
@@ -165,28 +154,29 @@ class SqliteDB
   inline void clearTableCache() const;
   inline void freeMemory();
   void checkDatabaseWriteVersion() const;
+  inline bool getStatement(std::string_view q, sqlite3_stmt **statement) const;
+  inline void setCacheSize(unsigned int size = 1);
 
  private:
   inline bool initFromFile();
   inline bool initFromMemory();
   inline void destroy();
-  inline int execParamFiller(int count, std::string const &param) const;
-  inline int execParamFiller(int count, std::string_view param) const;
-  inline int execParamFiller(int count, char const *param) const;
-  inline int execParamFiller(int count, unsigned char const *param) const;
-  inline int execParamFiller(int count, int param) const;
-  inline int execParamFiller(int count, unsigned int param) const;
-  inline int execParamFiller(int count, long param) const;
-  inline int execParamFiller(int count, unsigned long param) const;
-  inline int execParamFiller(int count, long long int param) const;
-  inline int execParamFiller(int count, unsigned long long int param) const;
-  inline int execParamFiller(int count, double param) const;
-  inline int execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, unsigned long> const &param) const;
-  inline int execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, unsigned long long> const &param) const;
-  inline int execParamFiller(int count, std::pair<unsigned char *, unsigned long> const &param) const;
-  inline int execParamFiller(int count, std::pair<unsigned char *, unsigned long long> const &param) const;
-  //inline int execParamFiller(int count, StaticTextParam const &param) const;
-  inline int execParamFiller(int count, std::nullptr_t param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::string const &param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::string_view param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, char const *param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, unsigned char const *param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, int param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, unsigned int param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, long param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, unsigned long param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, long long int param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, unsigned long long int param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, double param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::pair<std::shared_ptr<unsigned char []>, unsigned long> const &param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::pair<std::shared_ptr<unsigned char []>, unsigned long long> const &param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::pair<unsigned char *, unsigned long> const &param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::pair<unsigned char *, unsigned long long> const &param) const;
+  inline int execParamFiller(int count, sqlite3_stmt *stmt, std::nullptr_t param) const;
   template <typename T>
   inline bool isType(std::any const &a) const;
   inline bool prepareSchemaVersionStatement();
@@ -210,7 +200,7 @@ inline SqliteDB::SqliteDB(std::string const &name, bool readonly)
   d_name(name),
   d_db(nullptr),
   d_vfs(nullptr),
-  d_stmt(nullptr),
+  d_cache_size(1),
   d_stmt_pragma_schema_version(nullptr),
   d_error_tail(nullptr),
   d_data(nullptr),
@@ -226,7 +216,7 @@ inline SqliteDB::SqliteDB(std::pair<unsigned char *, uint64_t> *data)
   :
   d_db(nullptr),
   d_vfs(MemFileDB::sqlite3_memfilevfs(data)),
-  d_stmt(nullptr),
+  d_cache_size(1),
   d_stmt_pragma_schema_version(nullptr),
   d_error_tail(nullptr),
   d_data(data),
@@ -257,7 +247,8 @@ inline SqliteDB &SqliteDB::operator=(SqliteDB const &other)
     // create
     d_db = nullptr;
     d_vfs = nullptr;
-    d_stmt = nullptr;
+    d_stmt_cache.clear();
+    d_cache_size = other.d_cache_size;
     d_stmt_pragma_schema_version = nullptr;
     d_error_tail = nullptr;
     d_name = ":memory:";
@@ -320,8 +311,12 @@ inline bool SqliteDB::initFromMemory()
 
 inline void SqliteDB::destroy()
 {
-  if (d_stmt)
-    sqlite3_finalize(d_stmt);
+  //if (d_stmt)
+  //  sqlite3_finalize(d_stmt);
+  for (auto &stmt : d_stmt_cache)
+    if (stmt)
+      sqlite3_finalize(stmt);
+
 
   if (d_stmt_pragma_schema_version)
     sqlite3_finalize(d_stmt_pragma_schema_version);
@@ -370,66 +365,18 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
   if (verbose) [[unlikely]]
     Logger::message("Running query: \"", q, "\"");
 
-  // if we have no prepared statement OR
-  // if this query is not the prepared one -> we need to reprepare it...
-  if (!d_stmt || std::string_view(sqlite3_sql(d_stmt)) != q)
-  {
-    // destroy the old one (NOTE "Invoking sqlite3_finalize() on a NULL pointer is a harmless no-op.")
-    sqlite3_finalize(d_stmt);
-
-    // create new statement
-    if (sqlite3_prepare_v2(d_db, q.data(), q.size(), &d_stmt, &d_error_tail) != SQLITE_OK) [[unlikely]]
-    {
-      Logger::error("During sqlite3_prepare_v2(): ", sqlite3_errmsg(d_db));
-      //// old way: just print the error
-      //Logger::error_indent("\"", q, "\"");
-
-      //// newer way: mark the point _around_ the error posistion
-      // long long int error_pos = std::distance(q.c_str(), d_error_tail);
-      // long long int error_start = std::max(0ll, error_pos - 2);
-      // long long int error_end = std::min(error_pos + 2, static_cast<long long int>(q.size()));
-      // Logger::error_indent("-> Query: \"",
-      //                      q.substr(0, error_start),
-      //                      Logger::Control::BOLD,
-      //                      q.substr(error_start, error_end - error_start),
-      //                      Logger::Control::NORMAL,
-      //                      q.substr(error_end),
-      //                      "\"");
-
-      // attempt to mark the token that sqlite choked on
-      long long int error_pos = std::distance(q.data(), d_error_tail);
-      long long int error_start = error_pos; // find the token where the error starts...
-      while (error_start > 0 &&
-             ((q[error_start - 1] >= 'a' && q[error_start - 1] <= 'z') ||
-              (q[error_start - 1] >= 'A' && q[error_start - 1] <= 'Z') ||
-              (q[error_start - 1] >= '0' && q[error_start - 1] <= '9')))
-        --error_start;
-      Logger::error_indent("-> Query: \"",
-                           q.substr(0, error_start),
-                           Logger::Control::BOLD,
-                           q.substr(error_start, error_pos - error_start),
-                           Logger::Control::NORMAL,
-                           q.substr(error_pos),
-                           "\"");
-
-      return false;
-    }
-  }
-  else if (sqlite3_reset(d_stmt) != SQLITE_OK) [[unlikely]] // reuse existing prepared statement
-  {
-    Logger::error("During sqlite3_reset(): ", sqlite3_errmsg(d_db));
-    Logger::error_indent("-> Query: \"", q, "\"");
+  sqlite3_stmt *stmt;
+  if (!getStatement(q, &stmt)) // get prepared statment from cache, or produce a new one (and cache it)
     return false;
-  }
 
-  if (static_cast<int>(params.size()) != sqlite3_bind_parameter_count(d_stmt)) [[unlikely]]
+  if (static_cast<int>(params.size()) != sqlite3_bind_parameter_count(stmt)) [[unlikely]]
   {
-    if (sqlite3_bind_parameter_count(d_stmt) < static_cast<int>(params.size()))
+    if (sqlite3_bind_parameter_count(stmt) < static_cast<int>(params.size()))
       Logger::warning("Too few placeholders in query!");
-    else if (sqlite3_bind_parameter_count(d_stmt) > static_cast<int>(params.size()))
+    else if (sqlite3_bind_parameter_count(stmt) > static_cast<int>(params.size()))
       Logger::warning("Too many placeholders in query!");
     Logger::warning_indent("-> Query: \"", q, "\" (parameters: ", params.size(),
-                           ", placeholders: ", sqlite3_bind_parameter_count(d_stmt), ")");
+                           ", placeholders: ", sqlite3_bind_parameter_count(stmt), ")");
   }
 
 #if __cplusplus > 201703L
@@ -443,7 +390,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     if (isType<long long int>(p))
     {
       //std::cout << std::endl << "PARAM LONGLONGINT" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<long long int>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<long long int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -453,7 +400,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::nullptr_t>(p))
     {
       //std::cout << std::endl << "PARAM NULL" << std::endl;
-      if (execParamFiller(i + 1, nullptr) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, nullptr) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -463,7 +410,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::string_view>(p))
     {
       //std::cout << std::endl << "PARAM SV" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<std::string_view>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<std::string_view>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -473,7 +420,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::pair<unsigned char *, unsigned long>>(p))
     {
       //std::cout << std::endl << "PARAM PAIR UCHAR*,ULONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, unsigned long>>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<std::pair<unsigned char *, unsigned long>>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -483,7 +430,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<int>(p))
     {
       //std::cout << std::endl << "PARAM INT" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<int>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -493,7 +440,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::string>(p))
     {
       //std::cout << std::endl << "PARAM S" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<std::string>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<std::string>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -503,7 +450,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<unsigned long>(p))
     {
       //std::cout << std::endl << "PARAM ULONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<unsigned long>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<unsigned long>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -513,7 +460,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::pair<std::shared_ptr<unsigned char []>, unsigned long>>(p))
     {
       //std::cout << std::endl << "PARAM PAIR SHAREDPTR,ULONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, unsigned long>>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, unsigned long>>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -523,7 +470,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::pair<std::shared_ptr<unsigned char []>, unsigned long long>>(p))
     {
       //std::cout << std::endl << "PARAM PAIR SHAREDPTR,ULONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, unsigned long long>>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<std::pair<std::shared_ptr<unsigned char []>, unsigned long long>>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -533,7 +480,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<std::pair<unsigned char *, unsigned long long>>(p))
     {
       //std::cout << std::endl << "PARAM PAIR UCHAR*,ULONGLONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<std::pair<unsigned char *, unsigned long long>>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<std::pair<unsigned char *, unsigned long long>>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -543,7 +490,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<char const *>(p))
     {
       //std::cout << std::endl << "PARAM CHAR *" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<char const *>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<char const *>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -553,7 +500,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<double>(p))
     {
       //std::cout << std::endl << "PARAM DOUBLE" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<double>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<double>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -563,7 +510,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<unsigned int>(p))
     {
       //std::cout << std::endl << "PARAM UINT" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<unsigned int>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<unsigned int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -573,7 +520,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<unsigned char const *>(p))
     {
       //std::cout << std::endl << "PARAM UCHAR *" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<unsigned char const *>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<unsigned char const *>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -583,7 +530,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<long>(p))
     {
       //std::cout << std::endl << "PARAM LONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<long>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<long>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -593,7 +540,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     else if (isType<unsigned long long int>(p))
     {
       //std::cout << std::endl << "PARAM ULONGLONG" << std::endl;
-      if (execParamFiller(i + 1, std::any_cast<unsigned long long int>(p)) != SQLITE_OK) [[unlikely]]
+      if (execParamFiller(i + 1, stmt, std::any_cast<unsigned long long int>(p)) != SQLITE_OK) [[unlikely]]
       {
         Logger::error("During sqlite3_bind_*(): ", sqlite3_errmsg(d_db));
         Logger::error_indent("-> Query: \"", q, "\"");
@@ -622,43 +569,46 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
   if (results)
   {
     results->clear();
-    results->reserveColumnCount(sqlite3_column_count(d_stmt));
+    results->reserveColumnCount(sqlite3_column_count(stmt));
   }
 
   int rc;
   int row = 0;
 
-  while ((rc = sqlite3_step(d_stmt)) == SQLITE_ROW)
+  while ((rc = sqlite3_step(stmt)) == SQLITE_ROW)
   {
     if (!results)
       continue;
 
     // if headers aren't set, set them
     if (results->columns() == 0)
-      for (int c = 0; c < sqlite3_column_count(d_stmt); ++c)
-        results->emplaceHeader(sqlite3_column_name(d_stmt, c));
+      for (int c = 0; c < sqlite3_column_count(stmt); ++c)
+        results->emplaceHeader(sqlite3_column_name(stmt, c));
 
     // set values
-    for (int c = 0; c < sqlite3_column_count(d_stmt); ++c)
+    for (int c = 0; c < sqlite3_column_count(stmt); ++c)
     {
-      auto coltype = sqlite3_column_type(d_stmt, c);
+      auto coltype = sqlite3_column_type(stmt, c);
       // order empirically determined
       if (coltype == SQLITE_INTEGER)
-        results->emplaceValue(row, sqlite3_column_int64(d_stmt, c));
+        results->emplaceValue(row, sqlite3_column_int64(stmt, c));
       else if (coltype == SQLITE_NULL)
         results->emplaceValue(row, nullptr);
       else if (coltype == SQLITE_TEXT)
-        results->emplaceValue(row, std::string(reinterpret_cast<char const *>(sqlite3_column_text(d_stmt, c))));
+        results->emplaceValue(row, std::string(reinterpret_cast<char const *>(sqlite3_column_text(stmt, c))));
       else if (coltype == SQLITE_BLOB)
       {
-        size_t blobsize = sqlite3_column_bytes(d_stmt, c);
-        std::shared_ptr<unsigned char []> blob(new unsigned char[blobsize]);
-        if (blobsize) // if 0, sqlite3_column_blob() is nullptr, which is UB for memcpy
-          std::memcpy(blob.get(), reinterpret_cast<unsigned char const *>(sqlite3_column_blob(d_stmt, c)), blobsize);
+        size_t blobsize = sqlite3_column_bytes(stmt, c);
+        std::shared_ptr<unsigned char []> blob;
+        if (blobsize) [[likely]]
+        {
+          blob.reset(new unsigned char[blobsize]);
+          std::memcpy(blob.get(), reinterpret_cast<unsigned char const *>(sqlite3_column_blob(stmt, c)), blobsize);
+        }
         results->emplaceValue(row, std::make_pair(blob, blobsize));
       }
       else if (coltype == SQLITE_FLOAT)
-        results->emplaceValue(row, sqlite3_column_double(d_stmt, c));
+        results->emplaceValue(row, sqlite3_column_double(stmt, c));
     }
     ++row;
   }
@@ -666,7 +616,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
   if (rc != SQLITE_DONE) [[unlikely]]
   {
     Logger::error("After sqlite3_step(): ", sqlite3_errmsg(d_db));
-    char *expanded_query = sqlite3_expanded_sql(d_stmt);
+    char *expanded_query = sqlite3_expanded_sql(stmt);
     if (expanded_query)
     {
       Logger::error_indent("-> Query: \"", expanded_query, "\"");
@@ -801,106 +751,106 @@ inline bool SqliteDB::isType(std::any const &a) const
   return (a.type() == typeid(T));
 }
 
-inline int SqliteDB::execParamFiller(int count, std::string const &param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::string const &param) const
 {
   //std::cout << "Binding STRING at " << count << ": " << param.c_str() << std::endl;
-  return sqlite3_bind_text(d_stmt, count, param.c_str(), -1, SQLITE_TRANSIENT);
+  return sqlite3_bind_text(stmt, count, param.c_str(), -1, SQLITE_TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, std::string_view param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::string_view param) const
 {
   //std::cout << "Binding STRING_VIEW at " << count << ": " << param << std::endl;
-  return sqlite3_bind_text(d_stmt, count, param.data(), param.size(), SQLITE_TRANSIENT);
+  return sqlite3_bind_text(stmt, count, param.data(), param.size(), SQLITE_TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, char const *param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, char const *param) const
 {
   //std::cout << "Binding CHAR CONST * at " << count << ": " << param << std::endl;
-  return sqlite3_bind_text(d_stmt, count, param, -1, SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_text(stmt, count, param, -1, SQLITE_STATIC);//TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, unsigned char const *param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, unsigned char const *param) const
 {
   //std::cout << "Binding UNSIGNED CHAR CONST * at " << count << std::endl;
-  return sqlite3_bind_text(d_stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_text(stmt, count, reinterpret_cast<char const *>(param), -1, SQLITE_STATIC);//TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, unsigned long> const &param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::pair<std::shared_ptr<unsigned char []>, unsigned long> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first.get()), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first.get()), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, std::pair<std::shared_ptr<unsigned char []>, unsigned long long> const &param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::pair<std::shared_ptr<unsigned char []>, unsigned long long> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first.get()), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first.get()), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, std::pair<unsigned char *, unsigned long> const &param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::pair<unsigned char *, unsigned long> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
-inline int SqliteDB::execParamFiller(int count, std::pair<unsigned char *, unsigned long long> const &param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::pair<unsigned char *, unsigned long long> const &param) const
 {
   //std::cout << "Binding BLOB at " << count << std::endl;
-  return sqlite3_bind_blob(d_stmt, count, reinterpret_cast<void *>(param.first), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
+  return sqlite3_bind_blob(stmt, count, reinterpret_cast<void *>(param.first), static_cast<int>(param.second), SQLITE_STATIC);//TRANSIENT);
 }
 
 // inline int SqliteDB::execParamFiller(int count, StaticTextParam const &param) const
 // {
 //   //std::cout << "Binding STATIC TEXT at " << count << std::endl;
-//   return sqlite3_bind_text(d_stmt, count, param.ptr, static_cast<int>(param.size), SQLITE_STATIC);
+//   return sqlite3_bind_text(stmt, count, param.ptr, static_cast<int>(param.size), SQLITE_STATIC);
 // }
 
-inline int SqliteDB::execParamFiller(int count, int param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, int param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, param);
+  return sqlite3_bind_int64(stmt, count, param);
 }
 
-inline int SqliteDB::execParamFiller(int count, unsigned int param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, unsigned int param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, param);
+  return sqlite3_bind_int64(stmt, count, param);
 }
 
-inline int SqliteDB::execParamFiller(int count, long param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, long param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, param);
+  return sqlite3_bind_int64(stmt, count, param);
 }
 
-inline int SqliteDB::execParamFiller(int count, unsigned long param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, unsigned long param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, static_cast<sqlite_int64>(param));
+  return sqlite3_bind_int64(stmt, count, static_cast<sqlite_int64>(param));
 }
 
-inline int SqliteDB::execParamFiller(int count, long long int param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, long long int param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, param);
+  return sqlite3_bind_int64(stmt, count, param);
 }
 
-inline int SqliteDB::execParamFiller(int count, unsigned long long int param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, unsigned long long int param) const
 {
   //std::cout << "Binding long long int at " << count << ": " << param << std::endl;
-  return sqlite3_bind_int64(d_stmt, count, static_cast<sqlite_int64>(param));
+  return sqlite3_bind_int64(stmt, count, static_cast<sqlite_int64>(param));
 }
 
-inline int SqliteDB::execParamFiller(int count, std::nullptr_t) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, std::nullptr_t) const
 {
   //std::cout << "Binding NULL at " << count << std::endl;
-  return sqlite3_bind_null(d_stmt, count);
+  return sqlite3_bind_null(stmt, count);
 }
 
-inline int SqliteDB::execParamFiller(int count, double param) const
+inline int SqliteDB::execParamFiller(int count, sqlite3_stmt *stmt, double param) const
 {
   //std::cout << "Binding DOUBLE at " << count << ": " << param << std::endl;
-  return sqlite3_bind_double(d_stmt, count, param);
+  return sqlite3_bind_double(stmt, count, param);
 }
 
 inline int SqliteDB::changed() const
@@ -919,7 +869,7 @@ inline bool SqliteDB::containsTable(std::string const &tablename) const
     return it->second;
 
   QueryResults tmp;
-  if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = '" + tablename + "'", &tmp) &&
+  if (exec("SELECT DISTINCT tbl_name FROM sqlite_master WHERE type = 'table' AND tbl_name = ?", tablename, &tmp) &&
       tmp.rows() > 0)
   {
     d_tables.emplace(tablename, true);
@@ -938,7 +888,7 @@ inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::str
       return it2->second;
 
   QueryResults tmp;
-  if (exec("SELECT 1 FROM PRAGMA_TABLE_XINFO('" + tablename + "') WHERE name == '" + columnname + "'", &tmp) &&
+  if (exec("SELECT 1 FROM PRAGMA_TABLE_XINFO(?) WHERE name = ?", {tablename, columnname}, &tmp) &&
       tmp.rows() > 0)
   {
     if (it1 != d_columns.end())
@@ -1366,6 +1316,77 @@ inline void SqliteDB::jsonlong(sqlite3_context *context, int argc, sqlite3_value
   }
   //std::cout << "No results, returning null (" << argc << ")" << std::endl;
   sqlite3_result_null(context);
+}
+
+inline bool SqliteDB::getStatement(std::string_view q, sqlite3_stmt **statement) const
+{
+  auto it = std::find_if(d_stmt_cache.begin(), d_stmt_cache.end(),
+                         [&](sqlite3_stmt *stmt) { return sqlite3_sql(stmt) == q; });
+  if (it == d_stmt_cache.end()) // query not cached
+  {
+    //std::cout << std::endl << "NEW STATEMENT :'" << q << "'" << std::endl;
+
+    // cache is full, make room for new statement
+    if (d_stmt_cache.size() >= d_cache_size)
+    {
+      sqlite3_finalize(d_stmt_cache.back());
+      d_stmt_cache.pop_back();
+    }
+
+    // create new statement and prepare it.
+    sqlite3_stmt *result;
+    // prepare the statement, and put it in front of list
+    if (sqlite3_prepare_v2(d_db, q.data(), q.size(), &result, &d_error_tail) != SQLITE_OK) [[unlikely]]
+    {
+      Logger::error("During sqlite3_prepare_v2(): ", sqlite3_errmsg(d_db));
+      // attempt to mark the token that sqlite choked on
+      long long int error_pos = std::distance(q.data(), d_error_tail);
+      long long int error_start = error_pos; // find the token where the error starts...
+      while (error_start > 0 &&
+             ((q[error_start - 1] >= 'a' && q[error_start - 1] <= 'z') ||
+              (q[error_start - 1] >= 'A' && q[error_start - 1] <= 'Z') ||
+              (q[error_start - 1] >= '0' && q[error_start - 1] <= '9')))
+        --error_start;
+      Logger::error_indent("-> Query: \"",
+                           q.substr(0, error_start),
+                           Logger::Control::BOLD,
+                           q.substr(error_start, error_pos - error_start),
+                           Logger::Control::NORMAL,
+                           q.substr(error_pos),
+                           "\"");
+
+      return false;
+    }
+    // cache it
+    d_stmt_cache.push_front(result);
+    // set return, done!
+    *statement = result;
+    return true;
+  }
+  // else statement found in cache!
+  d_stmt_cache.splice(d_stmt_cache.begin(), d_stmt_cache, it); // move it to front
+  if (sqlite3_reset(*it) != SQLITE_OK) [[unlikely]] // reuse existing prepared statement
+  {
+    Logger::error("During sqlite3_reset(): ", sqlite3_errmsg(d_db));
+    Logger::error_indent("-> Query: \"", q, "\"");
+    return false;
+  }
+  *statement = *it;
+  return true;
+}
+
+inline void SqliteDB::setCacheSize(unsigned int size)
+{
+  //Logger::message("Setting statement cache size to ", size);
+  d_cache_size = size;
+  if (d_stmt_cache.size() > d_cache_size)
+  {
+    unsigned int i = 0;
+    for (auto it = d_stmt_cache.begin(); it != d_stmt_cache.end(); ++it, ++i)
+      if (i >= d_cache_size && *it)
+        sqlite3_finalize(*it);
+    d_stmt_cache.resize(d_cache_size);
+  }
 }
 
 // inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)

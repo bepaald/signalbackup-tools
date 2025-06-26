@@ -333,6 +333,15 @@ int main(int argc, char *argv[])
 
   MEMINFO("Start of program, before opening input");
 
+
+#ifdef TIME_FUNCTIONS
+  decltype(std::chrono::high_resolution_clock::now()) t1, t2;
+#endif
+
+#ifdef TIME_FUNCTIONS
+  t1 = std::chrono::high_resolution_clock::now();
+#endif
+
   // open input
   if (arg.verbose()) [[unlikely]]
     Logger::message("Opening input");
@@ -348,6 +357,12 @@ int main(int argc, char *argv[])
   }
   if (arg.verbose()) [[unlikely]]
     Logger::message("Input opened successfully");
+
+#ifdef TIME_FUNCTIONS
+  t2 = std::chrono::high_resolution_clock::now();
+  std::cout << " *** TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
+#endif
+
 
   MEMINFO("Input opened");
 
@@ -428,6 +443,10 @@ int main(int argc, char *argv[])
     }
   }
 
+#if TIME_FUNCTIONS
+  t1 = std::chrono::high_resolution_clock::now();
+  std::cout << " *** TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
+#endif
   if (arg.importfromdesktop())
   {
     if (!initDesktopDatabase())
@@ -441,6 +460,10 @@ int main(int argc, char *argv[])
       return 1;
     MEMINFO("After importfromdesktop");
   }
+#if TIME_FUNCTIONS
+  t2 = std::chrono::high_resolution_clock::now();
+  std::cout << " *** TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
+#endif
 
   if (!arg.importplaintextbackup().empty())
   {
