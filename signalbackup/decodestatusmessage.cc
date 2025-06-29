@@ -935,7 +935,6 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
     if (field1_1.has_value())
     {
       return decodeStatusMessage(field1_1->getDataString(), expiration, type, contactname, icon);
-
     }
   }
   else

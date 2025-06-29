@@ -34,7 +34,7 @@ void SignalBackup::dtInsertAttachment(long long int mms_id, long long int unique
   // the attachment download failed... we still insert it.
   if (attachment_results.valueAsString(0, "path").empty())
   {
-    if (attachment_results.getValueAs<long long int>(0, "pending") != 0)
+    if (attachment_results.valueAsInt(0, "pending", 0) != 0)
     {
       if (!insertRow(d_part_table,
                      {{d_part_mid, mms_id},
@@ -272,7 +272,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
            "IFNULL(height, 0) AS height,"
            "IFNULL(width, 0) AS width,"
            "blurHash," // not used (yet)
-           "pending,"
+           "IFNULL(pending, 0) AS pending,"
            "flags,"
            "IFNULL(transitCdnNumber, 0) AS cdn_number,"
            "IFNULL(transitCdnUploadTimestamp, 0) AS upload_timestamp,"
