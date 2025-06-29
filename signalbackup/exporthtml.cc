@@ -65,9 +65,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   if (!prepareOutputDirectory(directory, overwrite, !originalfilenames /*allowappend only allowed when not using original filenames*/, append))
     return false;
 
-  // // set sql statement cache size
-  // d_database.setCacheSize(5); // empirically determined
-  // ScopeGuard reset_cache_size([&]() { d_database.setCacheSize(); });
+  // set sql statement cache size
+  d_database.setCacheSize(5); // empirically determined
+  ScopeGuard reset_cache_size([&]() { d_database.setCacheSize(); });
 
   // see if we need aggressive filename sanitizing
   d_aggressive_filename_sanitizing = aggressive_sanitizing || !specialCharsSupported(directory);

@@ -1272,6 +1272,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         margin-bottom: 2px;
         margin-left: 2px;
         content: "";
+        filter: brightness(0);
       }
 
       .menu-item .nav-up
@@ -1494,6 +1495,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     .quote-link:hover .msg-name::after,
     .nav-up {
       background-image: url('data:image/svg+xml;utf-8,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="white" stroke="white"><path d="M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z"/></svg>');
+    }
+
+    .msg-incoming .quote-link:hover .msg-name::after,
+    .nav-up {
       filter: var(--icon-f);
     }
 
