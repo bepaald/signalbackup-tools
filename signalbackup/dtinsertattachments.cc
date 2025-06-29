@@ -263,7 +263,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
   SqliteDB::QueryResults attachment_results;
   ddb.exec("SELECT "
            "attachmentType,"  // attachmenttype = attachment, preview, sticker, long-message, quote, contact
-           "orderInMessage,"
+           "IFNULL(orderInMessage, 0) AS orderInMessage,"
            "contentType AS content_type,"
            "size,"
            "path,"
@@ -273,10 +273,10 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
            "IFNULL(width, 0) AS width,"
            "blurHash," // not used (yet)
            "IFNULL(pending, 0) AS pending,"
-           "flags,"
+           "IFNULL(flags, 0) AS flags,"
            "IFNULL(transitCdnNumber, 0) AS cdn_number,"
            "IFNULL(transitCdnUploadTimestamp, 0) AS upload_timestamp,"
-           "version "
+           "IFNULL(version, 1) AS version "
            //"thumbnailPath, thumbnailSize, thumbnailContentType, thumbnailLocalKey, thumbnailVersion "
            "FROM message_attachments " +
            (force_is_quote ?
