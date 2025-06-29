@@ -502,39 +502,75 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
     // now lets get all messages for this conversation
     SqliteDB::QueryResults results_all_messages_from_conversation;
-    if (!dtdb->d_database.exec("SELECT "
-                               "rowid,"
-                               "json_extract(json, '$.quote') AS quote,"
-                               "IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments,"
-                               "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
-                               "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS nummentions,"
-                               "IFNULL(json_array_length(json, '$.editHistory'), 0) AS editrevisions," // not used (yet?)
-                               "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
-                               "IFNULL(json_extract(json, '$.flags'), 0) AS flags," // see 'if (type.empty())' below for FLAGS enum
-                               "body,"
-                               "type,"
-                               "JSONLONG(COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at'))) AS sent_at,"
-                               "hasAttachments,"      // any attachment
-                               "hasFileAttachments,"  // non-media files? (any attachment that does not get a preview?)
-                               "hasVisualMediaAttachments," // ???
-                               "IFNULL(isErased, 0) AS isErased,"
-                               "IFNULL(isViewOnce, 0) AS isViewOnce,"
-                               "serverGuid,"
-                               "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
-                               "json_extract(json, '$.source') AS sourcephone,"
-                               "JSONLONG(expireTimer) AS expireTimer,"
-                               "seenStatus,"
-                               "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
-                               "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
-                               "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
-                               "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
-                               "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
-                               "isStory"
-                               " FROM messages WHERE conversationId = ?" + datewhereclause,
-                               results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
+    if (dtdb->d_database.containsTable("message_attachments")) [[likely]]
     {
-      Logger::error("Failed to retrieve message from this conversation.");
-      continue;
+      if (!dtdb->d_database.exec("SELECT "
+                                 "rowid,"
+                                 "json_extract(json, '$.quote') AS quote,"
+                                 "IFNULL(numattachments, 0) AS numattachments,"
+                                 "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
+                                 "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS nummentions,"
+                                 "IFNULL(json_array_length(json, '$.editHistory'), 0) AS editrevisions," // not used (yet?)
+                                 "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
+                                 "IFNULL(json_extract(json, '$.flags'), 0) AS flags," // see 'if (type.empty())' below for FLAGS enum
+                                 "body,"
+                                 "type,"
+                                 "JSONLONG(COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at'))) AS sent_at,"
+                                 "IFNULL(isErased, 0) AS isErased,"
+                                 "IFNULL(isViewOnce, 0) AS isViewOnce,"
+                                 "serverGuid,"
+                                 "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
+                                 "json_extract(json, '$.source') AS sourcephone,"
+                                 "JSONLONG(expireTimer) AS expireTimer,"
+                                 "seenStatus,"
+                                 "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
+                                 "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
+                                 "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
+                                 "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
+                                 "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
+                                 "isStory"
+                                 " FROM messages "
+                                 "LEFT JOIN (SELECT messageId, COUNT(*) AS numattachments FROM message_attachments WHERE editHistoryIndex = -1 GROUP BY messageId) AS attmnts ON messages.id = attmnts.messageId "
+                                 "WHERE conversationId = ?" + datewhereclause,
+                                 results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
+      {
+        Logger::error("Failed to retrieve message from this conversation.");
+        continue;
+      }
+    }
+    else // query before `message_attachments` table....
+    {
+      if (!dtdb->d_database.exec("SELECT "
+                                 "rowid,"
+                                 "json_extract(json, '$.quote') AS quote,"
+                                 "IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments,"
+                                 "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
+                                 "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS nummentions,"
+                                 "IFNULL(json_array_length(json, '$.editHistory'), 0) AS editrevisions," // not used (yet?)
+                                 "json_extract(json, '$.callHistoryDetails.creatorUuid') AS group_call_init,"
+                                 "IFNULL(json_extract(json, '$.flags'), 0) AS flags," // see 'if (type.empty())' below for FLAGS enum
+                                 "body,"
+                                 "type,"
+                                 "JSONLONG(COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at'))) AS sent_at,"
+                                 "IFNULL(isErased, 0) AS isErased,"
+                                 "IFNULL(isViewOnce, 0) AS isViewOnce,"
+                                 "serverGuid,"
+                                 "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
+                                 "json_extract(json, '$.source') AS sourcephone,"
+                                 "JSONLONG(expireTimer) AS expireTimer,"
+                                 "seenStatus,"
+                                 "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
+                                 "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
+                                 "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
+                                 "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
+                                 "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
+                                 "isStory"
+                                 " FROM messages WHERE conversationId = ?" + datewhereclause,
+                                 results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
+      {
+        Logger::error("Failed to retrieve message from this conversation.");
+        continue;
+      }
     }
     //results_all_messages_from_conversation.printLineMode();
 
@@ -1669,16 +1705,31 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           }
         }
 
+        // set preview
+        if (haspreview)
+          dtSetLinkPreviewData(new_mms_id, rowid, dtdb->d_database);
+
         // insert message attachments
         if (d_verbose) [[unlikely]] Logger::message_start("Inserting attachments...");
-        dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
-                          rowid, dtdb->d_database, "WHERE messages.rowid = " + bepaald::toString(rowid), databasedir, false, issticker, targetisdummy);
-        if (hasquote && !mmsquote_missing)
+        if (dtdb->d_database.containsTable("message_attachments")) [[likely]]
         {
-          // insert quotes attachments
-          dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, dtdb->d_database,
-                            //"WHERE (sent_at = " + bepaald::toString(mmsquote_id) + " AND sourceUuid = '" + mmsquote_author_uuid + "')", databasedir, true); // sourceUuid IS NULL if sent from desktop
-                            "WHERE JSONLONG(messages.sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/, targetisdummy);
+          if (numattachments)
+            dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), rowid, dtdb->d_database, databasedir, targetisdummy, false);
+
+          // at least existing quotes with attachments do not (always?) have their own message_attachments entry...
+          if (hasquote)
+            dtInsertAttachments(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), rowid, dtdb->d_database, databasedir, targetisdummy, true);
+        }
+        else
+        {
+          dtInsertAttachmentsOld(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), numattachments, haspreview,
+                                 rowid, dtdb->d_database, "WHERE messages.rowid = " + bepaald::toString(rowid), databasedir, false, issticker, targetisdummy);
+          if (hasquote && !mmsquote_missing)
+          {
+            // insert quotes attachments
+            dtInsertAttachmentsOld(new_mms_id, results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"), -1, 0, rowid, dtdb->d_database,
+                                   "WHERE JSONLONG(messages.sent_at) = " + bepaald::toString(mmsquote_id), databasedir, true, false /*issticker, not in quotes right now, need to test that*/, targetisdummy);
+          }
         }
         if (d_verbose) [[unlikely]] Logger::message_end("done");
 
@@ -1686,6 +1737,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         if (!msgbody_full.empty())
           dtImportLongText(msgbody_full, new_mms_id,
                            results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"));
+
+
 
         if (outgoing)
           dtSetMessageDeliveryReceipts(dtdb->d_database, rowid, &recipientmap, databasedir, createmissingcontacts,

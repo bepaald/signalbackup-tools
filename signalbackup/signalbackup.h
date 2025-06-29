@@ -422,9 +422,17 @@ class SignalBackup
   bool updateRows(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                   std::vector<std::pair<std::string, std::any>> whereclause,
                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
-  bool dtInsertAttachments(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
-                           long long int rowid, SqliteDB const &ddb, std::string const &where,
-                           std::string const &databasedir, bool isquote, bool issticker, bool targetisdummy);
+  void dtInsertAttachment(long long int mms_id, long long int unique_id, long long int realsize,
+                          SqliteDB::QueryResults const &att_res, SqliteDB::QueryResults const &link_res,
+                          SqliteDB::QueryResults const &sticker_results,  std::string const &databasedir,
+                          bool isquote, bool targetisdummy);
+  bool dtInsertAttachments(long long int mms_id, long long int unique_id, long long int rowid, SqliteDB const &ddb,
+                           std::string const &databasedir, bool targetisdummy, bool force_is_quote);
+  bool dtInsertAttachmentsOld(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
+                              long long int rowid, SqliteDB const &ddb, std::string const &where,
+                              std::string const &databasedir, bool isquote, bool issticker, bool targetisdummy);
+  bool dtSetLinkPreviewData(long long int mms_id, long long int rowid, SqliteDB const &ddb) const;
+  bool dtUpdateLinkPreviewAttachment(long long int mms_id, long long int new_part_id, long long int unique_id) const;
   bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address, bool insertincompletedataforexport) const;
   bool handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
                                   long long int date, std::map<long long int, long long int> *adjusted_timestamps, std::map<std::string, long long int> *savedmap,

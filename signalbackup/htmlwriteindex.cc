@@ -1056,7 +1056,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       }
     }
 
-    if (maxtimestamp != -1) // we are creating a new snippet, add attchment icon if needed
+    if (maxtimestamp != -1) // we are creating a new snippet, add attachment icon if needed
     {                       // needs to be done _after_ applying ranges.
       std::string attachmenttype = results.valueAsString(i, "partct");
       if (STRING_STARTS_WITH(attachmenttype, "image/gif"))
