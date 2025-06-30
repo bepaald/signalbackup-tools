@@ -1083,7 +1083,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       snippet = "<i>(status message)</i>"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
 
     if (excludeexpiring && results.valueAsInt(i, "expires_in", 0) > 0)
-      snippet = "<i>(excluded expiring message)</i>";
+      snippet.clear();// = "<i>(excluded expiring message)</i>";
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
