@@ -306,6 +306,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                             "IFNULL(json_extract(json,'$.isPinned'), false) AS 'is_pinned',"
                             "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
                             "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
+                            "IFNULL(json_extract(json,'$.expireTimer'),0) AS 'expireTimer',"
                             "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
                             " FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
@@ -429,7 +430,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       {
         Logger::warning("Failed to create missing recipient. Skipping.");
         continue;
-        }
+      }
     }
 
     if (recipientid_for_thread == -1)
@@ -453,7 +454,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       if (!insertRow("thread",
                      {{d_thread_recipient_id, recipientid_for_thread},
                       {"active", 1},
-                      {"archived", results_all_conversations.getValueAs<long long int>(i, "is_archived")}},
+                      //{isgroupconversation ? "" : "expires_in", results_all_conversations.valueAsInt(i, "expireTimer", 0) * 1000}, // done later on anyway
+                      {"archived", results_all_conversations.valueAsInt(i, "is_archived", 0)}},
                      "_id", &new_thread_id))
       {
         Logger::message_end();
@@ -480,10 +482,10 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
 
     // we have the Android thread id (ttid) and the desktop data (results_all_conversations.value(i, "xxx")), update
-    // Androids pinned and archived status if desktop is newer:
+    // Androids pinned and archived status, and expiration_timer if desktop is newer:
     if (desktop_is_newer)
     {
-      bool res = d_database.exec("UPDATE thread SET archived = ? WHERE _id = ?", {results_all_conversations.getValueAs<long long int>(i, "is_archived"), ttid});
+      bool res = d_database.exec("UPDATE thread SET archived = ? WHERE _id = ?", {results_all_conversations.valueAsInt(i, "is_archived"), ttid}, 0);
       if (res)
       {
         if (results_all_conversations.valueAsInt(i, "is_pinned", 0) > 0) // pin in Android database
@@ -494,6 +496,62 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           // to unpin something, set it to the default value. This was '0' before dbv266, 'NULL' after...
           std::string pinned_default = d_database.getSingleResultAs<std::string>("SELECT dflt_value FROM pragma_table_info('thread') WHERE name = '" + d_thread_pinned + "'", std::string());
           res &= d_database.exec("UPDATE thread SET " + d_thread_pinned + " = " + pinned_default + " WHERE _id = ?", ttid);
+        }
+
+        // expires_in only possibly set in non-group threads
+        if (res && !isgroupconversation)
+          res &= d_database.exec("UPDATE thread SET expires_in = ? WHERE _id = ?",
+                                 {results_all_conversations.valueAsInt(i, "expireTimer", 0) * 1000, ttid});
+
+        // update expiration timer in recipient while we're at it
+        if (res)
+        {
+          res &= d_database.exec("UPDATE recipient SET message_expiration_time = ? WHERE _id = ?",
+                                 {results_all_conversations.valueAsInt(i, "expireTimer", 0), recipientid_for_thread}); // NOTE! time in seconds in this table
+
+          if (res && isgroupconversation)
+          {
+            // get existing group info
+            std::pair<std::shared_ptr<unsigned char []>, size_t> groupdata =
+              d_database.tableContainsColumn("groups", "decrypted_group") ?
+              d_database.getSingleResultAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>("SELECT decrypted_group FROM groups WHERE recipient_id = ?", recipientid_for_thread, {nullptr, 0}) :
+              std::make_pair(nullptr, 0);
+            if (groupdata.first && groupdata.second)
+            {
+              DecryptedGroup group_info(groupdata);
+              //group_info.print();
+
+              // get current timer if any
+              auto group_info_timer = group_info.getField<4>();
+              bool addtimer = true;
+              if (group_info_timer.has_value())
+              {
+                auto duration = group_info_timer.value().getField<1>();
+                // if we have value and it's the same, or no value is set, but no value needs to be set
+                if ((duration.has_value() && duration.value() == results_all_conversations.valueAsInt(i, "expireTimer", 0)) ||
+                    (!duration.has_value() && results_all_conversations.valueAsInt(i, "expireTimer", 0) == 0))
+                {
+                  addtimer = false;
+                }
+                else
+                  group_info.deleteFields(4);
+              }
+              else if (results_all_conversations.valueAsInt(i, "expireTimer", 0) == 0)
+              {
+                addtimer = false;
+              }
+
+              if (addtimer)
+              {
+                //group_info.print();
+                DecryptedTimer newdecryptedtimer;
+                newdecryptedtimer.addField<1>(results_all_conversations.valueAsInt(i, "expireTimer", 0));
+                group_info.addField<4>(newdecryptedtimer);
+                //group_info.print();
+                res &= d_database.exec("UPDATE groups SET decrypted_group = ? WHERE recipient_id = ?", {std::pair(group_info.data(), static_cast<unsigned long long>(group_info.size())), recipientid_for_thread});
+              }
+            }
+          }
         }
       }
       if (!res)

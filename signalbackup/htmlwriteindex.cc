@@ -76,7 +76,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "thread." + d_thread_recipient_id + ", "
                        "thread.snippet, "
                        "thread.snippet_type, "
-                       "expires_in, "
+                       "thread.expires_in AS thread_expires_in, " // for groups, this is not set even if there are disappearing message
+                       "recipient.message_expiration_time AS recipient_expires_in, " // thi soen should always be set I think, but it's in seconds as opposed to milliseconds
                        "IFNULL(thread.date, 0) AS date, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        "json_extract(thread.snippet_extras, '$.bodyRanges') AS 'snippet_ranges', "
@@ -97,7 +98,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     Logger::error("Failed to query database for thread snippets.");
     return false;
   }
-  //results.prettyPrint(true);
+  //results.prettyPrint(d_truncate);
 
   //maxtimestamp = 9999999999999;
   if (maxtimestamp != -1) [[unlikely]]
@@ -133,7 +134,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          "END AS snippet, "
                          */
                          + d_mms_table + "." + d_mms_type + " AS snippet_type, "
-                         "thread.expires_in, "
+                         "thread.expires_in AS thread_expires_in, " // for groups, this is not set even if there are disappearing message
+                         "recipient.message_expiration_time AS recipient_expires_in, " // this one should always be set I think, but it's in seconds as opposed to milliseconds
                          "IFNULL(" + d_mms_table + "." + d_mms_date_sent + ", 0) AS date, "
                          "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', "
                          + d_mms_ranges + " AS 'snippet_ranges', "
@@ -1081,9 +1083,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
 
     if (Types::isStatusMessage(snippet_type))
       snippet = "<i>(status message)</i>"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
-
-    if (excludeexpiring && results.valueAsInt(i, "expires_in", 0) > 0)
-      snippet.clear();// = "<i>(excluded expiring message)</i>";
+    else if (excludeexpiring && results.valueAsInt(i, "recipient_expires_in", 0) > 0)
+      snippet = "<i>(excluded expiring message)</i>";
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
