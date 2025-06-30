@@ -36,7 +36,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
-                              bool compact, bool pagemenu, bool aggressive_sanitizing,
+                              bool compact, bool pagemenu, bool aggressive_sanitizing, bool excludeexpiring,
                               std::vector<std::string> const &ignoremediatypes)
 {
   Logger::message("Starting HTML export to '", directory, "'");
@@ -191,6 +191,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--includeblockedlist";
     if (settings)
       options += "<br>--includesettings";
+    if (excludeexpiring)
+      options += "<br>--excludeexpiring";
     if (addexportdetails)
       options += "<br>--addexportdetails";
     if (searchpage)
@@ -336,6 +338,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     // get mention count for message:
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id "
                                     "WHERE thread_id = ?1",
+                                    (excludeexpiring ? " AND (expires_in == 0 OR (" + d_mms_type + " & 0x40000) != 0)" : ""),
                                     datewhereclause,
                                     (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " "),
                                     (d_database.tableContainsColumn(d_mms_table, "story_type") ? " AND story_type = 0 OR story_type IS NULL " : ""), // storytype NONE(0), STORY_WITH(OUT)_REPLIES(1/2), TEXT_...(3/4)
@@ -1066,13 +1069,14 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
                             calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
                             append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"),
-                            chatfolders_list, compact);
+                            chatfolders_list, excludeexpiring, compact);
       }
     }
   }
   HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_list, compact);
+                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_list,
+                 excludeexpiring, compact);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,

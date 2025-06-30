@@ -138,6 +138,8 @@ R"*(
    --htmlignoremediatypes [MIME_LIST]    Treat message attachments with mimetype in `MIME_LIST' as
                                          non-media attachment. Useful for types not commonly supported by
                                          browsers, such as `video/3gpp'.
+   --excludeexpiring                     Optional modifier for `--exporthtml'. Excludes all messages with
+                                         an active expiration timer from being exported.
    --allhtmlpages                        Optional modifier for `--exporthtml'. Convenience option that
                                          enables all the modifying options for `--exporthtml' listed below.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML

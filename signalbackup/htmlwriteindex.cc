@@ -28,7 +28,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
                                       std::string const &exportdetails, long long int chatfolder_idx,
                                       std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders,
-                                      bool compact) const
+                                      bool excludeexpiring, bool compact) const
 {
   std::string filename(sanitizeFilename(basename, d_aggressive_filename_sanitizing) + ".html");
 
@@ -1081,6 +1081,9 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
 
     if (Types::isStatusMessage(snippet_type))
       snippet = "<i>(status message)</i>"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
+
+    if (excludeexpiring && results.valueAsInt(i, "expires_in", 0) > 0)
+      snippet = "<i>(excluded expiring message)</i>";
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");

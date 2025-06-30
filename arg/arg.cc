@@ -92,34 +92,35 @@ Arg::Arg(int argc, char *argv[])
   d_exportcsv(std::vector<std::pair<std::string,std::string>>()),
   d_mergegroups(std::vector<std::string>()),
   d_mergerecipients(std::vector<std::string>()),
-  d_mapxmladdresses(std::vector<std::pair<std::string, std::string>>()),
   d_onlyinthreads(std::vector<long long int>()),
   d_setchatcolors(std::vector<std::pair<long long int, std::string>>()),
+  d_mapxmladdresses(std::vector<std::pair<std::string, std::string>>()),
   d_mapxmlcontactnames(std::vector<std::pair<std::string, std::string>>()),
   d_onlylargerthan(-1),
   d_desktopdbversion(4),
-  d_findrecipient(-1),
   d_split(1000),
+  d_findrecipient(-1),
   d_hiperfall(-1),
   d_removedoubles(0),
-  d_jsonprependforward(false),
+  d_fulldecode(false),
+  d_migrate_to_191(false),
+  d_skipmessagereorder(false),
+  d_append(false),
+  d_truncate(true),
   d_migratedb(false),
   d_importstickers(false),
   d_htmlpagemenu(true),
+  d_custom_hugogithubs(false),
+  d_xmlmarkread(false),
+  d_xmlautogroupnames(false),
+  d_compactfilenames(false),
   d_targetisdummy(false),
   d_linkify(true),
-  d_migrate_to_191(false),
+  d_aggressivefilenamesanitizing(false),
+  d_jsonprependforward(false),
   d_jsonmarkdelivered(true),
   d_jsonmarkread(false),
   d_xmlmarkdelivered(true),
-  d_xmlmarkread(false),
-  d_aggressivefilenamesanitizing(false),
-  d_compactfilenames(false),
-  d_xmlautogroupnames(false),
-  d_fulldecode(false),
-  d_custom_hugogithubs(false),
-  d_truncate(true),
-  d_skipmessagereorder(false),
   d_reordermmssmsids(false),
   d_importfromdesktop(false),
   d_scramble(false),
@@ -141,15 +142,15 @@ Arg::Arg(int argc, char *argv[])
   d_showdesktopkey(false),
   d_assumebadframesizeonbadmac(false),
   d_themeswitching(false),
-  d_light(false),
   d_importdesktopcontacts(false),
   d_addincompletedataforhtmlexport(false),
   d_originalfilenames(false),
+  d_excludeexpiring(false),
   d_chatfolders(false),
   d_includereceipts(false),
   d_stickerpacks(false),
   d_searchpage(false),
-  d_append(false),
+  d_light(false),
   d_includefullcontactlist(false),
   d_includesettings(false),
   d_includeblockedlist(false),
@@ -1150,24 +1151,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--mapxmladdresses")
-    {
-      if (i < argsize - 1)
-      {
-        std::string error;
-        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
-          ok = false;
-        }
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--onlyinthreads")
     {
       if (i < argsize - 1)
@@ -1191,6 +1174,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       {
         std::string error;
         if (!parsePairList(arguments[++i], "=", &d_setchatcolors, &error))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--mapxmladdresses")
+    {
+      if (i < argsize - 1)
+      {
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
@@ -1255,6 +1256,20 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "--split")
+    {
+      d_split_bool = true;
+      if (i < argsize - 1 && !isOption(arguments[i + 1]))
+      {
+        if (!ston(&d_split, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
+          ok = false;
+        }
+      }
+      d_split_by.clear();
+      continue;
+    }
     if (option == "--findrecipient")
     {
       if (i < argsize - 1)
@@ -1270,20 +1285,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
         ok = false;
       }
-      continue;
-    }
-    if (option == "--split")
-    {
-      d_split_bool = true;
-      if (i < argsize - 1 && !isOption(arguments[i + 1]))
-      {
-        if (!ston(&d_split, arguments[++i]))
-        {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. ]" << std::endl;
-          ok = false;
-        }
-      }
-      d_split_by.clear();
       continue;
     }
     if (option == "--hiperfall")
@@ -1317,14 +1318,56 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--jsonprependforward")
+    if (option == "--fulldecode")
     {
-      d_jsonprependforward = true;
+      d_fulldecode = true;
+      d_input_required = true;
       continue;
     }
-    if (option == "--no-jsonprependforward")
+    if (option == "--no-fulldecode")
     {
-      d_jsonprependforward = false;
+      d_fulldecode = false;
+      continue;
+    }
+    if (option == "--migrate_to_191")
+    {
+      d_migrate_to_191 = true;
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--no-migrate_to_191")
+    {
+      d_migrate_to_191 = false;
+      continue;
+    }
+    if (option == "--skipmessagereorder")
+    {
+      d_skipmessagereorder = true;
+      continue;
+    }
+    if (option == "--no-skipmessagereorder")
+    {
+      d_skipmessagereorder = false;
+      continue;
+    }
+    if (option == "--append")
+    {
+      d_append = true;
+      continue;
+    }
+    if (option == "--no-append")
+    {
+      d_append = false;
+      continue;
+    }
+    if (option == "--truncate")
+    {
+      d_truncate = true;
+      continue;
+    }
+    if (option == "--no-truncate")
+    {
+      d_truncate = false;
       continue;
     }
     if (option == "--migratedb")
@@ -1357,6 +1400,47 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_htmlpagemenu = false;
       continue;
     }
+    if (option == "--custom_hugogithubs" || option == "--migrate214to215")
+    {
+      d_custom_hugogithubs = true;
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--no-custom_hugogithubs")
+    {
+      d_custom_hugogithubs = false;
+      continue;
+    }
+    if (option == "--xmlmarkread")
+    {
+      d_xmlmarkread = true;
+      continue;
+    }
+    if (option == "--no-xmlmarkread")
+    {
+      d_xmlmarkread = false;
+      continue;
+    }
+    if (option == "--xmlautogroupnames")
+    {
+      d_xmlautogroupnames = true;
+      continue;
+    }
+    if (option == "--no-xmlautogroupnames")
+    {
+      d_xmlautogroupnames = false;
+      continue;
+    }
+    if (option == "--compactfilenames")
+    {
+      d_compactfilenames = true;
+      continue;
+    }
+    if (option == "--no-compactfilenames")
+    {
+      d_compactfilenames = false;
+      continue;
+    }
     if (option == "--targetisdummy")
     {
       d_targetisdummy = true;
@@ -1379,15 +1463,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_linkify = false;
       continue;
     }
-    if (option == "--migrate_to_191")
+    if (option == "--aggressivefilenamesanitizing")
     {
-      d_migrate_to_191 = true;
-      d_input_required = true;
+      d_aggressivefilenamesanitizing = true;
       continue;
     }
-    if (option == "--no-migrate_to_191")
+    if (option == "--no-aggressivefilenamesanitizing")
     {
-      d_migrate_to_191 = false;
+      d_aggressivefilenamesanitizing = false;
+      continue;
+    }
+    if (option == "--jsonprependforward")
+    {
+      d_jsonprependforward = true;
+      continue;
+    }
+    if (option == "--no-jsonprependforward")
+    {
+      d_jsonprependforward = false;
       continue;
     }
     if (option == "--jsonmarkdelivered")
@@ -1418,88 +1511,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-xmlmarkdelivered")
     {
       d_xmlmarkdelivered = false;
-      continue;
-    }
-    if (option == "--xmlmarkread")
-    {
-      d_xmlmarkread = true;
-      continue;
-    }
-    if (option == "--no-xmlmarkread")
-    {
-      d_xmlmarkread = false;
-      continue;
-    }
-    if (option == "--aggressivefilenamesanitizing")
-    {
-      d_aggressivefilenamesanitizing = true;
-      continue;
-    }
-    if (option == "--no-aggressivefilenamesanitizing")
-    {
-      d_aggressivefilenamesanitizing = false;
-      continue;
-    }
-    if (option == "--compactfilenames")
-    {
-      d_compactfilenames = true;
-      continue;
-    }
-    if (option == "--no-compactfilenames")
-    {
-      d_compactfilenames = false;
-      continue;
-    }
-    if (option == "--xmlautogroupnames")
-    {
-      d_xmlautogroupnames = true;
-      continue;
-    }
-    if (option == "--no-xmlautogroupnames")
-    {
-      d_xmlautogroupnames = false;
-      continue;
-    }
-    if (option == "--fulldecode")
-    {
-      d_fulldecode = true;
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--no-fulldecode")
-    {
-      d_fulldecode = false;
-      continue;
-    }
-    if (option == "--custom_hugogithubs" || option == "--migrate214to215")
-    {
-      d_custom_hugogithubs = true;
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--no-custom_hugogithubs")
-    {
-      d_custom_hugogithubs = false;
-      continue;
-    }
-    if (option == "--truncate")
-    {
-      d_truncate = true;
-      continue;
-    }
-    if (option == "--no-truncate")
-    {
-      d_truncate = false;
-      continue;
-    }
-    if (option == "--skipmessagereorder")
-    {
-      d_skipmessagereorder = true;
-      continue;
-    }
-    if (option == "--no-skipmessagereorder")
-    {
-      d_skipmessagereorder = false;
       continue;
     }
     if (option == "--reordermmssmsids")
@@ -1720,16 +1731,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_themeswitching = false;
       continue;
     }
-    if (option == "--light")
-    {
-      d_light = true;
-      continue;
-    }
-    if (option == "--no-light")
-    {
-      d_light = false;
-      continue;
-    }
     if (option == "--importdesktopcontacts")
     {
       d_importdesktopcontacts = true;
@@ -1758,6 +1759,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-originalfilenames")
     {
       d_originalfilenames = false;
+      continue;
+    }
+    if (option == "--excludeexpiring")
+    {
+      d_excludeexpiring = true;
+      continue;
+    }
+    if (option == "--no-excludeexpiring")
+    {
+      d_excludeexpiring = false;
       continue;
     }
     if (option == "--chatfolders")
@@ -1800,14 +1811,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_searchpage = false;
       continue;
     }
-    if (option == "--append")
+    if (option == "--light")
     {
-      d_append = true;
+      d_light = true;
       continue;
     }
-    if (option == "--no-append")
+    if (option == "--no-light")
     {
-      d_append = false;
+      d_light = false;
       continue;
     }
     if (option == "--includefullcontactlist")
