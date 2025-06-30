@@ -44,13 +44,12 @@ std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, st
     return name + " has changed their profile name.";
 
   StringChange profilenamechange = profchangefull.getField<1>().value();
-
-  if ((!profilenamechange.getField<1>().has_value() || profilenamechange.getField<1>().value() == "") ||
-      (!profilenamechange.getField<2>().has_value() || profilenamechange.getField<2>().value() == ""))
+  auto oldname_protobuf = profilenamechange.getField<1>();
+  if (!oldname_protobuf.has_value() || oldname_protobuf.value().empty())
+    return name + " has changed their profile name.";
+  auto newname_protobuf = profilenamechange.getField<2>();
+  if (!newname_protobuf.has_value() || newname_protobuf.value().empty())
     return name + " has changed their profile name.";
 
-  std::string oldname = profilenamechange.getField<1>().value();
-  std::string newname = profilenamechange.getField<2>().value();
-
-  return oldname + " changed their profile name to " + newname + "."; //decodeProfileChange(body);
+  return oldname_protobuf.value() + " changed their profile name to " + newname_protobuf.value() + ".";
 }

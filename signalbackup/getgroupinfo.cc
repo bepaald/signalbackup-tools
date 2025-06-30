@@ -53,7 +53,8 @@ message DecryptedGroup {
   //group_info.print();
 
   // get announcementgroup
-  if (group_info.getField<12>().has_value())
+  auto group_info_isannouncement_group = group_info.getField<12>();
+  if (group_info_isannouncement_group.has_value())
   {
     /*
       enum EnabledState {
@@ -62,7 +63,7 @@ message DecryptedGroup {
       DISABLED = 2;
       }
     */
-    long long int state = group_info.getField<12>().value();
+    long long int state = group_info_isannouncement_group.value();
 
     if (state == 2)
       groupinfo->isannouncementgroup = false;
@@ -74,17 +75,19 @@ message DecryptedGroup {
 
   // get timer value:
   //std::cout << "=== TIMER:" << std::endl;
-  if (group_info.getField<4>().has_value())
+  auto group_info_timer = group_info.getField<4>();
+  if (group_info_timer.has_value())
   {
     /*
       message DecryptedTimer {
       uint32 duration = 1;
       }
     */
-    DecryptedTimer timerdata(group_info.getField<4>().value());
+    auto timerdata = group_info_timer.value();
     long long int timer = -1;
-    if (timerdata.getField<1>().has_value())
-      timer = timerdata.getField<1>().value();
+    auto duration = timerdata.getField<1>();
+    if (duration.has_value())
+      timer = duration.value();
     //std::cout << "Timer: " << timer << std::endl;
     if (timer != -1)
       groupinfo->expiration_timer = timer;
@@ -94,7 +97,8 @@ message DecryptedGroup {
 
   // get access control:
   //std::cout << "=== ACCESS CONTROL:" << std::endl;
-  if (group_info.getField<5>().has_value())
+  auto group_info_accesscontrol = group_info.getField<5>();
+  if (group_info_accesscontrol.has_value())
   {
     /*
 message AccessControl {
@@ -130,22 +134,25 @@ message AccessControl {
       }
     };
 
-    AccessControl acdata(group_info.getField<5>().value());
+    auto acdata = group_info_accesscontrol.value();
 
     long long int attributes = 0;
-    if (acdata.getField<1>().has_value())
-      attributes = acdata.getField<1>().value();
+    auto accesscontrol_attributes = acdata.getField<1>();
+    if (accesscontrol_attributes.has_value())
+      attributes = accesscontrol_attributes.value();
     groupinfo->access_control_attributes = enumToString(attributes);
 
 
     long long int members = 0;
-    if (acdata.getField<2>().has_value())
-      members = acdata.getField<2>().value();
+    auto accesscontrol_members = acdata.getField<2>();
+    if (accesscontrol_members.has_value())
+      members = accesscontrol_members.value();
     groupinfo->access_control_members = enumToString(members);
 
     long long int addfrominvitelink = 0;
-    if (acdata.getField<3>().has_value())
-      addfrominvitelink = acdata.getField<3>().value();
+    auto accesscontrol_addfrominvitelink = acdata.getField<3>();
+    if (accesscontrol_addfrominvitelink.has_value())
+      addfrominvitelink = accesscontrol_addfrominvitelink.value();
     groupinfo->access_control_addfromlinkinvite = enumToString(addfrominvitelink);
 
     //std::cout << "Access control: " << attributes << " - " << members << " - " << addfrominvitelink << std::endl;
@@ -181,8 +188,9 @@ message AccessControl {
 
       // role
       long long int role = -1;
-      if (newmembers[i].getField<2>().has_value())
-        role = newmembers[i].getField<2>().value();
+      auto newmember_role = newmembers[i].getField<2>();
+      if (newmember_role.has_value())
+        role = newmember_role.value();
 
       //std::cout << uuidstr << " (" << role << ")" << std::endl;
 
@@ -301,9 +309,10 @@ message AccessControl {
 
   // get description
   //std::cout << "=== DESCRIPTION:" << std::endl;
-  if (group_info.getField<11>().has_value())
+  auto group_info_description = group_info.getField<11>();
+  if (group_info_description.has_value())
   {
-    std::string desc = (group_info.getField<11>().value());
+    std::string desc = (group_info_description.value());
     groupinfo->description = desc;
     //std::cout << desc << std::endl;
   }
@@ -311,9 +320,10 @@ message AccessControl {
 
   // get group invite password?
   //std::cout << "=== INVITE PW:" << std::endl;
-  if (group_info.getField<10>().has_value())
+  auto group_info_invitepw = group_info.getField<10>();
+  if (group_info_invitepw.has_value())
   {
-    auto [pw, pwsize] = group_info.getField<10>().value();
+    auto [pw, pwsize] = group_info_invitepw.value();
     //std::cout << bepaald::bytesToHexString(pw, pwsize) << std::endl;
     //std::cout << "(base64:) " << Base64::bytesToBase64String(pw, pwsize) << std::endl;
     if (pwsize)

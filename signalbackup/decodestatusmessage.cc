@@ -43,31 +43,28 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     GroupContext statusmsg(body);
 
     std::string members;
-    auto field4 = statusmsg.getField<4>();
-    if (field4.size())
+    auto const &field4 = statusmsg.getField<4>();
+    for (unsigned int k = 0; k < field4.size(); ++k)
     {
-      for (unsigned int k = 0; k < field4.size(); ++k)
-      {
-        // get name from members string
-        SqliteDB::QueryResults res;
-        if (d_database.containsTable("recipient")) [[likely]] // dbv >= 24
-          d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
-                          "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
-                          (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
-                          "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), " +
-                          "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), recipient._id) AS 'name'"
-                          " FROM recipient WHERE " + d_recipient_e164 + " = ?", field4[k], &res);
-        else
-          d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'name' FROM recipient_preferences WHERE recipient_preferences.recipient_ids = ?", field4[k], &res);
+      // get name from members string
+      SqliteDB::QueryResults res;
+      if (d_database.containsTable("recipient")) [[likely]] // dbv >= 24
+        d_database.exec("SELECT COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''),"s : ""s) +
+                        "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
+                        (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
+                        "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), " +
+                        "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), recipient._id) AS 'name'"
+                        " FROM recipient WHERE " + d_recipient_e164 + " = ?", field4[k], &res);
+      else
+        d_database.exec("SELECT COALESCE(recipient_preferences.system_display_name, recipient_preferences.signal_profile_name) AS 'name' FROM recipient_preferences WHERE recipient_preferences.recipient_ids = ?", field4[k], &res);
 
-        std::string name = field4[k];
-        if (res.rows() == 1 && res.columns() == 1 && res.valueHasType<std::string>(0, "name"))
-          name = res.getValueAs<std::string>(0, "name");
+      std::string name = field4[k];
+      if (res.rows() == 1 && res.columns() == 1 && res.valueHasType<std::string>(0, "name"))
+        name = res.getValueAs<std::string>(0, "name");
 
-        members += name;
-        if (k < field4.size() - 1)
-          members += ", ";
-      }
+      members += name;
+      if (k < field4.size() - 1)
+        members += ", ";
     }
     if (!members.empty())
       result += "\n" + members + " joined the group.";
@@ -195,36 +192,46 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     //groupv2ctx.print();
     std::string statusmsg;
 
-    if (groupv2ctx.getField<2>().has_value())
+    auto context_groupchange = groupv2ctx.getField<2>();
+    if (context_groupchange.has_value())
     {
-      DecryptedGroupChange groupchange = groupv2ctx.getField<2>().value();
+      DecryptedGroupChange groupchange = context_groupchange.value();
       //std::cout << bepaald::bytesToHexString(groupchange.data(), groupchange.size()) << std::endl;
       //groupchange.print();
 
       // invite link changed:
-      if (groupchange.getField<15>().has_value())
+      auto groupchange_invitelink_changed = groupchange.getField<15>();
+      if (groupchange_invitelink_changed.has_value())
       {
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEGAPHONE;
 
         // new value: 0 unknown, 1 any, 2 member, 3 admin, 4 unsatisfiable
-        int accesscontrol = groupchange.getField<15>().value();
+        int accesscontrol = groupchange_invitelink_changed.value();
 
         // get editor
         std::string editoruuid;
-        if (groupchange.getField<1>().has_value())
+        auto groupchange_editor = groupchange.getField<1>();
+        if (groupchange_editor.has_value())
         {
-          auto [uuid, uuid_size] = groupchange.getField<1>().value();
+          auto [uuid, uuid_size] = groupchange_editor.value();
           editoruuid = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
           editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
 
         // previous accesscontrol: 0 unknown, 1 any, 2 member, 3 admin, 4 unsatisfiable
         int old_accesscontrol = 0;
-        if (groupv2ctx.getField<4>().has_value() &&
-            groupv2ctx.getField<4>().value().getField<5>().has_value() &&
-            groupv2ctx.getField<4>().value().getField<5>().value().getField<3>().has_value())
-          old_accesscontrol = groupv2ctx.getField<4>().value().getField<5>().value().getField<3>().value();
+        auto context_field4 = groupv2ctx.getField<4>();
+        if (context_field4.has_value())
+        {
+          auto context_field4_5 = context_field4.value().getField<5>();
+          if (context_field4_5.has_value())
+          {
+            auto context_field4_5_3 = context_field4_5.value().getField<3>();
+            if (context_field4_5_3.has_value())
+              old_accesscontrol = context_field4_5_3.value();
+          }
+        }
 
         if (editoruuid == d_selfuuid)
         {
@@ -286,7 +293,6 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           }
           // if (accesscontrol...
         }
-
       }
 
 
@@ -306,21 +312,24 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       //   else
       //     "Bob added invited member Alice." (or if editor is unknown: "Alice joined the group.");
 
-      if (groupchange.getField<1>().has_value() &&
-          groupchange.getField<9>().size())
+      auto groupchange_editor = groupchange.getField<1>();
+      auto const &groupchange_promotedmembers = groupchange.getField<9>();
+      if (groupchange_editor.has_value() &&
+          groupchange_promotedmembers.size())
       {
         // editor
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
         std::vector<std::string> promotedmemberuuids;
-        for (unsigned int i = 0; i < groupchange.getField<9>().size(); ++i)
+        for (unsigned int i = 0; i < groupchange_promotedmembers.size(); ++i)
         {
-          DecryptedMember dm = groupchange.getField<9>()[i];
-          if (dm.getField<1>().has_value())
+          DecryptedMember dm = groupchange_promotedmembers[i];
+          auto promotedmember_uuid = dm.getField<1>();
+          if (promotedmember_uuid.has_value())
           {
-            auto [tmpuuid, tmpuuid_size] = dm.getField<1>().value();
+            auto [tmpuuid, tmpuuid_size] = promotedmember_uuid.value();
             std::string pmus = bepaald::toLower(bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true));
             pmus.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
             promotedmemberuuids.emplace_back(std::move(pmus));
@@ -402,37 +411,45 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // if this is revision 0, and no previous state is given, and new title is -> creataed new group
-      if (!groupv2ctx.getField<4>().has_value() && // no previous state
-          (groupv2ctx.getField<1>().has_value() &&
-           groupv2ctx.getField<1>().value().getField<2>().has_value() && groupv2ctx.getField<1>().value().getField<2>().value() == 0))
+      if (!groupv2ctx.getField<4>().has_value()) // no previous state
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
-        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-
-        if (Types::isOutgoing(type))
+        auto groupctx = groupv2ctx.getField<1>();
+        if (groupctx.has_value() &&
+            groupctx.value().getField<2>().value_or(-1) == 0) // revision == 0
         {
+          auto [uuid, uuid_size] = groupchange_editor.value();
+          std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+          uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+          if (Types::isOutgoing(type))
+          {
+            if (icon && *icon == IconType::NONE)
+              *icon = IconType::MEMBERS;
+            return "You created the group.";
+          }
+          //else
           if (icon && *icon == IconType::NONE)
-            *icon = IconType::MEMBERS;
-          return "You created the group.";
+            *icon = IconType::MEMBER_ADD;
+          return contactname + " added you to the group.";
         }
-        //else
-        if (icon && *icon == IconType::NONE)
-          *icon = IconType::MEMBER_ADD;
-        return contactname + " added you to the group.";
       }
 
       // check group title changed
-      if (groupchange.getField<10>().has_value() &&
-          groupchange.getField<10>().value().getField<1>().has_value())
+      auto groupchange_decryptedtitle = groupchange.getField<10>();
+      if (groupchange_decryptedtitle.has_value())
       {
-        statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " changed the group name to \"" + groupchange.getField<10>().value().getField<1>().value() + "\".";
-        if (icon)
-          *icon = IconType::PENCIL;
+        auto groupchange_newtitle = groupchange_decryptedtitle.value().getField<1>();
+        if (groupchange_newtitle.has_value())
+        {
+          statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " changed the group name to \"" + groupchange_newtitle.value() + "\".";
+          if (icon)
+            *icon = IconType::PENCIL;
+        }
       }
 
       // check group description changed
-      if (groupchange.getField<20>().has_value()/* && groupchange.getField<20>().value().getField<1>().has_value()*/)
+      auto groupchange_descriptionchange = groupchange.getField<20>();
+      if (groupchange_descriptionchange.has_value()/* && groupchange.getField<20>().value().getField<1>().has_value()*/)
       {
         statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " changed the group description.";
         if (icon)
@@ -440,7 +457,8 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // check group avatar changed
-      if (groupchange.getField<11>().has_value()/* && groupchange.getField<11>().value().getField<1>().has_value()*/)
+      auto groupchange_avatarchange = groupchange.getField<11>();
+      if (groupchange_avatarchange.has_value()/* && groupchange.getField<11>().value().getField<1>().has_value()*/)
       {
         statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " changed the group avatar.";
         if (icon && *icon == IconType::NONE)
@@ -448,9 +466,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // check group timer changed : THIS TIMER IS IN SECONDS (message.expires_in, for non-group messages is in milliseconds)
-      if (groupchange.getField<12>().has_value()/* && groupchange.getField<12>().value().getField<1>().has_value()*/)
+      auto groupchange_timerchange = groupchange.getField<12>();
+      if (groupchange_timerchange.has_value()/* && groupchange.getField<12>().value().getField<1>().has_value()*/)
       {
-        uint32_t newexp = groupchange.getField<12>().value().getField<1>().value_or(0);
+        uint32_t newexp = groupchange_timerchange.value().getField<1>().value_or(0);
         std::string time;
         if (newexp == 0)
           time = "Off";
@@ -470,24 +489,23 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // check new member:
-      if (groupchange.getField<3>().size())
+      auto const &newmembers = groupchange.getField<3>();
+      if (newmembers.size())
       {
         // get editor of this group change
         std::string editoruuid;
-        if (groupchange.getField<1>().has_value())
+        if (groupchange_editor.has_value())
         {
-          auto [uuid, uuid_size] = groupchange.getField<1>().value();
+          auto [uuid, uuid_size] = groupchange_editor.value();
           editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
           editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
 
-        auto newmembers = groupchange.getField<3>();
         for (unsigned int i = 0; i < newmembers.size(); ++i)
         {
           auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
           std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
           uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-
 
           if (uuidstr == editoruuid) // you can't add yourself to the group, if this happens
           {                          // you joined via invite link (without approval)
@@ -505,7 +523,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // check members left:
-      auto deletedmembers = groupchange.getField<4>();
+      auto const &deletedmembers = groupchange.getField<4>();
       for (unsigned int i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
       {
         auto [uuid, uuid_size] = deletedmembers[i]; // bytes
@@ -517,15 +535,16 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // check memberrole change
-      auto memberrolechanges = groupchange.getField<5>();
+      auto const &memberrolechanges = groupchange.getField<5>();
       for (unsigned int i = 0; i < memberrolechanges.size(); ++i) // I dont know how this can be more than size() == 1
       {
         DecryptedModifyMemberRole const &mr = memberrolechanges[i];
 
         std::string uuidstr;
-        if (mr.getField<1>().has_value())
+        auto memberrole_uuid = mr.getField<1>();
+        if (memberrole_uuid.has_value())
         {
-          auto [uuid, uuid_size] = mr.getField<1>().value();
+          auto [uuid, uuid_size] = memberrole_uuid.value();
           uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
           uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
@@ -557,9 +576,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       // }
 
       // field 19 == newInviteLinkPassword
-      if (groupchange.getField<19>().has_value() && groupchange.getField<1>().has_value())
+      auto groupchange_newinvitelinkpw = groupchange.getField<19>();
+      if (groupchange_newinvitelinkpw.has_value() && groupchange_editor.has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
@@ -567,23 +587,25 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           *icon = IconType::MEGAPHONE;
 
         // field 15 == newInviteLinkAccess (== always 1 (== admin approval off) on creation?)
-        if (!groupchange.getField<15>().has_value())
+        auto groupchange_newinvitelinkpw_accesscontrol = groupchange.getField<15>();
+        if (!groupchange_newinvitelinkpw_accesscontrol.has_value())
           statusmsg +=  (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " reset the group link.";
         else
         {
-          int accesscontrol = groupchange.getField<15>().value();
+          int accesscontrol = groupchange_newinvitelinkpw_accesscontrol.value();
           statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " turned on the group link with admin approval " +
             (accesscontrol == 3 ? "on." : "off."); // never 3/on at creation
         }
       }
 
       // Field 21 'newIsAnnouncementGroup'
-      if (groupchange.getField<21>().has_value())
+      auto groupchange_newannouncementgroup = groupchange.getField<21>();
+      if (groupchange_newannouncementgroup.has_value())
       {
         std::string uuidstr;
-        if (groupchange.getField<1>().has_value())
+        if (groupchange_editor.has_value())
         {
-          auto [uuid, uuid_size] = groupchange.getField<1>().value();
+          auto [uuid, uuid_size] = groupchange_editor.value();
           uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
           uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
@@ -597,7 +619,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           DISABLED = 2;
           }
         */
-        int enabledstate = groupchange.getField<21>().value();
+        int enabledstate = groupchange_newannouncementgroup.value();
         if (enabledstate == 2)
         {
           if (uuidstr.empty())
@@ -615,9 +637,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // Field 13 'newAttributeAccess' : who can edit group info
-      if (groupchange.getField<13>().has_value() && groupchange.getField<1>().has_value())
+      auto groupchange_newattribute_access = groupchange.getField<13>();
+      if (groupchange_newattribute_access.has_value() && groupchange_editor.has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
@@ -630,15 +653,16 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           ADMINISTRATOR = 3;
           UNSATISFIABLE = 4;
         */
-        int accesscontrol = groupchange.getField<13>().value();
+        int accesscontrol = groupchange_newattribute_access.value();
         statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " changed who can edit group info to \"" +
           (accesscontrol == 3 ? "Only admins" : "All members") + "\".";
       }
 
       // Field 14 'newmemberaccess' : who can edit group membership
-      if (groupchange.getField<14>().has_value() && groupchange.getField<1>().has_value())
+      auto groupchange_newmember_access = groupchange.getField<14>();
+      if (groupchange.getField<14>().has_value() && groupchange_editor.has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
@@ -651,15 +675,16 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           ADMINISTRATOR = 3;
           UNSATISFIABLE = 4;
         */
-        int accesscontrol = groupchange.getField<14>().value();
+        int accesscontrol = groupchange_newmember_access.value();
         statusmsg += (Types::isOutgoing(type) ? "You" : getNameFromUuid(uuidstr)) + " changed who can edit group membership to \"" +
           (accesscontrol == 3 ? "Only admins" : "All members") + "\".";
       }
 
       // Field 16 'requesting member' : want to join
-      if (groupchange.getField<16>().size() && groupchange.getField<1>().has_value())
+      auto const &groupchange_requestingmembers = groupchange.getField<16>();
+      if (groupchange_requestingmembers.size() && groupchange_editor.has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
@@ -669,9 +694,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         // if field 17 'deletereqestingmembers' is also present (and same uuid as reqesting member?)
         // the memebrs has cancelled their request.
         std::string cancelleduuidstr;
-        if (groupchange.getField<17>().size())
+        auto groupchange_deletereqestingmembers = groupchange.getField<17>();
+        if (groupchange_deletereqestingmembers.size())
         {
-          auto [cancelleduuid, cancelleduuid_size] = groupchange.getField<17>()[0];
+          auto [cancelleduuid, cancelleduuid_size] = groupchange_deletereqestingmembers[0];
           cancelleduuidstr = bepaald::bytesToHexString(cancelleduuid, cancelleduuid_size, true);
           cancelleduuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
@@ -691,21 +717,21 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // Field 18 'approved member' : added after request
-      if (groupchange.getField<18>().size() && groupchange.getField<1>().has_value())
+      auto const &groupchange_approvedmembers = groupchange.getField<18>();
+      if (groupchange_approvedmembers.size() && groupchange_editor.has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBER_APPROVED;
 
-        auto const &approved_members = groupchange.getField<18>();
-        for (unsigned int i = 0; i < approved_members.size(); ++i)
+        for (unsigned int i = 0; i < groupchange_approvedmembers.size(); ++i)
         {
-          if (!approved_members[i].getField<1>().has_value())
+          if (!groupchange_approvedmembers[i].getField<1>().has_value())
             continue;
-          auto [uuid2, uuid_size2] = approved_members[i].getField<1>().value();
+          auto [uuid2, uuid_size2] = groupchange_approvedmembers[i].getField<1>().value();
           std::string uuidstr2 = bepaald::bytesToHexString(uuid2, uuid_size2, true);
           uuidstr2.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
           std::string newmem = getNameFromUuid(uuidstr2);
@@ -716,20 +742,22 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // field 22 'new banned member' , when combined with 17 ('delete reqeusting members) : request denied
-      if (groupchange.getField<22>().size() && groupchange.getField<1>().has_value())
+      auto const &groupchange_bannedmembers = groupchange.getField<22>();
+      if (groupchange_bannedmembers.size() && groupchange_editor.has_value())
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBER_REJECTED;
 
-        DecryptedBannedMember decryptedbannedmember = groupchange.getField<22>()[0];
+        DecryptedBannedMember decryptedbannedmember = groupchange_bannedmembers[0];
         std::string banneduuidstr;
-        if (decryptedbannedmember.getField<1>().has_value())
+        auto decryptedbannedmember_uuid = decryptedbannedmember.getField<1>();
+        if (decryptedbannedmember_uuid.has_value())
         {
-          auto [banneduuid, banneduuid_size] = decryptedbannedmember.getField<1>().value();
+          auto [banneduuid, banneduuid_size] = decryptedbannedmember_uuid.value();
           banneduuidstr = bepaald::bytesToHexString(banneduuid, banneduuid_size, true);
           banneduuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
@@ -737,9 +765,10 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         // if field 17 'deletereqestingmembers' is also present (and same uuid as reqesting member?)
         // the members request was denied
         std::string cancelleduuidstr;
-        if (groupchange.getField<17>().size())
+        auto const &deniedmembers = groupchange.getField<17>();
+        if (deniedmembers.size())
         {
-          auto [cancelleduuid, cancelleduuid_size] = groupchange.getField<17>()[0];
+          auto [cancelleduuid, cancelleduuid_size] = deniedmembers[0];
           cancelleduuidstr = bepaald::bytesToHexString(cancelleduuid, cancelleduuid_size, true);
           cancelleduuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
@@ -755,32 +784,32 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
 
       // if groupchange has editor, but nothing else : editor added you to the group:
-      if (groupchange.getField<1>().has_value() &&
-          !(groupchange.getField<2>().has_value() ||
-            groupchange.getField<3>().size() ||
-            groupchange.getField<4>().size() ||
-            groupchange.getField<5>().size() ||
-            groupchange.getField<6>().size() ||
-            groupchange.getField<7>().size() ||
-            groupchange.getField<8>().size() ||
-            groupchange.getField<9>().size() ||
-            groupchange.getField<10>().has_value() ||
-            groupchange.getField<11>().has_value() ||
-            groupchange.getField<12>().has_value() ||
-            groupchange.getField<13>().has_value() ||
-            groupchange.getField<14>().has_value() ||
-            groupchange.getField<15>().has_value() ||
-            groupchange.getField<16>().size() ||
-            groupchange.getField<17>().size() ||
-            groupchange.getField<18>().size() ||
-            groupchange.getField<19>().has_value() ||
-            groupchange.getField<20>().has_value() ||
-            groupchange.getField<21>().has_value() ||
-            groupchange.getField<22>().size() ||
-            groupchange.getField<23>().size() ||
-            groupchange.getField<24>().size()))
+      if (groupchange_editor.has_value() &&
+          !(groupchange.getField<2>().has_value() ||        // 2
+            newmembers.size() ||                            // 3
+            deletedmembers.size() ||                        // 4
+            memberrolechanges.size() ||                     // 5
+            groupchange.getField<6>().size() ||             // 6
+            groupchange.getField<7>().size() ||             // 7
+            groupchange.getField<8>().size() ||             // 8
+            groupchange_promotedmembers.size() ||           // 9
+            groupchange_decryptedtitle.has_value() ||       // 10
+            groupchange_avatarchange.has_value() ||         // 11
+            groupchange_timerchange.has_value() ||          // 12
+            groupchange_newattribute_access.has_value() ||  // 13
+            groupchange_newmember_access.has_value() ||     // 14
+            groupchange_invitelink_changed.has_value() ||   // 15
+            groupchange_requestingmembers.size() ||         // 16
+            groupchange.getField<17>().size() ||            // 17
+            groupchange_approvedmembers.size() ||           // 18
+            groupchange_newinvitelinkpw.has_value() ||      // 19
+            groupchange_descriptionchange.has_value() ||    // 20
+            groupchange_newannouncementgroup.has_value() || // 21
+            groupchange_bannedmembers.size() ||             // 22
+            groupchange.getField<23>().size() ||            // 23
+            groupchange.getField<24>().size()))             // 24
       {
-        auto [uuid, uuid_size] = groupchange.getField<1>().value();
+        auto [uuid, uuid_size] = groupchange_editor.value();
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
@@ -790,71 +819,73 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       }
     }
 
-
     // maybe someone was invited, check for pending memebers...
-    if (groupv2ctx.getField<3>().has_value() &&
-        groupv2ctx.getField<3>().value().getField<8>().size())
+    auto currentdecryptedgroup = groupv2ctx.getField<3>();
+    if (currentdecryptedgroup.has_value())
     {
-      std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
-
-      for (unsigned int i = 0; i < groupv2ctx.getField<3>().value().getField<8>().size(); ++i)
+      auto const &pendingmembers = currentdecryptedgroup.value().getField<8>();
+      if (pendingmembers.size())
       {
-        DecryptedPendingMember pm(groupv2ctx.getField<3>().value().getField<8>()[i]);
-        //pm.print();
-        if (pm.getField<1>().has_value())
+        std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
+
+        for (unsigned int i = 0; i < pendingmembers.size(); ++i)
         {
-          auto [inv_uuid, inv_uuid_size] = pm.getField<1>().value();
-          std::string invited_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true));
-          invited_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-          std::string invited_by_uuidstr;
-          if (pm.getField<3>().has_value())
+          DecryptedPendingMember pm(pendingmembers[i]);
+          //pm.print();
+          auto pm_uuid = pm.getField<1>();
+          if (pm_uuid.has_value())
           {
-            auto [inv_by_uuid, inv_by_uuid_size] = pm.getField<3>().value();
-            invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
-            invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+            auto [inv_uuid, inv_uuid_size] = pm_uuid.value();
+            std::string invited_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true));
+            invited_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+            std::string invited_by_uuidstr;
+            auto invitedby_uuid = pm.getField<3>();
+            if (invitedby_uuid.has_value())
+            {
+              auto [inv_by_uuid, inv_by_uuid_size] = invitedby_uuid.value();
+              invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
+              invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+            }
+            invitedmembers.emplace_back(std::move(invited_uuidstr), std::move(invited_by_uuidstr));
           }
-          invitedmembers.emplace_back(std::move(invited_uuidstr), std::move(invited_by_uuidstr));
+        }
+
+        if (icon && *icon == IconType::NONE)
+          *icon = IconType::MEMBER_ADD;
+
+        if (invitedmembers.size() > 1) // multiple members were invited
+        {
+          // not done yet
+        }
+        else // one member was invited
+        {
+          if (invitedmembers[0].second == d_selfuuid) // invited by you
+          {
+            std::string invitedname = getNameFromUuid(invitedmembers[0].first);
+            if (!invitedname.empty())
+              return "You invited " + invitedname + " to the group.";
+            else
+              return "You invited 1 person to the group.";
+          }
+          else if (invitedmembers[0].first == d_selfuuid) // you were the one invited
+          {
+            std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
+            if (!invitedbyname.empty())
+              return invitedbyname + " invited you to the group.";
+            else
+              return "You were invited to the group.";
+          }
+          else // someone was invited by someone (but neither were you)
+          {
+            std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
+            if (!invitedbyname.empty())
+              return invitedbyname + " invited 1 person to the group.";
+            else
+              return "1 person was invited to the group.";
+          }
         }
       }
-
-      if (icon && *icon == IconType::NONE)
-        *icon = IconType::MEMBER_ADD;
-
-      if (invitedmembers.size() > 1) // multiple members were invited
-      {
-        // not done yet
-      }
-      else // one member was invited
-      {
-        if (invitedmembers[0].second == d_selfuuid) // invited by you
-        {
-          std::string invitedname = getNameFromUuid(invitedmembers[0].first);
-          if (!invitedname.empty())
-            return "You invited " + invitedname + " to the group.";
-          else
-            return "You invited 1 person to the group.";
-        }
-        else if (invitedmembers[0].first == d_selfuuid) // you were the one invited
-        {
-          std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
-          if (!invitedbyname.empty())
-            return invitedbyname + " invited you to the group.";
-          else
-            return "You were invited to the group.";
-        }
-        else // someone was invited by someone (but neither were you)
-        {
-          std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
-          if (!invitedbyname.empty())
-            return invitedbyname + " invited 1 person to the group.";
-          else
-            return "1 person was invited to the group.";
-        }
-      }
-
     }
-
-
 
     if (statusmsg.empty())
     {

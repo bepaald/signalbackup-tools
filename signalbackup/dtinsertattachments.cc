@@ -288,7 +288,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
 
   for (unsigned int i = 0; i < attachment_results.rows(); ++i)
   {
-    std::string_view attachment_type = attachment_results(i, "attachmentType");
+    std::string attachment_type = attachment_results(i, "attachmentType");
 
     // currently 'long-messages' have an entry in message_attachments, including a path.
     // however the path does not exist, and the full msg body is still simply in

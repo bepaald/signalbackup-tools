@@ -63,79 +63,85 @@ std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::
     protobuffer::optional::FLOAT> color_proto(colordata);
 
   std::pair<std::string, std::string> custom_colors;
-  if (color_proto.getField<1>().has_value() &&
-      color_proto.getField<1>().value().getField<1>().has_value())
+
+  auto color_proto_singlecolor = color_proto.getField<1>();
+  if (color_proto_singlecolor.has_value())
   {
-    uint32_t c = color_proto.getField<1>().value().getField<1>().value();
-    //std::cout << "Color value: " << c << std::endl;
-
-    //uint8_t a = (c >> (3 * 8)) & 0xFF);
-    uint8_t r = (c >> (2 * 8)) & 0xFF;
-    uint8_t g = (c >> (1 * 8)) & 0xFF;
-    uint8_t b = (c >> (0 * 8)) & 0xFF;
-
-    std::ostringstream ss;
-    ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(r)
-       << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(g)
-       << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
-    custom_colors.first = ss.str();
-    //std::cout << custom_colors.first << std::endl;
-
-    if (color_proto.getField<4>().has_value())
+    auto color_proto_color = color_proto_singlecolor.value().getField<1>();
+    if (color_proto_color.has_value())
     {
-      double dimfactor = 1 - color_proto.getField<4>().value();
+      uint32_t c = color_proto_color.value();
+      //std::cout << "Color value: " << c << std::endl;
 
-      // to HSV
-      double maxrgb = std::max(r, std::max(g, b));
-      double minrgb = std::min(r, std::min(g, b));
+      //uint8_t a = (c >> (3 * 8)) & 0xFF);
+      uint8_t r = (c >> (2 * 8)) & 0xFF;
+      uint8_t g = (c >> (1 * 8)) & 0xFF;
+      uint8_t b = (c >> (0 * 8)) & 0xFF;
 
-      double v = maxrgb / 255;
-      double s = (maxrgb > 0) ? 1 - minrgb / maxrgb : 0;
+      std::ostringstream ss;
+      ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(r)
+         << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(g)
+         << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(b);
+      custom_colors.first = ss.str();
+      //std::cout << custom_colors.first << std::endl;
+
+      auto color_proto_dimlevel = color_proto.getField<4>();
+      if (color_proto_dimlevel.has_value())
+      {
+        double dimfactor = 1 - color_proto_dimlevel.value();
+
+        // to HSV
+        double maxrgb = std::max(r, std::max(g, b));
+        double minrgb = std::min(r, std::min(g, b));
+
+        double v = maxrgb / 255;
+        double s = (maxrgb > 0) ? 1 - minrgb / maxrgb : 0;
 
 #if __cpp_lib_math_constants >= 201907L
-      double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / std::numbers::pi;
+        double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / std::numbers::pi;
 #else
-      double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / 3.14159265;
+        double h = std::acos((r - 0.5 * g - 0.5 * b) / std::sqrt(r * r + g * g + b * b - r * g - r * b - g * b)) * 180 / 3.14159265;
 #endif
-      if (b > g)
-        h = 360 - h;
+        if (b > g)
+          h = 360 - h;
 
-      // apply dimming
-      v *= dimfactor;
+        // apply dimming
+        v *= dimfactor;
 
-      // back to rgb:
-      maxrgb = 255 * v;
-      minrgb = maxrgb * (1 - s);
+        // back to rgb:
+        maxrgb = 255 * v;
+        minrgb = maxrgb * (1 - s);
 
-      double z = (maxrgb - minrgb) * (1 - std::abs(std::fmod((h / 60), 2) - 1));
+        double z = (maxrgb - minrgb) * (1 - std::abs(std::fmod((h / 60), 2) - 1));
 
-      std::ostringstream ss2;
-      if (h < 60)
-        ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // r
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // g
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb); // b
-      else if (h < 120)
-        ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // r
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // g
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb); // b
-      else if (h < 180)
-        ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // r
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // g
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb); // b
-      else if (h < 240)
-        ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // r
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // g
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb); // b
-      else if (h < 300)
-        ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // r
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // g
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb); // b
-      else //if (h < 360)
-        ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // r
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // g
-            << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb); // b
-      custom_colors.second = ss2.str();
-      //std::cout << custom_colors.second << std::endl;
+        std::ostringstream ss2;
+        if (h < 60)
+          ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // r
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // g
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb); // b
+        else if (h < 120)
+          ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // r
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // g
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb); // b
+        else if (h < 180)
+          ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // r
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // g
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb); // b
+        else if (h < 240)
+          ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // r
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // g
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb); // b
+        else if (h < 300)
+          ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb) // r
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // g
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb); // b
+        else //if (h < 360)
+          ss2 << std::hex << std::setfill('0') << std::setw(2) << std::lround(maxrgb) // r
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(minrgb) // g
+              << std::hex << std::setfill('0') << std::setw(2) << std::lround(z + minrgb); // b
+        custom_colors.second = ss2.str();
+        //std::cout << custom_colors.second << std::endl;
+      }
     }
   }
   return custom_colors;
