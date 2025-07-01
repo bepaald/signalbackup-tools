@@ -65,12 +65,10 @@ ThreadTable::
                                         "(SELECT (SELECT count(*) FROM sms WHERE thread_id = ", threadid,
                                         ") + (SELECT count(*) FROM ", d_mms_table, " WHERE thread_id = ", threadid, ")) WHERE _id = ", threadid));
 
-        d_database.exec(bepaald::concat("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = ",
-                                        threadid, " UNION SELECT ", d_mms_table, ".", d_mms_date_sent, " AS union_date, ", d_mms_table, ".", d_mms_type, " AS union_type, ",
+        d_database.exec(bepaald::concat("SELECT sms.date_sent AS union_date, sms.type AS union_type, sms.body AS union_body, sms._id AS [sms._id], '' AS [mms._id] FROM 'sms' WHERE sms.thread_id = ?"
+                                        " UNION SELECT ", d_mms_table, ".", d_mms_date_sent, " AS union_date, ", d_mms_table, ".", d_mms_type, " AS union_type, ",
                                         d_mms_table, ".body AS union_body, '' AS [sms._id], ", d_mms_table, "._id AS [mms._id] FROM ", d_mms_table,
-                                        " WHERE ", d_mms_table, ".thread_id = ", threadid,
-                                        " AND (union_type & ?) = 0"
-                                        " AND (union_type & ?) = 0"
+                                        " WHERE ", d_mms_table, ".thread_id = ?",
                                         " AND (union_type & ?) != ?"
                                         " AND (union_type & ?) != ?"
                                         " AND (union_type & ?) IS NOT ?"
@@ -80,8 +78,7 @@ ThreadTable::
                                         " AND (union_type & ?) IS NOT ?"
                                         " AND (union_type & ?) IS NOT ?"
                                         " ORDER BY union_date DESC LIMIT 1"),
-                        {Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
-                         Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT,
+                        {threadid, threadid,
                          Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_REPORTED_SPAM,
                          Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,
                          Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
@@ -106,7 +103,7 @@ ThreadTable::
 
         d_database.exec(bepaald::concat("SELECT ", d_mms_table, ".", d_mms_date_sent, " AS union_date, ", d_mms_table, ".", d_mms_type, " AS union_type, ",
                                         d_mms_table, ".body AS union_body, '' AS [sms._id], ", d_mms_table, "._id AS [mms._id] FROM ", d_mms_table,
-                                        " WHERE ", d_mms_table, ".thread_id = ", threadid,
+                                        " WHERE ", d_mms_table, ".thread_id = ?",
                                         " AND (union_type & ?) = 0"
                                         " AND (union_type & ?) = 0"
                                         " AND (union_type & ?) != ?"
@@ -118,7 +115,8 @@ ThreadTable::
                                         " AND (union_type & ?) IS NOT ?"
                                         " AND (union_type & ?) IS NOT ?"
                                         " ORDER BY union_date DESC LIMIT 1"),
-                        {Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
+                        {threadid,
+                         Types::KEY_EXCHANGE_IDENTITY_DEFAULT_BIT,
                          Types::KEY_EXCHANGE_IDENTITY_VERIFIED_BIT,
                          Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_REPORTED_SPAM,
                          Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,

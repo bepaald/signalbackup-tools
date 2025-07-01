@@ -31,7 +31,6 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   // std::cout << Types::isGroupUpdate(type) << std::endl;
   // std::cout << Types::isGroupV2(type) << std::endl;
 
-
   // old style group updates (v1)
   if (Types::isGroupUpdate(type) && !Types::isGroupV2(type))
   {
@@ -135,15 +134,23 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
     return contactname + " set the disappearing message timer to " + time;
   }
   if (Types::isIdentityUpdate(type))
+  {
+    if (contactname.empty())
+      return "Safety number changed";
     return "Your safety number with " + contactname + " has changed.";
+  }
   if (Types::isIdentityVerified(type))
   {
+    if (contactname.empty())
+      return "Safety number changed";
     if (Types::isOutgoing(type))
       return "You marked your safety number with " + contactname + " verified";
     return "You marked your safety number with " + contactname + " verified from another device";
   }
   if (Types::isIdentityDefault(type))
   {
+    if (contactname.empty())
+      return "Safety number changed";
     if (Types::isOutgoing(type))
       return "You marked your safety number with " + contactname + " unverified";
     return "You marked your safety number with " + contactname + " unverified from another device";

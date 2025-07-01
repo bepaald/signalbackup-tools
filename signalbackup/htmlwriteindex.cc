@@ -77,13 +77,14 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "thread.snippet, "
                        "thread.snippet_type, "
                        "thread.expires_in AS thread_expires_in, " // for groups, this is not set even if there are disappearing message
-                       "recipient.message_expiration_time AS recipient_expires_in, " // thi soen should always be set I think, but it's in seconds as opposed to milliseconds
+                       "recipient.message_expiration_time AS recipient_expires_in, " // this one should always be set I think, but it's in seconds as opposed to milliseconds
                        "IFNULL(thread.date, 0) AS date, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        "json_extract(thread.snippet_extras, '$.bodyRanges') AS 'snippet_ranges', "
-                       "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', "
-                       + (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
-                       + (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
+                       "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', " +
+                       (d_database.tableContainsColumn("thread", "snippet_message_extras") ? "snippet_message_extras," : "NULL AS snippet_message_extras,") +
+                       (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
+                       (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
                        //"IFNULL(recipient.mute_until, 0) AS mute_until, " // dont think this is ever NULL
                        //"recipient.blocked, "
                        //"(SELECT COUNT(" + d_mms_table + "._id) FROM " + d_mms_table + " WHERE " + d_mms_table + ".thread_id = thread._id) AS message_count, "
@@ -110,38 +111,16 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          "thread." + d_thread_recipient_id + ", "
                          "NULLIF(" + d_mms_table + ".body, '') AS snippet, " +
                          d_part_table + "." + d_part_ct + " AS partct, "
-                         /*
-                         // this messes up body ranges
-                         "CASE "
-                         "  WHEN NULLIF(" + d_mms_table + ".body, '') NOT NULL THEN " // body NOT NULL
-                         "  CASE "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " IS NULL THEN NULLIF(" + d_mms_table + ".body, '') " // no attachment
-                         "    WHEN " + d_part_table + "." + d_part_ct + " IS 'image/gif' THEN CONCAT('\xF0\x9F\x8E\xA1 ', NULLIF(" + d_mms_table + ".body, '')) "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'image/%' THEN CONCAT('\xF0\x9F\x93\xB7 ', NULLIF(" + d_mms_table + ".body, '')) "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'audio/%' THEN CONCAT('\xF0\x9F\x8E\xA4 ', NULLIF(" + d_mms_table + ".body, '')) "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'video/%' THEN CONCAT('\xF0\x9F\x8E\xA5 ', NULLIF(" + d_mms_table + ".body, '')) "
-                         "    ELSE NULLIF(" + d_mms_table + ".body, '') "
-                         "  END "
-                         "ELSE " // body IS NULL
-                         "  CASE "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " IS NULL THEN NULL " // no attachment
-                         "    WHEN " + d_part_table + "." + d_part_ct + " IS 'image/gif' THEN '\xF0\x9F\x8E\xA1 GIF' "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'image/%' THEN '\xF0\x9F\x93\xB7 Photo' "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'audio/%' THEN '\xF0\x9F\x8E\xA4 Audio' "
-                         "    WHEN " + d_part_table + "." + d_part_ct + " LIKE 'video/%' THEN '\xF0\x9F\x8E\xA5 Video' "
-                         "  ELSE NULL "
-                         "  END "
-                         "END AS snippet, "
-                         */
                          + d_mms_table + "." + d_mms_type + " AS snippet_type, "
                          "thread.expires_in AS thread_expires_in, " // for groups, this is not set even if there are disappearing message
                          "recipient.message_expiration_time AS recipient_expires_in, " // this one should always be set I think, but it's in seconds as opposed to milliseconds
                          "IFNULL(" + d_mms_table + "." + d_mms_date_sent + ", 0) AS date, "
-                         "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', "
-                         + d_mms_ranges + " AS 'snippet_ranges', "
-                         + (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ")
-                         + (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
-                         + (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
+                         "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', " +
+                         (d_database.tableContainsColumn("thread", "snippet_message_extras") ? "snippet_message_extras," : "NULL AS snippet_message_extras,") +
+                         d_mms_ranges + " AS 'snippet_ranges', " +
+                         (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ") +
+                         (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
+                         (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
                          //"IFNULL(recipient.mute_until, 0) AS mute_until, "
                          //"recipient.blocked, "
                          //"-1 AS message_count, "
@@ -1081,10 +1060,114 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         snippet = "<i>This message was deleted.</i>";
     }
 
-    if (Types::isStatusMessage(snippet_type))
-      snippet = "<i>(status message)</i>"; // decodeStatusMessage(snippet, results.valueAsInt(i, "expires_in", 0), snippet_type, "", nullptr);
-    else if (excludeexpiring && results.valueAsInt(i, "recipient_expires_in", 0) > 0)
-      snippet = "<i>(excluded expiring message)</i>";
+    bool isstatusmsg = Types::isStatusMessage(snippet_type);
+    if (isstatusmsg)
+    {
+      // if snippet message extras does not exist, or was empty, decode from body
+      if (!(d_database.tableContainsColumn("thread", "snippet_message_extras") &&
+            results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_message_extras")))
+        snippet = decodeStatusMessage(snippet, results.valueAsInt(i, "recipient_expires_in", 0), snippet_type,
+                                      isgroup ?
+                                      (groupsender > 0 ? getRecipientInfoFromMap(recipient_info, groupsender).display_name : "") :
+                                      getRecipientInfoFromMap(recipient_info, rec_id).display_name,
+                                      nullptr);
+      else if (results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_message_extras"))
+        snippet = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_message_extras"), results.valueAsInt(i, "recipient_expires_in", 0), snippet_type,
+                                      isgroup ?
+                                      (groupsender > 0 ? getRecipientInfoFromMap(recipient_info, groupsender).display_name : "") :
+                                      getRecipientInfoFromMap(recipient_info, rec_id).display_name,
+                                      nullptr);
+
+      if (snippet.empty())
+        snippet = "(status message)";
+    }
+
+    if (excludeexpiring && results.valueAsInt(i, "recipient_expires_in", 0) > 0) [[unlikely]]
+    {
+      /*
+        ThreadTable::
+        private fun isSilentType(type: Long): Boolean {
+          return MessageTypes.isProfileChange(type) ||
+          MessageTypes.isGroupV1MigrationEvent(type) ||
+          MessageTypes.isChangeNumber(type) ||
+          MessageTypes.isBoostRequest(type) ||
+          MessageTypes.isGroupV2LeaveOnly(type) ||
+          MessageTypes.isThreadMergeType(type)
+        }
+      */
+      SqliteDB::QueryResults newsnippet_info;
+      if (d_database.exec(bepaald::concat("SELECT "
+                                          "body,"
+                                          "expires_in,",
+                                          (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras," : "NULL AS message_extras,"),
+                                          "IFNULL(remote_deleted, 0) AS remote_deleted,",
+                                          d_mms_type, " AS type "
+                                          "FROM ", d_mms_table,
+                                          " WHERE thread_id = ?",                    // get last body from this thread, where
+                                          (maxtimestamp > 0 ? " AND " + d_mms_table + ".date_received <= " + bepaald::toString(maxtimestamp) : ""),
+                                          " AND ("
+                                          "(expires_in == 0"                         // it's not expiring (and not any
+                                          " AND (", d_mms_type, " & ?) != ?"         // of the normally excluded snippet types,
+                                          " AND (", d_mms_type, " & ?) != ?"         // like identity verifications or spam reports
+                                          " AND (", d_mms_type, " & ?) IS NOT ?"
+                                          " AND (", d_mms_type, " & ?) IS NOT ?"
+                                          " AND (", d_mms_type, " & ?) IS NOT ?"
+                                          " AND (", d_mms_type, " & ?) IS NOT ?"
+                                          " AND (", d_mms_type, " & ?) IS NOT ?"
+                                          " AND (", d_mms_type, " & ?) IS NOT ?"
+                                          ")"
+                                          " OR ("
+                                          "expires_in != 0"                         // or it _is_ expiring, but
+                                          " AND (", d_mms_type, " & ?) != 0)"       // it is the expiration timer update itself
+                                          ")"
+                                          " ORDER BY date_received DESC LIMIT 1"),
+                          {t_id,
+                           Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_REPORTED_SPAM,
+                           Types::SPECIAL_TYPES_MASK, Types::SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED,
+                           Types::BASE_TYPE_MASK, Types::PROFILE_CHANGE_TYPE,
+                           Types::BASE_TYPE_MASK, Types::GV1_MIGRATION_TYPE,
+                           Types::BASE_TYPE_MASK, Types::CHANGE_NUMBER_TYPE,
+                           Types::BASE_TYPE_MASK, Types::BOOST_REQUEST_TYPE,
+                           Types::GROUP_V2_LEAVE_BITS, Types::GROUP_V2_LEAVE_BITS,
+                           Types::BASE_TYPE_MASK, Types::THREAD_MERGE_TYPE,
+                           Types::EXPIRATION_TIMER_UPDATE_BIT}, &newsnippet_info) &&
+          newsnippet_info.rows() == 1)
+        {
+          long long int newsnippet_type = newsnippet_info.valueAsInt(0, "type");
+          if (newsnippet_info.valueAsInt(0, "remote_deleted") != 0)
+          {
+            if (Types::isOutgoing(newsnippet_type))
+              snippet = "<i>You deleted this message.</i>";
+            else
+              snippet = "<i>This message was deleted.</i>";
+          }
+          else if (Types::isStatusMessage(newsnippet_type))
+          {
+            isstatusmsg = true;
+            if (!(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+                  newsnippet_info.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras")))
+              snippet =
+                decodeStatusMessage(newsnippet_info("body"), newsnippet_info.valueAsInt(0, "expires_in", 0), newsnippet_type,
+                                    isgroup ?
+                                    (groupsender > 0 ? getRecipientInfoFromMap(recipient_info, groupsender).display_name : "") :
+                                    getRecipientInfoFromMap(recipient_info, rec_id).display_name,
+                                    nullptr);
+            else if (newsnippet_info.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"))
+              snippet =
+                decodeStatusMessage(newsnippet_info.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"), newsnippet_info.valueAsInt(0, "expires_in", 0), newsnippet_type,
+                                    isgroup ?
+                                    (groupsender > 0 ? getRecipientInfoFromMap(recipient_info, groupsender).display_name : "") :
+                                    getRecipientInfoFromMap(recipient_info, rec_id).display_name,
+                                    nullptr);
+            if (snippet.empty())
+              snippet = "(status message)";
+          }
+          else
+            snippet = newsnippet_info(0, "body");
+        }
+      else
+        snippet.clear();
+    }
 
     long long int datetime = results.getValueAs<long long int>(i, "date");
     std::string date_date = bepaald::toDateString(datetime / 1000, "%b %d, %Y");
@@ -1148,8 +1231,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     outputfile <<
       "          </div>\n"
       "          <span class=\"snippet\">" <<
-      ((isgroup && groupsender > 0) ? "<span class=\"groupsender\">" + HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupsender).display_name) + "</span>: " : "") <<
-      snippet << "</span>\n"
+      ((isgroup && groupsender > 0 && !isstatusmsg) ? "<span class=\"groupsender\">" + HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupsender).display_name) + "</span>: " : "")
+               << (isstatusmsg ? "<i>" : "") << snippet << (isstatusmsg ? "</i>" : "") << "</span>\n"
       "        </div>\n"
       "        <div class=\"index-date\">\n"
       "          <a href=\"" << convo_url_path << "/" << convo_url_location << "\" class=\"main-link\"></a>\n"
