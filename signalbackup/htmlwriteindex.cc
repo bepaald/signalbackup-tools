@@ -438,6 +438,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     "/*        box-orient: vertical; */\n"
     "        overflow: hidden;\n"
     "        text-overflow: ellipsis;\n"
+    "        font-synthesis-style: none;\n"
     "      }\n"
     "\n"
     "      .monospace\n"
@@ -1018,7 +1019,6 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       groupsender = bepaald::toNumber<long long int>(results.valueAsString(i, "group_sender_id"));
 
     std::string snippet = results.valueAsString(i, "snippet");
-    //HTMLescapeString(&snippet);
     std::string snippet_ranges = results.valueAsString(i, "snippet_ranges");
     if (!snippet_ranges.empty())
     {
@@ -1099,6 +1099,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       if (d_database.exec(bepaald::concat("SELECT "
                                           "body,"
                                           "expires_in,",
+                                          d_mms_recipient_id, " AS from_recipient_id,",
                                           (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras," : "NULL AS message_extras,"),
                                           "IFNULL(remote_deleted, 0) AS remote_deleted,",
                                           d_mms_type, " AS type "
@@ -1133,6 +1134,9 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                            Types::EXPIRATION_TIMER_UPDATE_BIT}, &newsnippet_info) &&
           newsnippet_info.rows() == 1)
         {
+          if (isgroup)
+            groupsender = newsnippet_info.valueAsInt(0, "from_recipient_id", groupsender);
+
           long long int newsnippet_type = newsnippet_info.valueAsInt(0, "type");
           if (newsnippet_info.valueAsInt(0, "remote_deleted") != 0)
           {
