@@ -48,7 +48,8 @@ void SignalBackup::dtInsertAttachment(long long int mms_id, long long int unique
                       {"height", 0},
                       {"quote", isquote ? 1 : 0},
                       {"upload_timestamp", attachment_results.value(0, "upload_timestamp")},
-                      {"cdn_number", attachment_results.value(0, "cdn_number")}},
+                      {"cdn_number", attachment_results.value(0, "cdn_number")},
+                      {"display_order", attachment_results.value(0, "orderInMessage")}},
                      "_id"))
       {
         Logger::error("Inserting part-data (pending)");
@@ -167,6 +168,7 @@ void SignalBackup::dtInsertAttachment(long long int mms_id, long long int unique
                   {(d_database.tableContainsColumn(d_part_table, "data_hash_end") ? "data_hash_end" : ""), hash},
                   {"upload_timestamp", attachment_results.value(0, "upload_timestamp")},      // will be 0 on sticker
                   {"cdn_number", attachment_results.value(0, "cdn_number")}, // will be 0 on sticker, usually 0 or 2, but I dont know what it means
+                  {"display_order", attachment_results.value(0, "orderInMessage")},
                   {"file_name", attachment_results.value(0, "file_name")}},
                  "_id", &retval))
   {
@@ -453,6 +455,7 @@ bool SignalBackup::dtInsertAttachmentsOld(long long int mms_id, long long int un
                                   "IFNULL(json_extract(messages.json, '", jsonpath, ".version'), 1) AS version,"
                                   "IFNULL(json_extract(messages.json, '", jsonpath, ".width'), 0) AS width,"
                                   "IFNULL(json_extract(messages.json, '", jsonpath, ".height'), 0) AS height,"
+                                  "0 AS orderInMessage," // not present in old attachment-json?
 
                                   // only in sticker
                                   "json_extract(messages.json, '", jsonpath, ".emoji') AS sticker_emoji,"

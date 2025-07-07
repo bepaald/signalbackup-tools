@@ -462,7 +462,8 @@ class SignalBackup
                       bool light, bool themeswitching, bool searchpage, bool exportdetails, bool pagemenu) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool use_original_filenames,
-                              bool is_image_preview, bool overwrite, bool append, std::vector<std::string> const &ignoremediatypes) const;
+                              bool is_image_preview, bool isquote, bool overwrite, bool append,
+                              std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteCallLinkDiv(std::ofstream &htmloutput, int indent, std::string const &url, std::string const &title,
                             std::string const &description/*, std::string const &directory, std::string const &threaddir,
                                                               bool overwrite, bool append*/) const;

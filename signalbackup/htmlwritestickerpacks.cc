@@ -229,7 +229,7 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     "      }\n"
     "\n"
     "      .nav-one {\n"
-    "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"white\"><path style=\"stroke-width: 3;\" d=\"M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131\"/></svg>');\n"
+    "        background-image: url('data:image/svg+xml;,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"none\" stroke=\"white\"><path style=\"stroke-width: 3;\" d=\"M 13.796428,2.9378689 6.7339026,10.000394 13.795641,17.062131\"/></svg>');\n"
     "        filter: var(--icon-f);\n"
     "      }\n"
     "\n"
@@ -251,14 +251,14 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
       "\n"
       "      .themebutton {\n"
       "        display: block;\n"
-      "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 25 25\" fill=\"white\" stroke=\"white\"><defs><path id=\"s\" d=\"m12.5,2.5 2.5,2.5c0.27,0.27 0.63,0.43 1,0.43L19.62,5.42h1.79l-3.8e-5,-0.4C21.41,4.24 20.77,3.61 20,3.6l-3.8,0 -2.64,-2.65C13,0.4 12,0.4 11.5,0.96l-0.28,0.28z\"/></defs><path d=\"m12,8.13c0,-0.4 0.35,-0.8 0.8,-0.76 2.7,0.14 4.86,2.4 4.86,5.13 0,2.75 -2.15,5 -4.86,5.14 -0.45,0 -0.8,-0.35 -0.8,-0.77z\"/><use href=\"%23s\"/><use href=\"%23s\" transform=\"rotate(45 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(90 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(135 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(180 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(225 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(270 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(315 12.5 12.5)\"/></svg>');\n"
+      "        background-image: url('data:image/svg+xml;,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 25 25\" fill=\"white\" stroke=\"white\"><defs><path id=\"s\" d=\"m12.5,2.5 2.5,2.5c0.27,0.27 0.63,0.43 1,0.43L19.62,5.42h1.79l-3.8e-5,-0.4C21.41,4.24 20.77,3.61 20,3.6l-3.8,0 -2.64,-2.65C13,0.4 12,0.4 11.5,0.96l-0.28,0.28z\"/></defs><path d=\"m12,8.13c0,-0.4 0.35,-0.8 0.8,-0.76 2.7,0.14 4.86,2.4 4.86,5.13 0,2.75 -2.15,5 -4.86,5.14 -0.45,0 -0.8,-0.35 -0.8,-0.77z\"/><use href=\"%23s\"/><use href=\"%23s\" transform=\"rotate(45 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(90 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(135 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(180 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(225 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(270 12.5 12.5)\"/><use href=\"%23s\" transform=\"rotate(315 12.5 12.5)\"/></svg>');\n"
       "        filter: var(--icon-f);\n"
       "      }\n"
       "\n";
   }
   stickerhtml <<
     "      .nav-up {\n"
-    "        background-image: url('data:image/svg+xml;utf-8,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"white\" stroke=\"white\"><path d=\"M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z\"/></svg>');\n"
+    "        background-image: url('data:image/svg+xml;,<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" fill=\"white\" stroke=\"white\"><path d=\"M9.5,17.5l1.1,-1.1l-4.9,-4.9l-1.1,-0.8H17V9.2H4.6l1.1,-0.8l4.9,-5L9.5,2.5L2,10L9.5,17.5z\"/></svg>');\n"
     "        filter: var(--icon-f);\n"
     "      }\n"
     "\n"
