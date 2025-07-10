@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -41,9 +41,17 @@ bool DesktopDatabase::getKeyFromEncrypted_mac_linux()
     return false;
   };
 #if defined(__APPLE__) && defined(__MACH__)
-  getSecrets_mac(&secrets);
+  getSecrets_mac(&secrets, false /*beta*/);
   if (tryDecrypt())
     return true;
+  else
+  {
+    Logger::warning("tryDecrypt failed with initial secret, trying for Signal Beta...");
+    secrets.clear();
+    getSecrets_mac(&secrets, true /*beta*/);
+    if (tryDecrypt())
+      return true;
+  }
 #else
   getSecrets_linux_SecretService(&secrets);
   if (tryDecrypt())

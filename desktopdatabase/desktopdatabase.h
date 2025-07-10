@@ -74,7 +74,7 @@ class DesktopDatabase
   std::string decryptKey_linux_mac(std::string const &secret, std::string const &encryptedkeystr, bool last = true) const;
 #endif
 #if defined(__APPLE__) && defined(__MACH__) // if apple...
-  void getSecrets_mac(std::set<std::string> *secrets) const;
+  void getSecrets_mac(std::set<std::string> *secrets, bool beta) const;
 #elif !defined(_WIN32) && !defined(__MINGW64__) // not apple, but also not windows
   void getSecrets_linux_SecretService(std::set<std::string> *secrets) const;
   void getSecrets_linux_Kwallet(int version, std::set<std::string> *secrets) const;

@@ -235,7 +235,10 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             //d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
           }
           else
+          {
+            Logger::error("Failing to match group (v1?). Skipping.");
             continue;
+          }
           // person_or_group_id = "__textsecure_group__!" + bepaald::bytesToHexString(reinterpret_cast<unsigned char const *>(giddata.data()), giddata.size());
           // isgroupconversation = true;
         }
@@ -844,7 +847,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
               {
                 if (d_verbose) [[unlikely]] Logger::message_end();
                 Logger::error("Getting free date for inserting keychange into mms");
-              continue;
+                continue;
               }
               if (originaldate != freedate)
                 adjusted_timestamps[originaldate] = freedate;

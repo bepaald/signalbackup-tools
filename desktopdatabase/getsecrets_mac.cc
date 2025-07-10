@@ -47,7 +47,7 @@ attributes:
 #include "desktopdatabase.ih"
 #include <Security/Security.h>
 
-void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets) const
+void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets, bool beta) const
 {
   // create query to search the keychain:
   int const dict_size = 4;
@@ -55,8 +55,8 @@ void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets) const
 				 kSecAttrAccount,
 				 kSecAttrService,
 				 kSecReturnData};
-  CFStringRef account = CFStringCreateWithCString(nullptr, "Signal Key", kCFStringEncodingUTF8);
-  CFStringRef service = CFStringCreateWithCString(nullptr, "Signal Safe Storage", kCFStringEncodingUTF8);
+  CFStringRef account = CFStringCreateWithCString(nullptr, beta ? "Signal Beta" : "Signal Key", kCFStringEncodingUTF8);
+  CFStringRef service = CFStringCreateWithCString(nullptr, beta ? "Signal Beta Safe Storage" : "Signal Safe Storage", kCFStringEncodingUTF8);
   void const *values[dict_size] = {kSecClassGenericPassword,
 				   account,
 				   service,
@@ -78,10 +78,10 @@ void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets) const
     CFIndex length = CFStringGetLength(errmsg_ref);
     CFIndex max_length = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
     std::unique_ptr<char[]> error_string(new char[max_length]);
-    if (CFStringGetCString(errmsg_ref, error_string.get(), max_length, kCFStringEncodingUTF8) != 0)
-      Logger::error("Unknown error searching keychain");
-    else
+    if (CFStringGetCString(errmsg_ref, error_string.get(), max_length, kCFStringEncodingUTF8))
       Logger::error(error_string.get());
+    else
+      Logger::error("Unknown error searching keychain");
     return;
   }
 

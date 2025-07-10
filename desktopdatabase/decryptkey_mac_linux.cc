@@ -120,6 +120,7 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
         Logger::error("Decryption appears to have failed (padding bytes have unexpected value). No more secrets to try.");
       else
         Logger::warning("Decryption appears to have failed (padding bytes have unexpected value), attempting next secret...");
+      decryptedkey.clear();
       return decryptedkey;
     }
 
