@@ -177,18 +177,17 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
 
   // decode frame data
   int decodedframelength = encryptedframelength - MACSIZE;
-  unsigned char *decodedframe = new unsigned char[decodedframelength];
+  std::unique_ptr<unsigned char[]> decodedframe(new unsigned char[decodedframelength]);
 
-  if (EVP_DecryptUpdate(ctx.get(), decodedframe, &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
+  if (EVP_DecryptUpdate(ctx.get(), decodedframe.get(), &decodedframelength, encryptedframe.get(), encryptedframelength - MACSIZE) != 1) [[unlikely]]
   {
     Logger::error("Failed to decrypt data");
-    delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
 
   encryptedframe.reset(); // dont need this anymore, lets reclaim the memory....
 
-  std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe, decodedframelength, d_framecount++));
+  std::unique_ptr<BackupFrame> frame(initBackupFrame(decodedframe.get(), decodedframelength, d_framecount++));
 
   /*
     This was originally used to work around a short-lived bug in Signal (#9154).
@@ -217,21 +216,16 @@ std::unique_ptr<BackupFrame> FileDecryptor::getFrame(std::ifstream &file)
     if (d_badmac)
     {
       Logger::error_indent("Encrypted data had failed verification (Bad MAC)");
-      delete[] decodedframe;
       return std::make_unique<InvalidFrame>();
     }
     else
     {
       Logger::error_indent("Data was verified ok, but does not represent a valid frame... Don't know what happened, but it's bad... :(");
-      Logger::error_indent("Decrypted frame data: ", bepaald::bytesToHexString(decodedframe, decodedframelength));
-      delete[] decodedframe;
+      Logger::error_indent("Decrypted frame data: ", bepaald::bytesToHexString(decodedframe.get(), decodedframelength));
       return std::make_unique<InvalidFrame>();
     }
-    delete[] decodedframe;
     return std::unique_ptr<BackupFrame>(nullptr);
   }
-
-  delete[] decodedframe;
 
   // if (!frame->validate(d_filesize - file.tellg()))
   // {

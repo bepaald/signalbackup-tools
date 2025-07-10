@@ -24,188 +24,25 @@
 
 #include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
+#include "../scopeguard/scopeguard.h"
 
-/*
-  TODO
-  DONE? - limit timeframe
-  DONE? - AUTO timeframe
-  DONE? - fix address for call messages
-  DONE? - implement call messages (group video done?)
-  - implement group-v2- stuff
-
-  Known missing things:
-  DONE ? - messages for conversation that is not in thread table (-> create new thread for recipient)
-  - when recipient is not present in backup?
-   - message types other than 'incoming' and 'outgoing'
-     - 'group-v2-change' (group member add/remove/change group name/picture
-     - other status messages, like disappearing msgs timer change, profile key change etc
-   - inserting into group-v1-type groups
-  DONE? - all received/read receipts
-  DONE? - voice_note flag in part table?
-   - any group-v1 stuff
-   - stories?
-   - payments
-   - badges
-   - more...
- */
-
-/*
-///////////////////////////////  SMS COLUMNS:
-//_id // this is an AUTO value
-"thread_id,"
-"address/recipient_id,"
-//"address_device_id/recipient_device_id,"
-//"person,"// =
-"date,"// = 1663067790169
-"date_sent,"// = 1663067792779
-"date_server,"// = 1663067790149
-//"protocol,"// always 31337? maybe not necessary?
-//"read,"
-//"status,"
-"type," // = incoming/outgoing + secure
-//"reply_path_preseny,"// = 1
-//"delivery_receipt_count,"// = 0
-//"subject,"// =
-"body,"//
-//"mismatched_identities,"// =
-//"service_center,"// = GCM
-//"subscription_id,"// = -1
-//"expires_in,"// = 0
-//"expire_started,"// = 0
-//"notified,"// = 0
-//"read_receipt_count,"// = 0
-//"unidentified,"// = 1
-//"reactions,"// DOES NOT EXIST IN NEWER DATABASES
-//"reactions_unread,"// = 0
-//"reactions_last_seen,"// = 1663078811832
-"remote_deleted,"// = 0
-//"notified_timestamp,"// = 1663072365960
-"server_guid"// = 0bb19070-e1a2-4c52-b637-00e905583bc1
-//"receipt_timestamp"// = -1 // is -1 default?
-
-
-///////////////////////////////  MMS COLUMNS:
-//"_id,"// AUTO VALUE
-"thread_id,"
-"date,"// =  = 1474184079794
-"date_received,"// =  = 1474184079855
-"date_server,"// =  = -1
-"msg_box,"// =  = 10485783
-//"read,"// =  = 1
-"body,"//
-//"part_count,"// don't know what this is... not number of attachments // REMOVED IN DBV166
-//"ct_l,"// =  =
-"address,/recipient_id"// =  = 53
-//"address_device_id/recipient_device_id,"// =  =
-//"exp,"// =  =
-"m_type,"// =  = 128
-//"m_size,"// =  =
-//"st,"// =  =
-//"tr_id,"// =  =
-//"delivery_receipt_count,"// =  = 2
-//"mismatched_identities,"// =  =
-//"network_failures,"// =  =
-//"subscription_id,"// =  = -1
-//"expires_in,"// =  = 0
-//"expire_started = 0
-//"notified,"// =  = 0
-//"read_receipt_count,"// =  = 0
-"quote_id,"//  corresponds to 'messages.date' of quoted message
-"quote_author,"// =  =
-"quote_body,"// =  =
-"quote_attachment,"// =  = -1
-"quote_missing,"// =  = 0
-"quote_mentions,"// =  =
-//"shared_contacts,"// =  =
-//"unidentified,"// =  = 0
-//"previews,"// =  =
-//"reveal_duration,"// =  = 0
-//"reactions,"// =  =
-//"reactions_unread,"// =  = 0
-//"reactions_last_seen,"// =  = -1
-"remote_deleted,"// =  = 0
-//"mentions_self,"// =  = 0
-//"notified_timestamp,"// =  = 0
-//"viewed_receipt_count,"// =  = 0
-//"server_guid,"// =
-//"receipt_timestamp,"// =  = -1
-//"ranges,"// =  =
-//"is_story,"// =  = 0
-//"parent_story_id,"// =  = 0
-"quote_type"// =  = 0
-
-/////////////////////////////// PART COLUMNS:
-//"_id," // = AUTO VALUE
-"mid," // = 5500
-//"seq," // = 0
-"ct," // = image/jpeg
-//"name," // =
-//"chset," // =
-//"cd," // = A1sAd5JPAdm5SxZ9q2Bn/2X7BQw/vJfmaWk1zet2cFgb9D+2xpSRyMjuOcUZP7Lic3AEp38BIxKg/LCLMr2v5w==
-//"fn," // =
-//"cid," // =
-//"cl," // = DlImHS8vRhF5VM5ueDVh
-//"ctt_s," // =
-//"ctt_t," // =
-//"encrypted," // =
-"pending_push," // MUST BE ZERO (i think)
-//"_data," // = FILLED IN ON RESTORE?  /data/user/0/org.thoughtcrime.securesms/app_parts/part7685241378172293912.mms
-"data_size," // = 421
-"file_name," // =
-//"thumbnail," // =
-//"aspect_ratio," // =
-"unique_id," // = 1630950584787
-//"digest," // = (binary)
-//"fast_preflight_id," // =
-"voice_note," // = 0
-//"data_random," // = FILLED IN ON RESTORE? (binary)
-//"thumbnail_random," // =
-"width," // = 16
-"height," // = 16
-"quote," // = 0
-//"caption," // =
-//"sticker_pack_id," // =
-//"sticker_pack_key," // =
-//"sticker_id," // = -1
-"data_hash," // = Msx++MxFQPNuuCPnsO5Q9H2twoNFPMOKpH521FDVn+U=
- |-> "data_hash_start,"
- \-> "data_hash_end,"
-//"blur_hash," // = LN7nwD_M_M_M_M_M_M_M_M_M_M_M
-//"transform_properties," // = {"skipTransform":true,"videoTrim":false,"videoTrimStartTimeUs":0,"videoTrimEndTimeUs":0,"sentMediaQuality":0,"videoEdited":false}
-//"transfer_file," // =
-//"display_order," // = 0
-//"upload_timestamp," // = 1630950581728
-"cdn_number" // = 2
-//"borderless," // = 0
-//"sticker_emoji," // =
-//"video_gif" // = 0
-
-
-///////////////////////////////  REACTION COLUMNS
-//           _id = 80
-//    message_id = 66869
-//        is_mms = 0
-//     author_id = 7
-//         emoji = 👍
-//     date_sent = 1662929051259
-// date_received = 1662929052309
-
-///////////////////////////////   MENTION COLUMN
-// mention entry in android db
-//          _id = 10
-//    thread_id = 43
-//   message_id = 5910
-// recipient_id = 71
-//  range_start = 40
-// range_length = 1
-
-*/
+//#include <chrono>
 
 bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                                      std::vector<std::string> const &daterangelist, bool createmissingcontacts,
                                      bool createmissingcontacts_valid, bool autodates, bool importstickers,
                                      std::string const &selfphone, bool targetisdummy)
 {
+
+  //auto t1 = std::chrono::high_resolution_clock::now();
+
+  dtdb->d_database.setCacheSize(55); // seems to shave a few ms off. not exhaustively tested
+  ScopeGuard reset_cache_size_dt([&]() { dtdb->d_database.setCacheSize(); });
+
+  d_database.setCacheSize(40); // same
+  ScopeGuard reset_cache_size_android([&]() { d_database.setCacheSize(); });
+
+
   if (d_verbose) [[unlikely]]
     Logger::message("Starting importFromDesktop()");
 
@@ -1952,121 +1789,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       Logger::warning("Found ", null_keys, " NULL identity_keys. This will likely cause problems when restoring the backup.");
   }
 
+  // auto t2 = std::chrono::high_resolution_clock::now();
+  // auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
+  // std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+
   return checkDbIntegrity();
 }
-
-  /*
-      EXAMPLE
-
-      DESKTOP DB:
-                     rowid = 56
-                        id = 845bff95-[...]-4b53efcba27b
-                      json = {"timestamp":1643874290360,
-                              "attachments":[{"contentType":"application/pdf","fileName":"qrcode.pdf","path":"21/21561db325667446c84702bc2af2cb779aaaeb32c6b3d190d41f86d12e8bf5f0","size":38749,"pending":false,"url":"/home/svandijk/.config/Signal/drafts.noindex/4b/4bb11cd1be7c718ae8ed57dc28f34d57a1032d4ab0595128527466e876ddde9d"}],
-                              "type":"outgoing",
-                              "body":"qrcode",
-                              "conversationId":"d6b93b26-[...]-b949d4de0aba",
-                              "preview":[],
-                              "sent_at":1643874290360,
-                              "received_at":1623335267006,
-                              "received_at_ms":1643874290360,
-                              "recipients":["93722273-[...]-c8261969714c"],
-                              "bodyRanges":[],
-                              "sendHQImages":false,
-                              "sendStateByConversationId":{"d6b93b26-[...]-b949d4de0aba":{"status":"Delivered","updatedAt":1643874294845},
-                                                           "87e8067b-[...]-011b5c5ee23a":{"status":"Sent","updatedAt":1643874291830}},
-                              "schemaVersion":10,
-                              "hasAttachments":1,
-                              "hasFileAttachments":1,
-                              "contact":[],
-                              "destination":"93722273-[...]-c8261969714c",
-                              "id":"845bff95-[...]-4b53efcba27b",
-                              "readStatus":0,
-                              "expirationStartTimestamp":1643874291546,
-                              "unidentifiedDeliveries":["93722273-[...]-c8261969714c"],
-                              "errors":[],
-                              "synced":true}
-                readStatus = 0
-                expires_at =
-                   sent_at = 1643874290360
-             schemaVersion = 10
-            conversationId = d6b93b26-[...]-b949d4de0aba
-               received_at = 1623335267006
-                    source =
-    deprecatedSourceDevice =
-            hasAttachments = 1
-        hasFileAttachments = 1
- hasVisualMediaAttachments = 0
-               expireTimer =
-  expirationStartTimestamp = 1643874291546
-                      type = outgoing
-                      body = qrcode
-              messageTimer =
-         messageTimerStart =
-     messageTimerExpiresAt =
-                  isErased = 0
-                isViewOnce = 0
-                sourceUuid =
-                serverGuid =
-                 expiresAt =
-              sourceDevice =
-                   storyId =
-                   isStory = 0
-       isChangeCreatedByUs = 0
-      shouldAffectActivity = 1
-       shouldAffectPreview = 1
-    isUserInitiatedMessage = 1
-     isTimerChangeFromSync = 0
-         isGroupLeaveEvent = 0
-isGroupLeaveEventFromOther = 0
-
-
-     ANDROID DB:
-                        _id = 631
-             thread_id = 1
-                  date = 1643874290360
-         date_received = 1643874294496
-           date_server = -1
-               msg_box = 10485783
-                  read = 1
-                  body = qrcode
-            part_count = 1
-                  ct_l =
-               address = 2
-     address_device_id =
-                   exp =
-                m_type = 128
-                m_size =
-                    st =
-                 tr_id =
-delivery_receipt_count = 1
- mismatched_identities =
-      network_failures =
-       subscription_id = -1
-            expires_in = 0
-        expire_started = 0
-              notified = 0
-    read_receipt_count = 0
-              quote_id = 0
-          quote_author =
-            quote_body =
-      quote_attachment = -1
-         quote_missing = 0
-        quote_mentions =
-       shared_contacts =
-          unidentified = 1
-              previews =
-       reveal_duration = 0
-             reactions =
-      reactions_unread = 0
-   reactions_last_seen = -1
-        remote_deleted = 0
-         mentions_self = 0
-    notified_timestamp = 0
-  viewed_receipt_count = 0
-           server_guid =
-     receipt_timestamp = 1643874295302
-                ranges =
-              is_story = 0
-       parent_story_id = 0
-     */

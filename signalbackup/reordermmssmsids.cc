@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2024  Selwin van Dijk
+  Copyright (C) 2021-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,24 +18,13 @@
 */
 
 #include "signalbackup.ih"
-
 //#include <chrono>
 
 bool SignalBackup::reorderMmsSmsIds() const
 {
   //auto t1 = std::chrono::high_resolution_clock::now();
+
   Logger::message_start(__FUNCTION__);
-
-  // get all mms in the correct order
-  SqliteDB::QueryResults res;
-  if (!d_database.exec("SELECT _id FROM " + d_mms_table + " ORDER BY date_received ASC", &res)) // for sms table, use 'date'
-    return false;
-
-  d_database.exec("BEGIN TRANSACTION");
-
-  // set all id's 'negatively ascending' (negative because of UNIQUE constraint)
-  long long int negative_id_tmp = 0;
-  long long int total = res.rows();
 
   bool adjustmention = d_database.containsTable("mention");
   bool adjustmsl_message = d_database.containsTable("msl_message");
@@ -47,104 +36,152 @@ bool SignalBackup::reorderMmsSmsIds() const
   bool adjustoriginal_message_id = d_database.tableContainsColumn(d_mms_table, "original_message_id");
   bool adjustlatest_revision_id = d_database.tableContainsColumn(d_mms_table, "latest_revision_id");
 
-  // we purposefully do this in a dozen or so separate for-loops so SqliteDB can re-use its prepared statements!
-  for (unsigned int i = 0; i < total; ++i)
+  // get all mms in the correct order
+  SqliteDB::QueryResults res;
+  if (!d_database.exec(bepaald::concat("SELECT "
+                                       "_id"                                          // idx = 0
+                                       ", attcount",                                  // idx = 1
+                                       (adjustreaction ? ", reactioncount" : ""),
+                                       (adjustmention ? ", mentioncount" : ""),
+                                       ", groupreceiptcount",
+                                       (adjuststorysends ? ", storysendscount" : ""),
+                                       (adjustcall ? ", callcount" : ""),
+                                       (adjustmsl_message ? ", mslcount" : ""),
+                                       (adjustoriginal_message_id ? ", og_msgcount" : ""),
+                                       (adjustlatest_revision_id ? ", revisioncount" : ""),
+                                       " FROM ", d_mms_table, " ",
+                                       // get attachment count for message:
+                                       "LEFT JOIN (SELECT ", d_part_mid, " AS message_id, COUNT(*) AS attcount FROM ", d_part_table, " GROUP BY message_id) AS attmnts ON ", d_mms_table, "._id = attmnts.message_id ",
+                                       // get reaction count for message:
+                                       (adjustreaction ? "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON " + d_mms_table + "._id = rctns.message_id " : ""),
+                                       // get mention count for message:
+                                       (adjustmention ? "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id " : ""),
+                                       // get group receipt count for message:
+                                       "LEFT JOIN (SELECT mms_id, COUNT(*) AS groupreceiptcount FROM group_receipts GROUP BY mms_id) AS grprct ON ", d_mms_table, "._id = grprct.mms_id ",
+                                       // get story_sends count for message:
+                                       (adjuststorysends ? "LEFT JOIN (SELECT message_id, COUNT(*) AS storysendscount FROM story_sends GROUP BY message_id) AS ss ON " + d_mms_table + "._id = ss.message_id " : ""),
+                                       // get call count for message:
+                                       (adjustcall ? "LEFT JOIN (SELECT message_id, COUNT(*) AS callcount FROM call GROUP BY message_id) AS cc ON " + d_mms_table + "._id = cc.message_id " : ""),
+                                       // get msl count for message:
+                                       (adjustmsl_message ? "LEFT JOIN (SELECT message_id, COUNT(*) AS mslcount FROM msl_message GROUP BY message_id) AS msl ON " + d_mms_table + "._id = msl.message_id " : ""),
+                                       // get original_message count for message:
+                                       (adjustoriginal_message_id ? "LEFT JOIN (SELECT original_message_id, COUNT(*) AS og_msgcount FROM " + d_mms_table + " GROUP BY original_message_id) AS ogmsg ON " + d_mms_table + "._id = ogmsg.original_message_id " : ""),
+                                       // get latest_revision count for message:
+                                       (adjustlatest_revision_id ? "LEFT JOIN (SELECT latest_revision_id, COUNT(*) AS revisioncount FROM " + d_mms_table + " GROUP BY latest_revision_id) AS lr ON " + d_mms_table + "._id = lr.latest_revision_id " : ""),
+                                       "ORDER BY date_received ASC"), &res)) // for sms table, use 'date'
+    return false;
+
+  d_database.exec("BEGIN TRANSACTION");
+
+  // set all id's 'negatively ascending' (negative because of UNIQUE constraint)
+  long long int total = res.rows();
+
+  for (long long int i = 0; i < total; ++i)
   {
     std::any oldid = res.value(i, 0);
-    ++negative_id_tmp;
-    if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = ? WHERE _id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
+    if (!d_database.exec("UPDATE " + d_mms_table + " SET _id = ? WHERE _id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
       return false;
   }
-  negative_id_tmp = 0;
   Logger::message_continue(".");
 
-  for (unsigned int i = 0; i < total; ++i)
+  for (long long int i = 0; i < total; ++i)
   {
-    std::any oldid = res.value(i, 0);
-    ++negative_id_tmp;
-    if (!d_database.exec("UPDATE  " + d_part_table + " SET  " + d_part_mid + " = ? WHERE " + d_part_mid + " = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-      return false;
+    if (res.valueAsInt(i, 1, 0) > 0) // check attcount
+    {
+      std::any oldid = res.value(i, 0);
+      if (!d_database.exec("UPDATE  " + d_part_table + " SET  " + d_part_mid + " = ? WHERE " + d_part_mid + " = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+        return false;
+    }
   }
-  negative_id_tmp = 0;
 
-  for (unsigned int i = 0; i < total; ++i)
+  for (long long int i = 0; i < total; ++i)
   {
-    std::any oldid = res.value(i, 0);
-    ++negative_id_tmp;
-    if (!d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-      return false;
+    if (res.valueAsInt(i, "groupreceiptcount", 0) > 0) // check groupreceiptcount
+    {
+      std::any oldid = res.value(i, 0);
+      if (!d_database.exec("UPDATE group_receipts SET mms_id = ? WHERE mms_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+        return false;
+    }
   }
-  negative_id_tmp = 0;
 
   if (adjustmention)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "mentioncount", 0) > 0) // check mentioncount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
-  negative_id_tmp = 0;
 
   if (adjustmsl_message)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ?"s + (msl_has_is_mms ? " AND is_mms IS 1" : ""), {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "mslcount", 0) > 0) // check mslcount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE msl_message SET message_id = ? WHERE message_id = ?"s + (msl_has_is_mms ? " AND is_mms IS 1" : ""), {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
-  negative_id_tmp = 0;
 
   if (adjustreaction)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ?"s + (reaction_has_is_mms ? " AND is_mms IS 1" : ""), {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "reactioncount", 0) > 0) // check reactioncount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE reaction SET message_id = ? WHERE message_id = ?"s + (reaction_has_is_mms ? " AND is_mms IS 1" : ""), {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
-  negative_id_tmp = 0;
 
   if (adjuststorysends)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE story_sends SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "storysendscount", 0) > 0) // check storysendscount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE story_sends SET message_id = ? WHERE message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
-  negative_id_tmp = 0;
 
   if (adjustcall)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE call SET message_id = ? WHERE message_id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "callcount", 0) > 0) // check callcount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE call SET message_id = ? WHERE message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
-  negative_id_tmp = 0;
 
   if (adjustoriginal_message_id)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = ? WHERE original_message_id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "og_msgcount", 0) > 0) // check callcount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = ? WHERE original_message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
-  negative_id_tmp = 0;
+
 
   Logger::message_continue(".");
 
   if (adjustlatest_revision_id)
-    for (unsigned int i = 0; i < total; ++i)
+    for (long long int i = 0; i < total; ++i)
     {
-      std::any oldid = res.value(i, 0);
-      ++negative_id_tmp;
-      if (!d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = ? WHERE latest_revision_id = ?", {-1 * negative_id_tmp, oldid})) [[unlikely]]
-        return false;
+      if (res.valueAsInt(i, "revisioncount", 0) > 0) // check callcount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = ? WHERE latest_revision_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
     }
 
   /*
@@ -190,7 +227,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   if (!d_database.exec("UPDATE " + d_part_table + " SET " + d_part_mid + " = " + d_part_mid + " * -1 WHERE " + d_part_mid + " < 0")) [[unlikely]]
     return false;
 
-  if(!d_database.exec("UPDATE group_receipts SET mms_id = mms_id * -1 WHERE mms_id < 0")) [[unlikely]]
+  if (!d_database.exec("UPDATE group_receipts SET mms_id = mms_id * -1 WHERE mms_id < 0")) [[unlikely]]
     return false;
 
   if (adjustmention && !d_database.exec("UPDATE mention SET message_id = message_id * -1 WHERE message_id < 0")) [[unlikely]]
@@ -216,7 +253,7 @@ bool SignalBackup::reorderMmsSmsIds() const
     if (!d_database.exec("SELECT _id FROM sms ORDER BY " + d_sms_date_received + " ASC", &res))
       return false;
 
-    negative_id_tmp = 0;
+    long long int negative_id_tmp = 0;
     for (unsigned int i = 0; i < res.rows(); ++i)
     {
       long long int oldid = res.getValueAs<long long int>(i, 0);
@@ -241,9 +278,10 @@ bool SignalBackup::reorderMmsSmsIds() const
         return false;
   }
 
-  Logger::message_end("ok");
   // auto t2 = std::chrono::high_resolution_clock::now();
   // auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
   // std::cout << " *** TIME: " << ms_int.count() << "ms\n";
+
+  Logger::message_end("ok");
   return true;
 }
