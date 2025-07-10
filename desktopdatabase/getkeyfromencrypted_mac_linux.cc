@@ -41,14 +41,15 @@ bool DesktopDatabase::getKeyFromEncrypted_mac_linux()
     return false;
   };
 #if defined(__APPLE__) && defined(__MACH__)
-  getSecrets_mac(&secrets, false /*beta*/);
+  bool beta = d_databasedir.contains("Signal Beta");
+  getSecrets_mac(&secrets, beta);
   if (tryDecrypt())
     return true;
   else
   {
-    Logger::warning("tryDecrypt failed with initial secret, trying for Signal Beta...");
+    Logger::warning("tryDecrypt() failed with initial secret, trying for Signal ", beta ? "non-" : "", "Beta...");
     secrets.clear();
-    getSecrets_mac(&secrets, true /*beta*/);
+    getSecrets_mac(&secrets, !beta);
     if (tryDecrypt())
       return true;
   }
