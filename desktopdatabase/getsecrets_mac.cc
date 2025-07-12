@@ -50,15 +50,15 @@ attributes:
 void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets, bool beta) const
 {
   // create query to search the keychain:
-  int const dict_size = 4;
+  int const dict_size = 3; // 4 if using account as well;
   void const *keys[dict_size] = {kSecClass,
-				 kSecAttrAccount,
+				 //kSecAttrAccount,
 				 kSecAttrService,
 				 kSecReturnData};
-  CFStringRef account = CFStringCreateWithCString(nullptr, beta ? "Signal Beta" : "Signal Key", kCFStringEncodingUTF8);
+  //CFStringRef account = CFStringCreateWithCString(nullptr, beta ? "Signal Beta" : "Signal Key", kCFStringEncodingUTF8);
   CFStringRef service = CFStringCreateWithCString(nullptr, beta ? "Signal Beta Safe Storage" : "Signal Safe Storage", kCFStringEncodingUTF8);
   void const *values[dict_size] = {kSecClassGenericPassword,
-				   account,
+				   //account,
 				   service,
 				   kCFBooleanTrue};
   CFDictionaryRef query = CFDictionaryCreate(nullptr, keys, values, dict_size, nullptr, nullptr);
@@ -69,7 +69,7 @@ void DesktopDatabase::getSecrets_mac(std::set<std::string> *secrets, bool beta) 
 
   // clean up
   CFRelease(query);
-  CFRelease(account);
+  //CFRelease(account);
   CFRelease(service);
 
   if (ret != 0) // error
