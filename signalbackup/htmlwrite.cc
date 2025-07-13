@@ -2657,12 +2657,15 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     }
     htmloutput << "</div>\n";
   }
-  htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date << "</span>\n";
+  bool sendfailed = (msg_info.type & Types::BASE_TYPE_MASK) == Types::BASE_SENT_FAILED_TYPE;
+  htmloutput << std::string(extraindent, ' ') << "              <span class=\"msg-data\">" << msg_info.readable_date
+             << (sendfailed ? ", Send failed" : "")
+             << "</span>\n";
   if (!Types::isStatusMessage(msg_info.type))
   {
     if (msg_info.expires_in > 0)
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons is-expiring\"></div>\n";
-    if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted) // && received, read?
+    if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted && !sendfailed)
     {
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons checkmarks-";
       if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_read_receipts) > 0)
