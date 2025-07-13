@@ -22,7 +22,7 @@
 #include "../messagerangeproto_typedef/messagerangeproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
-bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int message_id)
+bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int message_id) const
 {
   //std::cout << "bodydata: " << bodyjson << std::endl;
 
@@ -40,9 +40,9 @@ bool SignalBackup::tgSetBodyRanges(std::string const &bodyjson, long long int me
   for (unsigned int i = 0; i < fragments; ++i)
   {
     if (!d_database.exec("SELECT "
-                         "json_extract(?1, '$[" + bepaald::toString(i) + "].text') AS text, "
-                         "json_extract(?1, '$[" + bepaald::toString(i) + "].type') AS type",
-                         bodyjson, &br) || br.rows() != 1)
+                         "json_extract(?1, '$[' || ?2 || '].text') AS text, "
+                         "json_extract(?1, '$[' || ?2 || '].type') AS type",
+                         {bodyjson, i}, &br) || br.rows() != 1)
     {
       Logger::error("Failed to get text fragment (", i, ") from message body. Body data: '" + bodyjson + "'");
       return false;

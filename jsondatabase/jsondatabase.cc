@@ -61,7 +61,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "reply_to_id INT, forwarded_from TEXT, "
                        "saved_from TEXT, photo TEXT, width INT, height INT, "
                        "file TEXT, media_type TEXT, mime_type TEXT, "
-                       "contact_vcard TEXT, poll)"))
+                       "contact_vcard TEXT, reactions TEXT, poll)"))
   {
     Logger::error("Failed to set up sql tables");
     return;
@@ -148,7 +148,9 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "json_extract(value, '$.media_type') AS media_type, "
                        "json_extract(value, '$.mime_type') AS mime_type, "
                        "json_extract(value, '$.contact_vcard') AS contact_vcard, "
-                       "json_extract(value, '$.poll') AS poll FROM tmp_json_tree"))
+                       "json_extract(value, '$.custom_reactions') AS reactions, "
+                       "json_extract(value, '$.poll') AS poll "
+                       "FROM tmp_json_tree"))
     return;
 
   // the 'saved_messages' chat has no 'name' field. Since this is note-to-self, the name should be the name of the

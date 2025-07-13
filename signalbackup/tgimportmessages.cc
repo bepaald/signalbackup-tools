@@ -66,7 +66,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
   // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
-  if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, contact_vcard, poll FROM messages "
+  if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, contact_vcard, reactions, poll FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
                chat_idx, &message_data))
@@ -92,7 +92,9 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
     if (message_data.valueAsString(i, "type") == "message")
     {
       // prepend notice to forwarded message
-      std::string bodyjson = message_data.valueAsString(i, "body");
+      std::string bodyjson = message_data(i, "body");
+      std::string reactionsjson = message_data(i, "reactions");
+
       if (prependforwarded && !message_data.isNull(i, "forwarded_from"))
       {
         //Logger::message("Body json before: ", bodyjson);
@@ -225,6 +227,12 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         continue;
       }
 
+      // add reactions
+      if (!tgSetReactions(reactionsjson, new_msg_id, contactmap))
+      {
+        Logger::warning("failed to add reactions to message");
+        continue;
+      }
 
       if (!msg_deleted &&
           d_database.getSingleResultAs<std::string>("SELECT body FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, std::string()).empty() && // no message body

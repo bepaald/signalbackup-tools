@@ -208,13 +208,13 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
   for (unsigned int i = 0; i < numchanges; ++i)
   {
     if (!ddb.exec("SELECT "
-                  "json_extract(json, '$.groupV2Change.details[' || ? || '].type') AS type,"
-                  "COALESCE(json_extract(json, '$.groupV2Change.details[' || ? || '].aci'), json_extract(json, '$.groupV2Change.details[' || ? || '].uuid')) AS uuid,"
-                  "json_extract(json, '$.groupV2Change.details[' || ? || '].newTitle') AS title,"
-                  "json_extract(json, '$.groupV2Change.details[' || ? || '].description') AS description,"
-                  "json_extract(json, '$.groupV2Change.details[' || ? || '].avatar') AS avatar,"
-                  "json_extract(json, '$.groupV2Change.details[' || ? || '].removed') AS removed"
-                  " FROM messages WHERE rowid = ?", {i, i, i, i, i, i, i, rowid}, &res))
+                  "json_extract(json, '$.groupV2Change.details[' || ?1 || '].type') AS type,"
+                  "COALESCE(json_extract(json, '$.groupV2Change.details[' || ?1 || '].aci'), json_extract(json, '$.groupV2Change.details[' || ?1 || '].uuid')) AS uuid,"
+                  "json_extract(json, '$.groupV2Change.details[' || ?1 || '].newTitle') AS title,"
+                  "json_extract(json, '$.groupV2Change.details[' || ?1 || '].description') AS description,"
+                  "json_extract(json, '$.groupV2Change.details[' || ?1 || '].avatar') AS avatar,"
+                  "json_extract(json, '$.groupV2Change.details[' || ?1 || '].removed') AS removed"
+                  " FROM messages WHERE rowid = ?", {i, rowid}, &res))
       continue;
 
     std::string changetype = res("type");

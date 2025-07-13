@@ -156,6 +156,7 @@ class SqliteDB
   void checkDatabaseWriteVersion() const;
   inline bool getStatement(std::string_view q, sqlite3_stmt **statement) const;
   inline void setCacheSize(unsigned int size = 1);
+  static inline void configSingleThreadMode();
 
  private:
   inline bool initFromFile();
@@ -1387,6 +1388,20 @@ inline void SqliteDB::setCacheSize(unsigned int size)
         sqlite3_finalize(*it);
     d_stmt_cache.resize(d_cache_size);
   }
+}
+
+// only call this once, before any other sqlite functions,
+// subsequent calls will fail (though it shouldn't do harm).
+// Also, we don't check the return code as it could fail
+// due to options passed to configure when the systems sqlite
+// was built. If this function fails, it is completely
+// harmless, it just means sqlite will do some unnessecary
+// mutex locking.
+inline void SqliteDB::configSingleThreadMode() //static
+{
+  sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
+  // if (sqlite3_config(SQLITE_CONFIG_SINGLETHREAD) != SQLITE_OK) [[unlikely]]
+  //   Logger::warning("FAILED TO SET SINGLE THREAD MODE ON SQLITE");
 }
 
 // inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)
