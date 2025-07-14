@@ -41,7 +41,7 @@ bool DesktopDatabase::getKeyFromEncrypted_mac_linux()
     return false;
   };
 #if defined(__APPLE__) && defined(__MACH__)
-  bool beta = d_databasedir.contains("Signal Beta");
+  bool beta = d_databasedir.find("Signal Beta") != std::string::npos;
   getSecrets_mac(&secrets, beta);
   if (tryDecrypt())
     return true;

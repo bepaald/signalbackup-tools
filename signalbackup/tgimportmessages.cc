@@ -66,7 +66,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
   // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
-  if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, file, media_type, mime_type, contact_vcard, reactions, poll FROM messages "
+  if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, "
+               "file, media_type, mime_type, contact_vcard, reactions, delivery_receipts, poll FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
                chat_idx, &message_data))
@@ -91,10 +92,11 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
     if (message_data.valueAsString(i, "type") == "message")
     {
-      // prepend notice to forwarded message
       std::string bodyjson = message_data(i, "body");
       std::string reactionsjson = message_data(i, "reactions");
+      std::string delivery_receiptsjson = message_data(i, "delivery_receipts");
 
+      // prepend notice to forwarded message
       if (prependforwarded && !message_data.isNull(i, "forwarded_from"))
       {
         //Logger::message("Body json before: ", bodyjson);
@@ -129,8 +131,12 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       bool incoming = from_recid != d_selfid;
       long long int address = !isgroup ? from_recid : (incoming ? from_recid : thread_recipient_id);
 
+      long long int msg_timestamp = message_data.valueAsInt(i, "date");
+      if (msg_timestamp < 100000000000) // only 11 digits (max), timestamp is likely in seconds instead of milliseconds
+        msg_timestamp *= 1000;
+
       // check if we need to merge message
-      if (message_data.valueAsInt(i, "date") == prevtimestamp_to_id.first &&
+      if (msg_timestamp == prevtimestamp_to_id.first &&
           body.empty() &&
           message_data.isNull(i, "reply_to_id") &&
           (!message_data(i, "file").empty() || !message_data(i, "photo").empty()) &&
@@ -145,8 +151,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       }
 
       // make sure date/from/thread is available
-      long long int date = message_data.valueAsInt(i, "date") * 1000;
-      long long int freedate = getFreeDateForMessage(date, thread_id, incoming ? address : d_selfid);
+      long long int freedate = getFreeDateForMessage(msg_timestamp, thread_id, incoming ? address : d_selfid);
       if (freedate == -1)
       {
         Logger::error("Getting free date for inserting message into mms");
@@ -192,6 +197,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
           Logger::warning("Failed to set attachment on otherwise empty message. Deleting message...");
           if (d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id))
             msg_deleted = true;
+          continue;
         }
         else
           Logger::warning("Failed to set attachment");
@@ -202,7 +208,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       telegram_msg_id_to_adb_msg_id[message_data.valueAsInt(i, "id")] = new_msg_id;
 
       // save message timestamp and id
-      prevtimestamp_to_id = {message_data.valueAsInt(i, "date"), new_msg_id};
+      prevtimestamp_to_id = {msg_timestamp, new_msg_id};
 
       // deal with quotes
       if (!message_data.isNull(i, "reply_to_id"))
@@ -233,6 +239,14 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         Logger::warning("failed to add reactions to message");
         continue;
       }
+
+      // add delivery receipts
+      if (!incoming)
+        if (!tgSetDeliveryReceipts(delivery_receiptsjson, new_msg_id, contactmap, isgroup))
+        {
+          Logger::warning("failed to add reactions to message");
+          continue;
+        }
 
       if (!msg_deleted &&
           d_database.getSingleResultAs<std::string>("SELECT body FROM " + d_mms_table + " WHERE _id = ?", new_msg_id, std::string()).empty() && // no message body

@@ -569,6 +569,9 @@ class SignalBackup
   bool tgSetBodyRanges(std::string const &bodyjson, long long int message_id) const;
   bool tgSetReactions(std::string const &reactionsjson, long long int new_msg_id,
                       std::vector<std::pair<std::vector<std::string>, long long int>> const &stdcontactmap) const;
+  bool tgSetDeliveryReceipts(std::string const &reactionsjson, long long int new_msg_id,
+                             std::vector<std::pair<std::vector<std::string>, long long int>> const &stdcontactmap,
+                             bool isgroup) const;
   bool tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
                        long long int r, long long int new_msg_id);
   bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
