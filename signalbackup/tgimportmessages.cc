@@ -67,7 +67,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
   if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, "
-               "file, media_type, mime_type, contact_vcard, reactions, delivery_receipts, poll FROM messages "
+               "file, media_type, mime_type, contact_vcard, reactions, delivery_receipts, location, poll "
+               "FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
                chat_idx, &message_data))
@@ -156,6 +157,20 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       {
         Logger::error("Getting free date for inserting message into mms");
         continue;
+      }
+
+      // append location data if available
+      if (!message_data(i, "location").empty())
+      {
+        std::string lng = d_database.getSingleResultAs<std::string>("SELECT CAST(json_extract(?, '$.longitude') AS TEXT)", message_data.value(i, "location"), std::string());
+        std::string lat = d_database.getSingleResultAs<std::string>("SELECT CAST(json_extract(?, '$.latitude') AS TEXT)", message_data.value(i, "location"), std::string());
+        if (!lng.empty() && !lat.empty())
+        {
+          std::string location("https://maps.google.com/maps?q=" + lat + "%2C" + lng);
+          if (!body.empty())
+            body += '\n';
+          body += location;
+        }
       }
 
       // insert message

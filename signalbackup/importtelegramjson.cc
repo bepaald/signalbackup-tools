@@ -26,7 +26,7 @@
   - underline style is not supported by signal
   - stickers turn into normal attachments?
   - 'forwarded from' is not an existing attribute in signal
-  - message reaction are not exported by Telegram
+  - !! NOTE -> THIS IS NO LONGER TRUE, THIS IS NOW A TO-DO !! message reaction are not exported by Telegram
   - poll-attachments skipped
 
  */
