@@ -568,7 +568,8 @@ class SignalBackup
   std::string tgBuildBody(std::string const &bodyjson) const;
   bool tgSetBodyRanges(std::string const &bodyjson, long long int message_id) const;
   bool tgSetReactions(std::string const &reactionsjson, long long int new_msg_id,
-                      std::vector<std::pair<std::vector<std::string>, long long int>> const &stdcontactmap) const;
+                      std::vector<std::pair<std::vector<std::string>, long long int>> const &stdcontactmap,
+                      bool custom) const;
   bool tgSetDeliveryReceipts(std::string const &reactionsjson, long long int new_msg_id,
                              std::vector<std::pair<std::vector<std::string>, long long int>> const &stdcontactmap,
                              bool isgroup) const;

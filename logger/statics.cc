@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,4 +19,4 @@
 
 #include "logger.h"
 
-std::unique_ptr<Logger> Logger::s_instance(nullptr);
+std::unique_ptr<Logger> Logger::s_instance(new Logger);

@@ -55,37 +55,26 @@ bool SignalBackup::tgSetDeliveryReceipts(std::string const &deliveryreportjson, 
 
   //std::cout << deliveryreportjson << std::endl;
 
-  long long int numreports = d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", deliveryreportjson, -1);
-  if (numreports == -1) [[unlikely]]
-  {
-    Logger::error("Failed to get number of deliveryreports from json string");
+  SqliteDB::QueryResults deliverystatuses_results;
+  if (!d_database.exec("SELECT "
+                       "json_extract(value, '$.recipient') AS recipient,"
+                       "json_extract(value, '$.timestamp') AS timestamp,"
+                       "json_extract(value, '$.status') AS status "
+                       "FROM json_each(?)", deliveryreportjson, &deliverystatuses_results)) [[unlikely]]
     return false;
-  }
 
-  if (numreports == 0) [[unlikely]] // is this even possible?
-    return true;
+  //deliverystatuses_results.prettyPrint(false);
 
-  for (unsigned int i = 0; i < numreports; ++i)
+  for (unsigned int i = 0; i < deliverystatuses_results.rows(); ++i)
   {
-    SqliteDB::QueryResults deliverystatus_results;
-    if (!d_database.exec("SELECT "
-                         "json_extract(?1, '$[' || ?2 || '].recipient') AS recipient,"
-                         "json_extract(?1, '$[' || ?2 || '].timestamp') AS timestamp,"
-                         "json_extract(?1, '$[' || ?2 || '].status') AS status",
-                         {deliveryreportjson, i}, &deliverystatus_results) ||
-        deliverystatus_results.rows() != 1)
-      return false;
-
-    //deliverystatus_results.prettyPrint(false);
-
-    long long int recipientid = find_in_contactmap(deliverystatus_results("recipient"));
+    long long int recipientid = find_in_contactmap(deliverystatuses_results(i, "recipient"));
     if (recipientid == -1) [[unlikely]]
     {
-      Logger::error("Failed to map reaction author '", deliverystatus_results("recipient"), "' to id in Android backup");
+      Logger::error("Failed to map reaction author '", deliverystatuses_results(i, "recipient"), "' to id in Android backup");
       return false;
     }
 
-    long long int timestamp = deliverystatus_results.valueAsInt(0, "timestamp", -1);
+    long long int timestamp = deliverystatuses_results.valueAsInt(i, "timestamp", -1);
     if (timestamp == -1) [[unlikely]]
     {
       if (isgroup)
@@ -98,7 +87,7 @@ bool SignalBackup::tgSetDeliveryReceipts(std::string const &deliveryreportjson, 
     else if (timestamp < 100000000000) // only 11 digits (max), timestamp is likely in seconds instead of milliseconds
       timestamp *= 1000;
 
-    std::string delivery_status = deliverystatus_results(0, "status");
+    std::string delivery_status = deliverystatuses_results(i, "status");
 
     if (delivery_status == "failed") [[unlikely]]
     {

@@ -67,7 +67,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
   // loop over messages from requested chat and insert
   SqliteDB::QueryResults message_data;
   if (!db.exec("SELECT type, date, from_id, forwarded_from, body, id, reply_to_id, photo, width, height, "
-               "file, media_type, mime_type, contact_vcard, reactions, delivery_receipts, location, poll "
+               "file, media_type, mime_type, contact_vcard, reactions, custom_reactions, custom_delivery_receipts, "
+               "location, poll "
                "FROM messages "
                "WHERE chatidx = ? "
                "ORDER BY date ASC",
@@ -95,7 +96,8 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
     {
       std::string bodyjson = message_data(i, "body");
       std::string reactionsjson = message_data(i, "reactions");
-      std::string delivery_receiptsjson = message_data(i, "delivery_receipts");
+      std::string custom_reactionsjson = message_data(i, "custom_reactions");
+      std::string custom_delivery_receiptsjson = message_data(i, "custom_delivery_receipts");
 
       // prepend notice to forwarded message
       if (prependforwarded && !message_data.isNull(i, "forwarded_from"))
@@ -249,15 +251,26 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       }
 
       // add reactions
-      if (!tgSetReactions(reactionsjson, new_msg_id, contactmap))
+      if (!custom_reactionsjson.empty())
       {
-        Logger::warning("failed to add reactions to message");
-        continue;
+        if (!tgSetReactions(custom_reactionsjson, new_msg_id, contactmap, true /*custom*/))
+        {
+          Logger::warning("failed to add reactions to message");
+          continue;
+        }
+      }
+      else if (!reactionsjson.empty()) // only do these if custom was not provided
+      {
+        if (!tgSetReactions(reactionsjson, new_msg_id, contactmap, false /*custom*/))
+        {
+          Logger::warning("failed to add reactions to message");
+          continue;
+        }
       }
 
       // add delivery receipts
       if (!incoming)
-        if (!tgSetDeliveryReceipts(delivery_receiptsjson, new_msg_id, contactmap, isgroup))
+        if (!tgSetDeliveryReceipts(custom_delivery_receiptsjson, new_msg_id, contactmap, isgroup))
         {
           Logger::warning("failed to add reactions to message");
           continue;

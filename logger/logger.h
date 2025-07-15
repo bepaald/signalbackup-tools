@@ -134,7 +134,7 @@ class Logger
   inline ~Logger();
  private:
   inline Logger();
-  inline static void ensureLogger();
+  //inline static void ensureLogger();
   static void firstUse();
   static std::ostream &dispTime(std::ostream &stream);
   inline static void messagePre();
@@ -210,15 +210,15 @@ inline Logger::~Logger()
   }
 }
 
-inline void Logger::ensureLogger() // static
-{
-  if (!s_instance.get()) [[unlikely]]
-    s_instance.reset(new Logger);
-}
+// inline void Logger::ensureLogger() // static
+// {
+//   if (!s_instance.get()) [[unlikely]]
+//     s_instance.reset(new Logger);
+// }
 
 inline void Logger::messagePre() //static
 {
-  ensureLogger();
+  //ensureLogger();
   firstUse();
 
   if (s_instance->d_overwriting) [[unlikely]]
@@ -246,7 +246,7 @@ inline void Logger::messagePre() //static
 
 inline void Logger::setFile(std::string const &f) // static
 {
-  ensureLogger();
+  //ensureLogger();
   if (s_instance->d_file)
     return;
 
@@ -261,7 +261,7 @@ inline void Logger::setFile(std::string const &f) // static
 
 inline void Logger::setTimestamp(bool val) // static
 {
-  ensureLogger();
+  //ensureLogger();
   s_instance->d_usetimestamps = val;
   firstUse();
 }
@@ -269,7 +269,7 @@ inline void Logger::setTimestamp(bool val) // static
 template <typename First, typename... Rest>
 inline void Logger::message_overwrite(First const &f, Rest const &... r) // static
 {
-  ensureLogger();
+  //ensureLogger();
   firstUse();
 
   s_instance->d_overwriting = true;
@@ -563,7 +563,7 @@ inline void Logger::outputMsg(Flags flags, Control c)
 
 inline void Logger::warnOnce(std::string const &w, bool error, std::string::size_type sub_id)
 {
-  ensureLogger();
+  //ensureLogger();
   if (s_instance->d_warningsgiven.find(w.substr(0, sub_id)) == s_instance->d_warningsgiven.end())
   {
     if (error)

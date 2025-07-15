@@ -20,7 +20,8 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::tgSetReactions(std::string const &reactionsjson, long long int new_msg_id,
-                                  std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap) const
+                                  std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
+                                  bool custom) const
 {
   if (reactionsjson.empty()) [[likely]]
     return true;
@@ -43,37 +44,42 @@ bool SignalBackup::tgSetReactions(std::string const &reactionsjson, long long in
 
   //std::cout << reactionsjson << std::endl;
 
-  long long int numreactions = d_database.getSingleResultAs<long long int>("SELECT json_array_length(?, '$')", reactionsjson, -1);
-  if (numreactions == -1) [[unlikely]]
-  {
-    Logger::error("Failed to get number of reactions from json string");
+  std::string_view query(custom ?
+                         "SELECT "
+                         "json_extract(value, '$.author') AS author,"
+                         "json_extract(value, '$.emoji') AS emoji,"
+                         "json_extract(value, '$.timestamp') AS timestamp "
+                         "FROM json_each(?)" :
+                         "SELECT "
+                         "json_extract(L2.value, '$.from_id') AS author, "
+                         "json_extract(L1.value, '$.emoji') AS emoji, "
+                         "UNIXEPOCH(json_extract(L2.value, '$.date'), 'utc') AS timestamp "
+                         "FROM json_each(?) L1, json_each(json_extract(L1.value, '$.recent')) L2 "
+                         "WHERE json_extract(L1.value, '$.type') = 'emoji'");
+
+  SqliteDB::QueryResults reactions_results;
+  if (!d_database.exec(query, reactionsjson, &reactions_results)) [[unlikely]]
     return false;
-  }
 
-  if (numreactions == 0) [[unlikely]] // is this even possible?
-    return true;
+  //reactions_results.prettyPrint(false);
 
-  for (unsigned int i = 0; i < numreactions; ++i)
+  for (unsigned int i = 0; i < reactions_results.rows(); ++i)
   {
-    SqliteDB::QueryResults reaction_results;
-    if (!d_database.exec("SELECT "
-                         "json_extract(?1, '$[' || ?2 || '].author') AS author,"
-                         "json_extract(?1, '$[' || ?2 || '].timestamp') AS timestamp,"
-                         "json_extract(?1, '$[' || ?2 || '].emoji') AS emoji",
-                         {reactionsjson, i}, &reaction_results) ||
-        reaction_results.rows() != 1)
-      return false;
-
-    //reaction_results.prettyPrint(false);
-
-    long long int authorid = find_in_contactmap(reaction_results("author"));
+    long long int authorid = find_in_contactmap(reactions_results(i, "author"));
     if (authorid == -1)
     {
-      Logger::error("Failed to map reaction author '", reaction_results("author"), "' to id in Android backup");
+      Logger::error("Failed to map reaction author '", reactions_results(i, "author"), "' to id in Android backup");
       return false;
     }
 
-    long long int timestamp = reaction_results.valueAsInt(0, "timestamp", -1);
+    std::string emoji = reactions_results(i, "emoji");
+    if (emoji.empty()) [[unlikely]]
+    {
+      Logger::error("Failed to retrieve emoji from json-reaction");
+      return false;
+    }
+
+    long long int timestamp = reactions_results.valueAsInt(i, "timestamp", -1);
     if (timestamp == -1)
     {
       Logger::error("failed to get timestamp for reaction");
@@ -84,7 +90,7 @@ bool SignalBackup::tgSetReactions(std::string const &reactionsjson, long long in
 
     if (!insertRow("reaction",
                    {{"author_id", authorid},
-                    {"emoji", reaction_results.value(0, "emoji")},
+                    {"emoji", emoji},
                     {"date_sent", timestamp},
                     {"date_received", timestamp},
                     {"message_id", new_msg_id}}))
