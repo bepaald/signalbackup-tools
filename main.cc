@@ -202,7 +202,8 @@ int main(int argc, char *argv[])
                               arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                               arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
-                              arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.excludeexpiring(), arg.htmlignoremediatypes()))
+                              arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.excludeexpiring(), arg.htmlfocusend(),
+                              arg.htmlignoremediatypes()))
         return 1;
 
     if (!arg.exportdesktoptxt().empty())
@@ -236,7 +237,8 @@ int main(int argc, char *argv[])
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                             arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
-                            arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.excludeexpiring(), arg.htmlignoremediatypes()))
+                            arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.excludeexpiring(), arg.htmlfocusend(),
+                            arg.htmlignoremediatypes()))
       return 1;
   }
 
@@ -567,7 +569,7 @@ int main(int argc, char *argv[])
                         arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
                         arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames(),
                         arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(),
-                        arg.excludeexpiring(), arg.htmlignoremediatypes()))
+                        arg.excludeexpiring(), arg.htmlfocusend(), arg.htmlignoremediatypes()))
       return 1;
 
   if (!arg.exporttxt().empty())

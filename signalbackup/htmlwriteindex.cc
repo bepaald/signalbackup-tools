@@ -28,7 +28,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
                                       std::string const &exportdetails, long long int chatfolder_idx,
                                       std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders,
-                                      bool excludeexpiring, bool compact) const
+                                      bool excludeexpiring, std::map<int, int> const &tid_pagecount_map, bool compact) const
 {
   std::string filename(sanitizeFilename(basename, d_aggressive_filename_sanitizing) + ".html");
 
@@ -1188,10 +1188,18 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     }
     HTMLescapeUrl(&convo_url_path);
 
-    std::string convo_url_location(sanitizeFilename(raw_convo_url_path, d_aggressive_filename_sanitizing) + ".html");
+    int lastpageidx = -1;
+    auto it = tid_pagecount_map.find(t_id);
+    if (it != tid_pagecount_map.end())
+      lastpageidx = it->second - 1;
+
+    std::string convo_url_location(sanitizeFilename(raw_convo_url_path, d_aggressive_filename_sanitizing) + (lastpageidx <= 0 ? "" : "_" + bepaald::toString(lastpageidx)) + ".html");
     if (compact) [[unlikely]]
-      convo_url_location = "0.html";
+      convo_url_location = (lastpageidx <= 0 ? "0" : bepaald::toString(lastpageidx)) + ".html";
     HTMLescapeUrl(&convo_url_location);
+
+    if (lastpageidx != -1)
+      convo_url_location.append("#pagebottom");
 
     if (convo_url_location == ".html") [[unlikely]]
     {
@@ -1199,7 +1207,6 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                     getRecipientInfoFromMap(recipient_info, rec_id).display_name, "'");
       return false;
     }
-
 
     // if (t_id == 11)
     // {

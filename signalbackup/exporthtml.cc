@@ -37,7 +37,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
                               bool compact, bool pagemenu, bool aggressive_sanitizing, bool excludeexpiring,
-                              std::vector<std::string> const &ignoremediatypes)
+                              bool focusend, std::vector<std::string> const &ignoremediatypes)
 {
   Logger::message("Starting HTML export to '", directory, "'");
 
@@ -92,7 +92,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                         threadIds() : limittothreads);
   std::vector<long long int> excludethreads; // threads excluded by limittodates...
 
-  std::map<long long int, RecipientInfo> recipient_info;
+  std::map<long long int, RecipientInfo> rid_recipientinfo_map;
 
   // set where-clause for date requested
   std::vector<std::pair<std::string, std::string>> dateranges;
@@ -183,6 +183,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       options += "<br>--split " + bepaald::toString(split);
     if (!splitby.empty())
       options += "<br>--split-by " + splitby;
+    if (focusend)
+      options += "<br>--htmlfocusend";
     if (receipts)
       options += "<br>--includereceipts";
     if (calllog)
@@ -268,6 +270,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       Logger::warning("Ignoring invalid 'split-by'-value ('", splitby, "')");
   }
 
+  std::map<int, int> thread_pagecount_map; // maps the number of pages for each thread.
+
   for (unsigned int t_idx = 0; t_idx < threads.size(); ++t_idx)
   {
     int t = threads[t_idx];
@@ -307,7 +311,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     if (groupcheck.rows())
       isgroup = true;
 
-    std::map<int64_t, std::pair<std::string, int64_t>> quotemap; // maps date_sent (=quote_id) of quoted message to page it is on and _id of message.
+    std::map<int64_t, std::pair<std::string, int64_t>> quoteid_page_and_msgid_map; // maps date_sent (=quote_id) of quoted message to page it is on and _id of message.
 
     // now get all messages
     SqliteDB::QueryResults messages;
@@ -355,19 +359,19 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     std::set<long long int> all_recipients_ids = getAllThreadRecipients(t);
 
     //try to set any missing info on recipients
-    setRecipientInfo(all_recipients_ids, &recipient_info);
+    setRecipientInfo(all_recipients_ids, &rid_recipientinfo_map);
 
-    //for (auto const &ri : recipient_info)
+    //for (auto const &ri : rid_recipientinfo_map)
     //  std::cout << ri.first << ": " << ri.second.display_name << std::endl;
 
     // get conversation name, sanitize it and create dir
-    if (recipient_info.find(thread_recipient_id) == recipient_info.end())
+    if (rid_recipientinfo_map.find(thread_recipient_id) == rid_recipientinfo_map.end())
     {
       Logger::error("Failed set recipient info for thread (", t, ")... skipping");
       continue;
     }
 
-    std::string basethreaddir(is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
+    std::string basethreaddir(is_note_to_self ? "Note to Self" : rid_recipientinfo_map[thread_recipient_id].display_name);
     WIN_LIMIT_FILENAME_LENGTH(basethreaddir);
     std::string threaddir(sanitizeFilename(basethreaddir, d_aggressive_filename_sanitizing) + " (_id"s + bepaald::toString(thread_id) + ")");
     if (compact) [[unlikely]]
@@ -404,7 +408,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
 
     // now append messages to html
-    std::map<long long int, std::string> written_avatars; // maps recipient_ids to the path of a written avatar file.
+    std::map<long long int, std::string> rid_writtenavatarpath_map; // maps recipient_ids to the path of a written avatar file.
     unsigned int messagecount = 0; // current message
     unsigned int max_msg_per_page = messages.rows();
     int pagenumber = 0; // current page
@@ -431,6 +435,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       for (int p = 0; p < totalpages; ++p)
         split_page_names.emplace_back("Page " + bepaald::toString(p + 1));
 
+    if (focusend)
+      thread_pagecount_map.emplace_hint(thread_pagecount_map.end(), t, totalpages);
 
     // std::cout << "Split: " << split << std::endl;
     // std::cout << "N MSG: " << messages.rows() << std::endl;
@@ -447,7 +453,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       std::string previous_period_split_string(messages(messagecount, "periodsplit"));
       std::string previous_day_change;
       // create output-file
-      std::string raw_base_filename = (is_note_to_self ? "Note to Self" : recipient_info[thread_recipient_id].display_name);
+      std::string raw_base_filename = (is_note_to_self ? "Note to Self" : rid_recipientinfo_map[thread_recipient_id].display_name);
       WIN_LIMIT_FILENAME_LENGTH(raw_base_filename);
       std::string sanitized_base_filename(sanitizeFilename(raw_base_filename, d_aggressive_filename_sanitizing));
       std::string filename(sanitized_base_filename + (pagenumber > 0 ? "_" + bepaald::toString(pagenumber) : "") + ".html");
@@ -468,7 +474,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
-                     is_releasechannel, all_recipients_ids, &recipient_info, &written_avatars, overwrite,
+                     is_releasechannel, all_recipients_ids, &rid_recipientinfo_map, &rid_writtenavatarpath_map, overwrite,
                      append, lighttheme, themeswitching, searchpage, addexportdetails, pagemenu && totalpages > 1);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
              messages(messagecount, "periodsplit") == previous_period_split_string)
@@ -580,12 +586,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
               !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                 messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras")))
             body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
-                                       type, getRecipientInfoFromMap(&recipient_info, target_rid).display_name, &icon);
+                                       type, getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &icon);
           else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                    messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))
             body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
                                        messages.getValueAs<long long int>(messagecount, "expires_in"), type,
-                                       getRecipientInfoFromMap(&recipient_info, target_rid).display_name, &icon);
+                                       getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &icon);
         }
 
         // prep body (scan emoji? -> in <span>) and handle mentions...
@@ -599,7 +605,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (!messages.isNull(messagecount, d_mms_ranges))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
 
-        bool only_emoji = HTMLprepMsgBody(&body, mentions, &recipient_info, incoming, brdata, linkify, false /*isquote*/);
+        bool only_emoji = HTMLprepMsgBody(&body, mentions, &rid_recipientinfo_map, incoming, brdata, linkify, false /*isquote*/);
 
         bool nobackground = false;
         if ((only_emoji && quote_id == 0 && !attachment_results.rows()) ||  // if no quote etc
@@ -611,7 +617,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
         if (!messages.isNull(messagecount, "quote_mentions"))
           quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
-        HTMLprepMsgBody(&quote_body, mentions, &recipient_info, incoming, quote_mentions, false /*linkify*/, true);
+        HTMLprepMsgBody(&quote_body, mentions, &rid_recipientinfo_map, incoming, quote_mentions, false /*linkify*/, true);
 
         // insert date-change message
         if (readable_date_day != previous_day_change)
@@ -666,10 +672,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                   overwrite,
                                   append,
                                   story_reply});
-        HTMLwriteMessage(htmloutput, msg_info, quotemap, &recipient_info, searchpage, receipts, ignoremediatypes);
+        HTMLwriteMessage(htmloutput, msg_info, quoteid_page_and_msgid_map, &rid_recipientinfo_map, searchpage, receipts, ignoremediatypes);
 
         if (msg_info.is_quoted)
-          quotemap.emplace(messages.valueAsInt(messagecount, d_mms_date_sent, 0), std::pair(msg_info.filename, msg_info.msg_id));
+          quoteid_page_and_msgid_map.emplace(messages.valueAsInt(messagecount, d_mms_date_sent, 0), std::pair(msg_info.filename, msg_info.msg_id));
 
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
@@ -941,15 +947,15 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       searchidx << "\n];\n";
 
     // write recipient info, maps recipient_ids to display name.
-    //std::map<long long int, RecipientInfo> recipient_info;
+    //std::map<long long int, RecipientInfo> rid_recipientinfo_map;
     searchidx << "recipient_idx = [\n";
-    for (auto r = recipient_info.begin(); r != recipient_info.end(); ++r)
+    for (auto r = rid_recipientinfo_map.begin(); r != rid_recipientinfo_map.end(); ++r)
     {
       std::string line = d_database.getSingleResultAs<std::string>("SELECT json_object('i', ?, 'dn', ?)", {r->first, r->second.display_name}, std::string());
       if (line.empty()) [[unlikely]]
         continue;
       searchidx << "  " << line;
-      if (std::next(r) != recipient_info.end()) [[likely]]
+      if (std::next(r) != rid_recipientinfo_map.end()) [[likely]]
         searchidx << ",\n";
       else
         searchidx << "\n];\n";
@@ -1066,20 +1072,20 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 #endif
 
         std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
-        HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &recipient_info, note_to_self_thread_id,
+        HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &rid_recipientinfo_map, note_to_self_thread_id,
                             calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
                             append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"),
-                            chatfolders_list, excludeexpiring, compact);
+                            chatfolders_list, excludeexpiring, thread_pagecount_map, compact);
       }
     }
   }
-  HTMLwriteIndex(indexedthreads, maxdate, directory, &recipient_info, note_to_self_thread_id,
+  HTMLwriteIndex(indexedthreads, maxdate, directory, &rid_recipientinfo_map, note_to_self_thread_id,
                  calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
                  append, lighttheme, themeswitching, exportdetails_html, chatfolders_list,
-                 excludeexpiring, compact);
+                 excludeexpiring, thread_pagecount_map, compact);
 
   if (calllog)
-    HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &recipient_info, note_to_self_thread_id,
+    HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &rid_recipientinfo_map, note_to_self_thread_id,
                      overwrite, append, lighttheme, themeswitching, exportdetails_html, compact);
 
   if (searchpage)
@@ -1089,11 +1095,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     HTMLwriteStickerpacks(directory, overwrite, append, lighttheme, themeswitching, exportdetails_html);
 
   if (blocked)
-    HTMLwriteBlockedlist(directory, &recipient_info, overwrite, append, lighttheme, themeswitching,
+    HTMLwriteBlockedlist(directory, &rid_recipientinfo_map, overwrite, append, lighttheme, themeswitching,
                          exportdetails_html, compact);
 
   if (fullcontacts)
-    HTMLwriteFullContacts(directory, &recipient_info, overwrite, append, lighttheme, themeswitching,
+    HTMLwriteFullContacts(directory, &rid_recipientinfo_map, overwrite, append, lighttheme, themeswitching,
                           exportdetails_html, compact);
 
   if (settings)

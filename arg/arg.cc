@@ -52,8 +52,8 @@ Arg::Arg(int argc, char *argv[])
   d_listjsonchats(std::string()),
   d_importtelegram(std::string()),
   d_split_by(std::string()),
-  d_exporttxt(std::string()),
   d_exportdesktoptxt(std::string()),
+  d_exporttxt(std::string()),
   d_passphrase(std::string()),
   d_dumpdesktopdb(std::string()),
   d_sourcepassphrase(std::string()),
@@ -122,6 +122,7 @@ Arg::Arg(int argc, char *argv[])
   d_jsonmarkread(false),
   d_xmlmarkdelivered(true),
   d_reordermmssmsids(false),
+  d_autolimitdates(false),
   d_importfromdesktop(false),
   d_scramble(false),
   d_showdbinfo(false),
@@ -131,7 +132,7 @@ Arg::Arg(int argc, char *argv[])
   d_dbusverbose(false),
   d_verbose(false),
   d_stoponerror(false),
-  d_autolimitdates(false),
+  d_ignorewal(false),
   d_showprogress(true),
   d_listrecipients(false),
   d_listthreads(false),
@@ -141,16 +142,17 @@ Arg::Arg(int argc, char *argv[])
   d_excludestickers(false),
   d_showdesktopkey(false),
   d_assumebadframesizeonbadmac(false),
-  d_themeswitching(false),
+  d_searchpage(false),
   d_importdesktopcontacts(false),
   d_addincompletedataforhtmlexport(false),
+  d_htmlfocusend(false),
   d_originalfilenames(false),
   d_excludeexpiring(false),
   d_chatfolders(false),
   d_includereceipts(false),
   d_stickerpacks(false),
-  d_searchpage(false),
   d_light(false),
+  d_themeswitching(false),
   d_includefullcontactlist(false),
   d_includesettings(false),
   d_includeblockedlist(false),
@@ -159,7 +161,6 @@ Arg::Arg(int argc, char *argv[])
   d_interactive(false),
   d_checkdbintegrity(false),
   d_includemms(true),
-  d_ignorewal(false),
   d_input_required(false),
   d_replaceattachments_bool(false),
   d_split_bool(false),
@@ -538,6 +539,19 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
+    if (option == "--exportdesktoptxt")
+    {
+      if (i < argsize - 1)
+      {
+        d_exportdesktoptxt = std::move(arguments[++i]);
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
     if (option == "--exporttxt")
     {
       if (i < argsize - 1)
@@ -550,19 +564,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
         ok = false;
       }
       d_input_required = true;
-      continue;
-    }
-    if (option == "--exportdesktoptxt")
-    {
-      if (i < argsize - 1)
-      {
-        d_exportdesktoptxt = std::move(arguments[++i]);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
       continue;
     }
     if (option == "-p" || option == "--passphrase" || option == "--password")
@@ -1524,6 +1525,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_reordermmssmsids = false;
       continue;
     }
+    if (option == "--autolimitdates")
+    {
+      d_autolimitdates = true;
+      continue;
+    }
+    if (option == "--no-autolimitdates")
+    {
+      d_autolimitdates = false;
+      continue;
+    }
     if (option == "--importfromdesktop")
     {
       d_importfromdesktop = true;
@@ -1619,14 +1630,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_stoponerror = false;
       continue;
     }
-    if (option == "--autolimitdates")
+    if (option == "--ignorewal")
     {
-      d_autolimitdates = true;
+      d_ignorewal = true;
       continue;
     }
-    if (option == "--no-autolimitdates")
+    if (option == "--no-ignorewal")
     {
-      d_autolimitdates = false;
+      d_ignorewal = false;
       continue;
     }
     if (option == "--showprogress")
@@ -1721,14 +1732,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_assumebadframesizeonbadmac = false;
       continue;
     }
-    if (option == "--themeswitching")
+    if (option == "--searchpage")
     {
-      d_themeswitching = true;
+      d_searchpage = true;
       continue;
     }
-    if (option == "--no-themeswitching")
+    if (option == "--no-searchpage")
     {
-      d_themeswitching = false;
+      d_searchpage = false;
       continue;
     }
     if (option == "--importdesktopcontacts")
@@ -1749,6 +1760,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-addincompletedataforhtmlexport")
     {
       d_addincompletedataforhtmlexport = false;
+      continue;
+    }
+    if (option == "--htmlfocusend")
+    {
+      d_htmlfocusend = true;
+      continue;
+    }
+    if (option == "--no-htmlfocusend")
+    {
+      d_htmlfocusend = false;
       continue;
     }
     if (option == "--originalfilenames")
@@ -1801,16 +1822,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_stickerpacks = false;
       continue;
     }
-    if (option == "--searchpage")
-    {
-      d_searchpage = true;
-      continue;
-    }
-    if (option == "--no-searchpage")
-    {
-      d_searchpage = false;
-      continue;
-    }
     if (option == "--light")
     {
       d_light = true;
@@ -1819,6 +1830,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-light")
     {
       d_light = false;
+      continue;
+    }
+    if (option == "--themeswitching")
+    {
+      d_themeswitching = true;
+      continue;
+    }
+    if (option == "--no-themeswitching")
+    {
+      d_themeswitching = false;
       continue;
     }
     if (option == "--includefullcontactlist")
@@ -1900,16 +1921,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-includemms")
     {
       d_includemms = false;
-      continue;
-    }
-    if (option == "--ignorewal")
-    {
-      d_ignorewal = true;
-      continue;
-    }
-    if (option == "--no-ignorewal")
-    {
-      d_ignorewal = false;
       continue;
     }
     if (option == "--allhtmlpages")
