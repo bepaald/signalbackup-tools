@@ -140,6 +140,8 @@ R"*(
                                          browsers, such as `video/3gpp'.
    --excludeexpiring                     Optional modifier for `--exporthtml'. Excludes all messages with
                                          an active expiration timer from being exported.
+   --htmlfocusend                        Optional modifier for `--exporthtml'. Causes the conversations to
+                                         open focused on the newest message instead of the oldest.
    --allhtmlpages                        Optional modifier for `--exporthtml'. Convenience option that
                                          enables all the modifying options for `--exporthtml' listed below.
    --themeswitching                      Optional modifier for `--exporthtml'. Adds a button to the HTML
