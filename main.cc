@@ -35,10 +35,9 @@
 #include "signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 #include "jsondatabase/jsondatabase.h"
 #include "dummybackup/dummybackup.h"
+//#include "adbbackupdatabase/adbbackupdatabase.h"
 
-#if __has_include("autoversion.h")
 #include "autoversion.h"
-#endif
 
 int main(int argc, char *argv[])
 {
@@ -86,6 +85,9 @@ int main(int argc, char *argv[])
     arg.usage();
     return 0;
   }
+
+  // AdbBackupDatabase temp("/home/svandijk/logs/lucient/signal 2017-04-19/", std::string(), true);
+  // return 0;
 
   SqliteDB::configSingleThreadMode();
 

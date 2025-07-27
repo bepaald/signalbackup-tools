@@ -23,6 +23,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <optional>
 
 #include "../logger/logger.h"
 #include "../common_be.h"
@@ -108,6 +109,17 @@ class XmlDocument
   inline bool ok() const;
   inline void print() const;
   inline Node const &root() const;
+  inline std::optional<std::string> getTextContentsFromNode(int idx, std::string const &nodename,
+                                                            std::vector<std::pair<std::string, std::string>> const &attribute_value_pairs = {},
+                                                            Node const *startnode = nullptr) const;
+  inline std::optional<std::string> getAttributeValueFromNode(std::string const &attribute, std::string const &nodename,
+                                                              std::vector<std::pair<std::string, std::string>> const &attribute_value_pairs = {},
+                                                              Node const *startnode = nullptr) const;
+
+ private:
+  inline Node const *getMatchingNode(std::string const &nodename,
+                                     std::vector<std::pair<std::string, std::string>> const &attribute_value_pairs,
+                                     Node const *startnode, int idx, std::optional<std::string> const &attribute = std::optional<std::string>()) const;
 };
 
 inline XmlDocument::Node::Node(Node *parent)
@@ -206,6 +218,66 @@ inline void XmlDocument::print() const
 inline XmlDocument::Node const &XmlDocument::root() const
 {
   return d_rootnode;
+}
+
+
+// this is a bit of a strange one, not always very useful...
+inline std::optional<std::string> XmlDocument::getTextContentsFromNode(int idx, std::string const &nodename,
+                                                                       std::vector<std::pair<std::string, std::string>> const &attribute_value_pairs,
+                                                                       Node const *startnode) const
+{
+  if (!startnode)
+    startnode = &d_rootnode;
+
+  Node const *node = getMatchingNode(nodename, attribute_value_pairs, startnode, idx);
+
+  if (node)
+    return node->d_children[idx].d_value;
+  return std::optional<std::string>();
+}
+
+inline std::optional<std::string> XmlDocument::getAttributeValueFromNode(std::string const &attribute, std::string const &nodename,
+                                                                         std::vector<std::pair<std::string, std::string>> const &attribute_value_pairs, Node const *startnode) const
+{
+  if (!startnode)
+    startnode = &d_rootnode;
+
+  Node const *node = getMatchingNode(nodename, attribute_value_pairs, startnode, -1, attribute);
+
+  if (node)
+    return node->getAttribute(attribute);
+  return std::optional<std::string>();
+}
+
+inline XmlDocument::Node const *XmlDocument::getMatchingNode(std::string const &nodename,
+                                                             std::vector<std::pair<std::string, std::string>> const &attribute_value_pairs,
+                                                             Node const *startnode, int idx, std::optional<std::string> const &attribute) const
+{
+  if (startnode->d_name == nodename &&
+      ((attribute && startnode->hasAttribute(attribute.value())) ||
+       (!attribute && static_cast<int>(startnode->d_children.size()) > idx && startnode->d_children[idx].isTextNode())))
+  {
+    bool match = true;
+    for (auto const &[att, value] : attribute_value_pairs)
+    {
+      if (!startnode->hasAttribute(att) ||
+          startnode->getAttribute(att) != value)
+      {
+        match = false;
+        break;
+      }
+    }
+    if (match)
+      return startnode;
+  }
+
+  for (auto const &child : startnode->d_children)
+  {
+    Node const *const matchingnode = getMatchingNode(nodename, attribute_value_pairs, &child, idx, attribute);
+    if (matchingnode)
+      return matchingnode;
+  }
+  return nullptr;
 }
 
 #endif

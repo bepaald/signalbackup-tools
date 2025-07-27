@@ -43,11 +43,14 @@ namespace bepaald
 {
   template <typename T>
   inline T swap_endian(T u);
-  std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
-  std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
-  std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
-  std::string bytesToString(unsigned char const *data, unsigned int length);
-  std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
+  inline std::string bytesToHexString(std::pair<std::unique_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
+  inline std::string bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted = false);
+  inline std::string bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted = false);
+  inline std::string bytesToHexString(std::unique_ptr<unsigned char []> const &data, unsigned int length, bool unformatted = false);
+  inline std::string bytesToHexString(std::shared_ptr<unsigned char []> const &data, unsigned int length, bool unformatted = false);
+  inline std::string bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted = false);
+  inline std::string bytesToString(unsigned char const *data, unsigned int length);
+  inline std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
   inline bool hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize);
   inline bool hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize);
 }
@@ -75,6 +78,11 @@ inline T bepaald::swap_endian(T u)
 #endif
 }
 
+inline std::string bepaald::bytesToHexString(std::pair<std::unique_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
+{
+  return bytesToHexString(data.first.get(), data.second, unformatted);
+}
+
 inline std::string bepaald::bytesToHexString(std::pair<std::shared_ptr<unsigned char []>, unsigned int> const &data, bool unformatted)
 {
   return bytesToHexString(data.first.get(), data.second, unformatted);
@@ -83,6 +91,16 @@ inline std::string bepaald::bytesToHexString(std::pair<std::shared_ptr<unsigned 
 inline std::string bepaald::bytesToHexString(std::pair<unsigned char *, unsigned int> const &data, bool unformatted/* = false*/)
 {
   return bytesToHexString(data.first, data.second, unformatted);
+}
+
+inline std::string bepaald::bytesToHexString(std::unique_ptr<unsigned char []> const &data, unsigned int length, bool unformatted)
+{
+  return bytesToHexString(data.get(), length, unformatted);
+}
+
+inline std::string bepaald::bytesToHexString(std::shared_ptr<unsigned char []> const &data, unsigned int length, bool unformatted)
+{
+  return bytesToHexString(data.get(), length, unformatted);
 }
 
 inline std::string bepaald::bytesToHexString(unsigned char const *data, unsigned int length, bool unformatted/* = false*/)

@@ -85,9 +85,6 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
     return decryptedkey;
   }
 
-  // disable padding
-  EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
-
   // decrypt update
   int out_len = 0;
   int output_length = data_length - version_header_length;
@@ -100,31 +97,14 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
 
   // decrypt final
   int tail_len = 0;
-  int err = 0;
-  if ((err = EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len)) != 1)
+  if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1)
   {
-    Logger::error("Finalizing decryption: ", err);
+    Logger::error("Finalizing desktop key decryption.");
     return decryptedkey;
   }
   out_len += tail_len;
 
-  // all input is always padded to the _next_ multiple of 16 (64 in this case to 80)
-  // the padding bytes are always the size of the padding (see below)
-  int padding = output_length % 16;
-  int realsize = output_length - (padding ? padding : 16);
-
-  for (int i = 0; i < (padding ? padding : 16); ++i)
-    if (static_cast<int>(output[realsize + i]) != (padding ? padding : 16))
-    {
-      if (last)
-        Logger::error("Decryption appears to have failed (padding bytes have unexpected value). No more secrets to try.");
-      else
-        Logger::warning("Decryption appears to have failed (padding bytes have unexpected value), attempting next secret...");
-      decryptedkey.clear();
-      return decryptedkey;
-    }
-
-  decryptedkey = bepaald::bytesToPrintableString(output.get(), realsize);
+  decryptedkey = bepaald::bytesToPrintableString(output.get(), out_len);
   if (decryptedkey.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789") != std::string::npos)
   {
     if (last)

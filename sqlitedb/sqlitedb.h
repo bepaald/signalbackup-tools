@@ -278,12 +278,12 @@ inline bool SqliteDB::initFromFile()
   else
     initok = (sqlite3_open(d_name.c_str(), &d_db) == SQLITE_OK);
 
-  if (!initok)
+  if (!initok) [[unlikely]]
     return false;
 
   setDatabaseWriteVersion();
 
-  if (!prepareSchemaVersionStatement())
+  if (!prepareSchemaVersionStatement()) [[unlikely]]
     return false;
 
   //sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
@@ -297,12 +297,12 @@ inline bool SqliteDB::initFromMemory()
   if (sqlite3_vfs_register(d_vfs, 0) == SQLITE_OK)
     initok = (sqlite3_open_v2(MemFileDB::vfsName(), &d_db, SQLITE_OPEN_READONLY, MemFileDB::vfsName()) == SQLITE_OK);
 
-  if (!initok)
+  if (!initok) [[unlikely]]
     return false;
 
   setDatabaseWriteVersion();
 
-  if (!prepareSchemaVersionStatement())
+  if (!prepareSchemaVersionStatement()) [[unlikely]]
     return false;
 
   //sqlite3_set_authorizer(d_db, authorizer, &d_schema_changed);
