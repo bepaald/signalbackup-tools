@@ -61,7 +61,7 @@ struct Range
     //return std::tie(start, start + length, replacement) <
     //  std::tie(other.start, other.start + other.length, other.replacement);
 
-  };
+  }
 };
 
 #endif

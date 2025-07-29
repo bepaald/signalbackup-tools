@@ -44,7 +44,7 @@ class BaseAttachmentReader
 
   inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) = 0;
   // this can be overridden in attachment readers to do more cleanup if needed
-  inline virtual void clearData() {};
+  inline virtual void clearData() {}
 };
 
 template <typename T>

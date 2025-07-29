@@ -85,6 +85,8 @@ struct Types
   static uint64_t constexpr END_SESSION_BIT    = 0x400000;
   static uint64_t constexpr PUSH_MESSAGE_BIT   = 0x200000;
 
+//  long ENCRYPTION_SYMMETRIC_BIT         = 0x80000000; Deprecated
+//  long ENCRYPTION_ASYMMETRIC_BIT        = 0x40000000; Deprecated
   static uint64_t constexpr ENCRYPTION_REMOTE_NO_SESSION_BIT = 0x08000000;
 
   static uint64_t constexpr SPECIAL_TYPES_MASK                     = 0xF00000000L;

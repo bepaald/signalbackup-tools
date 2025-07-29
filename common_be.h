@@ -89,7 +89,7 @@ namespace bepaald
   inline constexpr int strlitLength(char const *str, int pos = 0);
   //inline int strlitLength(std::string const &str);
   inline constexpr int numDigits(long long int num);
-  inline std::string toDateString(std::time_t epoch, std::string const &format);
+  inline std::string toDateString(std::time_t epoch, std::string_view format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
   inline void replaceAll(std::string *in, char from, std::string const &to);
@@ -268,7 +268,7 @@ inline constexpr int bepaald::numDigits(long long int num)
   return count;
 }
 
-inline std::string bepaald::toDateString(std::time_t epoch, std::string const &format)
+inline std::string bepaald::toDateString(std::time_t epoch, std::string_view format)
 {
   int size = 32;
   char *timestr = new char[size];
@@ -277,7 +277,7 @@ inline std::string bepaald::toDateString(std::time_t epoch, std::string const &f
   // to know how large a buffer must be (considering localized fmt strings), so we check
   // and realloc. In practice, ~28 seems to be large enough for all formats this tool
   // uses.
-  while ((chars = strftime(timestr, size, format.c_str(), std::localtime(&epoch))) == 0)
+  while ((chars = strftime(timestr, size, format.data(), std::localtime(&epoch))) == 0)
   {
     delete[] timestr;
     size += size;

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -30,12 +30,12 @@ class ScopeGuard
   explicit ScopeGuard(F &&fn)
     :
     d_function(std::forward<F>(fn))
-  {};
+  {}
 
   ~ScopeGuard()
   {
     d_function();
-  };
+  }
 };
 
 #endif

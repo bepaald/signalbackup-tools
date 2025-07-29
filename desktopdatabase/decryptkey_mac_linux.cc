@@ -47,7 +47,10 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
 #endif
   if (PKCS5_PBKDF2_HMAC_SHA1(secret.data(), secret.size(), salt, salt_length, iterations, key_length, key.get()) != 1)
   {
-    Logger::error("Error deriving key from password");
+    if (last)
+      Logger::error("Error deriving key from password. No more secrets to try.");
+    else
+      Logger::warning("Error deriving key from password. Trying next secret...");
     return decryptedkey;
   }
 
@@ -74,14 +77,20 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
   if (!ctx)
   {
-    Logger::error("Failed to create decryption context");
+    if (last)
+      Logger::error("Failed to create decryption context. No more secrets to try.");
+    else
+      Logger::warning("Failed to create decryption context. Trying next secret...");
     return decryptedkey;
   }
 
   // init decrypt
-  if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, key.get(), iv)) [[unlikely]]
+  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, key.get(), iv) != 1) [[unlikely]]
   {
-    Logger::error("Failed to initialize decryption operation");
+    if (last)
+      Logger::error("Failed to initialize decryption operation. No more secrets to try.");
+    else
+      Logger::warning("Failed to initialize decryption operation. Trying next secret...");
     return decryptedkey;
   }
 
@@ -91,7 +100,10 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   std::unique_ptr<unsigned char[]> output(new unsigned char[output_length]);
   if (EVP_DecryptUpdate(ctx.get(), output.get(), &out_len, data.get() + version_header_length, output_length) != 1)
   {
-    Logger::error("Decrypt update");
+    if (last)
+      Logger::error("Decrypt update");
+    else
+      Logger::error("Decrypt update. Trying next secret...");
     return decryptedkey;
   }
 
@@ -99,12 +111,17 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   int tail_len = 0;
   if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1)
   {
-    Logger::error("Finalizing desktop key decryption.");
+    if (last)
+      Logger::error("Finalizing desktop key decryption. No more secrets to try.");
+    else if (d_verbose) [[unlikely]]
+      Logger::warning("Finalizing desktop key decryption. Trying next secret...");
     return decryptedkey;
   }
   out_len += tail_len;
 
   decryptedkey = bepaald::bytesToPrintableString(output.get(), out_len);
+
+  // this is probably not necessary at this point, but it cant hurt
   if (decryptedkey.find_first_not_of("abcdefghijklmnopqrstuvwxyz0123456789") != std::string::npos)
   {
     if (last)
