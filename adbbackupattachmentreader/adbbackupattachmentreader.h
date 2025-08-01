@@ -28,7 +28,7 @@
 
 class FrameWithAttachment;
 
-class AdbBackupAttachmentReader : public BaseAttachmentReader
+class AdbBackupAttachmentReader : public AttachmentReader<AdbBackupAttachmentReader>
 {
   std::string d_path;
   std::unique_ptr<unsigned char[]> d_mackey;
@@ -37,19 +37,19 @@ class AdbBackupAttachmentReader : public BaseAttachmentReader
   int d_encryptionkey_length;
  public:
   inline AdbBackupAttachmentReader(std::string const &path,
-                                   unsigned char *mackey, int mackey_lengt,
-                                   unsigned char *encryptionkey, int encryptionkey_length);
+                                   unsigned char const *mackey, int mackey_lengt,
+                                   unsigned char const *encryptionkey, int encryptionkey_length);
   inline AdbBackupAttachmentReader(AdbBackupAttachmentReader const &other);
   inline AdbBackupAttachmentReader(AdbBackupAttachmentReader &&other) = default;
   inline AdbBackupAttachmentReader &operator=(AdbBackupAttachmentReader const &other);
   inline AdbBackupAttachmentReader &operator=(AdbBackupAttachmentReader &&other) = default;
   inline virtual ~AdbBackupAttachmentReader() override = default;
-  inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
+  virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
 };
 
 inline AdbBackupAttachmentReader::AdbBackupAttachmentReader(std::string const &path,
-                                                            unsigned char *mackey, int mackey_length,
-                                                            unsigned char *encryptionkey, int encryptionkey_length)
+                                                            unsigned char const *mackey, int mackey_length,
+                                                            unsigned char const *encryptionkey, int encryptionkey_length)
   :
   d_path(path),
   d_mackey_length(mackey_length),

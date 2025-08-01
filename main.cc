@@ -35,7 +35,7 @@
 #include "signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 #include "jsondatabase/jsondatabase.h"
 #include "dummybackup/dummybackup.h"
-//#include "adbbackupdatabase/adbbackupdatabase.h"
+#include "adbbackupdatabase/adbbackupdatabase.h"
 
 #include "autoversion.h"
 
@@ -86,14 +86,12 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  // AdbBackupDatabase temp("/home/svandijk/logs/lucient/signal 2017-04-19/", std::string(), true);
-  // return 0;
-
   SqliteDB::configSingleThreadMode();
 
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP  INPUT ****//
   std::unique_ptr<DesktopDatabase> ddb;
   std::unique_ptr<SignalPlaintextBackupDatabase> ptdb;
+  std::unique_ptr<AdbBackupDatabase> adbdb;
   auto initDesktopDatabase = [&]()
   {
     if (!ddb)
@@ -114,6 +112,13 @@ int main(int argc, char *argv[])
                                                    arg.mapxmladdresses(), arg.mapxmladdressesfromfile(),
                                                    arg.setcountrycode(), arg.xmlautogroupnames()));
     return ptdb->ok();
+  };
+
+  auto initAdbBackupDatabase = [&](std::string const &adbrootdir)
+  {
+    if (!adbdb)
+      adbdb.reset(new AdbBackupDatabase(adbrootdir, arg.adbpassphrase(), arg.verbose()));
+    return adbdb->ok();
   };
 
   if (!arg.generatedummy().empty())
@@ -235,6 +240,28 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.exportHtml(arg.exportplaintextbackuphtml().back(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
+                            (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
+                            arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
+                            arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
+                            arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
+                            arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(), arg.excludeexpiring(), arg.htmlfocusend(),
+                            arg.htmlignoremediatypes()))
+      return 1;
+  }
+
+  if (!arg.exportadbbackuptohtml_1().empty())
+  {
+    if (!initAdbBackupDatabase(arg.exportadbbackuptohtml_1()))
+      return 1;
+
+    DummyBackup dummydb(adbdb, arg.setselfid(), arg.verbose(), arg.truncate(), arg.showprogress());
+    if (!dummydb.ok())
+      return 1;
+
+    if (!dummydb.importFromAdbBackup(adbdb, true /*isdummy*/))
+      return 1;
+
+    if (!dummydb.exportHtml(arg.exportadbbackuptohtml_2(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
                             (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,

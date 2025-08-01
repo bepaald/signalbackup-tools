@@ -20,14 +20,13 @@
 #include "adbbackupdatabase.ih"
 
 #include <openssl/hmac.h>
+#include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <cstring>
 
 #include "../common_bytes.h"
 #include "../logger/logger.h"
 #include "../xmldocument/xmldocument.h"
-#include "../base64/base64.h"
-#include "../scopeguard/scopeguard.h"
 
 #define KEY_MATERIAL_ID 1
 #define IV_ID 2
@@ -51,16 +50,25 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
 
 
 
+  // get self phone
+  XmlDocument securesms_preferences(backupdir + "/sp/org.thoughtcrime.securesms_preferences.xml");
+  if (!securesms_preferences.ok()) [[unlikely]]
+    Logger::warning("Failed to open/parse preference file: '", backupdir, "/sp/org.thoughtcrime.securesms_preferences.xml");
+  else
+    d_selfphone = securesms_preferences.getTextContentsFromNode(0, "string", {{"name", "pref_local_number"}}).value_or(std::string());
+
+
+
+
   // set passphrase
   std::string passphrase(passphrase_given);
   if (passphrase.empty())
   {
-    XmlDocument securesms_prefs(backupdir + "/sp/org.thoughtcrime.securesms_preferences.xml");
-    if (!securesms_prefs.ok()) [[unlikely]]
+    if (!securesms_preferences.ok()) [[unlikely]]
       Logger::warning("Failed to open/parse preference file: '", backupdir, "/sp/org.thoughtcrime.securesms_preferences.xml");
     else
     {
-      std::string passphrase_disabled = securesms_prefs.getAttributeValueFromNode("value", "boolean", {{"name", "pref_disable_passphrase"}}).value_or(std::string());
+      std::string passphrase_disabled = securesms_preferences.getAttributeValueFromNode("value", "boolean", {{"name", "pref_disable_passphrase"}}).value_or(std::string());
       if (passphrase_disabled != "true")
         Logger::warning("No passphrase given (using default), but passphrase does not appear disabled in preferences");
     }
@@ -236,6 +244,26 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     Logger::message("ADB backup: Encryption secret: ", bepaald::bytesToHexString(d_encryption_secret, d_encryption_secret_length));
     Logger::message("                   Mac secret: ", bepaald::bytesToHexString(d_mac_secret, d_mac_secret_length));
   }
+
+  // SqliteDB::QueryResults res;
+  // d_db.exec("SELECT body FROM sms WHERE body IS NOT NULL", &res);
+  // for (unsigned int i = 0; i < res.rows(); ++i)
+  // {
+  //   auto body = decryptMessageBody(res(i, "body"));
+  //   if (body.has_value())
+  //     Logger::message("Body: \"", body.value(), "\"");
+  //   else
+  //     Logger::message("(nobody)");
+  // }
+  // d_db.exec("SELECT body FROM mms WHERE body IS NOT NULL", &res);
+  // for (unsigned int i = 0; i < res.rows(); ++i)
+  // {
+  //   auto body = decryptMessageBody(res(i, "body"));
+  //   if (body.has_value())
+  //     Logger::message("Body: \"", body.value(), "\"");
+  //   else
+  //     Logger::message("(nobody)");
+  // }
 
   d_ok = true;
 }

@@ -31,14 +31,11 @@
 
 class Arg
 {
-  std::array<std::string, 202> const d_alloptions{"--onlyolderthan", "--desktopdir", "--desktopdirs", "--rawdesktopdb", "--desktopkey", "--dumpmedia", "--dumpavatars", "--importcsv", "--setselfid", "--generatedummyfordesktop", "--generatedummy", "--setcountrycode", "--mapxmladdressesfromfile", "--mapxmlcontactnamesfromfile", "--onlynewerthan", "--appendbody", "--prependbody", "-l", "--logfile", "--exporthtml", "--exportdesktophtml", "--jsonshowcontactmap", "--listjsonchats", "--importtelegram", "--split-by", "--exportdesktoptxt", "--exporttxt", "-p", "--passphrase", "--dumpdesktopdb", "-sp", "--sourcepassphrase", "-s", "--source", "-op", "--opassphrase", "--exportxml", "--querymode", "-o", "--output", "-i", "--input", "--onlytype", "--mapjsoncontacts", "--croptothreadsbyname", "--croptothreads", "--replaceattachments", "--selectxmlchats", "--listxmlcontacts", "--mapxmlcontacts", "--limittodates", "--importthreads", "--importthreadsbyname", "--exportplaintextbackuphtml", "--limittothreads", "--limittothreadsbyname", "--importplaintextbackup", "--selectjsonchats", "--preventjsonmapping", "--runsqlquery", "--editattachmentsize", "--limitcontacts", "--rundtprettysqlquery", "--htmlignoremediatypes", "--rundtsqlquery", "--runprettysqlquery", "--mapcsvfields", "--croptodates", "--exportcsv", "--mergegroups", "--mergerecipients", "--onlyinthreads", "--setchatcolors", "--mapxmladdresses", "--mapxmlcontactnames", "--onlylargerthan", "--desktopdbversion", "--split", "--findrecipient", "--hiperfall", "--removedoubles", "--fulldecode", "--no-fulldecode", "--migrate_to_191", "--no-migrate_to_191", "--skipmessagereorder", "--no-skipmessagereorder", "--append", "--no-append", "--truncate", "--no-truncate", "--migratedb", "--no-migratedb", "--importstickers", "--no-importstickers", "--htmlpagemenu", "--no-htmlpagemenu", "--custom_hugogithubs", "--no-custom_hugogithubs", "--xmlmarkread", "--no-xmlmarkread", "--xmlautogroupnames", "--no-xmlautogroupnames", "--compactfilenames", "--no-compactfilenames", "--targetisdummy", "--no-targetisdummy", "--linkify", "--no-linkify", "--aggressivefilenamesanitizing", "--no-aggressivefilenamesanitizing", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--reordermmssmsids", "--no-reordermmssmsids", "--autolimitdates", "--no-autolimitdates", "--importfromdesktop", "--no-importfromdesktop", "--scramble", "--no-scramble", "--showdbinfo", "--no-showdbinfo", "--scanmissingattachments", "--no-scanmissingattachments", "-h", "--help", "--no-help", "--deleteattachments", "--no-deleteattachments", "--dbusverbose", "--no-dbusverbose", "-v", "--verbose", "--no-verbose", "--stoponerror", "--no-stoponerror", "--ignorewal", "--no-ignorewal", "--showprogress", "--no-showprogress", "--listrecipients", "--no-listrecipients", "--listthreads", "--no-listthreads", "--overwrite", "--no-overwrite", "--onlydb", "--no-onlydb", "--devcustom", "--no-devcustom", "--excludestickers", "--no-excludestickers", "--showdesktopkey", "--no-showdesktopkey", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--searchpage", "--no-searchpage", "--importdesktopcontacts", "--no-importdesktopcontacts", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--htmlfocusend", "--no-htmlfocusend", "--originalfilenames", "--no-originalfilenames", "--excludeexpiring", "--no-excludeexpiring", "--chatfolders", "--no-chatfolders", "--includereceipts", "--no-includereceipts", "--stickerpacks", "--no-stickerpacks", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--includefullcontactlist", "--no-includefullcontactlist", "--includesettings", "--no-includesettings", "--includeblockedlist", "--no-includeblockedlist", "--includecalllog", "--no-includecalllog", "--addexportdetails", "--no-addexportdetails", "--interactive", "--no-interactive", "--checkdbintegrity", "--no-checkdbintegrity", "--includemms", "--no-includemms", "--allhtmlpages"};
+  std::array<std::string, 205> const d_alloptions{"--appendbody", "--rawdesktopdb", "--desktopkey", "--dumpmedia", "--dumpavatars", "--importcsv", "--setselfid", "--generatedummyfordesktop", "--generatedummy", "--setcountrycode", "--mapxmladdressesfromfile", "--mapxmlcontactnamesfromfile", "--onlyolderthan", "--onlynewerthan", "-p", "--passphrase", "--prependbody", "-l", "--logfile", "--exporthtml", "--exportdesktophtml", "--importadbbackup", "--adbpassphrase", "--exportadbbackuptohtml", "--jsonshowcontactmap", "--listjsonchats", "--importtelegram", "--split-by", "--exportdesktoptxt", "--exporttxt", "--desktopdir", "-o", "--output", "-op", "--opassphrase", "-s", "--source", "-sp", "--sourcepassphrase", "--exportxml", "--querymode", "--desktopdirs", "--dumpdesktopdb", "-i", "--input", "--croptothreadsbyname", "--replaceattachments", "--preventjsonmapping", "--selectxmlchats", "--listxmlcontacts", "--mapxmlcontacts", "--mapjsoncontacts", "--limittodates", "--importthreadsbyname", "--croptodates", "--limittothreads", "--mergerecipients", "--croptothreads", "--exportplaintextbackuphtml", "--importplaintextbackup", "--htmlignoremediatypes", "--limittothreadsbyname", "--selectjsonchats", "--mapxmlcontactnames", "--mapcsvfields", "--limitcontacts", "--rundtprettysqlquery", "--rundtsqlquery", "--runprettysqlquery", "--runsqlquery", "--mapxmladdresses", "--importthreads", "--setchatcolors", "--onlyinthreads", "--editattachmentsize", "--exportcsv", "--onlytype", "--mergegroups", "--split", "--findrecipient", "--hiperfall", "--desktopdbversion", "--onlylargerthan", "--removedoubles", "--aggressivefilenamesanitizing", "--no-aggressivefilenamesanitizing", "--importstickers", "--no-importstickers", "--migratedb", "--no-migratedb", "--append", "--no-append", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--xmlmarkread", "--no-xmlmarkread", "--fulldecode", "--no-fulldecode", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--linkify", "--no-linkify", "--xmlautogroupnames", "--no-xmlautogroupnames", "--compactfilenames", "--no-compactfilenames", "--targetisdummy", "--no-targetisdummy", "--htmlpagemenu", "--no-htmlpagemenu", "--reordermmssmsids", "--no-reordermmssmsids", "--autolimitdates", "--no-autolimitdates", "--importfromdesktop", "--no-importfromdesktop", "--scramble", "--no-scramble", "--showdbinfo", "--no-showdbinfo", "--scanmissingattachments", "--no-scanmissingattachments", "-h", "--help", "--no-help", "--deleteattachments", "--no-deleteattachments", "--dbusverbose", "--no-dbusverbose", "-v", "--verbose", "--no-verbose", "--stoponerror", "--no-stoponerror", "--ignorewal", "--no-ignorewal", "--showprogress", "--no-showprogress", "--listrecipients", "--no-listrecipients", "--listthreads", "--no-listthreads", "--overwrite", "--no-overwrite", "--onlydb", "--no-onlydb", "--devcustom", "--no-devcustom", "--excludestickers", "--no-excludestickers", "--showdesktopkey", "--no-showdesktopkey", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--searchpage", "--no-searchpage", "--importdesktopcontacts", "--no-importdesktopcontacts", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--htmlfocusend", "--no-htmlfocusend", "--originalfilenames", "--no-originalfilenames", "--excludeexpiring", "--no-excludeexpiring", "--chatfolders", "--no-chatfolders", "--includereceipts", "--no-includereceipts", "--stickerpacks", "--no-stickerpacks", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--includefullcontactlist", "--no-includefullcontactlist", "--includesettings", "--no-includesettings", "--includeblockedlist", "--no-includeblockedlist", "--includecalllog", "--no-includecalllog", "--addexportdetails", "--no-addexportdetails", "--interactive", "--no-interactive", "--checkdbintegrity", "--no-checkdbintegrity", "--includemms", "--no-includemms", "--allhtmlpages"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
-  std::string d_onlyolderthan;
-  std::string d_desktopdir;
-  std::string d_desktopdirs_1;
-  std::string d_desktopdirs_2;
+  std::string d_appendbody;
   std::string d_rawdesktopdb;
   std::string d_desktopkey;
   std::string d_dumpmedia;
@@ -50,85 +47,92 @@ class Arg
   std::string d_setcountrycode;
   std::string d_mapxmladdressesfromfile;
   std::string d_mapxmlcontactnamesfromfile;
+  std::string d_onlyolderthan;
   std::string d_onlynewerthan;
-  std::string d_appendbody;
+  std::string d_passphrase;
   std::string d_prependbody;
   std::string d_logfile;
   std::string d_exporthtml;
   std::string d_exportdesktophtml;
+  std::string d_importadbbackup;
+  std::string d_adbpassphrase;
+  std::string d_exportadbbackuptohtml_1;
+  std::string d_exportadbbackuptohtml_2;
   std::string d_jsonshowcontactmap;
   std::string d_listjsonchats;
   std::string d_importtelegram;
   std::string d_split_by;
   std::string d_exportdesktoptxt;
   std::string d_exporttxt;
-  std::string d_passphrase;
-  std::string d_dumpdesktopdb;
-  std::string d_sourcepassphrase;
-  std::string d_source;
+  std::string d_desktopdir;
+  std::string d_output;
   std::string d_opassphrase;
+  std::string d_source;
+  std::string d_sourcepassphrase;
   std::string d_exportxml;
   std::string d_querymode;
-  std::string d_output;
+  std::string d_desktopdirs_1;
+  std::string d_desktopdirs_2;
+  std::string d_dumpdesktopdb;
   std::string d_input;
-  std::vector<std::string> d_onlytype;
-  std::vector<std::pair<std::string, long long int>> d_mapjsoncontacts;
   std::vector<std::string> d_croptothreadsbyname;
-  std::vector<long long int> d_croptothreads;
   std::vector<std::pair<std::string,std::string>> d_replaceattachments;
+  std::vector<std::string> d_preventjsonmapping;
   std::vector<std::string> d_selectxmlchats;
   std::vector<std::string> d_listxmlcontacts;
   std::vector<std::pair<std::string,long long int>> d_mapxmlcontacts;
+  std::vector<std::pair<std::string, long long int>> d_mapjsoncontacts;
   std::vector<std::string> d_limittodates;
-  std::vector<long long int> d_importthreads;
   std::vector<std::string> d_importthreadsbyname;
-  std::vector<std::string> d_exportplaintextbackuphtml;
+  std::vector<std::string> d_croptodates;
   std::vector<long long int> d_limittothreads;
-  std::vector<std::string> d_limittothreadsbyname;
+  std::vector<std::string> d_mergerecipients;
+  std::vector<long long int> d_croptothreads;
+  std::vector<std::string> d_exportplaintextbackuphtml;
   std::vector<std::string> d_importplaintextbackup;
+  std::vector<std::string> d_htmlignoremediatypes;
+  std::vector<std::string> d_limittothreadsbyname;
   std::vector<long long int> d_selectjsonchats;
-  std::vector<std::string> d_preventjsonmapping;
-  std::vector<std::string> d_runsqlquery;
-  std::vector<long long int> d_editattachmentsize;
+  std::vector<std::pair<std::string, std::string>> d_mapxmlcontactnames;
+  std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
   std::vector<std::string> d_limitcontacts;
   std::vector<std::string> d_rundtprettysqlquery;
-  std::vector<std::string> d_htmlignoremediatypes;
   std::vector<std::string> d_rundtsqlquery;
   std::vector<std::string> d_runprettysqlquery;
-  std::vector<std::pair<std::string,std::string>> d_mapcsvfields;
-  std::vector<std::string> d_croptodates;
-  std::vector<std::pair<std::string,std::string>> d_exportcsv;
-  std::vector<std::string> d_mergegroups;
-  std::vector<std::string> d_mergerecipients;
-  std::vector<long long int> d_onlyinthreads;
-  std::vector<std::pair<long long int, std::string>> d_setchatcolors;
+  std::vector<std::string> d_runsqlquery;
   std::vector<std::pair<std::string, std::string>> d_mapxmladdresses;
-  std::vector<std::pair<std::string, std::string>> d_mapxmlcontactnames;
-  long long int d_onlylargerthan;
-  long long int d_desktopdbversion;
+  std::vector<long long int> d_importthreads;
+  std::vector<std::pair<long long int, std::string>> d_setchatcolors;
+  std::vector<long long int> d_onlyinthreads;
+  std::vector<long long int> d_editattachmentsize;
+  std::vector<std::pair<std::string,std::string>> d_exportcsv;
+  std::vector<std::string> d_onlytype;
+  std::vector<std::string> d_mergegroups;
   long long int d_split;
   long long int d_findrecipient;
   long long int d_hiperfall;
+  long long int d_desktopdbversion;
+  long long int d_onlylargerthan;
   int d_removedoubles;
-  bool d_fulldecode;
-  bool d_migrate_to_191;
-  bool d_skipmessagereorder;
-  bool d_append;
-  bool d_truncate;
-  bool d_migratedb;
-  bool d_importstickers;
-  bool d_htmlpagemenu;
-  bool d_custom_hugogithubs;
-  bool d_xmlmarkread;
-  bool d_xmlautogroupnames;
-  bool d_compactfilenames;
-  bool d_targetisdummy;
-  bool d_linkify;
   bool d_aggressivefilenamesanitizing;
+  bool d_importstickers;
+  bool d_migratedb;
+  bool d_append;
   bool d_jsonprependforward;
   bool d_jsonmarkdelivered;
   bool d_jsonmarkread;
   bool d_xmlmarkdelivered;
+  bool d_xmlmarkread;
+  bool d_fulldecode;
+  bool d_custom_hugogithubs;
+  bool d_truncate;
+  bool d_skipmessagereorder;
+  bool d_migrate_to_191;
+  bool d_linkify;
+  bool d_xmlautogroupnames;
+  bool d_compactfilenames;
+  bool d_targetisdummy;
+  bool d_htmlpagemenu;
   bool d_reordermmssmsids;
   bool d_autolimitdates;
   bool d_importfromdesktop;
@@ -180,10 +184,7 @@ class Arg
   inline Arg &operator=(Arg const &other) = delete;
   inline bool ok() const;
   void usage() const;
-  inline std::string const &onlyolderthan() const;
-  inline std::string const &desktopdir() const;
-  inline std::string const &desktopdirs_1() const;
-  inline std::string const &desktopdirs_2() const;
+  inline std::string const &appendbody() const;
   inline std::string const &rawdesktopdb() const;
   inline std::string const &desktopkey() const;
   inline std::string const &dumpmedia() const;
@@ -195,91 +196,98 @@ class Arg
   inline std::string const &setcountrycode() const;
   inline std::string const &mapxmladdressesfromfile() const;
   inline std::string const &mapxmlcontactnamesfromfile() const;
+  inline std::string const &onlyolderthan() const;
   inline std::string const &onlynewerthan() const;
-  inline std::string const &appendbody() const;
+  inline std::string const &passphrase() const;
+  inline void setpassphrase(std::string const &val);
   inline std::string const &prependbody() const;
   inline std::string const &logfile() const;
   inline std::string const &exporthtml() const;
   inline std::string const &exportdesktophtml() const;
+  inline std::string const &importadbbackup() const;
+  inline std::string const &adbpassphrase() const;
+  inline std::string const &exportadbbackuptohtml_1() const;
+  inline std::string const &exportadbbackuptohtml_2() const;
   inline std::string const &jsonshowcontactmap() const;
   inline std::string const &listjsonchats() const;
   inline std::string const &importtelegram() const;
   inline std::string const &split_by() const;
   inline std::string const &exportdesktoptxt() const;
   inline std::string const &exporttxt() const;
-  inline std::string const &passphrase() const;
-  inline void setpassphrase(std::string const &val);
-  inline std::string const &dumpdesktopdb() const;
-  inline std::string const &sourcepassphrase() const;
-  inline void setsourcepassphrase(std::string const &val);
-  inline std::string const &source() const;
+  inline std::string const &desktopdir() const;
+  inline std::string const &output() const;
   inline std::string const &opassphrase() const;
   inline void setopassphrase(std::string const &val);
+  inline std::string const &source() const;
+  inline std::string const &sourcepassphrase() const;
+  inline void setsourcepassphrase(std::string const &val);
   inline std::string const &exportxml() const;
   inline std::string const &querymode() const;
-  inline std::string const &output() const;
+  inline std::string const &desktopdirs_1() const;
+  inline std::string const &desktopdirs_2() const;
+  inline std::string const &dumpdesktopdb() const;
   inline std::string const &input() const;
-  inline std::vector<std::string> const &onlytype() const;
-  inline std::vector<std::pair<std::string, long long int>> const &mapjsoncontacts() const;
   inline std::vector<std::string> const &croptothreadsbyname() const;
-  inline std::vector<long long int> const &croptothreads() const;
   inline std::vector<std::pair<std::string,std::string>> const &replaceattachments() const;
   inline bool replaceattachments_bool() const;
+  inline std::vector<std::string> const &preventjsonmapping() const;
   inline std::vector<std::string> const &selectxmlchats() const;
   inline std::vector<std::string> const &listxmlcontacts() const;
   inline std::vector<std::pair<std::string,long long int>> const &mapxmlcontacts() const;
+  inline std::vector<std::pair<std::string, long long int>> const &mapjsoncontacts() const;
   inline std::vector<std::string> const &limittodates() const;
-  inline std::vector<long long int> const &importthreads() const;
   inline std::vector<std::string> const &importthreadsbyname() const;
-  inline std::vector<std::string> const &exportplaintextbackuphtml() const;
+  inline std::vector<std::string> const &croptodates() const;
   inline std::vector<long long int> const &limittothreads() const;
-  inline std::vector<std::string> const &limittothreadsbyname() const;
+  inline std::vector<std::string> const &mergerecipients() const;
+  inline std::vector<long long int> const &croptothreads() const;
+  inline std::vector<std::string> const &exportplaintextbackuphtml() const;
   inline std::vector<std::string> const &importplaintextbackup() const;
+  inline std::vector<std::string> const &htmlignoremediatypes() const;
+  inline std::vector<std::string> const &limittothreadsbyname() const;
   inline std::vector<long long int> const &selectjsonchats() const;
-  inline std::vector<std::string> const &preventjsonmapping() const;
-  inline std::vector<std::string> const &runsqlquery() const;
-  inline std::vector<long long int> const &editattachmentsize() const;
+  inline std::vector<std::pair<std::string, std::string>> const &mapxmlcontactnames() const;
+  inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
   inline std::vector<std::string> const &limitcontacts() const;
   inline std::vector<std::string> const &rundtprettysqlquery() const;
-  inline std::vector<std::string> const &htmlignoremediatypes() const;
   inline std::vector<std::string> const &rundtsqlquery() const;
   inline std::vector<std::string> const &runprettysqlquery() const;
-  inline std::vector<std::pair<std::string,std::string>> const &mapcsvfields() const;
-  inline std::vector<std::string> const &croptodates() const;
-  inline std::vector<std::pair<std::string,std::string>> const &exportcsv() const;
-  inline std::vector<std::string> const &mergegroups() const;
-  inline std::vector<std::string> const &mergerecipients() const;
-  inline std::vector<long long int> const &onlyinthreads() const;
-  inline std::vector<std::pair<long long int, std::string>> const &setchatcolors() const;
+  inline std::vector<std::string> const &runsqlquery() const;
   inline std::vector<std::pair<std::string, std::string>> const &mapxmladdresses() const;
-  inline std::vector<std::pair<std::string, std::string>> const &mapxmlcontactnames() const;
-  inline long long int onlylargerthan() const;
-  inline long long int desktopdbversion() const;
+  inline std::vector<long long int> const &importthreads() const;
+  inline std::vector<std::pair<long long int, std::string>> const &setchatcolors() const;
+  inline std::vector<long long int> const &onlyinthreads() const;
+  inline std::vector<long long int> const &editattachmentsize() const;
+  inline std::vector<std::pair<std::string,std::string>> const &exportcsv() const;
+  inline std::vector<std::string> const &onlytype() const;
+  inline std::vector<std::string> const &mergegroups() const;
   inline long long int split() const;
   inline bool split_bool() const;
   inline long long int findrecipient() const;
   inline long long int hiperfall() const;
+  inline long long int desktopdbversion() const;
+  inline long long int onlylargerthan() const;
   inline int removedoubles() const;
   inline bool removedoubles_bool() const;
-  inline bool fulldecode() const;
-  inline bool migrate_to_191() const;
-  inline bool skipmessagereorder() const;
-  inline bool append() const;
-  inline bool truncate() const;
-  inline bool migratedb() const;
-  inline bool importstickers() const;
-  inline bool htmlpagemenu() const;
-  inline bool custom_hugogithubs() const;
-  inline bool xmlmarkread() const;
-  inline bool xmlautogroupnames() const;
-  inline bool compactfilenames() const;
-  inline bool targetisdummy() const;
-  inline bool linkify() const;
   inline bool aggressivefilenamesanitizing() const;
+  inline bool importstickers() const;
+  inline bool migratedb() const;
+  inline bool append() const;
   inline bool jsonprependforward() const;
   inline bool jsonmarkdelivered() const;
   inline bool jsonmarkread() const;
   inline bool xmlmarkdelivered() const;
+  inline bool xmlmarkread() const;
+  inline bool fulldecode() const;
+  inline bool custom_hugogithubs() const;
+  inline bool truncate() const;
+  inline bool skipmessagereorder() const;
+  inline bool migrate_to_191() const;
+  inline bool linkify() const;
+  inline bool xmlautogroupnames() const;
+  inline bool compactfilenames() const;
+  inline bool targetisdummy() const;
+  inline bool htmlpagemenu() const;
   inline bool reordermmssmsids() const;
   inline bool autolimitdates() const;
   inline bool importfromdesktop() const;
@@ -337,24 +345,9 @@ class Arg
   inline bool isOption(std::string const &str) const;
 };
 
-inline std::string const &Arg::onlyolderthan() const
+inline std::string const &Arg::appendbody() const
 {
-  return d_onlyolderthan;
-}
-
-inline std::string const &Arg::desktopdir() const
-{
-  return d_desktopdir;
-}
-
-inline std::string const &Arg::desktopdirs_1() const
-{
-  return d_desktopdirs_1;
-}
-
-inline std::string const &Arg::desktopdirs_2() const
-{
-  return d_desktopdirs_2;
+  return d_appendbody;
 }
 
 inline std::string const &Arg::rawdesktopdb() const
@@ -412,14 +405,24 @@ inline std::string const &Arg::mapxmlcontactnamesfromfile() const
   return d_mapxmlcontactnamesfromfile;
 }
 
+inline std::string const &Arg::onlyolderthan() const
+{
+  return d_onlyolderthan;
+}
+
 inline std::string const &Arg::onlynewerthan() const
 {
   return d_onlynewerthan;
 }
 
-inline std::string const &Arg::appendbody() const
+inline std::string const &Arg::passphrase() const
 {
-  return d_appendbody;
+  return d_passphrase;
+}
+
+inline void Arg::setpassphrase(std::string const &val)
+{
+  d_passphrase = val;
 }
 
 inline std::string const &Arg::prependbody() const
@@ -440,6 +443,26 @@ inline std::string const &Arg::exporthtml() const
 inline std::string const &Arg::exportdesktophtml() const
 {
   return d_exportdesktophtml;
+}
+
+inline std::string const &Arg::importadbbackup() const
+{
+  return d_importadbbackup;
+}
+
+inline std::string const &Arg::adbpassphrase() const
+{
+  return d_adbpassphrase;
+}
+
+inline std::string const &Arg::exportadbbackuptohtml_1() const
+{
+  return d_exportadbbackuptohtml_1;
+}
+
+inline std::string const &Arg::exportadbbackuptohtml_2() const
+{
+  return d_exportadbbackuptohtml_2;
 }
 
 inline std::string const &Arg::jsonshowcontactmap() const
@@ -472,34 +495,14 @@ inline std::string const &Arg::exporttxt() const
   return d_exporttxt;
 }
 
-inline std::string const &Arg::passphrase() const
+inline std::string const &Arg::desktopdir() const
 {
-  return d_passphrase;
+  return d_desktopdir;
 }
 
-inline void Arg::setpassphrase(std::string const &val)
+inline std::string const &Arg::output() const
 {
-  d_passphrase = val;
-}
-
-inline std::string const &Arg::dumpdesktopdb() const
-{
-  return d_dumpdesktopdb;
-}
-
-inline std::string const &Arg::sourcepassphrase() const
-{
-  return d_sourcepassphrase;
-}
-
-inline void Arg::setsourcepassphrase(std::string const &val)
-{
-  d_sourcepassphrase = val;
-}
-
-inline std::string const &Arg::source() const
-{
-  return d_source;
+  return d_output;
 }
 
 inline std::string const &Arg::opassphrase() const
@@ -512,6 +515,21 @@ inline void Arg::setopassphrase(std::string const &val)
   d_opassphrase = val;
 }
 
+inline std::string const &Arg::source() const
+{
+  return d_source;
+}
+
+inline std::string const &Arg::sourcepassphrase() const
+{
+  return d_sourcepassphrase;
+}
+
+inline void Arg::setsourcepassphrase(std::string const &val)
+{
+  d_sourcepassphrase = val;
+}
+
 inline std::string const &Arg::exportxml() const
 {
   return d_exportxml;
@@ -522,9 +540,19 @@ inline std::string const &Arg::querymode() const
   return d_querymode;
 }
 
-inline std::string const &Arg::output() const
+inline std::string const &Arg::desktopdirs_1() const
 {
-  return d_output;
+  return d_desktopdirs_1;
+}
+
+inline std::string const &Arg::desktopdirs_2() const
+{
+  return d_desktopdirs_2;
+}
+
+inline std::string const &Arg::dumpdesktopdb() const
+{
+  return d_dumpdesktopdb;
 }
 
 inline std::string const &Arg::input() const
@@ -532,24 +560,9 @@ inline std::string const &Arg::input() const
   return d_input;
 }
 
-inline std::vector<std::string> const &Arg::onlytype() const
-{
-  return d_onlytype;
-}
-
-inline std::vector<std::pair<std::string, long long int>> const &Arg::mapjsoncontacts() const
-{
-  return d_mapjsoncontacts;
-}
-
 inline std::vector<std::string> const &Arg::croptothreadsbyname() const
 {
   return d_croptothreadsbyname;
-}
-
-inline std::vector<long long int> const &Arg::croptothreads() const
-{
-  return d_croptothreads;
 }
 
 inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattachments() const
@@ -560,6 +573,11 @@ inline std::vector<std::pair<std::string,std::string>> const &Arg::replaceattach
 inline bool Arg::replaceattachments_bool() const
 {
   return d_replaceattachments_bool;
+}
+
+inline std::vector<std::string> const &Arg::preventjsonmapping() const
+{
+  return d_preventjsonmapping;
 }
 
 inline std::vector<std::string> const &Arg::selectxmlchats() const
@@ -577,14 +595,14 @@ inline std::vector<std::pair<std::string,long long int>> const &Arg::mapxmlconta
   return d_mapxmlcontacts;
 }
 
+inline std::vector<std::pair<std::string, long long int>> const &Arg::mapjsoncontacts() const
+{
+  return d_mapjsoncontacts;
+}
+
 inline std::vector<std::string> const &Arg::limittodates() const
 {
   return d_limittodates;
-}
-
-inline std::vector<long long int> const &Arg::importthreads() const
-{
-  return d_importthreads;
 }
 
 inline std::vector<std::string> const &Arg::importthreadsbyname() const
@@ -592,9 +610,9 @@ inline std::vector<std::string> const &Arg::importthreadsbyname() const
   return d_importthreadsbyname;
 }
 
-inline std::vector<std::string> const &Arg::exportplaintextbackuphtml() const
+inline std::vector<std::string> const &Arg::croptodates() const
 {
-  return d_exportplaintextbackuphtml;
+  return d_croptodates;
 }
 
 inline std::vector<long long int> const &Arg::limittothreads() const
@@ -602,9 +620,19 @@ inline std::vector<long long int> const &Arg::limittothreads() const
   return d_limittothreads;
 }
 
-inline std::vector<std::string> const &Arg::limittothreadsbyname() const
+inline std::vector<std::string> const &Arg::mergerecipients() const
 {
-  return d_limittothreadsbyname;
+  return d_mergerecipients;
+}
+
+inline std::vector<long long int> const &Arg::croptothreads() const
+{
+  return d_croptothreads;
+}
+
+inline std::vector<std::string> const &Arg::exportplaintextbackuphtml() const
+{
+  return d_exportplaintextbackuphtml;
 }
 
 inline std::vector<std::string> const &Arg::importplaintextbackup() const
@@ -612,24 +640,29 @@ inline std::vector<std::string> const &Arg::importplaintextbackup() const
   return d_importplaintextbackup;
 }
 
+inline std::vector<std::string> const &Arg::htmlignoremediatypes() const
+{
+  return d_htmlignoremediatypes;
+}
+
+inline std::vector<std::string> const &Arg::limittothreadsbyname() const
+{
+  return d_limittothreadsbyname;
+}
+
 inline std::vector<long long int> const &Arg::selectjsonchats() const
 {
   return d_selectjsonchats;
 }
 
-inline std::vector<std::string> const &Arg::preventjsonmapping() const
+inline std::vector<std::pair<std::string, std::string>> const &Arg::mapxmlcontactnames() const
 {
-  return d_preventjsonmapping;
+  return d_mapxmlcontactnames;
 }
 
-inline std::vector<std::string> const &Arg::runsqlquery() const
+inline std::vector<std::pair<std::string,std::string>> const &Arg::mapcsvfields() const
 {
-  return d_runsqlquery;
-}
-
-inline std::vector<long long int> const &Arg::editattachmentsize() const
-{
-  return d_editattachmentsize;
+  return d_mapcsvfields;
 }
 
 inline std::vector<std::string> const &Arg::limitcontacts() const
@@ -642,11 +675,6 @@ inline std::vector<std::string> const &Arg::rundtprettysqlquery() const
   return d_rundtprettysqlquery;
 }
 
-inline std::vector<std::string> const &Arg::htmlignoremediatypes() const
-{
-  return d_htmlignoremediatypes;
-}
-
 inline std::vector<std::string> const &Arg::rundtsqlquery() const
 {
   return d_rundtsqlquery;
@@ -657,39 +685,9 @@ inline std::vector<std::string> const &Arg::runprettysqlquery() const
   return d_runprettysqlquery;
 }
 
-inline std::vector<std::pair<std::string,std::string>> const &Arg::mapcsvfields() const
+inline std::vector<std::string> const &Arg::runsqlquery() const
 {
-  return d_mapcsvfields;
-}
-
-inline std::vector<std::string> const &Arg::croptodates() const
-{
-  return d_croptodates;
-}
-
-inline std::vector<std::pair<std::string,std::string>> const &Arg::exportcsv() const
-{
-  return d_exportcsv;
-}
-
-inline std::vector<std::string> const &Arg::mergegroups() const
-{
-  return d_mergegroups;
-}
-
-inline std::vector<std::string> const &Arg::mergerecipients() const
-{
-  return d_mergerecipients;
-}
-
-inline std::vector<long long int> const &Arg::onlyinthreads() const
-{
-  return d_onlyinthreads;
-}
-
-inline std::vector<std::pair<long long int, std::string>> const &Arg::setchatcolors() const
-{
-  return d_setchatcolors;
+  return d_runsqlquery;
 }
 
 inline std::vector<std::pair<std::string, std::string>> const &Arg::mapxmladdresses() const
@@ -697,19 +695,39 @@ inline std::vector<std::pair<std::string, std::string>> const &Arg::mapxmladdres
   return d_mapxmladdresses;
 }
 
-inline std::vector<std::pair<std::string, std::string>> const &Arg::mapxmlcontactnames() const
+inline std::vector<long long int> const &Arg::importthreads() const
 {
-  return d_mapxmlcontactnames;
+  return d_importthreads;
 }
 
-inline long long int Arg::onlylargerthan() const
+inline std::vector<std::pair<long long int, std::string>> const &Arg::setchatcolors() const
 {
-  return d_onlylargerthan;
+  return d_setchatcolors;
 }
 
-inline long long int Arg::desktopdbversion() const
+inline std::vector<long long int> const &Arg::onlyinthreads() const
 {
-  return d_desktopdbversion;
+  return d_onlyinthreads;
+}
+
+inline std::vector<long long int> const &Arg::editattachmentsize() const
+{
+  return d_editattachmentsize;
+}
+
+inline std::vector<std::pair<std::string,std::string>> const &Arg::exportcsv() const
+{
+  return d_exportcsv;
+}
+
+inline std::vector<std::string> const &Arg::onlytype() const
+{
+  return d_onlytype;
+}
+
+inline std::vector<std::string> const &Arg::mergegroups() const
+{
+  return d_mergegroups;
 }
 
 inline long long int Arg::split() const
@@ -732,6 +750,16 @@ inline long long int Arg::hiperfall() const
   return d_hiperfall;
 }
 
+inline long long int Arg::desktopdbversion() const
+{
+  return d_desktopdbversion;
+}
+
+inline long long int Arg::onlylargerthan() const
+{
+  return d_onlylargerthan;
+}
+
 inline int Arg::removedoubles() const
 {
   return d_removedoubles;
@@ -742,34 +770,9 @@ inline bool Arg::removedoubles_bool() const
   return d_removedoubles_bool;
 }
 
-inline bool Arg::fulldecode() const
+inline bool Arg::aggressivefilenamesanitizing() const
 {
-  return d_fulldecode;
-}
-
-inline bool Arg::migrate_to_191() const
-{
-  return d_migrate_to_191;
-}
-
-inline bool Arg::skipmessagereorder() const
-{
-  return d_skipmessagereorder;
-}
-
-inline bool Arg::append() const
-{
-  return d_append;
-}
-
-inline bool Arg::truncate() const
-{
-  return d_truncate;
-}
-
-inline bool Arg::migratedb() const
-{
-  return d_migratedb;
+  return d_aggressivefilenamesanitizing;
 }
 
 inline bool Arg::importstickers() const
@@ -777,44 +780,14 @@ inline bool Arg::importstickers() const
   return d_importstickers;
 }
 
-inline bool Arg::htmlpagemenu() const
+inline bool Arg::migratedb() const
 {
-  return d_htmlpagemenu;
+  return d_migratedb;
 }
 
-inline bool Arg::custom_hugogithubs() const
+inline bool Arg::append() const
 {
-  return d_custom_hugogithubs;
-}
-
-inline bool Arg::xmlmarkread() const
-{
-  return d_xmlmarkread;
-}
-
-inline bool Arg::xmlautogroupnames() const
-{
-  return d_xmlautogroupnames;
-}
-
-inline bool Arg::compactfilenames() const
-{
-  return d_compactfilenames;
-}
-
-inline bool Arg::targetisdummy() const
-{
-  return d_targetisdummy;
-}
-
-inline bool Arg::linkify() const
-{
-  return d_linkify;
-}
-
-inline bool Arg::aggressivefilenamesanitizing() const
-{
-  return d_aggressivefilenamesanitizing;
+  return d_append;
 }
 
 inline bool Arg::jsonprependforward() const
@@ -835,6 +808,61 @@ inline bool Arg::jsonmarkread() const
 inline bool Arg::xmlmarkdelivered() const
 {
   return d_xmlmarkdelivered;
+}
+
+inline bool Arg::xmlmarkread() const
+{
+  return d_xmlmarkread;
+}
+
+inline bool Arg::fulldecode() const
+{
+  return d_fulldecode;
+}
+
+inline bool Arg::custom_hugogithubs() const
+{
+  return d_custom_hugogithubs;
+}
+
+inline bool Arg::truncate() const
+{
+  return d_truncate;
+}
+
+inline bool Arg::skipmessagereorder() const
+{
+  return d_skipmessagereorder;
+}
+
+inline bool Arg::migrate_to_191() const
+{
+  return d_migrate_to_191;
+}
+
+inline bool Arg::linkify() const
+{
+  return d_linkify;
+}
+
+inline bool Arg::xmlautogroupnames() const
+{
+  return d_xmlautogroupnames;
+}
+
+inline bool Arg::compactfilenames() const
+{
+  return d_compactfilenames;
+}
+
+inline bool Arg::targetisdummy() const
+{
+  return d_targetisdummy;
+}
+
+inline bool Arg::htmlpagemenu() const
+{
+  return d_htmlpagemenu;
 }
 
 inline bool Arg::reordermmssmsids() const

@@ -20,6 +20,7 @@
 #include "adbbackupattachmentreader.h"
 #include "../framewithattachment/framewithattachment.h"
 #include "../common_filesystem.h"
+#include "../adbbackupdatabase/adbbackupdatabase.h"
 
 #include <openssl/sha.h>
 #include <openssl/evp.h>
@@ -46,54 +47,17 @@ inline BaseAttachmentReader::ReturnCode AdbBackupAttachmentReader::getAttachment
     return ReturnCode::ERROR;
   }
 
-  // check HMAC
-  unsigned int digest_size = SHA_DIGEST_LENGTH;
-  std::unique_ptr<unsigned char []> hash(new unsigned char[digest_size]);
-  HMAC(EVP_sha1(), d_mackey.get(), d_mackey_length, encryptedfiledata.get(),
-       encryptedfile_size - SHA_DIGEST_LENGTH, hash.get(), &digest_size);
-  if (std::memcmp(hash.get(), encryptedfiledata.get() + (encryptedfile_size - SHA_DIGEST_LENGTH), SHA_DIGEST_LENGTH) != 0) [[unlikely]]
-  {
-    Logger::error("HMAC failed for part '", d_path, "'");
+  auto data = AdbBackupDatabase::decrypt(encryptedfiledata.get(), encryptedfile_size,
+                                         d_mackey.get(), d_mackey_length,
+                                         d_encryptionkey.get(), d_encryptionkey_length);
+  if (!data.has_value()) [[unlikely]]
     return ReturnCode::ERROR;
-  }
 
-  // decrypt file
+  // std::cout << "Filesize: " << encryptedfile_size << std::endl;
+  // std::cout << "decrytpsize: " << data.value().second << std::endl;
+  // std::cout << bepaald::bytesToHexString(data.value().first.get(), data.value().second) << std::endl;
 
-  unsigned char *iv = encryptedfiledata.get(); /// first 16 bytes is IV
-  // create context
-  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, d_encryptionkey.get(), iv) != 1) [[unlikely]]
-  {
-    Logger::error("CTX INIT FAILED");
-    return ReturnCode::ERROR;
-  }
-
-  int out_len = encryptedfile_size - (16 + SHA_DIGEST_LENGTH); // this includes padding, the EVP_ routines will shrink this number
-  std::unique_ptr<unsigned char []> out(new unsigned char[out_len]);
-  if (EVP_DecryptUpdate(ctx.get(), out.get(), &out_len,
-                        encryptedfiledata.get() + 16, encryptedfile_size - (16 + SHA_DIGEST_LENGTH)) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to decrypt data");
-    return ReturnCode::ERROR;
-  }
-
-  //std::cout << "Filesize: " << filedata_size << std::endl;
-  //std::cout << "decrytpsize: " << padded_out_len << std::endl;
-
-  // Finalize: decrypt trailling bytes, check the padding, and discard if ok
-  int tail_len = 0;
-  if (EVP_DecryptFinal_ex(ctx.get(), out.get() + out_len, &tail_len) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to finalize decryption");
-    return ReturnCode::ERROR;
-  }
-  out_len += tail_len;
-
-  //std::cout << "Filesize: " << filedata_size << std::endl;
-  //std::cout << "decrytpsize: " << padded_out_len << std::endl;
-  //std::cout << bepaald::bytesToHexString(out.get(), padded_out_len) << std::endl;
-
-  frame->setAttachmentDataBacked(out.release(), out_len); // the frame will now own the data...
+  frame->setAttachmentDataBacked(data.value().first.release(), data.value().second); // the frame will now own the data...
 
   return ReturnCode::OK;
 }

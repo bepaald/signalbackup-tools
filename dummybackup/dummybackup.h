@@ -25,6 +25,8 @@
 #include "../signalplaintextbackupdatabase/signalplaintextbackupdatabase.h"
 #include "../adbbackupdatabase/adbbackupdatabase.h"
 
+#include "../xmldocument/xmldocument.h"
+
 class DummyBackup : public SignalBackup
 {
  public:
@@ -270,7 +272,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
   d_ok = true;
 }
 
-inline DummyBackup::DummyBackup(std::unique_ptr<AdbBackupDatabase> const &adb [[maybe_unused]], std::string const &selfid, bool verbose,
+inline DummyBackup::DummyBackup(std::unique_ptr<AdbBackupDatabase> const &adb, std::string const &selfid, bool verbose,
                                 bool truncate, bool showprogress) // for importing from (old) adb backup
   :
   DummyBackup(verbose, truncate, showprogress)
@@ -285,9 +287,7 @@ inline DummyBackup::DummyBackup(std::unique_ptr<AdbBackupDatabase> const &adb [[
 
   std::string selfphone(selfid);
   if (selfphone.empty())
-  {
-    // selfphone = in "org.thoughtcrime.securesms_preferences.xml" : <string name="pref_local_number" value="+123456789">
-  }
+    selfphone = adb->selfphone();
   if (selfphone.empty())
   {
     Logger::error("Failed to determine id of 'self'. Please pass `--setselfid \"[phone]\"' to set it manually if problems occur");
@@ -295,18 +295,18 @@ inline DummyBackup::DummyBackup(std::unique_ptr<AdbBackupDatabase> const &adb [[
   }
 
   // cant find any names in database yet...
-  // std::stirng contact_name = ...
+  std::string contact_name;// = ...
 
-  //std::any new_rid;
-  //if (!insertRow("recipient",
-  //               {{d_recipient_e164, selfphone},
-  //               {(contact_name.empty() ? "" : "profile_given_name"), contact_name},
-  //               {(contact_name.empty() ? "" : "profile_joined_name"), contact_name}},
-  //               "_id", &new_rid))
-  //  return;
-  //d_selfid = std::any_cast<long long int>(new_rid);
+  std::any new_rid;
+  if (!insertRow("recipient",
+                 {{d_recipient_e164, selfphone},
+                  {(contact_name.empty() ? "" : "profile_given_name"), contact_name},
+                  {(contact_name.empty() ? "" : "profile_joined_name"), contact_name}},
+                 "_id", &new_rid))
+    return;
+  d_selfid = std::any_cast<long long int>(new_rid);
 
-  //d_ok = true;
+  d_ok = true;
 }
 
 #endif
