@@ -405,9 +405,9 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     "\n"
     // only showing the muted icon for threads muted 'forever', for others it gets a bit
     // difficult since the mute_until is never cleared (contains past timestamps) and the
-    // value is check against 'current time' normally.
+    // value is checked against 'current time' normally, which is of course not available.
     "      .muted {\n"
-    "         background-image: url('data:image/svg+xml;,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 1 16 16\" fill=\"white\"><path d=\"M6.163 14h3.674a1.875 1.875 0 0 1-3.674 0zM8 2a3.233 3.233 0 0 1 3.041 2.171l.113.322L3.5 10.507a8.079 8.079 0 0 0 .335-1.136L4.84 4.548A3.25 3.25 0 0 1 8 2m0-1a4.236 4.236 0 0 0-4.138 3.337l-1.007 4.83a5.83 5.83 0 0 1-1.785 3.25l-.879.69.618.786 14-11-.618-.786-2.206 1.734A4.225 4.225 0 0 0 8 1zm6.54 10.035a2.846 2.846 0 0 1-1.395-1.868l-.662-3.176h0l-.878.689.564 2.7a3.954 3.954 0 0 0 1.89 2.558A.059.059 0 0 1 14 12H4.834l-1.272 1H14a1.056 1.056 0 0 0 .54-1.965z\"/></svg>');\n"
+    "        background-image: url('data:image/svg+xml;,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 1 16 16\" fill=\"white\"><path d=\"M6.163 14h3.674a1.875 1.875 0 0 1-3.674 0zM8 2a3.233 3.233 0 0 1 3.041 2.171l.113.322L3.5 10.507a8.079 8.079 0 0 0 .335-1.136L4.84 4.548A3.25 3.25 0 0 1 8 2m0-1a4.236 4.236 0 0 0-4.138 3.337l-1.007 4.83a5.83 5.83 0 0 1-1.785 3.25l-.879.69.618.786 14-11-.618-.786-2.206 1.734A4.225 4.225 0 0 0 8 1zm6.54 10.035a2.846 2.846 0 0 1-1.395-1.868l-.662-3.176h0l-.878.689.564 2.7a3.954 3.954 0 0 0 1.89 2.558A.059.059 0 0 1 14 12H4.834l-1.272 1H14a1.056 1.056 0 0 0 .54-1.965z\"/></svg>');\n"
     "        display: inline-block;\n"
     "        height: 18px;\n"
     "        aspect-ratio: 1 / 1;\n"
@@ -1178,12 +1178,12 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     //std::string date_time = bepaald::toDateString(datetime / 1000, "%R"); // does not work with mingw
     std::string date_time = bepaald::toDateString(datetime / 1000, "%H:%M");
 
-    std::string raw_convo_url_path(isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name);
-    WIN_LIMIT_FILENAME_LENGTH(raw_convo_url_path);
-    std::string convo_url_path(sanitizeFilename(raw_convo_url_path, d_aggressive_filename_sanitizing) + " (_id" + bepaald::toString(t_id) + ")");
+    std::string raw_convo_url_name(isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, rec_id).display_name);
+    WIN_LIMIT_FILENAME_LENGTH(raw_convo_url_name);
+    std::string convo_url_path(sanitizeFilename(raw_convo_url_name, d_aggressive_filename_sanitizing) + " (_id" + bepaald::toString(t_id) + ")");
     if (compact) [[unlikely]]
     {
-      raw_convo_url_path.clear();
+      raw_convo_url_name.clear();
       convo_url_path = "id" + bepaald::toString(t_id);
     }
     HTMLescapeUrl(&convo_url_path);
@@ -1193,7 +1193,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     if (it != tid_pagecount_map.end())
       lastpageidx = it->second - 1;
 
-    std::string convo_url_location(sanitizeFilename(raw_convo_url_path, d_aggressive_filename_sanitizing) + (lastpageidx <= 0 ? "" : "_" + bepaald::toString(lastpageidx)) + ".html");
+    std::string convo_url_location(sanitizeFilename(raw_convo_url_name, d_aggressive_filename_sanitizing) + (lastpageidx <= 0 ? "" : "_" + bepaald::toString(lastpageidx)) + ".html");
     if (compact) [[unlikely]]
       convo_url_location = (lastpageidx <= 0 ? "0" : bepaald::toString(lastpageidx)) + ".html";
     HTMLescapeUrl(&convo_url_location);

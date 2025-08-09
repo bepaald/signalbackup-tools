@@ -404,7 +404,7 @@ class SignalBackup
   //                     std::string const &message, std::string const &selfid, bool isgroup,
   //                     std::map<std::string, std::string> const &name_to_recipientid);
   bool setFileTimeStamp(std::string const &file, long long int time_usec) const;
-  std::string sanitizeFilename(std::string const &filename, bool aggressive) const;
+  std::string sanitizeFilename(std::string const &filename, bool aggressive, bool onlybase = false) const;
   bool setColumnNames();
   void dtSetColumnNames(SqliteDB *ddb);
   long long int scanSelf() const;

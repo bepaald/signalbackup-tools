@@ -19,25 +19,14 @@
 
 #include "signalbackup.ih"
 
-std::string SignalBackup::sanitizeFilename(std::string const &filename, bool aggressive [[maybe_unused]]) const
+std::string SignalBackup::sanitizeFilename(std::string const &filename, bool aggressive [[maybe_unused]],
+                                           bool onlybase) const // onlybase indicates this is just the basename
+                                                                // and an extension is going to be added (trailing
+                                                                // characters are not trailing) // currently unused
 {
   std::string result;
 
 #if !defined(_WIN32) && !defined(__MINGW64__)
-
-  /*
-  // attempt to determine target filesystem
-  static std::string filesystem_type;
-  if (filesystem_type.empty())
-  {
-    Logger::message("Attempting to get type of filesystem...");
-
-    filesystem_type = "Unknown";
-
-    Logger::message("Got filesystem type '", filesystem_type, "'");
-  }
-  */
-
   if (!aggressive)
   {
     // filter disallowed characters. (Note this is not an exact science)
@@ -95,9 +84,16 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename, bool agg
 
   // trailing whitespace or periods are (possibly) technically allowed
   // by the filesystem, but not supported by windows shell and UI
-  while (result.back() == ' ' ||
-         result.back() == '.')
-    result.pop_back();
+  if (!onlybase && result.size() &&
+      (result.back() == ' ' ||
+       result.back() == '.')) [[unlikely]]
+    result.back() = '_';
+
+#if !defined(_WIN32) && !defined(__MINGW64__)
+  // lets replace leading period on non-windows systems to prevent hidden files
+  if (result.size() && result.front() == '.') [[unlikely]]
+    result.front() = '_';
+#endif
 
 #if !defined(_WIN32) && !defined(__MINGW64__)
   }

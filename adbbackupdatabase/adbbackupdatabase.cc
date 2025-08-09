@@ -48,7 +48,20 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     return;
   }
 
+  // attach the 'canonical_addresses.db' database
 
+  /*
+    ATTACH DATABASE 'canonical_addresses.db' AS ca;
+
+    sqlite> .tables
+    android_metadata        identities              recipient_preferences
+    ca.android_metadata     mms                     sms
+    ca.canonical_addresses  mms_addresses           thread
+    drafts                  part
+    groups                  push
+
+    SELECT DISTINCT thread_id,mms.address AS msg_address,canonical_addresses.address AS can_address,recipient_ids FROM mms LEFT JOIN thread ON thread_id = thread._id LEFT JOIN ca.canonical_addresses ON ca.canonical_addresses._id = thread.recipient_ids UNION SELECT DISTINCT thread_id,sms.address AS msg_address,canonical_addresses.address AS can_address,recipient_ids FROM sms LEFT JOIN thread ON thread._id = sms.thread_id LEFT JOIN ca.canonical_addresses ON ca.canonical_addresses._id = thread.recipient_ids
+  */
 
   // get self phone
   XmlDocument securesms_preferences(backupdir + "/sp/org.thoughtcrime.securesms_preferences.xml");

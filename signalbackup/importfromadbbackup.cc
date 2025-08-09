@@ -33,11 +33,16 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
   {
     Logger::message("Dealing with thread ", it + 1, "/", thread_results.rows());
 
+    // if (recipient_e164.empty())
+    // {
+    //   Logger::error("Failed to get conversation partner for thread. Skipping...");
+    //   continue;
+    // }
+
+    // if (d_verbose) [[unlikely]]
+    //   Logger::message("Got address for thread: ", recipient_e164);
+
     // match thread id in target backup, create if needed
-
-    // get thread recipient (for to_/from_recipient_id)
-
-
 
     // get messages
     SqliteDB::QueryResults message_results;
