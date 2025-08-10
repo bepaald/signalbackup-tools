@@ -229,7 +229,7 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
             if (adb_attachment.getAttachmentData(std::out_ptr(att_data), d_verbose) != AdbBackupAttachmentReader::ReturnCode::OK)
 #else
             unsigned char *att_data = nullptr; // !! NOTE RAW POINTER
-            if (adb_attachment.getAttachmentData(&att_data, d_verbose) != DesktopAttachmentReader::ReturnCode::OK)
+            if (adb_attachment.getAttachmentData(&att_data, d_verbose) != AdbBackupAttachmentReader::ReturnCode::OK)
 #endif
             {
               Logger::error("Failed to get attachment data for file '", attachment_filepath, "'");
