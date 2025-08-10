@@ -23,8 +23,35 @@
 #include <ranges>
 #endif
 
+bool SignalBackup::tryInsertRowElseGetFreeDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, int dateidx,
+                                               long long int originaldate, long long int thread_id, long long int recipient_id,
+                                               std::string const &returnfield, std::any *returnvalue) const
+{
+  bool ret = insertRowImpl(table, data, true, returnfield, returnvalue);
+
+  if (d_database.changed() == 0) [[unlikely]]
+  {
+    long long int freedate = originaldate;
+    freedate = getFreeDateForMessage(originaldate, thread_id, recipient_id);
+    if (freedate == -1) [[unlikely]]
+    {
+      Logger::error("Getting free date for inserting message into mms");
+      return ret;
+    }
+    data[dateidx].second = freedate;
+    return insertRowImpl(table, data, false, returnfield, returnvalue);
+  }
+  return ret;
+}
+
 bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                              std::string const &returnfield, std::any *returnvalue) const
+{
+  return insertRowImpl(table, data, false, returnfield, returnvalue);
+}
+
+bool SignalBackup::insertRowImpl(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
+                                 bool or_ignore, std::string const &returnfield, std::any *returnvalue) const
 {
   // check if columns exist...
   for (auto it = data.begin(); it != data.end();)
@@ -40,7 +67,7 @@ bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std
       ++it;
   }
 
-  std::string query("INSERT INTO " + table + " (");
+  std::string query((or_ignore ? "INSERT OR IGNORE INTO " : "INSERT INTO ") + table + " (");
   for (unsigned int i = 0; i < data.size(); ++i)
     query += data[i].first + (i < data.size() -1 ? ", " : ") ");
 

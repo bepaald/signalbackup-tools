@@ -26,6 +26,7 @@
 
 struct Types
 {
+  static uint64_t constexpr TOTAL_MASK                         = 0xFFFFFFFF;
   static uint64_t constexpr BASE_TYPE_MASK                     = 0x1F;
 
   //  static uint64_t constexpr INCOMING_CALL_TYPE                 = 1;

@@ -419,8 +419,13 @@ class SignalBackup
   bool missingAttachmentExpected(uint64_t rowid, int64_t unique_id) const;
   template <typename T>
   inline bool setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, std::string const &line) const;
+  bool insertRowImpl(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
+                     bool or_ignore, std::string const &returnfield, std::any *returnvalue) const;
   bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                  std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
+  bool tryInsertRowElseGetFreeDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, int dateidx,
+                                   long long int originaldate, long long int thread_id, long long int recipient_id,
+                                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
   bool updateRows(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                   std::vector<std::pair<std::string, std::any>> whereclause,
                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;

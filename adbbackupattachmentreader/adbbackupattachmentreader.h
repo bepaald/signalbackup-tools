@@ -35,9 +35,10 @@ class AdbBackupAttachmentReader : public AttachmentReader<AdbBackupAttachmentRea
   int d_mackey_length;
   std::unique_ptr<unsigned char[]> d_encryptionkey;
   int d_encryptionkey_length;
+  int64_t d_size;
  public:
   inline AdbBackupAttachmentReader(std::string const &path,
-                                   unsigned char const *mackey, int mackey_lengt,
+                                   unsigned char const *mackey, int mackey_length,
                                    unsigned char const *encryptionkey, int encryptionkey_length);
   inline AdbBackupAttachmentReader(AdbBackupAttachmentReader const &other);
   inline AdbBackupAttachmentReader(AdbBackupAttachmentReader &&other) = default;
@@ -45,6 +46,8 @@ class AdbBackupAttachmentReader : public AttachmentReader<AdbBackupAttachmentRea
   inline AdbBackupAttachmentReader &operator=(AdbBackupAttachmentReader &&other) = default;
   inline virtual ~AdbBackupAttachmentReader() override = default;
   virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
+  ReturnCode getAttachmentData(unsigned char **data, bool verbose);
+  inline int64_t size() const;
 };
 
 inline AdbBackupAttachmentReader::AdbBackupAttachmentReader(std::string const &path,
@@ -53,7 +56,8 @@ inline AdbBackupAttachmentReader::AdbBackupAttachmentReader(std::string const &p
   :
   d_path(path),
   d_mackey_length(mackey_length),
-  d_encryptionkey_length(encryptionkey_length)
+  d_encryptionkey_length(encryptionkey_length),
+  d_size(-1)
 {
   if (d_mackey_length == 0 ||
       d_encryptionkey_length == 0) [[unlikely]]
@@ -70,7 +74,8 @@ inline AdbBackupAttachmentReader::AdbBackupAttachmentReader(AdbBackupAttachmentR
   :
   d_path(other.d_path),
   d_mackey_length(other.d_mackey_length),
-  d_encryptionkey_length(other.d_encryptionkey_length)
+  d_encryptionkey_length(other.d_encryptionkey_length),
+  d_size(other.d_size)
 {
   if (d_mackey_length == 0 ||
       d_encryptionkey_length == 0) [[unlikely]]
@@ -94,6 +99,7 @@ inline AdbBackupAttachmentReader &AdbBackupAttachmentReader::operator=(AdbBackup
     d_path = other.d_path;
     d_mackey_length = other.d_mackey_length;
     d_encryptionkey_length = other.d_encryptionkey_length;
+    d_size = other.d_size;
     if (d_mackey_length == 0 ||
         d_encryptionkey_length == 0) [[unlikely]]
     {
@@ -110,6 +116,11 @@ inline AdbBackupAttachmentReader &AdbBackupAttachmentReader::operator=(AdbBackup
     }
   }
   return *this;
+}
+
+inline int64_t AdbBackupAttachmentReader::size() const
+{
+  return d_size;
 }
 
 #endif

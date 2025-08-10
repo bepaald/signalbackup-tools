@@ -26,7 +26,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
-inline BaseAttachmentReader::ReturnCode AdbBackupAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual override
+BaseAttachmentReader::ReturnCode AdbBackupAttachmentReader::getAttachmentData(unsigned char **rawdata, bool verbose)
 {
   if (verbose) [[unlikely]]
     Logger::message("Starting get encrypted AdbBackupAttachment data");
@@ -47,17 +47,26 @@ inline BaseAttachmentReader::ReturnCode AdbBackupAttachmentReader::getAttachment
     return ReturnCode::ERROR;
   }
 
-  auto data = AdbBackupDatabase::decrypt(encryptedfiledata.get(), encryptedfile_size,
-                                         d_mackey.get(), d_mackey_length,
-                                         d_encryptionkey.get(), d_encryptionkey_length);
-  if (!data.has_value()) [[unlikely]]
+  auto decrypted_data = AdbBackupDatabase::decrypt(encryptedfiledata.get(), encryptedfile_size,
+                                                   d_mackey.get(), d_mackey_length,
+                                                   d_encryptionkey.get(), d_encryptionkey_length);
+  if (!decrypted_data.has_value()) [[unlikely]]
     return ReturnCode::ERROR;
 
   // std::cout << "Filesize: " << encryptedfile_size << std::endl;
   // std::cout << "decrytpsize: " << data.value().second << std::endl;
   // std::cout << bepaald::bytesToHexString(data.value().first.get(), data.value().second) << std::endl;
-
-  frame->setAttachmentDataBacked(data.value().first.release(), data.value().second); // the frame will now own the data...
+  d_size = decrypted_data.value().second;
+  *rawdata = decrypted_data.value().first.release();
 
   return ReturnCode::OK;
+}
+
+BaseAttachmentReader::ReturnCode AdbBackupAttachmentReader::getAttachment(FrameWithAttachment *frame, bool verbose) // virtual override
+{
+  unsigned char *data = nullptr;
+  ReturnCode ret = getAttachmentData(&data, verbose);
+  if (ret == ReturnCode::OK) [[likely]]
+    frame->setAttachmentDataBacked(data, d_size);
+  return ret;
 }

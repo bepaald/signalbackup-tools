@@ -35,6 +35,7 @@
 AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string const &passphrase_given, bool verbose)
   :
   d_db(backupdir + "/db/messages.db"),
+  d_backuproot(backupdir),
   d_encryption_secret_length(0),
   d_encryption_secret(nullptr),
   d_mac_secret_length(0),
@@ -48,25 +49,25 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     return;
   }
 
-  // attach the 'canonical_addresses.db' database
+  //  d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table'");
+
+  // attach the 'canonical_address.db' database
+  if (!d_db.exec("ATTACH DATABASE ? AS ca", d_backuproot + "/db/canonical_address.db"))
+  {
+    Logger::error("Failed to attach 'canonical_address.db'");
+    return;
+  }
+
+  //  d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table' UNION ALL SELECT name FROM ca.sqlite_master WHERE type = 'table'");
 
   /*
-    ATTACH DATABASE 'canonical_addresses.db' AS ca;
-
-    sqlite> .tables
-    android_metadata        identities              recipient_preferences
-    ca.android_metadata     mms                     sms
-    ca.canonical_addresses  mms_addresses           thread
-    drafts                  part
-    groups                  push
-
     SELECT DISTINCT thread_id,mms.address AS msg_address,canonical_addresses.address AS can_address,recipient_ids FROM mms LEFT JOIN thread ON thread_id = thread._id LEFT JOIN ca.canonical_addresses ON ca.canonical_addresses._id = thread.recipient_ids UNION SELECT DISTINCT thread_id,sms.address AS msg_address,canonical_addresses.address AS can_address,recipient_ids FROM sms LEFT JOIN thread ON thread._id = sms.thread_id LEFT JOIN ca.canonical_addresses ON ca.canonical_addresses._id = thread.recipient_ids
   */
 
   // get self phone
-  XmlDocument securesms_preferences(backupdir + "/sp/org.thoughtcrime.securesms_preferences.xml");
+  XmlDocument securesms_preferences(d_backuproot + "/sp/org.thoughtcrime.securesms_preferences.xml");
   if (!securesms_preferences.ok()) [[unlikely]]
-    Logger::warning("Failed to open/parse preference file: '", backupdir, "/sp/org.thoughtcrime.securesms_preferences.xml");
+    Logger::warning("Failed to open/parse preference file: '", d_backuproot, "/sp/org.thoughtcrime.securesms_preferences.xml");
   else
     d_selfphone = securesms_preferences.getTextContentsFromNode(0, "string", {{"name", "pref_local_number"}}).value_or(std::string());
 
@@ -78,7 +79,7 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
   if (passphrase.empty())
   {
     if (!securesms_preferences.ok()) [[unlikely]]
-      Logger::warning("Failed to open/parse preference file: '", backupdir, "/sp/org.thoughtcrime.securesms_preferences.xml");
+      Logger::warning("Failed to open/parse preference file: '", d_backuproot, "/sp/org.thoughtcrime.securesms_preferences.xml");
     else
     {
       std::string passphrase_disabled = securesms_preferences.getAttributeValueFromNode("value", "boolean", {{"name", "pref_disable_passphrase"}}).value_or(std::string());
@@ -95,10 +96,10 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
 
 
   // this pref file contains the needed data
-  XmlDocument securesms_prefs(backupdir + "/sp/SecureSMS-Preferences.xml");
+  XmlDocument securesms_prefs(d_backuproot + "/sp/SecureSMS-Preferences.xml");
   if (!securesms_prefs.ok())
   {
-    Logger::error("ADB backup: Filed to open/parse XML preferences '", backupdir, "/sp/SecureSMS-Preferences.xml");
+    Logger::error("ADB backup: Filed to open/parse XML preferences '", d_backuproot, "/sp/SecureSMS-Preferences.xml");
     return;
   }
 

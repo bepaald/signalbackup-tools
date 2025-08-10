@@ -373,11 +373,12 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
   if (static_cast<int>(params.size()) != sqlite3_bind_parameter_count(stmt)) [[unlikely]]
   {
     if (sqlite3_bind_parameter_count(stmt) < static_cast<int>(params.size()))
-      Logger::warning("Too few placeholders in query!");
+      Logger::error("Too few placeholders in query!");
     else if (sqlite3_bind_parameter_count(stmt) > static_cast<int>(params.size()))
-      Logger::warning("Too many placeholders in query!");
-    Logger::warning_indent("-> Query: \"", q, "\" (parameters: ", params.size(),
-                           ", placeholders: ", sqlite3_bind_parameter_count(stmt), ")");
+      Logger::error("Too many placeholders in query!");
+    Logger::error_indent("-> Query: \"", q, "\" (parameters: ", params.size(),
+                         ", placeholders: ", sqlite3_bind_parameter_count(stmt), ")");
+    return false;
   }
 
 #if __cplusplus > 201703L

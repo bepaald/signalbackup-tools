@@ -30,6 +30,7 @@
 class AdbBackupDatabase
 {
   FileSqliteDB d_db;
+  std::string d_backuproot;
   std::string d_selfphone;
   std::unique_ptr<unsigned char []> d_combined_secret;
   int d_encryption_secret_length;
@@ -48,6 +49,7 @@ class AdbBackupDatabase
   inline unsigned char const *encryptionSecret() const;
   inline std::optional<std::string> decryptMessageBody(std::string const &encbody) const;
   inline std::string const &selfphone() const;
+  inline std::string const &backupRoot() const;
  private:
   static std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> decrypt(unsigned char *encdata, int enclength,
                                                                                  unsigned char *mackey, int maclength,
@@ -82,13 +84,18 @@ inline unsigned char const *AdbBackupDatabase::encryptionSecret() const
   return d_encryption_secret;
 }
 
+inline std::string const &AdbBackupDatabase::backupRoot() const
+{
+  return d_backuproot;
+}
+
 inline std::optional<std::string> AdbBackupDatabase::decryptMessageBody(std::string const &encbody_b64) const
 {
   auto encbody = Base64::base64StringToBytes(encbody_b64);
   if (encbody.second == 0) [[unlikely]]
   {
     Logger::error("Failed to b64 decode encrypted message body");
-    return std::string();
+    return std::optional<std::string>();
   }
   ScopeGuard encbody_guard([&](){ if (encbody.first) delete[] encbody.first; });
 
