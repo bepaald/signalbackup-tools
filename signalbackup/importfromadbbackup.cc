@@ -155,7 +155,7 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
       bool incoming = Types::isInboxType(type);
 
       std::string body = message_results(im, "body");
-      if (body != "(message body deleted)" && !body.empty())
+      if (!body.empty())
       {
         auto opt_body = adbdb->decryptMessageBody(body);
         if (!opt_body.has_value())
