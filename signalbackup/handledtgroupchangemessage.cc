@@ -347,29 +347,44 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     }
     else
     {
-      //newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-      //we try to get the first free date_sent
-      long long int freedate = getFreeDateForMessage(date, thread_id, Types::isOutgoing(groupv2type) ? d_selfid : address);
-      if (freedate == -1)
-      {
-        Logger::error("Getting free date for inserting verified-change message into mms");
-        return false;
-      }
-      if (date != freedate)
-        (*adjusted_timestamps)[date] = freedate;
+      // //newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      // //we try to get the first free date_sent
+      // long long int freedate = getFreeDateForMessage(date, thread_id, Types::isOutgoing(groupv2type) ? d_selfid : address);
+      // if (freedate == -1)
+      // {
+      //   Logger::error("Getting free date for inserting verified-change message into mms");
+      //   return false;
+      // }
+      // if (date != freedate)
+      //   (*adjusted_timestamps)[date] = freedate;
 
-      //std::cout << "ADDING NEW GROUPV2 MESSAGE AT DATE: " << bepaald::toDateString(freedate / 1000, "%Y-%m-%d %H:%M:%S") << std::endl;
+      // //std::cout << "ADDING NEW GROUPV2 MESSAGE AT DATE: " << bepaald::toDateString(freedate / 1000, "%Y-%m-%d %H:%M:%S") << std::endl;
 
-      std::any newmms_id;
-      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
-                                   {d_mms_date_sent, freedate},
-                                   {"date_received", freedate},
-                                   {"body", groupchange_data_b64},
-                                   {d_mms_type, groupv2type},
-                                   {d_mms_recipient_id, incoming ? address : d_selfid},
-                                   {"to_recipient_id", incoming ? d_selfid : address},
-                                   {"m_type", incoming ? 132 : 128},
-                                   {"read", 1}}, "_id", &newmms_id))              // hardcoded to 1 in Signal Android
+      // //std::any newmms_id;
+      // if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+      //                              {d_mms_date_sent, freedate},
+      //                              {"date_received", freedate},
+      //                              {"body", groupchange_data_b64},
+      //                              {d_mms_type, groupv2type},
+      //                              {d_mms_recipient_id, incoming ? address : d_selfid},
+      //                              {"to_recipient_id", incoming ? d_selfid : address},
+      //                              {"m_type", incoming ? 132 : 128},
+      //                              {"read", 1}}/*, "_id", &newmms_id*/))              // hardcoded to 1 in Signal Android
+      // {
+      //   Logger::error("Inserting verified-change into mms");
+      //   return false;
+      // }
+      if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                      {{"thread_id", thread_id},
+                                       {d_mms_date_sent, date},
+                                       {"date_received", date},
+                                       {"body", groupchange_data_b64},
+                                       {d_mms_type, groupv2type},
+                                       {d_mms_recipient_id, incoming ? address : d_selfid},
+                                       {"to_recipient_id", incoming ? d_selfid : address},
+                                       {"m_type", incoming ? 132 : 128},
+                                       {"read", 1}}, // hardcoded to 1 in Signal Android
+                                      {1, 2}, date, thread_id, incoming ? address : d_selfid, adjusted_timestamps))
       {
         Logger::error("Inserting verified-change into mms");
         return false;

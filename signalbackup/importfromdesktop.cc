@@ -693,30 +693,42 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           }
           else
           {
-            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-            // we try to get the first free date_sent
-            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = originaldate;
-            if (!targetisdummy)
-            {
-              freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
-              if (freedate == -1)
-              {
-                Logger::error("Getting free date for inserting session reset into mms");
-                continue;
-              }
-              if (originaldate != freedate)
-                adjusted_timestamps[originaldate] = freedate;
-            }
+            // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // // we try to get the first free date_sent
+            // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            // long long int freedate = originaldate;
+            // if (!targetisdummy)
+            // {
+            //   freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address);
+            //   if (freedate == -1)
+            //   {
+            //     Logger::error("Getting free date for inserting session reset into mms");
+            //     continue;
+            //   }
+            //   if (originaldate != freedate)
+            //     adjusted_timestamps[originaldate] = freedate;
+            // }
 
-            if (!insertRow(d_mms_table,
-                           {{"thread_id", ttid},
-                            {d_mms_date_sent, freedate},
-                            {"date_received", freedate},
-                            {d_mms_type, endsessiontype},
-                            {d_mms_recipient_id, Types::isOutgoing(endsessiontype) ? d_selfid : address},
-                            {"to_recipient_id", address},//Types::isOutgoing(endsessiontype) ? address : address},
-                            {"read", 1}}))
+            // if (!insertRow(d_mms_table,
+            //                {{"thread_id", ttid},
+            //                 {d_mms_date_sent, freedate},
+            //                 {"date_received", freedate},
+            //                 {d_mms_type, endsessiontype},
+            //                 {d_mms_recipient_id, Types::isOutgoing(endsessiontype) ? d_selfid : address},
+            //                 {"to_recipient_id", address},//Types::isOutgoing(endsessiontype) ? address : address},
+            //                 {"read", 1}}))
+            //   Logger::error("Inserting session reset into mms");
+
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, endsessiontype},
+                                             {d_mms_recipient_id, Types::isOutgoing(endsessiontype) ? d_selfid : address},
+                                             {"to_recipient_id", address},//Types::isOutgoing(endsessiontype) ? address : address},
+                                             {"read", 1}},
+                                            {1, 2}, originaldate, ttid, Types::isOutgoing(endsessiontype) ? d_selfid : address, &adjusted_timestamps))
               Logger::error("Inserting session reset into mms");
           }
         }
@@ -761,31 +773,49 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           }
           else
           {
-            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-            // we try to get the first free date_sent
-            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = originaldate;
-            if (!targetisdummy)
-            {
-              freedate = getFreeDateForMessage(originaldate, ttid, address);
-              if (freedate == -1)
-              {
-                if (d_verbose) [[unlikely]] Logger::message_end();
-                Logger::error("Getting free date for inserting number-change into mms");
-                continue;
-              }
-              if (originaldate != freedate)
-                adjusted_timestamps[originaldate] = freedate;
-            }
+            // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // // we try to get the first free date_sent
+            // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            // long long int freedate = originaldate;
+            // if (!targetisdummy)
+            // {
+            //   freedate = getFreeDateForMessage(originaldate, ttid, address);
+            //   if (freedate == -1)
+            //   {
+            //     if (d_verbose) [[unlikely]] Logger::message_end();
+            //     Logger::error("Getting free date for inserting number-change into mms");
+            //     continue;
+            //   }
+            //   if (originaldate != freedate)
+            //     adjusted_timestamps[originaldate] = freedate;
+            // }
 
-            if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, freedate},
-                                         {"date_received", freedate},
-                                         {d_mms_type, Types::CHANGE_NUMBER_TYPE},
-                                         {d_mms_recipient_id, address},
-                                         {"to_recipient_id", d_selfid},
-                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
-                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+            //                              {d_mms_date_sent, freedate},
+            //                              {"date_received", freedate},
+            //                              {d_mms_type, Types::CHANGE_NUMBER_TYPE},
+            //                              {d_mms_recipient_id, address},
+            //                              {"to_recipient_id", d_selfid},
+            //                              {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+            //                              {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // {
+            //   if (d_verbose) [[unlikely]] Logger::message_end();
+            //   Logger::error("Inserting number-change into mms");
+            //   dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+            //   return false;
+            // }
+
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, Types::CHANGE_NUMBER_TYPE},
+                                             {d_mms_recipient_id, address},
+                                             {"to_recipient_id", d_selfid},
+                                             {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                             {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+                                            {1, 2}, originaldate, ttid, address, &adjusted_timestamps))
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting number-change into mms");
@@ -836,31 +866,49 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           }
           else
           {
-            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-            // we try to get the first free date_sent
-            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = originaldate;
-            if (!targetisdummy)
-            {
-              freedate = getFreeDateForMessage(originaldate, ttid, address);
-              if (freedate == -1)
-              {
-                if (d_verbose) [[unlikely]] Logger::message_end();
-                Logger::error("Getting free date for inserting keychange into mms");
-                continue;
-              }
-              if (originaldate != freedate)
-                adjusted_timestamps[originaldate] = freedate;
-            }
+            // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // // we try to get the first free date_sent
+            // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            // long long int freedate = originaldate;
+            // if (!targetisdummy)
+            // {
+            //   freedate = getFreeDateForMessage(originaldate, ttid, address);
+            //   if (freedate == -1)
+            //   {
+            //     if (d_verbose) [[unlikely]] Logger::message_end();
+            //     Logger::error("Getting free date for inserting keychange into mms");
+            //     continue;
+            //   }
+            //   if (originaldate != freedate)
+            //     adjusted_timestamps[originaldate] = freedate;
+            // }
 
-            if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, freedate},
-                                         {"date_received", freedate},
-                                         {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
-                                         {d_mms_recipient_id, address},
-                                         {"to_recipient_id", d_selfid},
-                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
-                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+            //                              {d_mms_date_sent, freedate},
+            //                              {"date_received", freedate},
+            //                              {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
+            //                              {d_mms_recipient_id, address},
+            //                              {"to_recipient_id", d_selfid},
+            //                              {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+            //                              {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // {
+            //   if (d_verbose) [[unlikely]] Logger::message_end();
+            //   Logger::error("Inserting keychange into mms");
+            //   dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+            //   return false;
+            // }
+
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, Types::BASE_INBOX_TYPE | Types::KEY_EXCHANGE_IDENTITY_UPDATE_BIT | Types::PUSH_MESSAGE_BIT},
+                                             {d_mms_recipient_id, address},
+                                             {"to_recipient_id", d_selfid},
+                                             {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                             {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+                                            {1, 2}, originaldate, ttid, address, &adjusted_timestamps))
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting keychange into mms");
@@ -934,31 +982,48 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           }
           else
           {
-            // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-            // we try to get the first free date_sent
-            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = originaldate;
-            if (!targetisdummy)
-            {
-              freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
-              if (freedate == -1)
-              {
-                if (d_verbose) [[unlikely]] Logger::message_end();
-                Logger::error("Getting free date for inserting verified-change message into mms");
-                continue;
-              }
-              if (originaldate != freedate)
-                adjusted_timestamps[originaldate] = freedate;
-            }
+            // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+            // // we try to get the first free date_sent
+            // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            // long long int freedate = originaldate;
+            // if (!targetisdummy)
+            // {
+            //   freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(verifytype) ? d_selfid : address);
+            //   if (freedate == -1)
+            //   {
+            //     if (d_verbose) [[unlikely]] Logger::message_end();
+            //     Logger::error("Getting free date for inserting verified-change message into mms");
+            //     continue;
+            //   }
+            //   if (originaldate != freedate)
+            //     adjusted_timestamps[originaldate] = freedate;
+            // }
 
-            if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {d_mms_type, verifytype},
-                                         {d_mms_recipient_id, Types::isOutgoing(verifytype) ? d_selfid : address},
-                                         {"to_recipient_id", Types::isOutgoing(verifytype) ? address : d_selfid},
-                                         {"m_type", 128}, // probably also if (local == false) 132
-                                         {"read", 1}}))              // hardcoded to 1 in Signal Android
+            // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+            //                              {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+            //                              {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+            //                              {d_mms_type, verifytype},
+            //                              {d_mms_recipient_id, Types::isOutgoing(verifytype) ? d_selfid : address},
+            //                              {"to_recipient_id", Types::isOutgoing(verifytype) ? address : d_selfid},
+            //                              {"m_type", 128}, // probably also if (local == false) 132
+            //                              {"read", 1}}))              // hardcoded to 1 in Signal Android
+            // {
+            //   if (d_verbose) [[unlikely]] Logger::message_end();
+            //   Logger::error("Inserting verified-change into mms");
+            //   return false;
+            // }
+
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, verifytype},
+                                             {d_mms_recipient_id, Types::isOutgoing(verifytype) ? d_selfid : address},
+                                             {"to_recipient_id", Types::isOutgoing(verifytype) ? address : d_selfid},
+                                             {"m_type", 128}, // probably also if (local == false) 132
+                                             {"read", 1}},    // hardcoded to 1 in Signal Android
+                                            {1, 2}, originaldate, ttid, Types::isOutgoing(verifytype) ? d_selfid : address, &adjusted_timestamps))
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting verified-change into mms");
@@ -1054,30 +1119,48 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           {
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
-            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = originaldate;
-            if (!targetisdummy)
-            {
-              freedate = getFreeDateForMessage(freedate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
-              if (freedate == -1)
-              {
-                if (d_verbose) [[unlikely]] Logger::message_end();
-                Logger::error("Getting free date for inserting profile-change into mms");
-                continue;
-              }
-              if (originaldate != freedate)
-                adjusted_timestamps[originaldate] = freedate;
-            }
+            // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            // long long int freedate = originaldate;
+            // if (!targetisdummy)
+            // {
+            //   freedate = getFreeDateForMessage(freedate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address);
+            //   if (freedate == -1)
+            //   {
+            //     if (d_verbose) [[unlikely]] Logger::message_end();
+            //     Logger::error("Getting free date for inserting profile-change into mms");
+            //     continue;
+            //   }
+            //   if (originaldate != freedate)
+            //     adjusted_timestamps[originaldate] = freedate;
+            // }
 
-            if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
-                                         {d_mms_type, Types::PROFILE_CHANGE_TYPE},
-                                         {"body", profchangefull.getDataString()},
-                                         {d_mms_recipient_id, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address},
-                                         {"to_recipient_id", Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? address : d_selfid},
-                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
-                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+            //                              {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+            //                              {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+            //                              {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+            //                              {"body", profchangefull.getDataString()},
+            //                              {d_mms_recipient_id, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address},
+            //                              {"to_recipient_id", Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? address : d_selfid},
+            //                              {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+            //                              {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // {
+            //   if (d_verbose) [[unlikely]] Logger::message_end();
+            //   Logger::error("Inserting profile-change into mms");
+            //   return false;
+            // }
+
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+                                             {"body", profchangefull.getDataString()},
+                                             {d_mms_recipient_id, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address},
+                                             {"to_recipient_id", Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? address : d_selfid},
+                                             {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                             {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+                                            {1, 2}, originaldate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address, &adjusted_timestamps))
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting profile-change into mms");
@@ -1173,29 +1256,46 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           {
             // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
             // we try to get the first free date_sent
-            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-            long long int freedate = originaldate;
-            if (!targetisdummy)
-            {
-              freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address);
-              if (freedate == -1)
-              {
-                if (d_verbose) [[unlikely]] Logger::message_end();
-                Logger::error("Getting free date for inserting ", type, " into mms");
-                continue;
-              }
-              if (originaldate != freedate)
-                adjusted_timestamps[originaldate] = freedate;
-            }
+            // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            // long long int freedate = originaldate;
+            // if (!targetisdummy)
+            // {
+            //   freedate = getFreeDateForMessage(originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address);
+            //   if (freedate == -1)
+            //   {
+            //     if (d_verbose) [[unlikely]] Logger::message_end();
+            //     Logger::error("Getting free date for inserting ", type, " into mms");
+            //     continue;
+            //   }
+            //   if (originaldate != freedate)
+            //     adjusted_timestamps[originaldate] = freedate;
+            // }
 
-            if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                         {d_mms_date_sent, freedate},
-                                         {"date_received", freedate},
-                                         {d_mms_type, message_request_response_type},
-                                         {d_mms_recipient_id, Types::isOutgoing(message_request_response_type) ? d_selfid : address},
-                                         {"to_recipient_id", Types::isOutgoing(message_request_response_type) ? address : d_selfid},
-                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
-                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+            //                              {d_mms_date_sent, freedate},
+            //                              {"date_received", freedate},
+            //                              {d_mms_type, message_request_response_type},
+            //                              {d_mms_recipient_id, Types::isOutgoing(message_request_response_type) ? d_selfid : address},
+            //                              {"to_recipient_id", Types::isOutgoing(message_request_response_type) ? address : d_selfid},
+            //                              {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+            //                              {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            // {
+            //   if (d_verbose) [[unlikely]] Logger::message_end();
+            //   Logger::error("Inserting ", type, " into mms");
+            //   dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid = ?", rowid);
+            //   return false;
+            // }
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, message_request_response_type},
+                                             {d_mms_recipient_id, Types::isOutgoing(message_request_response_type) ? d_selfid : address},
+                                             {"to_recipient_id", Types::isOutgoing(message_request_response_type) ? address : d_selfid},
+                                             {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                             {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+                                            {1, 2}, originaldate, ttid, Types::isOutgoing(message_request_response_type) ? d_selfid : address, &adjusted_timestamps))
             {
               if (d_verbose) [[unlikely]] Logger::message_end();
               Logger::error("Inserting ", type, " into mms");
@@ -1494,7 +1594,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                        //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                                        {d_mms_recipient_id, address},
                                        {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                                       {"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
+                                       //{"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
+                                       {"quote_id", hasquote ? bepaald::map_value_or(adjusted_timestamps, mmsquote_id, mmsquote_id) : 0},
                                        {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
                                        {"quote_body", hasquote ? mmsquote_body : nullptr},
                                        //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
@@ -1514,52 +1615,89 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         }
         else
         {
-          // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-          // we try to get the first free date_sent
-          long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
-          long long int freedate = originaldate;
-          if (!targetisdummy)
-          {
-            freedate = getFreeDateForMessage(originaldate, ttid, incoming ? address : d_selfid);
-            if (freedate == -1)
-            {
-              if (d_verbose) [[unlikely]] Logger::message_end();
-              Logger::error("Getting free date for inserting message into mms");
-              continue;
-            }
-            if (originaldate != freedate)
-              adjusted_timestamps[originaldate] = freedate;
-          }
+          // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+          // // we try to get the first free date_sent
+          // long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+          // long long int freedate = originaldate;
+          // if (!targetisdummy)
+          // {
+          //   freedate = getFreeDateForMessage(originaldate, ttid, incoming ? address : d_selfid);
+          //   if (freedate == -1)
+          //   {
+          //     if (d_verbose) [[unlikely]] Logger::message_end();
+          //     Logger::error("Getting free date for inserting message into mms");
+          //     continue;
+          //   }
+          //   if (originaldate != freedate)
+          //     adjusted_timestamps[originaldate] = freedate;
+          // }
 
-          if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                       {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
-                                       {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                                       {"body", msgbody},
-                                       {"read", 1}, // defaults to 0, but causes tons of unread message notifications
-                                       //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
-                                       //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
-                                       {d_mms_recipient_id, incoming ? address : d_selfid},
-                                       {"to_recipient_id", incoming ? d_selfid : address},
-                                       {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
-                                       {"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
-                                       {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
-                                       {"quote_body", hasquote ? mmsquote_body : nullptr},
-                                       //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
-                                       {"quote_missing", hasquote ? mmsquote_missing : 0},
-                                       {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
-                                       {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
-                                       {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
-                                       {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
-                                          results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
-                                       {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
-                                       {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
+          // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+          //                              {d_mms_date_sent, freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+          //                              {"date_received", freedate},//results_all_messages_from_conversation.value(j, "sent_at")},
+          //                              {"date_server", results_all_messages_from_conversation.value(j, "sent_at")},
+          //                              {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+          //                              {"body", msgbody},
+          //                              {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+          //                              //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
+          //                              //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
+          //                              {d_mms_recipient_id, incoming ? address : d_selfid},
+          //                              {"to_recipient_id", incoming ? d_selfid : address},
+          //                              {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+          //                              //{"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
+          //                              {"quote_id", hasquote ? bepaald::map_value_or(adjusted_timestamps, mmsquote_id, mmsquote_id) : 0},
+          //                              {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+          //                              {"quote_body", hasquote ? mmsquote_body : nullptr},
+          //                              //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
+          //                              {"quote_missing", hasquote ? mmsquote_missing : 0},
+          //                              {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+          //                              {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
+          //                              {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+          //                              {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
+          //                                 results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
+          //                              {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
+          //                              {"quote_type", hasquote ? mmsquote_type : 0}}, "_id", &retval))
+          // {
+          //   if (d_verbose) [[unlikely]] Logger::message_end();
+          //   Logger::error("Inserting into mms");
+          //   return false;
+          // }
+
+          long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+          if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                          {{"thread_id", ttid},
+                                           {d_mms_date_sent, originaldate},
+                                           {"date_received", originaldate},
+                                           {"date_server", originaldate},
+                                           {d_mms_type, Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                           {"body", msgbody},
+                                           {"read", 1}, // defaults to 0, but causes tons of unread message notifications
+                                                        //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
+                                                        //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
+                                           {d_mms_recipient_id, incoming ? address : d_selfid},
+                                           {"to_recipient_id", incoming ? d_selfid : address},
+                                           {"m_type", incoming ? 132 : 128}, // dont know what this is, but these are the values...
+                                           //{"quote_id", hasquote ? (bepaald::contains(adjusted_timestamps, mmsquote_id) ? adjusted_timestamps[mmsquote_id] : mmsquote_id) : 0},
+                                           {"quote_id", hasquote ? bepaald::map_value_or(adjusted_timestamps, mmsquote_id, mmsquote_id) : 0},
+                                           {"quote_author", hasquote ? std::any(mmsquote_author) : std::any(nullptr)},
+                                           {"quote_body", hasquote ? mmsquote_body : nullptr},
+                                           //{"quote_attachment", hasquote ? mmsquote_attachment : -1}, // removed since dbv166 so probably not important, was always -1 before
+                                           {"quote_missing", hasquote ? mmsquote_missing : 0},
+                                           {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
+                                           {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
+                                           {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                           {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
+                                              results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
+                                           {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
+                                           {"quote_type", hasquote ? mmsquote_type : 0}},
+                                          {1, 2}, originaldate, ttid, incoming ? address : d_selfid, &adjusted_timestamps,
+                                          "_id", &retval))
           {
             if (d_verbose) [[unlikely]] Logger::message_end();
             Logger::error("Inserting into mms");
             return false;
           }
+
         }
 
         //std::cout << "Raw any_cast 2" << std::endl;

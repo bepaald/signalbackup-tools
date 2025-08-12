@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -149,24 +149,40 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
     }
     else
     {
-      // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-      // we try to get the first free date_sent
-      long long int freedate = getFreeDateForMessage(timestamp, thread_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address);
-      if (freedate == -1)
-      {
-        Logger::error("Getting free date for inserting group-v1-migration message into mms");
-        return false;
-      }
+      // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      // // we try to get the first free date_sent
+      // long long int freedate = getFreeDateForMessage(timestamp, thread_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address);
+      // if (freedate == -1)
+      // {
+      //   Logger::error("Getting free date for inserting group-v1-migration message into mms");
+      //   return false;
+      // }
 
-      if (!insertRow(d_mms_table, {{"thread_id", thread_id},
-                                   {d_mms_date_sent, freedate},
-                                   {"date_received", freedate},
-                                   {d_mms_type, Types::GV1_MIGRATION_TYPE},
-                                   {d_mms_recipient_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address},
-                                   {"to_recipient_id", Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? address : d_selfid},
-                                   {"body", body},
-                                   {d_mms_recipient_device_id, 1},
-                                   {"read", 1}}))
+      // if (!insertRow(d_mms_table, {{"thread_id", thread_id},
+      //                              {d_mms_date_sent, freedate},
+      //                              {"date_received", freedate},
+      //                              {d_mms_type, Types::GV1_MIGRATION_TYPE},
+      //                              {d_mms_recipient_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address},
+      //                              {"to_recipient_id", Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? address : d_selfid},
+      //                              {"body", body},
+      //                              {d_mms_recipient_device_id, 1},
+      //                              {"read", 1}}))
+      // {
+      //   Logger::error("Inserting group-v1-migration into mms");
+      //   return false;
+      // }
+
+      if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                      {{"thread_id", thread_id},
+                                       {d_mms_date_sent, timestamp},
+                                       {"date_received", timestamp},
+                                       {d_mms_type, Types::GV1_MIGRATION_TYPE},
+                                       {d_mms_recipient_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address},
+                                       {"to_recipient_id", Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? address : d_selfid},
+                                       {"body", body},
+                                       {d_mms_recipient_device_id, 1},
+                                       {"read", 1}},
+                                      {1, 2}, timestamp, thread_id, Types::isOutgoing(Types::GV1_MIGRATION_TYPE) ? d_selfid : address, nullptr))
       {
         Logger::error("Inserting group-v1-migration into mms");
         return false;

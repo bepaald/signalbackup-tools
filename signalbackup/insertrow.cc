@@ -23,9 +23,10 @@
 #include <ranges>
 #endif
 
-bool SignalBackup::tryInsertRowElseGetFreeDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, int dateidx,
-                                               long long int originaldate, long long int thread_id, long long int recipient_id,
-                                               std::string const &returnfield, std::any *returnvalue) const
+bool SignalBackup::tryInsertRowElseAdjustDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, std::vector<int> const &dateidx,
+                                              long long int originaldate, long long int thread_id, long long int recipient_id,
+                                              std::map<long long int, long long int> *adjusted_timestamps, std::string const &returnfield,
+                                              std::any *returnvalue) const
 {
   bool ret = insertRowImpl(table, data, true, returnfield, returnvalue);
 
@@ -36,18 +37,18 @@ bool SignalBackup::tryInsertRowElseGetFreeDate(std::string const &table, std::ve
     if (freedate == -1) [[unlikely]]
     {
       Logger::error("Getting free date for inserting message into mms");
-      return ret;
+      return false;
     }
-    data[dateidx].second = freedate;
+    if (adjusted_timestamps && originaldate != freedate)
+      adjusted_timestamps->emplace(originaldate, freedate);
+
+    for (auto idx : dateidx)
+      data[idx].second = freedate;
+
     return insertRowImpl(table, data, false, returnfield, returnvalue);
   }
-  return ret;
-}
 
-bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
-                             std::string const &returnfield, std::any *returnvalue) const
-{
-  return insertRowImpl(table, data, false, returnfield, returnvalue);
+  return ret;
 }
 
 bool SignalBackup::insertRowImpl(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
@@ -110,7 +111,7 @@ bool SignalBackup::insertRowImpl(std::string const &table, std::vector<std::pair
     *returnvalue = res.value(0, 0);
   }
 
-  if (d_verbose) [[unlikely]]
+  if (d_verbose && ret) [[unlikely]]
     Logger::message("Inserted new row into table '", table, "'. New _id: ", d_database.lastId());
 
   return ret;

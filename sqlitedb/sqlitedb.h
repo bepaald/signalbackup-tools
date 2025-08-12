@@ -156,7 +156,8 @@ class SqliteDB
   void checkDatabaseWriteVersion() const;
   inline bool getStatement(std::string_view q, sqlite3_stmt **statement) const;
   inline void setCacheSize(unsigned int size = 1);
-  static inline void configSingleThreadMode();
+  static inline void setConfigOptions();
+  inline void transactionState() const;
 
  private:
   inline bool initFromFile();
@@ -1398,11 +1399,34 @@ inline void SqliteDB::setCacheSize(unsigned int size)
 // was built. If this function fails, it is completely
 // harmless, it just means sqlite will do some unnessecary
 // mutex locking.
-inline void SqliteDB::configSingleThreadMode() //static
+inline void SqliteDB::setConfigOptions() //static
 {
+  // run single threaded. this allows speed up (in single threaded-applications)
+  // due to less (no?) locking
   sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
-  // if (sqlite3_config(SQLITE_CONFIG_SINGLETHREAD) != SQLITE_OK) [[unlikely]]
-  //   Logger::warning("FAILED TO SET SINGLE THREAD MODE ON SQLITE");
+
+  // make sure the open functions interpret 'file://'-URIs. This is required
+  // to attach databases in readonly mode
+  sqlite3_config(SQLITE_CONFIG_URI, 1);
+}
+
+inline void SqliteDB::transactionState() const
+{
+  int state = sqlite3_txn_state(d_db, nullptr);
+  switch (state)
+  {
+    case SQLITE_TXN_NONE:
+      Logger::message("No pending transactions");
+      break;
+    case 1:
+      Logger::message("Read transaction in progress");
+      break;
+    case 2:
+      Logger::message("Write transaction in progress");
+      break;
+    [[unlikely]] default:
+      Logger::message("Invalid transaction state");
+  }
 }
 
 // inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)

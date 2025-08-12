@@ -49,10 +49,13 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     return;
   }
 
+  d_db.prettyPrint(false, "SELECT _id AS thread_id, message_count AS 'N messages' FROM thread");
+  d_db.transactionState();
+
   //  d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table'");
 
   // attach the 'canonical_address.db' database
-  if (!d_db.exec("ATTACH DATABASE ? AS ca", d_backuproot + "/db/canonical_address.db"))
+  if (!d_db.exec("ATTACH DATABASE ? AS ca", "file:" + d_backuproot + "/db/canonical_address.db?mode=ro"))
   {
     Logger::error("Failed to attach 'canonical_address.db'");
     return;

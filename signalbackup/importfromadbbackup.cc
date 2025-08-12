@@ -167,20 +167,20 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
       }
 
       std::any new_mms_id;
-      if (!tryInsertRowElseGetFreeDate(d_mms_table,
-                                       {{"thread_id", thread_id},
-                                        {d_mms_date_sent, message_results.value(im, "date_sent")},
-                                        {"date_received", message_results.value(im, "date_received")},
-                                        {d_mms_recipient_id, incoming ? thread_recipient_id : d_selfid},
-                                        {"to_recipient_id", incoming ? d_selfid : thread_recipient_id},
-                                        {d_mms_type, type},
-                                        {"body", body},
-                                        {"read", 1},
-                                        {"m_type", incoming ? 132 : 128},
-                                        {d_mms_delivery_receipts, message_results.value(im, "delivery_receipt_count")}},
-                                       1 /*date_sent idx*/, message_results.valueAsInt(im, "date_sent", 0), thread_id, incoming ? thread_recipient_id : d_selfid,
-                                       "_id",
-                                       &new_mms_id))
+      if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                      {{"thread_id", thread_id},
+                                       {d_mms_date_sent, message_results.value(im, "date_sent")},
+                                       {"date_received", message_results.value(im, "date_received")},
+                                       {d_mms_recipient_id, incoming ? thread_recipient_id : d_selfid},
+                                       {"to_recipient_id", incoming ? d_selfid : thread_recipient_id},
+                                       {d_mms_type, type},
+                                       {"body", body},
+                                       {"read", 1},
+                                       {"m_type", incoming ? 132 : 128},
+                                       {d_mms_delivery_receipts, message_results.value(im, "delivery_receipt_count")}},
+                                      1 /*date_sent idx*/, message_results.valueAsInt(im, "date_sent", 0), thread_id, incoming ? thread_recipient_id : d_selfid, nullptr,
+                                      "_id",
+                                      &new_mms_id))
       {
         Logger::warning("Failed to insert message");
         continue;

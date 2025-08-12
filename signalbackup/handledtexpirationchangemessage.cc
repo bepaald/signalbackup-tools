@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -119,24 +119,41 @@ bool SignalBackup::handleDTExpirationChangeMessage(SqliteDB const &ddb,
     }
     else
     {
-      // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-      // we try to get the first free date_sent
-      long long int freedate = getFreeDateForMessage(sent_at, ttid, incoming ? address : d_selfid);
-      if (freedate == -1)
-      {
-        Logger::error("Getting free date for inserting expiration-timer-update message into mms");
-        return false;
-      }
-      if (!insertRow(d_mms_table, {{"thread_id", ttid},
-                                   {d_mms_date_sent, freedate},//sent_at},
-                                   {"date_received", freedate},//sent_at},
-                                   {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
-                                    (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
-                                   {"m_type", (incoming ? 132 : 128)},
-                                   {"expires_in", timer * 1000},
-                                   {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
-                                   {d_mms_recipient_id, incoming ? address : d_selfid},
-                                   {"to_recipient_id", incoming ? d_selfid : address}}))
+      // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+      // // we try to get the first free date_sent
+      // long long int freedate = getFreeDateForMessage(sent_at, ttid, incoming ? address : d_selfid);
+      // if (freedate == -1)
+      // {
+      //   Logger::error("Getting free date for inserting expiration-timer-update message into mms");
+      //   return false;
+      // }
+      // if (!insertRow(d_mms_table, {{"thread_id", ttid},
+      //                              {d_mms_date_sent, freedate},//sent_at},
+      //                              {"date_received", freedate},//sent_at},
+      //                              {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
+      //                               (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+      //                              {"m_type", (incoming ? 132 : 128)},
+      //                              {"expires_in", timer * 1000},
+      //                              {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+      //                              {d_mms_recipient_id, incoming ? address : d_selfid},
+      //                              {"to_recipient_id", incoming ? d_selfid : address}}))
+      // {
+      //   Logger::message("Inserting expiration-timer-update into mms");
+      //   return false;
+      // }
+
+      if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                      {{"thread_id", ttid},
+                                       {d_mms_date_sent, sent_at},
+                                       {"date_received", sent_at},
+                                       {d_mms_type, Types::PUSH_MESSAGE_BIT | Types::SECURE_MESSAGE_BIT | Types::EXPIRATION_TIMER_UPDATE_BIT |
+                                        (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE)},
+                                       {"m_type", (incoming ? 132 : 128)},
+                                       {"expires_in", timer * 1000},
+                                       {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                       {d_mms_recipient_id, incoming ? address : d_selfid},
+                                       {"to_recipient_id", incoming ? d_selfid : address}},
+                                      {1, 2}, sent_at, ttid, incoming ? address : d_selfid, nullptr))
       {
         Logger::message("Inserting expiration-timer-update into mms");
         return false;

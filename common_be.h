@@ -34,6 +34,7 @@
 #include <ctime>
 #include <initializer_list>
 #include <string_view>
+#include <map>
 
 #if __cpp_lib_format >= 201907L
 #include <format>
@@ -145,6 +146,15 @@ namespace bepaald
 
   template <typename T, typename U>
   inline constexpr int findIdxOf(T const &container, U const &value);
+
+  template <typename Key, typename Value>
+  inline Value map_value_or(std::map<Key, Value> const &m, Key const& key, Value const &def)
+  {
+    auto it = m.find(key);
+    if (it == m.end())
+      return def;
+    return it->second;
+  }
 }
 
 #if defined DEBUGMSG || DEBUGISSUE

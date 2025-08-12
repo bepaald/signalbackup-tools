@@ -421,11 +421,16 @@ class SignalBackup
   inline bool setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, std::string const &line) const;
   bool insertRowImpl(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                      bool or_ignore, std::string const &returnfield, std::any *returnvalue) const;
-  bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
-                 std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
-  bool tryInsertRowElseGetFreeDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, int dateidx,
-                                   long long int originaldate, long long int thread_id, long long int recipient_id,
-                                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
+  inline bool insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
+                        std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
+  inline bool tryInsertRowElseAdjustDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, int dateidx,
+                                         long long int originaldate, long long int thread_id, long long int recipient_id,
+                                         std::map<long long int, long long int> *adjusted_timestamps, std::string const &returnfield = std::string(),
+                                         std::any *returnvalue = nullptr) const;
+  bool tryInsertRowElseAdjustDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, std::vector<int> const &dateidx,
+                                  long long int originaldate, long long int thread_id, long long int recipient_id,
+                                  std::map<long long int, long long int> *adjusted_timestamps, std::string const &returnfield = std::string(),
+                                  std::any *returnvalue = nullptr) const;
   bool updateRows(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
                   std::vector<std::pair<std::string, std::any>> whereclause,
                   std::string const &returnfield = std::string(), std::any *returnvalue = nullptr) const;
@@ -767,6 +772,21 @@ inline bool SignalBackup::setFrameFromLine(DeepCopyingUniquePtr<T> *newframe, st
   else
     return false;
   return true;
+}
+
+inline bool SignalBackup::insertRow(std::string const &table, std::vector<std::pair<std::string, std::any>> data,
+                             std::string const &returnfield, std::any *returnvalue) const
+{
+  return insertRowImpl(table, data, false, returnfield, returnvalue);
+}
+
+
+inline bool SignalBackup::tryInsertRowElseAdjustDate(std::string const &table, std::vector<std::pair<std::string, std::any>> data, int dateidx,
+                                                     long long int originaldate, long long int thread_id, long long int recipient_id,
+                                                     std::map<long long int, long long int> *adjusted_timestamps,
+                                                     std::string const &returnfield, std::any *returnvalue) const
+{
+  return tryInsertRowElseAdjustDate(table, data, std::vector<int>{dateidx}, originaldate, thread_id, recipient_id, adjusted_timestamps, returnfield, returnvalue);
 }
 
 template <>

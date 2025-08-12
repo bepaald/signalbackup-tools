@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  SqliteDB::configSingleThreadMode();
+  SqliteDB::setConfigOptions();
 
   //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP  INPUT ****//
   std::unique_ptr<DesktopDatabase> ddb;

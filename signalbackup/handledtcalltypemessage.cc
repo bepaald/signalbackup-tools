@@ -234,23 +234,38 @@ bool SignalBackup::handleDTCallTypeMessage(SqliteDB const &ddb, std::string cons
   }
   else
   {
-    // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
-    // we try to get the first free date_sent
-    long long int freedate = getFreeDateForMessage(calldetails.getValueAs<long long int>(0, "sent_at"), ttid, Types::isOutgoing(calltype) ? d_selfid : address);
-    if (freedate == -1)
-    {
-      Logger::error("Getting free date for call type message");
-      return false;
-    }
+    // // newer tables have a unique constraint on date_sent/thread_id/from_recipient_id, so
+    // // we try to get the first free date_sent
+    // long long int freedate = getFreeDateForMessage(calldetails.getValueAs<long long int>(0, "sent_at"), ttid, Types::isOutgoing(calltype) ? d_selfid : address);
+    // if (freedate == -1)
+    // {
+    //   Logger::error("Getting free date for call type message");
+    //   return false;
+    // }
 
-    if (!insertRow(d_mms_table,
-                   {{"thread_id", ttid},
-                    {d_mms_recipient_id, Types::isOutgoing(calltype) ? d_selfid : address},
-                    {"to_recipient_id", Types::isOutgoing(calltype) ? address : d_selfid},
-                    {"date_received", freedate},//calldetails.value(0, "sent_at")},
-                    {"date_sent", freedate},//calldetails.value(0, "sent_at")},
-                    {"type", calltype},
-                    {"body", body}}))
+    // if (!insertRow(d_mms_table,
+    //                {{"thread_id", ttid},
+    //                 {d_mms_recipient_id, Types::isOutgoing(calltype) ? d_selfid : address},
+    //                 {"to_recipient_id", Types::isOutgoing(calltype) ? address : d_selfid},
+    //                 {"date_received", freedate},//calldetails.value(0, "sent_at")},
+    //                 {"date_sent", freedate},//calldetails.value(0, "sent_at")},
+    //                 {"type", calltype},
+    //                 {"body", body}}))
+    // {
+    //   Logger::warning("Failed inserting into ", d_mms_table, ": call type message.");
+    //   return false;
+    // }
+
+    long long int date = calldetails.getValueAs<long long int>(0, "sent_at");
+    if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                    {{"thread_id", ttid},
+                                     {d_mms_recipient_id, Types::isOutgoing(calltype) ? d_selfid : address},
+                                     {"to_recipient_id", Types::isOutgoing(calltype) ? address : d_selfid},
+                                     {"date_received", date},
+                                     {"date_sent", date},
+                                     {"type", calltype},
+                                     {"body", body}},
+                                    {3, 4}, date, ttid, Types::isOutgoing(calltype) ? d_selfid : address, nullptr))
     {
       Logger::warning("Failed inserting into ", d_mms_table, ": call type message.");
       return false;
