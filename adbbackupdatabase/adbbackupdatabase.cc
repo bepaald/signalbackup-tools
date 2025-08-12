@@ -49,8 +49,22 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     return;
   }
 
+  Logger::message("Some info on messages.db:");
   d_db.prettyPrint(false, "SELECT _id AS thread_id, message_count AS 'N messages' FROM thread");
+  Logger::message_start(Logger::Control::BOLD);
   d_db.transactionState();
+  Logger::message_end(Logger::Control::NORMAL);
+
+  {
+    FileSqliteDB tmp(backupdir + "/db/canonical_address.db");
+    if (!tmp.ok())
+      Logger::warning("Something wrong with canonical_address.db?");
+    Logger::message("Some info on canonical_address.db:");
+    tmp.prettyPrint(false, "SELECT * FROM canonical_addresses");
+    Logger::message_start(Logger::Control::BOLD);
+    tmp.transactionState();
+    Logger::message_end(Logger::Control::NORMAL);
+  }
 
   //  d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table'");
 
