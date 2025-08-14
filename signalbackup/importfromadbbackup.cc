@@ -42,9 +42,13 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
   {
     Logger::message("Dealing with thread ", it + 1, "/", thread_results.rows());
 
-    std::string thread_recipient_e164 = adbdb->d_db.getSingleResultAs<std::string>("SELECT address FROM canonical_addresses WHERE ca.canonical_addresses._id = ?",
-                                                                                   thread_results.value(it, "recipient_ids"),
-                                                                                   std::string());
+    std::string thread_recipient_e164 =
+      adbdb->version() < 276 ?
+      adbdb->d_db.getSingleResultAs<std::string>("SELECT address FROM canonical_addresses WHERE ca.canonical_addresses._id = ?",
+                                                 thread_results.value(it, "recipient_ids"),
+                                                 std::string()) :
+      thread_results(it, "recipient_ids");
+
 
     if (thread_recipient_e164.empty())
     {
@@ -214,12 +218,6 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
               continue;
             }
             std::string attachment_filepath(adbdb->backupRoot() + "/r/" + data.substr(STRLEN("/data/user/0/org.thoughtcrime.securesms/")));
-            // std::ifstream attachment_file(attachment_filepath, std::ios_base::in | std::ios_base::binary);
-            // if (!attachment_file.is_open())
-            // {
-            //   Logger::error("Failed to open attachment file for reading: '", attachment_filepath, "'");
-            //   continue;
-            // }
 
             AdbBackupAttachmentReader adb_attachment(attachment_filepath,
                                                      adbdb->macSecret(), adbdb->macSecretLength(),

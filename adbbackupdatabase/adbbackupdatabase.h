@@ -39,6 +39,7 @@ class AdbBackupDatabase
   unsigned char *d_mac_secret;        // non-owning pointer
   bool d_ok;
   bool d_verbose;
+  int d_version_code;
 
  public:
   AdbBackupDatabase(std::string const &backupdir, std::string const &passphrase, bool verbose);
@@ -50,6 +51,7 @@ class AdbBackupDatabase
   inline std::optional<std::string> decryptMessageBody(std::string const &encbody) const;
   inline std::string const &selfphone() const;
   inline std::string const &backupRoot() const;
+  inline int version() const;
  private:
   static std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> decrypt(unsigned char *encdata, int enclength,
                                                                                  unsigned char *mackey, int maclength,
@@ -87,6 +89,11 @@ inline unsigned char const *AdbBackupDatabase::encryptionSecret() const
 inline std::string const &AdbBackupDatabase::backupRoot() const
 {
   return d_backuproot;
+}
+
+inline int AdbBackupDatabase::version() const
+{
+  return d_version_code;
 }
 
 inline std::optional<std::string> AdbBackupDatabase::decryptMessageBody(std::string const &encbody_b64) const

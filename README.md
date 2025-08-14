@@ -1043,6 +1043,7 @@ Done! Wrote 10940302 bytes.
 
 - `--removedoubles <ms>` Removes doubled messages from a backup file. The supplied argument `ms` is optional (default 0) and sets the maximum number of milliseconds the timestamps of two messages can be apart and still be considered potential doubles. Note, in any somewhat recent backups true doubles (with a timestamp difference of 0) are not possible, as the database does not allow the insertion of messages in the same thread, from the same recipient with the same timestamp. This function also considers the message body and number of attachments when determining if a message is doubled. Could be useful after having merged older, overlapping backups or imported overlapping data from Signal Desktop without using the `--limittodates/--autolimitdates` option, and no possibility to redo the process. If the source data is still available, it is always recommended to re-do the process with the proper date limiting or cropping. _This function is experimental, but has been used successfully at least once._
 - `--mergerecipients <OLDNUMBER> <NEWNUMBER>` Can be used to change a contacts' number (for example when they get a new phone resulting in the conversation being split in two). Messages from `OLDNUMBER` are changed so they appear as coming from `NEWNUMBER`, and the threads are merged.
+- While it is not easily achievable to completely remove a contact from Signal's database, much of their data (names, avatar, etc.) can be cleared. See https://github.com/bepaald/signalbackup-tools/issues/114 for details.
 
 **<span id="advanced">Advanced options</span>**
 
@@ -1083,7 +1084,7 @@ done!
 [~/programming/signalbackup-tools] $ ./signalbackup-tools [input] [passphrase] --runsqlquery "UPDATE sms SET body = 'No' WHERE _id == 21300" --ouput [output]
 ```
 
-If you also need to edit the attachments, dump the backup to directory first ([as described above](#dump)) and do whatever you want, but realize when editing the .bin file, it will usually require changes to also be made to the .sbf file and the sql database to end up with a valid database.
+If you also need to edit the attachments, dump the backup to directory first ([as described above](#dump)) and do whatever you want, but realize when editing the `.bin` file, it will usually require changes to also be made to the `.sbf` file and the sql database to end up with a valid database.
 
 
 ## Future plans

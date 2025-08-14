@@ -41,7 +41,8 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
   d_mac_secret_length(0),
   d_mac_secret(nullptr),
   d_ok(false),
-  d_verbose(verbose)
+  d_verbose(verbose),
+  d_version_code(0)
 {
   if (!d_db.ok()) [[unlikely]]
   {
@@ -49,40 +50,49 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     return;
   }
 
-  Logger::message("Some info on messages.db:");
-  d_db.prettyPrint(false, "SELECT _id AS thread_id, message_count AS 'N messages' FROM thread");
-  Logger::message_start(Logger::Control::BOLD);
-  d_db.transactionState();
-  Logger::message_end(Logger::Control::NORMAL);
+  // get self phone
+  XmlDocument securesms_preferences(d_backuproot + "/sp/org.thoughtcrime.securesms_preferences.xml");
+  if (!securesms_preferences.ok()) [[unlikely]]
+    Logger::warning("Failed to open/parse preference file: '", d_backuproot, "/sp/org.thoughtcrime.securesms_preferences.xml");
+  d_version_code = bepaald::toNumber<int>(securesms_preferences.getAttributeValueFromNode("value", "int", {{"name", "last_version_code"}}).value_or("0"));
 
-  {
-    FileSqliteDB tmp(backupdir + "/db/canonical_address.db");
-    if (!tmp.ok())
-      Logger::warning("Something wrong with canonical_address.db?");
-    Logger::message("Some info on canonical_address.db:");
-    tmp.prettyPrint(false, "SELECT * FROM canonical_addresses");
-    Logger::message_start(Logger::Control::BOLD);
-    tmp.transactionState();
-    Logger::message_end(Logger::Control::NORMAL);
-  }
+  // Logger::message("Some info on messages.db:");
+  // d_db.prettyPrint(false, "SELECT _id AS thread_id, message_count AS 'N messages' FROM thread");
+  // Logger::message_start(Logger::Control::BOLD);
+  // d_db.transactionState();
+  // Logger::message_end(Logger::Control::NORMAL);
+
+  // {
+  //   FileSqliteDB tmp(backupdir + "/db/canonical_address.db");
+  //   if (!tmp.ok())
+  //     Logger::warning("Something wrong with canonical_address.db?");
+  //   Logger::message("Some info on canonical_address.db:");
+  //   tmp.prettyPrint(false, "SELECT * FROM canonical_addresses");
+  //   Logger::message_start(Logger::Control::BOLD);
+  //   tmp.transactionState();
+  //   Logger::message_end(Logger::Control::NORMAL);
+  // }
 
   //  d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table'");
 
-  // attach the 'canonical_address.db' database
-  if (!d_db.exec("ATTACH DATABASE ? AS ca", "file:" + d_backuproot + "/db/canonical_address.db?mode=ro"))
+  // attach the 'canonical_address.db' database, which contained the recipient identifiers (e164)
+  // until version 275. Starting at 276, the e164 from this database are folded into the tables in
+  // messages.db (eg thread.recipent_ids initially referred to an entry in canonical_addresses._id,
+  // afterwards thread.recipient_ids would simply have +123456789 as a value)
+  if (d_version_code < 276 && !d_db.exec("ATTACH DATABASE ? AS ca", "file:" + d_backuproot + "/db/canonical_address.db?mode=ro"))
   {
     Logger::error("Failed to attach 'canonical_address.db'");
     return;
   }
 
-  //  d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table' UNION ALL SELECT name FROM ca.sqlite_master WHERE type = 'table'");
+  //Logger::message("Code version: ", d_version_code);
+  //d_db.prettyPrint(false, "SELECT name FROM sqlite_master WHERE type = 'table' UNION ALL SELECT name FROM ca.sqlite_master WHERE type = 'table'");
 
   /*
     SELECT DISTINCT thread_id,mms.address AS msg_address,canonical_addresses.address AS can_address,recipient_ids FROM mms LEFT JOIN thread ON thread_id = thread._id LEFT JOIN ca.canonical_addresses ON ca.canonical_addresses._id = thread.recipient_ids UNION SELECT DISTINCT thread_id,sms.address AS msg_address,canonical_addresses.address AS can_address,recipient_ids FROM sms LEFT JOIN thread ON thread._id = sms.thread_id LEFT JOIN ca.canonical_addresses ON ca.canonical_addresses._id = thread.recipient_ids
   */
 
   // get self phone
-  XmlDocument securesms_preferences(d_backuproot + "/sp/org.thoughtcrime.securesms_preferences.xml");
   if (!securesms_preferences.ok()) [[unlikely]]
     Logger::warning("Failed to open/parse preference file: '", d_backuproot, "/sp/org.thoughtcrime.securesms_preferences.xml");
   else
@@ -275,26 +285,6 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
     Logger::message("ADB backup: Encryption secret: ", bepaald::bytesToHexString(d_encryption_secret, d_encryption_secret_length));
     Logger::message("                   Mac secret: ", bepaald::bytesToHexString(d_mac_secret, d_mac_secret_length));
   }
-
-  // SqliteDB::QueryResults res;
-  // d_db.exec("SELECT body FROM sms WHERE body IS NOT NULL", &res);
-  // for (unsigned int i = 0; i < res.rows(); ++i)
-  // {
-  //   auto body = decryptMessageBody(res(i, "body"));
-  //   if (body.has_value())
-  //     Logger::message("Body: \"", body.value(), "\"");
-  //   else
-  //     Logger::message("(nobody)");
-  // }
-  // d_db.exec("SELECT body FROM mms WHERE body IS NOT NULL", &res);
-  // for (unsigned int i = 0; i < res.rows(); ++i)
-  // {
-  //   auto body = decryptMessageBody(res(i, "body"));
-  //   if (body.has_value())
-  //     Logger::message("Body: \"", body.value(), "\"");
-  //   else
-  //     Logger::message("(nobody)");
-  // }
 
   d_ok = true;
 }
