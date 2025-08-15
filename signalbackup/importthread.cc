@@ -977,24 +977,11 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
     source->d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
   }
 
-  // delete existing chat_folder_memberships
-  if (source->d_database.containsTable("chat_folder_membership") &&
-      d_database.containsTable("chat_folder_membership"))
-  {
-    SqliteDB::QueryResults res;
-    d_database.exec("SELECT chat_folder_id, thread_id FROM chat_folder_membership", &res);
-
-    for (unsigned int i = 0; i < res.rows(); ++i)
-      source->d_database.exec("DELETE FROM chat_folder_membership WHERE chat_folder_id = ? AND thread_id = ?",
-                              {res.value(i, "chat_folder_id"), res.value(i, "thread_id")});
-  }
-
-  // delete the default chat_folder
-  if (source->d_database.containsTable("chat_folder_membership") &&
-      d_database.containsTable("chat_folder_membership"))
-  {
-    source->d_database.exec("DELETE FROM chat_folder WHERE NAME IS NULL");
-  }
+  // do not attempt to import chat_folders...
+  if (source->d_database.containsTable("chat_folder_membership"))
+    source->d_database.exec("DELETE FROM chat_folder_membership");
+  if (source->d_database.containsTable("chat_folder"))
+    source->d_database.exec("DELETE FROM chat_folder");
 
   // // export database
   // std::cout << "Writing database..." << std::endl;
