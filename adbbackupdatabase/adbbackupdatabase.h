@@ -41,6 +41,12 @@ class AdbBackupDatabase
   bool d_verbose;
   int d_version_code;
 
+  enum EncryptionType : uint64_t
+  {
+    ENCRYPTION_ASYMMETRIC_BIT = 0x40000000,
+    ENCRYPTION_SYMMETRIC_BIT = 0x80000000
+  };
+
  public:
   AdbBackupDatabase(std::string const &backupdir, std::string const &passphrase, bool verbose);
   inline bool ok() const;

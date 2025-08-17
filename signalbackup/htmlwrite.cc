@@ -528,6 +528,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         background-image: url('data:image/svg+xml;,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="white" stroke="none"><path d="M6.75,6a0.75,0.75 0,0 1,-1.5 0c0,-0.414 0.475,-3.581 0.5,-3.75S5.862,2 6,2s0.226,0.087 0.25,0.25S6.75,5.589 6.75,6ZM12,6a6,6 0,1 0,-6 6A6.006,6.006 0,0 0,12 6ZM11,6A5,5 0,1 1,6 1,5.006 5.006,0 0,1 11,6Z"/></svg>');
       }
 
+      .insecure {
+        height: 14px;
+        width: 14px;
+        background-image: url('data:image/svg+xml;,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M22.5 6.5a4.95 4.95 0 0 0-5-5 4.95 4.95 0 0 0-5 5v3h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2h-1v-3c0-1.7 1.3-3 3-3s3 1.3 3 3v3h2zm-12 10.2V19h-2v-2.3c-.6-.4-1-1-1-1.7 0-1.1.9-2 2-2s2 .9 2 2c0 .7-.4 1.4-1 1.7z"/></svg>');
+      }
+
       .msg-incoming .is-expiring {
         filter: var(--icon-f);
       }
@@ -595,7 +601,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .no-bg-bubble .checkmarks-sent,
       .no-bg-bubble .checkmarks-read,
-      .no-bg-bubble .checkmarks-received {
+      .no-bg-bubble .checkmarks-received,
+      .no-bg-bubble .insecure {
         filter: var(--nobgbubble-checkmarks-f);
       }
 
@@ -2665,8 +2672,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   {
     if (msg_info.expires_in > 0)
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons is-expiring\"></div>\n";
-    if (!msg_info.incoming && !Types::isCallType(msg_info.type) && !msg_info.is_deleted && !sendfailed)
+    if (!msg_info.incoming && !msg_info.is_deleted && !sendfailed)
     {
+      if ((msg_info.type & Types::SECURE_MESSAGE_BIT) == 0)
+        htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons insecure\"></div>\n";
       htmloutput << std::string(extraindent, ' ') << "              <div class=\"footer-icons checkmarks-";
       if (msg_info.messages->getValueAs<long long int>(msg_info.idx, d_mms_read_receipts) > 0)
         htmloutput << "read";

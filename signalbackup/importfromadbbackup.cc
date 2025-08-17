@@ -128,9 +128,9 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
 
     // get messages
     SqliteDB::QueryResults message_results;
-    if (!adbdb->d_db.exec("SELECT _id, thread_id, body, date AS date_received, date_sent, read, type, delivery_receipt_count, 0 AS is_mms FROM sms WHERE thread_id = ?1"
+    if (!adbdb->d_db.exec("SELECT _id, thread_id, body, date AS date_received, date_sent, read, type, delivery_receipt_count, expires_in, 0 AS is_mms FROM sms WHERE thread_id = ?1"
                           "UNION ALL "
-                          "SELECT _id, thread_id, body, date AS date_received, date AS date_sent, read, msg_box AS type, delivery_receipt_count, 1 AS is_mms FROM mms WHERE thread_id = ?1",
+                          "SELECT _id, thread_id, body, date AS date_received, date AS date_sent, read, msg_box AS type, delivery_receipt_count, expires_in, 1 AS is_mms FROM mms WHERE thread_id = ?1",
                           thread_results.value(it, 0),
                           &message_results))
       return false;
@@ -147,18 +147,32 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
     {
       Logger::message_overwrite("Importing message ", im + 1, "/", message_results.rows());
 
+      // the types in this database seem to be prepended with 11111111'11111111'11111111'11111111 (making it appear signed negative as well), lets remove that.
+      long long int type = message_results.valueAsInt(im, "type") & Types::TOTAL_MASK;
+
+      AdbBackupDatabase::EncryptionType encryptiontype = type & AdbBackupDatabase::EncryptionType::ENCRYPTION_ASYMMETRIC_BIT ?
+        AdbBackupDatabase::EncryptionType::ENCRYPTION_ASYMMETRIC_BIT :
+        AdbBackupDatabase::EncryptionType::ENCRYPTION_SYMMETRIC_BIT;
+
       // these message still have
       //  long ENCRYPTION_SYMMETRIC_BIT         = 0x80000000; Deprecated
       //  long ENCRYPTION_ASYMMETRIC_BIT        = 0x40000000; Deprecated
       // bits set. Remove them.
+      // type &= ~0x40000000;
+      // type &= ~0x80000000;
+      // ~(0x40000000 | 0x80000000) == 0x3FFFFFFF
+      //type &= 0x3FFFFFFF;
+      type &= 0x3FFFFFFF;
 
-      // the types in this database seem to be prepended with 11111111'11111111'11111111'11111111 (making it appear signed negative as well), lets remove that.
-      long long int type = message_results.valueAsInt(im, "type") & Types::TOTAL_MASK;
-      type &= ~0x40000000;
-      type &= ~0x80000000;
       bool incoming = Types::isInboxType(type);
 
-      std::string body = message_results(im, "body");
+      if (encryptiontype == AdbBackupDatabase::EncryptionType::ENCRYPTION_ASYMMETRIC_BIT) [[unlikely]]
+      {
+        Logger::warning("Message encrypted with asymmetric encryption not (yet) supported. Skipping...)");
+        continue;
+      }
+
+      std::string body(message_results(im, "body"));
       if (!body.empty())
       {
         auto opt_body = adbdb->decryptMessageBody(body);
@@ -167,7 +181,7 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
           Logger::error("Failed to decrypt message body");
           continue;
         }
-        body = opt_body.value();
+        body = std::move(*opt_body);
       }
 
       std::any new_mms_id;
@@ -178,9 +192,10 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
                                        {d_mms_recipient_id, incoming ? thread_recipient_id : d_selfid},
                                        {"to_recipient_id", incoming ? d_selfid : thread_recipient_id},
                                        {d_mms_type, type},
-                                       {"body", body},
+                                       {!body.empty() ? "body" : "", body},
                                        {"read", 1},
                                        {"m_type", incoming ? 132 : 128},
+                                       {"expires_in", message_results.value(im, "expires_in")},
                                        {d_mms_delivery_receipts, message_results.value(im, "delivery_receipt_count")}},
                                       1 /*date_sent idx*/, message_results.valueAsInt(im, "date_sent", 0), thread_id, incoming ? thread_recipient_id : d_selfid, nullptr,
                                       "_id",
@@ -209,12 +224,18 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
         {
           for (unsigned int ip = 0; ip < part_results.rows(); ++ip)
           {
+            // get the transfer state to detect failed attachments;
+            long long int pending_push = part_results.valueAsInt(ip, "pending_push", 3/* = TRANSFER_PROGRESS_FAILED*/);
+
             // _data is '/data/user/0/org.thoughtcrime.securesms/app_parts/partXXXXXXX.mms'
             // our files live in '[backupdir]/r/app_parts/partXXXXXXXX.mms'
             std::string data = part_results(ip, "_data");
             if (!STRING_STARTS_WITH(data, "/data/user/0/org.thoughtcrime.securesms/"))
             {
-              Logger::warning("Attachment _data entry has unexpected value: '", data, "', skipping");
+              if (data.empty() && pending_push != 0)
+                Logger::warning("Skipping attachment with failed transfer state");
+              else
+                Logger::warning("Attachment _data entry has unexpected value: '", data, "', skipping");
               continue;
             }
             std::string attachment_filepath(adbdb->backupRoot() + "/r/" + data.substr(STRLEN("/data/user/0/org.thoughtcrime.securesms/")));
@@ -241,18 +262,18 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
             if (att_data)
               delete[] att_data;
 #endif
-            // std::cout << std::endl;
-            // std::cout << "GOT ATTACHMENT DATA!" << std::endl;
-            // std::cout << amd << std::endl;
-            // std::cout << amd.filename << std::endl;
-            // std::cout << amd.filetype << std::endl;
-            // std::cout << amd.filesize << std::endl;
-            // std::cout << amd.hash << std::endl;
-            // std::cout << amd.width << std::endl;
-            // std::cout << amd.height << std::endl;
-            // std::cout << std::endl;
 
             long long int datasize = part_results.valueAsInt(ip, "data_size", 0);
+
+            std::string file_name(part_results(ip, "file_name"));
+            if (!file_name.empty())
+            {
+              auto opt_file_name = adbdb->decryptMessageBody(file_name);
+              if (!opt_file_name.has_value()) [[unlikely]]
+                Logger::error("Failed to decrypt attachment file name");
+              else
+                file_name = std::move(*opt_file_name);
+            }
 
             //insert into part
             std::any new_part_id_any;
@@ -262,10 +283,10 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
                             {d_part_cd, part_results.value(ip, "cd")},
                             {d_part_cl, part_results.value(ip, "cl")},
                             {"remote_digest", part_results.value(ip, "digest")},
-                            {d_part_pending, part_results.value(ip, "pending_push")},
+                            {d_part_pending, pending_push},
                             {"data_file", part_results.value(ip, "_data")},
                             {"data_size", datasize},
-                            {"file_name", part_results.value(ip, "file_name")},
+                            {"file_name", file_name},
                             {amd.width > -1 ? "width" : "", amd.width},
                             {amd.height > -1 ? "height" : "", amd.height},
                             {(d_database.tableContainsColumn(d_part_table, "data_hash") ? "data_hash" : ""), amd.hash},
@@ -291,7 +312,7 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
             }
           }
         }
-        if (!attachmentadded && body.empty()) [[unlikely]] // remove new message if body is empty and no attachments were successfully added
+        if (!attachmentadded && body.empty() && !Types::isExpirationTimerUpdate(type)) [[unlikely]] // remove new message if body is empty and no attachments were successfully added
         {
           Logger::warning("Removing empty message (no message body, no attachments)");
           d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_mms_id);

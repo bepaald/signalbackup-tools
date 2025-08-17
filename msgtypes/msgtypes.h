@@ -65,6 +65,10 @@ struct Types
                                                         BASE_PENDING_INSECURE_SMS_FALLBACK,
                                                         OUTGOING_AUDIO_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE};
 
+  //static uint64_t constexpr MESSAGE_ATTRIBUTE_MASK   = 0xE0;
+  //static uint64_t constexpr MESSAGE_RATE_LIMITED_BIT = 0x80;
+  static uint64_t constexpr MESSAGE_FORCE_SMS_BIT    = 0x40;
+
   static uint64_t constexpr KEY_EXCHANGE_MASK                  = 0xFF00;
   static uint64_t constexpr KEY_EXCHANGE_BIT                   = 0x8000;
   static uint64_t constexpr KEY_EXCHANGE_IDENTITY_VERIFIED_BIT = 0x4000;
