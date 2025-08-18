@@ -17,4 +17,4 @@ jobs:
       - name: Build cmake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DWIN32_GITHUB_RUNNER=1 -Dunofficial-sqlite3_DIR="C:/vcpkg/packages/sqlite3_x64-windows/share/unofficial-sqlite3/"
-          cmake --build build/ -j $(nproc)
+          cmake --build build/ -j8

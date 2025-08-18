@@ -177,7 +177,8 @@ R"*(
 --overwrite                              Optional modifier for all output operations. Overwrite output
                                          files if they exist. When <OUTPUT> is a directory this will
                                          delete ALL directory contents.
-
+)*"
+R"*(
  = EDITING OPTIONS =
 --croptothreads <THREADS_LIST>           Crop database to list of threads. The list supports comma
                                          separated numbers or ranges (for example: "1,3,4-8,13") or the
@@ -261,22 +262,23 @@ R"*(
                                          as delivered.
    --jsonmarkread                        Optional modifier for `--importtelegram'. Mark imported messages
                                          as read."
-
+)*"
+R"*(
  = VARIOUS =
 The following options are also supported in this program, and listed here for completeness. Some of them
 are mostly useful for the developer, others were custom functions for specific problems that are not
 expected to be very useful to other people. Most of these functions are poorly tested (if at all) and
 possibly outdated. Some will probably eventually be renamed and more thoroughly documented others will
 be removed.
---showdbinfo                                  Prints a list of all tables and columns in the backups
-                                              SQLite database.
---showdesktopkey                              Show the (hex) SQLCipher key used for the desktop database.
---dumpdesktopdb <OUTPUT>                      Decrypt the Signal Desktop database and saves it to <OUTPUT>.
---scramble                                    Poorly censors backups, replacing all characters with 'x'.
-                                              Useful to make screenshots.
---scanmissingattachments                      If you see "warning attachment data not found" messages,
-                                              feel free to use this option and provide the output to the
-                                              developer.)*";
+--showdbinfo                               Prints a list of all tables and columns in the backups
+                                           SQLite database.
+--showdesktopkey                           Show the (hex) SQLCipher key used for the desktop database.
+--dumpdesktopdb <OUTPUT>                   Decrypt the Signal Desktop database and saves it to <OUTPUT>.
+--scramble                                 Poorly censors backups, replacing all characters with 'x'.
+                                           Useful to make screenshots.
+--scanmissingattachments                   If you see "warning attachment data not found" messages,
+                                           feel free to use this option and provide the output to the
+                                           developer.)*";
 // --hiperfall <THREAD_ID>                       Switch sender and recipient. See
 //                                               https://github.com/bepaald/signalbackup-tools/issues/44
 //    --setselfid <PHONENUMBER>                  Optional modifier for `--hiperfall' and `--importwachat'

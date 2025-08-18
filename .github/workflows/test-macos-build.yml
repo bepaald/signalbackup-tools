@@ -32,5 +32,5 @@ jobs:
           echo "Installing..."
           brew install --HEAD signalbackup-tools
           echo "Testing..."
-          brew test HomebrewFormula/signalbackup-tools.rb
+          brew test signalbackup-tools
           echo "done!"

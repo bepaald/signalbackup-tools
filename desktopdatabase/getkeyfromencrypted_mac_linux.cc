@@ -17,7 +17,7 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#if !defined(__WIN32) && !defined(__MINGW64__)
+#if !defined(_WIN32) && !defined(__MINGW64__)
 
 #include "desktopdatabase.ih"
 

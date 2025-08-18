@@ -1460,7 +1460,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           {
             // HEX(quote_mentions) = 0A2A080A10011A2439333732323237332D373865332D343133362D383634302D633832363139363937313463
             // PROTOBUF
-            // Field #1: 0A String Length = 42, Hex = 2A, UTF8 = " $93722273-7 ..." (total 42 chars)
+            // Field #1: 0A String Length = 42, Hex = 2A, UTF8 = "[gobbledygook] ..." (total 42 chars)
             // As sub-object :
             // Field #1: 08 Varint Value = 10, Hex = 0A
             // Field #2: 10 Varint Value = 1, Hex = 01
