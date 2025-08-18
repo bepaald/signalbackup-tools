@@ -10,7 +10,11 @@ endif ()
 project(signalbackup-tools)
 
 find_package(OpenSSL REQUIRED)
-find_package(SQLite3 REQUIRED)
+if (WIN32_GITHUB_RUNNER)
+  find_package(unofficial-sqlite3 CONFIG REQUIRED)
+else()
+  find_package(SQLite3 REQUIRED)
+endif()
 
 set(CMAKE_CXX_EXTENSIONS off)
 if (CMAKE_VERSION VERSION_LESS "3.30")  # the CMAKE_CXX_STANDARD_LATEST variable was only introduced in 3.30
@@ -64,4 +68,12 @@ endif()
 file(GLOB SOURCES CONFIGURE_DEPENDS */*.cc */*.h *.cc *.h)
 add_executable(signalbackup-tools ${SOURCES})
 
-target_link_libraries(signalbackup-tools OpenSSL::Crypto SQLite::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})
+if (WIN32)
+  target_compile_definitions(signalbackup-tools PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+endif()
+
+if (WIN32_GITHUB_RUNNER)
+  target_link_libraries(signalbackup-tools PRIVATE OpenSSL::Crypto unofficial::sqlite3::sqlite3)
+else()
+  target_link_libraries(signalbackup-tools OpenSSL::Crypto SQLite::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})
+endif()

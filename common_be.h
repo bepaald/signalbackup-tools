@@ -20,6 +20,11 @@
 #ifndef COMMON_BE_H_
 #define COMMON_BE_H_
 
+#if defined(_WIN32) || defined(__MINGW64__)
+#define WIN32_LEAN_AND_MEAN 1
+#define NOGDI 1
+#endif
+
 #if defined(__has_include) && __has_include("version")
 #include <version>
 #endif
