@@ -21,14 +21,16 @@ jobs:
   do-build-tests:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-
       - name: Prepare
         run: |
           brew update
 
       - name: Build
         run: |
+          echo "Tapping..."
           brew tap bepaald/signalbackup-tools https://github.com/bepaald/signalbackup-tools
+          echo "Installing..."
           brew install --HEAD signalbackup-tools
+          echo "Testing..."
           brew test HomebrewFormula/signalbackup-tools.rb
+          echo "done!"
