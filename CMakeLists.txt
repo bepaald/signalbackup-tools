@@ -70,6 +70,7 @@ add_executable(signalbackup-tools ${SOURCES})
 
 if (WIN32)
   target_compile_definitions(signalbackup-tools PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+  target_link_libraries(signalbackup-tools PRIVATE crypt32)
 endif()
 
 if (WIN32_GITHUB_RUNNER)
