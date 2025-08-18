@@ -306,7 +306,7 @@ inline std::string SharedPrefFrame::valueType() const
       return "STRINGSET";
 
     if (std::get<0>(p) == FIELD::ISSTRINGSETVALUE)
-      if (bytesToInt64(std::get<1>(p), std::get<2>(p)) == true)
+      if (bytesToInt64(std::get<1>(p), std::get<2>(p)) == 1)
         return "STRINGSET";
   }
   Logger::warning("Currently unsupported value type requested from SharedPrefrenceFrame");
