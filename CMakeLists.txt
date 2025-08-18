@@ -73,7 +73,7 @@ if (WIN32)
 endif()
 
 if (WIN32_GITHUB_RUNNER)
-  target_compile_options(signalbackup-tools PUBLIC /wd4244 /wd4267)
+  target_compile_options(signalbackup-tools PUBLIC /wd4244 /wd4267 /wd4996)
   target_link_libraries(signalbackup-tools PRIVATE OpenSSL::Crypto unofficial::sqlite3::sqlite3)
 else()
   target_link_libraries(signalbackup-tools OpenSSL::Crypto SQLite::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})
