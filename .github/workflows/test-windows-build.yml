@@ -1,12 +1,19 @@
 name: Test Windows Build
 
 on:
- workflow_dispatch:
-   branches:
-     - main
+  workflow_dispatch:
+  push:
+    tags-ignore:
+      - '[0-9]*'
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
+      - '**/autoversion.h'
+      - '.github/workflows/*.yml'
 
 jobs:
-  do-build-tests-cmake:
+  do-build-tests-windows:
     runs-on: windows-2025
     steps:
       - uses: actions/checkout@v4
@@ -17,4 +24,4 @@ jobs:
       - name: Build cmake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DWIN32_GITHUB_RUNNER=1 -Dunofficial-sqlite3_DIR="C:/vcpkg/packages/sqlite3_x64-windows/share/unofficial-sqlite3/"
-          cmake --build build/ -j 8
+          cmake --build build/ -- /p:CL_MPcount=4
