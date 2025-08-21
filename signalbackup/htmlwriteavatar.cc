@@ -45,22 +45,22 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     avatar = "media/Avatar_" + pos->first + "." + ext;
 
     // directory + threaddir is guaranteed to exist at this point, check/create 'media'
-    if (!bepaald::fileOrDirExists(directory + "/" + threaddir + "/media"))
+    if (!bepaald::fileOrDirExists(bepaald::concat(directory, "/", threaddir, "/media")))
     {
-      if (!bepaald::createDir(directory + "/" + threaddir + "/media"))
+      if (!bepaald::createDir(bepaald::concat(directory, "/", threaddir, "/media")))
       {
         Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
         return std::string();
       }
     }
-    else if (!bepaald::isDir(directory + "/" + threaddir + "/media"))
+    else if (!bepaald::isDir(bepaald::concat(directory, "/", threaddir, "/media")))
     {
       Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
       return std::string();
     }
 
     // check actual avatar file
-    if (bepaald::fileOrDirExists(directory + "/" + threaddir + "/" + avatar))
+    if (bepaald::fileOrDirExists(bepaald::concat(directory, "/", threaddir, "/", avatar)))
     {
       if (append) // file already exists, but we were asked to just use the existing file, so we're done
         return avatar;
@@ -72,7 +72,7 @@ std::string SignalBackup::HTMLwriteAvatar(long long int recipient_id, std::strin
     }
 
     // directory exists, now write avatar
-    std::ofstream avatarstream(WIN_LONGPATH(directory + "/" + threaddir + "/" + avatar), std::ios_base::binary);
+    std::ofstream avatarstream(WIN_LONGPATH(bepaald::concat(directory, "/", threaddir, "/", avatar)), std::ios_base::binary);
     if (!avatarstream.is_open())
     {
       Logger::error("Failed to open file for writing: '", directory, "/", threaddir, "/", avatar, "'");

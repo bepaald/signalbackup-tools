@@ -239,10 +239,10 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       } // else, thread was found, use the name that was used before
 
       // create dir if not exists
-      if (!bepaald::isDir(dir + "/" + conversations.second[idx_of_thread]))
+      if (!bepaald::isDir(bepaald::concat(dir, "/", conversations.second[idx_of_thread])))
       {
         // std::cout << " Creating subdirectory '" << conversations.second[idx_of_thread] << "' for conversation..." << std::endl;
-        if (!bepaald::createDir(dir + "/" + conversations.second[idx_of_thread]))
+        if (!bepaald::createDir(bepaald::concat(dir, "/", conversations.second[idx_of_thread])))
         {
           //std::cout << " ERROR creating directory '" << dir << "/" << conversations.second[idx_of_thread] << "'" << std::endl;
           Logger::error("Failed to create directory '", dir, "/", conversations.second[idx_of_thread], "'");
@@ -251,7 +251,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       }
 
       long long int msg_box = results.getValueAs<long long int>(0, d_mms_type);
-      targetdir = dir + "/" + conversations.second[idx_of_thread] + "/" + (Types::isOutgoing(msg_box) ? "sent" : "received");
+      targetdir = bepaald::concat(dir, "/", conversations.second[idx_of_thread], "/", (Types::isOutgoing(msg_box) ? "sent" : "received"));
 
       // create dir if not exists
       if (!bepaald::isDir(targetdir))
@@ -271,31 +271,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       Logger::error("getting unique filename for '", targetdir, "/", filename, "'");
       continue;
     }
-    /*
-    while (bepaald::fileOrDirExists(targetdir + "/" + filename))
-    {
-      //std::cout << std::endl << "File exists: " << targetdir << "/" << filename << " -> ";
 
-      std::filesystem::path p(filename);
-      std::regex numberedfile(".*( \\(([0-9]*)\\))$");
-      std::smatch sm;
-      std::string filestem(p.stem().string());
-      std::string ext(p.extension().string());
-      int counter = 2;
-      if (regex_match(filestem, sm, numberedfile) && sm.size() >= 3 && sm[2].matched)
-      {
-        // increase the counter
-        counter = bepaald::toNumber<int>(sm[2]) + 1;
-        // remove " (xx)" part from stem
-        filestem.erase(sm[1].first, sm[1].second);
-      }
-      filename = filestem + " (" + bepaald::toString(counter) + ")" + p.extension().string();
-
-      //std::cout << filename << std::endl;
-    }
-    */
     std::ofstream attachmentstream(bepaald::concat(targetdir, "/", filename), std::ios_base::binary);
-
     if (!attachmentstream.is_open())
     {
       Logger::error("Failed to open file for writing: '", targetdir, "/", filename, "'");
@@ -316,9 +293,6 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     if (!setFileTimeStamp(bepaald::concat(targetdir, "/", filename), datum)) [[unlikely]]
       Logger::warning("Failed to set timestamp for attachment '", targetdir, "/", filename, "'");
 
-    // !! ifdef c++20
-    //std::error_code ec;
-    //std::filesystem::last_write_time(dir + "/" + chatpartner + "/" + filename, std::chrono::clock_cast<std::filesystem::file_time_type>(datum / 1000), ec);
   }
   Logger::message_overwrite("Saving attachments... done.", Logger::Control::ENDOVERWRITE);
   return true;

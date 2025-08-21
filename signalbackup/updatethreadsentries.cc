@@ -195,15 +195,15 @@ ThreadTable::
         SqliteDB::QueryResults results3;
         if (d_database.tableContainsColumn(d_part_table, "sticker_pack_id") &&
             d_database.tableContainsColumn(d_part_table, "sticker_emoji"))
-          d_database.exec("SELECT " +
-                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
-                          ", _id, " + d_part_ct + ", sticker_pack_id, IFNULL(sticker_emoji, '') AS sticker_emoji "
-                          "FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", {mid}, &results3);
+          d_database.exec(bepaald::concat("SELECT ",
+                                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s),
+                                          ", _id, ", d_part_ct, ", sticker_pack_id, IFNULL(sticker_emoji, '') AS sticker_emoji "
+                                          "FROM ", d_part_table, " WHERE ", d_part_mid, " = ?"), {mid}, &results3);
         else
-          d_database.exec("SELECT " +
-                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s) +
-                          ", _id, " + d_part_ct + ", NULL AS sticker_pack_id, NULL AS sticker_emoji "
-                          "FROM " + d_part_table + " WHERE " + d_part_mid + " = ?", {mid}, &results3);
+          d_database.exec(bepaald::concat("SELECT ",
+                                          (d_database.tableContainsColumn(d_part_table, "unique_id") ? "unique_id"s : "-1 AS unique_id"s),
+                                          ", _id, ", d_part_ct, ", NULL AS sticker_pack_id, NULL AS sticker_emoji "
+                                          "FROM ", d_part_table, " WHERE ", d_part_mid, " = ?"), {mid}, &results3);
 
         if (results3.rows())
         {
@@ -215,9 +215,9 @@ ThreadTable::
           if (id.type() == typeid(long long int) && uniqueid.type() == typeid(long long int))
           {
             //std::cout << "    Updating snippet_uri" << std::endl;
-            d_database.exec("UPDATE thread SET snippet_uri = 'content://org.thoughtcrime.securesms/part/" +
-                            bepaald::toString(std::any_cast<long long int>(uniqueid)) + "/" +
-                            bepaald::toString(std::any_cast<long long int>(id)) + "' WHERE _id = " + threadid);
+            d_database.exec(bepaald::concat("UPDATE thread SET snippet_uri = 'content://org.thoughtcrime.securesms/part/",
+                                            bepaald::toString(std::any_cast<long long int>(uniqueid)), "/",
+                                            bepaald::toString(std::any_cast<long long int>(id)), "' WHERE _id = ", threadid));
           }
 
           // update body to show photo/movie/file

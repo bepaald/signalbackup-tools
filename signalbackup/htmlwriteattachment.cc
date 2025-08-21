@@ -28,28 +28,28 @@ bool SignalBackup::HTMLwriteAttachment(std::string const &directory, std::string
                                        std::string const &attachment_filename, long long int timestamp,
                                        bool overwrite, bool append) const
 {
+
   auto attachmentfound = d_attachments.find({rowid, uniqueid});
   if (attachmentfound == d_attachments.end()) [[unlikely]]
     return false;
 
   // directory + threaddir is guaranteed to exist at this point, check/create 'media'
-  if (!bepaald::fileOrDirExists(directory + "/" + threaddir + "/media"))
+  if (!bepaald::fileOrDirExists(bepaald::concat(directory, "/", threaddir, "/media")))
   {
-    if (!bepaald::createDir(directory + "/" + threaddir + "/media"))
+    if (!bepaald::createDir(bepaald::concat(directory, "/", threaddir, "/media")))
     {
       Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
       return false;
     }
   }
-  else if (!bepaald::isDir(directory + "/" + threaddir + "/media"))
+  else if (!bepaald::isDir(bepaald::concat(directory, "/", threaddir, "/media")))
   {
     Logger::error("Failed to create directory `", directory, "/", threaddir, "/media");
     return false;
   }
 
   // check actual attachmentfile file
-  std::string attachment_filename_full = directory + "/" + threaddir + "/media/" +
-    attachment_filename;
+  std::string attachment_filename_full(bepaald::concat(directory, "/", threaddir, "/media/", attachment_filename));
   // "/media/Attachment_" + bepaald::toString(rowid) + "_" + bepaald::toString(uniqueid) + "." + ext;
 
   WIN_CHECK_PATH_LENGTH(attachment_filename_full);

@@ -25,7 +25,7 @@
 
 bool SignalBackup::makeFilenameUnique(std::string const &path, std::string *file_or_dir) const
 {
-  while (bepaald::fileOrDirExists(path + "/" + *file_or_dir))
+  while (bepaald::fileOrDirExists(bepaald::concat(path, "/", *file_or_dir)))
   {
     //std::cout << std::endl << "File exists: " << path << "/" << file_or_dir << " -> ";
 

@@ -26,7 +26,7 @@ void SignalBackup::HTMLwriteSearchpage(std::string const &dir, bool light, bool 
 
   Logger::message("Writing searchpage.html...");
 
-  std::ofstream outputfile(WIN_LONGPATH(dir + "/" + "searchpage.html"), std::ios_base::binary);
+  std::ofstream outputfile(WIN_LONGPATH(bepaald::concat(dir, "/", "searchpage.html")), std::ios_base::binary);
   if (!outputfile.is_open())
   {
     Logger::error("Failed to open '", dir, "/searchpage.html' for writing");

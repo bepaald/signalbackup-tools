@@ -165,7 +165,12 @@ inline DBusCon::DBusCon(bool dbus_verbose)
   dbus_error_init(&d_error);
   d_connection = dbus_bus_get_private(DBUS_BUS_SESSION, &d_error);
 
-  if (d_connection)
+  if (dbus_error_is_set(&d_error))
+  {
+    Logger::error(d_error.name, " : ", d_error.message);
+    dbus_error_free(&d_error);
+  }
+  else if (d_connection)
     d_ok = true;
 }
 
@@ -187,12 +192,13 @@ inline bool DBusCon::ok() const
 
 inline bool DBusCon::matchSignal(std::string const &matchingrule)
 {
-  //Rules are specified as a string of comma separated key/value pairs. An example is "type='signal',sender='org.freedesktop.DBus', interface='org.freedesktop.DBus',member='Foo', path='/bar/foo',destination=':452345.34'"
+  // Rules are specified as a string of comma separated key/value pairs. An example is "type='signal',sender='org.freedesktop.DBus', interface='org.freedesktop.DBus',member='Foo', path='/bar/foo',destination=':452345.34'"
   // Possible keys you can match on are type, sender, interface, member, path, destination and numbered keys to match message args (keys are 'arg0', 'arg1', etc.).
   dbus_bus_add_match(d_connection, matchingrule.c_str(), &d_error);
   if (dbus_error_is_set(&d_error))
   {
     Logger::error("::dbus_message_new_method_call - Unable to allocate memory for the message!");
+    dbus_error_free(&d_error);
     return false;
   }
   dbus_connection_flush(d_connection);
@@ -455,7 +461,13 @@ inline void DBusCon::callMethod(std::string const &destination, std::string cons
   d_reply.reset(dbus_connection_send_with_reply_and_block(d_connection, dbus_message.get(), DBUS_TIMEOUT_USE_DEFAULT, &d_error));
   if (!d_reply)
   {
-    Logger::error(d_error.name, " : ", d_error.message);
+    if (dbus_error_is_set(&d_error))
+    {
+      Logger::error(d_error.name, " : ", d_error.message);
+      dbus_error_free(&d_error);
+    }
+    else
+      Logger::error("Unknown dbus error calling method");
     return;
   }
 

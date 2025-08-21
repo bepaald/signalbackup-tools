@@ -2287,13 +2287,13 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
     std::string contact_name = "Unknown contact";
     std::string contact_info;
     SqliteDB::QueryResults sc;
-    d_database.exec("SELECT "
-                    "json_extract('" + shared_contact + "', '$[0].name.displayName') AS display_name, "
-                    "IFNULL(json_array_length('" + shared_contact + "', '$[0].phoneNumbers'), 0) AS num_numbers, "
-                    "IFNULL(json_array_length('" + shared_contact + "', '$[0].emails'), 0) AS num_emails, "
-                    "json_extract('" + shared_contact + "', '$[0].avatar.attachmentId.rowId') AS avatar_rowid, "
-                    "json_extract('" + shared_contact + "', '$[0].avatar.attachmentId.uniqueId') AS avatar_uniqueid", &sc
-                    );
+    d_database.exec(bepaald::concat("SELECT "
+                                    "json_extract('", shared_contact, "', '$[0].name.displayName') AS display_name, "
+                                    "IFNULL(json_array_length('", shared_contact, "', '$[0].phoneNumbers'), 0) AS num_numbers, "
+                                    "IFNULL(json_array_length('", shared_contact, "', '$[0].emails'), 0) AS num_emails, "
+                                    "json_extract('", shared_contact, "', '$[0].avatar.attachmentId.rowId') AS avatar_rowid, "
+                                    "json_extract('", shared_contact, "', '$[0].avatar.attachmentId.uniqueId') AS avatar_uniqueid"), &sc
+                                    );
 
     if (!sc("display_name").empty())
       contact_name = sc("display_name");

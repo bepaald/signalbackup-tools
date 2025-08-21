@@ -149,7 +149,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   // start search index page
   if (searchpage)
   {
-    searchidx.open(WIN_LONGPATH(directory + "/" + "searchidx.js"), std::ios_base::binary);
+    searchidx.open(WIN_LONGPATH(bepaald::concat(directory, "/", "searchidx.js")), std::ios_base::binary);
     if (!searchidx.is_open())
     {
       Logger::error("Failed to open 'searchidx.js' for writing");
@@ -479,39 +479,61 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
              messages(messagecount, "periodsplit") == previous_period_split_string)
       {
-        long long int msg_id = messages.getValueAs<long long int>(messagecount, "_id");
         long long int msg_recipient_id = messages.valueAsInt(messagecount, d_mms_recipient_id);
         if (msg_recipient_id == -1) [[unlikely]]
         {
           Logger::warning("Failed to get message recipient id. Skipping.");
           continue;
         }
-        long long int original_message_id = (d_database.tableContainsColumn(d_mms_table, "original_message_id") ?
-                                             messages.valueAsInt(messagecount, "original_message_id") :
-                                             -1);
-        std::string readable_date =
-          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "bubble_date") / 1000, //(/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
-                                "%b %d, %Y %H:%M:%S");
-        std::string readable_date_day =
-          bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "bubble_date") / 1000, //(/*(original_message_id != -1) ? "date_received" : */d_mms_date_sent)) / 1000,
-                                "%b %d, %Y");
-        bool incoming = !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type));
-        bool is_deleted = messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1;
-        bool is_viewonce = messages.getValueAs<long long int>(messagecount, "view_once") == 1;
-        std::string body = messages.valueAsString(messagecount, "body");
-        std::string shared_contacts = messages.valueAsString(messagecount, "shared_contacts");
-        std::string quote_body = messages.valueAsString(messagecount, "quote_body");
-        long long int expires_in = messages.getValueAs<long long int>(messagecount, "expires_in");
-        long long int type = messages.getValueAs<long long int>(messagecount, d_mms_type);
-        long long int quote_id = messages.valueAsInt(messagecount, "quote_id", 0);
-        bool quote_missing = messages.valueAsInt(messagecount, "quote_missing", 0) != 0;
-        bool story_reply = (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? messages.valueAsInt(messagecount, "parent_story_id", 0) : 0);
-        //long long int attachmentcount = messages.valueAsInt(messagecount, "attcount", 0);
-        //long long int reactioncount = messages.valueAsInt(messagecount, "reactioncount", 0);
-        //long long int mentioncount = messages.valueAsInt(messagecount, "mentioncount", 0);
 
         SqliteDB::QueryResults attachment_results;
         SqliteDB::QueryResults quote_attachment_results;
+        SqliteDB::QueryResults reaction_results;
+        SqliteDB::QueryResults edit_revisions;
+
+        HTMLMessageInfo msg_info({messages.valueAsString(messagecount, "body"),   // body
+            std::string(),                                                        // quote_body
+            bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "bubble_date") / 1000, "%b %d, %Y %H:%M:%S"), // readable_date
+            directory,                                                            // export directory
+            threaddir,                                                            // thread directory
+            filename,                                                             // filename
+            messages(messagecount, "link_preview_url"),                           // link_preview_url
+            messages(messagecount, "link_preview_title"),                         // link_preview_title
+            messages(messagecount, "link_preview_description"),                   // link_preview_description
+            messages.valueAsString(messagecount, "shared_contacts"),              // shared_contacts
+
+            &messages,
+            &quote_attachment_results,
+            &attachment_results,
+            &reaction_results,
+            &edit_revisions,
+
+            messages.getValueAs<long long int>(messagecount, d_mms_type),           // type
+            messages.getValueAs<long long int>(messagecount, "expires_in"),         // expires_in
+            messages.getValueAs<long long int>(messagecount, "_id"),                // msg_id
+            msg_recipient_id,                                                       // msg_recipient_id
+            d_database.tableContainsColumn(d_mms_table, "original_message_id") ?    // original_msg_id
+            messages.valueAsInt(messagecount, "original_message_id") :
+            -1,
+            messages.valueAsInt(messagecount, "quote_id", 0),                       // quote_id
+
+            IconType::NONE,                                                         // icon
+            messagecount,                                                           // current message idx in results
+
+            false,                                                                  // only_emoji
+            messages.valueAsInt(messagecount, "is_quoted", 0) != 0,
+            messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1,          // is_deleted
+            messages.getValueAs<long long int>(messagecount, "view_once") == 1,               // is_viewonce,
+            isgroup,
+            !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type)), // incoming
+            false,                                                                            // nobackground,
+            messages.valueAsInt(messagecount, "quote_missing", 0) != 0,                       // quote_missing,
+            originalfilenames,                                                                // original_filenames
+            overwrite,                                                                        // overwrite
+            append,                                                                           // append
+            (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? messages.valueAsInt(messagecount, "parent_story_id", 0) > 0 : false)}); // story_reply
+
+        // get attachments if any...
         if (messages.valueAsInt(messagecount, "attcount", 0) > 0)
         {
           d_database.exec(bepaald::concat("SELECT ",
@@ -527,7 +549,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                           "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
                                           "WHERE ", d_part_mid, " IS ? "
                                           "AND quote IS ? "
-                                          " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 0}, &attachment_results);
+                                          " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_info.msg_id, 0}, msg_info.attachment_results);
 
           d_database.exec(bepaald::concat("SELECT ",
                                           d_part_table, "._id, ",
@@ -542,30 +564,25 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                           "LEFT JOIN ", d_mms_table, " ON ", d_mms_table, "._id = ", d_part_table, ".", d_part_mid, " "
                                           "WHERE ", d_part_mid, " IS ? "
                                           "AND quote IS ? "
-                                          " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_id, 1}, &quote_attachment_results);
+                                          " ORDER BY display_order ASC, ", d_part_table, "._id ASC"), {msg_info.msg_id, 1}, msg_info.quote_attachment_results);
         }
         // check attachments for long message body -> replace cropped body & remove from attachment results
-        bool haslongbody = setLongMessageBody(&body, &attachment_results);
+        bool haslongbody = setLongMessageBody(&msg_info.body, &attachment_results);
 
-        SqliteDB::QueryResults mention_results;
-        if (messages.valueAsInt(messagecount, "mentioncount", 0) > 0)
-          d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_id, &mention_results);
-
-        SqliteDB::QueryResults reaction_results;
+        // get reactions if any...
         if (messages.valueAsInt(messagecount, "reactioncount", 0) > 0)
-          d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
-                          "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+          d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', "
+                          "DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
+                          "FROM reaction WHERE message_id IS ?", msg_info.msg_id, msg_info.reaction_results);
 
-        SqliteDB::QueryResults edit_revisions;
-        if (original_message_id != -1 && d_database.tableContainsColumn(d_mms_table, "revision_number"))
-          d_database.exec("SELECT _id,body,date_received," + d_mms_date_sent + ",revision_number FROM " + d_mms_table +
-                          " WHERE _id = ?1 OR original_message_id = ?1 ORDER BY " + d_mms_date_sent + " ASC", // skip actual current message
-                          original_message_id, &edit_revisions);
+        // get edits if any...
+        if (msg_info.original_message_id != -1 && d_database.tableContainsColumn(d_mms_table, "revision_number"))
+          d_database.exec(bepaald::concat("SELECT _id,body,date_received,", d_mms_date_sent, ",revision_number FROM ", d_mms_table,
+                                          " WHERE _id = ?1 OR original_message_id = ?1 ORDER BY ", d_mms_date_sent, " ASC"), // skip actual current message
+                          msg_info.original_message_id, msg_info.edit_revisions);
 
-        bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
-
-        IconType icon = IconType::NONE;
-        if (Types::isStatusMessage(type))
+        // set status message + icon
+        if (Types::isStatusMessage(msg_info.type))
         {
           // identityVerified and identityDefault ("You marked your safety number with XXX (un)verified") are
           // a little different from other (nongroup) statusmessages, in that the name to be filled in is not
@@ -577,49 +594,62 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           // But all of the above is only true for (newer) databases that _have_ from_ and to_recipient_ids,
           // in older databases the target-name is recipient_id in all cases...
           long long int target_rid = msg_recipient_id;
-          if ((Types::isIdentityVerified(type) || Types::isIdentityDefault(type)) &&
+          if ((Types::isIdentityVerified(msg_info.type) || Types::isIdentityDefault(msg_info.type)) &&
               messages.valueAsInt(messagecount, "to_recipient_id") != -1) [[unlikely]]
             target_rid = messages.valueAsInt(messagecount, "to_recipient_id");
 
           // decode from body if (body not empty) OR (message_extras not available)
-          if (!body.empty() ||
+          if (!msg_info.body.empty() ||
               !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                 messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras")))
-            body = decodeStatusMessage(body, messages.getValueAs<long long int>(messagecount, "expires_in"),
-                                       type, getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &icon);
+            msg_info.body = decodeStatusMessage(msg_info.body, msg_info.expires_in,  msg_info.type,
+                                                getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &msg_info.icon);
           else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                    messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))
-            body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
-                                       messages.getValueAs<long long int>(messagecount, "expires_in"), type,
-                                       getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &icon);
+            msg_info.body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
+                                                msg_info.expires_in, msg_info.type,
+                                                getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &msg_info.icon);
         }
 
-        // prep body (scan emoji? -> in <span>) and handle mentions...
-        // if (prepbody)
+        // collect mentions if any...
+        SqliteDB::QueryResults mention_results;
         std::vector<std::tuple<long long int, long long int, long long int>> mentions;
-        for (unsigned int mi = 0; mi < mention_results.rows(); ++mi)
-          mentions.emplace_back(mention_results.getValueAs<long long int>(mi, "recipient_id"),
-                                mention_results.getValueAs<long long int>(mi, "range_start"),
-                                mention_results.getValueAs<long long int>(mi, "range_length"));
+        if (messages.valueAsInt(messagecount, "mentioncount", 0) > 0)
+        {
+          d_database.exec("SELECT recipient_id, range_start, range_length FROM mention WHERE message_id IS ?", msg_info.msg_id, &mention_results);
+          for (unsigned int mi = 0; mi < mention_results.rows(); ++mi)
+            mentions.emplace_back(mention_results.getValueAs<long long int>(mi, "recipient_id"),
+                                  mention_results.getValueAs<long long int>(mi, "range_start"),
+                                  mention_results.getValueAs<long long int>(mi, "range_length"));
+        }
+
+        // collect ranges (text styling) if any...
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
         if (!messages.isNull(messagecount, d_mms_ranges))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
 
-        bool only_emoji = HTMLprepMsgBody(&body, mentions, &rid_recipientinfo_map, incoming, brdata, linkify, false /*isquote*/);
+        // prep body: scan emoji, linkify, and handle mentions and message ranges...
+        msg_info.only_emoji = HTMLprepMsgBody(&msg_info.body, mentions, &rid_recipientinfo_map, msg_info.incoming, brdata, linkify, false /*isquote*/);
 
-        bool nobackground = false;
-        if ((only_emoji && quote_id == 0 && !attachment_results.rows()) ||  // if no quote etc
-            issticker) // or sticker
-          nobackground = true;
+        // set no background on msg bubble
+        bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
+        if ((msg_info.only_emoji && msg_info.quote_id == 0 && !attachment_results.rows()) ||  // single emoji, no quote, no attachments
+            issticker)                                                                        // or sticker
+          msg_info.nobackground = true;
 
         // same for quote_body!
-        mentions.clear();
-        std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
-        if (!messages.isNull(messagecount, "quote_mentions"))
-          quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
-        HTMLprepMsgBody(&quote_body, mentions, &rid_recipientinfo_map, incoming, quote_mentions, false /*linkify*/, true);
+        if (msg_info.quote_id) [[unlikely]]
+        {
+          msg_info.quote_body = messages.valueAsString(messagecount, "quote_body");
+          mentions.clear();
+          std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
+          if (!messages.isNull(messagecount, "quote_mentions"))
+            quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
+          HTMLprepMsgBody(&msg_info.quote_body, mentions, &rid_recipientinfo_map, msg_info.incoming, quote_mentions, false /*linkify*/, true);
+        }
 
         // insert date-change message
+        std::string readable_date_day = bepaald::toDateString(messages.getValueAs<long long int>(messagecount, "bubble_date") / 1000, "%b %d, %Y");
         if (readable_date_day != previous_day_change)
         {
           htmloutput <<
@@ -632,93 +662,54 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         previous_day_change = readable_date_day;
         previous_period_split_string = messages(messagecount, "periodsplit");
 
-        // collect data needed by writeMessage()
-        HTMLMessageInfo msg_info({body,
-                                  quote_body,
-                                  readable_date,
-                                  directory,
-                                  threaddir,
-                                  filename,
-                                  messages(messagecount, "link_preview_url"),
-                                  messages(messagecount, "link_preview_title"),
-                                  messages(messagecount, "link_preview_description"),
-                                  shared_contacts,
-
-                                  &messages,
-                                  &quote_attachment_results,
-                                  &attachment_results,
-                                  &reaction_results,
-                                  &edit_revisions,
-
-                                  type,
-                                  expires_in,
-                                  msg_id,
-                                  msg_recipient_id,
-                                  original_message_id,
-                                  quote_id,
-
-                                  icon,
-                                  messagecount,
-
-                                  only_emoji,
-                                  messages.valueAsInt(messagecount, "is_quoted", 0) != 0,
-                                  is_deleted,
-                                  is_viewonce,
-                                  isgroup,
-                                  incoming,
-                                  nobackground,
-                                  quote_missing,
-                                  originalfilenames,
-                                  overwrite,
-                                  append,
-                                  story_reply});
         HTMLwriteMessage(htmloutput, msg_info, quoteid_page_and_msgid_map, &rid_recipientinfo_map, searchpage, receipts, ignoremediatypes);
 
         if (msg_info.is_quoted)
           quoteid_page_and_msgid_map.emplace(messages.valueAsInt(messagecount, d_mms_date_sent, 0), std::pair(msg_info.filename, msg_info.msg_id));
 
+        long long int date_received = messages.valueAsInt(messagecount, "date_received", 0);
+
         if (searchpage && (!Types::isStatusMessage(msg_info.type) && !msg_info.body.empty()))
         {
-          if (auto it = searchidx_page_idx_map.find(msg_info.threaddir + "/" + sanitized_base_filename); it != searchidx_page_idx_map.end())
+          if (auto it = searchidx_page_idx_map.find(bepaald::concat(msg_info.threaddir, "/", sanitized_base_filename)); it != searchidx_page_idx_map.end())
             searchidx_page_idx = it->second;
           else
-            searchidx_page_idx_map.emplace(msg_info.threaddir + "/" + sanitized_base_filename, ++searchidx_page_idx);
+            searchidx_page_idx_map.emplace(bepaald::concat(msg_info.threaddir, "/", sanitized_base_filename), ++searchidx_page_idx);
 
           // because the body is already escaped for html at this point, we get it fresh from database (and have sqlite do the json formatting)
-          if (!d_database.exec("SELECT json_object("
-                               "'i', ?1, "
-                               "'b', " + d_mms_table + ".body, "
-                               "'f', ?2, "
-                               "'t', ?3, "
-                               "'o', ?4, "
-                               "'d', ?5, "
-                               "'p', ?6, "
-                               "'n', ?7) AS line," +
-                               (haslongbody ?
-                                d_part_table + "._id AS rowid, " +
-                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
-                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") :
-                                " -1 AS rowid, -1 AS uniqueid") +
-                               " FROM " + d_mms_table + " "
-                               "LEFT JOIN thread ON thread._id IS ?8 " +
-                               (haslongbody ?
-                                "LEFT JOIN " + d_part_table + " ON " + d_part_table + "." + d_part_mid + " IS ?1 AND " + d_part_table + "." + d_part_ct + " = 'text/x-signal-plain' AND " + d_part_table + ".quote = 0 " : "") +
-                               "WHERE " + d_mms_table + "._id = ?1",
-                               {msg_id, msg_recipient_id, thread_recipient_id, incoming ? 0 : 1,
-                                messages.valueAsInt(messagecount, "date_received", 0) / 1000 - 1404165600, // lose the last three digits (miliseconds, they are never displayed anyway).
-                                                                                                           // subtract "2014-07-01". Signals initial release was 2014-07-29, negative
-                                                                                                           // numbers should work otherwise anyway.
+          if (!d_database.exec(bepaald::concat("SELECT json_object("
+                                               "'i', ?1, "
+                                               "'b', ", d_mms_table, ".body, "
+                                               "'f', ?2, "
+                                               "'t', ?3, "
+                                               "'o', ?4, "
+                                               "'d', ?5, "
+                                               "'p', ?6, "
+                                               "'n', ?7) AS line,",
+                                               (haslongbody ?
+                                                d_part_table + "._id AS rowid, " +
+                                                (d_database.tableContainsColumn(d_part_table, "unique_id") ?
+                                                 d_part_table + ".unique_id AS uniqueid" : "-1 AS uniqueid") :
+                                                " -1 AS rowid, -1 AS uniqueid"),
+                                               " FROM ", d_mms_table, " "
+                                               "LEFT JOIN thread ON thread._id IS ?8 ",
+                                               (haslongbody ?
+                                                bepaald::concat("LEFT JOIN ", d_part_table, " ON ", d_part_table, ".", d_part_mid, " IS ?1 AND ", d_part_table, ".", d_part_ct, " = 'text/x-signal-plain' AND ", d_part_table, ".quote = 0 ") : ""),
+                                               "WHERE ", d_mms_table, "._id = ?1"),
+                               {msg_info.msg_id, msg_info.msg_recipient_id, thread_recipient_id, msg_info.incoming ? 0 : 1,
+                                date_received / 1000 - 1404165600, // lose the last three digits (miliseconds, they are never displayed anyway).
+                                                                   // subtract "2014-07-01". Signals initial release was 2014-07-29, negative
+                                                                   // numbers should work otherwise anyway.
                                 searchidx_page_idx, pagenumber, t},
                                &search_idx_results) ||
-                               search_idx_results.rows() < 1) [[unlikely]]
+              search_idx_results.rows() < 1) [[unlikely]]
           {
             Logger::warning("Search_idx query failed or no results");
           }
           else
           {
             if (search_idx_results.rows() > 1) [[unlikely]]
-              Logger::warning("Unexpected number of results from search_idx query (",
-                              search_idx_results.rows(), " results, using first)");
+              Logger::warning("Unexpected number of results from search_idx query (", search_idx_results.rows(), " results, using first)");
 
             std::string line = search_idx_results("line");
             if (!line.empty()) [[likely]]
@@ -748,8 +739,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         // set daterangeidx (which range were we in for the just written message...)
         for (unsigned int dri = 0; dri < dateranges.size(); ++dri)
-          if (messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[dri].first) &&
-              messages.getValueAs<long long int>(messagecount, "date_received") <= bepaald::toNumber<long long int>(dateranges[dri].second))
+          if (date_received > bepaald::toNumber<long long int>(dateranges[dri].first) &&
+              date_received <= bepaald::toNumber<long long int>(dateranges[dri].second))
           {
             daterangeidx = dri;
             break;
@@ -768,7 +759,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         //               messages.getValueAs<long long int>(messagecount, "date_received") <= bepaald::toNumber<long long int>(dateranges[daterangeidx + 1].first)) << std::endl;
         if (!dateranges.empty() &&
             daterangeidx < dateranges.size() - 1 && // dont split if it's the last range
-            messages.getValueAs<long long int>(messagecount, "date_received") > bepaald::toNumber<long long int>(dateranges[daterangeidx].second))
+            date_received > bepaald::toNumber<long long int>(dateranges[daterangeidx].second))
         {
           if (messagecount < (max_msg_per_page * (pagenumber + 1))) // dont break convo-box if we are moving to a new page (because of --split)
           {
@@ -947,7 +938,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       searchidx << "\n];\n";
 
     // write recipient info, maps recipient_ids to display name.
-    //std::map<long long int, RecipientInfo> rid_recipientinfo_map;
     searchidx << "recipient_idx = [\n";
     for (auto r = rid_recipientinfo_map.begin(); r != rid_recipientinfo_map.end(); ++r)
     {

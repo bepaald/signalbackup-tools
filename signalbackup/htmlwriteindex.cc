@@ -33,7 +33,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
   std::string filename(sanitizeFilename(basename, d_aggressive_filename_sanitizing) + ".html");
 
   Logger::message("Writing ", filename, "...");
-  if (bepaald::fileOrDirExists(directory + "/" + filename))
+  if (bepaald::fileOrDirExists(bepaald::concat(directory, "/", filename)))
   {
     if (!overwrite && !append)
     {
@@ -41,7 +41,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       return false;
     }
   }
-  std::ofstream outputfile(WIN_LONGPATH(directory + "/" + filename), std::ios_base::binary);
+  std::ofstream outputfile(WIN_LONGPATH(bepaald::concat(directory, "/", filename)), std::ios_base::binary);
   if (!outputfile.is_open())
   {
     Logger::error("Failed to open '", directory, "/", filename, "' for writing.");

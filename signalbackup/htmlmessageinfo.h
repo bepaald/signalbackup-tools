@@ -25,9 +25,9 @@ struct HTMLMessageInfo
   std::string body;
   std::string quote_body;
   std::string readable_date;
-  std::string directory;
-  std::string threaddir;
-  std::string filename;
+  std::string const &directory;
+  std::string const &threaddir;
+  std::string const &filename;
   std::string link_preview_url;
   std::string link_preview_title;
   std::string link_preview_description;

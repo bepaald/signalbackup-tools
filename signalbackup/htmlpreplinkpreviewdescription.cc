@@ -27,7 +27,7 @@ std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string const &in) 
   // in the app the tags are stripped, and underscores are replaced with spaces
   // for some reason
 
-  std::string cleaned = in;
+  std::string cleaned(in);
 
   while (cleaned.find('<') != std::string::npos)
   {
