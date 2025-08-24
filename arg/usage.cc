@@ -306,7 +306,7 @@ std::cout << R"*(
                                            this program before this was done automatically (as it is
                                            now)
 --stoponerror                              Do not try to recover automatically when encountering bad
-                                           data.
+                                           data while reading the input file.
 -v, --verbose                              Makes the output even more verbose than it already is.
 --mergerecipients <OLDNUMBER,NEWNUMBER>    Can be used to change a contacts number (for example when
                                            they get a new phone). Messages from OLDNUMBER are changed

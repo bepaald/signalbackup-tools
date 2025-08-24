@@ -251,7 +251,7 @@ class SignalBackup
   void listRecipients() const;
   void cropToThread(long long int threadid);
   void cropToThread(std::vector<long long int> const &threadid);
-  void cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
+  bool cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges);
   inline void addSMSMessage(std::string const &body, std::string const &address, std::string const &timestamp,
                             long long int thread, bool incoming);
   void addSMSMessage(std::string const &body, std::string const &address, long long int timestamp,
@@ -320,6 +320,7 @@ class SignalBackup
                           bool skipmessagereorder, bool markdelivered, bool markread,
                           std::string const &selfphone, bool onlyshowmap);
   bool setChatColors(std::vector<std::pair<long long int, std::string>> const &colorlist);
+  bool fixForeignKeyConstraintViolations() const;
 
   /* CUSTOMS */
   //bool hhenkel(std::string const &);

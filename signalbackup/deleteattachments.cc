@@ -53,7 +53,10 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   {
     long long int date = dateToMSecsSinceEpoch(before);
     if (date == -1)
-      Logger::warning("Ignoring before-date: '", before, "'. Failed to parse or invalid.");
+    {
+      Logger::error("Failed to parse before-date: '", before, "'.");
+      return false;
+    }
     else
     {
       if (specification.empty())
@@ -68,7 +71,10 @@ bool SignalBackup::deleteAttachments(std::vector<long long int> const &threadids
   {
     long long int date = dateToMSecsSinceEpoch(after);
     if (date == -1)
-      Logger::warning("Ignoring after-date: '", after, "'. Failed to parse or invalid.");
+    {
+      Logger::error("Failed to parse after-date: '", before, "'.");
+      return false;
+    }
     else
     {
       if (specification.empty())

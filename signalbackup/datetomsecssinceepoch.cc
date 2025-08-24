@@ -18,8 +18,8 @@
 */
 
 #include "signalbackup.ih"
+#include "../common_regex.h"
 
-#include <regex>
 #include <sstream>
 
 long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date, bool *fromdatestring) const
@@ -27,8 +27,8 @@ long long int SignalBackup::dateToMSecsSinceEpoch(std::string const &date, bool 
   long long int ret = -1;
 
   // check
-  std::regex datestring("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}");
-  if (std::regex_match(date, datestring))
+  REGEX datestring("[[:space:]]*[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}[[:space:]]*");
+  if (REGEX_MATCH(date, datestring))
   {
     std::tm t = {};  // sets all to 0: NO daylight savings...
     t.tm_isdst = -1; // set daylight savings time to unknown (handle automatically)

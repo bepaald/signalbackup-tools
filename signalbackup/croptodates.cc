@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2025  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges)
+bool SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> const &dateranges)
 {
   Logger::message(__FUNCTION__);
 
@@ -35,8 +35,8 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
     long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
-      Logger::warning("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
-      continue;
+      Logger::error("Invalid range: '", dateranges[i].first, "' - '", dateranges[i].second, "' (", startrange, " - ", endrange, ")");
+      return false;
     }
     Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, "\n",
                     "               ", startrange, " - ", endrange);
@@ -72,17 +72,21 @@ void SignalBackup::cropToDates(std::vector<std::pair<std::string, std::string>> 
   if (smsq.empty() || mmsq.empty())
   {
     Logger::error("Failed to get any date ranges.");
-    return;
+    return false;
   }
 
   if (d_database.containsTable("sms"))
-    d_database.exec(smsq, params);
-  d_database.exec(mmsq, params);
+    if (!d_database.exec(smsq, params)) [[unlikely]]
+      return false;
+  if (!d_database.exec(mmsq, params)) [[unlikely]]
+    return false;
   if (d_database.containsTable("megaphone"))
   {
-    d_database.exec(megaphoneq, params2);
+    if (!d_database.exec(megaphoneq, params2)) [[unlikely]]
+      return false;
     //std::cout << "changed: " << d_database.changed() << std::endl;
   }
 
   cleanDatabaseByMessages();
+  return true;
 }

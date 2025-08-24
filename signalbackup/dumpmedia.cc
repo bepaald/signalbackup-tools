@@ -112,9 +112,8 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
       if (startrange == -1 || endrange == -1 || endrange < startrange)
       {
-        Logger::error("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
-        Logger::error_indent(startrange, " ", endrange);
-        continue;
+        Logger::error("Invalid range: '", dateranges[i].first, "' - '", dateranges[i].second, "' (", startrange, " - ", endrange, ")");
+        return false;
       }
 
       if (d_verbose) [[unlikely]]

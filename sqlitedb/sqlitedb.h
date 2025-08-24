@@ -368,7 +368,7 @@ inline bool SqliteDB::exec(std::string_view q, std::vector<std::any> const &para
     Logger::message("Running query: \"", q, "\"");
 
   sqlite3_stmt *stmt;
-  if (!getStatement(q, &stmt)) // get prepared statment from cache, or produce a new one (and cache it)
+  if (!getStatement(q, &stmt)) // get prepared statment from cache, or prepare a new one (and cache it, and return it)
     return false;
 
   if (static_cast<int>(params.size()) != sqlite3_bind_parameter_count(stmt)) [[unlikely]]

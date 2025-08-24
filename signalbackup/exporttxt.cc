@@ -120,9 +120,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
-      Logger::error("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
-      Logger::error_indent(startrange, " ", endrange);
-      continue;
+      Logger::error("Invalid range: '", dateranges[i].first, "' - '", dateranges[i].second, "' (", startrange, " - ", endrange, ")");
+      return false;
     }
     Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
 

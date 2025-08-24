@@ -107,8 +107,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
     if (startrange == -1 || endrange == -1 || endrange < startrange)
     {
-      Logger::error("Skipping range: '", dateranges[i].first, " - ", dateranges[i].second, "'. Failed to parse or invalid range.");
-      continue;
+      Logger::error("Invalid range: '", dateranges[i].first, "' - '", dateranges[i].second, "' (", startrange, " - ", endrange, ")");
+      return false;
     }
     Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
 

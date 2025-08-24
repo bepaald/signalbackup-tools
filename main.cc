@@ -583,6 +583,9 @@ int main(int argc, char *argv[])
     if (!sb->setChatColors(arg.setchatcolors()))
       return 1;
 
+  if (arg.autofixfkc())
+    if (!sb->fixForeignKeyConstraintViolations())
+      return 1;
 
   if (!arg.runsqlquery().empty())
     for (unsigned int i = 0; i < arg.runsqlquery().size(); ++i)
