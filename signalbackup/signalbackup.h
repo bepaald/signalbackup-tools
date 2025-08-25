@@ -291,7 +291,8 @@ class SignalBackup
                                  std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,
                                  bool createmissingcontacts, bool markdelivered, bool markread, bool autodates,
                                  std::string const &selfphone, bool targetisdummy);
-  bool importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const &adbbd, bool isdummy);
+  bool importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const &adbbd,
+                           std::vector<std::string> const &daterangelist, bool isdummy);
   long long int ptCreateRecipient(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb,
                                   std::map<std::string, long long int> *contactmap,
                                   bool *warned_createcontacts, std::string const &contact_name,

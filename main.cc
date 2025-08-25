@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
     if (!dummydb.ok())
       return 1;
 
-    if (!dummydb.importFromAdbBackup(adbdb, true /*isdummy*/))
+    if (!dummydb.importFromAdbBackup(adbdb, arg.limittodates(), true /*isdummy*/))
       return 1;
 
     if (!dummydb.exportHtml(arg.exportadbbackuptohtml_2(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
@@ -507,6 +507,15 @@ int main(int argc, char *argv[])
                                        arg.selectxmlchats(), arg.addincompletedataforhtmlexport(),
                                        arg.xmlmarkdelivered(), arg.xmlmarkread(), arg.autolimitdates(), arg.setselfid(),
                                        arg.targetisdummy()))
+      return 1;
+  }
+
+  if (!arg.importadbbackup().empty())
+  {
+    if (!initAdbBackupDatabase(arg.importadbbackup()))
+      return 1;
+
+    if (!sb->importFromAdbBackup(adbdb, arg.limittodates(), arg.targetisdummy()))
       return 1;
   }
 

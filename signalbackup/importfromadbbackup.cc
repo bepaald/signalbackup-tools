@@ -22,7 +22,8 @@
 #include "../adbbackupdatabase/adbbackupdatabase.h"
 #include "../adbbackupattachmentreader/adbbackupattachmentreader.h"
 
-bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const &adbdb, bool isdummy [[maybe_unused]])
+bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const &adbdb,
+                                       std::vector<std::string> const &daterangelist, bool isdummy [[maybe_unused]])
 {
   if (d_database.tableContainsColumn(d_part_table, "unique_id")) [[unlikely]]
   {
@@ -37,6 +38,32 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
   SqliteDB::QueryResults thread_results;
   if (!adbdb->d_db.exec("SELECT _id, recipient_ids FROM thread", &thread_results))
     return false;
+
+  std::vector<std::pair<std::string, std::string>> dateranges;
+  if (daterangelist.size() % 2 == 0)
+    for (unsigned int i = 0; i < daterangelist.size(); i += 2)
+      dateranges.push_back({daterangelist[i], daterangelist[i + 1]});
+
+  std::string datewhereclause;
+  for (unsigned int i = 0; i < dateranges.size(); ++i)
+  {
+    bool needrounding = false;
+    long long int startrange = dateToMSecsSinceEpoch(dateranges[i].first);
+    long long int endrange   = dateToMSecsSinceEpoch(dateranges[i].second, &needrounding);
+    if (startrange == -1 || endrange == -1 || endrange < startrange)
+    {
+      Logger::error("Invalid range: '", dateranges[i].first, "' - '", dateranges[i].second, "' (", startrange, " - ", endrange, ")");
+      return false;
+    }
+    Logger::message("  Using range: ", dateranges[i].first, " - ", dateranges[i].second, " (", startrange, " - ", endrange, ")");
+
+    if (needrounding)// if called with "YYYY-MM-DD HH:MM:SS"
+      endrange += 999; // to get everything in the second specified...
+
+    datewhereclause += (datewhereclause.empty() ? " AND (" : " OR ") + "date_received BETWEEN "s + bepaald::toString(startrange) + " AND " + bepaald::toString(endrange);
+    if (i == dateranges.size() - 1)
+      datewhereclause += ')';
+  }
 
   for (unsigned int it = 0; it < thread_results.rows(); ++it)
   {
@@ -128,16 +155,16 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
 
     // get messages
     SqliteDB::QueryResults message_results;
-    if (!adbdb->d_db.exec("SELECT _id, thread_id, body, date AS date_received, date_sent, read, type, delivery_receipt_count, expires_in, 0 AS is_mms FROM sms WHERE thread_id = ?1"
-                          "UNION ALL "
-                          "SELECT _id, thread_id, body, date AS date_received, date AS date_sent, read, msg_box AS type, delivery_receipt_count, expires_in, 1 AS is_mms FROM mms WHERE thread_id = ?1",
+    if (!adbdb->d_db.exec("SELECT _id, thread_id, body, date AS date_received, date_sent, read, type, delivery_receipt_count, expires_in, 0 AS is_mms FROM sms WHERE thread_id = ?1 " + datewhereclause +
+                          " UNION ALL "
+                          "SELECT _id, thread_id, body, date AS date_received, date AS date_sent, read, msg_box AS type, delivery_receipt_count, expires_in, 1 AS is_mms FROM mms WHERE thread_id = ?1 " + datewhereclause,
                           thread_results.value(it, 0),
                           &message_results))
       return false;
 
     if (message_results.rows() == 0)
     {
-      Logger::message("No messages in thread");
+      Logger::message("No messages in thread", datewhereclause.empty() ? "" : " (in selected time period)");
       continue;
     }
 
