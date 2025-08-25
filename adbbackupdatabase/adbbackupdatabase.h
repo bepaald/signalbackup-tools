@@ -107,7 +107,7 @@ inline std::optional<std::string> AdbBackupDatabase::decryptMessageBody(std::str
   auto encbody = Base64::base64StringToBytes(encbody_b64);
   if (encbody.second == 0) [[unlikely]]
   {
-    Logger::error("Failed to b64 decode encrypted message body");
+    Logger::error("Failed to base64 decode encrypted message body");
     return std::optional<std::string>();
   }
   ScopeGuard encbody_guard([&](){ if (encbody.first) delete[] encbody.first; });

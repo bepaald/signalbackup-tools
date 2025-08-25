@@ -111,7 +111,7 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
       // THIS IS UNTESTED
       if (!isdummy)
       {
-        std::string identity_key = adbdb->d_db.getSingleResultAs<std::string>("SELECT key FROM identities WHERE recipient = ?",
+        std::string identity_key = adbdb->d_db.getSingleResultAs<std::string>("SELECT key FROM identities WHERE address = ?",
                                                                               thread_results.value(it, "recipient_ids"),
                                                                               std::string());
         if (identity_key.empty()) // no key found in source data, insert fake one:
@@ -141,6 +141,9 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
     long long int thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE recipient_id = ?", thread_recipient_id, -1);
     if (thread_id == -1)
     {
+      if (d_verbose) [[unlikely]]
+        Logger::message("No existing thread found for recipient, creating...");
+
       std::any new_thread_id;
       if (!insertRow("thread",
                      {{d_thread_recipient_id, thread_recipient_id},
