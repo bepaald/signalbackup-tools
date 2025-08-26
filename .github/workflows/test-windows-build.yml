@@ -23,5 +23,8 @@ jobs:
           
       - name: Build cmake
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DWIN32_GITHUB_RUNNER=1 -Dunofficial-sqlite3_DIR="C:/vcpkg/packages/sqlite3_x64-windows/share/unofficial-sqlite3/"
-          cmake --build build/ -- /p:CL_MPcount=4
+          set UseMultiToolTask=true
+          set EnforceProcessCountAcrossBuilds=true
+          set MultiProcessorCompilation=true
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_VS_GLOBALS="UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true;MultiProcessorCompilation=true" -DSQLite3_INCLUDE_DIR="C:/vcpkg/packages/sqlite3_x64-windows/include/" -DSQLite3_LIBRARY="C:/vcpkg/packages/sqlite3_x64-windows/lib/sqlite3.lib"
+          cmake --build build/ -- /m
