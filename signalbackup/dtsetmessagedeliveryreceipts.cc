@@ -34,20 +34,23 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
 
   SqliteDB::QueryResults status_results;
   if (!ddb.exec("SELECT "
+                "delivery_details.old_delivered AS old_delivered,"
                 "delivery_details.key AS conv_id,"
                 "conversations." + d_dt_c_uuid + " AS uuid,"
                 "conversations.e164 AS e164,"
                 "json_extract(delivery_details.value, '$.status') AS status,"
-                "COALESCE(json_extract(delivery_details.value, '$.updatedAt'), delivery_details.sent_at) AS updated_timestamp"
-                " FROM "
-                "(SELECT sent_at,key,value FROM messages,json_each(messages.json, '$.sendStateByConversationId') WHERE messages.rowid IS ?) AS delivery_details"
-                " LEFT JOIN conversations ON conversations.id IS conv_id", rowid, &status_results))
+                "COALESCE(json_extract(delivery_details.value, '$.updatedAt'), delivery_details.sent_at) AS updated_timestamp "
+                "FROM "
+                "(SELECT IFNULL(json_extract(messages.json, '$.delivered'), 0) AS old_delivered, sent_at, key, value FROM messages LEFT JOIN json_each(messages.json, '$.sendStateByConversationId') WHERE messages.rowid IS ?) AS delivery_details "
+                "LEFT JOIN conversations ON conversations.id IS conv_id", rowid, &status_results))
   {
     Logger::warning("Failed to get message delivery status");
     return;
   }
 
-  // results:
+  // example:
+  // {"bodyRanges":[],"sendHQImages":false,"sendStateByConversationId":{"d1c1693d-91e1-486f-8634-29c22afb881b":{"status":"Delivered","updatedAt":1745130667799},"37fb0475-13e7-43e6-965a-4b11d9370488":{"status":"Sent","updatedAt":1745130666116}},"unidentifiedDeliveries":["93722273-78e3-4136-8640-c8261969714c"],"errors":[],"synced":true,"preview":[]}
+  // results (from different example):
   //              key = 37fb0475-13e7-43e6-965a-4b11d9370488
   //           status = Sent
   //updated_timestamp = 1668710610793
@@ -56,7 +59,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
   //           status = Delivered
   //updated_timestamp = 1668710612716
 
-  //status_results.prettyPrint();
+  //status_results.prettyPrint(false);
 
   long long int deliveryreceiptcount = 0;
   long long int readreceiptcount = 0;
@@ -131,6 +134,8 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
           Logger::error("Inserting group_receipt");
       }
     }
+    else if (status_results.valueAsInt(i, "old_delivered", 0) > 0 && !isgroup)
+      ++deliveryreceiptcount;
   }
 
   // update the message in its table (mms/sms)

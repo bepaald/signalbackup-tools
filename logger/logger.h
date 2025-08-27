@@ -567,15 +567,9 @@ inline void Logger::warnOnce(std::string const &w, bool error, std::string::size
   if (s_instance->d_warningsgiven.find(w.substr(0, sub_id)) == s_instance->d_warningsgiven.end())
   {
     if (error)
-    {
       Logger::error(w);
-      Logger::error_indent("This error will be shown only once");
-    }
     else
-    {
       Logger::warning(w);
-      Logger::warning_indent("This warning will be shown only once");
-    }
     s_instance->d_warningsgiven.emplace(w, 0, sub_id);
   }
 }
