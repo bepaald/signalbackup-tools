@@ -184,40 +184,64 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
     Logger::error("DesktopDatabase was not ok");
   dtSetColumnNames(&ddb->d_database);
 
-  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
-  std::string uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(" + d_dt_m_sourceuuid + ", '') FROM messages "
-                                                                    "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
-  if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
+  SqliteDB::QueryResults selfdata;
+  std::string uuid;
+  std::string e164;
+  if (ddb->d_database.tableContainsColumn("messages", d_dt_m_sourceuuid)) [[likely]]
   {
-    // try from sessions:
-    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT " + d_dt_s_uuid + " FROM sessions WHERE SUBSTR(" + d_dt_s_uuid + ", 1, 4) != 'PNI:'", std::string());
-    if (uuid.empty())
+    // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
+    uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT NULLIF(" + d_dt_m_sourceuuid + ", '') FROM messages "
+                                                          "WHERE type = 'outgoing' AND " + d_dt_m_sourceuuid + " IS NOT NULL", std::string());
+    if (uuid.empty())  // on messages sent from Desktop, sourceServiceId/sourceUuid is empty
     {
-      // a bit more complicated:
-      uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE id IS "
-                                                            "("
-                                                            "  SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') "
-                                                            "    WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN "
-                                                            "    ("
-                                                            "      SELECT id FROM conversations WHERE type = 'group'"
-                                                            "    )"
-                                                            ")", std::string());
+      // try from sessions:
+      uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT " + d_dt_s_uuid + " FROM sessions WHERE SUBSTR(" + d_dt_s_uuid + ", 1, 4) != 'PNI:'", std::string());
       if (uuid.empty())
       {
-        Logger::error("Failed to determine uuid of self");
-        return;
+        // a bit more complicated:
+        uuid = ddb->d_database.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE id IS "
+                                                              "("
+                                                              "  SELECT DISTINCT NULLIF(key, '') FROM messages, json_each(messages.json, '$.sendStateByConversationId') "
+                                                              "    WHERE messages.type = 'outgoing' AND key IS NOT messages.conversationId AND messages.conversationId NOT IN "
+                                                              "    ("
+                                                              "      SELECT id FROM conversations WHERE type = 'group'"
+                                                              "    )"
+                                                              ")", std::string());
+        if (uuid.empty())
+        {
+          Logger::error("Failed to determine uuid of self");
+          return;
+        }
       }
     }
-  }
 
-  SqliteDB::QueryResults selfdata;
-  if (!ddb->d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color "
-                            "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
-                            uuid, &selfdata) ||
-      selfdata.rows() != 1)
+    if (!ddb->d_database.exec("SELECT profileName, profileFamilyName, profileFullName, e164, json_extract(json, '$.color') AS color "
+                              "FROM conversations WHERE " + d_dt_c_uuid + " = ?",
+                              uuid, &selfdata) ||
+        selfdata.rows() != 1)
+    {
+      Logger::error("Failed to get profile data of self from Desktop database");
+      return;
+    }
+  }
+  else // very old database, pre-uuid...
   {
-    Logger::error("Failed to get profile data of self from Desktop database");
-    return;
+    e164 = ddb->d_database.getSingleResultAs<std::string>("SELECT DISTINCT CAST(source AS TEXT) FROM messages "
+                                                          "WHERE type = 'outgoing' AND source IS NOT '' AND source IS NOT NULL", std::string());
+    if (e164.empty())
+    {
+      Logger::error("Failed to determine e164 of self");
+      return;
+    }
+
+    if (!ddb->d_database.exec("SELECT COALESCE(profileName, name) AS profileName, NULL AS profileFamilyName, COALESCE(profileName, name) AS profileFullName, ('+' || id) AS e164, json_extract(json, '$.color') AS color "
+                              "FROM conversations WHERE id = ?",
+                              e164, &selfdata) ||
+        selfdata.rows() != 1)
+    {
+      Logger::error("Failed to get profile data of self from Desktop database");
+      return;
+    }
   }
 
   std::any new_rid;
@@ -226,30 +250,19 @@ inline DummyBackup::DummyBackup(std::unique_ptr<DesktopDatabase> const &ddb, boo
                   {"profile_family_name", selfdata.value(0, "profileFamilyName")},
                   {"profile_joined_name", selfdata.value(0, "profileFullName")},
                   {d_recipient_e164, selfdata.value(0, "e164")},
-                  {d_recipient_aci, uuid},
+                  {!uuid.empty() ? d_recipient_aci : "", uuid},
                   {d_recipient_avatar_color, selfdata.value(0, "color")}}, "_id", &new_rid))
   {
     Logger::error("Failed to insert profile data of self into DummyBackup");
     return;
   }
 
-  /*
-    // insert self, even if we have no profile data...
-  std::any new_rid;
-  if (!insertRow("recipient",
-                 {{d_recipient_aci, uuid}}, "_id", &new_rid))
-  {
-    Logger::error("Failed to insert profile data of self into DummyBackup");
-    return;
-  }
-  */
-
   d_selfid = std::any_cast<long long int>(new_rid);
   d_selfuuid = uuid;
 
   // let scan self work on this dummy, by adding keyvalueframe...
   if (!insertRow("identities",
-                 {{"address", uuid},
+                 {{"address", !uuid.empty() ? uuid : e164},
                   {"identity_key", "this/is/a/fake/key0="}, // fake key, and 'guaranteed' to be invalid
                   {"first_use", 1},
                   {"timestamp", 0},

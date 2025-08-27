@@ -285,7 +285,8 @@ class SignalBackup
   bool importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                          std::vector<std::string> const &dateranges, bool createmissingcontacts,
                          bool createcontacts_nowarn, bool autodates, bool importstickers,
-                         std::string const &selfphone, bool targetisdummy);
+                         std::string const &selfphone, bool targetisdummy, bool migratedb);
+  bool dtUpdateDatabase(std::unique_ptr<DesktopDatabase> const &dtdb, bool targetisdummy);
   bool importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBackupDatabase> const &ptdb, bool skipmessagereorder,
                                  std::vector<std::pair<std::string, long long int>> const &initial_contactmap,
                                  std::vector<std::string> const &daterangelist, std::vector<std::string> const &chats,

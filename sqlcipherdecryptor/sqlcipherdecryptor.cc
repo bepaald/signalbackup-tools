@@ -25,7 +25,11 @@
 /*
   SQLCipher 1,2,3    ->  4
   - KDF Algorithm: PBKDF2-HMAC-SHA1 -> PBKDF2-HMAC-SHA512
-  - KDF Iterations: 4000,4000,64000,256000 (") // unused, no password->key derivation is done, raw key is in config
+  - KDF Iterations: 4000,4000,64000,256000 (") // unused, no password->key derivation is done,
+                                               // since the raw key is in config. In newer versions
+                                               // of Signal Desktop, the key is encrypted in the
+                                               // config, but encrypted from the user env, so still
+                                               // no KD is done
   - HMAC: HMAC-SHA1 -> HMAC-SHA512
   - Pagesize: 1024 -> 4096
 */

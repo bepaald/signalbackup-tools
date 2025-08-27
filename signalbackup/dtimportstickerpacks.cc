@@ -28,8 +28,8 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       !ddb.containsTable("sticker_packs") ||
       !ddb.containsTable("stickers"))
   {
-    Logger::error("Database does not contain expected sticker tables");
-    return false;
+    Logger::warnOnce("Database does not contain expected sticker tables.");
+    return true; // this is not an error per se, if the tables arent there, we have imported all (0) stickerpacks...
   }
 
   // get all stickerpacks

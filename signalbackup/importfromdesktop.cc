@@ -31,7 +31,7 @@
 bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtdb, bool skipmessagereorder,
                                      std::vector<std::string> const &daterangelist, bool createmissingcontacts,
                                      bool createmissingcontacts_valid, bool autodates, bool importstickers,
-                                     std::string const &selfphone, bool targetisdummy)
+                                     std::string const &selfphone, bool targetisdummy, bool migratedb)
 {
 
   //auto t1 = std::chrono::high_resolution_clock::now();
@@ -73,6 +73,14 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   }
 
   dtSetColumnNames(&dtdb->d_database);
+
+  if (migratedb) [[unlikely]]
+    if (!dtUpdateDatabase(dtdb, targetisdummy))
+    {
+      Logger::message("Failed to migrate Desktop database");
+      return false;
+    }
+
   //std::string configdir = dtdb->getConfigDir();
   std::string const &databasedir = dtdb->getDatabaseDir();
 
