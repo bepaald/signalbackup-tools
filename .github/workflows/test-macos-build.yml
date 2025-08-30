@@ -24,6 +24,11 @@ jobs:
       - name: Prepare
         run: |
           brew update
+          # I've been (intermittently) getting this error:
+          # Error: cmake is already installed from local/pinned!
+          # Please `brew uninstall cmake` first."
+          # so lets try that
+          brew uninstall cmake
 
       - name: Build
         run: |
