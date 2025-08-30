@@ -64,7 +64,7 @@ bool CryptBase::getBackupKey(std::string const &passphrase)
 
   EVP_DigestUpdate(mdctx.get(), d_salt, d_salt_size);
 
-  unsigned long digest_size = EVP_MD_size(EVP_sha512());
+  unsigned long digest_size = EVP_MD_CTX_size(mdctx.get());
   std::unique_ptr<unsigned char[]> digest(new unsigned char[digest_size]);
 
   for (i = 0; i < 250000; ++i)

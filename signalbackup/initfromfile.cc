@@ -20,9 +20,13 @@
 #include "signalbackup.ih"
 
 #include "../sqlstatementframe/sqlstatementframe.h"
+#include <chrono>
 
 void SignalBackup::initFromFile()
 {
+
+  using std::literals::chrono_literals::operator""ms;
+
   if (!d_fd->ok())
   {
     Logger::message("Failed to create filedecrypter");
@@ -37,12 +41,12 @@ void SignalBackup::initFromFile()
     return;
   }
 
+  auto old_time = std::chrono::steady_clock::now();
   int64_t totalsize = d_fd->total();
-  int prev_progress = 2000; // note this number will be max 1000 (10 * 100%), so this is an invalid number (to trigger on 0).
   if (d_verbose || !d_showprogress) [[unlikely]]
     Logger::message_overwrite("Reading backup file...");
   else
-    Logger::message_overwrite("Reading backup file: 000.0%...");
+    Logger::message_overwrite("Reading backup file: 0.00%...");
 
   std::unique_ptr<BackupFrame> frame;
 
@@ -58,24 +62,19 @@ void SignalBackup::initFromFile()
         return;
     }
 
-    if (d_showprogress) [[likely]]
+    auto new_time = std::chrono::steady_clock::now();
+    if (d_showprogress && (new_time - old_time > 250ms || d_verbose))
     {
-      int64_t progress = (static_cast<float>(backupfile.tellg()) / totalsize) * 1000;
+      if (d_verbose) [[unlikely]]
+        Logger::message_overwrite("FRAME ", frame->frameNumber(), ": ",
+                                  std::fixed, std::setprecision(2), std::setw(5), std::setfill('0'),
+                                  (static_cast<float>(backupfile.tellg() * 100) / totalsize), std::defaultfloat, "%...");
+      else
+        Logger::message_overwrite("Reading backup file: ",
+                                  std::fixed, std::setprecision(2), std::setw(5), std::setfill('0'),
+                                  (static_cast<float>(backupfile.tellg() * 100) / totalsize), std::defaultfloat, "%...");
 
-      if (progress != prev_progress ||
-          d_verbose)
-      {
-        //std::cout << "Progress: " << progress <<  " " << std::fixed << (static_cast<float>(progress) / 10) << std::endl;
-
-        if (d_verbose) [[unlikely]]
-          Logger::message_overwrite("FRAME ", frame->frameNumber(), ": ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%...");
-        else
-          Logger::message_overwrite("Reading backup file:", " ", std::fixed, std::setprecision(1), std::setw(5), std::setfill('0'),
-                                    (static_cast<float>(progress) / 10), std::defaultfloat, "%...");
-
-        prev_progress = progress;
-      }
+      old_time = new_time;
     }
 
     //if (frame->frameNumber() > 73085)

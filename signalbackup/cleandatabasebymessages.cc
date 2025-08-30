@@ -138,6 +138,12 @@ void SignalBackup::cleanDatabaseByMessages()
   {
     Logger::message_start("  Deleting call details from non-existing messages...");
     d_database.exec("DELETE FROM call WHERE message_id NOT IN (SELECT _id FROM " + d_mms_table + ")");
+
+    // when a message is deleted, the entry in call will remain with message_id = NULL.
+    d_database.exec("DELETE FROM call WHERE message_id IS NULL"); // maybe try to only delete these NULL
+                                                                  // calls if recipient (call.peer) does
+                                                                  // not exist.
+
     Logger::message_end(" (", d_database.changed(), ")");
   }
 

@@ -592,6 +592,14 @@ int main(int argc, char *argv[])
     if (!sb->setChatColors(arg.setchatcolors()))
       return 1;
 
+  // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
+  if (arg.hiperfall() != -1)
+    if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
+    {
+      Logger::error("Some error occurred in SignalBackup::hiperfall()...");
+      return 1;
+    }
+
   if (arg.autofixfkc())
     if (!sb->fixForeignKeyConstraintViolations())
       return 1;
@@ -634,14 +642,6 @@ int main(int argc, char *argv[])
   // {
   //   sb->hhenkel(arg.hhenkel());
   // }
-
-  // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
-  if (arg.hiperfall() != -1)
-    if (!sb->hiperfall(arg.hiperfall(), arg.setselfid()))
-    {
-      Logger::error("Some error occurred in SignalBackup::hiperfall()...");
-      return 1;
-    }
 
   // // temporary, to import messages from truncated database into older, but complete database
   // if (!arg.sleepyh34d().empty())
