@@ -86,6 +86,8 @@ changes, you must provide one of the output options.
    --limittodates <LIST_OF_DATES>        Optional modifier for `--dumpmedia'. Only export messages within
                                          the ranges defined by LIST_OF_DATES. List format is the same as
                                          `--croptodates'.
+   --excludequotes                       Optional modifier for `--dumpmedia'. Exclude quoted media from
+                                         the media dump.
    --excludestickers                     Optional modifier for `--dumpmedia'. Exclude stickers from the
                                          media dump.
 --dumpavatars <DIRECTORY>                Save all avatars to DIRECTORY.

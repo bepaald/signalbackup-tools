@@ -273,7 +273,7 @@ class SignalBackup
   bool reorderMmsSmsIds() const;
   bool dumpMedia(std::string const &dir, std::vector<std::string> const &dateranges,
                  std::vector<long long int> const &threads, bool excludestickers,
-                 bool aggressive_sanitizing, bool overwrite) const;
+                 bool excludequotes, bool aggressive_sanitizing, bool overwrite) const;
   bool dumpAvatars(std::string const &dir, std::vector<std::string> const &contacts, bool aggressive_sanitizing, bool overwrite) const;
   bool deleteAttachments(std::vector<long long int> const &threadids, std::string const &before,
                          std::string const &after, long long int filesize,

@@ -342,7 +342,7 @@ Where `outputdirectory` is an empty directory, or does not exist (in which case 
 
 To limit the export to certain threads, the option `--limittothreads [LIST_OF_THREADS]` can be added. The list of threads can contain both ranges and comma separated values, e.g. `--limittothreads 1,2,3,8-16,20`. The thread numbers can be obtained from `--listthreads`. Additionally, threads can be identified by a string representing the display name, phone number or username of the recipient: `--limittothreadsbyname "Alice","Family Group","+14255550123"`. Similarly, the option `--limittodates [LIST_OF_DATES]` will limit the output to media from the time periods listed. For the format of the date list, see the [crop to dates](#crop) option.
 
-Normally, stickers are included in the media export, as they are normal attachments in the database. To prevent this, add the option `--excludestickers`.
+Attachments that are quoted in later messages are normally included in the media export as duplicates (which is how they appear in the backup file), to prevent this add the option `--excludequotes`. Similarly, stickers are normally included in the media export, as they are normal attachments in the database. To exclude stickers, add the option `--excludestickers`.
 
 ##### Dumping avatars
 

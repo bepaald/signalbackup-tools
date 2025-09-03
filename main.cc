@@ -570,7 +570,8 @@ int main(int argc, char *argv[])
   }
 
   if (!arg.dumpmedia().empty())
-    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.excludestickers(), arg.aggressivefilenamesanitizing(),  arg.overwrite()))
+    if (!sb->dumpMedia(arg.dumpmedia(), arg.limittodates(), limittothreads, arg.excludestickers(),
+                       arg.excludequotes(), arg.aggressivefilenamesanitizing(),  arg.overwrite()))
       return 1;
 
   if (!arg.dumpavatars().empty())

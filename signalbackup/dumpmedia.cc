@@ -25,7 +25,7 @@
 
 bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> const &daterangelist,
                              std::vector<long long int> const &threads, bool excludestickers,
-                             bool aggressive_sanitizing, bool overwrite) const
+                             bool excludequotes, bool aggressive_sanitizing, bool overwrite) const
 {
   Logger::message("Dumping media to dir '", dir, "'");
 
@@ -55,6 +55,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     d_part_table + ".display_order"
     " FROM " + d_part_table + " WHERE " + d_part_table + "._id == ?" +
     (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "") +
+    (excludequotes ? " AND quote = 0" : "") +
     ((excludestickers && d_database.tableContainsColumn(d_part_table, "sticker_id")) ? " AND sticker_id = -1" : "");
 
   // if all tables for detailed info are present...
@@ -85,6 +86,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
       (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
       "WHERE " + d_part_table + "._id == ?" +
       (d_database.tableContainsColumn(d_part_table, "unique_id") ? " AND unique_id == ?" : "") +
+      (excludequotes ? " AND quote = 0" : "") +
       ((excludestickers && d_database.tableContainsColumn(d_part_table, "sticker_id")) ? " AND sticker_id = -1" : "");
   }
 
@@ -169,7 +171,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
 
     //results.prettyPrint();
 
-    if (results.rows() == 0 && (!threads.empty() || !daterangelist.empty())) // probably an attachment for a de-selected thread
+    if (results.rows() == 0 && (!threads.empty() || !daterangelist.empty() || excludequotes || excludestickers)) // probably an attachment for a de-selected thread
       continue;
 
     if (results.rows() != 1)
