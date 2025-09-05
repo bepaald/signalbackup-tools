@@ -669,6 +669,9 @@ If you use this option and read this line, I would really appreciate it if you l
 
 **<span id="desktop">Importing conversations from Signal-Desktop</span>**
 
+> [!WARNING]
+> It appears a potentially breaking bug is present in this feature (most likely when used with the `--importdesktopcontacts` options). See #341
+
 > [!IMPORTANT]
 > This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated
 
