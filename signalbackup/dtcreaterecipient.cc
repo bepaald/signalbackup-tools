@@ -112,6 +112,13 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
     }
 
+    // it seems groups (v2) _must_ have storage id, or Signal Android will crash...
+    if (res.isNull(0, "storageId") || res(0, "storageId").empty())
+    {
+      Logger::error("No storage id found for group-recipient. Skipping group-creation");
+      return -1;
+    }
+
     d_database.exec("BEGIN TRANSACTION"); // things could still go bad...
 
     std::any new_rid;
