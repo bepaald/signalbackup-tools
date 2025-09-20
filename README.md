@@ -33,7 +33,7 @@ Signal is an actively developed application and consequently, the database forma
 ### Requirements
 
 To compile this project, current stable released versions of the following are needed:
-- A C++ compiler supporting at least the C++17 standard (tested with [GCC](https://gcc.gnu.org) 14.2.1 and [Clang](https://clang.llvm.org) 18.1.8, also tested and working with a few older compiler versions)
+- A C++ compiler supporting at least the C++17 standard (the higher the standard, the better) (between [github actions](https://github.com/bepaald/signalbackup-tools/actions) and local builds, it is tested on around 15 different versions of [GCC](https://gcc.gnu.org), [Clang](https://clang.llvm.org) and MSVC).
 - [OpenSSL](https://www.openssl.org/) (any reasonably recent version from either the 3.X or 1.1x series)
 - [SQLite3](https://www.sqlite.org/) (any reasonably recent version)
 - Only on Linux: [dbus](https://www.freedesktop.org/wiki/Software/dbus/). Optional, but required by default. See the [compiling](#compiling) section to build without `dbus`. If the program is compiled without `dbus`, operations that need to open the Signal Desktop client database will not work unless the decrypted encryption key is manually provided.
@@ -993,6 +993,8 @@ This program supports a small number of other options, most of which are of litt
 - `--runsqlquery [QUERY]` Run any query on the SQL database in the backup file. If combined with `-o/--output` any changes made are saved in the new backup file. See also [advanced options](#advanced).
 - `--runprettysqlquery [QUERY]` As above, but tries to make make the output a bit nicer to look at. Depending on the size of the query and the size of the output terminal, may make the output more legible (or less so).
 - `-l/--logfile [FILE]` All terminal output is saved to file `[FILE]`.
+- `--checkdbintegrity` Checks the integrity of the SQLite database. The most common issues are reported automatically whenever opening a file, but this option runs a full check.
+- `--autofixfkc` Attempts to automatically fix the most common database error: the 'foreign key constraint' violation. This option will repeatedly delete one or more entries from one or more tables of the database until all foreign key constraints are met. To see some details of what is being deleted, run with `-v/--verbose`. **NOTE** If the foreign key constraint violation is not present initially when opening the file, but only after this tool has performed some database-altering operation, that means it was this tool that introduced the violation. In those cases please report that as a bug.
 - `--no-truncate` Any SQL query results that are pretty-printed (see `--runprettysqlquery` above) are normally truncated to fit in the output terminal. This option will prevent this truncating. May be useful when redirecting to file (or using the `--logfile` option).
 - `--no-showprogress` Disable (most) progress indicators. Especially useful when trying to parse the programs output in a script.
 - `-v/--verbose` Run in verbose mode. This will print a _lot_ of text to output, may be useful in case of errors.

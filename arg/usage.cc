@@ -323,6 +323,10 @@ std::cout << R"*(
                                            https://github.com/bepaald/signalbackup-tools/issues/184
 --checkdbintegrity                         Does a full integrity check on the SQLite database in the
                                            backup file.
+--autofixfkc                               Attempts to automatically fix any foreign key constraint
+                                           violations in the database (as reported by `--checkdbintegrity')
+                                           This will delete data from the database. To see some details
+                                           of what is deleted, run with `-v/--verbose'.
 )*";
 
 // --editgroupmembers                         Optional modifier for `--mergerecipients'. Also changes
