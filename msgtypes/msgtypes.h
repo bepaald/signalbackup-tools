@@ -240,6 +240,11 @@ struct Types
     return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_REPORTED_SPAM;
   }
 
+  inline static bool isThreadMergeType(uint64_t type)
+  {
+    return (type & BASE_TYPE_MASK) == THREAD_MERGE_TYPE;
+  }
+
   inline static bool isStatusMessage(uint64_t type)
   {
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
@@ -247,7 +252,7 @@ struct Types
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
       isProfileChange(type) || isEndSession(type) || type == GV1_MIGRATION_TYPE ||
       isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type) ||
-      isReportedSpam(type);
+      isReportedSpam(type) || isThreadMergeType(type);
   }
 };
 

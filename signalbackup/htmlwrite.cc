@@ -1137,6 +1137,11 @@ R"(
         filter: var(--icon-f);
       }
 
+      .msg-status .msg-thread-merge-icon {
+        background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M4.137 14c.197 0 .402-.067.584-.186l.394-.26c1.054-.7 2.608-2.277 2.874-3.065h.022c.258.781 1.812 2.365 2.874 3.065l.394.26a1.08 1.08 0 0 0 .577.186c.386 0 .644-.26.644-.625 0-.223-.121-.446-.326-.573l-.599-.379c-1.054-.684-2.912-2.41-2.912-4.233V5.401H9.74c.531 0 .675-.365.379-.774L8.428 2.254c-.242-.335-.606-.342-.856 0L5.873 4.619c-.295.417-.159.782.387.782h1.077V8.19c0 1.823-1.866 3.541-2.912 4.233l-.599.379a.68.68 0 0 0-.326.581c0 .334.25.617.637.617z"/></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-spam-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 6.5c-.7 0-1.24.6-1.2 1.29l.43 5.5c.03.4.37.71.77.71s.74-.31.77-.71l.42-5.5c.05-.7-.49-1.29-1.19-1.29zm0 8.75a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 1 0 0-2.5zm3.1-13.62H8.9c-.77 0-1.5.3-2.04.84l-4.4 4.39c-.52.54-.82 1.27-.82 2.03v6.22a2.87 2.87 0 0 0 .84 2.03l4.39 4.4a2.91 2.91 0 0 0 2.03.84h6.22c.76 0 1.49-.3 2.03-.85l4.4-4.39a2.91 2.91 0 0 0 .84-2.03V8.89c0-.76-.3-1.49-.85-2.03l-4.39-4.4a2.9 2.9 0 0 0-2.03-.83zM8.9 3.38h6.2a1.11 1.11 0 0 1 .8.32l4.4 4.4c.2.2.32.5.32.8v6.2a1.11 1.11 0 0 1-.32.8l-4.4 4.4c-.2.2-.5.32-.8.32H8.9a1.11 1.11 0 0 1-.8-.32l-4.4-4.4a1.16 1.16 0 0 1-.33-.8V8.9c0-.3.12-.6.33-.8l4.4-4.4a1.16 1.16 0 0 1 .8-.33z"/></svg>');
         filter: var(--icon-f);
@@ -1227,6 +1232,7 @@ R"(
       .msg-status .msg-info-icon,
       .msg-status .msg-security-icon,
       .thread-subtitle .msg-security-icon,
+      .msg-status .msg-thread-merge-icon,
       .msg-status .msg-spam-icon,
       .msg-status .msg-pencil-icon,
       .msg-status .msg-thread-icon,
@@ -1778,7 +1784,7 @@ R"(
       .msg-status .msg-group-call, .msg-status .msg-call-incoming,
       .msg-status .msg-call-missed, .msg-status .msg-call-outgoing,
       .msg-status .msg-info-icon, .msg-status .msg-security-icon,
-      .msg-status .msg-spam-icon,
+      .msg-status .msg-thread-merge-icon, .msg-status .msg-spam-icon,
       .msg-status .msg-pencil-icon, .msg-status .msg-megaphone-icon,
       .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
       .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
@@ -2561,6 +2567,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-thread-icon\"></span>";
     else if (Types::isReportedSpam(msg_info.type))
       htmloutput << "<span class=\"msg-spam-icon\"></span>";
+    else if (Types::isThreadMergeType(msg_info.type))
+      htmloutput << "<span class=\"msg-thread-merge-icon\"></span>";
     else if (msg_info.type == Types::GV1_MIGRATION_TYPE)
     {
       if (msg_info.icon == IconType::MEMBER_ADD)

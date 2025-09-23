@@ -183,7 +183,23 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   {
     return "Reported as spam";
   }
+  if (Types::isThreadMergeType(type))
+  {
+    /*
+      // proto for this type (base64 in msg body)
+      message ThreadMergeEvent {
+        string previousE164 = 1;
+      }
+    */
 
+    std::string previous_e164(" ");
+    ProtoBufParser<protobuffer::optional::STRING> thread_merge_event(body);
+    auto field1 = thread_merge_event.getField<1>();
+    if (field1.has_value())
+      previous_e164.append(field1.value());
+
+    return "Your message history with " + contactname + " and their number" + previous_e164 + " has been merged.";
+  }
 
 
 
