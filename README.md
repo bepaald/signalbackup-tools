@@ -995,6 +995,7 @@ This program supports a small number of other options, most of which are of litt
 - `--no-truncate` Any SQL query results that are pretty-printed (see `--runprettysqlquery` above) are normally truncated to fit in the output terminal. This option will prevent this truncating. May be useful when redirecting to file (or using the `--logfile` option).
 - `--no-showprogress` Disable (most) progress indicators. Especially useful when trying to parse the programs output in a script.
 - `-v/--verbose` Run in verbose mode. This will print a _lot_ of text to output, may be useful in case of errors.
+- `--fulldecode` This option forces all media to be decrypted when the file is opened. Normally this is only done when the attachment data is actually needed. This greatly slows down opening the backup file.
 - `--listrecipients` Lists all recipients found in the database.
 - `--showdbinfo` Prints a list of all tables and their columns in the backups Sqlite database.
 - `--scanmissingattachments` If you see _"warning attachment data not found"_ messages, feel free to use this option and provide the 

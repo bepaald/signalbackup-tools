@@ -321,6 +321,9 @@ std::cout << R"*(
                                            function attempts to migrate the older database so it can be
                                            used as a source for `--importthreads'. See also
                                            https://github.com/bepaald/signalbackup-tools/issues/184
+--fulldecode                               Ensures all attachments are immediately decrypted when opening
+                                           a backup file. Normally this is only done when the
+                                           attachment data is actually needed.
 --checkdbintegrity                         Does a full integrity check on the SQLite database in the
                                            backup file.
 --autofixfkc                               Attempts to automatically fix any foreign key constraint
