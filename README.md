@@ -970,6 +970,8 @@ Done!
 
 While this tool only deals with backups from Signal Android, and there are no plans to change that, a small number of functions that operate on a Signal Desktop database is available. These options primarily exist to facilitate debugging the [import from Desktop](#desktop) function.
 
+One commonly performed procedure is to move a Signal Desktop installation from one computer to another. While not really a function of this tool, it provides a convenient way to obtain the decryption key (see the `--showdesktopkey` option below). Detailed instructions for moving a Signal Desktop installation can be found [here](https://github.com/bepaald/signalbackup-tools/issues/348#issuecomment-3346674053).
+
 Running with these options does not require an Android backup file to be provided as input (for example `signalbackup-tools --exportdesktophtml [TARGETDIR]`). These options support some of the same  modifying options as `--importfromdesktop`, namely: `--desktopdirs`, and `--ignorewal`.
 
 - `--dumpdesktopdb [OUTPUTFILE]` Save the Desktop database to `[OUTPUTFILE]` without encryption.
