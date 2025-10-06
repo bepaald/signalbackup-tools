@@ -298,7 +298,8 @@ class SignalBackup
                                   std::map<std::string, long long int> *contactmap,
                                   bool *warned_createcontacts, std::string const &contact_name,
                                   std::string const &address, bool isgroup) const;
-  bool checkDbIntegrity(bool warn = false) const;
+  bool checkDbIntegrityInternal(bool warnonly = false) const;
+  bool checkDbIntegrity() const;
   bool exportHtml(std::string const &directory, std::vector<long long int> const &threads,
                   std::vector<std::string> const &dateranges, std::string const &splitby,
                   long long int split, std::string const &selfid, bool calllog, bool searchpage,

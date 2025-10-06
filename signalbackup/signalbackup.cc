@@ -54,5 +54,5 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
 
   Logger::message("Database version: ", d_databaseversion);
 
-  checkDbIntegrity(true);
+  checkDbIntegrityInternal(true /* onlywarn */);
 }

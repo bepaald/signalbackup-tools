@@ -1143,5 +1143,5 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   d_database.exec("VACUUM");
   d_database.freeMemory();
 
-  return checkDbIntegrity();
+  return checkDbIntegrityInternal();
 }

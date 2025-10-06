@@ -721,7 +721,7 @@ int main(int argc, char *argv[])
   // export output
   if (!arg.output().empty())
   {
-    sb->checkDbIntegrity(true);
+    sb->checkDbIntegrityInternal(true /* warnonly */);
     if (!sb->exportBackup(arg.output(), arg.opassphrase(), arg.overwrite(), SignalBackup::DROPATTACHMENTDATA, arg.onlydb()))
     {
       Logger::error("Failed to export backup to '", arg.output(), "'");

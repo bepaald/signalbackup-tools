@@ -1812,7 +1812,7 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
       }
     }
 
-    if (!checkDbIntegrity())
+    if (!checkDbIntegrityInternal())
       return false;
 
     // setDBV
@@ -2074,5 +2074,5 @@ bool SignalBackup::migrate_to_191(std::string const &selfphone)
   d_databaseversion = 191;
   setColumnNames();
 
-  return checkDbIntegrity();
+  return checkDbIntegrityInternal();
 }

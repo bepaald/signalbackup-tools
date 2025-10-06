@@ -128,5 +128,5 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
   if (!skipmessagereorder) [[likely]]
     reorderMmsSmsIds();
   updateThreadsEntries();
-  return checkDbIntegrity();
+  return checkDbIntegrityInternal();
 }

@@ -569,5 +569,5 @@ bool SignalBackup::importFromPlaintextBackup(std::unique_ptr<SignalPlaintextBack
     if (!isdummy)
       reorderMmsSmsIds();
   updateThreadsEntries();
-  return checkDbIntegrity();
+  return checkDbIntegrityInternal();
 }

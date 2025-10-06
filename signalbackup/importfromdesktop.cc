@@ -1942,5 +1942,5 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   // auto ms_int = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1);
   // std::cout << " *** TIME: " << ms_int.count() << "ms\n";
 
-  return checkDbIntegrity();
+  return checkDbIntegrityInternal();
 }
