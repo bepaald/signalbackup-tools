@@ -77,10 +77,11 @@ bool SignalBackup::checkDbIntegrity() const
 {
   bool ret = checkDbIntegrityInternal(false /* warnonly */);
 
-  Logger::message("\nPerforming additional checks. The following checks are expected to\n"
-                  "cause problems if not passed. However, this is not a certainty. Escpecially\n"
-                  "if the database is an unaltered database straight from an official source,\n"
-                  "it can be assumed any warnings are false positives\n");
+  Logger::message("\nPerforming additional checks. If any of the following checks are not passes\n"
+                  "this may be a source of issues with the backup.\n"
+                  "However, this is not a certainty. Escpecially if the database is an unaltered\n"
+                  "database straight from an official source, it can be assumed any warnings are\n"
+                  "false positives.\n");
 
   // it has been reported that group recipients without a storage_service_id can cause
   // Signal Android to crash (#341). This checks for that case. However, I expect
