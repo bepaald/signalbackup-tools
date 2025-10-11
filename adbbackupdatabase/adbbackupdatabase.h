@@ -59,7 +59,7 @@ class AdbBackupDatabase
   inline std::string const &backupRoot() const;
   inline int version() const;
  private:
-  static std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> decrypt(unsigned char *encdata, int enclength,
+  static std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> decrypt(unsigned char const *encdata, int enclength,
                                                                                  unsigned char *mackey, int maclength,
                                                                                  unsigned char *key, int keylength);
 

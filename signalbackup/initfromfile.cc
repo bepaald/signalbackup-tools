@@ -174,7 +174,7 @@ void SignalBackup::initFromFile()
     }
     else [[unlikely]] // if (frame->frameType() == BackupFrame::FRAMETYPE::INVALID)
     {
-      Logger::warning(Logger::Control::BOLD, "SKIPPING UNKNOWN OR INVALID FRAME! (", frame->frameType(), ")", Logger::Control::NORMAL);
+      Logger::warning(Logger::Control::BOLD, "SKIPPING UNKNOWN OR INVALID FRAME! (", static_cast<int>(frame->frameType()), ")", Logger::Control::NORMAL);
     }
   }
 

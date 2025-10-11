@@ -23,7 +23,7 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 
-std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> AdbBackupDatabase::decrypt(unsigned char *encdata, int enclength,
+std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> AdbBackupDatabase::decrypt(unsigned char const *encdata, int enclength,
                                                                                            unsigned char *mackey, int maclength,
                                                                                            unsigned char *key, int keylength [[maybe_unused]]) //static
 {

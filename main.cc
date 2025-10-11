@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
   SqliteDB::setConfigOptions();
 
-  //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP  INPUT ****//
+  //**** OPTIONS THAT DO NOT REQUIRE SIGNAL BACKUP INPUT ****//
   std::unique_ptr<DesktopDatabase> ddb;
   std::unique_ptr<SignalPlaintextBackupDatabase> ptdb;
   std::unique_ptr<AdbBackupDatabase> adbdb;
@@ -300,6 +300,12 @@ int main(int argc, char *argv[])
     Logger::error("No input provided.");
     Logger::error_indent("Run with `", argv[0], " <INPUT> [<PASSPHRASE>] [OPTIONS]'");
     Logger::error_indent("Try '", argv[0], " --help' for available options");
+    return 1;
+  }
+
+  if (arg.output() == arg.input())
+  {
+    Logger::error("Input and output refer to the same file. This is not supported.");
     return 1;
   }
 

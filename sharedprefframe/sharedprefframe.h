@@ -309,7 +309,7 @@ inline std::string SharedPrefFrame::valueType() const
       if (bytesToInt64(std::get<1>(p), std::get<2>(p)) == 1)
         return "STRINGSET";
   }
-  Logger::warning("Currently unsupported value type requested from SharedPrefrenceFrame");
+  Logger::warning("Currently unsupported value type requested from SharedPreferenceFrame");
   return std::string();
 }
 

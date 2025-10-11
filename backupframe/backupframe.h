@@ -64,7 +64,7 @@ class BackupFrame
   {
     Registrar(FRAMETYPE ft, BackupFrame *(*func)(unsigned char const *, size_t, uint64_t))
     {
-      //Logger::message("Registering class type: ", ft);
+      //std::cout << "Registering class type: " << static_cast<int>(ft) << std::endl; // dont use logger here, it may not be instantiated yet
       s_registry()[ft] = func;
     }
   };
