@@ -27,9 +27,9 @@ bool SignalBackup::exportBackupToFile(std::string const &filename, std::string c
   Logger::message("\nExporting backup to '", filename, "'");
 
   std::string newpw = passphrase;
-  if (newpw == std::string())
+  if (newpw.empty())
     newpw = d_passphrase;
-  if (newpw == std::string())
+  if (newpw.empty())
   {
     Logger::error("Need password to create encrypted backup file.");
     return false;

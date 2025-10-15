@@ -41,6 +41,7 @@ namespace bepaald
 {
   inline bool fileOrDirExists(std::string const &path);
   inline bool fileOrDirExists(std::filesystem::path const &path);
+  inline bool sameFile(std::string const &path1, std::string const &path2);
   inline bool isDir(std::string const &path);
   inline bool createDir(std::string const &path);
   inline bool isEmpty(std::string const &path);
@@ -62,6 +63,12 @@ inline bool bepaald::fileOrDirExists(std::filesystem::path const &path)
 {
   std::error_code ec;
   return std::filesystem::exists(path, ec);
+}
+
+inline bool bepaald::sameFile(std::string const &path1, std::string const &path2)
+{
+  std::error_code ec;
+  return std::filesystem::equivalent(path1, path2, ec);
 }
 
 inline bool bepaald::isDir(std::string const &path)

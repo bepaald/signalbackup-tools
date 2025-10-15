@@ -303,7 +303,9 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  if (arg.output() == arg.input())
+  if (bepaald::fileOrDirExists(arg.output()) &&
+      bepaald::fileOrDirExists(arg.input()) &&
+      bepaald::sameFile(arg.input(), arg.output()))
   {
     Logger::error("Input and output refer to the same file. This is not supported.");
     return 1;
