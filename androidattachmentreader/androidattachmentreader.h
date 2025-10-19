@@ -251,7 +251,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
   EVP_CIPHER_CTX_set_padding(ctx.get(), 0);
 
   // init
-  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1)
+  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_ctr(), nullptr, d_cipherkey, d_iv) != 1) [[unlikely]]
   {
     Logger::error("CTX INIT FAILED");
     return ReturnCode::ERROR;
@@ -269,33 +269,33 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 
 
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  if (EVP_MAC_init(hctx.get(), d_mackey, d_mackey_size, params) != 1)
+  if (EVP_MAC_init(hctx.get(), d_mackey, d_mackey_size, params) != 1) [[unlikely]]
 #else
-  if (HMAC_Init_ex(hctx.get(), d_mackey, d_mackey_size, EVP_sha256(), nullptr) != 1)
+  if (HMAC_Init_ex(hctx.get(), d_mackey, d_mackey_size, EVP_sha256(), nullptr) != 1) [[unlikely]]
 #endif
   {
     Logger::error("Failed to initialize HMAC context");
     return ReturnCode::ERROR;
   }
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  if (EVP_MAC_update(hctx.get(), d_iv, d_iv_size) != 1)
+  if (EVP_MAC_update(hctx.get(), d_iv, d_iv_size) != 1) [[unlikely]]
 #else
-  if (HMAC_Update(hctx.get(), d_iv, d_iv_size) != 1)
+  if (HMAC_Update(hctx.get(), d_iv, d_iv_size) != 1) [[unlikely]]
 #endif
   {
     Logger::error("Failed to update HMAC");
     return ReturnCode::ERROR;
   }
 
-  // read and process attachment data in 8MB chunks
-  uint32_t const BUFFERSIZE = 8 * 1024;
+  // read and process attachment data in 32MB chunks
+  uint32_t const BUFFERSIZE = 32 * 1024;
   unsigned char encrypteddatabuffer[BUFFERSIZE];
   uint32_t processed = 0;
   uint32_t size = d_attachmentdata_size;
   std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[size]); // to hold the data
   while (processed < size)
   {
-    if (!file.read(reinterpret_cast<char *>(encrypteddatabuffer), std::min(size - processed, BUFFERSIZE)))
+    if (!file.read(reinterpret_cast<char *>(encrypteddatabuffer), std::min(size - processed, BUFFERSIZE))) [[unlikely]]
     {
       Logger::error("STOPPING BEFORE END OF ATTACHMENT!!!", (file.eof() ? " (EOF) " : ""));
       return ReturnCode::ERROR;
@@ -304,9 +304,9 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 
     // update MAC with read data
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-    if (EVP_MAC_update(hctx.get(), encrypteddatabuffer, read) != 1)
+    if (EVP_MAC_update(hctx.get(), encrypteddatabuffer, read) != 1) [[unlikely]]
 #else
-    if (HMAC_Update(hctx.get(), encrypteddatabuffer, read) != 1)
+    if (HMAC_Update(hctx.get(), encrypteddatabuffer, read) != 1) [[unlikely]]
 #endif
     {
       Logger::error("Failed to update HMAC");
@@ -315,7 +315,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 
     // decrypt the read data;
     int spaceleft = size - processed;
-    if (EVP_DecryptUpdate(ctx.get(), decryptedattachmentdata.get() + processed, &spaceleft, encrypteddatabuffer, read) != 1)
+    if (EVP_DecryptUpdate(ctx.get(), decryptedattachmentdata.get() + processed, &spaceleft, encrypteddatabuffer, read) != 1) [[unlikely]]
     {
       Logger::error("Failed to decrypt data");
       return ReturnCode::ERROR;
@@ -328,10 +328,10 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 
   unsigned char hash[SHA256_DIGEST_LENGTH];
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-  if (EVP_MAC_final(hctx.get(), hash, nullptr, SHA256_DIGEST_LENGTH) != 1)
+  if (EVP_MAC_final(hctx.get(), hash, nullptr, SHA256_DIGEST_LENGTH) != 1) [[unlikely]]
 #else
   unsigned int digest_size = SHA256_DIGEST_LENGTH;
-  if (HMAC_Final(hctx.get(), hash, &digest_size) != 1)
+  if (HMAC_Final(hctx.get(), hash, &digest_size) != 1) [[unlikely]]
 #endif
   {
     Logger::error("Failed to finalize MAC");
@@ -339,7 +339,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
   }
 
   unsigned char theirMac[CryptBase::MACSIZE];
-  if (!file.read(reinterpret_cast<char *>(theirMac), CryptBase::MACSIZE))
+  if (!file.read(reinterpret_cast<char *>(theirMac), CryptBase::MACSIZE)) [[unlikely]]
   {
     Logger::error("STOPPING BEFORE END OF ATTACHMENT!!! 2 ");
     return ReturnCode::ERROR;
@@ -349,7 +349,7 @@ inline BaseAttachmentReader::ReturnCode AndroidAttachmentReader::getAttachment(F
 
   bool badmac = false;
 
-  if (std::memcmp(theirMac, hash, CryptBase::MACSIZE) != 0)
+  if (std::memcmp(theirMac, hash, CryptBase::MACSIZE) != 0) [[unlikely]]
   {
     Logger::warning("Bad MAC in attachmentdata: theirMac: ", bepaald::bytesToHexString(theirMac, CryptBase::MACSIZE));
     Logger::warning_indent("                             ourMac: ", bepaald::bytesToHexString(hash, SHA256_DIGEST_LENGTH));

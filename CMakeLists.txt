@@ -34,7 +34,7 @@ if ((CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
 endif()
 
 # find and set DBUS include and library paths
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES ".*BSD")
   if (WITHOUT_DBUS)
     add_definitions(-DWITHOUT_DBUS)
   else()

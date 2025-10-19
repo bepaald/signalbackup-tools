@@ -73,7 +73,6 @@ void SignalBackup::initFromFile()
         Logger::message_overwrite("Reading backup file: ",
                                   std::fixed, std::setprecision(2), std::setw(5), std::setfill('0'),
                                   (static_cast<float>(backupfile.tellg() * 100) / totalsize), std::defaultfloat, "%...");
-
       old_time = new_time;
     }
 
