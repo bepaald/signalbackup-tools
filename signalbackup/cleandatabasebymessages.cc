@@ -254,7 +254,7 @@ void SignalBackup::cleanDatabaseByMessages()
     for (long long int id : mentioned_in_group_updates)
       referenced_recipients.insert(id);
     if (d_verbose) [[unlikely]]
-      Logger::message("Got recipients from mentions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
+      Logger::message("Got recipients from group-update-mentions. List now: ", std::vector<long long int>(referenced_recipients.begin(), referenced_recipients.end()));
 
     // get recipient_id of releasechannel
     for (auto const &kv : d_keyvalueframes)
@@ -307,6 +307,8 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? " UNION SELECT DISTINCT to_recipient_id FROM " +
                      d_mms_table : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
+                    (d_database.containsTable("call") ? " UNION SELECT DISTINCT peer FROM call"s : ""s) +
+                    (d_database.containsTable("call") && d_database.tableContainsColumn("call", "ringer") ? " UNION SELECT DISTINCT ringer FROM call"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     (d_database.containsTable("distribution_list_member") ? " UNION SELECT DISTINCT recipient_id FROM distribution_list_member"s : ""s) +

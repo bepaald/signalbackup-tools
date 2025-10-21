@@ -143,7 +143,13 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
     if (d_database.containsTable("call"))
     {
       d_database.exec("UPDATE call SET peer = ? WHERE peer = ?", {target_rid, r_ids[i]});
-      Logger::message("Updated ", d_database.changed(), " recipients in 'call' table");
+      int count = d_database.changed();
+      if (d_database.tableContainsColumn("call", "ringer"))
+      {
+        d_database.exec("UPDATE call SET ringer = ? WHERE ringer = ?", {target_rid, r_ids[i]});
+        count += d_database.changed();
+      }
+      Logger::message("Updated ", count, " recipients in 'call' table");
     }
 
     if (d_database.containsTable("notification_profile_allowed_members"))

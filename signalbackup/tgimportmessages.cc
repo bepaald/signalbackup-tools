@@ -212,8 +212,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         if (body.empty())
         {
           Logger::warning("Failed to set attachment on otherwise empty message. Deleting message...");
-          if (d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id))
-            msg_deleted = true;
+          d_database.exec("DELETE FROM " + d_mms_table + " WHERE _id = ?", new_msg_id);
           continue;
         }
         else

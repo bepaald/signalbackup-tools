@@ -166,6 +166,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"story_sends", "recipient_id"},
       {"pending_pni_signature_message", "recipient_id"},
       {"call", "peer"},
+      {"call", "ringer"},
       {"group_membership", "recipient_id", "", "", SET_UNIQUELY},
       {"name_collision_membership", "recipient_id"}
     },
