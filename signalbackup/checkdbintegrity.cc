@@ -158,5 +158,29 @@ bool SignalBackup::checkDbIntegrity() const
     }
   }
 
+  // while most places where a recipient is referenced (for example `reaction.author_id`), this is made explicit
+  // in the database schema (`author_id INTEGER NOT NULL REFERENCES recipient (_id)`), this is not the case
+  // for `call.ringer` (likely because it can be NULL).
+  // Previously, a backup merge (`importthreads`), could leave this column referencing invalid recipients (#332).
+  if (d_database.tableContainsColumn("call", "ringer"))
+  {
+    Logger::message_start("Checking bad recipient._id in call.ringer... ");
+    // ringer must refer to an existing recipient, and this recipient must have an aci.
+    long long int count = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM call WHERE ringer IS NOT NULL AND ringer NOT IN "
+                                                                      "(SELECT _id FROM recipient WHERE " + d_recipient_aci + " IS NOT NULL)", -1);
+    if (count == -1) [[unlikely]]
+    {
+      Logger::error("Query failed");
+      ret = false;
+    }
+    else if (count == 0)
+      Logger::message_end(Logger::Control::BOLD, "ok", Logger::Control::NORMAL);
+    else
+    {
+      Logger::error("Found call.ringer entries that refer to non-existing recipients, or recipients with no ACI/UUID. This could cause cloud backups to fail.");
+      ret = false;
+    }
+  }
+
   return ret;
 }
