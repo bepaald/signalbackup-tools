@@ -4,7 +4,7 @@ While this tool has been used to fix a number of bugs in Signal Android, it's mo
 
 - Main symptom: cloud backup fails to be created for a database that was previouly merged (with `--importfromthreads`) with this tool.
 
-During backup merging, the column `ringer` in the `call` table was not treated as referencing a `recipient._id`. This could cause an entry in the `call` table to exist with a `ringer` that reference a non-existing (or invalid) recipient.
+  During backup merging, the column `ringer` in the `call` table was not treated as referencing a `recipient._id`. This could cause an entry in the `call` table to exist with a `ringer` that reference a non-existing (or invalid) recipient.
 
   See [#332](https://github.com/bepaald/signalbackup-tools/issues/332#issuecomment-3426285375) for details and a fix.
   
