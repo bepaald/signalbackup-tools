@@ -172,6 +172,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                          "IFNULL(remote_deleted, 0) AS remote_deleted, "
                          "IFNULL(view_once, 0) AS view_once, " +
                          (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
+                         (d_database.containsTable("poll_option") ? "poll_option._id AS poll_id, " : "-1 AS poll_id, ") +
                          "expires_in"
                          " FROM " + d_mms_table + " "
                          // get attachment count for message:
@@ -179,7 +180,9 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                          // get reaction count for message:
                          "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON " + d_mms_table + "._id = rctns.message_id "
                          // get mention count for message:
-                         "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id "
+                         "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id " +
+                         // get poll_id (if any)
+                         (d_database.containsTable("poll_option") ? "LEFT JOIN poll_option ON " + d_mms_table + "._id = poll_option.message_id " : " ") +
                          "WHERE thread_id = ?"
                          + datewhereclause +
                          + (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL" : "") +
@@ -269,6 +272,11 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
         d_database.exec("SELECT emoji, author_id, DATETIME(date_sent / 1000, 'unixepoch', 'localtime') AS 'date_sent', "
                         "DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
                         "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
+
+      // SqliteDB::QueryResults poll_results;
+      // if (message.valueAsInt(i, "poll_id", -1) > -1)
+      //   d_database.exec("SELECT (stuff) FROM poll_option [LEFT JOIN poll_vote ON poll_vote.poll_id = poll_option.poll_id] "
+      //                   "WHERE poll_id = ?", message.valueAsInt(i, "poll_id", -1), &poll_results);
 
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {

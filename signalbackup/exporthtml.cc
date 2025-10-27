@@ -321,7 +321,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     "date_received, ", d_mms_date_sent, ", ", d_mms_type, ", ",
                                     (!periodsplitformat.empty() ? bepaald::concat("strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')") : "''"), " AS periodsplit, "
                                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
-                                    "attcount, reactioncount, mentioncount, pollcount,"
+                                    "attcount, reactioncount, mentioncount, "
                                     "IFNULL(", d_mms_date_sent, " IN (SELECT DISTINCT quote_id FROM ", d_mms_table, " WHERE thread_id = ?1), 0) AS is_quoted, ",
                                     d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                                     "IFNULL(view_once, 0) AS view_once, expires_in, ", d_mms_ranges, ", shared_contacts, ",
@@ -330,6 +330,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "), // introduced in 117
+                                    (d_database.containsTable("poll_option") ? "poll_option._id AS poll_id, " : "-1 AS poll_id, "),
                                     "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
@@ -340,10 +341,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON ", d_mms_table, "._id = rctns.message_id "
                                     // get mention count for message:
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id ",
-                                    // get poll count for message:
-                                    (d_database.containsTable("poll") ?
-                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS pollcount FROM poll GROUP BY message_id) AS plls ON " + d_mms_table + "._id = plls.message_id " :
-                                     "LEFT JOIN (SELECT 0 AS pollcount) AS plls "),
+                                    // get poll_id (if any)
+                                    (d_database.containsTable("poll_option") ? "LEFT JOIN poll_option ON " + d_mms_table + "._id = poll_option.message_id " : ""),
                                     "WHERE thread_id = ?1",
                                     (excludeexpiring ? " AND (expires_in == 0 OR (" + d_mms_type + " & 0x40000) != 0)" : ""),
                                     datewhereclause,
@@ -635,9 +634,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
         /*
         // get polls if any...
-        if (messages.valueAsInt(messagecount, "pollcount", 0) > 0)
+        if (messages.valueAsInt(messagecount, "poll_id", -1) > -1)
         {
-          d_database.exec("SELECT (stuff) FROM poll_options [LEFT JOIN poll_vote ON poll_vote.poll_id = poll_options.poll_id] WHERE poll_id = (SELECT _id FROM poll WHERE message_id = >), msg_info.msg_id, &msg_info.poll_results);
+          d_database.exec("SELECT (stuff) FROM poll_option [LEFT JOIN poll_vote ON poll_vote.poll_id = poll_option.poll_id] "
+                          "WHERE poll_id = ?", messages.valueAsInt(messagecount, "poll_id", -1), msg_info.poll_results);
           //.. todo
         }
         */
