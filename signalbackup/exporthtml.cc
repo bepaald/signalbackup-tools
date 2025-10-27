@@ -321,7 +321,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     "date_received, ", d_mms_date_sent, ", ", d_mms_type, ", ",
                                     (!periodsplitformat.empty() ? bepaald::concat("strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')") : "''"), " AS periodsplit, "
                                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
-                                    "attcount, reactioncount, mentioncount, "
+                                    "attcount, reactioncount, mentioncount, pollcount,"
                                     "IFNULL(", d_mms_date_sent, " IN (SELECT DISTINCT quote_id FROM ", d_mms_table, " WHERE thread_id = ?1), 0) AS is_quoted, ",
                                     d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", IFNULL(remote_deleted, 0) AS remote_deleted, "
                                     "IFNULL(view_once, 0) AS view_once, expires_in, ", d_mms_ranges, ", shared_contacts, ",
@@ -339,7 +339,11 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     // get reaction count for message:
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON ", d_mms_table, "._id = rctns.message_id "
                                     // get mention count for message:
-                                    "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id "
+                                    "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id ",
+                                    // get poll count for message:
+                                    (d_database.containsTable("poll") ?
+                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS pollcount FROM poll GROUP BY message_id) AS plls ON " + d_mms_table + "._id = plls.message_id " :
+                                     "LEFT JOIN (SELECT 0 AS pollcount) AS plls "),
                                     "WHERE thread_id = ?1",
                                     (excludeexpiring ? " AND (expires_in == 0 OR (" + d_mms_type + " & 0x40000) != 0)" : ""),
                                     datewhereclause,
@@ -489,6 +493,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         SqliteDB::QueryResults quote_attachment_results;
         SqliteDB::QueryResults reaction_results;
         SqliteDB::QueryResults edit_revisions;
+        //SqliteDB::QueryResults poll_results;
 
         HTMLMessageInfo msg_info({messages.valueAsString(messagecount, "body"),   // body
             std::string(),                                                        // quote_body
@@ -506,6 +511,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             &attachment_results,
             &reaction_results,
             &edit_revisions,
+            //&poll_results,
 
             messages.getValueAs<long long int>(messagecount, d_mms_type),           // type
             messages.getValueAs<long long int>(messagecount, "expires_in"),         // expires_in
@@ -626,6 +632,15 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(nullptr, 0);
         if (!messages.isNull(messagecount, d_mms_ranges))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
+
+        /*
+        // get polls if any...
+        if (messages.valueAsInt(messagecount, "pollcount", 0) > 0)
+        {
+          d_database.exec("SELECT (stuff) FROM poll_options [LEFT JOIN poll_vote ON poll_vote.poll_id = poll_options.poll_id] WHERE poll_id = (SELECT _id FROM poll WHERE message_id = >), msg_info.msg_id, &msg_info.poll_results);
+          //.. todo
+        }
+        */
 
         // prep body: scan emoji, linkify, and handle mentions and message ranges...
         msg_info.only_emoji = HTMLprepMsgBody(&msg_info.body, mentions, &rid_recipientinfo_map, msg_info.incoming, brdata, linkify, false /*isquote*/);

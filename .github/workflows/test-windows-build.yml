@@ -9,6 +9,7 @@ on:
       - master
     paths-ignore:
       - '**/README.md'
+      - '**/ERRATA.md'
       - '**/autoversion.h'
       - '.github/workflows/*.yml'
 

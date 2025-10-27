@@ -80,7 +80,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"story_sends", "message_id"},
       {"call", "message_id"},
       {"message", "latest_revision_id"},
-      {"message", "original_message_id"}
+      {"message", "original_message_id"},
+      {"poll", "message_id"}
     },
     0
   },
@@ -168,7 +169,9 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"call", "peer"},
       {"call", "ringer"},
       {"group_membership", "recipient_id", "", "", SET_UNIQUELY},
-      {"name_collision_membership", "recipient_id"}
+      {"name_collision_membership", "recipient_id"},
+      {"poll", "author_id"},
+      {"poll_vote", "voter_id"}
     },
     NO_COMPACT
   },
@@ -483,6 +486,23 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "backup_media_snapshot",
     "_id",
     {},
+    0
+  },
+  {
+    "poll",
+    "_id",
+    {
+      {"poll_option", "poll_id"},
+      {"poll_vote", "poll_id"}
+    },
+    0
+  },
+  {
+    "poll_option",
+    "_id",
+    {
+      {"poll_vote", "poll_option_id"}
+    },
     0
   }
 };

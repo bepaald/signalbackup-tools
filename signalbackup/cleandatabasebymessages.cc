@@ -40,6 +40,18 @@ void SignalBackup::cleanDatabaseByMessages()
     d_database.exec("DELETE FROM mention WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ") OR thread_id NOT IN (SELECT DISTINCT _id FROM thread)");
   }
 
+  if (d_database.containsTable("poll"))
+  {
+    // clean up entries in poll_vote and poll_option
+    d_database.exec("DELETE FROM poll_vote WHERE poll_id NOT IN "
+                    "(SELECT DISTINCT _id FROM poll WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + "))");
+    d_database.exec("DELETE FROM poll_option WHERE poll_id NOT IN "
+                    "(SELECT DISTINCT _id FROM poll WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + "))");
+
+    Logger::message("  Deleting entries from 'poll' not belonging to remaining messages");
+    d_database.exec("DELETE FROM poll WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + ")");
+  }
+
   //Logger::message("Groups left:");
   //runSimpleQuery("SELECT group_id,title,members FROM groups");
 
@@ -312,6 +324,8 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     (d_database.containsTable("distribution_list_member") ? " UNION SELECT DISTINCT recipient_id FROM distribution_list_member"s : ""s) +
+                    (d_database.containsTable("poll") ? " UNION SELECT DISTINCT author_id FROM poll"s : ""s) +
+                    (d_database.containsTable("poll_vote") ? " UNION SELECT DISTINCT voter_id FROM poll_vote"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
                     //",COALESCE(NULLIF(" + d_recipient_system_joined_name + ", ''), NULLIF(profile_joined_name, ''), NULLIF(" + d_recipient_profile_given_name + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), recipient._id) AS 'display_name'," + d_recipient_e164 +
