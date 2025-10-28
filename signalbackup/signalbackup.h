@@ -225,7 +225,7 @@ class SignalBackup
 
   static std::vector<DatabaseLink> const s_databaselinks;
   static std::map<std::string, std::vector<std::vector<std::string>>> const s_columnaliases;
-  static std::string_view const s_emoji_unicode_list[3781];
+  static std::string_view const s_emoji_unicode_list[3944];
   static std::string_view const s_emoji_first_bytes;
   static std::map<std::string, std::string> const s_html_colormap;
   static std::array<std::pair<std::string, std::string>, 12> const s_html_random_colors;

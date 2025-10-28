@@ -314,8 +314,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
     // now get all messages
     SqliteDB::QueryResults messages;
-    d_database.exec(bepaald::concat("SELECT "
-                                    "_id, ", d_mms_recipient_id, ", ",
+    d_database.exec(bepaald::concat("SELECT ",
+                                    d_mms_table, "._id, ", d_mms_recipient_id, ", ",
                                     (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1"), " AS to_recipient_id, body, "
                                     "MIN(date_received, ", d_mms_date_sent, ") AS bubble_date, "
                                     "date_received, ", d_mms_date_sent, ", ", d_mms_type, ", ",
@@ -330,7 +330,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "), // introduced in 117
-                                    (d_database.containsTable("poll_option") ? "poll_option._id AS poll_id, " : "-1 AS poll_id, "),
+                                    (d_database.containsTable("poll") ? "poll._id AS poll_id, " : "-1 AS poll_id, "),
                                     "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
@@ -342,7 +342,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     // get mention count for message:
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id ",
                                     // get poll_id (if any)
-                                    (d_database.containsTable("poll_option") ? "LEFT JOIN poll_option ON " + d_mms_table + "._id = poll_option.message_id " : ""),
+                                    (d_database.containsTable("poll") ? "LEFT JOIN poll ON " + d_mms_table + "._id = poll.message_id " : ""),
                                     "WHERE thread_id = ?1",
                                     (excludeexpiring ? " AND (expires_in == 0 OR (" + d_mms_type + " & 0x40000) != 0)" : ""),
                                     datewhereclause,
