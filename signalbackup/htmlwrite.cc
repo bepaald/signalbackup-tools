@@ -2539,7 +2539,12 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     else if (Types::isGroupQuit(msg_info.type))
       htmloutput << "<span class=\"msg-group-quit-icon\"></span>";
     else if (Types::isProfileChange(msg_info.type))
-      htmloutput << "<span class=\"msg-profile-icon\"></span>";
+    {
+      if (msg_info.icon == IconType::THREAD)
+        htmloutput << "<span class=\"msg-thread-icon\"></span>";
+      else
+        htmloutput << "<span class=\"msg-profile-icon\"></span>";
+    }
     else if (Types::isExpirationTimerUpdate(msg_info.type))
     {
       if (msg_info.body.find("disabled disappearing messages") != std::string::npos)

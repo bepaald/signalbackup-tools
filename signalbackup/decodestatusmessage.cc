@@ -173,7 +173,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   }
   if (Types::isProfileChange(type))
   {
-    return decodeProfileChangeMessage(body, contactname);
+    return decodeProfileChangeMessage(body, contactname, icon);
   }
   if (Types::isMessageRequestAccepted(type))
   {
@@ -995,7 +995,7 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
   {
     auto field3 = me.getField<3>(); // ProfileChangeDetails
     if (field3.has_value())
-      return decodeProfileChangeMessage(field3->getDataString(), contactname);
+      return decodeProfileChangeMessage(field3->getDataString(), contactname, icon);
   }
   return std::string();
 }

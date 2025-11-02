@@ -252,7 +252,8 @@ inline void SqlStatementFrame::printInfo() const
             Logger::message("         - (binary parameter): \"", bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])), "\"");
             break;
           case PARAMETER_FIELD::DOUBLE:
-            Logger::message("         - (double parameter): \"", bepaald::toString(*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))), "\" ",
+            //Logger::message("         - (double parameter): \"", bepaald::toString(*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr]))), "\" ",
+            Logger::message("         - (double parameter): \"", bepaald::toString(bepaald::reinterpret<double>(std::get<1>(d_parameterdata[param_ctr]))), "\" ",
                             bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])));
             break;
         }
@@ -310,7 +311,8 @@ inline void SqlStatementFrame::printInfo(std::vector<std::string> const &paramet
             break;
           case PARAMETER_FIELD::DOUBLE:
             Logger::message("         - ", parameternames[param_ctr], " (double parameter): \"",
-                            *reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr])), "\" ",
+                            //*reinterpret_cast<double *>(std::get<1>(d_parameterdata[param_ctr])), "\" ",
+                            bepaald::reinterpret<double>(std::get<1>(d_parameterdata[param_ctr])), "\" ",
                             bepaald::bytesToHexString(std::get<1>(d_parameterdata[param_ctr]), std::get<2>(d_parameterdata[param_ctr])));
             break;
         }
@@ -653,7 +655,8 @@ inline std::vector<std::any> SqlStatementFrame::parametersView() const
       }
       case PARAMETER_FIELD::DOUBLE:
       {
-        parameters.emplace_back(*reinterpret_cast<double *>(std::get<1>(p)));
+        //parameters.emplace_back(*reinterpret_cast<double *>(std::get<1>(p)));
+        parameters.emplace_back(bepaald::reinterpret<double>(std::get<1>(p)));
         break;
       }
     }

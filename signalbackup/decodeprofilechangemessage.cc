@@ -22,16 +22,26 @@
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
-std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, std::string const &name) const
+std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, std::string const &name, IconType *icon) const
 {
   /*
-    // from app/src/main/proto/Database.proto
+    // from app/src/main/protowire/Database.proto
     message ProfileChangeDetails {
       message StringChange {
         string previous = 1;
         string new      = 2;
       }
+      message LearnedProfileName {
+        oneof PreviouslyKnownAs {
+          string e164 = 1;
+          string username = 2;
+        }
+      }
+
       StringChange profileNameChange = 1;
+      // Deprecated - Use learnedProfileName instead
+      StringChange       deprecatedLearnedProfileName = 2;
+      LearnedProfileName learnedProfileName           = 3;
     }
   */
 
@@ -40,16 +50,40 @@ std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, st
   //std::cout << body << std::endl;
   //profchangefull.print();
 
-  if (!profchangefull.getField<1>().has_value())
-    return name + " has changed their profile name.";
+  auto profilenamechange = profchangefull.getField<1>();
+  if (profilenamechange.has_value())
+  {
+    auto oldname_protobuf = profilenamechange.value().getField<1>();
+    if (!oldname_protobuf.has_value() || oldname_protobuf.value().empty())
+      return name + " has changed their profile name.";
+    auto newname_protobuf = profilenamechange.value().getField<2>();
+    if (!newname_protobuf.has_value() || newname_protobuf.value().empty())
+      return name + " has changed their profile name.";
+    return oldname_protobuf.value() + " changed their profile name to " + newname_protobuf.value() + ".";
+  }
 
-  StringChange profilenamechange = profchangefull.getField<1>().value();
-  auto oldname_protobuf = profilenamechange.getField<1>();
-  if (!oldname_protobuf.has_value() || oldname_protobuf.value().empty())
-    return name + " has changed their profile name.";
-  auto newname_protobuf = profilenamechange.getField<2>();
-  if (!newname_protobuf.has_value() || newname_protobuf.value().empty())
-    return name + " has changed their profile name.";
+  // no StringChange (field 1), maybe field 3?
+  auto learnedprofile = profchangefull.getField<3>();
+  if (learnedprofile.has_value())
+  {
+    if (icon && *icon == IconType::NONE)
+      *icon = IconType::THREAD;
 
-  return oldname_protobuf.value() + " changed their profile name to " + newname_protobuf.value() + ".";
+    auto learned_e164 = learnedprofile.value().getField<1>();
+    if (learned_e164.has_value())
+      return "You started this chat with " + learned_e164.value();
+
+    auto learned_username = learnedprofile.value().getField<2>();
+    if (learned_username.has_value())
+      return "You started this chat with " + learned_username.value();
+  }
+
+  if (profchangefull.getField<2>().has_value())
+  {
+    Logger::warning("Encountered 'deprecatedLearnedProfileName' in profileChange message. This format is not (yet) supported.");
+    return "";
+  }
+
+  return name + " has changed their profile name.";
+
 }

@@ -53,6 +53,8 @@ namespace bepaald
   inline std::string bytesToPrintableString(unsigned char const *data, unsigned int length);
   inline bool hexStringToBytes(unsigned char const *in, uint64_t insize, unsigned char *out, uint64_t outsize);
   inline bool hexStringToBytes(std::string const &in, unsigned char *out, uint64_t outsize);
+  template <typename T, typename U>
+  inline T reinterpret(U const *u);
 }
 
 template <typename T>
@@ -187,6 +189,14 @@ inline bool bepaald::hexStringToBytes(std::string const &in, unsigned char *out,
   input.erase(newend, input.end());
 
   return hexStringToBytes(reinterpret_cast<unsigned char const *>(input.c_str()), input.size(), out, outsize);
+}
+
+template <typename T, typename U>
+inline T bepaald::reinterpret(U const *u)
+{
+  T t;
+  std::memcpy(&t, u, sizeof(T));
+  return t;
 }
 
 #endif

@@ -42,7 +42,6 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   d_database.setCacheSize(40); // same
   ScopeGuard reset_cache_size_android([&]() { d_database.setCacheSize(); });
 
-
   if (d_verbose) [[unlikely]]
     Logger::message("Starting importFromDesktop()");
 
@@ -491,7 +490,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
       long long int rowid = results_all_messages_from_conversation.getValueAs<long long int>(j, "rowid");
       //bool hasattachments = (results_all_messages_from_conversation.getValueAs<long long int>(j, "hasAttachments") == 1);
-      bool outgoing = (type == "outgoing" || type == "message-request-response-event");
+      bool outgoing = (type == "outgoing" || type == "message-request-response-event" || type == "title-transition-notification");
       bool incoming = (type == "incoming" || type == "profile-change" || type == "keychange" || type == "verified-change" || type == "change-number-notification");
       long long int numattachments = results_all_messages_from_conversation.getValueAs<long long int>(j, "numattachments");
       long long int numreactions = results_all_messages_from_conversation.getValueAs<long long int>(j, "numreactions");
@@ -1080,14 +1079,12 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         std::string newname = profilechange_data.valueAsString(0, "new_name");
 
         // subobject namechange:
-        ProtoBufParser<protobuffer::optional::STRING,
-                       protobuffer::optional::STRING> profilenamechange;
+        StringChange profilenamechange;
         profilenamechange.addField<1>(previousname);
         profilenamechange.addField<2>(newname);
 
         // full profilechange object:
-        ProtoBufParser<ProtoBufParser<protobuffer::optional::STRING, // previous
-                                      protobuffer::optional::STRING>> profchangefull;
+        ProfileChangeDetails profchangefull;
         profchangefull.addField<1>(profilenamechange);
 
         if (d_database.containsTable("sms"))
@@ -1157,6 +1154,101 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             //   return false;
             // }
 
+            long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+            if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                            {{"thread_id", ttid},
+                                             {d_mms_date_sent, originaldate},
+                                             {"date_received", originaldate},
+                                             {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+                                             {"body", profchangefull.getDataString()},
+                                             {d_mms_recipient_id, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address},
+                                             {"to_recipient_id", Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? address : d_selfid},
+                                             {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                             {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+                                            {1, 2}, originaldate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address, &adjusted_timestamps))
+            {
+              if (d_verbose) [[unlikely]] Logger::message_end();
+              Logger::error("Inserting profile-change into mms");
+              return false;
+            }
+          }
+        }
+        if (d_verbose) [[unlikely]]
+          Logger::message_end("done");
+        continue;
+      }
+      else if (type == "title-transition-notification")
+      {
+        if (d_verbose) [[unlikely]]
+          Logger::message_start("Dealing with ", type, " message... ");
+
+        SqliteDB::QueryResults learnedprofile_data;
+        if (!dtdb->d_database.exec("SELECT "
+                                   "json_extract(json, '$.titleTransition.renderInfo.username') AS learned_username, "
+                                   "json_extract(json, '$.titleTransition.renderInfo.e164') AS learned_e164 " // this one is a guess, not encountered yet
+                                   "FROM messages WHERE rowid = ?", rowid, &learnedprofile_data))
+        {
+          if (d_verbose) [[unlikely]] Logger::message_end();
+          Logger::error("Failed to query title-transition data. Skipping message");
+          continue;
+        }
+
+        std::string learned_e164 = learnedprofile_data("learned_e164");
+        std::string learned_username = learnedprofile_data("learned_username");
+
+        if (learned_e164.empty() && learned_username.empty())
+        {
+          if (d_verbose) [[unlikely]] Logger::message_end();
+          Logger::error("Failed to query title-transition data. Skipping message");
+          continue;
+        }
+
+        // LearnedProfile message
+        LearnedProfileName learnedProfile;
+        if (!learned_e164.empty())
+          learnedProfile.addField<1>(learned_e164);
+        else
+          learnedProfile.addField<2>(learned_username);
+
+        // full profilechange object:
+        ProfileChangeDetails profchangefull;
+        profchangefull.addField<3>(learnedProfile);
+
+        if (d_database.containsTable("sms"))
+        {
+          if (!insertRow("sms", {{"thread_id", ttid},
+                                 {"date_sent", results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {d_sms_date_received, results_all_messages_from_conversation.value(j, "sent_at")},
+                                 {"type", Types::PROFILE_CHANGE_TYPE},
+                                 {"body", profchangefull.getDataString()},
+                                 {"read", 1}, // hardcoded to 1 in Signal Android (for profile-change)
+                                 {d_sms_recipient_id, address}}))
+          {
+            if (d_verbose) [[unlikely]] Logger::message_end();
+            Logger::error("Inserting profile-change into sms");
+            return false;
+          }
+        }
+        else
+        {
+          if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+          {
+            if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                         {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                         {d_mms_type, Types::PROFILE_CHANGE_TYPE},
+                                         {"body", profchangefull.getDataString()},
+                                         {d_mms_recipient_id, address},
+                                         {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                         {"read", 1}}))                  // it is hardcoded to 1 in Signal Android (as is 'read')
+            {
+              if (d_verbose) [[unlikely]] Logger::message_end();
+              Logger::error("Inserting profile-change into mms");
+              return false;
+            }
+          }
+          else
+          {
             long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
             if (!tryInsertRowElseAdjustDate(d_mms_table,
                                             {{"thread_id", ttid},

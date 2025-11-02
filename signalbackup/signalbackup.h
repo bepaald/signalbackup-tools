@@ -551,7 +551,7 @@ class SignalBackup
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string_view line) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
-  std::string decodeProfileChangeMessage(std::string const &body, std::string const &name) const;
+  std::string decodeProfileChangeMessage(std::string const &body, std::string const &name, IconType *icon) const;
   inline constexpr int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string const &body, unsigned int idx) const;
   inline int utf8Chars(std::string const &body) const;

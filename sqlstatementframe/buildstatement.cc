@@ -87,7 +87,8 @@ void SqlStatementFrame::buildStatement()
       {
         std::stringstream ss;
         ss.imbue(std::locale(std::locale(), new Period)); // make sure we get periods as decimal indicators
-        ss << std::defaultfloat << std::setprecision(17) << *reinterpret_cast<double *>(std::get<1>(p));
+        //ss << std::defaultfloat << std::setprecision(17) << *reinterpret_cast<double *>(std::get<1>(p));
+        ss << std::defaultfloat << std::setprecision(17) << bepaald::reinterpret<double>(std::get<1>(p));
         d_statement.replace(pos, 1, ss.str());
         break;
       }

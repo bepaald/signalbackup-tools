@@ -645,13 +645,22 @@ message ProfileChangeDetails {
         string previous = 1;
         string newValue = 2;
     }
+    message LearnedProfileName {
+        oneof PreviouslyKnownAs {
+            string e164 = 1;
+            string username = 2;
+        }
+    }
 
     StringChange profileNameChange = 1;
-    StringChange learnedProfileName = 2;
+    // Deprecated - Use learnedProfileName instead
+    StringChange       deprecatedLearnedProfileName = 2;
+    LearnedProfileName learnedProfileName           = 3;
 }
 */
 typedef ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING> StringChange;
-typedef ProtoBufParser<StringChange, StringChange> ProfileChangeDetails;
+typedef ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING> LearnedProfileName;
+typedef ProtoBufParser<StringChange, StringChange, LearnedProfileName> ProfileChangeDetails;
 
 /*
 message MessageExtras {

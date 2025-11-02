@@ -105,7 +105,8 @@ inline void KeyValueFrame::printInfo() const // virtual
     else if (std::get<0>(p) == FIELD::BOOLEANVALUE)
       Logger::message("         - (booleanvalue : \"", std::boolalpha, (bytesToInt64(std::get<1>(p), std::get<2>(p)) ? true : false), "\")");
     else if (std::get<0>(p) == FIELD::FLOATVALUE) // note, this is untested, none of my backups contain a KVFrame with this field
-      Logger::message("         - (floatvalue : \"", bepaald::toString(*reinterpret_cast<float *>(std::get<1>(p))), "\" (", std::get<2>(p), " bytes)");
+    //Logger::message("         - (floatvalue : \"", bepaald::toString(*reinterpret_cast<float *>(std::get<1>(p))), "\" (", std::get<2>(p), " bytes)");
+      Logger::message("         - (floatvalue : \"", bepaald::toString(bepaald::reinterpret<float>(std::get<1>(p))), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::INTEGERVALUE)
       Logger::message("         - (integervalue : \"", bytesToInt32(std::get<1>(p), std::get<2>(p)), "\" (", std::get<2>(p), " bytes)");
     else if (std::get<0>(p) == FIELD::LONGVALUE)
