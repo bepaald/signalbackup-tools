@@ -543,6 +543,8 @@ class SignalBackup
   std::string HTMLescapeString(std::string const &in) const;
   void HTMLescapeUrl(std::string *in) const;
   std::string HTMLescapeUrl(std::string const &in) const;
+  inline bool HTMLpossibleLink(std::string_view str) const;
+  void HTMLLinkifyToken(std::string_view token, int tokenoffset, std::vector<Range> *ranges) const;
   void HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
   void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
@@ -553,10 +555,10 @@ class SignalBackup
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name, IconType *icon) const;
   inline constexpr int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
-  inline int utf16CharSize(std::string const &body, unsigned int idx) const;
+  inline int utf16CharSize(std::string_view body, unsigned int idx) const;
   inline int utf8Chars(std::string const &body) const;
   inline void resizeToNUtf8Chars(std::string &body, unsigned long size) const;
-  inline int bytesToUtf8CharSize(std::string const &body, unsigned int idx) const;
+  inline int bytesToUtf8CharSize(std::string_view body, unsigned int idx) const;
   std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
@@ -945,7 +947,19 @@ inline bool SignalBackup::HTMLwriteChatFolder(std::vector<long long int> const &
                             tid_pagecount_map, compact);
 }
 
-inline int SignalBackup::utf16CharSize(std::string const &body, unsigned int idx) const
+inline bool SignalBackup::HTMLpossibleLink(std::string_view str) const
+{
+  if (str.empty())
+    return false;
+  long long unsigned int pos = 0;
+  std::string_view str_minus_last(str.data(), str.size() - 1);
+  while ((pos = str_minus_last.find('.', pos)) != std::string::npos)
+    if (str[++pos] >= 'A')
+      return true;
+  return false;
+}
+
+inline int SignalBackup::utf16CharSize(std::string_view body, unsigned int idx) const
 {
 
   if ((static_cast<uint8_t>(body[idx]) & 0b1110'0000) <= 0b1100'0000 || // 1/2 byte utf8 -> 1 byte utf16
@@ -1024,7 +1038,7 @@ inline void SignalBackup::resizeToNUtf8Chars(std::string &body, unsigned long si
     body.resize(idx);
 }
 
-inline int SignalBackup::bytesToUtf8CharSize(std::string const &body, unsigned int idx) const
+inline int SignalBackup::bytesToUtf8CharSize(std::string_view body, unsigned int idx) const
 {
   if ((static_cast<uint8_t>(body[idx]) & 0b10000000) == 0b00000000)
     return 1;

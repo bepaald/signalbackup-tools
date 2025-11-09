@@ -28,6 +28,7 @@
 
 #define REGEX boost::regex
 #define REGEX_SMATCH_RESULTS boost::smatch
+#define REGEX_SVMATCH_RESULTS boost::match_results<std::string_view::const_iterator>
 #define REGEX_MATCH boost::regex_match
 #define REGEX_SEARCH boost::regex_search
 #define REGEX_FLAGS boost::regex::icase | boost::regex::ECMAScript | boost::regex::no_mod_m
@@ -38,6 +39,7 @@
 
 #define REGEX std::regex
 #define REGEX_SMATCH_RESULTS std::smatch
+#define REGEX_SVMATCH_RESULTS std::match_results<std::string_view::const_iterator>
 #define REGEX_MATCH std::regex_match
 #define REGEX_SEARCH std::regex_search
 #define REGEX_FLAGS std::regex_constants::icase | std::regex_constants::ECMAScript

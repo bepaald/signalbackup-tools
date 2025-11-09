@@ -402,7 +402,7 @@ inline void DBusCon::passArg(DBusArg const &arg, DBusMessageIter *dbus_iter, boo
     else
     {
       DBusDictElement elem = std::get<recursive_wrapper<DBusDict>>(arg)->at(0);
-      // key
+      // set key. NOTE: only basic types are allowed as dict key by dbus spec
       if (std::holds_alternative<int64_t>(elem.d_key))
         dictspec += DBUS_TYPE_INT64_AS_STRING;
       else if (std::holds_alternative<int32_t>(elem.d_key))
@@ -412,7 +412,7 @@ inline void DBusCon::passArg(DBusArg const &arg, DBusMessageIter *dbus_iter, boo
       else if (std::holds_alternative<bool>(elem.d_key))
         dictspec += DBUS_TYPE_BOOLEAN_AS_STRING;
 
-      // value
+      // set value
       if (std::holds_alternative<int64_t>(elem.d_value))
         dictspec += DBUS_TYPE_INT64_AS_STRING;
       else if (std::holds_alternative<int32_t>(elem.d_value))

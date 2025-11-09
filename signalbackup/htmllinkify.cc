@@ -24,31 +24,18 @@
 
 #include "../common_regex.h"
 
-void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const
+void SignalBackup::HTMLLinkifyToken(std::string_view token, int tokenoffset, std::vector<Range> *ranges) const
 {
-  bool possible_link = false;
-  long long unsigned int pos = 0;
-  while ((pos = body.find('.', pos)) != std::string::npos)
-  {
-    ++pos;
-    if (pos < body.size() &&
-        body[pos] >= 'A')
-    {
-      possible_link = true;
-      break;
-    }
-  }
-
-  if (!possible_link) [[likely]]
+  if (!HTMLpossibleLink(token)) [[likely]]
     return;
 
   if (d_verbose) [[unlikely]]
     Logger::message("Searching for possible URL in message body");
 
-  pos = 0; // to save position from start of string (only the suffix is passed to the search each iteration)
-  REGEX_SMATCH_RESULTS url_match_result;
-  auto start = body.begin();
-  while (start != body.end() && REGEX_SEARCH(start, body.end(), url_match_result, HTMLLinkify::pattern))
+  unsigned long long pos = 0; // to save position from start of string (only the suffix is passed to the search each iteration)
+  REGEX_SVMATCH_RESULTS url_match_result;
+  std::string_view::const_iterator start = token.begin();
+  while (start != token.end() && REGEX_SEARCH(start, token.end(), url_match_result, HTMLLinkify::pattern))
   {
     // std::cout << "MATCH : " << url_match_result[0] << " (" << url_match_result.size() << " matches total)"
     //           << " : " << pos + url_match_result.position(0) << " " << url_match_result.length(0) << std::endl;
@@ -76,8 +63,8 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     long long int match_start = 0;
     for (unsigned int i = 0; i < pos + url_match_result.position(match_index); )
     {
-      int utf8size = bytesToUtf8CharSize(body, i);
-      match_start += utf16CharSize(body, i);
+      int utf8size = bytesToUtf8CharSize(token, i);
+      match_start += utf16CharSize(token, i);
       i += utf8size;
     }
     //std::cout << "startpos : " << match_start << std::endl;
@@ -85,8 +72,8 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     long long int match_length = 0;
     for (unsigned int i = pos + url_match_result.position(match_index); i < pos + url_match_result.position(match_index) + url_match_result.length(match_index); )
     {
-      int utf8size = bytesToUtf8CharSize(body, i);
-      match_length += utf16CharSize(body, i);
+      int utf8size = bytesToUtf8CharSize(token, i);
+      match_length += utf16CharSize(token, i);
       i += utf8size;
     }
     //std::cout << "match length : " << match_length << std::endl;
@@ -148,7 +135,7 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
     }
 
     if (match_index == URL_WITH_PROTOCOL_MATCH) // -> URL_WITH_PROTOCOL
-      ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
+      ranges->emplace_back(match_start + tokenoffset, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"" + match_link + "\">",
                            "",
@@ -162,14 +149,14 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
          is at a new root, but automatically uses the current protocol (which is file://,
          which is also not correct.
       */
-      ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
+      ranges->emplace_back(match_start + tokenoffset, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"https://" + match_link + "\">",
                            "",
                            "</a>",
                            true);
     else if (match_index == EMAIL_MATCH) // -> EMAIL
-      ranges->emplace_back(match_start, //static_cast<long long int>(pos) + url_match_result.position(0),
+      ranges->emplace_back(match_start + tokenoffset, //static_cast<long long int>(pos) + url_match_result.position(0),
                            match_length, //url_match_result.length(0),
                            "<a class=\"unstyled-link\" href=\"mailto:" + match_link + "\">",
                            "",
@@ -182,7 +169,42 @@ void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *rang
   }
 }
 
+void SignalBackup::HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const
+{
+  if (!HTMLpossibleLink(body)) [[likely]]
+    return;
 
+#ifdef USE_BOOST_REGEX // the boost regex is (nanoseconds) slower when tokenizing
+  HTMLLinkifyToken(body, 0, ranges);
+#else
+  // we tokenize on spaces. Spaces cannot be part of link, linkifying tokens is about twice as fast as whole lines...
+  std::string_view body_view(body);
+  std::string_view::size_type spos = 0, epos;
+  int tokenoffset = 0;
+  while (true)
+  {
+    epos = body_view.find(' ', spos);
+
+    //std::cout << "Doing substr: '" << std::flush << body_view.substr(spos, epos == std::string_view::npos ? epos : (epos - spos)) << "' at offset " << tokenoffset << std::endl;
+
+    HTMLLinkifyToken(body_view.substr(spos, epos == std::string_view::npos ? epos : (epos - spos)), tokenoffset, ranges);
+    if (epos == std::string_view::npos)
+      break;
+
+    // get next token offset....
+    ++tokenoffset; // to account for the space that was found (and is skipped)
+    //std::cout << "running from 0 to " << (epos - spos) << std::endl;
+    for (unsigned int i = 0; i < (epos - spos); )
+    {
+      int utf8size = bytesToUtf8CharSize(body_view.substr(spos, epos - spos), i);
+      tokenoffset += utf16CharSize(body_view.substr(spos, epos - spos), i);
+      i += utf8size;
+    }
+
+    spos = epos + 1;
+  }
+#endif
+}
 
 /*
 

@@ -186,17 +186,17 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_databaseversion < 24)
   {
     Logger::message("  Deleting unreferenced recipient_preferences entries...");
-    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms");
+    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT SUBSTR(str, 0, instr(str, ',')), SUBSTR(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM mms");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
-    d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + ")");
+    d_database.exec("DELETE FROM recipient_preferences WHERE recipient_ids NOT IN (WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT SUBSTR(str, 0, instr(str, ',')), SUBSTR(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table + ")");
   }
   else
   {
     Logger::message("  Deleting unreferenced recipient entries...");
 
     //runSimpleQuery("SELECT group_concat(_id,',') FROM recipient");
-    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT substr(str, 0, instr(str, ',')), substr(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id FROM mms UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread");
+    //runSimpleQuery("WITH RECURSIVE split(word, str) AS (SELECT '', members||',' FROM groups UNION ALL SELECT SUBSTR(str, 0, instr(str, ',')), SUBSTR(str, instr(str, ',')+1) FROM split WHERE str!='') SELECT DISTINCT split.word FROM split WHERE word!='' UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms UNION SELECT DISTINCT " + d_mms_recipient_id FROM mms UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread");
 
     // this gets all recipient_ids/addresses ('+31612345678') from still existing groups and sms/mms
 
