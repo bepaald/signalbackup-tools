@@ -92,21 +92,21 @@ namespace bepaald
   template <typename T>
   inline std::string toHexString(T const &num, typename std::enable_if<std::is_integral<T>::value>::type *dummy = nullptr);
   inline std::string toString(double num);
+#if __cpp_consteval >= 201811L
+  inline consteval int strlitLength(char const *str, int pos = 0);
+#else
   inline constexpr int strlitLength(char const *str, int pos = 0);
-  //inline int strlitLength(std::string const &str);
+#endif
   inline constexpr int numDigits(long long int num);
   inline std::string toDateString(std::time_t epoch, std::string_view format);
   inline std::string toLower(std::string s);
   inline std::string toUpper(std::string s);
   inline void replaceAll(std::string *in, char from, std::string const &to);
   inline void replaceAll(std::string *in, std::string const &from, std::string const &to);
-#if __cpp_constexpr >= 202110L
-  inline constexpr std::string concat_helper(std::initializer_list<std::string_view> const &strs);
   template <typename... Args>
+#if __cpp_constexpr >= 202110L
   inline constexpr std::string concat(Args const &... args);
 #else
-  inline std::string concat_helper(std::initializer_list<std::string_view> const &strs);
-  template <typename... Args>
   inline std::string concat(Args const &... args);
 #endif
   template <typename T, typename I>
@@ -265,15 +265,14 @@ inline std::string bepaald::toString(double num)
   return oss.str();
 }
 
+#if __cpp_consteval >= 201811L
+inline consteval int bepaald::strlitLength(char const *str, int pos)
+#else
 inline constexpr int bepaald::strlitLength(char const *str, int pos)
+#endif
 {
   return str[pos] == '\0' ? 0 : 1 + strlitLength(str, pos + 1);
 }
-
-// inline int bepaald::strlitLength(std::string const &str)
-// {
-//   return str.size();
-// }
 
 inline constexpr int bepaald::numDigits(long long int num)
 {
@@ -338,25 +337,6 @@ inline void bepaald::replaceAll(std::string *in, std::string const &from, std::s
   }
 }
 
-#if __cpp_constexpr >= 202110L
-inline constexpr std::string bepaald::concat_helper(std::initializer_list<std::string_view> const &strs)
-#else
-inline std::string bepaald::concat_helper(std::initializer_list<std::string_view> const &strs)
-#endif
-{
-  size_t len = 0;
-  for (auto const &s : strs)
-    len += s.size();
-
-  std::string result;
-  result.reserve(len);
-
-  for (auto const &s : strs)
-    result.append(s);
-
-  return result;
-}
-
 template <typename... Args>
 #if __cpp_constexpr >= 202110L
 inline constexpr std::string bepaald::concat(Args const &... args)
@@ -364,7 +344,11 @@ inline constexpr std::string bepaald::concat(Args const &... args)
 inline std::string bepaald::concat(Args const &... args)
 #endif
 {
-  return concat_helper({args...});
+  auto const size = (std::string_view{args}.size() + ...);
+  std::string res;
+  res.reserve(size);
+  (res.append(args), ...);
+  return res;
 }
 
 template <typename T, typename U>

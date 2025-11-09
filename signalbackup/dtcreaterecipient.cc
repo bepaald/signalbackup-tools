@@ -19,6 +19,8 @@
 
 #include "signalbackup.ih"
 
+#include <openssl/rand.h>
+
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
@@ -43,7 +45,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 
                 "IFNULL(json_extract(conversations.json, '$.expireTimer'), 0) AS 'expireTimer', "
                 "IFNULL(json_extract(conversations.json, '$.expireTimerVersion'), 1) AS 'expireTimerVersion', "
-                "json_extract(conversations.json, '$.storageID') AS 'storageId', "
+                "json_extract(conversations.json, '$.storageID') AS 'storageID', "
                 "json_extract(conversations.json, '$.pni') AS 'pni', "
                 "IFNULL(json_extract(conversations.json, '$.profileSharing'), '0') AS 'profileSharing', "
                 "json_extract(conversations.json, '$.firstUnregisteredAt') AS 'firstUnregisteredAt', "
@@ -112,16 +114,52 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       ddb.printLineMode("SELECT * FROM conversations WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ?", {id, phone, groupidb64});
     }
 
+    std::string storageId(res("storageID"));
+
     // it seems groups (v2) _must_ have storage id, or Signal Android will crash (#341)...
     // it may actually suffice to just generate a random 16 byte key (base64 encoded)...
-    if (res.isNull(0, "storageId") || res(0, "storageId").empty())
+    if (storageId.empty())
     {
       if (!create_valid_contacts) // ...but we don't care
         Logger::warning("No storage id found for group-recipient.");
       else
       {
-        Logger::error("No storage id found for group-recipient. Skipping group-creation");
-        return -1;
+        if (false /*generateMissingStorageKeys*/)
+        {
+          Logger::message("No storage id found for group-recipient. Generating...");
+          int count = 0;
+          while (true)
+          {
+            ++count;
+            unsigned char sid[16];
+            if (RAND_bytes(sid, 16) != 1)
+            {
+              Logger::error("Failed to generate random storage key for group contact (1)");
+              return -1;
+            }
+            storageId = Base64::bytesToBase64String(sid, 16);
+            if (storageId.empty()) [[unlikely]]
+            {
+              Logger::error("Failed to generate random storage key for group contact (2)");
+              return -1;
+            }
+            long long int exists = d_database.getSingleResultAs<long long int>("SELECT EXISTS(SELECT 1 FROM recipient WHERE storage_service_id = ?)", storageId, 1);
+            if (exists == 1) [[unlikely]]
+              continue;
+            break;
+          }
+
+          if (count >= 10)
+          {
+            Logger::error("Failed to generate random storage key for group contact (3)");
+            return -1;
+          }
+        }
+        else
+        {
+          Logger::error("No storage id found for group-recipient. Skipping group-creation");
+          return -1;
+        }
       }
     }
 
@@ -131,7 +169,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (!insertRow("recipient",
                    {{"group_id", group_id},
                     {d_recipient_type, 3}, // group type
-                    {"storage_service_id", res.value(0, "storageId")},
+                    {"storage_service_id", storageId},
                     {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
                     {"message_expiration_time", res.value(0, "expireTimer")},
                     {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
@@ -410,7 +448,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                            "registered = ? "
                            "WHERE _id = ?",
                            {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"),
-                            res.value(0, "storageId"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
+                            res.value(0, "storageID"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
         return -1;
       Logger::message("Found existing contact without uuid, Updating... (id: ", existing_recipient_id, ").");
       new_rec_id = existing_recipient_id;
@@ -436,7 +474,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                     {"pni", res.value(0, "pni")},
                     {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
                     {"message_expiration_time", res.value(0, "expireTimer")},
-                    {"storage_service_id", res.value(0, "storageId")},
+                    {"storage_service_id", res.value(0, "storageID")},
                     {"profile_sharing", res.value(0, "profileSharing")},
                     {"registered", res.isNull(0, "firstUnregisteredAt") ? 1 : 0},   // registered if no Unregister-timestamp is found, unknown otherwise
                     {d_recipient_sealed_sender, res.value(0, "sealedSender")},

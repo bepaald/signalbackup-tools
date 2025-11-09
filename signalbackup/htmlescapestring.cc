@@ -28,7 +28,7 @@ std::string SignalBackup::HTMLescapeString(std::string const &body) const
 
 void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *const positions_excluded_from_escape) const
 {
-  // escape special html chars second, so the span's added by emojifinder (next) aren't escaped
+  // escape special html chars second, so the spans added by emojifinder (next) aren't escaped
   int positions_added = 0;
   std::string::size_type strlen = body->length();
   for (unsigned int i = 0; i < strlen; ++i)

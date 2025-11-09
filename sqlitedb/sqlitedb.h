@@ -1412,6 +1412,7 @@ inline void SqliteDB::setConfigOptions() //static
 
 inline void SqliteDB::transactionState() const
 {
+#if SQLITE_VERSION_NUMBER >= 3034000
   int state = sqlite3_txn_state(d_db, nullptr);
   switch (state)
   {
@@ -1427,6 +1428,9 @@ inline void SqliteDB::transactionState() const
     [[unlikely]] default:
       Logger::message("Invalid transaction state");
   }
+#else
+  Logger::message("Transaction state info not available (sqlite version too old)");
+#endif
 }
 
 // inline int SqliteDB::authorizer(void *userdata, int actioncode, char const *, char const *, char const *, char const *)

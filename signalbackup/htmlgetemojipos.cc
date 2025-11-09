@@ -38,6 +38,8 @@ std::vector<std::pair<unsigned int, unsigned int>> SignalBackup::HTMLgetEmojiPos
       // many emoji start with the same byte sequence, so we check back to front
       for (std::string_view const &emoji_string : s_emoji_unicode_list)
       {
+        if (str[c] != emoji_string[0])
+          continue;
         hit = true;
         for (unsigned int i = emoji_string.size(); i-- ;)
         {
