@@ -86,7 +86,8 @@ jobs:
         run: |
           set -x
           sudo apt-get update
-          sudo apt-get install --yes --no-install-recommends -V g++ make libsqlite3-dev libssl-dev libdbus-1-dev
+          sudo add-apt-repository universe
+          sudo apt-get install --yes --no-install-recommends -V g++-9 make libsqlite3-dev libssl-dev libdbus-1-dev
 
       - name: Build legacy g++-9
         run: |
