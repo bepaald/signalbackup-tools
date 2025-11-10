@@ -31,7 +31,7 @@
 
 class Arg
 {
-  std::array<std::string, 211> const d_alloptions{"--appendbody", "--rawdesktopdb", "--desktopkey", "--dumpmedia", "--dumpavatars", "--importcsv", "--setselfid", "--generatedummyfordesktop", "--generatedummy", "--setcountrycode", "--mapxmladdressesfromfile", "--mapxmlcontactnamesfromfile", "--onlyolderthan", "--onlynewerthan", "-p", "--passphrase", "--prependbody", "-l", "--logfile", "--exporthtml", "--exportdesktophtml", "--importadbbackup", "--adbpassphrase", "--exportadbbackuptohtml", "--jsonshowcontactmap", "--listjsonchats", "--importtelegram", "--split-by", "--exportdesktoptxt", "--exporttxt", "--desktopdir", "--exportxml", "--desktopdirs", "--querymode", "-sp", "--sourcepassphrase", "-s", "--source", "-op", "--opassphrase", "-o", "--output", "--dumpdesktopdb", "-i", "--input", "--croptothreadsbyname", "--mergerecipients", "--replaceattachments", "--selectxmlchats", "--mapxmlcontacts", "--listxmlcontacts", "--importthreads", "--limittodates", "--croptodates", "--croptothreads", "--exportplaintextbackuphtml", "--importplaintextbackup", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "--selectjsonchats", "--preventjsonmapping", "--mapjsoncontacts", "--onlytype", "--limitcontacts", "--rundtprettysqlquery", "--mapcsvfields", "--editattachmentsize", "--htmlignoremediatypes", "--rundtsqlquery", "--runprettysqlquery", "--runsqlquery", "--mapxmladdresses", "--mapxmlcontactnames", "--mergegroups", "--setchatcolors", "--onlyinthreads", "--exportcsv", "--desktopdbversion", "--split", "--hiperfall", "--onlylargerthan", "--findrecipient", "--removedoubles", "--autofixfkc", "--no-autofixfkc", "--migratedb", "--no-migratedb", "--targetisdummy", "--no-targetisdummy", "--aggressivefilenamesanitizing", "--no-aggressivefilenamesanitizing", "--importstickers", "--no-importstickers", "--append", "--no-append", "--htmlpagemenu", "--no-htmlpagemenu", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--compactfilenames", "--no-compactfilenames", "--xmlautogroupnames", "--no-xmlautogroupnames", "--xmlmarkread", "--no-xmlmarkread", "--fulldecode", "--no-fulldecode", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--linkify", "--no-linkify", "--reordermmssmsids", "--no-reordermmssmsids", "--migratedesktopdb", "--no-migratedesktopdb", "--importfromdesktop", "--no-importfromdesktop", "--scramble", "--no-scramble", "--showdbinfo", "--no-showdbinfo", "--scanmissingattachments", "--no-scanmissingattachments", "-h", "--help", "--no-help", "--deleteattachments", "--no-deleteattachments", "--dbusverbose", "--no-dbusverbose", "-v", "--verbose", "--no-verbose", "--stoponerror", "--no-stoponerror", "--autolimitdates", "--no-autolimitdates", "--showprogress", "--no-showprogress", "--listrecipients", "--no-listrecipients", "--listthreads", "--no-listthreads", "--overwrite", "--no-overwrite", "--onlydb", "--no-onlydb", "--devcustom", "--no-devcustom", "--excludestickers", "--no-excludestickers", "--excludequotes", "--no-excludequotes", "--showdesktopkey", "--no-showdesktopkey", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--themeswitching", "--no-themeswitching", "--importdesktopcontacts", "--no-importdesktopcontacts", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--htmlfocusend", "--no-htmlfocusend", "--originalfilenames", "--no-originalfilenames", "--excludeexpiring", "--no-excludeexpiring", "--chatfolders", "--no-chatfolders", "--includereceipts", "--no-includereceipts", "--stickerpacks", "--no-stickerpacks", "--searchpage", "--no-searchpage", "--light", "--no-light", "--includefullcontactlist", "--no-includefullcontactlist", "--includesettings", "--no-includesettings", "--includeblockedlist", "--no-includeblockedlist", "--includecalllog", "--no-includecalllog", "--addexportdetails", "--no-addexportdetails", "--interactive", "--no-interactive", "--checkdbintegrity", "--no-checkdbintegrity", "--includemms", "--no-includemms", "--ignorewal", "--no-ignorewal", "--allhtmlpages"};
+  std::array<std::string, 213> const d_alloptions{"--appendbody", "--rawdesktopdb", "--desktopkey", "--dumpmedia", "--dumpavatars", "--importcsv", "--setselfid", "--generatedummyfordesktop", "--generatedummy", "--setcountrycode", "--mapxmladdressesfromfile", "--mapxmlcontactnamesfromfile", "--onlyolderthan", "--onlynewerthan", "-p", "--passphrase", "--prependbody", "-l", "--logfile", "--exporthtml", "--exportdesktophtml", "--importadbbackup", "--adbpassphrase", "--exportadbbackuptohtml", "--jsonshowcontactmap", "--listjsonchats", "--importtelegram", "--split-by", "--exportdesktoptxt", "--exporttxt", "--desktopdir", "--exportxml", "--desktopdirs", "--querymode", "-sp", "--sourcepassphrase", "-s", "--source", "-op", "--opassphrase", "-o", "--output", "--dumpdesktopdb", "-i", "--input", "--croptothreadsbyname", "--mergerecipients", "--replaceattachments", "--selectxmlchats", "--mapxmlcontacts", "--listxmlcontacts", "--importthreads", "--limittodates", "--croptodates", "--croptothreads", "--exportplaintextbackuphtml", "--importplaintextbackup", "--importthreadsbyname", "--limittothreads", "--limittothreadsbyname", "--selectjsonchats", "--preventjsonmapping", "--mapjsoncontacts", "--onlytype", "--limitcontacts", "--rundtprettysqlquery", "--mapcsvfields", "--editattachmentsize", "--htmlignoremediatypes", "--rundtsqlquery", "--runprettysqlquery", "--runsqlquery", "--mapxmladdresses", "--mapxmlcontactnames", "--mergegroups", "--setchatcolors", "--onlyinthreads", "--exportcsv", "--desktopdbversion", "--split", "--hiperfall", "--onlylargerthan", "--findrecipient", "--removedoubles", "--autofixfkc", "--no-autofixfkc", "--migratedb", "--no-migratedb", "--targetisdummy", "--no-targetisdummy", "--aggressivefilenamesanitizing", "--no-aggressivefilenamesanitizing", "--importstickers", "--no-importstickers", "--append", "--no-append", "--htmlpagemenu", "--no-htmlpagemenu", "--jsonprependforward", "--no-jsonprependforward", "--jsonmarkdelivered", "--no-jsonmarkdelivered", "--jsonmarkread", "--no-jsonmarkread", "--xmlmarkdelivered", "--no-xmlmarkdelivered", "--compactfilenames", "--no-compactfilenames", "--xmlautogroupnames", "--no-xmlautogroupnames", "--xmlmarkread", "--no-xmlmarkread", "--fulldecode", "--no-fulldecode", "--custom_hugogithubs", "--no-custom_hugogithubs", "--truncate", "--no-truncate", "--skipmessagereorder", "--no-skipmessagereorder", "--migrate_to_191", "--no-migrate_to_191", "--linkify", "--no-linkify", "--reordermmssmsids", "--no-reordermmssmsids", "--migratedesktopdb", "--no-migratedesktopdb", "--importfromdesktop", "--no-importfromdesktop", "--scramble", "--no-scramble", "--showdbinfo", "--no-showdbinfo", "--scanmissingattachments", "--no-scanmissingattachments", "-h", "--help", "--no-help", "--deleteattachments", "--no-deleteattachments", "--dbusverbose", "--no-dbusverbose", "-v", "--verbose", "--no-verbose", "--stoponerror", "--no-stoponerror", "--autolimitdates", "--no-autolimitdates", "--showprogress", "--no-showprogress", "--listrecipients", "--no-listrecipients", "--listthreads", "--no-listthreads", "--overwrite", "--no-overwrite", "--onlydb", "--no-onlydb", "--devcustom", "--no-devcustom", "--excludestickers", "--no-excludestickers", "--excludequotes", "--no-excludequotes", "--showdesktopkey", "--no-showdesktopkey", "--assumebadframesizeonbadmac", "--no-assumebadframesizeonbadmac", "--searchpage", "--no-searchpage", "--generatemissingstoragekeys", "--no-generatemissingstoragekeys", "--importdesktopcontacts", "--no-importdesktopcontacts", "--addincompletedataforhtmlexport", "--no-addincompletedataforhtmlexport", "--htmlfocusend", "--no-htmlfocusend", "--originalfilenames", "--no-originalfilenames", "--excludeexpiring", "--no-excludeexpiring", "--chatfolders", "--no-chatfolders", "--includereceipts", "--no-includereceipts", "--stickerpacks", "--no-stickerpacks", "--light", "--no-light", "--themeswitching", "--no-themeswitching", "--includefullcontactlist", "--no-includefullcontactlist", "--includesettings", "--no-includesettings", "--includeblockedlist", "--no-includeblockedlist", "--includecalllog", "--no-includecalllog", "--addexportdetails", "--no-addexportdetails", "--interactive", "--no-interactive", "--checkdbintegrity", "--no-checkdbintegrity", "--includemms", "--no-includemms", "--ignorewal", "--no-ignorewal", "--allhtmlpages"};
   size_t d_positionals;
   size_t d_maxpositional;
   std::string d_progname;
@@ -156,7 +156,8 @@ class Arg
   bool d_excludequotes;
   bool d_showdesktopkey;
   bool d_assumebadframesizeonbadmac;
-  bool d_themeswitching;
+  bool d_searchpage;
+  bool d_generatemissingstoragekeys;
   bool d_importdesktopcontacts;
   bool d_addincompletedataforhtmlexport;
   bool d_htmlfocusend;
@@ -165,8 +166,8 @@ class Arg
   bool d_chatfolders;
   bool d_includereceipts;
   bool d_stickerpacks;
-  bool d_searchpage;
   bool d_light;
+  bool d_themeswitching;
   bool d_includefullcontactlist;
   bool d_includesettings;
   bool d_includeblockedlist;
@@ -314,7 +315,8 @@ class Arg
   inline bool excludequotes() const;
   inline bool showdesktopkey() const;
   inline bool assumebadframesizeonbadmac() const;
-  inline bool themeswitching() const;
+  inline bool searchpage() const;
+  inline bool generatemissingstoragekeys() const;
   inline bool importdesktopcontacts() const;
   inline bool addincompletedataforhtmlexport() const;
   inline bool htmlfocusend() const;
@@ -323,8 +325,8 @@ class Arg
   inline bool chatfolders() const;
   inline bool includereceipts() const;
   inline bool stickerpacks() const;
-  inline bool searchpage() const;
   inline bool light() const;
+  inline bool themeswitching() const;
   inline bool includefullcontactlist() const;
   inline bool includesettings() const;
   inline bool includeblockedlist() const;
@@ -986,9 +988,14 @@ inline bool Arg::assumebadframesizeonbadmac() const
   return d_assumebadframesizeonbadmac;
 }
 
-inline bool Arg::themeswitching() const
+inline bool Arg::searchpage() const
 {
-  return d_themeswitching;
+  return d_searchpage;
+}
+
+inline bool Arg::generatemissingstoragekeys() const
+{
+  return d_generatemissingstoragekeys;
 }
 
 inline bool Arg::importdesktopcontacts() const
@@ -1031,14 +1038,14 @@ inline bool Arg::stickerpacks() const
   return d_stickerpacks;
 }
 
-inline bool Arg::searchpage() const
-{
-  return d_searchpage;
-}
-
 inline bool Arg::light() const
 {
   return d_light;
+}
+
+inline bool Arg::themeswitching() const
+{
+  return d_themeswitching;
 }
 
 inline bool Arg::includefullcontactlist() const

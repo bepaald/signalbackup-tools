@@ -148,7 +148,8 @@ Arg::Arg(int argc, char *argv[])
   d_excludequotes(false),
   d_showdesktopkey(false),
   d_assumebadframesizeonbadmac(false),
-  d_themeswitching(false),
+  d_searchpage(false),
+  d_generatemissingstoragekeys(false),
   d_importdesktopcontacts(false),
   d_addincompletedataforhtmlexport(false),
   d_htmlfocusend(false),
@@ -157,8 +158,8 @@ Arg::Arg(int argc, char *argv[])
   d_chatfolders(false),
   d_includereceipts(false),
   d_stickerpacks(false),
-  d_searchpage(false),
   d_light(false),
+  d_themeswitching(false),
   d_includefullcontactlist(false),
   d_includesettings(false),
   d_includeblockedlist(false),
@@ -1801,14 +1802,24 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_assumebadframesizeonbadmac = false;
       continue;
     }
-    if (option == "--themeswitching")
+    if (option == "--searchpage")
     {
-      d_themeswitching = true;
+      d_searchpage = true;
       continue;
     }
-    if (option == "--no-themeswitching")
+    if (option == "--no-searchpage")
     {
-      d_themeswitching = false;
+      d_searchpage = false;
+      continue;
+    }
+    if (option == "--generatemissingstoragekeys")
+    {
+      d_generatemissingstoragekeys = true;
+      continue;
+    }
+    if (option == "--no-generatemissingstoragekeys")
+    {
+      d_generatemissingstoragekeys = false;
       continue;
     }
     if (option == "--importdesktopcontacts")
@@ -1891,16 +1902,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_stickerpacks = false;
       continue;
     }
-    if (option == "--searchpage")
-    {
-      d_searchpage = true;
-      continue;
-    }
-    if (option == "--no-searchpage")
-    {
-      d_searchpage = false;
-      continue;
-    }
     if (option == "--light")
     {
       d_light = true;
@@ -1909,6 +1910,16 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
     if (option == "--no-light")
     {
       d_light = false;
+      continue;
+    }
+    if (option == "--themeswitching")
+    {
+      d_themeswitching = true;
+      continue;
+    }
+    if (option == "--no-themeswitching")
+    {
+      d_themeswitching = false;
       continue;
     }
     if (option == "--includefullcontactlist")

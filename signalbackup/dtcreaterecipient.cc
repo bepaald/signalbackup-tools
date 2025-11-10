@@ -28,7 +28,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               std::string const &id, std::string const &phone, std::string const &groupidb64,
                                               std::string const &databasedir,
                                               std::map<std::string, long long int> *recipient_info,
-                                              bool create_valid_contacts, bool *was_warned)
+                                              bool create_valid_contacts, bool generatestoragekeys, bool *was_warned)
 {
   std::string printable_uuid(makePrintable(id));
   Logger::message("Creating new recipient for id: ", printable_uuid);
@@ -124,7 +124,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         Logger::warning("No storage id found for group-recipient.");
       else
       {
-        if (false /*generateMissingStorageKeys*/)
+        if (generatestoragekeys)
         {
           Logger::message("No storage id found for group-recipient. Generating...");
           int count = 0;
@@ -233,7 +233,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       {
         if (d_verbose) [[unlikely]]
           Logger::message("Creating group member...");
-        member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info, create_valid_contacts, was_warned);
+        member_rid = dtCreateRecipient(ddb, mem("member"), std::string(), std::string(), databasedir, recipient_info,
+                                       create_valid_contacts, generatestoragekeys, was_warned);
         if (member_rid == -1)
         {
           Logger::error("Failed to get new groups members uuid.");

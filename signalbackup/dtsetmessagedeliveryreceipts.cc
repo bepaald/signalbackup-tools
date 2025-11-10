@@ -21,7 +21,7 @@
 
 void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
                                                 std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms,
-                                                bool isgroup, bool create_valid_contacts, bool *warn)
+                                                bool isgroup, bool create_valid_contacts, bool generatemissingkeys, bool *warn)
 {
   //  public static final int STATUS_UNKNOWN     = -1;
   //  public static final int STATUS_UNDELIVERED = 0;
@@ -81,7 +81,8 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         {
           if (createcontacts)
           {
-            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, create_valid_contacts, warn)) == -1)
+            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir,
+                                               savedmap, create_valid_contacts, generatemissingkeys, warn)) == -1)
             {
               Logger::error("Failed to create delivery_receipt member. Skipping");
               continue;
@@ -115,7 +116,8 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         {
           if (createcontacts)
           {
-            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir, savedmap, create_valid_contacts, warn)) == -1)
+            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir,
+                                               savedmap, create_valid_contacts, generatemissingkeys, warn)) == -1)
             {
               Logger::error("Failed to create delivery_receipt member. Skipping");
               continue;

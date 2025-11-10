@@ -40,7 +40,7 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
                                               std::map<long long int, long long int> *adjusted_timestamps,
                                               std::map<std::string, long long int> *savedmap,
                                               std::string const &databasedir, bool istimermessage, bool createcontacts,
-                                              bool createvalidcontacts, bool *warn)
+                                              bool createvalidcontacts, bool generatemissingkeys, bool *warn)
 {
   if (date == -1)
   {
@@ -81,7 +81,8 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
       {
         if (createcontacts)
         {
-          if ((address = dtCreateRecipient(ddb, timer_results("sourceuuid"), std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
+          if ((address = dtCreateRecipient(ddb, timer_results("sourceuuid"), std::string(), std::string(), databasedir,
+                                           savedmap, createvalidcontacts, generatemissingkeys, warn)) == -1)
           {
             Logger::error("Failed to create group-v2-expiration-timer contact (1), skipping");
             return false;
@@ -186,7 +187,8 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     {
       if (createcontacts)
       {
-        if ((address = dtCreateRecipient(ddb, source_uuid, std::string(), std::string(), databasedir, savedmap, createvalidcontacts, warn)) == -1)
+        if ((address = dtCreateRecipient(ddb, source_uuid, std::string(), std::string(), databasedir, savedmap,
+                                         createvalidcontacts, generatemissingkeys, warn)) == -1)
         {
           Logger::error("Failed to create group-v2-update contact (1), skipping");
           return false;
