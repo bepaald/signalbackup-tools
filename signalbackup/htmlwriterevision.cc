@@ -31,7 +31,9 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                        "MIN(date_received, ", d_mms_date_sent, ") AS bubble_date, ",
                                        d_mms_date_sent, ", ",
                                        d_mms_type, ", "
-                                       "body, quote_missing, quote_author, quote_body, ", d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", "
+                                       "body, quote_missing, quote_author, quote_body, ",
+                                       (d_database.tableContainsColumn(d_mms_table, "quote_type") ? "quote_type, " : "0 AS quote_type, "),
+                                       d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", "
                                        "attcount, reactioncount, mentioncount, "
                                        "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                                        "json_extract(link_previews, '$[0].title') AS link_preview_title, "

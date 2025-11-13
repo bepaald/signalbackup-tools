@@ -320,7 +320,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     "MIN(date_received, ", d_mms_date_sent, ") AS bubble_date, "
                                     "date_received, ", d_mms_date_sent, ", ", d_mms_type, ", ",
                                     (!periodsplitformat.empty() ? bepaald::concat("strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')") : "''"), " AS periodsplit, "
-                                    "quote_id, quote_author, quote_body, quote_mentions, quote_missing, "
+                                    "quote_id, quote_author, quote_body, quote_mentions, quote_missing, ",
+                                    (d_database.tableContainsColumn(d_mms_table, "quote_type") ? "quote_type, " : "0 AS quote_type, "),
                                     "attcount, reactioncount, mentioncount, "
                                     "IFNULL(", d_mms_date_sent, " IN (SELECT DISTINCT quote_id FROM ", d_mms_table, " WHERE thread_id = ?1), 0) AS is_quoted, ",
                                     d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", IFNULL(remote_deleted, 0) AS remote_deleted, "

@@ -2557,7 +2557,9 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << (msg_info.story_reply ? " &middot; Story" : "")
                << "</span>\n";
     if (!msg_info.quote_body.empty())
-      htmloutput << std::string(extraindent, ' ') << "                <pre dir=\"auto\">" << msg_info.quote_body << "</pre>\n";
+      htmloutput << std::string(extraindent, ' ') << "                <pre dir=\"auto\">"
+                 << ((msg_info.messages->valueAsInt(msg_info.idx, "quote_type", 0) == 2) ? "Poll: " : "")  // quote_type: 0:normal, 1:giftbadge, 2:poll
+                 << msg_info.quote_body << "</pre>\n";
     if (msg_info.story_reply && msg_info.quote_missing)
       htmloutput << std::string(extraindent, ' ') << "                <pre>No longer available</pre>\n";
     htmloutput << std::string(extraindent, ' ') << "              </div>\n";
