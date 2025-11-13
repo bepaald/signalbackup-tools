@@ -488,6 +488,8 @@ class SignalBackup
   void HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
                                  std::string const &directory, std::string const &threaddir,
                                  bool overwrite, bool append) const;
+  bool HTMLwritePollDiv(std::ofstream &htmloutput, int indent, SqliteDB::QueryResults const &poll,
+                        SqliteDB::QueryResults const &poll_options, SqliteDB::QueryResults const &poll_votes) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
                            long long int uniqueid, std::string const &attachment_filename, long long int timestamp,
                            bool overwrite, bool append) const;
@@ -495,6 +497,7 @@ class SignalBackup
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
                        bool linkify, bool isquote) const;
+  inline bool HTMLprepMsgBody(std::string *body) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
@@ -918,6 +921,17 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
     if (results.valueHasType<long long int>(i, columnname)) // column name. This function expect it may fail
       tmp = results.getValueAs<long long int>(i, columnname);
   return tmp;
+}
+
+inline bool SignalBackup::HTMLprepMsgBody(std::string *body) const
+{
+  return HTMLprepMsgBody(body,
+                         std::vector<std::tuple<long long int, long long int, long long int>>(), // mentions
+                         nullptr, // recipient_info* ?? NOTE! if mentions or rangedata would not be empty, this pointer could be dereferenced
+                         false, //incoming
+                         std::pair<std::shared_ptr<unsigned char []>, size_t>(), //rangedata
+                         false, // linkify
+                         false); //isquote
 }
 
 inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const

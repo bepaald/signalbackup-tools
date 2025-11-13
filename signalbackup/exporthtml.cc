@@ -492,7 +492,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         SqliteDB::QueryResults quote_attachment_results;
         SqliteDB::QueryResults reaction_results;
         SqliteDB::QueryResults edit_revisions;
-        //SqliteDB::QueryResults poll_results;
+        SqliteDB::QueryResults poll;
+        SqliteDB::QueryResults poll_options;
+        SqliteDB::QueryResults poll_votes;
 
         HTMLMessageInfo msg_info({messages.valueAsString(messagecount, "body"),   // body
             std::string(),                                                        // quote_body
@@ -510,7 +512,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             &attachment_results,
             &reaction_results,
             &edit_revisions,
-            //&poll_results,
+            &poll,
+            &poll_options,
+            &poll_votes,
 
             messages.getValueAs<long long int>(messagecount, d_mms_type),           // type
             messages.getValueAs<long long int>(messagecount, "expires_in"),         // expires_in
@@ -632,15 +636,22 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         if (!messages.isNull(messagecount, d_mms_ranges))
           brdata = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, d_mms_ranges);
 
-        /*
         // get polls if any...
         if (messages.valueAsInt(messagecount, "poll_id", -1) > -1)
         {
-          d_database.exec("SELECT (stuff) FROM poll_option [LEFT JOIN poll_vote ON poll_vote.poll_id = poll_option.poll_id] "
-                          "WHERE poll_id = ?", messages.valueAsInt(messagecount, "poll_id", -1), msg_info.poll_results);
-          //.. todo
+          // poll: _id, author_id, message_id, question, allow_multiple_votes, end_message_id
+          // poll_option: _id, poll_id, option_text, option_order
+          // poll_vote: _id, poll_id, poll_option_id, voter_id, vote_count, date_received, vote_state
+          d_database.exec("SELECT question, allow_multiple_votes, end_message_id FROM poll WHERE message_id = ?", msg_info.msg_id, msg_info.poll);
+          d_database.exec("SELECT _id, option_text, option_order FROM poll_option WHERE poll_id = ? ORDER BY option_order ASC",
+                          messages.valueAsInt(messagecount, "poll_id", -1), msg_info.poll_options);
+
+          // poll_state: NONE = 0, PENDING_REMOVE = 1, PENDING_ADD = 2, REMOVED = 3, ADDED = 4,
+          // not sure what to do with 0, 1, and 2 (but not sure if they can appear in a backup at all).
+          d_database.exec("SELECT poll_option_id, voter_id, vote_count, date_received, vote_state FROM poll_vote "
+                          "WHERE poll_id = ? AND vote_state = 4",
+                          messages.valueAsInt(messagecount, "poll_id", -1), msg_info.poll_votes);
         }
-        */
 
         // prep body: scan emoji, linkify, and handle mentions and message ranges...
         msg_info.only_emoji = HTMLprepMsgBody(&msg_info.body, mentions, &rid_recipientinfo_map, msg_info.incoming, brdata, linkify, false /*isquote*/);

@@ -38,7 +38,9 @@ struct HTMLMessageInfo
   SqliteDB::QueryResults *attachment_results;
   SqliteDB::QueryResults *reaction_results;
   SqliteDB::QueryResults *edit_revisions;
-  //SqliteDB::QueryResults *poll_results;
+  SqliteDB::QueryResults *poll;
+  SqliteDB::QueryResults *poll_options;
+  SqliteDB::QueryResults *poll_votes;
 
   long long int type;
   long long int expires_in;

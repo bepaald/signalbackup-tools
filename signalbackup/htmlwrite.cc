@@ -129,6 +129,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << "\n"
     "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << "\n"
     "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << "\n"
+    "        --poll-unfilled-in: " << (light ? "#8D8D92;" : "#1B1C1F;") << "\n"
+    "        --poll-filled-in: " << (light ? "#2C58C3;" : "#B6C5FA;") << "\n"
     "      }\n"
     "\n";
 
@@ -169,6 +171,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << "\n"
       "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << "\n"
       "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << "\n"
+      "        --poll-unfilled-in: " << (!light ? "#8D8D92;" : "#1B1C1F;") << "\n"
+      "        --poll-filled-in: " << (!light ? "#2C58C3;" : "#B6C5FA;") << "\n"
       "      }"
       "\n";
   }
@@ -918,6 +922,7 @@ R"(
         margin-left: 5px;
       }
 
+      .poll-option-details,
       .msg-receipt-info,
       .edited-info,
       .msg-reaction .msg-reaction-info {
@@ -969,21 +974,42 @@ R"(
       }
 
       /* Draw an arrow using border styles */
+      .msg-outgoing .poll-option-details::before,
+      .msg-incoming .poll-option-details::before,
       .msg-receipt-info::before,
       .edited-info::before,
       .msg-reaction .msg-reaction-info::before {
         content: "";
         position: absolute;
-        top: calc(100% - 5px);
-        left: calc(50% - 5px);
         width: 10px;
         height: 10px;
-        transform: rotate(45deg);
         background-color: var(--msgreactioninfo-bc);
         border-bottom: 1px solid var(--msgreactioninfo-border);
         border-right: 1px solid var(--msgreactioninfo-border);
       }
 
+      .msg-receipt-info::before,
+      .edited-info::before,
+      .msg-reaction .msg-reaction-info::before {
+        top: calc(100% - 5px);
+        left: calc(50% - 5px);
+        transform: rotate(45deg);
+      }
+
+      .msg-incoming .poll-option-details::before {
+        top: calc(50% - 5px);
+        left: calc(0% - 5px);
+        transform: rotate(135deg);
+        clip-path: polygon(0% 100%, 100% 100%, 100% 0%);
+      }
+
+      .msg-outgoing .poll-option-details::before {
+        top: calc(50% - 5px);
+        left: calc(100% - 5px);
+        transform: rotate(315deg);
+      }
+
+      .poll-option:hover .poll-option-details,
       .footer-icons:hover,
       .footer-icons:hover .msg-receipt-info,
       .edited:hover,
@@ -991,6 +1017,73 @@ R"(
       .msg-reaction:hover .msg-reaction-info {
         visibility: visible;
         opacity: 1;
+      }
+
+      .msg-incoming .poll-option-details,
+      .msg-outgoing .poll-option-details {
+        top: 50%;
+        transform: translateY(-50%);
+        width: 250px;
+      }
+
+      .msg-outgoing .poll-option-details {
+        left: -275px;
+      }
+
+      .msg-incoming .poll-option-details {
+        left: calc(100% + 10px);
+      }
+
+      .msg:has(.poll) {
+        min-width: 30%;
+      }
+
+      .poll-subtitle {
+        font-size: x-small;
+        opacity: 75%;
+      }
+
+      .poll-option-title-votes {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .poll-options {
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+
+      .poll-option {
+        margin-top: 5px;
+        position: relative;
+      }
+
+      .poll-option-meter-bar,
+      .poll-option-meter-filled {
+        height: 10px;
+      }
+
+      .poll-option-meter-bar {
+        width: 100%;
+        height: 10px;
+        border-radius: 5px 5px 5px 5px;
+        overflow: hidden;
+        margin-top: 5px;
+        margin-bottom: 5px;
+      }
+
+      .msg-incoming .poll-option-meter-bar {
+        background: var(--poll-unfilled-in);
+      }
+      .msg-outgoing .poll-option-meter-bar {
+        background: #A5B9FA;
+      }
+
+      .msg-incoming .poll-option-meter-filled {
+        background: var(--poll-filled-in);
+      }
+      .msg-outgoing .poll-option-meter-filled {
+        background: #FFFFFF;
       }
 
       .msg-quote {
@@ -2484,7 +2577,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   }
 
   // insert attachment?
-  if (!msg_info.shared_contacts.empty()) [[unlikely]] // if we have an attachment with a shared contact, it's an avatar
+  if (!msg_info.shared_contacts.empty()) [[likely]] // if we have an attachment with a shared contact, it's an avatar
     HTMLwriteSharedContactDiv(htmloutput, msg_info.shared_contacts, 12 + extraindent,
                               msg_info.directory, msg_info.threaddir, msg_info.overwrite, msg_info.append);
   else if (STRING_STARTS_WITH(msg_info.link_preview_url, "https://signal.link/call/#key=")) [[unlikely]]
@@ -2497,6 +2590,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                            (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
                            false /*isquote*/, msg_info.overwrite, msg_info.append, ignoremediatypes);
 
+  if (msg_info.poll_options->rows()) [[unlikely]]
+    HTMLwritePollDiv(htmloutput, 12 + extraindent, *msg_info.poll, *msg_info.poll_options, *msg_info.poll_votes);
 
   // insert link_preview data? (if not call link)
   if ((!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()) &&
@@ -2522,7 +2617,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   }
 
   //insert body
-  if (!msg_info.body.empty())
+  if (!msg_info.body.empty() && msg_info.poll->empty())
   {
     htmloutput << std::string(extraindent, ' ') << "            <div"
                << (msg_info.only_emoji ? " class=\"msg-all-emoji\"" : "")

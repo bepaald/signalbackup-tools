@@ -156,6 +156,9 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
     quote_mentions = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "quote_mentions");
   HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, linkify, true /*isquote*/);
 
+  SqliteDB::QueryResults poll; // it is currently not possible to edit polls
+  SqliteDB::QueryResults poll_options;
+  SqliteDB::QueryResults poll_votes;
   HTMLMessageInfo msg_info({body,
                             quote_body,
                             readable_date,
@@ -172,6 +175,9 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             &attachment_results,
                             &reaction_results,
                             &edit_revisions,
+                            &poll,
+                            &poll_options,
+                            &poll_votes,
 
                             type,
                             expires_in,
