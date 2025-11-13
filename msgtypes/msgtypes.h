@@ -103,6 +103,8 @@ struct Types
   static uint64_t constexpr SPECIAL_TYPE_MESSAGE_REQUEST_ACCEPTED  = 0x600000000L;
   static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_ACTIVATED        = 0x800000000L;
   static uint64_t constexpr SPECIAL_TYPE_PAYMENTS_TOMBSTONE        = 0x900000000L;
+  static uint64_t constexpr SPECIAL_TYPE_POLL_TERMINATE            = 0xC00000000L;
+
 
   inline static bool isGroupUpdate(uint64_t type)
   {
@@ -245,6 +247,11 @@ struct Types
     return (type & BASE_TYPE_MASK) == THREAD_MERGE_TYPE;
   }
 
+  inline static bool isPollEndType(uint64_t type)
+  {
+    return (type & SPECIAL_TYPES_MASK) == SPECIAL_TYPE_POLL_TERMINATE;
+  }
+
   inline static bool isStatusMessage(uint64_t type)
   {
     return isCallType(type) || isGroupUpdate(type) || isGroupV2(type) ||
@@ -252,7 +259,7 @@ struct Types
       isIdentityDefault(type) || isExpirationTimerUpdate(type) || isJoined(type) ||
       isProfileChange(type) || isEndSession(type) || type == GV1_MIGRATION_TYPE ||
       isNumberChange(type) || isDonationRequest(type) || isMessageRequestAccepted(type) ||
-      isReportedSpam(type) || isThreadMergeType(type);
+      isReportedSpam(type) || isThreadMergeType(type) || isPollEndType(type);
   }
 };
 

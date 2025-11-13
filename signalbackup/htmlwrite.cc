@@ -1235,6 +1235,11 @@ R"(
         filter: var(--icon-f);
       }
 
+      .msg-status .msg-poll-end-icon {
+        background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M18.15 3.63c1.52 0.08 2.73 1.33 2.73 2.87v1c0 1.59-1.3 2.88-2.88 2.88h-1.35c0.14 0.34 0.23 0.72 0.23 1.12v1c0 0.43-0.1 0.83-0.26 1.2 1.29 0.27 2.25 1.42 2.25 2.8v1c0 1.59-1.28 2.88-2.87 2.88H6.5c-1.59 0-2.88-1.3-2.88-2.88v-1c0-0.78 0.31-1.48 0.82-2-0.5-0.52-0.82-1.22-0.82-2v-1c0-0.78 0.31-1.48 0.82-2-0.5-0.52-0.82-1.22-0.82-2v-1c0-1.59 1.3-2.88 2.88-2.88H18h0.15ZM6.5 15.38c-0.62 0-1.13 0.5-1.13 1.12v1c0 0.62 0.5 1.13 1.13 1.13H16c0.62 0 1.13-0.5 1.13-1.13v-1c0-0.62-0.5-1.13-1.13-1.13H6.5Zm0-5c-0.62 0-1.13 0.5-1.13 1.12v1c0 0.62 0.5 1.13 1.13 1.13H14c0.62 0 1.13-0.5 1.13-1.13v-1c0-0.62-0.5-1.13-1.13-1.13H6.5Zm0-5c-0.62 0-1.13 0.5-1.13 1.12v1c0 0.62 0.5 1.13 1.13 1.13H18c0.62 0 1.13-0.5 1.13-1.13v-1c0-0.58-0.45-1.06-1.01-1.12H18 6.5Z"/></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-status .msg-spam-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 6.5c-.7 0-1.24.6-1.2 1.29l.43 5.5c.03.4.37.71.77.71s.74-.31.77-.71l.42-5.5c.05-.7-.49-1.29-1.19-1.29zm0 8.75a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 1 0 0-2.5zm3.1-13.62H8.9c-.77 0-1.5.3-2.04.84l-4.4 4.39c-.52.54-.82 1.27-.82 2.03v6.22a2.87 2.87 0 0 0 .84 2.03l4.39 4.4a2.91 2.91 0 0 0 2.03.84h6.22c.76 0 1.49-.3 2.03-.85l4.4-4.39a2.91 2.91 0 0 0 .84-2.03V8.89c0-.76-.3-1.49-.85-2.03l-4.39-4.4a2.9 2.9 0 0 0-2.03-.83zM8.9 3.38h6.2a1.11 1.11 0 0 1 .8.32l4.4 4.4c.2.2.32.5.32.8v6.2a1.11 1.11 0 0 1-.32.8l-4.4 4.4c-.2.2-.5.32-.8.32H8.9a1.11 1.11 0 0 1-.8-.32l-4.4-4.4a1.16 1.16 0 0 1-.33-.8V8.9c0-.3.12-.6.33-.8l4.4-4.4a1.16 1.16 0 0 1 .8-.33z"/></svg>');
         filter: var(--icon-f);
@@ -1337,6 +1342,7 @@ R"(
       .msg-status .msg-members-icon,
       .msg-status .msg-member-approved-icon,
       .msg-status .msg-member-rejected-icon,
+      .msg-status .msg-poll-end-icon,
       .msg-status .msg-profile-icon,
       .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled,
@@ -1882,7 +1888,7 @@ R"(
       .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
       .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
       .msg-status .msg-members-icon, .msg-status .msg-member-approved-icon,
-      .msg-status .msg-member-rejected-icon,
+      .msg-status .msg-member-rejected-icon, .msg-status .msg-end-poll-icon,
       .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
       .msg-status .msg-phone-icon, .msg-status .msg-thread-icon,
@@ -2669,6 +2675,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-spam-icon\"></span>";
     else if (Types::isThreadMergeType(msg_info.type))
       htmloutput << "<span class=\"msg-thread-merge-icon\"></span>";
+    else if (Types::isPollEndType(msg_info.type))
+      htmloutput << "<span class=\"msg-poll-end-icon\"></span>";
     else if (msg_info.type == Types::GV1_MIGRATION_TYPE)
     {
       if (msg_info.icon == IconType::MEMBER_ADD)

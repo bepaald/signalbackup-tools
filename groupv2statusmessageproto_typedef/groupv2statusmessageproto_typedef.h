@@ -663,14 +663,48 @@ typedef ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STR
 typedef ProtoBufParser<StringChange, StringChange, LearnedProfileName> ProfileChangeDetails;
 
 /*
+message CryptoValue {
+  oneof Value {
+    MobileCoinValue mobileCoinValue = 1;
+  }
+  message MobileCoinValue {
+    string picoMobileCoin = 1;
+  }
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::STRING> MobileCoinValue;
+typedef ProtoBufParser<MobileCoinValue> CryptoValue;
+
+/*
+message PaymentTombstone {
+    optional string note = 1;
+    CryptoValue amount = 2;
+    CryptoValue fee = 3;
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::STRING, CryptoValue, CryptoValue> PaymentTombstone;
+
+/*
+message PollTerminate {
+    string question = 1;
+    uint64 messageId = 2;
+    uint64 targetTimestamp = 3;
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::UINT64, protobuffer::optional::UINT64> PollTerminate;
+
+
+/*
 message MessageExtras {
     oneof extra {
         GV2UpdateDescription gv2UpdateDescription = 1;
         signalservice.GroupContext gv1Context     = 2;
         ProfileChangeDetails profileChangeDetails = 3;
+        PaymentTombstone paymentTombstone = 4;
+        PollTerminate pollTerminate = 5;
     }
 }
 */
-typedef ProtoBufParser<GV2UpdateDescription, GroupContext, ProfileChangeDetails> MessageExtras;
+typedef ProtoBufParser<GV2UpdateDescription, GroupContext, ProfileChangeDetails, PaymentTombstone, PollTerminate> MessageExtras;
 
 #endif

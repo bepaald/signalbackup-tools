@@ -183,6 +183,14 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   {
     return "Reported as spam";
   }
+  if (Types::isPollEndType(type))
+  {
+    if (icon)
+      *icon = IconType::POLL_TERMINATE;
+    if (Types::isOutgoing(type))
+      return "You ended the poll \"(poll title)\"";
+    return contactname + " ended the poll \"(poll title)\"";
+  }
   if (Types::isThreadMergeType(type))
   {
     /*
@@ -987,16 +995,21 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
   {
     auto field1_1 = field1->getField<1>();
     if (field1_1.has_value())
-    {
       return decodeStatusMessage(field1_1->getDataString(), expiration, type, contactname, icon);
-    }
   }
   else
   {
     auto field3 = me.getField<3>(); // ProfileChangeDetails
     if (field3.has_value())
       return decodeProfileChangeMessage(field3->getDataString(), contactname, icon);
+    else
+    {
+      auto field5 = me.getField<5>(); // PollTerminate
+      if (field5.has_value())
+        return decodePollTerminateMessage(field5->getDataString(), type, contactname, icon);
+    }
   }
+
   return std::string();
 }
 

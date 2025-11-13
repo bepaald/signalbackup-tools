@@ -35,6 +35,7 @@ enum class IconType : std::uint8_t
   AVATAR_UPDATE,
   THREAD,
   //AVATAR_REMOVE,
+  POLL_TERMINATE,
 };
 
 #endif

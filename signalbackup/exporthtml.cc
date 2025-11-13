@@ -608,8 +608,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
           // decode from body if (body not empty) OR (message_extras not available)
           if (!msg_info.body.empty() ||
-              !(d_database.tableContainsColumn(d_mms_table, "message_extras") &&
-                messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras")))
+              !((d_database.tableContainsColumn(d_mms_table, "message_extras") &&
+                 messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))))
             msg_info.body = decodeStatusMessage(msg_info.body, msg_info.expires_in,  msg_info.type,
                                                 getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &msg_info.icon);
           else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
