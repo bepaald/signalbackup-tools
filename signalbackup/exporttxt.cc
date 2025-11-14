@@ -164,8 +164,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
     // now get all messages
     SqliteDB::QueryResults messages;
-    if (!d_database.exec("SELECT "
-                         "_id, " + d_mms_recipient_id + ", "
+    if (!d_database.exec("SELECT " +
+                         d_mms_table + "._id, " + d_mms_recipient_id + ", "
                          + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
                          "date_received, " + d_mms_type + ", "
                          "attcount, reactioncount, mentioncount, "
@@ -273,10 +273,18 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                         "DATETIME(date_received / 1000, 'unixepoch', 'localtime') AS 'date_received' "
                         "FROM reaction WHERE message_id IS ?", msg_id, &reaction_results);
 
-      // SqliteDB::QueryResults poll_results;
-      // if (message.valueAsInt(i, "poll_id", -1) > -1)
-      //   d_database.exec("SELECT (stuff) FROM poll_option [LEFT JOIN poll_vote ON poll_vote.poll_id = poll_option.poll_id] "
-      //                   "WHERE poll_id = ?", message.valueAsInt(i, "poll_id", -1), &poll_results);
+      SqliteDB::QueryResults poll;
+      SqliteDB::QueryResults poll_options;
+      SqliteDB::QueryResults poll_votes;
+      if (messages.valueAsInt(i, "poll_id", -1) > -1)
+      {
+        d_database.exec("SELECT question, allow_multiple_votes, end_message_id FROM poll WHERE message_id = ?", msg_id, &poll);
+        d_database.exec("SELECT _id, option_text FROM poll_option WHERE poll_id = ? ORDER BY option_order ASC",
+                        messages.valueAsInt(i, "poll_id", -1), &poll_options);
+        d_database.exec("SELECT poll_option_id, voter_id, vote_count FROM poll_vote "
+                        "WHERE poll_id = ? AND vote_state = 4",
+                        messages.valueAsInt(i, "poll_id", -1), &poll_votes);
+      }
 
       if (Types::isStatusMessage(type) || Types::isCallType(type))
       {
@@ -323,7 +331,31 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
             TXTaddReactions(&reaction_results, &txtoutput);
           txtoutput << '\n';
         }
-        if (!body.empty())
+        if (poll.rows())
+        {
+          std::string poll_title(poll("question"));
+          std::map<long long int, int> votes_per_option;
+          for (unsigned int j = 0; j < poll_votes.rows(); ++j)
+          {
+            long long int poll_option_id = poll_votes.valueAsInt(j, "poll_option_id", -1);
+            if (poll_option_id == -1) [[unlikely]]
+              continue;
+            if (votes_per_option.contains(poll_option_id))
+              ++votes_per_option[poll_option_id];
+            else
+              votes_per_option.emplace(poll_option_id, 1);
+          }
+          txtoutput << "[" << readable_date << "] <" << user << "> Poll: " << poll_title << std::endl;
+          for (unsigned int j = 0; j < poll_options.rows(); ++j)
+          {
+            long long int poll_option_id = poll_options.valueAsInt(j, "_id", -1);
+            if (poll_option_id == -1) [[unlikely]]
+              continue;
+            txtoutput << " " << std::string(readable_date.length(), ' ') << "   " << std::string(user.length(), ' ')
+                      << "        [" << votes_per_option[poll_option_id] << "] " << poll_options(j, "option_text") << std::endl;
+          }
+        }
+        else if (!body.empty())
         {
           // prep body for mentions...
           std::vector<Range> ranges;

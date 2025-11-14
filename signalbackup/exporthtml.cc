@@ -343,7 +343,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     // get mention count for message:
                                     "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON ", d_mms_table, "._id = mntns.message_id ",
                                     // get poll_id (if any)
-                                    (d_database.containsTable("poll") ? "LEFT JOIN poll ON " + d_mms_table + "._id = poll.message_id " : ""),
+                                    (d_database.containsTable("poll") ? "LEFT JOIN poll ON " + d_mms_table + "._id = poll.message_id " : " "),
                                     "WHERE thread_id = ?1",
                                     (excludeexpiring ? " AND (expires_in == 0 OR (" + d_mms_type + " & 0x40000) != 0)" : ""),
                                     datewhereclause,
@@ -644,12 +644,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           // poll_option: _id, poll_id, option_text, option_order
           // poll_vote: _id, poll_id, poll_option_id, voter_id, vote_count, date_received, vote_state
           d_database.exec("SELECT question, allow_multiple_votes, end_message_id FROM poll WHERE message_id = ?", msg_info.msg_id, msg_info.poll);
-          d_database.exec("SELECT _id, option_text, option_order FROM poll_option WHERE poll_id = ? ORDER BY option_order ASC",
+          d_database.exec("SELECT _id, option_text FROM poll_option WHERE poll_id = ? ORDER BY option_order ASC",
                           messages.valueAsInt(messagecount, "poll_id", -1), msg_info.poll_options);
 
           // poll_state: NONE = 0, PENDING_REMOVE = 1, PENDING_ADD = 2, REMOVED = 3, ADDED = 4,
           // not sure what to do with 0, 1, and 2 (but not sure if they can appear in a backup at all).
-          d_database.exec("SELECT poll_option_id, voter_id, vote_count, date_received, vote_state FROM poll_vote "
+          d_database.exec("SELECT poll_option_id, voter_id, vote_count, date_received FROM poll_vote "
                           "WHERE poll_id = ? AND vote_state = 4",
                           messages.valueAsInt(messagecount, "poll_id", -1), msg_info.poll_votes);
         }
