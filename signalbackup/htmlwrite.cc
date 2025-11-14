@@ -1026,6 +1026,15 @@ R"(
         width: 250px;
       }
 
+      .poll-option-details div {
+        color: var(--conversationbox-c);
+        padding: 5px 3px 5px 3px;
+      }
+
+      .poll-option-details div:not(:last-child) {
+        border-bottom: 1px solid var(--conversationbox-c);
+      }
+
       .msg-outgoing .poll-option-details {
         left: -275px;
       }
@@ -2599,7 +2608,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                            false /*isquote*/, msg_info.overwrite, msg_info.append, ignoremediatypes);
 
   if (msg_info.poll_options->rows()) [[unlikely]]
-    HTMLwritePollDiv(htmloutput, 12 + extraindent, *msg_info.poll, *msg_info.poll_options, *msg_info.poll_votes);
+    HTMLwritePollDiv(htmloutput, 12 + extraindent, recipient_info, *msg_info.poll, *msg_info.poll_options, *msg_info.poll_votes);
 
   // insert link_preview data? (if not call link)
   if ((!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()) &&

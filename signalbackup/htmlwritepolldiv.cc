@@ -30,7 +30,7 @@
   x show winning option? (only when closed?)
 */
 
-bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent,
+bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::map<long long int, RecipientInfo> *recipient_info,
                                     SqliteDB::QueryResults const &poll,
                                     SqliteDB::QueryResults const &poll_options,
                                     SqliteDB::QueryResults const &poll_votes) const
@@ -72,7 +72,7 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent,
   // gather data on number of votes per option, totals and max
   int totalvotes = 0;
   int maxvotes = 0;
-  std::map<long long int, int> votes_per_option; // maps option_id -> num-votes
+  std::map<long long int, std::pair<int, std::vector<long long int>>> votes_per_option; // maps option_id -> {num-votes, {voters-list}}
   for (unsigned int j = 0; j < poll_votes.rows(); ++j)
   {
     long long int poll_option_id = poll_votes.valueAsInt(j, "poll_option_id", -1);
@@ -80,12 +80,15 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent,
       continue;
 
     if (votes_per_option.contains(poll_option_id))
-      ++votes_per_option[poll_option_id];
+    {
+      ++votes_per_option[poll_option_id].first;
+      votes_per_option[poll_option_id].second.emplace_back(poll_votes.valueAsInt(j, "voter_id", -1));
+    }
     else
-      votes_per_option.emplace(poll_option_id, 1);
+      votes_per_option.emplace(poll_option_id, std::make_pair<int, std::vector<long long int>>(1, {poll_votes.valueAsInt(j, "voter_id", -1)}));
 
-    if (votes_per_option[poll_option_id] > maxvotes)
-      maxvotes = votes_per_option[poll_option_id];
+    if (votes_per_option[poll_option_id].first > maxvotes)
+      maxvotes = votes_per_option[poll_option_id].first;
 
     ++totalvotes;
   }
@@ -102,20 +105,27 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent,
       << std::string(indent, ' ') << "    <div class=\"poll-option\">\n"
       << std::string(indent, ' ') << "      <div class=\"poll-option-title-votes\">\n"
       << std::string(indent, ' ') << "        <div class=\"poll-option-title\">" << option << "</div>"
-      << "<div class=\"poll-option-votes\">" << votes_per_option[poll_option_id] << "</div>\n"
+      << "<div class=\"poll-option-votes\">" << votes_per_option[poll_option_id].first << "</div>\n"
       << std::string(indent, ' ') << "      </div>\n"
       << std::string(indent, ' ') << "      <div class=\"poll-option-meter-bar\">";
-    if (votes_per_option[poll_option_id]) // if votes were cast, fill meter bar
-      htmloutput << "<div class=\"poll-option-meter-filled\" style=\"width:" << ((100 * votes_per_option[poll_option_id]) / maxvotes) << "%\"></div>";
+    if (votes_per_option[poll_option_id].first) // if votes were cast, fill meter bar
+      htmloutput << "<div class=\"poll-option-meter-filled\" style=\"width:" << ((100 * votes_per_option[poll_option_id].first) / maxvotes) << "%\"></div>";
     htmloutput << "</div>\n";
-    if (votes_per_option[poll_option_id])
+    if (votes_per_option[poll_option_id].first)
     {
       htmloutput
-        << std::string(indent, ' ') << "      <div class=\"poll-option-details\">";
-      for (unsigned int j = 0; j < poll_votes.rows(); ++j)
-        if (poll_votes.valueAsInt(j, "poll_option_id", -1) == poll_option_id)
-          htmloutput << "(vote-details for option " << poll_option_id << " (TO-DO))";
-      htmloutput << "</div>\n";
+        << std::string(indent, ' ') << "      <div class=\"poll-option-details\">\n";
+      for (auto rid : votes_per_option[poll_option_id].second)
+      {
+        if (rid == -1) [[unlikely]]
+          continue;
+        std::string name = getRecipientInfoFromMap(recipient_info, rid).display_name;
+        if (name.empty()) [[unlikely]]
+          continue;
+        HTMLprepMsgBody(&name);
+        htmloutput << "        <div>" << name << "</div>\n";
+      }
+      htmloutput << "      </div>\n";
     }
     htmloutput
       << std::string(indent, ' ') << "    </div>\n";

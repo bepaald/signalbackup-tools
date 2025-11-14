@@ -488,8 +488,9 @@ class SignalBackup
   void HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::string const &shared_contact, int indent,
                                  std::string const &directory, std::string const &threaddir,
                                  bool overwrite, bool append) const;
-  bool HTMLwritePollDiv(std::ofstream &htmloutput, int indent, SqliteDB::QueryResults const &poll,
-                        SqliteDB::QueryResults const &poll_options, SqliteDB::QueryResults const &poll_votes) const;
+  bool HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::map<long long int, RecipientInfo> *recipients_info,
+                        SqliteDB::QueryResults const &poll, SqliteDB::QueryResults const &poll_options,
+                        SqliteDB::QueryResults const &poll_votes) const;
   bool HTMLwriteAttachment(std::string const &directory, std::string const &threaddir, long long int rowid,
                            long long int uniqueid, std::string const &attachment_filename, long long int timestamp,
                            bool overwrite, bool append) const;
