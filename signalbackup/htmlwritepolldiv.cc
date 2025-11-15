@@ -109,7 +109,7 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::
       << std::string(indent, ' ') << "      </div>\n"
       << std::string(indent, ' ') << "      <div class=\"poll-option-meter-bar\">";
     if (votes_per_option[poll_option_id].first) // if votes were cast, fill meter bar
-      htmloutput << "<div class=\"poll-option-meter-filled\" style=\"width:" << ((100 * votes_per_option[poll_option_id].first) / maxvotes) << "%\"></div>";
+      htmloutput << "<div class=\"poll-option-meter-filled\" style=\"width: calc(" << (100 * votes_per_option[poll_option_id].first) << "% / " << maxvotes << ")\"></div>";
     htmloutput << "</div>\n";
     if (votes_per_option[poll_option_id].first)
     {

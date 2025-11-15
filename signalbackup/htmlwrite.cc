@@ -131,6 +131,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << "\n"
     "        --poll-unfilled-in: " << (light ? "#8D8D92;" : "#1B1C1F;") << "\n"
     "        --poll-filled-in: " << (light ? "#2C58C3;" : "#B6C5FA;") << "\n"
+    "        --poll-unfilled-out: " << (light ? "#8198F8;" : "#5279F6;") << "\n"
+    "        --poll-filled-out: " << (light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
     "      }\n"
     "\n";
 
@@ -173,6 +175,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << "\n"
       "        --poll-unfilled-in: " << (!light ? "#8D8D92;" : "#1B1C1F;") << "\n"
       "        --poll-filled-in: " << (!light ? "#2C58C3;" : "#B6C5FA;") << "\n"
+      "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
+      "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
       "      }"
       "\n";
   }
@@ -1085,14 +1089,14 @@ R"(
         background: var(--poll-unfilled-in);
       }
       .msg-outgoing .poll-option-meter-bar {
-        background: #A5B9FA;
+        background: var(--poll-unfilled-out);
       }
 
       .msg-incoming .poll-option-meter-filled {
         background: var(--poll-filled-in);
       }
       .msg-outgoing .poll-option-meter-filled {
-        background: #FFFFFF;
+        background: var(--poll-filled-out);
       }
 
       .msg-quote {

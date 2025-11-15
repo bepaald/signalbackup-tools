@@ -432,6 +432,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                                  "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
                                  "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
+                                 "IFNULL(json_extract(json, '$.poll'), '') AS poll,"
                                  "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
                                  "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                                  "isStory"
@@ -468,6 +469,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                                  "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
                                  "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
+                                 "IFNULL(json_extract(json, '$.poll'), '') AS poll,"
                                  "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
                                  "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                                  "isStory"
@@ -1876,7 +1878,11 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           dtImportLongText(msgbody_full, new_mms_id,
                            results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"));
 
-
+        // insert poll if present
+        if (!results_all_messages_from_conversation(j, "poll").empty())
+        {
+          handleDTPoll(new_mms_id, incoming ? address : d_selfid, results_all_messages_from_conversation(j, "poll"));
+        }
 
         if (outgoing)
           dtSetMessageDeliveryReceipts(dtdb->d_database, rowid, &recipientmap, databasedir, createmissingcontacts,

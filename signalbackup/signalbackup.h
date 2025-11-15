@@ -448,6 +448,7 @@ class SignalBackup
   bool dtInsertAttachmentsOld(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
                               long long int rowid, SqliteDB const &ddb, std::string const &where,
                               std::string const &databasedir, bool isquote, bool issticker, bool targetisdummy);
+  bool handleDTPoll(long long int mms_id, long long int rid, std::string const &poll_json) const;
   bool dtSetLinkPreviewData(long long int mms_id, long long int rowid, SqliteDB const &ddb) const;
   bool dtUpdateLinkPreviewAttachment(long long int mms_id, long long int new_part_id, long long int unique_id) const;
   bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address, bool insertincompletedataforexport) const;
