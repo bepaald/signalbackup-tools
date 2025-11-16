@@ -215,8 +215,8 @@ R"*(
                                          imported to the specified date ranges. The format of the list of
                                          list of dates is the same as `--croptodates'.
    --autolimitdates                      Optional modifier for `--importfromdesktop'. Automatically limit
-                                         the import of messages to those older than the first message in the
-                                         INPUT backup file.
+                                         the import of messages to those older than the first and newer
+                                         than the last message in the INPUT backup file.
    --desktopkey <HEXKEY>                 Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
                                          Provide the decrypted SQLCipher key for decrypting the desktop
                                          database (see README).

@@ -1068,7 +1068,7 @@ R"(
       }
 
       .poll-option-votes-own {
-        margin: 2px 2px 0px 0px;
+        margin: 2px 3px 0px 0px;
         width: 14px;
         height: 14px;
         border-radius: 50%;
