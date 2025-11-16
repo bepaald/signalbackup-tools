@@ -133,6 +133,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --poll-filled-in: " << (light ? "#2C58C3;" : "#B6C5FA;") << "\n"
     "        --poll-unfilled-out: " << (light ? "#8198F8;" : "#5279F6;") << "\n"
     "        --poll-filled-out: " << (light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
+    "        --poll-checkmark-in: " << (light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
     "      }\n"
     "\n";
 
@@ -177,6 +178,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --poll-filled-in: " << (!light ? "#2C58C3;" : "#B6C5FA;") << "\n"
       "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
       "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
+      "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
       "      }"
       "\n";
   }
@@ -1059,6 +1061,40 @@ R"(
       .poll-option-title-votes {
         display: flex;
         justify-content: space-between;
+      }
+
+      .poll-option-votes {
+        display: flex;
+      }
+
+      .poll-option-votes-own {
+        margin: 2px 2px 0px 0px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: flex;
+      }
+
+      .msg-incoming .poll-option-votes-own {
+        background-color: var(--poll-filled-in);
+      }
+
+      .msg-outgoing .poll-option-votes-own {
+        background-color: var(--poll-filled-out);
+      }
+
+      .poll-checkmark {
+        background-image: url('data:image/svg+xml;,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23315FF4" stroke="%23315FF4" stroke-width="1.7"><path d="M9.172,18.5l-6.188,-6.187l1.061,-1.061l5.127,5.127l10.783,-10.784l1.061,1.061l-11.844,11.844z"/></svg>');
+        height: 10px;
+        aspect-ratio: 1 / 1;
+        filter: none;
+        margin-left: auto;
+        margin-right: auto;
+        align-self: center;
+      }
+
+      .msg-incoming .poll-checkmark {
+        filter: var(--poll-checkmark-in);
       }
 
       .poll-options {

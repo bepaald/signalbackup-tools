@@ -104,13 +104,19 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::
     htmloutput
       << std::string(indent, ' ') << "    <div class=\"poll-option\">\n"
       << std::string(indent, ' ') << "      <div class=\"poll-option-title-votes\">\n"
-      << std::string(indent, ' ') << "        <div class=\"poll-option-title\">" << option << "</div>"
-      << "<div class=\"poll-option-votes\">" << votes_per_option[poll_option_id].first << "</div>\n"
+      << std::string(indent, ' ') << "        <div class=\"poll-option-title\">" << option << "</div>" << "<div class=\"poll-option-votes\">";
+    if (bepaald::contains(votes_per_option[poll_option_id].second, d_selfid))
+      htmloutput
+        << "<div class=\"poll-option-votes-own\"><div class=\"poll-checkmark\"></div></div>";
+    htmloutput
+      << votes_per_option[poll_option_id].first << "</div>\n"
       << std::string(indent, ' ') << "      </div>\n"
       << std::string(indent, ' ') << "      <div class=\"poll-option-meter-bar\">";
     if (votes_per_option[poll_option_id].first) // if votes were cast, fill meter bar
       htmloutput << "<div class=\"poll-option-meter-filled\" style=\"width: calc(" << (100 * votes_per_option[poll_option_id].first) << "% / " << maxvotes << ")\"></div>";
     htmloutput << "</div>\n";
+
+    // write vote-details
     if (votes_per_option[poll_option_id].first)
     {
       htmloutput
@@ -123,9 +129,9 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::
         if (name.empty()) [[unlikely]]
           continue;
         HTMLprepMsgBody(&name);
-        htmloutput << "        <div>" << name << "</div>\n";
+        htmloutput << std::string(indent, ' ') << "        <div>" << name << "</div>\n";
       }
-      htmloutput << "      </div>\n";
+      htmloutput << std::string(indent, ' ') << "      </div>\n";
     }
     htmloutput
       << std::string(indent, ' ') << "    </div>\n";
