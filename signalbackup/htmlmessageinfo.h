@@ -48,6 +48,7 @@ struct HTMLMessageInfo
   long long int msg_recipient_id;
   long long int original_message_id;
   long long int quote_id; // 0 if none
+  long long int scheduled_date; // 0 if none
 
   IconType icon; //size: 4
   unsigned int idx;

@@ -35,9 +35,8 @@ std::string SignalBackup::decodePollTerminateMessage(std::string const &body, lo
   */
 
   PollTerminate pollterminate(body);
-
   //std::cout << body << std::endl;
-  //profchangefull.print();
+  //pollterminate.print();
 
   std::string status_message((Types::isOutgoing(type) ? "You" : name) + " ended the poll");
 

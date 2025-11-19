@@ -330,6 +330,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? "parent_story_id, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
+                                    (d_database.tableContainsColumn(d_mms_table, "scheduled_date") ? "scheduled_date, " : "0 AS scheduled_date, "),
                                     (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "), // introduced in 117
                                     (d_database.containsTable("poll") ? "poll._id AS poll_id, " : "-1 AS poll_id, "),
                                     "json_extract(link_previews, '$[0].url') AS link_preview_url, "
@@ -350,6 +351,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (d_database.tableContainsColumn(d_mms_table, "latest_revision_id") ? " AND latest_revision_id IS NULL " : " "),
                                     (d_database.tableContainsColumn(d_mms_table, "story_type") ? " AND story_type = 0 OR story_type IS NULL " : ""), // storytype NONE(0), STORY_WITH(OUT)_REPLIES(1/2), TEXT_...(3/4)
                                     " ORDER BY date_received ASC"), t, &messages);
+
     if (messages.rows() == 0)
     {
       if (d_verbose) [[unlikely]]
@@ -525,6 +527,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             messages.valueAsInt(messagecount, "original_message_id") :
             -1,
             messages.valueAsInt(messagecount, "quote_id", 0),                       // quote_id
+            messages.valueAsInt(messagecount, "scheduled_date", 0),                 // scheduled_date
 
             IconType::NONE,                                                         // icon
             messagecount,                                                           // current message idx in results

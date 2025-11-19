@@ -1274,6 +1274,39 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           Logger::message_end("done");
         continue;
       }
+      else if (type == "poll-terminate")
+      {
+        Logger::warnOnce("Unhandled message type 'poll-terminate'. Skipping message. (this warning will be shown only once)");
+        continue;
+
+        if (d_verbose) [[unlikely]]
+          Logger::message_start("Dealing with ", type, " message... ");
+
+        results_all_messages_from_conversation.printLineMode(j);
+        std::string poll_title(dtdb->d_database.getSingleResultAs<std::string>("SELECT json_extract(json, '$.pollTerminateNotification.question') FROM messages WHERE rowid = ?", rowid, std::string()));
+        std::string poll_msg_id(dtdb->d_database.getSingleResultAs<std::string>("SELECT json_extract(json, '$.pollTerminateNotification.pollMessageId') FROM messages WHERE rowid = ?", rowid, std::string()));
+
+        if (poll_title.empty() || poll_msg_id.empty())
+        {
+          Logger::warning("Incomplete data for poll-terminate message. Skipping...");
+          continue;
+        }
+
+        std::cout << "TITLE: " << poll_title << std::endl;
+        std::cout << "MSGID: " << poll_msg_id << std::endl;
+
+        // get _id,date for added poll message with id poll_msg_id from poll_map (similar to quotemap)
+
+        // construct message_extras
+
+        // insert message.
+
+        // update poll.end_message_id column for this newly inserted terminate message (set _id)
+
+        if (d_verbose) [[unlikely]]
+          Logger::message_end("done");
+        continue;
+      }
       else if (type == "message-request-response-event")
       {
         if (d_verbose) [[unlikely]]

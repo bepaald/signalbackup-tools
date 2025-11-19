@@ -40,6 +40,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                                        "json_extract(link_previews, '$[0].description') AS link_preview_description, ",
                                        (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "),
                                        (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : ""),
+                                       (d_database.tableContainsColumn(d_mms_table, "scheduled_date") ? "scheduled_date, " : "0 AS scheduled_date, "),
                                        "shared_contacts, quote_id, expires_in, ", d_mms_ranges, ", quote_mentions "
                                        "FROM ", d_mms_table, " ",
                                        // get attachment count for message:
@@ -187,6 +188,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             msg_recipient_id,
                             -1, //original_message_id,
                             quote_id, // quote_id
+                            revision.valueAsInt(0, "scheduled_date", 0),
 
                             icon,
                             0, // messagecount, // idx of current message in &messages

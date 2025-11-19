@@ -21,7 +21,8 @@
 
 bool SignalBackup::handleDTPoll(long long int mms_id [[maybe_unused]],
                                 long long int rid [[maybe_unused]],
-                                std::string const &poll_json [[maybe_unused]]) const
+                                std::string const &poll_json [[maybe_unused]]
+                                /*, recipientmap, createcontacts, createcontacts_valid, generatekeys, warn*/) const
 {
   // not supported yet...
   return false;
@@ -93,6 +94,9 @@ bool SignalBackup::handleDTPoll(long long int mms_id [[maybe_unused]],
     // - (NOTE! on Android each individual vote (removed or not), has its own vote_count. On Desktop, removed votes are not saved. Additionally,
     //          when multiple votes are allowed, even if multiple are un-removed and present in the Desktop database, only the current highest
     //          voteCount is saved. I am not sure how Android would deal with this...
+    //   (NOTE2 I think this is ok on Android, old votes are also removed sometimes (when the same option is added and removed multiple times),
+    //          so the voteCount is not a continuum there anyway. I should probably just set the vote_count on the last aadded cote and auto-
+    //          decrement from this number on any other votes (but check count > 0)
 
     // extract timestamp -> date_received (note, even when multiple votes are cast, only one timestamp is saved? we will just use it for all votes)
 
@@ -125,5 +129,10 @@ bool SignalBackup::handleDTPoll(long long int mms_id [[maybe_unused]],
       }
     }
   }
+
+  // insert message
+
+  // save _id, date in poll-map for possible terminate message
+
   */
 }

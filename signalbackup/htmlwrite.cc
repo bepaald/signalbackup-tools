@@ -129,7 +129,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --nav-disabled-f: " << (light ? "brightness(.8);" : "brightness(.15);") << "\n"
     "        --shared-contact-incoming-f: " << (light ? "brightness(1);" : "brightness(.5);") << "\n"
     "        --shared-contact-outgoing-f: " << (light ? "brightness(.9);" : "brightness(1);") << "\n"
-    "        --poll-unfilled-in: " << (light ? "#8D8D92;" : "#1B1C1F;") << "\n"
+    "        --poll-unfilled-in: " << (light ? "#8D8D92;" : "#494A4C;") << "\n"
     "        --poll-filled-in: " << (light ? "#2C58C3;" : "#B6C5FA;") << "\n"
     "        --poll-unfilled-out: " << (light ? "#8198F8;" : "#5279F6;") << "\n"
     "        --poll-filled-out: " << (light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
@@ -174,7 +174,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --nav-disabled-f: " << (!light ? "brightness(.8);" : "brightness(.15);") << "\n"
       "        --shared-contact-incoming-f: " << (!light ? "brightness(1);" : "brightness(.5);") << "\n"
       "        --shared-contact-outgoing-f: " << (!light ? "brightness(.9);" : "brightness(1);") << "\n"
-      "        --poll-unfilled-in: " << (!light ? "#8D8D92;" : "#1B1C1F;") << "\n"
+      "        --poll-unfilled-in: " << (!light ? "#8D8D92;" : "#494A4C;") << "\n"
       "        --poll-filled-in: " << (!light ? "#2C58C3;" : "#B6C5FA;") << "\n"
       "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
       "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
@@ -324,6 +324,12 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         background: rgba(0, 0, 0, 0);
         border: 1px solid var(--deletedmsg-border);
         color: var(--deletedmsg-c);
+      }
+
+      .scheduled-header {
+        font-style: italic;
+        font-size: smaller;
+        padding: 0px 0px 3px 3px;
       }
 
       .avatar {
@@ -1115,7 +1121,7 @@ R"(
       .poll-option-meter-bar {
         width: 100%;
         height: 10px;
-        border-radius: 5px 5px 5px 5px;
+        border-radius: 4px;
         overflow: hidden;
         margin-top: 5px;
         margin-bottom: 5px;
@@ -1126,6 +1132,10 @@ R"(
       }
       .msg-outgoing .poll-option-meter-bar {
         background: var(--poll-unfilled-out);
+      }
+
+      .poll-option-meter-filled {
+        border-radius: inherit;
       }
 
       .msg-incoming .poll-option-meter-filled {
@@ -2321,11 +2331,31 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
     long long int uniqueid = attachment_results.getValueAs<long long int>(a, "unique_id");
     long long int pending_push = attachment_results.getValueAs<long long int>(a, d_part_pending);
 
-    if (pending_push != 0)
+    if (pending_push != 0) [[unlikely]]
     {
+      /*
+        const val TRANSFER_PROGRESS_DONE = 0
+        const val TRANSFER_PROGRESS_STARTED = 1
+        const val TRANSFER_PROGRESS_PENDING = 2
+        const val TRANSFER_PROGRESS_FAILED = 3
+        const val TRANSFER_PROGRESS_PERMANENT_FAILURE = 4
+        const val TRANSFER_NEEDS_RESTORE = 5
+        const val TRANSFER_RESTORE_IN_PROGRESS = 6
+        const val TRANSFER_RESTORE_OFFLOADED = 7
+      */
       htmloutput << std::string(indent, ' ') << "<div class=\"attachment\">\n";
       htmloutput << std::string(indent, ' ') << "  <div class=\"pending-attachment\">\n";
-      htmloutput << std::string(indent, ' ') << "    (attachment not downloaded)\n";
+      // these are made up error messages. on device, these attachments are simply not there
+      if (pending_push == 3 || pending_push == 4)
+        htmloutput << std::string(indent, ' ') << "    (attachment download failed)\n";
+      else if (pending_push == 1)
+        htmloutput << std::string(indent, ' ') << "    (attachment download started)\n";
+      else if (pending_push == 2)
+        htmloutput << std::string(indent, ' ') << "    (attachment download pending)\n";
+      else if (pending_push == 5 || pending_push == 6 || pending_push == 7)
+        htmloutput << std::string(indent, ' ') << "    (attachment not restored)\n";
+      else
+        htmloutput << std::string(indent, ' ') << "    (attachment not available)\n";
       htmloutput << std::string(indent, ' ') << "  </div>\n";
       htmloutput << std::string(indent, ' ') << "</div>\n";
       return;
@@ -2575,6 +2605,13 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
                << (msg_info.is_viewonce ? " msg-viewonce" : "")
                << ((msg_info.is_deleted && !msg_info.is_viewonce) ? " deleted-msg" : "")
                << (msg_info.reaction_results->rows() ? " msg-with-reaction" : "")<< "\">\n";
+
+  // scheduled messages
+  if (msg_info.scheduled_date > 0) [[unlikely]]
+  {
+    std::string sched_date(bepaald::toDateString(msg_info.scheduled_date / 1000, "%b %d, %Y %H:%M"));
+    htmloutput << std::string(extraindent, ' ') << "            <div class=\"scheduled-header\">Message scheduled for " << sched_date << ":</div>\n";
+  }
 
   // for incoming group (normal) message: Senders name before message content
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
