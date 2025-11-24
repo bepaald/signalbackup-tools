@@ -326,6 +326,12 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     // timestamps <to, from>
     std::map<long long int, long long int> adjusted_timestamps;
 
+    // similar for poll_terminate messages and the poll (the poll-terminate also has the polls message_id.
+    // also, we save whether the poll terminated at all, if the poll-terminate gives an error on insertion
+    // we could deal with the poll (if needed)
+    // poll.message_id -> {poll-timestamp, has_terminated}
+    std::map<long long int, std::pair<long long int, bool>> poll_map;
+
     //std::cout << "Match for " << person_or_group_id << std::endl;
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
 
@@ -534,7 +540,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           {
             Logger::warning("Failed to get uuid for incoming group profile-change.");
             // print some extra info
-            //dtdb->d_database.printLineMode("SELECT * FROM messaages WHERE rowid IS ?)", rowid);
+            //dtdb->d_database.printLineMode("SELECT * FROM messages WHERE rowid IS ?)", rowid);
           }
         }
         else if (type == "keychange")
@@ -572,7 +578,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           results_all_messages_from_conversation.valueAsString(j, "sourcephone");
 
         if (source_uuid.empty() || (address = getRecipientIdFromUuidMapped(source_uuid, &recipientmap, createmissingcontacts)) == -1) // try with phone number
-          address = getRecipientIdFromPhoneMapped(source_phone, &recipientmap, createmissingcontacts);
+          address = source_phone.empty() ? -1 : getRecipientIdFromPhoneMapped(source_phone, &recipientmap, createmissingcontacts);
         if (address == -1)
         {
           if (createmissingcontacts)
@@ -1912,9 +1918,21 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                            results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"));
 
         // insert poll if present
-        if (!results_all_messages_from_conversation(j, "poll").empty())
+        if (!results_all_messages_from_conversation(j, "poll").empty() && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) != 1)
         {
-          handleDTPoll(new_mms_id, incoming ? address : d_selfid, results_all_messages_from_conversation(j, "poll"));
+          long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+          handleDTPoll(dtdb->d_database,
+                       databasedir,
+                       new_mms_id,
+                       incoming ? address : d_selfid,
+                       bepaald::map_value_or(adjusted_timestamps, originaldate, originaldate),
+                       results_all_messages_from_conversation(j, "poll"),
+                       &recipientmap,
+                       &poll_map,
+                       createmissingcontacts,
+                       createmissingcontacts_valid,
+                       generatestoragekeys,
+                       &warned_createcontacts);
         }
 
         if (outgoing)

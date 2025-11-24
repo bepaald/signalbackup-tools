@@ -90,6 +90,12 @@ inline DummyBackup::DummyBackup(bool verbose, bool truncate, bool showprogress)
   if (!d_database.exec("CREATE TABLE group_receipts (_id INTEGER PRIMARY KEY, mms_id INTEGER, address TEXT, status INTEGER, timestamp INTEGER, unidentified INTEGER DEFAULT 0)"))
     return;
 
+  // POLL
+  if (!d_database.exec("CREATE TABLE poll (_id INTEGER PRIMARY KEY AUTOINCREMENT,author_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE,message_id INTEGER NOT NULL REFERENCES message (_id) ON DELETE CASCADE,question TEXT,allow_multiple_votes INTEGER DEFAULT 0,end_message_id INTEGER DEFAULT 0)") ||
+      !d_database.exec("CREATE TABLE poll_option (_id INTEGER PRIMARY KEY AUTOINCREMENT,poll_id INTEGER NOT NULL REFERENCES poll (_id) ON DELETE CASCADE,option_text TEXT,option_order INTEGER)") ||
+      !d_database.exec("CREATE TABLE IF NOT EXISTS poll_vote (_id INTEGER PRIMARY KEY AUTOINCREMENT,poll_id INTEGER NOT NULL REFERENCES poll (_id) ON DELETE CASCADE,poll_option_id INTEGER DEFAULT NULL REFERENCES poll_option (_id) ON DELETE CASCADE,voter_id INTEGER NOT NULL REFERENCES recipient (_id) ON DELETE CASCADE,vote_count INTEGER,date_received INTEGER DEFAULT 0,vote_state INTEGER DEFAULT 0)"))
+    return;
+
   // IDENTITIES // not really strictly necessary, but dtInsertRecipient now tries to fill this table...
   if (!d_database.exec("CREATE TABLE identities (_id INTEGER PRIMARY KEY AUTOINCREMENT, address INTEGER UNIQUE, identity_key TEXT, first_use INTEGER DEFAULT 0, timestamp INTEGER DEFAULT 0, verified INTEGER DEFAULT 0, nonblocking_approval INTEGER DEFAULT 0)"))
     return;
