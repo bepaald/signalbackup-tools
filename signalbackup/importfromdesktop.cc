@@ -329,8 +329,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     // similar for poll_terminate messages and the poll (the poll-terminate also has the polls message_id.
     // also, we save whether the poll terminated at all, if the poll-terminate gives an error on insertion
     // we could deal with the poll (if needed)
-    // poll.message_id -> {poll-timestamp, has_terminated}
-    std::map<long long int, std::pair<long long int, bool>> poll_map;
+    // poll.message_id(dt) -> {poll-message-id(android,imported),poll-timestamp(android,imported)}
+    std::map<std::string, std::pair<long long int, long long int>> poll_map;
 
     //std::cout << "Match for " << person_or_group_id << std::endl;
     //std::cout << " - ID of thread in Android database that matches the conversation in desktopdb: " << ttid << std::endl;
@@ -418,6 +418,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     {
       if (!dtdb->d_database.exec("SELECT "
                                  "rowid,"
+                                 "id,"
                                  "json_extract(json, '$.quote') AS quote,"
                                  "IFNULL(numattachments, 0) AS numattachments,"
                                  "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
@@ -444,7 +445,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "isStory"
                                  " FROM messages "
                                  "LEFT JOIN (SELECT messageId, COUNT(*) AS numattachments FROM message_attachments WHERE editHistoryIndex = -1 GROUP BY messageId) AS attmnts ON messages.id = attmnts.messageId "
-                                 "WHERE conversationId = ?" + datewhereclause,
+                                 "WHERE conversationId = ?" + datewhereclause + " ORDER BY sent_at",
                                  results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
       {
         Logger::error("Failed to retrieve message from this conversation.");
@@ -455,6 +456,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     {
       if (!dtdb->d_database.exec("SELECT "
                                  "rowid,"
+                                 "id,"
                                  "json_extract(json, '$.quote') AS quote,"
                                  "IFNULL(json_array_length(json, '$.attachments'), 0) AS numattachments,"
                                  "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
@@ -479,7 +481,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "IFNULL(json_extract(json, '$.callId'), '') AS callId,"
                                  "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                                  "isStory"
-                                 " FROM messages WHERE conversationId = ?" + datewhereclause,
+                                 " FROM messages WHERE conversationId = ?" + datewhereclause + " ORDER BY sent_at",
                                  results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
       {
         Logger::error("Failed to retrieve message from this conversation.");
@@ -1282,32 +1284,165 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       }
       else if (type == "poll-terminate")
       {
-        Logger::warnOnce("Unhandled message type 'poll-terminate'. Skipping message. (this warning will be shown only once)");
-        continue;
+        if (createmissingcontacts_valid)
+        {
+          Logger::warnOnce("Unhandled message type 'poll-terminate'. Skipping message. (this warning will be shown only once)");
+          continue;
+        }
 
         if (d_verbose) [[unlikely]]
           Logger::message_start("Dealing with ", type, " message... ");
 
-        results_all_messages_from_conversation.printLineMode(j);
-        std::string poll_title(dtdb->d_database.getSingleResultAs<std::string>("SELECT json_extract(json, '$.pollTerminateNotification.question') FROM messages WHERE rowid = ?", rowid, std::string()));
-        std::string poll_msg_id(dtdb->d_database.getSingleResultAs<std::string>("SELECT json_extract(json, '$.pollTerminateNotification.pollMessageId') FROM messages WHERE rowid = ?", rowid, std::string()));
+        //dtdb->d_database.printLineMode("SELECT json FROM messages WHERE rowid = ?", rowid);
 
-        if (poll_title.empty() || poll_msg_id.empty())
+        SqliteDB::QueryResults poll_terminate_results;
+        if (!dtdb->d_database.exec("SELECT json_extract(json, '$.pollTerminateNotification.question') AS question,"
+                                   "json_extract(json, '$.pollTerminateNotification.pollMessageId') AS pollMessageId "
+                                   "FROM messages WHERE rowid = ?", rowid, &poll_terminate_results) ||
+            poll_terminate_results.rows() != 1) [[unlikely]]
+        {
+          Logger::warning("Failed to get poll-terminate-message data");
+          continue;
+        }
+        std::string poll_title(poll_terminate_results("question"));
+        std::string poll_msg_id(poll_terminate_results("pollMessageId"));
+        if (poll_title.empty() || poll_msg_id.empty()) [[unlikely]]
         {
           Logger::warning("Incomplete data for poll-terminate message. Skipping...");
           continue;
         }
 
-        std::cout << "TITLE: " << poll_title << std::endl;
-        std::cout << "MSGID: " << poll_msg_id << std::endl;
+        // std::cout << "TITLE: " << poll_title << std::endl;
+        // std::cout << "MSGID: " << poll_msg_id << std::endl;
 
         // get _id,date for added poll message with id poll_msg_id from poll_map (similar to quotemap)
+        auto it = poll_map.find(poll_msg_id);
+        if (it == poll_map.end()) [[unlikely]]
+        {
+          Logger::warning("Closed poll not found");
+          continue;
+        }
+
+        long long int android_msg_id = it->second.first;
+        long long int android_msg_timestamp = it->second.second;
+
+        // NOTE: incoming/outgoing are not valid for poll-terminate. Check the sourceUuid
+        // and compare against self.
+        // BECAUSE incoming/outgoing WAS NOT VALID, address may also not be valid
+        // (the code that sets the address for incoming group messages, needs to know
+        // if it's incoming. But in order to know if it's incoming, we need the address...
+        // At the earlier site, the initial check against selfid is not good to do
+        // because recipientmap, may still be empty at that point.
+        std::string source_uuid = results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
+        long long int source_rid = getRecipientIdFromUuidMapped(source_uuid, &recipientmap, createmissingcontacts);
+        if (source_rid == -1) [[unlikely]]
+        {
+          Logger::warning("Failed to get poll-terminate message source id");
+          continue;
+        }
+        outgoing = (source_rid == d_selfid);
+        incoming = !outgoing;
+        if (isgroupconversation && incoming)
+        {
+          address = getRecipientIdFromUuidMapped(source_uuid, &recipientmap, createmissingcontacts);
+          if (address == -1)
+          {
+            if (createmissingcontacts)
+            {
+              if ((address = dtCreateRecipient(dtdb->d_database, source_uuid, std::string(), std::string(), databasedir, &recipientmap,
+                                               createmissingcontacts_valid, generatestoragekeys, &warned_createcontacts)) == -1)
+              {
+                Logger::error("Failed to create contact for incoming poll-terminate message. Skipping");
+                continue;
+              }
+            }
+            else
+            {
+              Logger::error("Failed to set address of incoming poll-terminate message. Skipping");
+              continue;
+            }
+          }
+        }
+        else
+          address = recipientid_for_thread; // message is 1-on-1 or outgoing_group
+
+
+        long long int poll_terminate_type = Types::SECURE_MESSAGE_BIT | Types::PUSH_MESSAGE_BIT |
+          Types::SPECIAL_TYPE_POLL_TERMINATE  | (incoming ? Types::BASE_INBOX_TYPE : Types::BASE_SENT_TYPE);
+
+        // std::cout << "MSGID(I):" << android_msg_id << std::endl;
+        // std::cout << "TIMESTAMP:" << android_msg_timestamp << std::endl;
+        // std::cout << "type: " << type << std::endl;
+        // std::cout << "incoming: " << incoming << std::endl;
 
         // construct message_extras
+        /*
+        // from app/src/main/protowire/Database.proto
+
+        message PollTerminate {
+          string question = 1;
+          uint64 messageId = 2;
+          uint64 targetTimestamp = 3;
+        }
+        */
+        PollTerminate pollterminate;
+        pollterminate.addField<1>(poll_title);
+        pollterminate.addField<2>(android_msg_id);
+        pollterminate.addField<3>(android_msg_timestamp);
+
+        if (d_database.containsTable("sms") ||
+            !d_database.tableContainsColumn(d_mms_table, "message_extras")) [[unlikely]]
+        {
+          Logger::message("inserting poll-terminate: database too old, or does not have message_extras column in message table");
+          continue;
+        }
+        MessageExtras me;
+        me.addField<5>(pollterminate);
 
         // insert message.
+        std::any new_mms_id;
+        if (!d_database.tableContainsColumn(d_mms_table, "to_recipient_id"))
+        {
+          if (!insertRow(d_mms_table, {{"thread_id", ttid},
+                                       {d_mms_date_sent, results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {"date_received", results_all_messages_from_conversation.value(j, "sent_at")},
+                                       {d_mms_type, poll_terminate_type},
+                                       {"message_extras", std::pair<unsigned char *, unsigned long long>{me.data(), me.size()}},
+                                       {d_mms_recipient_id, address},
+                                       {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                       {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+              "_id", &new_mms_id))
+          {
+            if (d_verbose) [[unlikely]] Logger::message_end();
+            Logger::error("Inserting poll-terminate into mms");
+            return false;
+          }
+        }
+        else
+        {
+          long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
+          if (!tryInsertRowElseAdjustDate(d_mms_table,
+                                          {{"thread_id", ttid},
+                                           {d_mms_date_sent, originaldate},
+                                           {"date_received", originaldate},
+                                           {d_mms_type, poll_terminate_type},
+                                           {"message_extras", std::pair<unsigned char *, unsigned long long>{me.data(), me.size()}},
+                                           {d_mms_recipient_id, incoming ? address : d_selfid},
+                                           {"to_recipient_id", incoming ? d_selfid : address},
+                                           {d_mms_recipient_device_id, 1}, // not sure what this is but at least for profile-change
+                                           {"read", 1}},                   // it is hardcoded to 1 in Signal Android (as is 'read')
+                                          {1, 2}, originaldate, ttid, Types::isOutgoing(Types::PROFILE_CHANGE_TYPE) ? d_selfid : address,
+                                          &adjusted_timestamps, "_id", &new_mms_id))
+          {
+            if (d_verbose) [[unlikely]] Logger::message_end();
+            Logger::error("Inserting poll-terminate into mms");
+            return false;
+          }
+        }
 
         // update poll.end_message_id column for this newly inserted terminate message (set _id)
+        if (!d_database.exec("UPDATE poll SET end_message_id = ? WHERE message_id = ?", {new_mms_id, android_msg_id}))
+          Logger::warning("Failed to update poll table with end_message_id");
 
         if (d_verbose) [[unlikely]]
           Logger::message_end("done");
@@ -1918,13 +2053,14 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                            results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at"));
 
         // insert poll if present
-        if (!results_all_messages_from_conversation(j, "poll").empty() && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) != 1)
+        if (!results_all_messages_from_conversation(j, "poll").empty())
         {
           long long int originaldate = results_all_messages_from_conversation.getValueAs<long long int>(j, "sent_at");
           handleDTPoll(dtdb->d_database,
                        databasedir,
                        new_mms_id,
                        incoming ? address : d_selfid,
+                       results_all_messages_from_conversation(j, "id"),
                        bepaald::map_value_or(adjusted_timestamps, originaldate, originaldate),
                        results_all_messages_from_conversation(j, "poll"),
                        &recipientmap,

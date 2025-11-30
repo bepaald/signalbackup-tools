@@ -448,13 +448,14 @@ class SignalBackup
   bool dtInsertAttachmentsOld(long long int mms_id, long long int unique_id, int numattachments, long long int haspreviews,
                               long long int rowid, SqliteDB const &ddb, std::string const &where,
                               std::string const &databasedir, bool isquote, bool issticker, bool targetisdummy);
-  bool handleDTPoll(SqliteDB const &ddb, std::string const &databasedir, long long int mms_id, long long int rid,
+  bool handleDTPoll(SqliteDB const &ddb, std::string const &databasedir, long long int mms_id, long long int rid, std::string const &pollmsg_id,
                     long long int pollmsg_date, std::string const &poll_json, std::map<std::string, long long int> *savedmap,
-                    std::map<long long int, std::pair<long long int, bool>> *pollmap, bool createcontacts,
-                    bool create_valid_contacts, bool generatestoragekeys, bool *warn);
+                    std::map<std::string, std::pair<long long int, long long int>> *pollmap, bool createcontacts, bool create_valid_contacts,
+                    bool generatestoragekeys, bool *warn);
   bool dtSetLinkPreviewData(long long int mms_id, long long int rowid, SqliteDB const &ddb) const;
   bool dtUpdateLinkPreviewAttachment(long long int mms_id, long long int new_part_id, long long int unique_id) const;
-  bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address, bool insertincompletedataforexport) const;
+  bool handleDTCallTypeMessage(SqliteDB const &ddb, std::string const &callid, long long int rowid, long long int ttid, long long int address,
+                               bool insertincompletedataforexport) const;
   bool handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
                                   long long int date, std::map<long long int, long long int> *adjusted_timestamps,
                                   std::map<std::string, long long int> *savedmap, std::string const &databasedir, bool istimermessage,

@@ -20,8 +20,9 @@
 #include "signalbackup.ih"
 
 bool SignalBackup::handleDTPoll(SqliteDB const &ddb, std::string const &databasedir, long long int mms_id, long long int rid,
-                                long long int pollmsg_date, std::string const &poll_json, std::map<std::string, long long int> *recipientmap,
-                                std::map<long long int, std::pair<long long int, bool>> *pollmap,
+                                std::string const &pollmsg_id, long long int pollmsg_date, std::string const &poll_json,
+                                std::map<std::string, long long int> *recipientmap,
+                                std::map<std::string, std::pair<long long int, long long int>> *pollmap,
                                 bool createcontacts, bool create_valid_contacts, bool generatestoragekeys,
                                 bool *warn)
 {
@@ -193,7 +194,7 @@ bool SignalBackup::handleDTPoll(SqliteDB const &ddb, std::string const &database
 
   // set data in poll-map, for handling of any poll-terminate message;
   if (pollmap)
-    pollmap->emplace(mms_id, std::make_pair(pollmsg_date, poll_dt_data.valueAsInt(0, "terminatedAt")));
+    pollmap->emplace(pollmsg_id, std::make_pair(mms_id, pollmsg_date));
 
   return true;
 }
