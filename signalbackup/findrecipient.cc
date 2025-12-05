@@ -105,6 +105,7 @@ bool SignalBackup::findRecipient(long long int id) const
   // check old style? group members
   SqliteDB::QueryResults results;
   std::set<long long int> oldstylegroupmembers;
+  std::istringstream ss;
   for (auto const &members : {"members"s, d_groups_v1_members})
   {
     if (!d_database.tableContainsColumn("groups", members))
@@ -114,7 +115,7 @@ bool SignalBackup::findRecipient(long long int id) const
     for (unsigned int i = 0; i < results.rows(); ++i)
     {
       std::string membersstr = results.getValueAs<std::string>(i, members);
-      std::istringstream ss(membersstr);
+      ss.str(std::move(membersstr));
       while (ss.good())
       {
         std::string substr;
@@ -122,6 +123,7 @@ bool SignalBackup::findRecipient(long long int id) const
         //Logger::message("ADDING ", members, " MEMBER: ", substr);
         oldstylegroupmembers.insert(bepaald::toNumber<int>(substr));
       }
+      ss.clear();
     }
   }
   if (bepaald::contains(oldstylegroupmembers, id))

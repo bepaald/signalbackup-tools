@@ -235,6 +235,7 @@ void SignalBackup::cleanDatabaseByMessages()
 
     // get (former)group members
     SqliteDB::QueryResults results;
+    std::istringstream ss;
     for (auto const &members : {"members"s, d_groups_v1_members})
     {
       if (!d_database.tableContainsColumn("groups", members))
@@ -244,7 +245,7 @@ void SignalBackup::cleanDatabaseByMessages()
       for (unsigned int i = 0; i < results.rows(); ++i)
       {
         std::string membersstr = results.getValueAs<std::string>(i, members);
-        std::istringstream ss(membersstr);
+        ss.str(std::move(membersstr));
         while (ss.good())
         {
           std::string substr;
@@ -252,6 +253,7 @@ void SignalBackup::cleanDatabaseByMessages()
           //Logger::message("ADDING ", members, " MEMBER: ", substr);
           referenced_recipients.insert(bepaald::toNumber<int>(substr));
         }
+        ss.clear();
       }
     }
     if (d_database.containsTable("group_membership"))

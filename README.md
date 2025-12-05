@@ -1116,4 +1116,4 @@ BTC: 17RqHi9XBeUAEShbp2RnbmkCSAU2R94tH4
 
 Donations will help development in that they will put food in my mouth, and I need food to write code :smile:
 
-You might also consider helping out the Signal Foundation here: https://support.signal.org/hc/en-us/articles/360007319831-How-can-I-contribute-to-Signal-
+You might also consider helping out the Signal Foundation here: https://signal.org/donate
