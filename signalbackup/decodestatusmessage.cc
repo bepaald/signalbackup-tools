@@ -984,12 +984,24 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
   return body;
 }
 
-
 std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned char []>, size_t> const &body, long long int expiration,
                                               long long int type, std::string const &contactname, IconType *icon) const
 {
   // get GroupV2Context from MessageExtras, pass it as a base64string to decodestatusmessage
+  /*
+    message MessageExtras {
+      oneof extra {
+        GV2UpdateDescription gv2UpdateDescription = 1;
+        signalservice.GroupContext gv1Context     = 2;
+        ProfileChangeDetails profileChangeDetails = 3;
+        PaymentTombstone paymentTombstone = 4;
+        PollTerminate pollTerminate = 5;
+        PinnedMessage pinnedMessage = 6;
+      }
+    }
+  */
   MessageExtras me(body);
+
   auto field1 = me.getField<1>();
   if (field1.has_value()) // GV2UpdateDescription
   {
@@ -997,18 +1009,18 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
     if (field1_1.has_value())
       return decodeStatusMessage(field1_1->getDataString(), expiration, type, contactname, icon);
   }
-  else
-  {
-    auto field3 = me.getField<3>(); // ProfileChangeDetails
-    if (field3.has_value())
-      return decodeProfileChangeMessage(field3->getDataString(), contactname, icon);
-    else
-    {
-      auto field5 = me.getField<5>(); // PollTerminate
-      if (field5.has_value())
-        return decodePollTerminateMessage(field5->getDataString(), type, contactname, icon);
-    }
-  }
+
+  auto field3 = me.getField<3>(); // ProfileChangeDetails
+  if (field3.has_value())
+    return decodeProfileChangeMessage(field3->getDataString(), contactname, icon);
+
+  auto field5 = me.getField<5>(); // PollTerminate
+  if (field5.has_value())
+    return decodePollTerminateMessage(field5->getDataString(), type, contactname, icon);
+
+  // auto field6 = me.getField<6>(); // PinnedMessage
+  // if (field6.has_value())
+  //   return "PinnedMessage (not yet implemented)";
 
   return std::string();
 }

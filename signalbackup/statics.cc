@@ -81,7 +81,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"call", "message_id"},
       {"message", "latest_revision_id"},
       {"message", "original_message_id"},
-      //{"message", "pinning_message_id", "pinning_message_id != 0"}, // column has default 0, but only refers to a message when != 0
+      {"message", "pinning_message_id", "pinning_message_id != 0"}, // column has default 0, but only refers to a message when != 0
       {"poll", "message_id"}
     },
     0

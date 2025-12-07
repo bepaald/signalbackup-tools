@@ -693,6 +693,15 @@ message PollTerminate {
 */
 typedef ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::UINT64, protobuffer::optional::UINT64> PollTerminate;
 
+/*
+message PinnedMessage {
+    uint64 pinnedMessageId = 1;
+    bytes targetAuthorAci = 2;
+    uint64 targetTimestamp = 3;
+    uint64 pinDurationInSeconds = 4; // Long.MAX_VALUE if pin is forever
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::UINT64, protobuffer::optional::BYTES, protobuffer::optional::UINT64, protobuffer::optional::UINT64> PinnedMessage;
 
 /*
 message MessageExtras {
@@ -702,9 +711,10 @@ message MessageExtras {
         ProfileChangeDetails profileChangeDetails = 3;
         PaymentTombstone paymentTombstone = 4;
         PollTerminate pollTerminate = 5;
+        PinnedMessage pinnedMessage = 6;
     }
 }
 */
-typedef ProtoBufParser<GV2UpdateDescription, GroupContext, ProfileChangeDetails, PaymentTombstone, PollTerminate> MessageExtras;
+typedef ProtoBufParser<GV2UpdateDescription, GroupContext, ProfileChangeDetails, PaymentTombstone, PollTerminate, PinnedMessage> MessageExtras;
 
 #endif
