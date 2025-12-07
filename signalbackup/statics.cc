@@ -81,6 +81,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"call", "message_id"},
       {"message", "latest_revision_id"},
       {"message", "original_message_id"},
+      {"message", "pinning_message_id", "pinning_message_id != 0"}, // column has default 0, but only refers to a message when != 0
       {"poll", "message_id"}
     },
     0
@@ -392,8 +393,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     {},
     0
   },
-  {         // NOTE e164 is also UNIQUE, remove doubles (oldeest?) beforehand
-    "cds",  // 'Caontact Discovery Service (v2)??'
+  {         // NOTE e164 is also UNIQUE, remove doubles (oldest?) beforehand
+    "cds",  // 'Contact Discovery Service (v2)??'
     "_id",
     {},
     0
@@ -433,15 +434,11 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
   {
     "kyber_prekey",
     "_id",
-    {},
+    {
+      {"last_resort_key_tuple", "kyber_prekey_id"}
+    },
     0
   },
-  // {
-  //   "kyber_prekey",
-  //   "key_id",
-  //   {},
-  //   0
-  // },
   {
     "name_collision",
     "_id",
@@ -503,6 +500,18 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     {
       {"poll_vote", "poll_option_id"}
     },
+    0
+  },
+  {
+    "poll_vote",
+    "_id",
+    {},
+    0
+  },
+  {
+    "last_resort_key_tuple", // not sure about this one...
+    "_id",
+    {},
     0
   }
 };
