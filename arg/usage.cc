@@ -220,6 +220,9 @@ R"*(
    --desktopkey <HEXKEY>                 Optional modifier for `--importfromdesktop` and `--dumpdesktopdb`.
                                          Provide the decrypted SQLCipher key for decrypting the desktop
                                          database (see README).
+   --generatemissingstoragekeys          Optional modifier for `--importfromdesktop`. Generate random
+                                         storageIds, if they are missing from the database. Please see
+                                         github issue #352 for details before using this option.
 --deleteattachments                      Delete attachments from backup file.
    --onlyinthreads <LIST_OF_THREADS>     Optional modifier for `--deleteattachments' and
                                          `--replaceattachments'. Only deal with attachments within these
