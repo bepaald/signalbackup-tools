@@ -899,7 +899,7 @@ bool SignalBackup::hiperfall(uint64_t t_id, std::string const &selfid)
   d_database.exec("DELETE FROM thread WHERE _id IS NOT ?", t_id);
   cleanDatabaseByMessages();
 
-  auto setType = [](uint64_t oldtype, uint64_t newtype) STATICLAMBDA { return (oldtype & ~(static_cast<uint64_t> (0x1f))) + newtype; };
+  auto setType = [](uint64_t oldtype, uint64_t newtype) STATICLAMBDA { return (oldtype & ~(static_cast<uint64_t> (0x1f))) | newtype; };
 
   if (d_database.containsTable("sms"))
   {

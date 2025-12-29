@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 
     if (!arg.exportdesktophtml().empty())
       if (!dummydb.exportHtml(arg.exportdesktophtml(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
-                              (arg.split_bool() ? arg.split() : -1), arg.setselfid(),  arg.includecalllog(), arg.searchpage(),
+                              (arg.split_bool() ? arg.split() : -1), arg.setorigin(), arg.setselfid(),  arg.includecalllog(), arg.searchpage(),
                               arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                               arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                               arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.exportHtml(arg.exportplaintextbackuphtml().back(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
-                            (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
+                            (arg.split_bool() ? arg.split() : -1), arg.setorigin(), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                             arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!dummydb.exportHtml(arg.exportadbbackuptohtml_2(), {} /*limittothreads*/, arg.limittodates(), arg.split_by(),
-                            (arg.split_bool() ? arg.split() : -1), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
+                            (arg.split_bool() ? arg.split() : -1), arg.setorigin(), arg.setselfid(), arg.includecalllog(), arg.searchpage(),
                             arg.stickerpacks(), arg.migratedb(), arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(),
                             arg.addexportdetails(), arg.includeblockedlist(), arg.includefullcontactlist(), false /*arg.includesettings()*/,
                             arg.includereceipts(), arg.originalfilenames(), arg.linkify(), arg.chatfolders(), arg.compactfilenames(),
@@ -625,8 +625,8 @@ int main(int argc, char *argv[])
 
   if (!arg.exporthtml().empty())
     if (!sb->exportHtml(arg.exporthtml(), limittothreads, arg.limittodates(), arg.split_by(), (arg.split_bool() ? arg.split() : -1),
-                        arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(), arg.overwrite(),
-                        arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
+                        arg.setorigin(), arg.setselfid(), arg.includecalllog(), arg.searchpage(), arg.stickerpacks(), arg.migratedb(),
+                        arg.overwrite(), arg.append(), arg.light(), arg.themeswitching(), arg.addexportdetails(), arg.includeblockedlist(),
                         arg.includefullcontactlist(), arg.includesettings(), arg.includereceipts(), arg.originalfilenames(),
                         arg.linkify(), arg.chatfolders(), arg.compactfilenames(), arg.htmlpagemenu(), arg.aggressivefilenamesanitizing(),
                         arg.excludeexpiring(), arg.htmlfocusend(), arg.htmlignoremediatypes()))

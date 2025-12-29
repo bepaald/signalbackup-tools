@@ -32,8 +32,8 @@
 
 bool SignalBackup::exportHtml(std::string const &directory, std::vector<long long int> const &limittothreads,
                               std::vector<std::string> const &daterangelist, std::string const &splitby,
-                              long long int split, std::string const &selfphone, bool calllog, bool searchpage,
-                              bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
+                              long long int split, long long int origin, std::string const &selfphone, bool calllog,
+                              bool searchpage, bool stickerpacks, bool migrate, bool overwrite, bool append, bool lighttheme,
                               bool themeswitching, bool addexportdetails, bool blocked, bool fullcontacts,
                               bool settings, bool receipts, bool originalfilenames, bool linkify, bool chatfolders,
                               bool compact, bool pagemenu, bool aggressive_sanitizing, bool excludeexpiring,
@@ -85,6 +85,40 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   else
   {
     note_to_self_thread_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM thread WHERE " + d_thread_recipient_id + " = ?", d_selfid, -1);
+    d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
+  }
+
+  // set origin if requested...
+  if (origin != -1)
+  {
+    // set all messages incoming (audio/video calls too)
+    d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
+                    "WHERE " + d_mms_type + " & 0x1f = ?", {Types::INCOMING_AUDIO_CALL_TYPE, Types::OUTGOING_AUDIO_CALL_TYPE});
+    d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
+                    "WHERE " + d_mms_type + " & 0x1f = ?", {Types::INCOMING_VIDEO_CALL_TYPE, Types::OUTGOING_VIDEO_CALL_TYPE});
+    d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
+                    "WHERE " + d_mms_type + " & 0x1f = ?", {Types::BASE_INBOX_TYPE, Types::BASE_SENT_TYPE});
+
+    // remove messages that are _always_ outgoing ()  \__ safety number changed/verified/base_sending?/BASE_SENT_FAILED_TYPE/BASE_DRAFT_TYPE,
+    // maybe remove all that are always incoming?     /   group invites?
+    d_database.exec("DELETE FROM " + d_mms_table + " WHERE " + d_mms_type + " & 0xFF00 != 0"); // key_exchange mask (all safety number stuff)
+    d_database.exec("DELETE FROM " + d_mms_table + " WHERE " + d_mms_type + " & 0x1f = ?", Types::BASE_SENT_FAILED_TYPE);
+    d_database.exec("DELETE FROM " + d_mms_table + " WHERE " + d_mms_type + " & 0x1f = ?", Types::BASE_DRAFT_TYPE);
+
+    if (origin > 0)
+    {
+      // set to_recipient to thread, where from = origin
+      // set outgoing where from = origin
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
+                      "WHERE from_recipient_id = ? AND " + d_mms_type + " & 0x1f = ?", {Types::OUTGOING_AUDIO_CALL_TYPE, origin, Types::INCOMING_AUDIO_CALL_TYPE});
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
+                      "WHERE from_recipient_id = ? AND " + d_mms_type + " & 0x1f = ?", {Types::OUTGOING_VIDEO_CALL_TYPE, origin, Types::INCOMING_VIDEO_CALL_TYPE});
+      d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
+                      "WHERE from_recipient_id = ? AND " + d_mms_type + " & 0x1f = ?", {Types::BASE_SENT_TYPE, origin, Types::BASE_INBOX_TYPE});
+    }
+
+    d_selfid = origin;
+    note_to_self_thread_id = -1;
     d_selfuuid = bepaald::toLower(d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?", d_selfid, std::string()));
   }
 
