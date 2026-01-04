@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -896,7 +896,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     SqliteDB::QueryResults cf_details;
     SqliteDB::QueryResults cf_details_members_included;
     SqliteDB::QueryResults cf_details_members_excluded;
-    if (d_database.exec("SELECT name, show_unread, show_muted, show_individual, show_groups, is_muted, folder_type FROM chat_folder WHERE _id = ?", chatfolder_idx, &cf_details) &&
+    if (d_database.exec("SELECT name, show_unread, show_muted, show_individual, show_groups, folder_type FROM chat_folder WHERE _id = ?",
+                        chatfolder_idx, &cf_details) &&
         d_database.exec("SELECT thread.recipient_id FROM chat_folder_membership "
                         "LEFT JOIN thread ON thread._id = chat_folder_membership.thread_id "
                         "WHERE chat_folder_id = ? AND membership_type = 0", chatfolder_idx, &cf_details_members_included) &&
@@ -949,8 +950,6 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_unread") ? "true" : "false") << "</span>\n"
         "            <span class=\"column-right-align\">Include muted chats:</span>\n"
         "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "show_muted") ? "true" : "false") << "</span>\n"
-        "            <span class=\"column-right-align\">Muted:</span>\n"
-        "            <span class=\"column-left-align\">" << (cf_details.valueAsInt(0, "is_muted") ? "true" : "false") << "</span>\n"
         "          </span>\n"
         "        </span>\n"
         "        </label>\n"
