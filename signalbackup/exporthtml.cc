@@ -1067,7 +1067,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     {
       for (unsigned int i = 0; i < cf_results.rows(); ++i)
       {
-        std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
+        std::string filename(sanitizeFilename("chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name"), d_aggressive_filename_sanitizing));
         chatfolders_list.emplace_back(cf_results.valueAsInt(i, "_id"), cf_results(i, "name"), filename);
       }
 

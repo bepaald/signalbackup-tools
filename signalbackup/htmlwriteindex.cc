@@ -1370,6 +1370,9 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       "      </div>\n"
       "\n";
 
+  // for (auto const &cf : chatfolders)
+  //   std::cout << std::get<0>(cf) << " " << std::get<1>(cf) << " " << std::get<2>(cf) << std::endl;
+
   if (chatfolders.size())
     for (auto const &cf : chatfolders)
       outputfile <<
