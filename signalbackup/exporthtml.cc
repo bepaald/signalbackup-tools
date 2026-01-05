@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -44,6 +44,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   // v170 and above should work. Anything below will first migrate (I believe anything down to ~23 should more or less work)
   bool databasemigrated = false;
   MemSqliteDB backup_database;
+  ScopeGuard restore_migrated_database([&]() { if (databasemigrated) SqliteDB::copyDb(backup_database, d_database); });
   if (d_databaseversion < 170 || migrate)
   {
     SqliteDB::copyDb(d_database, backup_database);
@@ -56,7 +57,6 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     }
     databasemigrated = true;
   }
-  ScopeGuard restore_migrated_database([&]() { if (databasemigrated) SqliteDB::copyDb(backup_database, d_database); });
 
   if (originalfilenames && append) [[unlikely]]
     Logger::warning("Options 'originalfilenames' and 'append' are incompatible");
@@ -89,8 +89,19 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   // set origin if requested...
+  bool origin_changed = false;
+  MemSqliteDB backup_database_original_origin;
+  ScopeGuard restore_origin_database([&]() { if (origin_changed) SqliteDB::copyDb(backup_database_original_origin, d_database); });
   if (origin != -1)
   {
+    if (!d_database.tableContainsColumn(d_mms_table, "from_recipient_id"))
+    {
+      Logger::error("Database too old for `--setorigin' option.");
+      return false;
+    }
+    origin_changed = true;
+    SqliteDB::copyDb(d_database, backup_database_original_origin);
+
     // set all messages incoming (audio/video calls too)
     d_database.exec("UPDATE " + d_mms_table + " SET " + d_mms_type + " = " + d_mms_type + " & ~0x1f | ? "
                     "WHERE " + d_mms_type + " & 0x1f = ?", {Types::INCOMING_AUDIO_CALL_TYPE, Types::OUTGOING_AUDIO_CALL_TYPE});
