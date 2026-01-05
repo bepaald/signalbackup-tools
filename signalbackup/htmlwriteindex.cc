@@ -1253,6 +1253,15 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
       "\n";
   }
 
+  // no chats in this chatfolder
+  if (results.rows() == 0)
+  {
+    outputfile <<
+      "        <div class=\"conversation-list-item\">\n"
+      "            <span style=\"font-weight: bold; font-size: 18px\">(none)</span>\n"
+      "        </div>\n";
+  }
+
   if (menuitems > 0 ||
       chatfolders.size() > 0 ||
       chatfolder_idx >= 0)
