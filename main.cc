@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -754,7 +754,6 @@ bool addThreadIdsFromString(SignalBackup const *const backup, std::vector<std::s
 {
   for (unsigned int i = 0; i < names.size(); ++i)
   {
-
     long long int r = backup->getRecipientIdFromName(names[i], true);
     if (r == -1)
       r = backup->getRecipientIdFromPhone(names[i], true);

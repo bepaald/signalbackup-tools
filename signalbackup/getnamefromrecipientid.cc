@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2024  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -27,7 +27,9 @@ std::string SignalBackup::getNameFromRecipientId(long long int rid) const
                       (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                       "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
                       (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
-                      "NULLIF(recipient." + d_recipient_aci + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), "
+                      "NULLIF(recipient." + d_recipient_e164 + ", '')," +
+                      (d_database.tableContainsColumn("recipient", "username") ? "NULLIF(recipient.username, '')," : "") +
+                      "NULLIF(recipient." + d_recipient_aci + ", ''), "
                       " recipient._id) AS 'display_name',recipient." + d_recipient_e164 +
                       (d_database.tableContainsColumn("recipient", "username") ? ",recipient.username" : "") +
                       ",recipient." + d_recipient_aci + " "

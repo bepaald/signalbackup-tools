@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -46,8 +46,9 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     (d_database.tableContainsColumn("recipient", "profile_joined_name") ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
                     "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), NULLIF(groups.title, ''), " +
                     (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, ''), " : "") +
-                    "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
-                    " recipient._id) AS 'display_name', recipient." + d_recipient_e164 + ", recipient.username, recipient." + d_recipient_aci + ", " +
+                    "NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient.username, ''), NULLIF(recipient." + d_recipient_aci + ", ''), "
+                    " recipient._id) AS 'display_name',"
+                    "recipient." + d_recipient_e164 + ", recipient.username, recipient." + d_recipient_aci + ", " +
                     (d_database.tableContainsColumn("recipient", "chat_colors") ? "NULLIF(recipient.chat_colors, '') AS chat_colors,"s : ""s) + //wallpaper_file, custom_chat_colors_id
                     "recipient.group_id, recipient." + d_recipient_avatar_color + ", " +
                     (d_database.tableContainsColumn("recipient", "notification_channel") ? "notification_channel, " : "") +
@@ -63,6 +64,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                     (d_database.containsTable("distribution_list") ? "LEFT JOIN distribution_list ON recipient._id = distribution_list.recipient_id " : "") +
                     "WHERE recipient._id = ?",
                     rid, &results);
+    //results.printLineMode();
 
     std::string display_name = results.valueAsString(0, "display_name");
     if (display_name.empty())
