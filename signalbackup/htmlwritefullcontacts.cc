@@ -236,6 +236,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     "        display: flex;\n"
     "        flex-direction: column;\n"
     "        width: fit-content;\n"
+    "        max-width: 80%;\n"
     "        margin-top: 10px;\n"
     "        margin-bottom: 100px;\n"
     "        margin-right: auto;\n"
