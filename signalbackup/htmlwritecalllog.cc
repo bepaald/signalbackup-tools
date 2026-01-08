@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -299,6 +299,7 @@ void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, s
     "        display: flex;\n"
     "        border-radius: 50%;\n"
     "        width: 60px;\n"
+    "        min-width: 60px;\n"
     "        height: 60px;\n"
     "        line-height: 60px;\n"
     "        text-align: center;\n"

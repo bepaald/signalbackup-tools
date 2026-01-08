@@ -293,6 +293,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
     "        display: flex;\n"
     "        border-radius: 50%;\n"
     "        width: 60px;\n"
+    "        min-width: 60px;\n"
     "        height: 60px;\n"
     "        line-height: 60px;\n"
     "        text-align: center;\n"

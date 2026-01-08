@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -265,6 +265,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     "        display: flex;\n"
     "        border-radius: 50%;\n"
     "        width: 60px;\n"
+    "        min-width: 60px;\n"
     "        height: 60px;\n"
     "        line-height: 60px;\n"
     "        text-align: center;\n"
