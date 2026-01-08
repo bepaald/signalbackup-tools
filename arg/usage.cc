@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -105,8 +105,8 @@ R"*(
                                          placed in a separate subdirectory.
    --limittothreads <THREADS_LIST>       Optional modifier for `--exporthtml'. Only export the listed
                                          threads. List format same as `--croptothreads'
-   --limittothreadsbyname <THREADS_LIST> Optional modifier for `--exporthtml'. Only save the attachments
-                                         from the listed threads. List format same as
+   --limittothreadsbyname <THREADS_LIST> Optional modifier for `--exporthtml'. Only export the listed
+                                         threads. List format same as
                                          `--croptothreadsbyname'
    --limittodates <LIST_OF_DATES>        Optional modifier for `--exporthtml'. Only export messages within
                                          the ranges defined by LIST_OF_DATES. List format is the same as
