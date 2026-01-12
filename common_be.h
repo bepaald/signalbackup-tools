@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -40,6 +40,10 @@
 #include <initializer_list>
 #include <string_view>
 #include <map>
+
+#if false && __cpp_lib_string_resize_and_overwrite >= 202110L // used in concat
+#include <span>
+#endif
 
 #if __cpp_lib_format >= 201907L
 #include <format>
@@ -346,8 +350,17 @@ inline std::string bepaald::concat(Args const &... args)
 {
   auto const size = (std::string_view{args}.size() + ...);
   std::string res;
+#if false && __cpp_lib_string_resize_and_overwrite >= 202110L
+  res.resize_and_overwrite(size, [&](char *buf, size_t n)
+  {
+    auto pos = std::span(buf, n).begin();
+    ((pos = std::copy(std::string_view{args}.begin(), std::string_view{args}.end(), pos)), ...);
+    return n;
+  });
+#else
   res.reserve(size);
   (res.append(args), ...);
+#endif
   return res;
 }
 

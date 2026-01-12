@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -328,7 +328,9 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
 
       // for accepting invites: check DecryptedGroupChange<1>: (editor)
-      // and                          DecryptedGroupChange<9>[]:DecryptedMember<1>: uuid (promotePendingMembers)
+      // and                         (DecryptedGroupChange<9>[]:DecryptedMember<1>: uuid (promotePendingMembers)
+      //                              OR
+      //                              DecryptedGroupChange<24>[]:DecryptedMember<1>: uuid (promotePendingPniAciMembers))
       //
       // if editor == self
         //   if (promotependingmembers contains self)
@@ -345,8 +347,9 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
 
       auto groupchange_editor = groupchange.getField<1>();
       auto const &groupchange_promotedmembers = groupchange.getField<9>();
+      auto const &groupchange_promotedpniacimembers = groupchange.getField<24>();
       if (groupchange_editor.has_value() &&
-          groupchange_promotedmembers.size())
+          (groupchange_promotedmembers.size() || groupchange_promotedpniacimembers.size()))
       {
         // editor
         auto [uuid, uuid_size] = groupchange_editor.value();
@@ -357,6 +360,18 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         for (unsigned int i = 0; i < groupchange_promotedmembers.size(); ++i)
         {
           DecryptedMember dm = groupchange_promotedmembers[i];
+          auto promotedmember_uuid = dm.getField<1>();
+          if (promotedmember_uuid.has_value())
+          {
+            auto [tmpuuid, tmpuuid_size] = promotedmember_uuid.value();
+            std::string pmus = bepaald::toLower(bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true));
+            pmus.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+            promotedmemberuuids.emplace_back(std::move(pmus));
+          }
+        }
+        for (unsigned int i = 0; i < groupchange_promotedpniacimembers.size(); ++i)
+        {
+          DecryptedMember dm = groupchange_promotedpniacimembers[i];
           auto promotedmember_uuid = dm.getField<1>();
           if (promotedmember_uuid.has_value())
           {
@@ -589,7 +604,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         int newrole = mr.getField<2>().value_or(0);
 
         if (newrole == 2)
-          statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " made " + getNameFromUuid(uuidstr) + " an admin.";
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " made " + (uuidstr == d_selfuuid ? "you" : getNameFromUuid(uuidstr)) + " an admin.";
         else
           statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " revoked admin privileges from " + getNameFromUuid(uuidstr) + ".";
         if (icon && *icon == IconType::NONE)
@@ -857,7 +872,8 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       auto const &pendingmembers = currentdecryptedgroup.value().getField<8>();
       if (pendingmembers.size())
       {
-        std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
+        std::vector<std::pair<std::string, std::string>> all_invitedmembers; // <invited_uuid, invited_by_uuid>
+        std::vector<std::string> old_invitedmembers;
 
         for (unsigned int i = 0; i < pendingmembers.size(); ++i)
         {
@@ -877,18 +893,39 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
               invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
               invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
             }
-            invitedmembers.emplace_back(std::move(invited_uuidstr), std::move(invited_by_uuidstr));
+            all_invitedmembers.emplace_back(std::move(invited_uuidstr), std::move(invited_by_uuidstr));
           }
         }
+
+        auto previousdecryptedgroup = groupv2ctx.getField<4>();
+        if (previousdecryptedgroup.has_value())
+        {
+          auto const &prevpendingmembers = previousdecryptedgroup.value().getField<8>();
+          if (prevpendingmembers.size())
+          {
+            for (unsigned int i = 0; i < prevpendingmembers.size(); ++i)
+            {
+              DecryptedPendingMember pm(prevpendingmembers[i]);
+              //pm.print();
+              auto pm_uuid = pm.getField<1>();
+              if (pm_uuid.has_value())
+              {
+                auto [inv_uuid, inv_uuid_size] = pm_uuid.value();
+                std::string invited_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true));
+                invited_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+                old_invitedmembers.emplace_back(std::move(invited_uuidstr));
+              }
+            }
+          }
+        }
+
+        std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
+        std::copy_if(std::make_move_iterator(all_invitedmembers.begin()), std::make_move_iterator(all_invitedmembers.end()), std::back_inserter(invitedmembers), [&](auto const &mem){ return !bepaald::contains(old_invitedmembers, mem.first); } );
 
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBER_ADD;
 
-        if (invitedmembers.size() > 1) // multiple members were invited
-        {
-          // not done yet
-        }
-        else // one member was invited
+        if (invitedmembers.size() == 1) // one member was invited
         {
           if (invitedmembers[0].second == d_selfuuid) // invited by you
           {
@@ -914,6 +951,13 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
             else
               return "1 person was invited to the group.";
           }
+        }
+        else if (invitedmembers.size() > 1) // multiple members were invited
+        {
+          // not done yet
+
+          // I think multiple members can only possibly be invited simultaneously by a single member. So this is should not be that difficult...
+
         }
       }
     }
@@ -1001,7 +1045,6 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
     }
   */
   MessageExtras me(body);
-
   auto field1 = me.getField<1>();
   if (field1.has_value()) // GV2UpdateDescription
   {
