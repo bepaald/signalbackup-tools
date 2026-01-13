@@ -919,45 +919,72 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           }
         }
 
+        // move new invited members for this group change into vector
         std::vector<std::pair<std::string, std::string>> invitedmembers; // <invited_uuid, invited_by_uuid>
-        std::copy_if(std::make_move_iterator(all_invitedmembers.begin()), std::make_move_iterator(all_invitedmembers.end()), std::back_inserter(invitedmembers), [&](auto const &mem){ return !bepaald::contains(old_invitedmembers, mem.first); } );
+        std::copy_if(std::make_move_iterator(all_invitedmembers.begin()), std::make_move_iterator(all_invitedmembers.end()),
+                     std::back_inserter(invitedmembers), [&](auto const &mem){ return !bepaald::contains(old_invitedmembers, mem.first); } );
 
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBER_ADD;
 
-        if (invitedmembers.size() == 1) // one member was invited
+        if (invitedmembers.size() > 0)
         {
-          if (invitedmembers[0].second == d_selfuuid) // invited by you
+          std::string return_message;
+          // assert all were invited by same person
+          if (std::all_of(invitedmembers.begin(), invitedmembers.end(), [&](auto const &p){ return p.second == invitedmembers.begin()->second; })) [[likely]]
           {
-            std::string invitedname = getNameFromUuid(invitedmembers[0].first);
-            if (!invitedname.empty())
-              return "You invited " + invitedname + " to the group.";
-            else
-              return "You invited 1 person to the group.";
-          }
-          else if (invitedmembers[0].first == d_selfuuid) // you were the one invited
-          {
-            std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
-            if (!invitedbyname.empty())
-              return invitedbyname + " invited you to the group.";
-            else
-              return "You were invited to the group.";
-          }
-          else // someone was invited by someone (but neither were you)
-          {
-            std::string invitedbyname = getNameFromUuid(invitedmembers[0].second);
-            if (!invitedbyname.empty())
-              return invitedbyname + " invited 1 person to the group.";
-            else
-              return "1 person was invited to the group.";
-          }
-        }
-        else if (invitedmembers.size() > 1) // multiple members were invited
-        {
-          // not done yet
+            std::string inviter_name = invitedmembers.begin()->second == d_selfuuid ? "You" : getNameFromUuid(invitedmembers[0].second);
 
-          // I think multiple members can only possibly be invited simultaneously by a single member. So this is should not be that difficult...
+            int self_is_invited = std::count_if(invitedmembers.begin(), invitedmembers.end(), [&](auto const &p){ return p.first == d_selfuuid; });
+            int others_invited = invitedmembers.size() - self_is_invited;
 
+            if (self_is_invited)
+            {
+              if (!inviter_name.empty())
+                return_message = inviter_name + " invited you to the group.";
+              else
+                return_message = "You were invited to the group.";
+
+              // self was invited, but more people were invited, add new line
+              if (others_invited > 0)
+                return_message += "\n";
+            }
+
+            if (others_invited == 1)
+            {
+              auto invited_it = std::find_if(invitedmembers.begin(), invitedmembers.end(), [&](auto const &p){ return p.first != d_selfuuid; });
+              std::string invited_name = getNameFromUuid(invited_it->first);
+
+              if (!inviter_name.empty())
+              {
+                if (!invited_name.empty())
+                  return_message += inviter_name + " invited " + invited_name + " to the group.";
+                else
+                  return_message += inviter_name + " invited 1 person to the group.";
+              }
+              else
+              {
+                if (!invited_name.empty())
+                  return_message += invited_name + " was invited to the group.";
+                else
+                  return_message += "1 person was invited to the group.";
+              }
+            }
+            if (others_invited > 1)
+            {
+              if (!inviter_name.empty())
+                return_message += inviter_name + " invited " + bepaald::toString(others_invited) + " people to the group.";
+              else
+                return_message += bepaald::toString(others_invited) + " people were invited to the group.";
+            }
+
+            if (!return_message.empty())
+              return return_message;
+          }
+          else
+          {
+            Logger::warning("Unsupported group change: multiple people invited by multiple inviters in a single GroupChange");
+          }
         }
       }
     }
