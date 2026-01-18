@@ -35,6 +35,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   bool adjustcall = d_database.containsTable("call");
   bool adjustoriginal_message_id = d_database.tableContainsColumn(d_mms_table, "original_message_id");
   bool adjustlatest_revision_id = d_database.tableContainsColumn(d_mms_table, "latest_revision_id");
+  bool adjustpinning_message_id = d_database.tableContainsColumn(d_mms_table, "pinning_message_id"); // column has default 0, but only refers to a message when != 0
   bool adjustpoll = d_database.containsTable("poll");
 
   // get all mms in the correct order
@@ -50,6 +51,7 @@ bool SignalBackup::reorderMmsSmsIds() const
                                        (adjustmsl_message ? ", mslcount" : ""),
                                        (adjustoriginal_message_id ? ", og_msgcount" : ""),
                                        (adjustlatest_revision_id ? ", revisioncount" : ""),
+                                       (adjustpinning_message_id ? ", pincount" : ""),
                                        (adjustpoll ? ", pollcount" : ""),
                                        " FROM ", d_mms_table, " ",
                                        // get attachment count for message:
@@ -72,6 +74,8 @@ bool SignalBackup::reorderMmsSmsIds() const
                                        (adjustoriginal_message_id ? "LEFT JOIN (SELECT original_message_id, COUNT(*) AS og_msgcount FROM " + d_mms_table + " GROUP BY original_message_id) AS ogmsg ON " + d_mms_table + "._id = ogmsg.original_message_id " : ""),
                                        // get latest_revision count for message:
                                        (adjustlatest_revision_id ? "LEFT JOIN (SELECT latest_revision_id, COUNT(*) AS revisioncount FROM " + d_mms_table + " GROUP BY latest_revision_id) AS lr ON " + d_mms_table + "._id = lr.latest_revision_id " : ""),
+                                       // get latest_revision count for message:
+                                       (adjustpinning_message_id ? "LEFT JOIN (SELECT pinning_message_id, COUNT(*) AS pincount FROM " + d_mms_table + " GROUP BY pinning_message_id) AS pm ON " + d_mms_table + "._id = pm.pinning_message_id " : ""),
                                        "ORDER BY date_received ASC"), &res)) // for sms table, use 'date'
     return false;
 
@@ -177,7 +181,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   if (adjustoriginal_message_id)
     for (long long int i = 0; i < total; ++i)
     {
-      if (res.valueAsInt(i, "og_msgcount", 0) > 0) // check callcount
+      if (res.valueAsInt(i, "og_msgcount", 0) > 0)
       {
         std::any oldid = res.value(i, 0);
         if (!d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = ? WHERE original_message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
@@ -185,16 +189,27 @@ bool SignalBackup::reorderMmsSmsIds() const
       }
     }
 
-
   Logger::message_continue(".");
 
   if (adjustlatest_revision_id)
     for (long long int i = 0; i < total; ++i)
     {
-      if (res.valueAsInt(i, "revisioncount", 0) > 0) // check callcount
+      if (res.valueAsInt(i, "revisioncount", 0) > 0)
       {
         std::any oldid = res.value(i, 0);
         if (!d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = ? WHERE latest_revision_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
+    }
+
+  // THIS ONE IS UNTESTED
+  if (adjustpinning_message_id)
+    for (long long int i = 0; i < total; ++i)
+    {
+      if (res.valueAsInt(i, "pincount", 0) > 0) // check pinning message count
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE " + d_mms_table + " SET pinning_message_id = ? WHERE pinning_message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
           return false;
       }
     }
@@ -260,6 +275,9 @@ bool SignalBackup::reorderMmsSmsIds() const
   if (adjustoriginal_message_id && !d_database.exec("UPDATE " + d_mms_table + " SET original_message_id = original_message_id * -1 WHERE original_message_id < 0")) [[unlikely]]
     return false;
   if (adjustlatest_revision_id && !d_database.exec("UPDATE " + d_mms_table + " SET latest_revision_id = latest_revision_id * -1 WHERE latest_revision_id < 0")) [[unlikely]]
+    return false;
+  // THIS ONE IS UNTESTED
+  if (adjustpinning_message_id && !d_database.exec("UPDATE " + d_mms_table + " SET pinning_message_id = pinning_message_id * -1 WHERE pinning_message_id < 0")) [[unlikely]]
     return false;
 
   d_database.exec("COMMIT");

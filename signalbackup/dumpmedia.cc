@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2025  Selwin van Dijk
+  Copyright (C) 2021-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,8 +24,9 @@
 #include "../mimetypes/mimetypes.h"
 
 bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> const &daterangelist,
-                             std::vector<long long int> const &threads, bool excludestickers,
-                             bool excludequotes, bool aggressive_sanitizing, bool overwrite) const
+                             std::vector<long long int> const &threads, long long int minsize,
+                             long long int maxsize, bool excludestickers, bool excludequotes,
+                             bool aggressive_sanitizing, bool overwrite) const
 {
   Logger::message("Dumping media to dir '", dir, "'");
 
@@ -135,6 +136,12 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
     query += datewhereclause;
   }
 
+  if (minsize > -1)
+    query += " AND " + d_part_table + ".data_size >= " + bepaald::toString(minsize);
+
+  if (maxsize > -1)
+    query += " AND " + d_part_table + ".data_size <= " + bepaald::toString(maxsize);
+
   if (d_verbose) [[unlikely]]
     Logger::message("Dump media query: ", query);
 
@@ -171,7 +178,7 @@ bool SignalBackup::dumpMedia(std::string const &dir, std::vector<std::string> co
 
     //results.prettyPrint();
 
-    if (results.rows() == 0 && (!threads.empty() || !daterangelist.empty() || excludequotes || excludestickers)) // probably an attachment for a de-selected thread
+    if (results.rows() == 0 && (!threads.empty() || !daterangelist.empty() || minsize > -1 || maxsize > -1 || excludequotes || excludestickers)) // probably an attachment for a de-selected thread
       continue;
 
     if (results.rows() != 1)

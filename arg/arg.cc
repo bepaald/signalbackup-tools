@@ -86,24 +86,25 @@ Arg::Arg(int argc, char *argv[])
   d_selectjsonchats(std::vector<long long int>()),
   d_croptodates(std::vector<std::string>()),
   d_croptothreads(std::vector<long long int>()),
-  d_limittothreads(std::vector<long long int>()),
+  d_mapxmladdresses(std::vector<std::pair<std::string, std::string>>()),
   d_htmlignoremediatypes(std::vector<std::string>()),
   d_limitcontacts(std::vector<std::string>()),
   d_mapcsvfields(std::vector<std::pair<std::string,std::string>>()),
   d_editattachmentsize(std::vector<long long int>()),
   d_importthreads(std::vector<long long int>()),
   d_importthreadsbyname(std::vector<std::string>()),
-  d_mapxmladdresses(std::vector<std::pair<std::string, std::string>>()),
+  d_limittothreads(std::vector<long long int>()),
+  d_limittothreadsbyname(std::vector<std::string>()),
   d_onlytype(std::vector<std::string>()),
   d_rundtsqlquery(std::vector<std::string>()),
-  d_runprettysqlquery(std::vector<std::string>()),
-  d_limittothreadsbyname(std::vector<std::string>()),
-  d_rundtprettysqlquery(std::vector<std::string>()),
   d_onlyinthreads(std::vector<long long int>()),
-  d_findrecipient(-1),
+  d_runprettysqlquery(std::vector<std::string>()),
+  d_rundtprettysqlquery(std::vector<std::string>()),
+  d_hiperfall(-1),
+  d_onlysmallerthan(-1),
   d_onlylargerthan(-1),
   d_split(1000),
-  d_hiperfall(-1),
+  d_findrecipient(-1),
   d_desktopdbversion(4),
   d_setorigin(-1),
   d_removedoubles(0),
@@ -1043,13 +1044,14 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--limittothreads")
+    if (option == "--mapxmladdresses")
     {
       if (i < argsize - 1)
       {
-        if (!parseNumberList(arguments[++i], &d_limittothreads, true))
+        std::string error;
+        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
         {
-          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. Got '" << arguments[i] << "', expected list of integers. ]" << std::endl;
+          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
           ok = false;
         }
       }
@@ -1167,16 +1169,28 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_input_required = true;
       continue;
     }
-    if (option == "--mapxmladdresses")
+    if (option == "--limittothreads")
     {
       if (i < argsize - 1)
       {
-        std::string error;
-        if (!parsePairList(arguments[++i], "=", &d_mapxmladdresses, &error))
+        if (!parseNumberList(arguments[++i], &d_limittothreads, true))
         {
-          std::cerr << "[ Error parsing command line option `" << option << "': " << error << " ]" << std::endl;
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. Got '" << arguments[i] << "', expected list of integers. ]" << std::endl;
           ok = false;
         }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--limittothreadsbyname")
+    {
+      if (i < argsize - 1)
+      {
+        parseStringList(arguments[++i], &d_limittothreadsbyname);
       }
       else
       {
@@ -1211,46 +1225,6 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--runprettysqlquery")
-    {
-      if (i < argsize - 1)
-      {
-        d_runprettysqlquery.emplace_back(std::move(arguments[++i]));
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      d_input_required = true;
-      continue;
-    }
-    if (option == "--limittothreadsbyname")
-    {
-      if (i < argsize - 1)
-      {
-        parseStringList(arguments[++i], &d_limittothreadsbyname);
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
-    if (option == "--rundtprettysqlquery")
-    {
-      if (i < argsize - 1)
-      {
-        d_rundtprettysqlquery.emplace_back(std::move(arguments[++i]));
-      }
-      else
-      {
-        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
-        ok = false;
-      }
-      continue;
-    }
     if (option == "--onlyinthreads")
     {
       if (i < argsize - 1)
@@ -1268,11 +1242,55 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       }
       continue;
     }
-    if (option == "--findrecipient")
+    if (option == "--runprettysqlquery")
     {
       if (i < argsize - 1)
       {
-        if (!ston(&d_findrecipient, arguments[++i]))
+        d_runprettysqlquery.emplace_back(std::move(arguments[++i]));
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      d_input_required = true;
+      continue;
+    }
+    if (option == "--rundtprettysqlquery")
+    {
+      if (i < argsize - 1)
+      {
+        d_rundtprettysqlquery.emplace_back(std::move(arguments[++i]));
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--hiperfall")
+    {
+      if (i < argsize - 1)
+      {
+        if (!ston(&d_hiperfall, arguments[++i]))
+        {
+          std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. Got '" << arguments[i] << "', expected integer. ]" << std::endl;
+          ok = false;
+        }
+      }
+      else
+      {
+        std::cerr << "[ Error parsing command line option `" << option << "': Missing argument. ]" << std::endl;
+        ok = false;
+      }
+      continue;
+    }
+    if (option == "--onlysmallerthan")
+    {
+      if (i < argsize - 1)
+      {
+        if (!ston(&d_onlysmallerthan, arguments[++i]))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. Got '" << arguments[i] << "', expected integer. ]" << std::endl;
           ok = false;
@@ -1316,11 +1334,11 @@ bool Arg::parseArgs(std::vector<std::string> const &arguments)
       d_split_by.clear();
       continue;
     }
-    if (option == "--hiperfall")
+    if (option == "--findrecipient")
     {
       if (i < argsize - 1)
       {
-        if (!ston(&d_hiperfall, arguments[++i]))
+        if (!ston(&d_findrecipient, arguments[++i]))
         {
           std::cerr << "[ Error parsing command line option `" << option << "': Bad argument. Got '" << arguments[i] << "', expected integer. ]" << std::endl;
           ok = false;
