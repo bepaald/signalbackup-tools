@@ -389,8 +389,8 @@ int main(int argc, char *argv[])
     Logger::message("Opening input");
   std::unique_ptr<SignalBackup> sb(new SignalBackup(arg.input(), arg.passphrase(), arg.verbose(),
                                                     arg.truncate(), arg.showprogress(),
-                                                    arg.replaceattachments_bool(),
-                                                    arg.assumebadframesizeonbadmac(), arg.editattachmentsize(),
+                                                    arg.replaceattachments_bool(), arg.assumebadframesizeonbadmac(),
+                                                    arg.editattachmentsize(), arg.allowhugeattachments(),
                                                     arg.stoponerror(), arg.fulldecode()));
   if (!sb->ok())
   {
@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
   if (!arg.source().empty())
   {
     SignalBackup src(arg.source(), arg.sourcepassphrase(), arg.verbose(), arg.truncate(),
-                     arg.showprogress(), !arg.replaceattachments().empty());
+                     arg.showprogress(), !arg.replaceattachments().empty(), arg.allowhugeattachments());
     std::vector<long long int> threads = arg.importthreads();
     if (threads.size() == 1 && threads[0] == -1) // import all threads!
     {
@@ -532,13 +532,13 @@ int main(int argc, char *argv[])
   if (!arg.importtelegram().empty())
     if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
                                 arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(),
-                                arg.setselfid(), false /*onlyshowmapping*/))
+                                arg.setselfid(), false /*onlyshowmapping*/, arg.allowhugeattachments()))
       return 1;
 
   if (!arg.jsonshowcontactmap().empty())
     if (!sb->importTelegramJson(arg.jsonshowcontactmap(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
                                 arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(),
-                                arg.setselfid(), true /*onlyshowmapping*/))
+                                arg.setselfid(), true /*onlyshowmapping*/, arg.allowhugeattachments()))
       return 1;
 
   if (arg.removedoubles_bool())

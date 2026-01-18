@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2025  Selwin van Dijk
+  Copyright (C) 2021-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,6 +35,7 @@ bool SignalBackup::reorderMmsSmsIds() const
   bool adjustcall = d_database.containsTable("call");
   bool adjustoriginal_message_id = d_database.tableContainsColumn(d_mms_table, "original_message_id");
   bool adjustlatest_revision_id = d_database.tableContainsColumn(d_mms_table, "latest_revision_id");
+  bool adjustpoll = d_database.containsTable("poll");
 
   // get all mms in the correct order
   SqliteDB::QueryResults res;
@@ -49,6 +50,7 @@ bool SignalBackup::reorderMmsSmsIds() const
                                        (adjustmsl_message ? ", mslcount" : ""),
                                        (adjustoriginal_message_id ? ", og_msgcount" : ""),
                                        (adjustlatest_revision_id ? ", revisioncount" : ""),
+                                       (adjustpoll ? ", pollcount" : ""),
                                        " FROM ", d_mms_table, " ",
                                        // get attachment count for message:
                                        "LEFT JOIN (SELECT ", d_part_mid, " AS message_id, COUNT(*) AS attcount FROM ", d_part_table, " GROUP BY message_id) AS attmnts ON ", d_mms_table, "._id = attmnts.message_id ",
@@ -56,6 +58,8 @@ bool SignalBackup::reorderMmsSmsIds() const
                                        (adjustreaction ? "LEFT JOIN (SELECT message_id, COUNT(*) AS reactioncount FROM reaction GROUP BY message_id) AS rctns ON " + d_mms_table + "._id = rctns.message_id " : ""),
                                        // get mention count for message:
                                        (adjustmention ? "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id " : ""),
+                                       // get poll count for message:
+                                       (adjustmention ? "LEFT JOIN (SELECT message_id, COUNT(*) AS pollcount FROM poll GROUP BY message_id) AS plls ON " + d_mms_table + "._id = plls.message_id " : ""),
                                        // get group receipt count for message:
                                        "LEFT JOIN (SELECT mms_id, COUNT(*) AS groupreceiptcount FROM group_receipts GROUP BY mms_id) AS grprct ON ", d_mms_table, "._id = grprct.mms_id ",
                                        // get story_sends count for message:
@@ -111,6 +115,17 @@ bool SignalBackup::reorderMmsSmsIds() const
       {
         std::any oldid = res.value(i, 0);
         if (!d_database.exec("UPDATE mention SET message_id = ? WHERE message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
+          return false;
+      }
+    }
+
+  if (adjustpoll)
+    for (long long int i = 0; i < total; ++i)
+    {
+      if (res.valueAsInt(i, "pollcount", 0) > 0) // check pollcount
+      {
+        std::any oldid = res.value(i, 0);
+        if (!d_database.exec("UPDATE poll SET message_id = ? WHERE message_id = ?", {-1 * (i + 1), oldid})) [[unlikely]]
           return false;
       }
     }
@@ -231,6 +246,8 @@ bool SignalBackup::reorderMmsSmsIds() const
     return false;
 
   if (adjustmention && !d_database.exec("UPDATE mention SET message_id = message_id * -1 WHERE message_id < 0")) [[unlikely]]
+    return false;
+  if (adjustpoll && !d_database.exec("UPDATE poll SET message_id = message_id * -1 WHERE message_id < 0")) [[unlikely]]
     return false;
   if (adjustmsl_message && !d_database.exec("UPDATE msl_message SET message_id = message_id * -1 WHERE message_id < 0"s + (msl_has_is_mms ? " AND is_mms IS 1" : ""))) [[unlikely]]
     return false;

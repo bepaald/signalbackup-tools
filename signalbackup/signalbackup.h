@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -234,11 +234,12 @@ class SignalBackup
  protected:
   inline SignalBackup(bool verbose, bool truncate, bool showprogress);
  public:
-  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                      bool truncate, bool showprogress, bool replaceattachments);
+  inline SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose, bool truncate,
+                      bool showprogress, bool replaceattachments, bool inserthugeattachments);
   SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
                bool truncate, bool showprogress, bool replaceattachment, bool assumebadframesizeonbadmac,
-               std::vector<long long int> const &editattachments, bool stoponerror, bool fulldecode);
+               std::vector<long long int> const &editattachments, bool inserthugeattachments,
+               bool stoponerror, bool fulldecode);
   inline SignalBackup(SignalBackup const &other) = default;
   inline SignalBackup &operator=(SignalBackup const &other) = default;
   inline SignalBackup(SignalBackup &&other) = default;
@@ -322,7 +323,7 @@ class SignalBackup
                           std::vector<std::pair<std::string, long long int>> contactmap,
                           std::vector<std::string> const &inhibitmapping, bool prependforwarded,
                           bool skipmessagereorder, bool markdelivered, bool markread,
-                          std::string const &selfphone, bool onlyshowmap);
+                          std::string const &selfphone, bool onlyshowmap, bool hugeattachments);
   bool setChatColors(std::vector<std::pair<long long int, std::string>> const &colorlist);
   bool fixForeignKeyConstraintViolations() const;
 
@@ -346,7 +347,7 @@ class SignalBackup
                                         bool overwrite, bool keepattachmentdatainmemory);
   [[nodiscard]] bool exportBackupToDir(std::string const &directory, bool overwrite, bool keepattachmentdatainmemory, bool onlydb);
   void initFromFile();
-  void initFromDir(std::string const &inputdir, bool replaceattachments);
+  void initFromDir(std::string const &inputdir, bool replaceattachments, bool inserthugeattachments);
   void updateThreadsEntries(long long int thread = -1);
   long long int getMaxUsedId(std::string const &table, std::string const &col = "_id") const;
   long long int getMinUsedId(std::string const &table, std::string const &col = "_id") const;
@@ -591,7 +592,7 @@ class SignalBackup
   bool setLongMessageBody(std::string *body, SqliteDB::QueryResults *attachment_results) const;
   bool tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
                         std::string const &datapath, std::string const &threadname, long long int chat_idx,
-                        bool prependforwarded, bool markdelivered, bool markread, bool isgroup);
+                        bool prependforwarded, bool markdelivered, bool markread, bool isgroup, bool hugeattachments);
   bool tgMapContacts(JsonDatabase const &jdb, std::string const &chatselection,
                      std::vector<std::pair<std::vector<std::string>, long long int>> *contactmap,
                      std::vector<std::string> const &inhibitmappping) const;
@@ -604,7 +605,7 @@ class SignalBackup
                              std::vector<std::pair<std::vector<std::string>, long long int>> const &stdcontactmap,
                              bool isgroup) const;
   bool tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
-                       long long int r, long long int new_msg_id);
+                       long long int r, long long int new_msg_id, bool hugeattachments);
   bool tgSetQuote(long long int quoted_message_id, long long int new_msg_id);
   bool dtImportStickerPacks(SqliteDB const &ddb, std::string const &databasedir);
   void dtImportLongText(std::string const &msgbody_full, long long int new_mms_id, long long int uniqueid);
@@ -639,9 +640,10 @@ inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,
-                                  bool truncate, bool showprogress, bool replaceattachments)
+                                  bool truncate, bool showprogress, bool replaceattachments, bool inserthugeattachments)
   :
-  SignalBackup(filename, passphrase, verbose, truncate, showprogress, replaceattachments, false, std::vector<long long int>(), false, false)
+  SignalBackup(filename, passphrase, verbose, truncate, showprogress, replaceattachments, false,
+               std::vector<long long int>(), inserthugeattachments, false, false)
 {}
 
 inline bool SignalBackup::ok() const

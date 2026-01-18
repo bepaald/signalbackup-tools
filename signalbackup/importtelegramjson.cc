@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -40,7 +40,7 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
                                       std::vector<std::pair<std::string, long long int>> contactmap,
                                       std::vector<std::string> const &inhibitmapping, bool prependforwarded,
                                       bool skipmessagereorder, bool markdelivered, bool markread,
-                                      std::string const &selfphone, bool onlyshowmapping)
+                                      std::string const &selfphone, bool onlyshowmapping, bool inserthugeattachments)
 {
   if (onlyshowmapping)
     Logger::message("Show json contact-mapping");
@@ -113,11 +113,11 @@ bool SignalBackup::importTelegramJson(std::string const &file, std::vector<long 
     Logger::message("Dealing with conversation ", i + 1, "/", chats.rows());
 
     if (chats.valueAsString(i, "type") == "private_group" /*|| chats.valueAsString(i, "type") == "some_other_group"*/)
-      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, true); // deal with group chat
+      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, true, inserthugeattachments); // deal with group chat
     else if (chats.valueAsString(i, "type") == "personal_chat") // ????
-      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false); // deal with 1-on-1 convo
+      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false, inserthugeattachments); // deal with 1-on-1 convo
     else if (chats.valueAsString(i, "type") == "saved_messages")
-      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false); // deal note-to-self
+      tgImportMessages(jsondb.d_database, finalcontactmap, datapath, chats.valueAsString(i, "id"), chats.valueAsInt(i, "idx"), prependforwarded, markdelivered, markread, false, inserthugeattachments); // deal note-to-self
     else
     {
       Logger::warning("Unsupported chat type `", chats.valueAsString(i, "type"), "'. Skipping...");

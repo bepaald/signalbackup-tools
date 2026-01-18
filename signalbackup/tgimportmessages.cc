@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,7 +21,7 @@
 
 bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<std::vector<std::string>, long long int>> const &contactmap,
                                     std::string const &datapath, std::string const &threadid, long long int chat_idx, bool prependforwarded,
-                                    bool markdelivered, bool markread, bool isgroup)
+                                    bool markdelivered, bool markread, bool isgroup, bool inserthugeattachments)
 {
   // get recipient id for conversation
   auto find_in_contactmap = [&contactmap](std::string const &identifier) -> long long int
@@ -88,7 +88,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
 
     if (!message_data.isNull(i, "poll"))
     {
-      Logger::warnOnce("Message is 'poll'. This is not supported in Signal. Skipping...");
+      Logger::warnOnce("Message is 'poll'. This is not yet supported. Skipping...");
       continue;
     }
 
@@ -149,7 +149,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
         Logger::message("Attachment-only message with same timestamp as previous: assuming attachment belongs to previous message");
 
         // add attachments
-        tgSetAttachment(message_data, datapath, i, prevtimestamp_to_id.second);
+        tgSetAttachment(message_data, datapath, i, prevtimestamp_to_id.second, inserthugeattachments);
         continue;
       }
 
@@ -207,7 +207,7 @@ bool SignalBackup::tgImportMessages(SqliteDB const &db, std::vector<std::pair<st
       bool msg_deleted = false;
 
       // add attachments
-      if (!tgSetAttachment(message_data, datapath, i, new_msg_id))
+      if (!tgSetAttachment(message_data, datapath, i, new_msg_id, inserthugeattachments))
       {
         if (body.empty())
         {

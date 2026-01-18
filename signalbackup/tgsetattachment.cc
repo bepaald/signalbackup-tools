@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,7 @@
 #include "../attachmentmetadata/attachmentmetadata.h"
 
 bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, std::string const &datapath,
-                                   long long int r, long long int new_msg_id)
+                                   long long int r, long long int new_msg_id, bool inserthugeattachments)
 {
   std::string photo = message_data.valueAsString(r, "photo");
   std::string file = message_data.valueAsString(r, "file");
@@ -46,6 +46,12 @@ bool SignalBackup::tgSetAttachment(SqliteDB::QueryResults const &message_data, s
     if (amd.filename.empty() || amd.filesize == 0)
     {
       Logger::warning("Failed to get attachment data. Skipping.");
+      continue;
+    }
+
+    if (!inserthugeattachments && amd.filesize > 100 * 1024 * 1024)
+    {
+      Logger::warning("Filesize exceeds Signal limits. Skipping attachment `", datapath, a, "' (Size: ", amd.filesize, " > ", 100 * 1024 * 1024, ")");
       continue;
     }
 

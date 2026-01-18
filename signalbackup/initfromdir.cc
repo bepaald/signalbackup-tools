@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,7 +23,7 @@
 #include "../rawfileattachmentreader/rawfileattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
 
-void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments)
+void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments, bool inserthugeattachments)
 {
 
   Logger::message("Opening from dir!");
@@ -186,6 +186,11 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
         //  return;
         //temp->setLazyDataRAW(temp->length(), attbin.string());
         temp->setReader(new RawFileAttachmentReader(/*temp->length(), */attbin.string()));
+      }
+      else if (!inserthugeattachments && amd.filesize > 100 * 1024 * 1024) [[unlikely]]
+      {
+        Logger::error("Filesize exceeds Signal limits. Attachment `", attbin, "' (Size: ", amd.filesize, " > ", 100 * 1024 * 1024, ")");
+        return;
       }
       else
       {
