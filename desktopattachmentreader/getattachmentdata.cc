@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -182,6 +182,11 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   out_len += tail_len;
   //std::cout << out_len << std::endl;
 
+  // set the actual decrypted size. This includes padding, but at least (should not)
+  // overflow any buffers. Calling functions should use this for the attachment size
+  // if it is smaller than what was read from the database.
+  //d_decryptedsize = out_len;
+
   //std::cout << "Start of decrypted data: " << bepaald::bytesToHexString(output.get(), 64) << std::endl;
   *rawdata = output.release();
 
@@ -197,6 +202,17 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   {
     Logger::warning("Decrypted size is larger or equal to total data size.");
     Logger::warning_indent("The total size was likely imported from Desktop incorrectly");
+    Logger::warning_indent("Attachment path: ", d_path);
+    Logger::warning_indent("Attachment size (encrypted, on disk): ", bepaald::fileSize(d_path));
+    Logger::warning_indent("Attachment size (as found in database): ", d_size);
+    Logger::warning_indent("Attachment size (as decoded, including padding)): ", out_len);
+
+    std::string_view tmp(reinterpret_cast<char *>(*rawdata), out_len);
+    Logger::warning_indent("Last non-null pos: ", tmp.find_last_not_of('\0'));
+
+
+    // std::cout << bepaald::bytesToHexString(*rawdata, out_len) << std::endl;
+    // std::cout << bepaald::bytesToHexString(*rawdata, 165006) << std::endl;
   }
   return ReturnCode::OK;
 }

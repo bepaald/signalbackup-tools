@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -54,16 +54,19 @@ bool SignalBackup::dtSetAvatar(std::string const &avatarpath, std::string const 
       Logger::error("Failed to get avatar data");
       return false;
     }
+
+    // size = dar.getDecodedSize();
+
 #if __cpp_lib_out_ptr >= 202106L
-    amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap
+    amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data.get(), size); // get metadata from heap data
 #else
-    amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap
+    amd = AttachmentMetadata::getAttachmentMetaData(fullpath, att_data, size);       // get metadata from heap data
     if (att_data)
       delete[] att_data;
 #endif
   }
   else
-    amd = AttachmentMetadata::getAttachmentMetaData(fullpath);                        // get from file
+    amd = AttachmentMetadata::getAttachmentMetaData(fullpath);                        // get from file (version 1, not encrypted)
 
 
   if (!amd)

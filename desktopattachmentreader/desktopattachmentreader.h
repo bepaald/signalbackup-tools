@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -43,6 +43,7 @@ class DesktopAttachmentReader : public AttachmentReader<DesktopAttachmentReader>
   std::string d_path;
   std::string d_key;
   uint64_t d_size;
+  //uint64_t d_decryptedsize;
   int d_version;
  public:
   inline explicit DesktopAttachmentReader(std::string const &path);
@@ -54,6 +55,7 @@ class DesktopAttachmentReader : public AttachmentReader<DesktopAttachmentReader>
   inline virtual ~DesktopAttachmentReader() override = default;
   inline virtual ReturnCode getAttachment(FrameWithAttachment *frame, bool verbose) override;
   ReturnCode getAttachmentData(unsigned char **data, bool verbose);
+  //inline uint64_t getDecryptedSize() const;
   //decryptdata
  private:
   ReturnCode getEncryptedAttachment(FrameWithAttachment *frame, bool verbose);
@@ -70,6 +72,7 @@ inline DesktopAttachmentReader::DesktopAttachmentReader(int version, std::string
   d_path(path),
   d_key(key),
   d_size(size),
+  //d_decryptedsize(0),
   d_version(version)
 {}
 
@@ -87,5 +90,10 @@ inline BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getRawAttachmen
   RawFileAttachmentReader raw(d_path);
   return raw.getAttachment(frame, verbose);
 }
+
+//inline uint64_t DesktopAttachmentReader::getDecryptedSize() const
+//{
+//  return d_decryptedsize;
+//}
 
 #endif

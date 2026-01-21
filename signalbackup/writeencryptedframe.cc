@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -69,6 +69,7 @@ bool SignalBackup::writeEncryptedFrame(std::ofstream &outputfile, BackupFrame *f
         Logger::warning("Corrupted data encountered. Skipping frame.");
         return true;
       }
+      Logger::error("Failed to get attachment data for frame.");
       return false;
     }
 
