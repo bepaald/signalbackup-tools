@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -333,7 +333,7 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
                "json_extract(json, '$.preview[0].description') AS description "
                "FROM messages WHERE rowid = ?", rowid, &linkpreview_results);
 
-    int64_t realsize = attachment_results.valueAsInt(i, "size", -1);
+    int64_t realsize = attachment_results.valueAsInt(i, "size", std::numeric_limits<int64_t>::max());
     SqliteDB::QueryResults sticker_results;
     if (attachment_type == "sticker")
     {
@@ -350,10 +350,20 @@ bool SignalBackup::dtInsertAttachments(long long int mms_id, long long int uniqu
       // in one single instance in my Desktop database, one sticker has
       // its size set to the encrypted filesize (13600) instead of the
       // real filesize (13062) in message_attachments.size,
-      // this would cause a bufffer overflow when getting the data from
+      // this would cause a buffer overflow when getting the data from
       // DesktopAttachmentReader. So here we get the correct size.
-      realsize = ddb.getSingleResultAs<long long int>("SELECT size FROM stickers WHERE packId = ? AND id = ?", {sticker_results.value(0, "packid"), sticker_results.value(0, "stickerid")}, realsize);
+      // EDIT: the size of the sticker in the sticker table can _also_
+      // be incorrect. So we get both sizes, and try to pick the correct one
+      int64_t sticker_size = ddb.getSingleResultAs<long long int>("SELECT IFNULL(NULLIF(size, 0), 9223372036854775807) FROM stickers "
+                                                                  "WHERE packId = ? AND id = ?",
+                                                                  {sticker_results.value(0, "packid"), sticker_results.value(0, "stickerid")},
+                                                                  std::numeric_limits<int64_t>::max());
+      if (sticker_size < realsize)
+        realsize = sticker_size;
     }
+
+    if (realsize == 9223372036854775807)
+      realsize = -1;
 
     dtInsertAttachment(mms_id, unique_id, realsize, attachment_results.getRow(i), linkpreview_results, sticker_results, databasedir, force_is_quote, targetisdummy);
   }
@@ -438,19 +448,23 @@ bool SignalBackup::dtInsertAttachmentsOld(long long int mms_id, long long int un
 
     // get the attachment info (content-type, size, path, ...)
 
-    // the size of a sticker in the messages table can be incorrect,
-    // so lets get it from the stickers table...
-    // in one single instance in my Desktop database, one sticker has
-    // its size set to the encrypted filesize (13600) instead of the
-    // real filesize (13062) in messages.json<$.sticker.data.size>,
-    // this woud cause a bufffer overflow when getting the data from
-    // DesktopAttachmentReader. So here, we COALESCE with stickers.size
-    // on packid and stickerid, to get the correct size.
     if (!ddb.exec(bepaald::concat("SELECT "
                                   "json_extract(messages.json, '", jsonpath, ".path') AS path,"
                                   "json_extract(messages.json, '", jsonpath, ".contentType') AS content_type,"
-                                  "COALESCE(stickers.size, json_extract(messages.json, '", jsonpath, ".size')) AS size,"
-                                  //"json_extract(json, '", jsonpath, ".cdnKey') AS cdn_key,"
+
+                                  // the size of a sticker in the messages table can be incorrect,
+                                  // so lets get it from the stickers table...
+                                  // in one single instance in my Desktop database, one sticker has
+                                  // its size set to the encrypted filesize (13600) instead of the
+                                  // real filesize (13062) in messages.json<$.sticker.data.size>,
+                                  // this woud cause a buffer overflow when getting the data from
+                                  // DesktopAttachmentReader. So here, we COALESCE with stickers.size
+                                  // on packid and stickerid, to get the correct size.
+                                  // EDIT: the size of the sticker in the sticker table can _also_
+                                  // be incorrect. So we get both sizes, and try to pick the correct one
+                                  "IFNULL(NULLIF((stickers.size, 0), 9223372036854775807) AS sticker_size,"
+                                  "IFNULL(NULLIF(json_extract(messages.json, '", jsonpath, ".size'), 0), 9223372036854775807) AS messages_size,"
+
                                   "json_extract(messages.json, '", jsonpath, ".localKey') AS localKey,"
                                   "IFNULL(json_extract(messages.json, '", jsonpath, ".version'), 1) AS version,"
                                   "IFNULL(json_extract(messages.json, '", jsonpath, ".width'), 0) AS width,"
@@ -489,7 +503,12 @@ bool SignalBackup::dtInsertAttachmentsOld(long long int mms_id, long long int un
                "FROM messages " + where, &sticker_results);
     }
 
-    dtInsertAttachment(mms_id, unique_id, results_attachment_data.valueAsInt(0, "size", -1), results_attachment_data, linkpreview_results, sticker_results, databasedir, isquote, targetisdummy);
+    int64_t stickersize = std::min(results_attachment_data.valueAsInt(0, "sticker_size", std::numeric_limits<int64_t>::max()),
+                                   results_attachment_data.valueAsInt(0, "messages_size", std::numeric_limits<int64_t>::max()));
+    if (stickersize == 9223372036854775807)
+      stickersize = -1;
+
+    dtInsertAttachment(mms_id, unique_id, stickersize, results_attachment_data, linkpreview_results, sticker_results, databasedir, isquote, targetisdummy);
   }
   return true;
 }

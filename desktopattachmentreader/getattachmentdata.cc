@@ -210,7 +210,6 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
     std::string_view tmp(reinterpret_cast<char *>(*rawdata), out_len);
     Logger::warning_indent("Last non-null pos: ", tmp.find_last_not_of('\0'));
 
-
     // std::cout << bepaald::bytesToHexString(*rawdata, out_len) << std::endl;
     // std::cout << bepaald::bytesToHexString(*rawdata, 165006) << std::endl;
   }
