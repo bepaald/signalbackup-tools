@@ -1088,9 +1088,17 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
   if (field5.has_value())
     return decodePollTerminateMessage(field5->getDataString(), type, contactname, icon);
 
-  // auto field6 = me.getField<6>(); // PinnedMessage
-  // if (field6.has_value())
-  //   return "PinnedMessage (not yet implemented)";
+  auto field6 = me.getField<6>(); // PinnedMessage
+  if (field6.has_value())
+  {
+    if (icon && *icon == IconType::NONE)
+      *icon = IconType::PINNED_MESSAGE;
+
+    std::string name(Types::isOutgoing(type) ? "You" : contactname);
+    if (!name.empty())
+      return name + " pinned a message";
+    return "A message was pinned";
+  }
 
   return std::string();
 }

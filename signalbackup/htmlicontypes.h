@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -36,6 +36,7 @@ enum class IconType : std::uint8_t
   THREAD,
   //AVATAR_REMOVE,
   POLL_TERMINATE,
+  PINNED_MESSAGE,
 };
 
 #endif

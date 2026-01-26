@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -43,9 +43,9 @@ void SignalBackup::cleanDatabaseByMessages()
   if (d_database.containsTable("poll"))
   {
     // clean up entries in poll_vote and poll_option
-    d_database.exec("DELETE FROM poll_vote WHERE poll_id NOT IN "
+    d_database.exec("DELETE FROM poll_vote WHERE poll_id IN "
                     "(SELECT DISTINCT _id FROM poll WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + "))");
-    d_database.exec("DELETE FROM poll_option WHERE poll_id NOT IN "
+    d_database.exec("DELETE FROM poll_option WHERE poll_id IN "
                     "(SELECT DISTINCT _id FROM poll WHERE message_id NOT IN (SELECT DISTINCT _id FROM " + d_mms_table + "))");
 
     Logger::message("  Deleting entries from 'poll' not belonging to remaining messages");
@@ -312,17 +312,31 @@ void SignalBackup::cleanDatabaseByMessages()
     }
     //Logger::message("QUERY: ", reaction_authors_query);
 
+    // d_database.printSingleLine("SELECT recipient._id FROM recipient");
+    // d_database.printSingleLine("SELECT DISTINCT from_recipient_id FROM message");
+    // d_database.printSingleLine("SELECT DISTINCT to_recipient_id FROM message");
+    // d_database.printSingleLine("SELECT DISTINCT quote_author FROM message WHERE quote_author IS NOT NULL AND quote_author IS NOT 0");
+    // d_database.printSingleLine("SELECT DISTINCT recipient_id FROM mention");
+    // d_database.printSingleLine("SELECT DISTINCT peer FROM call");
+    // d_database.printSingleLine("SELECT DISTINCT ringer FROM call WHERE ringer IS NOT NULL");
+    // d_database.printSingleLine("SELECT DISTINCT author_id FROM reaction");
+    // d_database.printSingleLine("SELECT DISTINCT recipient_id FROM story_sends");
+    // d_database.printSingleLine("SELECT DISTINCT recipient_id FROM distribution_list_member");
+    // d_database.printSingleLine("SELECT DISTINCT author_id FROM poll");
+    // d_database.printSingleLine("SELECT DISTINCT voter_id FROM poll_vote");
+    // d_database.printSingleLine("SELECT DISTINCT recipient_id FROM thread");
+
     SqliteDB::QueryResults deleted_recipients;
     d_database.exec("DELETE FROM recipient WHERE _id NOT IN"
                     " (SELECT DISTINCT " + d_mms_recipient_id + " FROM " + d_mms_table +
                     (d_database.containsTable("sms") ? " UNION SELECT DISTINCT " + d_sms_recipient_id + " FROM sms"s : "") +
                     (d_database.tableContainsColumn(d_mms_table, "quote_author") ? " UNION SELECT DISTINCT quote_author FROM " +
-                     d_mms_table + " WHERE quote_author IS NOT NULL"s : ""s) +
+                     d_mms_table + " WHERE quote_author IS NOT NULL AND quote_author IS NOT 0"s : ""s) +
                     (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? " UNION SELECT DISTINCT to_recipient_id FROM " +
                      d_mms_table : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("call") ? " UNION SELECT DISTINCT peer FROM call"s : ""s) +
-                    (d_database.containsTable("call") && d_database.tableContainsColumn("call", "ringer") ? " UNION SELECT DISTINCT ringer FROM call"s : ""s) +
+                    (d_database.containsTable("call") && d_database.tableContainsColumn("call", "ringer") ? " UNION SELECT DISTINCT ringer FROM call WHERE ringer IS NOT NULL"s : ""s) +
                     (d_database.containsTable("reaction") ? " UNION SELECT DISTINCT author_id FROM reaction"s : ""s) +
                     (d_database.containsTable("story_sends") ? " UNION SELECT DISTINCT recipient_id FROM story_sends"s : ""s) +
                     (d_database.containsTable("distribution_list_member") ? " UNION SELECT DISTINCT recipient_id FROM distribution_list_member"s : ""s) +
@@ -365,6 +379,7 @@ void SignalBackup::cleanDatabaseByMessages()
       }
 
     }
+    //d_database.printSingleLine("SELECT recipient._id FROM recipient");
   }
 
   if (d_database.containsTable("notification_profile_allowed_members"))

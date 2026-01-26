@@ -182,6 +182,16 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
   out_len += tail_len;
   //std::cout << out_len << std::endl;
 
+  // if (data_length - out_len > 16) // data_length is the actual attachment data + 0-padding added by Signal + padded to first multiple of 16 by aes
+  // {                               //     out_len is the actual attachment data + 0-padding added by Signal
+  //   std::cout << "UNEXPECTED OUTLEN" << std::endl;
+  //   std::cout << d_path << std::endl;
+  //   std::cout << "filesize: " << bepaald::fileSize(d_path)
+  //             << " decrypted: "<< out_len
+  //             << " REAL size: " << d_size
+  //             << " " << bepaald::fileSize(d_path) - out_len << " " << tail_len << std::endl;
+  // }
+
   // set the actual decrypted size. This includes padding, but at least (should not)
   // overflow any buffers. Calling functions should use this for the attachment size
   // if it is smaller than what was read from the database.

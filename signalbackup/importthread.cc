@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -289,6 +289,22 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
     }
     if (count)
       Logger::message("  Deleted ", count, " existing storage_keys");
+  }
+
+  // delete already present attachment_metadata
+  if (d_database.containsTable("attachment_metadata"))
+  {
+    SqliteDB::QueryResults res;
+    d_database.exec("SELECT plaintext_hash FROM attachment_metadata", &res);
+
+    int count = 0;
+    for (unsigned int i = 0; i < res.rows(); ++i)
+    {
+      source->d_database.exec("DELETE FROM attachment_metadata WHERE plaintext_hash = ?", res.value(i, 0));
+      count += source->d_database.changed();
+    }
+    if (count)
+      Logger::message("  Deleted ", count, " existing attachment_metadata");
   }
 
   // delete double megaphones
@@ -1101,6 +1117,12 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //     std::cout << results.valueAsString(i, j) << " ";
       //   std::cout << std::endl;
       // }
+
+      if (table == "recipient")
+      {
+        results.printLineMode(i);
+      }
+
       SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
       d_database.exec(newframe.bindStatementView(), newframe.parametersView());
       //newframe.printInfo();

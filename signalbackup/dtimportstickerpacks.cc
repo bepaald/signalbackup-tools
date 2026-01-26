@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -96,20 +96,37 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       std::string localkey = dtstickers(j, "localKey");
       std::string fullpath(databasedir + "/stickers.noindex/" + dtstickers(j, "path"));
 
-      // get filelength if not in database
+      // get filelength to make sure it is not larger than whats in the database.
+      // incorrect (too big) sizes have been observed in the database, leading to buffer
+      // overflows when writing the decrypted data.
+      uint64_t filesize_on_disk = bepaald::fileSize(fullpath);
+
+      // if we got the file size
+      if (filesize_on_disk != 0 && filesize_on_disk != static_cast<std::uintmax_t>(-1))
+      {
+        // IF file size without MAC and IV (= attachment_data + 0-padding by Signal + padding to first multiple of 16 by AES
+        // <
+        // size in database
+        // THEN size in database is wrong: even filesize_on_disk - 32 - 16 is already more than we have available...
+        if (filesize_on_disk - 32 /*MAC LENGTH*/ - 16 /*IV LENGTH*/ < filelength ||
+            filelength == 0)
+        {
+          Logger::error("Sticker size in database is incorrect. Skipping...");
+          return false;
+
+          // TODO: decrypt the sticker and get its "attachment_data + 0-padding by Signal"-size
+          //       (out_len in DesktopAttachmentReader)
+          //       this is also not the _real_ size, but at least theses bytes are all going
+          //       to be available to write.
+
+          // Logger::message("Adjusting sticker size as it appears to large in database.");
+          // Logger::message("Size in DB: ", filelength, " Size on disk: ", filesize_on_disk,
+          //                 " (with padding and 48 bytes IV+MAC)");
+          // filelength = filesize_on_disk - 32 - 16;
+        }
+      }
+
       if (filelength == 0)
-        //{
-        //std::ifstream dtstickerfile(fullpath, std::ios_base::binary | std::ios_base::in);
-        //if (!dtstickerfile.is_open())
-        //{
-        //  Logger::error("Error opening Desktop sticker at path '", fullpath, "'. Skipping...");
-        //  continue;
-        //}
-        //dtstickerfile.seekg(0, std::ios_base::end);
-        //filelength = dtstickerfile.tellg();
-        filelength = bepaald::fileSize(fullpath);
-        //}
-      if (filelength == 0 || filelength == static_cast<std::uintmax_t>(-1)) [[unlikely]]
       {
         Logger::error("Failed to get Sticker filesize. Skipping...");
         return false;

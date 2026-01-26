@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -510,6 +510,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
   },
   {
     "last_resort_key_tuple", // not sure about this one...
+    "_id",
+    {},
+    0
+  },
+  {
+    "attachment_metadata",
     "_id",
     {},
     0

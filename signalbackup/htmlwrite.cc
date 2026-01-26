@@ -1299,6 +1299,18 @@ R"(
         filter: var(--icon-f);
       }
 
+      .footer .msg-pinned-icon,
+      .msg-status .msg-pinned-icon {
+        background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white" stroke="none"><path d="M10.886 1.604c-.323-.322-.765-.495-1.203-.471a1.35 1.35 0 0 0-1.146.737 4.16 4.16 0 0 0-.432 2.402L6.662 5.475c-1.247-.411-2.585-.376-3.733.159a1.36 1.36 0 0 0-.791 1.145c-.035.448.136.906.47 1.24l2.124 2.124-2.969 2.969a1.5 1.5 0 0 0-.373.619l-.251.818a.25.25 0 0 0 .312.312l.818-.251a1.5 1.5 0 0 0 .619-.373l2.969-2.969 2.124 2.124c.334.334.792.505 1.24.47a1.36 1.36 0 0 0 1.145-.791c.535-1.147.57-2.484.16-3.73l1.205-1.445c.814.097 1.653-.047 2.399-.433.474-.245.713-.693.738-1.146.023-.438-.149-.88-.472-1.203l-3.51-3.51zm-1.194.863c.01-.02.018-.025.02-.026s.017-.009.042-.01c.054-.003.14.02.212.093l3.51 3.51c.073.072.096.158.093.213-.001.024-.007.037-.01.041s-.006.01-.026.02c-.595.308-1.279.392-1.923.25l-.386-.085-2.186 2.623.147.362c.43 1.056.42 2.168.003 3.063-.011.024-.021.031-.024.033s-.019.01-.044.012c-.056.004-.145-.018-.22-.093L3.527 7.1c-.075-.075-.097-.164-.093-.22.002-.025.009-.039.012-.044s.009-.012.033-.024c.895-.417 2.009-.426 3.066.004l.362.147 2.621-2.184-.086-.386c-.142-.645-.058-1.33.25-1.926z"/></svg>');
+        filter: var(--icon-f);
+      }
+      .footer .msg-pinned-icon
+      {
+        height: 12px;
+        width: 12px;
+        margin-right: 5px;
+      }
+
       .msg-status .msg-spam-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 6.5c-.7 0-1.24.6-1.2 1.29l.43 5.5c.03.4.37.71.77.71s.74-.31.77-.71l.42-5.5c.05-.7-.49-1.29-1.19-1.29zm0 8.75a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 1 0 0-2.5zm3.1-13.62H8.9c-.77 0-1.5.3-2.04.84l-4.4 4.39c-.52.54-.82 1.27-.82 2.03v6.22a2.87 2.87 0 0 0 .84 2.03l4.39 4.4a2.91 2.91 0 0 0 2.03.84h6.22c.76 0 1.49-.3 2.03-.85l4.4-4.39a2.91 2.91 0 0 0 .84-2.03V8.89c0-.76-.3-1.49-.85-2.03l-4.39-4.4a2.9 2.9 0 0 0-2.03-.83zM8.9 3.38h6.2a1.11 1.11 0 0 1 .8.32l4.4 4.4c.2.2.32.5.32.8v6.2a1.11 1.11 0 0 1-.32.8l-4.4 4.4c-.2.2-.5.32-.8.32H8.9a1.11 1.11 0 0 1-.8-.32l-4.4-4.4a1.16 1.16 0 0 1-.33-.8V8.9c0-.3.12-.6.33-.8l4.4-4.4a1.16 1.16 0 0 1 .8-.33z"/></svg>');
         filter: var(--icon-f);
@@ -1402,6 +1414,7 @@ R"(
       .msg-status .msg-member-approved-icon,
       .msg-status .msg-member-rejected-icon,
       .msg-status .msg-poll-end-icon,
+      .msg-status .msg-pinned-icon,
       .msg-status .msg-profile-icon,
       .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled,
@@ -1947,8 +1960,8 @@ R"(
       .msg-status .msg-member-add-icon, .msg-status .msg-member-remove-icon,
       .msg-status .msg-avatar-update-icon, .msg-status .msg-group-quit-icon,
       .msg-status .msg-members-icon, .msg-status .msg-member-approved-icon,
-      .msg-status .msg-member-rejected-icon, .msg-status .msg-end-poll-icon,
-      .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
+      .msg-status .msg-member-rejected-icon, .msg-status .msg-poll-end-icon,
+      .msg-status .msg-pinned-icon, .msg-status .msg-profile-icon, .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled, .msg-status .msg-expiration-timer-set,
       .msg-status .msg-phone-icon, .msg-status .msg-thread-icon,
       .msg-incoming .shared-contact-avatar-default,
@@ -2765,6 +2778,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       htmloutput << "<span class=\"msg-thread-merge-icon\"></span>";
     else if (Types::isPollEndType(msg_info.type))
       htmloutput << "<span class=\"msg-poll-end-icon\"></span>";
+    else if (Types::isPinnedMessageType(msg_info.type))
+      htmloutput << "<span class=\"msg-pinned-icon\"></span>";
     else if (msg_info.type == Types::GV1_MIGRATION_TYPE)
     {
       if (msg_info.icon == IconType::MEMBER_ADD)
@@ -2839,6 +2854,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // insert msg-footer (date & checkmarks)
   htmloutput << std::string(extraindent, ' ') << "            <div class=\"footer" << (Types::isStatusMessage(msg_info.type) ? "-status" : "") << "\">\n";
+  if (msg_info.pinned_until > 0)
+  {
+    htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-pinned-icon\"></div>";
+  }
   if (msg_info.original_message_id != -1) // : is_edited = true
   {
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"edited\"><span>edited</span>";
@@ -2891,17 +2910,21 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         htmloutput << "received";
       else // if something? type != failed? -> check for failed before outputting 'checkmarks-'
         htmloutput << "sent";
-      htmloutput << "\">\n";
+      htmloutput << "\">";
       // msg receipt details
       if (writereceipts &&
           (msg_info.messages->valueAsInt(msg_info.idx, d_mms_delivery_receipts, -1) > 0 ||
            msg_info.messages->valueAsInt(msg_info.idx, d_mms_read_receipts, -1) > 0))
+      {
+        htmloutput << "\n";
         HTMLwriteMsgReceiptInfo(htmloutput, recipient_info, msg_info.msg_id, msg_info.isgroup,
                                 msg_info.messages->valueAsInt(msg_info.idx, d_mms_read_receipts, 0),
                                 msg_info.messages->valueAsInt(msg_info.idx, d_mms_delivery_receipts, 0),
                                 msg_info.messages->valueAsInt(msg_info.idx, "receipt_timestamp", -1),
                                 extraindent);
-      htmloutput << std::string(extraindent, ' ') << "              </div>\n";
+        htmloutput << std::string(extraindent, ' ') << "              ";
+      }
+      htmloutput << "</div>\n";
     }
   }
   htmloutput << std::string(extraindent, ' ') << "            </div>\n";

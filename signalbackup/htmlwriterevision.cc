@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -189,6 +189,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             -1, //original_message_id,
                             quote_id, // quote_id
                             revision.valueAsInt(0, "scheduled_date", 0),
+                            0, // pinned_until
 
                             icon,
                             0, // messagecount, // idx of current message in &messages

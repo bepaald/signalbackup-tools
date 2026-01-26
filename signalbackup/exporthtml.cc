@@ -378,6 +378,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (d_database.tableContainsColumn(d_mms_table, "scheduled_date") ? "scheduled_date, " : "0 AS scheduled_date, "),
                                     (d_database.tableContainsColumn(d_mms_table, "receipt_timestamp") ? "receipt_timestamp, " : "-1 AS receipt_timestamp, "), // introduced in 117
                                     (d_database.containsTable("poll") ? "poll._id AS poll_id, " : "-1 AS poll_id, "),
+                                    (d_database.tableContainsColumn(d_mms_table, "pinned_until") ? "pinned_until AS pinned_until, " : "0 AS pinned_until, "),
                                     "json_extract(link_previews, '$[0].url') AS link_preview_url, "
                                     "json_extract(link_previews, '$[0].title') AS link_preview_title, "
                                     "json_extract(link_previews, '$[0].description') AS link_preview_description "
@@ -573,6 +574,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             -1,
             messages.valueAsInt(messagecount, "quote_id", 0),                       // quote_id
             messages.valueAsInt(messagecount, "scheduled_date", 0),                 // scheduled_date
+            messages.valueAsInt(messagecount, "pinned_until", 0),                   // scheduled_date
 
             IconType::NONE,                                                         // icon
             messagecount,                                                           // current message idx in results
