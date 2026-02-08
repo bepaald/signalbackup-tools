@@ -1,0 +1,2 @@
+#include <windows.h>    // RT_MANIFEST
+1  RT_MANIFEST "windows_utf8.manifest"

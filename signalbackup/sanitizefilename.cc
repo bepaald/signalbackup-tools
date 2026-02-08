@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2025  Selwin van Dijk
+  Copyright (C) 2021-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -25,6 +25,12 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename, bool agg
                                                                 // characters are not trailing) // currently unused
 {
   std::string result;
+
+#if defined(_WIN32) || defined(__MINGW64__)
+  static bool use_utf8 = (GetACP() == CP_UTF8);
+#else
+  static bool use_utf8 = aggressive ? false : true; // if we are not on windows and we specifically
+#endif                                              // requested aggressive sanitizing, lets not do utf8
 
 #if !defined(_WIN32) && !defined(__MINGW64__)
   if (!aggressive)
@@ -80,7 +86,7 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename, bool agg
     result += ((c == '/' || c == '\\' || c == '?' ||
                 c == '*' || c == ':' || c == '|' ||
                 c == '"' || c == '<' || c == '>' ||
-                c <= 0x1f || c == 0x7f) ? '_' : c);
+                (use_utf8 ? false : c <= 0x1f) || (use_utf8 ? false : c == 0x7f)) ? '_' : c);
 
   // trailing whitespace or periods are (possibly) technically allowed
   // by the filesystem, but not supported by windows shell and UI

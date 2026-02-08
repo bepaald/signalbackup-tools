@@ -65,6 +65,9 @@ file(GLOB SOURCES CONFIGURE_DEPENDS */*.cc */*.h *.cc *.h)
 add_executable(signalbackup-tools ${SOURCES})
 
 if (WIN32)
+  # add the manifest that makes the app use the UTF8 codepage to the sources
+  target_sources(signalbackup-tools PRIVATE ${windows_utf8.manifest})
+
   target_compile_definitions(signalbackup-tools PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
   target_link_libraries(signalbackup-tools PRIVATE crypt32)
   # disable some warnings on windows (int conversions and use of localtime vs localtime_s)

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -1676,7 +1676,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           if (!dtdb->d_database.exec("SELECT "
                                     "json_extract(messages.json, '$.quote.id') AS quote_id,"
                                     "json_extract(messages.json, '$.quote.author') AS quote_author_phone,"     // in old databases, authorUuid does not exist, but this holds the phone number
-                                    "conversations." + d_dt_c_uuid + " AS quote_author_uuid_from_phone,"       // this is filled from a left join on the possible phone number above
+                                    "conversations." + d_dt_c_uuid + " AS quote_author_uuid_from_phone,"       // <- this is filled from a left join on the possible phone number above
                                     "LOWER(json_extract(messages.json, '$.quote.authorAci')) AS quote_author_aci," // in newer databases, this replaces the 'authorUuid'
                                     "LOWER(json_extract(messages.json, '$.quote.authorUuid')) AS quote_author_uuid,"
                                     "json_extract(messages.json, '$.quote.text') AS quote_text,"

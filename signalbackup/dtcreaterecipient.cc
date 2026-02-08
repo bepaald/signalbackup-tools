@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -31,7 +31,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               bool create_valid_contacts, bool generatestoragekeys, bool *was_warned)
 {
   std::string printable_uuid(makePrintable(id));
-  Logger::message("Creating new recipient for id: ", printable_uuid);
+  std::string printable_phone(makePrintable(phone));
+  Logger::message("Creating new recipient for id: ", printable_uuid, (id.empty() ? " (" + printable_phone + ")" : ""));
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
