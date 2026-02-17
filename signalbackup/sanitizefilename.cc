@@ -27,7 +27,7 @@ std::string SignalBackup::sanitizeFilename(std::string const &filename, bool agg
   std::string result;
 
 #if defined(_WIN32) || defined(__MINGW64__)
-  static bool use_utf8 = (GetACP() == CP_UTF8);
+  static bool use_utf8 = (GetACP() == CP_UTF8); // 65001
 #else
   static bool use_utf8 = aggressive ? false : true; // if we are not on windows and we specifically
 #endif                                              // requested aggressive sanitizing, lets not do utf8

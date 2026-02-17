@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 #if defined(_WIN32) || defined(__MINGW64__)
   // set utf8 output
   unsigned int oldcodepage = GetConsoleOutputCP();
-  SetConsoleOutputCP(65001);
+  SetConsoleOutputCP(CP_UTF8); // 65001
   // enable ansi escape codes
   HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
   DWORD mode = 0;

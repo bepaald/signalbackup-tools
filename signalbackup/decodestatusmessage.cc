@@ -456,7 +456,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         }
       }
 
-      // if this is revision 0, and no previous state is given, and new title is -> creataed new group
+      // if no previous state is given, and this is revision 0 and new title -> created new group
       if (!groupv2ctx.getField<4>().has_value()) // no previous state
       {
         auto groupctx = groupv2ctx.getField<1>();
@@ -534,52 +534,6 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           *icon = (newexp == 0) ? IconType::TIMER_DISABLE : IconType::TIMER_UPDATE;
       }
 
-      // check new member:
-      auto const &newmembers = groupchange.getField<3>();
-      if (newmembers.size())
-      {
-        // get editor of this group change
-        std::string editoruuid;
-        if (groupchange_editor.has_value())
-        {
-          auto [uuid, uuid_size] = groupchange_editor.value();
-          editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
-          editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-        }
-
-        for (unsigned int i = 0; i < newmembers.size(); ++i)
-        {
-          auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-          std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-          uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-
-          if (uuidstr == editoruuid) // you can't add yourself to the group, if this happens
-          {                          // you joined via invite link (without approval)
-            statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " joined the group via the group link";
-            if (icon && *icon == IconType::NONE)
-              *icon = IconType::MEMBER_APPROVED;
-          }
-          else
-          {
-            statusmsg += (Types::isOutgoing(type) ? "You" : contactname) + " added " + getNameFromUuid(uuidstr) + ".";
-            if (icon && *icon == IconType::NONE)
-              *icon = IconType::MEMBER_ADD;
-          }
-        }
-      }
-
-      // check members left:
-      auto const &deletedmembers = groupchange.getField<4>();
-      for (unsigned int i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
-      {
-        auto [uuid, uuid_size] = deletedmembers[i]; // bytes
-        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
-        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
-        statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " removed " + getNameFromUuid(uuidstr) + ".";
-        if (icon && *icon == IconType::NONE)
-          *icon = IconType::MEMBER_REMOVE;
-      }
-
       // check memberrole change
       auto const &memberrolechanges = groupchange.getField<5>();
       for (unsigned int i = 0; i < memberrolechanges.size(); ++i) // I dont know how this can be more than size() == 1
@@ -609,6 +563,67 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " revoked admin privileges from " + getNameFromUuid(uuidstr) + ".";
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEGAPHONE;
+      }
+
+      // check new member:
+      auto const &newmembers = groupchange.getField<3>();
+      if (newmembers.size())
+      {
+        // get editor of this group change
+        std::string editoruuid;
+        if (groupchange_editor.has_value())
+        {
+          auto [uuid, uuid_size] = groupchange_editor.value();
+          editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
+          editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        }
+
+        for (unsigned int i = 0; i < newmembers.size(); ++i)
+        {
+          auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+          std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+          uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+          if (uuidstr == editoruuid) // you can't add yourself to the group, if this happens
+          {                          // you joined via invite link (without approval)
+            statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " joined the group via the group link";
+            if (icon && *icon == IconType::NONE)
+              *icon = IconType::MEMBER_APPROVED;
+          }
+          else
+          {
+            statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " added " +
+              (uuidstr == d_selfuuid ? "you" : getNameFromUuid(uuidstr)) + " to the group.";
+            if (icon && *icon == IconType::NONE)
+              *icon = IconType::MEMBER_ADD;
+          }
+        }
+      }
+
+      // check members left:
+      auto const &deletedmembers = groupchange.getField<4>();
+      for (unsigned int i = 0; i < deletedmembers.size(); ++i) // I dont know how this can be more than size() == 1
+      {
+        auto [uuid, uuid_size] = deletedmembers[i]; // bytes
+        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+        if (Types::isOutgoing(type) && uuidstr == d_selfuuid)
+        {
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + "You left the group."s;
+          if (icon && *icon == IconType::NONE)
+            *icon = IconType::GROUP_QUIT;
+        }
+        // else if editor == uuidstr -> "name left the group." ?
+        else
+        {
+          // if (contactname.empty() && !Types::isOutgoing(type))
+          //   statusmsg += (!statusmsg.empty() ? "\n" : "") + (uuidstr == d_selfuuid ? "You were" : getNameFromUuid(uuidstr) + "was") + " removed from the group.";
+          // else
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " removed " +
+            (uuidstr == d_selfuuid ? "you" : getNameFromUuid(uuidstr)) + " from the group.";
+          if (icon && *icon == IconType::NONE)
+            *icon = IconType::MEMBER_REMOVE;
+        }
       }
 
       // // check members left:
@@ -863,6 +878,21 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBER_ADD;
       }
+    } // if groupchange (groupv2ctx.field2)
+
+    if (!groupv2ctx.getField<2>().has_value() && // no GroupChange
+        groupv2ctx.getField<3>().has_value() &&  // yes current state, but...
+        !groupv2ctx.getField<4>().has_value() && // no previous state
+        Types::isOutgoing(type))
+    {
+      auto groupctx = groupv2ctx.getField<1>();
+      if (!groupctx.has_value() ||
+          groupctx.value().getField<2>().value_or(-1) > 0) // revision > 0
+      {                                                    // we just joined!
+        if (icon && *icon == IconType::NONE)
+          *icon = IconType::MEMBER_ADD;
+        return "You joined the group.";
+      }
     }
 
     // maybe someone was invited, check for pending memebers...
@@ -1075,7 +1105,7 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
   auto field1 = me.getField<1>();
   if (field1.has_value()) // GV2UpdateDescription
   {
-    auto field1_1 = field1->getField<1>();
+    auto field1_1 = field1->getField<1>(); // DecryptedGroupV2Context
     if (field1_1.has_value())
       return decodeStatusMessage(field1_1->getDataString(), expiration, type, contactname, icon);
   }

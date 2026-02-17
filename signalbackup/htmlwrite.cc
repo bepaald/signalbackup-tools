@@ -2822,6 +2822,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         htmloutput << "<span class=\"msg-member-remove-icon\"></span>";
       else if (msg_info.icon == IconType::AVATAR_UPDATE)
         htmloutput << "<span class=\"msg-avatar-update-icon\"></span>";
+      else if (msg_info.icon == IconType::GROUP_QUIT)
+        htmloutput << "<span class=\"msg-group-quit-icon\"></span>";
     }
     // else if (Types::isGroupV2(msg_info.type) && msg_info.icon == IconType::)
     //   htmloutput << "<span class=\"msg-\"></span>";

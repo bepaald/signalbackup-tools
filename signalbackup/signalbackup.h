@@ -59,7 +59,7 @@
 // titles have been possible).
 // maybe this needs to be done smarter, making sure to only truncate at character
 // boundaries (not in the middle of multibyte ones...
-#define MAXFILELENGTH 54
+//#define MAXFILELENGTH 54
 //#define WIN_LIMIT_FILENAME_LENGTH(str) if (str.size() > MAXFILELENGTH) [[unlikely]]  str.resize(MAXFILELENGTH);
 #define WIN_LIMIT_FILENAME_LENGTH(str)
 #else

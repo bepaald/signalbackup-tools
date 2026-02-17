@@ -37,6 +37,7 @@ enum class IconType : std::uint8_t
   //AVATAR_REMOVE,
   POLL_TERMINATE,
   PINNED_MESSAGE,
+  GROUP_QUIT,
 };
 
 #endif
