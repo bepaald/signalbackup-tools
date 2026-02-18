@@ -593,7 +593,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           else
           {
             statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " added " +
-              (uuidstr == d_selfuuid ? "you" : getNameFromUuid(uuidstr)) + " to the group.";
+              (uuidstr == d_selfuuid ? "you to the group" : getNameFromUuid(uuidstr)) + ".";
             if (icon && *icon == IconType::NONE)
               *icon = IconType::MEMBER_ADD;
           }
@@ -620,7 +620,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           //   statusmsg += (!statusmsg.empty() ? "\n" : "") + (uuidstr == d_selfuuid ? "You were" : getNameFromUuid(uuidstr) + "was") + " removed from the group.";
           // else
           statusmsg += (!statusmsg.empty() ? "\n" : "") + (Types::isOutgoing(type) ? "You" : contactname) + " removed " +
-            (uuidstr == d_selfuuid ? "you" : getNameFromUuid(uuidstr)) + " from the group.";
+            (uuidstr == d_selfuuid ? "you from the group" : getNameFromUuid(uuidstr)) + ".";
           if (icon && *icon == IconType::NONE)
             *icon = IconType::MEMBER_REMOVE;
         }

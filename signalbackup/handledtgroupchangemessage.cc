@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -171,6 +171,17 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
     return false;
 
   std::string source_uuid = res("source");
+  if (source_uuid.empty())
+  {
+    // This has been observed in the wild. A group-v2-change type message without any source,
+    // on Desktop, the message reads "You were removed from the group.", on Android this message
+    // does not show at all (is not present in the database). Androids `strings.xml' also does
+    // not contain this string.
+    // To prevent multiple errors showing up in this case, we check here, warn once, and exit.
+    Logger::warning("Group v2 change message without source recipient, this is not supported on Android. Skipping.");
+    return false;
+  }
+
   if (STRING_STARTS_WITH(source_uuid, "pni")) // get real uuid if source was a "PNI:" type id...?
   {
     std::string realuuid = ddb.getSingleResultAs<std::string>("SELECT " + d_dt_c_uuid + " FROM conversations WHERE LOWER(json_extract(json, '$.pni')) IS ?", source_uuid, std::string());
