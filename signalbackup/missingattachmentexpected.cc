@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2024  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -58,7 +58,8 @@ bool SignalBackup::missingAttachmentExpected(uint64_t rowid, int64_t unique_id) 
     // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check:
 
     // check for remote deleted
-    if (d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE remote_deleted IS 1 AND " +
+    std::string deleted(d_database.tableContainsColumn(d_mms_table, "deleted_by") ? "deleted_by" : "remote_deleted");
+    if (d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE " + deleted + " != 0 AND " +
                         d_mms_date_sent + " IS (SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?)",
                         mid, &results))
       if (results.rows()) // can be > 1 if message are doubled (and before date_sent had UNIQUE)

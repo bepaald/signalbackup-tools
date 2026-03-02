@@ -82,7 +82,8 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"message", "latest_revision_id"},
       {"message", "original_message_id"},
       {"message", "pinning_message_id", "pinning_message_id != 0"}, // column has default 0, but only refers to a message when != 0
-      {"poll", "message_id"}
+      {"poll", "message_id"},
+      {"thread", "snippet_message_id"}
     },
     0
   },
@@ -132,7 +133,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     NO_COMPACT
   },
   {
-    "recipient", // for (very) old databases
+    "recipient",
     "_id",
     {
       {"sms", "address"},      // \ These are one
@@ -142,6 +143,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"message", "from_recipient_id"}, // | Also sort of
       {"message", "to_recipient_id"},   // /
       {"message", "quote_author"},
+      {"message", "deleted_by"},
       {"mms", "address"},      // \ These are one
       {"mms", "recipient_id"}, // /
       {"mms", "quote_author"},
@@ -150,6 +152,9 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"thread", "recipient_ids"},        //---\ Only one of these will exist
       {"thread", "thread_recipient_id"},  //   /
       {"thread", "recipient_id"},         //__/
+      {"thread", "snippet_extras", "", "'$.deletedBy'"},
+      {"thread", "snippet_extras", "", "'$.groupAddedBy'"},
+      {"thread", "snippet_extras", "", "'$.individualRecipientId'"},
       {"groups", "recipient_id"},
       {"remapped_recipients", "old_id"}, // should actually be cleared, but ...
       {"remapped_recipients", "new_id"}, // this can't hurt
@@ -158,11 +163,13 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"reaction", "author_id"},
       {"notification_profile_allowed_members", "recipient_id"},
       {"payments", "recipient"},
-      {"identities", "address", "", "", SET_UNIQUELY},  // identities.address has UNIQUE constraint
-                                                        // when I can assume c++20, sometime in the future, change this to
-                                                        // {.table = "identities", .column = "address', .flags = SET_UNIQUELY}
-                                                        // this is much more explicit and looks cleaner without the empty
-                                                        // fields. (give missing fields default init in header)
+      {"identities", "address", "", "", SET_UNIQUELY, 24, 113},  // identities.address has UNIQUE constraint
+                                                                 // when I can assume c++20, sometime in the future, change this to
+                                                                 // {.table = "identities", .column = "address', .flags = SET_UNIQUELY}
+                                                                 // this is much more explicit and looks cleaner without the empty
+                                                                 // fields. (give missing fields default init in header)
+                                                                 // Before version 24, address was a phone number (not referencing recipient._id)
+                                                                 // After version 113, address was UUID (or phone if no uuid present)
       {"distribution_list", "recipient_id"},
       {"distribution_list_member", "recipient_id"},
       {"story_sends", "recipient_id"},

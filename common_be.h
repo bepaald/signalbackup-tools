@@ -41,7 +41,7 @@
 #include <string_view>
 #include <map>
 
-#if false && __cpp_lib_string_resize_and_overwrite >= 202110L // used in concat
+#if !defined __GNUG__ && __cpp_lib_string_resize_and_overwrite >= 202110L // used in concat
 #include <span>
 #endif
 
@@ -350,7 +350,9 @@ inline std::string bepaald::concat(Args const &... args)
 {
   auto const size = (std::string_view{args}.size() + ...);
   std::string res;
-#if false && __cpp_lib_string_resize_and_overwrite >= 202110L
+  // This is slightly faster, but gcc has a bug that
+  // erroneously prints an ugly warning for this code
+#if !defined __GNUG__ && __cpp_lib_string_resize_and_overwrite >= 202110L
   res.resize_and_overwrite(size, [&](char *buf, size_t n)
   {
     auto pos = std::span(buf, n).begin();

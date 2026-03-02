@@ -186,7 +186,8 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             expires_in,
                             msg_id,
                             msg_recipient_id,
-                            -1, //original_message_id,
+                            -1, // deleted_by
+                            -1, // original_message_id,
                             quote_id, // quote_id
                             revision.valueAsInt(0, "scheduled_date", 0),
                             0, // pinned_until

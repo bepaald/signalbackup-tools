@@ -1880,7 +1880,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                        {"quote_missing", hasquote ? mmsquote_missing : 0},
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                        {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
-                                       {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                       {(d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
+                                       {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
                                        {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
                                           results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                                        {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
@@ -1963,7 +1964,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                            {"quote_missing", hasquote ? mmsquote_missing : 0},
                                            {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                            {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
-                                           {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                                           {(d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
+                                           {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
                                            {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
                                               results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                                            {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
@@ -2157,7 +2159,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                         {"read", 1},
                         //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                         //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
-                        {"remote_deleted", results_all_messages_from_conversation.value(j, "isErased")},
+                        {(d_database.tableContainsColumn("sms", "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
+                        {(d_database.tableContainsColumn("sms", "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
                         {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
                            results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                         {"server_guid", results_all_messages_from_conversation.value(j, "serverGuid")}},

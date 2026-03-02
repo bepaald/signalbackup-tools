@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -66,9 +66,32 @@ void SignalBackup::compactIds(std::string const &table, std::string const &col)
             {
               if (!c.json_path.empty())
               {
-                if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = json_replace(" + c.column + ", " + c.json_path + ", ?) "
-                                       "WHERE json_extract(" + c.column + ", " + c.json_path + ") = ?", {nid, valuetochange}))
-                  Logger::error("Compacting table '", table, "'");
+                SqliteDB::QueryResults jsontype_results;
+                d_database.exec("SELECT DISTINCT TYPEOF(json_extract(" + c.column + ", " + c.json_path + ")) "
+                                "FROM " + c.table + " "
+                                "WHERE CAST(json_extract(" + c.column + ", " + c.json_path + ") AS INTEGER) = ?",
+                                valuetochange, &jsontype_results);
+                if (jsontype_results.rows() == 0)
+                  continue;
+
+                std::string jsontype(jsontype_results.valueAsString(0, 0));
+
+                if (jsontype == "text")
+                {
+                  if (!d_database.exec(bepaald::concat("UPDATE ", c.table, " SET ", c.column,
+                                                       " = json_replace(", c.column, ", ", c.json_path, ", CAST(? AS TEXT)) ",
+                                                       "WHERE CAST(json_extract(" + c.column + ", " + c.json_path + ") AS INTEGER) = ?"), {nid, valuetochange}))
+                    Logger::error("Compacting table '", table, "'");
+                }
+                else if (jsontype == "integer") // untested
+                {
+                  if (!d_database.exec(bepaald::concat("UPDATE ", c.table, " SET ", c.column,
+                                                       " = json_replace(", c.column, ", ", c.json_path, ", ?) ",
+                                                       "WHERE CAST(json_extract(" + c.column + ", " + c.json_path + ") AS INTEGER) = ?"), {nid, valuetochange}))
+                    Logger::error("Compacting table '", table, "'");
+                }
+                else [[unlikely]]
+                  Logger::error("Failed to update recipientid: ", c.table, ".", c.column, "{", c.json_path, "}. Unhandled type.");
               }
               else if (!d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?" + (c.whereclause.empty() ? "" : " AND " + c.whereclause), {nid, valuetochange}))
                 Logger::error("Compacting table '", table, "'");

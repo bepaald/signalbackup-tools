@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -55,9 +55,27 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
         if (!c.json_path.empty())
         {
-          source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
-                                  " = json_replace(" + c.column + ", " + c.json_path + ", json_extract(" + c.column + ", " + c.json_path + ") + ?) "
-                                  "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL", offsetvalue);
+          // in the android database, json values are often (always?) strings when they are recipient ids (only bools seem to be
+          // inserted unquoted (-> as integers)). Lets keep them whatever they are...
+          SqliteDB::QueryResults jsontype_results;
+          d_database.exec(bepaald::concat("SELECT DISTINCT TYPEOF(json_extract(", c.column, ", ", c.json_path, ")) "
+                                          "FROM ", c.table, " WHERE json_extract(", c.column, ", ", c.json_path, ") IS NOT NULL"), &jsontype_results);
+
+          if (jsontype_results.rows() == 0)
+            continue;
+
+          std::string jsontype(jsontype_results.valueAsString(0, 0));
+
+          if (jsontype == "text")
+            source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
+                                    " = json_replace(" + c.column + ", " + c.json_path + ", CAST(json_extract(" + c.column + ", " + c.json_path + ") + ? AS TEXT)) "
+                                    "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL", offsetvalue);
+          else if (jsontype == "integer")
+            source->d_database.exec("UPDATE " + c.table + " SET " + c.column +
+                                    " = json_replace(" + c.column + ", " + c.json_path + ", json_extract(" + c.column + ", " + c.json_path + ") + ?) "
+                                    "WHERE json_extract(" + c.column + ", " + c.json_path + ") IS NOT NULL", offsetvalue);
+          else [[unlikely]]
+            Logger::error("Failed to make id unique: ", c.table, ".", c.column, "{", c.json_path, "}. Unhandled type.");
         }
         else if ((c.flags & SET_UNIQUELY))
         {
@@ -122,7 +140,7 @@ void SignalBackup::makeIdsUnique(SignalBackup *source)
 
       source->updateAvatars(offsetvalue);
 
-      source->updateSnippetExtrasRecipient(offsetvalue);
+      //source->updateSnippetExtrasRecipient(offsetvalue);
     }
 
     // compact table if requested

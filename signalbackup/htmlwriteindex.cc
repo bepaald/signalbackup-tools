@@ -81,7 +81,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                        "IFNULL(thread.date, 0) AS date, "
                        "json_extract(thread.snippet_extras, '$.individualRecipientId') AS 'group_sender_id', "
                        "json_extract(thread.snippet_extras, '$.bodyRanges') AS 'snippet_ranges', "
-                       "json_extract(thread.snippet_extras, '$.isRemoteDelete') AS 'deleted', " +
+                       "IFNULL(json_extract(thread.snippet_extras, '$.isRemoteDelete'), 0) AS 'remote_deleted', "
+                       "IFNULL(json_extract(thread.snippet_extras, '$.deletedBy'), -1) AS 'deleted_by', " +
                        (d_database.tableContainsColumn("thread", "snippet_message_extras") ? "snippet_message_extras," : "NULL AS snippet_message_extras,") +
                        (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
                        (d_database.tableContainsColumn("thread", "archived") ? "archived," : "") +
@@ -118,7 +119,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                          "CAST(" + d_mms_table + "." + d_mms_recipient_id + " AS text) AS 'group_sender_id', " +
                          (d_database.tableContainsColumn("thread", "snippet_message_extras") ? "snippet_message_extras," : "NULL AS snippet_message_extras,") +
                          d_mms_ranges + " AS 'snippet_ranges', " +
-                         (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted AS 'deleted', " : "0 AS 'deleted', ") +
+                         (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? "IFNULL(deleted_by, -1)" : "-1") + " AS 'deleted_by', " +
+                         (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "IFNULL(remote_deleted, 0)" : "0") + " AS 'remote_deleted', " +
                          (d_database.tableContainsColumn("thread", d_thread_pinned) ? "IFNULL(" + d_thread_pinned + ", 0) AS pinned," : "0 AS pinned,") +
                          (d_database.tableContainsColumn("thread", "archived") ? "thread.archived, " : "") +
                          //"IFNULL(recipient.mute_until, 0) AS mute_until, "
@@ -1052,12 +1054,25 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         snippet = "<span class=\"msg-emoji\">\xF0\x9F\x93\x8E</span> " + (snippet.empty() ? "File" : snippet); // paperclip
     }
 
-    if (results.valueAsInt(i, "deleted", 0) == 1)
+    long long int deleted_by_rid = results.valueAsInt(i, "deleted_by", -1);
+    if (deleted_by_rid > 0 ||
+        results.valueAsInt(i, "remote_deleted", 0) > 0)
     {
       if (Types::isOutgoing(snippet_type))
         snippet = "<i>You deleted this message.</i>";
       else
+      {
+        // if (deleted_by_rid > 0)
+        // {
+        //   name = namefromrid(deleted_by_rid)
+        //   if (!name.empty())
+        //     snippet = "<i>Admin " + name + " deleted this message.</i>";
+        //   else
+        //     ...an admin deleted this message?
+        // }
+        // else
         snippet = "<i>This message was deleted.</i>";
+      }
     }
 
     bool isstatusmsg = Types::isStatusMessage(snippet_type);
@@ -1101,7 +1116,8 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                           "expires_in,",
                                           d_mms_recipient_id, " AS from_recipient_id,",
                                           (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras," : "NULL AS message_extras,"),
-                                          "IFNULL(remote_deleted, 0) AS remote_deleted,",
+                                          (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "IFNULL(remote_deleted, 0)" : "0"), " AS remote_deleted,",
+                                          (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? "IFNULL(deleted_by, -1)" : "-1"), " AS deleted_by,",
                                           d_mms_type, " AS type "
                                           "FROM ", d_mms_table,
                                           " WHERE thread_id = ?",                    // get last body from this thread, where
@@ -1138,12 +1154,25 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
             groupsender = newsnippet_info.valueAsInt(0, "from_recipient_id", groupsender);
 
           long long int newsnippet_type = newsnippet_info.valueAsInt(0, "type");
-          if (newsnippet_info.valueAsInt(0, "remote_deleted") != 0)
+          deleted_by_rid = newsnippet_info.valueAsInt(i, "deleted_by", -1);
+          if (deleted_by_rid > 0 ||
+              newsnippet_info.valueAsInt(i, "remote_deleted", 0) > 0)
           {
-            if (Types::isOutgoing(newsnippet_type))
+            if (Types::isOutgoing(snippet_type))
               snippet = "<i>You deleted this message.</i>";
             else
+            {
+              // if (deleted_by_rid > 0)
+              // {
+              //   name = namefromrid(deleted_by_rid)
+              //   if (!name.empty())
+              //     snippet = "<i>Admin " + name + " deleted this message.</i>";
+              //   else
+              //     ...an admin deleted this message?
+              // }
+              // else
               snippet = "<i>This message was deleted.</i>";
+            }
           }
           else if (Types::isStatusMessage(newsnippet_type))
           {

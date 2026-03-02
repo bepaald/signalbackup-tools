@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -67,6 +67,21 @@ void SignalBackup::scanMissingAttachments() const
             Logger::message_end("OK, EXPECTED (original message missing (remote deleted))");
           else
             Logger::message_end("FALSE HIT! (remote delete)");
+          continue;
+        }
+      }
+
+      // quote_missing is not always (often not?) set to 1 even if quote is missing, so manually check
+      if (d_database.tableContainsColumn(d_mms_table, "deleted_by"))
+      {
+        d_database.exec("SELECT _id FROM " + d_mms_table + " WHERE deleted_by != 0 AND " + d_mms_date_sent + " IS (SELECT quote_id FROM " + d_mms_table + " WHERE _id = ?)",
+                        mid, &res);
+        if (res.rows()) // can be more than 1 row if messages were doubled (before date_sent (=quote_id) had UNIQUE constraint)
+        {
+          if (d_attachments.find({missing[i].first, missing[i].second}) == d_attachments.end())
+            Logger::message_end("OK, EXPECTED (original message missing (deleted_by))");
+          else
+            Logger::message_end("FALSE HIT! (deleted_by)");
           continue;
         }
       }

@@ -369,7 +369,9 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (d_database.tableContainsColumn(d_mms_table, "quote_type") ? "quote_type, " : "0 AS quote_type, "),
                                     "attcount, reactioncount, mentioncount, "
                                     "IFNULL(", d_mms_date_sent, " IN (SELECT DISTINCT quote_id FROM ", d_mms_table, " WHERE thread_id = ?1), 0) AS is_quoted, ",
-                                    d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", IFNULL(remote_deleted, 0) AS remote_deleted, "
+                                    d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", ",
+                                    (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "IFNULL(remote_deleted, 0)" : "0"), " AS remote_deleted, ",
+                                    (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? "IFNULL(deleted_by, -1)" : "-1"), " AS deleted_by, ",
                                     "IFNULL(view_once, 0) AS view_once, expires_in, ", d_mms_ranges, ", shared_contacts, ",
                                     (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : ""),
@@ -569,6 +571,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             messages.getValueAs<long long int>(messagecount, "expires_in"),         // expires_in
             messages.getValueAs<long long int>(messagecount, "_id"),                // msg_id
             msg_recipient_id,                                                       // msg_recipient_id
+            messages.valueAsInt(messagecount, "deleted_by"),                        // deleted_by
             d_database.tableContainsColumn(d_mms_table, "original_message_id") ?    // original_msg_id
             messages.valueAsInt(messagecount, "original_message_id") :
             -1,
@@ -581,7 +584,8 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 
             false,                                                                  // only_emoji
             messages.valueAsInt(messagecount, "is_quoted", 0) != 0,
-            messages.getValueAs<long long int>(messagecount, "remote_deleted") == 1,          // is_deleted
+            (messages.getValueAs<long long int>(messagecount, "remote_deleted") > 0 ||
+             messages.getValueAs<long long int>(messagecount, "deleted_by") > 0),             // is_deleted
             messages.getValueAs<long long int>(messagecount, "view_once") == 1,               // is_viewonce,
             isgroup,
             !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type)), // incoming

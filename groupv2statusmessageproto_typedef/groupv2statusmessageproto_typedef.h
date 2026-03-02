@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2025  Selwin van Dijk
+  Copyright (C) 2021-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -130,11 +130,14 @@ message DecryptedMember {
   bytes       profileKey       = 3;
   uint32      joinedAtRevision = 5;
   bytes       pni              = 6;
+  string      labelEmoji       = 7;
+  string      labelString      = 8;
 }
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM,
                        protobuffer::optional::BYTES, protobuffer::DUMMY,
-                       protobuffer::optional::UINT32, protobuffer::optional::BYTES> DecryptedMember;
+                       protobuffer::optional::UINT32, protobuffer::optional::BYTES,
+                       protobuffer::optional::STRING, protobuffer::optional::STRING> DecryptedMember;
 
 /*
 message DecryptedPendingMember {

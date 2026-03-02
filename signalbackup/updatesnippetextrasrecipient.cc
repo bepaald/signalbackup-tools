@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -16,6 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
+
+// DEPRECATED (?) (not called anymore)
+// All of this should be done automatically from s_databaselinks (in compactids, makeidsunique and updaterecipientids)
 
 #include "signalbackup.ih"
 
@@ -36,6 +39,12 @@ void SignalBackup::updateSnippetExtrasRecipient(long long int id1, long long int
       changed = d_database.changed();
       if (d_verbose && changed) [[unlikely]]
         Logger::message("     Updated ", changed, " groupaddedby-ids in thread.snippet_extras");
+
+      d_database.exec("UPDATE thread SET snippet_extras = "
+                      "json_set(snippet_extras, '$.deletedBy', CAST(json_extract(snippet_extras, '$.deletedBy') + ? AS text))", id1);
+      changed = d_database.changed();
+      if (d_verbose && changed) [[unlikely]]
+        Logger::message("     Updated ", changed, " deleteby-ids in thread.snippet_extras");
     }
     else
     {
@@ -52,6 +61,13 @@ void SignalBackup::updateSnippetExtrasRecipient(long long int id1, long long int
       changed = d_database.changed();
       if (d_verbose && changed) [[unlikely]]
         Logger::message("     Updated ", changed, " groupaddedby-ids in thread.snippet_extras");
+
+      d_database.exec("UPDATE thread SET snippet_extras = "
+                      "json_set(snippet_extras, '$.deletedBy', CAST(? AS text)) "
+                      "WHERE json_extract(snippet_extras, '$.deletedBy') = CAST(? AS text)", {id2, id1});
+      changed = d_database.changed();
+      if (d_verbose && changed) [[unlikely]]
+        Logger::message("     Updated ", changed, " deletedby-ids in thread.snippet_extras");
     }
   }
 }

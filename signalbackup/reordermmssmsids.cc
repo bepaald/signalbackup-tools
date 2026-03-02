@@ -61,7 +61,7 @@ bool SignalBackup::reorderMmsSmsIds() const
                                        // get mention count for message:
                                        (adjustmention ? "LEFT JOIN (SELECT message_id, COUNT(*) AS mentioncount FROM mention GROUP BY message_id) AS mntns ON " + d_mms_table + "._id = mntns.message_id " : ""),
                                        // get poll count for message:
-                                       (adjustmention ? "LEFT JOIN (SELECT message_id, COUNT(*) AS pollcount FROM poll GROUP BY message_id) AS plls ON " + d_mms_table + "._id = plls.message_id " : ""),
+                                       (adjustpoll ? "LEFT JOIN (SELECT message_id, COUNT(*) AS pollcount FROM poll GROUP BY message_id) AS plls ON " + d_mms_table + "._id = plls.message_id " : ""),
                                        // get group receipt count for message:
                                        "LEFT JOIN (SELECT mms_id, COUNT(*) AS groupreceiptcount FROM group_receipts GROUP BY mms_id) AS grprct ON ", d_mms_table, "._id = grprct.mms_id ",
                                        // get story_sends count for message:

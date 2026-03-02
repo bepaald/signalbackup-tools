@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2020-2024  Selwin van Dijk
+  Copyright (C) 2020-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -69,7 +69,32 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
       if (d_databaseversion >= c.mindbvversion && d_databaseversion <= c.maxdbvversion &&
           d_database.containsTable(c.table) && d_database.tableContainsColumn(c.table, c.column))
       {
-        d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ? WHERE " + c.column + " = ?", {targetid, sourceid});
+        if (!c.json_path.empty())
+        {
+          SqliteDB::QueryResults jsontype_results;
+          d_database.exec(bepaald::concat("SELECT DISTINCT TYPEOF(json_extract(", c.column, ", ", c.json_path, ")) "
+                                          "FROM ", c.table, " "
+                                          "WHERE CAST(json_extract(", c.column, ", ", c.json_path, ") AS INTEGER) = ?"),
+                          sourceid, &jsontype_results);
+          if (jsontype_results.rows() == 0)
+            continue;
+
+          std::string jsontype(jsontype_results.valueAsString(0, 0));
+
+          //std::cout << "Got jsontype " << jsontype << std::endl;
+          if (jsontype == "text")
+            d_database.exec(bepaald::concat("UPDATE ", c.table, " SET ", c.column,
+                                            " = json_replace(", c.column, ", ", c.json_path, ", CAST(? AS TEXT)) ",
+                                            "WHERE CAST(json_extract(" + c.column + ", " + c.json_path + ") AS INTEGER) = ?"), {targetid, sourceid});
+          else if (jsontype == "integer") // untested
+            d_database.exec(bepaald::concat("UPDATE ", c.table, " SET ", c.column,
+                                            " = json_replace(", c.column, ", ", c.json_path, ", ?) ",
+                                            "WHERE CAST(json_extract(" + c.column + ", " + c.json_path + ") AS INTEGER) = ?"), {targetid, sourceid});
+          else [[unlikely]]
+            Logger::error("Failed to update recipientid: ", c.table, ".", c.column, "{", c.json_path, "}. Unhandled type.");
+        }
+        else
+          d_database.exec(bepaald::concat("UPDATE ", c.table, " SET ", c.column, " = ? WHERE ", c.column, " = ?"), {targetid, sourceid});
         if (d_verbose)
           Logger::message("    update table '" + c.table + "', changed: ", d_database.changed());
       }
@@ -78,7 +103,7 @@ void SignalBackup::updateRecipientId(long long int targetid, long long int sourc
   updateGroupMembers(sourceid, targetid);
   updateReactionAuthors(sourceid, targetid);
   updateAvatars(sourceid, targetid);
-  updateSnippetExtrasRecipient(sourceid, targetid);
+  //updateSnippetExtrasRecipient(sourceid, targetid);
 }
 
 // // OLD VERSION

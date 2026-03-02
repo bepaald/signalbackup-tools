@@ -334,6 +334,8 @@ void SignalBackup::cleanDatabaseByMessages()
                      d_mms_table + " WHERE quote_author IS NOT NULL AND quote_author IS NOT 0"s : ""s) +
                     (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? " UNION SELECT DISTINCT to_recipient_id FROM " +
                      d_mms_table : ""s) +
+                    (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? " UNION SELECT DISTINCT deleted_by FROM " +
+                     d_mms_table + " WHERE deleted_by IS NOT NULL AND deleted_by IS NOT 0"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("call") ? " UNION SELECT DISTINCT peer FROM call"s : ""s) +
                     (d_database.containsTable("call") && d_database.tableContainsColumn("call", "ringer") ? " UNION SELECT DISTINCT ringer FROM call WHERE ringer IS NOT NULL"s : ""s) +
@@ -342,6 +344,9 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.containsTable("distribution_list_member") ? " UNION SELECT DISTINCT recipient_id FROM distribution_list_member"s : ""s) +
                     (d_database.containsTable("poll") ? " UNION SELECT DISTINCT author_id FROM poll"s : ""s) +
                     (d_database.containsTable("poll_vote") ? " UNION SELECT DISTINCT voter_id FROM poll_vote"s : ""s) +
+                    (d_database.tableContainsColumn("thread", "snippet_extras") ? " UNION SELECT DISTINCT CAST(json_extract(snippet_extras, '$.deletedBy') AS INTEGER) FROM thread WHERE json_extract(snippet_extras, '$.deletedBy') IS NOT NULL"s : ""s) +
+                    (d_database.tableContainsColumn("thread", "snippet_extras") ? " UNION SELECT DISTINCT CAST(json_extract(snippet_extras, '$.groupAddedBy') AS INTEGER) FROM thread WHERE json_extract(snippet_extras, '$.groupAddedBy') IS NOT NULL"s : ""s) +
+                    (d_database.tableContainsColumn("thread", "snippet_extras") ? " UNION SELECT DISTINCT CAST(json_extract(snippet_extras, '$.individualRecipientId') AS INTEGER) FROM thread WHERE json_extract(snippet_extras, '$.individualRecipientId') IS NOT NULL"s : ""s) +
                     referenced_recipients_query +
                     " UNION SELECT DISTINCT " + d_thread_recipient_id + " FROM thread) RETURNING _id"s +
                     //",COALESCE(NULLIF(" + d_recipient_system_joined_name + ", ''), NULLIF(profile_joined_name, ''), NULLIF(" + d_recipient_profile_given_name + ", ''), NULLIF(recipient." + d_recipient_e164 + ", ''), NULLIF(recipient." + d_recipient_aci + ", ''), recipient._id) AS 'display_name'," + d_recipient_e164 +

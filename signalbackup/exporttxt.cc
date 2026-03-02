@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -168,8 +168,9 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
                          d_mms_table + "._id, " + d_mms_recipient_id + ", "
                          + (d_database.tableContainsColumn(d_mms_table, "to_recipient_id") ? "to_recipient_id" : "-1") +  " AS to_recipient_id, body, "
                          "date_received, " + d_mms_type + ", "
-                         "attcount, reactioncount, mentioncount, "
-                         "IFNULL(remote_deleted, 0) AS remote_deleted, "
+                         "attcount, reactioncount, mentioncount, " +
+                         (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "IFNULL(remote_deleted, 0)" : "0") + " AS remote_deleted, " +
+                         (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? "IFNULL(deleted_by, -1)" : "-1") + " AS deleted_by, " +
                          "IFNULL(view_once, 0) AS view_once, " +
                          (d_database.tableContainsColumn(d_mms_table, "message_extras") ? "message_extras, " : "") +
                          (d_database.containsTable("poll") ? "poll._id AS poll_id, " : "-1 AS poll_id, ") +
@@ -231,7 +232,8 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
 
     for (unsigned int i = 0; i < messages.rows(); ++i)
     {
-      bool is_deleted = messages.getValueAs<long long int>(i, "remote_deleted") == 1;
+      bool is_deleted = (messages.getValueAs<long long int>(i, "remote_deleted") > 0 ||
+                         messages.getValueAs<long long int>(i, "deleted_by") > 0);
       bool is_viewonce = messages.getValueAs<long long int>(i, "view_once") == 1;
       if (is_deleted || is_viewonce)
         continue;

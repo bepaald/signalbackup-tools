@@ -2848,7 +2848,12 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   {
     htmloutput << "            <div>\n";
     if (msg_info.incoming)
+    {
+      //if deleted_by > 0 && deleted_by != d_selfid
       htmloutput << "              <pre>This message was deleted.</pre>\n";
+      //else
+      //  htmloutput << "              <pre>Admin " + getNameFromRid + " deleted this message.</pre>\n";
+    }
     else
       htmloutput << "              <pre>You deleted this message.</pre>\n";
     htmloutput << "            </div>\n";
