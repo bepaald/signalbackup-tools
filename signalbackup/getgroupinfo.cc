@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -159,11 +159,15 @@ message AccessControl {
   }
   //std::cout << "===" << std::endl << std::endl;
 
+  std::set<std::string> member_color_id; // to get the colors of members, we need to sort them all according to
+                                         // [uuid -> phone -> email] and get the color at the index grom s_html_groupmember_colors;
+                                         // the members, as we get them below, should all have uuid...
+
   // get members:
   {
     //std::cout << "=== MEMBERS:" << std::endl;
-    auto newmembers = group_info.getField<7>();
-    for (unsigned int i = 0; i < newmembers.size(); ++i)
+    auto members = group_info.getField<7>();
+    for (unsigned int i = 0; i < members.size(); ++i)
     {
       /*
         message DecryptedMember {
@@ -172,6 +176,8 @@ message AccessControl {
         bytes       profileKey       = 3;
         uint32      joinedAtRevision = 5;
         bytes       pni              = 6;
+        string      labelEmoji       = 7;
+        string      labelString      = 8;
         }
         enum Role {
         UNKNOWN       = 0;
@@ -180,31 +186,61 @@ message AccessControl {
         }
       */
       // uuid
-      auto [uuid, uuid_size] = newmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
-      if (uuid_size < 16)
+      auto [uuid, uuid_size] = members[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      if (uuid_size < 16) [[unlikely]]
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
+      // save the uuid in the sorted set to set the color
+      member_color_id.insert(uuidstr);
+
       // role
       long long int role = -1;
-      auto newmember_role = newmembers[i].getField<2>();
-      if (newmember_role.has_value())
-        role = newmember_role.value();
-
+      auto member_role = members[i].getField<2>();
+      if (member_role.has_value())
+        role = member_role.value();
       //std::cout << uuidstr << " (" << role << ")" << std::endl;
-
       if (role == 2) // ADMIN
       {
         long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
-        if (id != -1)
+        if (id != -1) [[likely]]
           groupinfo->admin_ids.push_back(id);
+      }
+
+      // get member labelstring + labelemoji
+      std::pair<std::string, std::string> label;
+      auto labelemoji_pb = members[i].getField<7>();
+      if (labelemoji_pb.has_value())
+        label.first = std::move(labelemoji_pb.value());
+
+      auto labelstring_pb = members[i].getField<8>();
+      if (labelstring_pb.has_value())
+        label.second = std::move(labelstring_pb.value());
+      //std::cout << uuidstr << " (" << labelemoji << " " << labelstring << ")" << std::endl;
+      if (!label.second.empty()) // _only_ emoji seems not possible
+      {
+        long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
+        if (id != -1) [[likely]]
+          groupinfo->labels.emplace(id, std::move(label));
       }
     }
     //std::cout << "===" << std::endl << std::endl;
   }
 
-
+  // get member colors
+#if __cplusplus > 201703L
+  for (unsigned int midx = 0; auto const &m : member_color_id)
+#else
+  unsigned int midx = 0;
+  for (auto const &m : member_color_id)
+#endif
+  {
+    long long int id = getRecipientIdFromUuidMapped(m, nullptr);
+    if (id == -1) [[unlikely]]
+      continue;
+    groupinfo->colors.emplace(id, s_html_random_groupmember_colors[midx++ % s_html_random_groupmember_colors.size()]);
+  }
 
   // get pending members:
   {

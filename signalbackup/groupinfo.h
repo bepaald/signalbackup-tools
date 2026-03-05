@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -27,6 +27,8 @@ struct GroupInfo
   std::string access_control_attributes;
   std::string access_control_members;
   std::string access_control_addfromlinkinvite;
+  std::map<long long int, std::pair<std::string, std::string>> labels; // recipient_id -> label{emoji, string}
+  std::map<long long int, std::pair<std::string, std::string>> colors; // recipient_id -> color{light, dark}
   std::list<long long int> admin_ids;
   std::vector<long long int> pending_members;
   std::vector<long long int> requesting_members;

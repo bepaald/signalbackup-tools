@@ -229,6 +229,7 @@ class SignalBackup
   static std::string_view const s_emoji_first_bytes;
   static std::map<std::string, std::string> const s_html_colormap;
   static std::array<std::pair<std::string, std::string>, 12> const s_html_random_colors;
+  static std::array<std::pair<std::string, std::string>, 36> const s_html_random_groupmember_colors;
   //static std::regex const s_linkify_pattern;
 
  protected:

@@ -133,7 +133,16 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --poll-filled-in: " << (light ? "#2C58C3;" : "#B6C5FA;") << "\n"
     "        --poll-unfilled-out: " << (light ? "#8198F8;" : "#5279F6;") << "\n"
     "        --poll-filled-out: " << (light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
-    "        --poll-checkmark-in: " << (light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
+    "        --poll-checkmark-in: " << (light ? "brightness(0) invert(1);" : "brightness(0);") << "\n";
+  if (isgroup)
+    for (long long int id : recipient_ids)
+    {
+      file << "        --memc-" << id << ": #";
+      auto it = groupinfo.colors.find(id);
+      file << (it != groupinfo.colors.end() ? (light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id).color);
+      file << ";\n";
+    }
+  file <<
     "      }\n"
     "\n";
 
@@ -178,7 +187,16 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --poll-filled-in: " << (!light ? "#2C58C3;" : "#B6C5FA;") << "\n"
       "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
       "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
-      "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
+      "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n";
+    if (isgroup)
+      for (long long int id : recipient_ids)
+      {
+        file << "        --memc-" << id << ": #";
+        auto it = groupinfo.colors.find(id);
+        file << (it != groupinfo.colors.end() ? (!light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id).color);
+        file << ";\n";
+      }
+    file <<
       "      }"
       "\n";
   }
@@ -308,10 +326,23 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 )";
 
   for (long long int id : recipient_ids)
-    file << "      .msg-sender-" << id << " { background: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}\n";
-  file << '\n';
-  for (long long int id : recipient_ids)
-    file << "      .msg-name-" << id << " { color: #" << getRecipientInfoFromMap(recipient_info, id).color << ";}\n";
+  {
+    file << "      .msg-sender-" << id << " { background: var(--memc-" << id << "); }\n";
+    file << "      .msg-name-" << id << " { color: var(--memc-" << id << "); }\n";
+  }
+  // for (long long int id : recipient_ids)
+  // {
+  //   file << "      .msg-name-" << id << " { color: #";
+  //   if (isgroup)
+  //   {
+  //     auto it = groupinfo.colors.find(id);
+  //     // note this is just the light color for now, move to separate light and dark colors later (use var)
+  //     file << (it != groupinfo.colors.end() ? it->second.first : getRecipientInfoFromMap(recipient_info, id).color);
+  //   }
+  //   else
+  //     file << getRecipientInfoFromMap(recipient_info, id).color;
+  //   file << ";}\n";
+  // }
 
   file << R"(
       .msg-outgoing {
