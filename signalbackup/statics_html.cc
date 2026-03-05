@@ -210,7 +210,7 @@ std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red"
   UNKNOWN("UNKNOWN", 0x00000000),
   ON_SURFACE_VARIANT("ON_SURFACE_VARIANT", 0x00000000);
 */
-#if __cpp_lib_array_constexpr >= 201603L
+#if __cpp_lib_constexpr_string >= 201907L
 std::array<std::pair<std::string, std::string>, 12> constexpr SignalBackup::s_html_random_colors
 #else
 std::array<std::pair<std::string, std::string>, 12> const SignalBackup::s_html_random_colors
@@ -230,7 +230,7 @@ std::array<std::pair<std::string, std::string>, 12> const SignalBackup::s_html_r
 
 // https://github.com/signalapp/Signal-Android/blob/main/app/src/main/java/org/thoughtcrime/securesms/conversation/colors/ChatColorsPalette.kt
 // list of {light, dark}
-#if __cpp_lib_array_constexpr >= 201603L
+#if __cpp_lib_constexpr_string >= 201907L
 std::array<std::pair<std::string, std::string>, 36> constexpr SignalBackup::s_html_random_groupmember_colors
 #else
 std::array<std::pair<std::string, std::string>, 36> const SignalBackup::s_html_random_groupmember_colors
