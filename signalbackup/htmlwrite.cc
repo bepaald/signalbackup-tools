@@ -695,10 +695,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .call-link {
-        border-top-left-radius: 0.6em;
-        border-top-right-radius: 0.6em;
-        border-bottom-left-radius: 0em;
-        border-bottom-right-radius: 0em;
+        border-top-left-radius: .4em;
+        border-top-right-radius: .4em;
         padding: 7px;
         margin-bottom: 5px;
       }
@@ -793,7 +791,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       .shared-contact-avatar input[type=checkbox],
       .msg-img-container input[type=checkbox],
-      .msg-linkpreview-img-container input[type=checkbox],
+      .msg-lp-img-container input[type=checkbox],
       .thread-subtitle input[type=checkbox] {
         display: none;
       }
@@ -834,18 +832,16 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 )"
 R"(
       .msg-img-container img {
-        border-radius: 0.6em;
+        border-radius: .4em;
       }
 
       .shared-contact-avatar img {
         border-radius: 50%;
       }
 
-      .msg-linkpreview-img-container img {
-        border-top-left-radius: 0.6em;
-        border-top-right-radius: 0.6em;
-        border-bottom-left-radius: 0em;
-        border-bottom-right-radius: 0em;
+      .msg-lp-img-container img {
+        border-top-left-radius: 0.4em;
+        border-top-right-radius: 0.4em;
         cursor: zoom-in;
         z-index: 1;
         position: relative;
@@ -853,25 +849,30 @@ R"(
         transition-delay: .25s, 0s;
       }
 
-      .msg-linkpreview-img-container {
-        border-top-left-radius: 0.6em;
-        border-top-right-radius: 0.6em;
-        border-bottom-left-radius: 0em;
-        border-bottom-right-radius: 0em;
+      .msg-lp-img-container {
+        border-top-left-radius: 0.4em;
+        border-top-right-radius: 0.4em;
       }
 
-      .linkpreview {
+      .lp {
         padding: 5px;
         margin-bottom: 5px;
       }
 
-      .linkpreview_title {
+      .lp-noimg {
+        padding: 7px 8px 5px 8px;
+        margin-bottom: 5px;
+        border-top-left-radius: 0.4em;
+        border-top-right-radius: 0.4em;
+      }
+
+      .lp-title {
         font-weight: 550;
       }
 
       .shared-contact-avatar input[type=checkbox]:checked ~ label > img,
       .msg-img-container input[type=checkbox]:checked ~ label > img,
-      .msg-linkpreview-img-container input[type=checkbox]:checked ~ label > img {
+      .msg-lp-img-container input[type=checkbox]:checked ~ label > img {
         border-radius: 0;
         cursor: zoom-out;
         z-index: 2;
@@ -880,7 +881,7 @@ R"(
       }
 
       .msg-img-container input[type=checkbox]:checked ~ label > img,
-      .msg-linkpreview-img-container input[type=checkbox]:checked ~ label > img {
+      .msg-lp-img-container input[type=checkbox]:checked ~ label > img {
         transform: scale(2.5);
       }
 
@@ -896,7 +897,7 @@ R"(
       }
 
       .attachment-unknown-type {
-        border-radius: .6em;
+        border-radius: .4em;
         padding-top: 6px;
         padding-bottom: 6px;
         padding-left: 9px;
@@ -1193,16 +1194,18 @@ R"(
       }
 
       .msg-incoming .msg-quote,
-      .msg-incoming .msg-linkpreview-img-container,
+      .msg-incoming .msg-lp-img-container,
       .msg-incoming .call-link,
-      .msg-incoming .linkpreview {
+      .msg-incoming .lp,
+      .msg-incoming .lp-noimg {
         background-color: var(--incominglinkpreview-bc);
       }
 
       .msg-outgoing .msg-quote,
-      .msg-outgoing .msg-linkpreview-img-container,
+      .msg-outgoing .msg-lp-img-container,
       .msg-outgoing .call-link,
-      .msg-outgoing .linkpreview {
+      .msg-outgoing .lp,
+      .msg-outgoing .lp-noimg {
         background-color: var(--outgoinglinkpreview-bc);
         color: #000000;
       }
@@ -2455,7 +2458,7 @@ void SignalBackup::HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::Q
 
     if (STRING_STARTS_WITH(content_type, "image/") && !ignoremedia)
     {
-      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "linkpreview-" : "") << "img-container\">\n";
+      htmloutput << std::string(indent, ' ') << "  <div class=\"msg-" << (is_image_preview ? "lp-" : "") << "img-container\">\n";
       htmloutput << std::string(indent, ' ') << "    <input type=\"checkbox\" id=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "    <label for=\"zoomCheck-" << rowid << "-" << uniqueid << "\">\n";
       htmloutput << std::string(indent, ' ') << "      <img src=\"media/" << attachment_filename_on_disk << "\" alt=\"Image attachment\">\n";
@@ -2730,7 +2733,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   else
     HTMLwriteAttachmentDiv(htmloutput, *msg_info.attachment_results, 12 + extraindent,
                            msg_info.directory, msg_info.threaddir, msg_info.orig_filename,
-                           (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()),
+                           (!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()), // is linkpreview
                            false /*isquote*/, msg_info.overwrite, msg_info.append, ignoremediatypes);
 
   if (msg_info.poll_options->rows()) [[unlikely]]
@@ -2740,11 +2743,12 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   if ((!msg_info.link_preview_title.empty() || !msg_info.link_preview_description.empty()) &&
       !STRING_STARTS_WITH(msg_info.link_preview_url, "https://signal.link/call/#key="))
   {
-    htmloutput << "            <div class=\"linkpreview\">\n";
+    htmloutput << "            <div class=\"lp" << ((msg_info.attachment_results->rows() == 0 && (!msg_info.isgroup || !msg_info.incoming))? "-noimg" : "") << "\">\n";
+    //htmloutput << "            <div class=\"lp\">\n";
     if (!msg_info.link_preview_title.empty())
     {
       htmloutput <<
-        "              <div class=\"linkpreview_title\">\n"
+        "              <div class=\"lp-title\">\n"
         "                " << HTMLescapeString(msg_info.link_preview_title) << "\n"
         "              </div>\n";
     }
@@ -2752,7 +2756,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     if (!cleaned_link_preview_description.empty())
     {
       htmloutput <<
-        "              <div class=\"linkpreview_description\">\n"
+        "              <div class=\"lp-description\">\n"
         "                " << cleaned_link_preview_description << "\n"
         "              </div>\n";
     }
