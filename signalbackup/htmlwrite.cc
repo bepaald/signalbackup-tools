@@ -134,14 +134,18 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --poll-unfilled-out: " << (light ? "#8198F8;" : "#5279F6;") << "\n"
     "        --poll-filled-out: " << (light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
     "        --poll-checkmark-in: " << (light ? "brightness(0) invert(1);" : "brightness(0);") << "\n";
-  if (isgroup)
-    for (long long int id : recipient_ids)
+  for (long long int id : recipient_ids)
+  {
+    file << "        --memc-" << id << ": #";
+    if (isgroup)
     {
-      file << "        --memc-" << id << ": #";
       auto it = groupinfo.colors.find(id);
       file << (it != groupinfo.colors.end() ? (light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id).color);
-      file << ";\n";
     }
+    else
+      file << getRecipientInfoFromMap(recipient_info, id).color;
+    file << ";\n";
+  }
   file <<
     "      }\n"
     "\n";
@@ -188,14 +192,18 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
       "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
       "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n";
-    if (isgroup)
-      for (long long int id : recipient_ids)
+    for (long long int id : recipient_ids)
+    {
+      file << "        --memc-" << id << ": #";
+      if (isgroup)
       {
-        file << "        --memc-" << id << ": #";
         auto it = groupinfo.colors.find(id);
         file << (it != groupinfo.colors.end() ? (!light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id).color);
-        file << ";\n";
       }
+      else
+        file << getRecipientInfoFromMap(recipient_info, id).color;
+      file << ";\n";
+    }
     file <<
       "      }"
       "\n";
@@ -859,9 +867,6 @@ R"(
 
       .linkpreview_title {
         font-weight: 550;
-      }
-
-      .linkpreview_description {
       }
 
       .shared-contact-avatar input[type=checkbox]:checked ~ label > img,

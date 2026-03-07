@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -29,15 +29,52 @@ std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string const &in) 
 
   std::string cleaned(in);
 
-  while (cleaned.find('<') != std::string::npos)
-  {
-    auto startpos = cleaned.find('<');
-    auto endpos = cleaned.find('>') + 1;
+  //std::cout << "IN : " << in << std::endl;
 
-    if (endpos != std::string::npos)
-      cleaned.erase(startpos, endpos - startpos);
+  std::string::size_type startpos = 0;
+  while ((startpos = cleaned.find('<', startpos)) != std::string::npos)
+  {
+    auto endpos = cleaned.find('>', startpos);
+    if (endpos == std::string::npos)
+      break;
+
+    // Check if what we have is a tag... THIS IS NOT PERFECT BUT SHOULD CATCH MOST CASES
+    std::string_view tag(cleaned.data() + startpos, (endpos + 1) - startpos);
+    //std::cout << "GOT TAG: " << tag << " (at " << startpos << ")" <<  std::endl;
+
+    // after the opening '<', there can only be [a-zA-Z0-9]-_: and possibly a leading '/'. once a space is encountered there
+    // could be an attribute of the form name[=value]. The name can be anything except '\t', '\n', '\f', ' ', '/', '>', '=', '"', '''.
+    // the (optional) value can basically be anything I think (optionally quoted or doublequoted).
+    // we will only check that the tag is valid, and then assume anything else is attribute(s)
+    bool istag = false;
+    for (unsigned int i = tag[1] == '/' ? 2 : 1; i < tag.size() - 1; ++i) // start after '<' or '</', end before '>'
+    {
+      if (tag[i] == ' ')
+        break;
+      if (!((tag[i] >= 'a' && tag[i] <= 'z') ||
+            (tag[i] >= 'A' && tag[i] <= 'Z') ||
+            (tag[i] >= '0' && tag[i] <= '9')))
+      {
+        istag = false;
+        break;
+      }
+      else
+        istag = true; // is _possible_ tag (we have some valid characters after '<(/)'
+    }
+    //std::cout << "IS TAG: " << istag << std::endl;
+
+    if (istag)
+    {
+      cleaned.erase(startpos, (endpos + 1) - startpos);
+      startpos = 0;
+    }
+    else
+      ++startpos;
   }
 
   bepaald::replaceAll(&cleaned, "_", " ");
+
+  HTMLescapeString(&cleaned);
+
   return cleaned;
 }

@@ -192,7 +192,14 @@ message AccessControl {
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-      // save the uuid in the sorted set to set the color
+      /*
+       * save the uuid in the sorted set to set the color
+       * the actual implementation appears to filter the SELF recipient from the list, but
+       * when testing, it appears to not be filtered out (when removing SELF from this list,
+       * all colors of contacts _after_ self are off by one idx).
+       * See app/src/main/java/org/thoughtcrime/securesms/conversation/colors/GroupAuthorNameColorHelper.kt
+       */
+      //if (uuidstr != d_selfuuid)
       member_color_id.insert(uuidstr);
 
       // role
