@@ -64,10 +64,7 @@ std::string SignalBackup::HTMLprepLinkPreviewDescription(std::string const &in) 
     //std::cout << "IS TAG: " << istag << std::endl;
 
     if (istag)
-    {
       cleaned.erase(startpos, (endpos + 1) - startpos);
-      startpos = 0;
-    }
     else
       ++startpos;
   }
