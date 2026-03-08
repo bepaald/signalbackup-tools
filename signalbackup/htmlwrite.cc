@@ -46,7 +46,8 @@
 
 bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id,
                                   std::string const &directory, std::string const &threaddir, bool isgroup,
-                                  bool isnotetoself, bool isreleasechannel, std::set<long long int> const &recipient_ids,
+                                  GroupInfo const &groupinfo, bool isnotetoself, bool isreleasechannel,
+                                  std::set<long long int> const &recipient_ids,
                                   std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
                                   bool overwrite, bool append, bool light, bool themeswitch,
@@ -60,10 +61,6 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     if (results.rows() == 1)
       getGroupMembersOld(&groupmembers, results.valueAsString(0, "group_id"));
   }
-
-  GroupInfo groupinfo;
-  if (isgroup)
-    getGroupInfo(thread_recipient_id, &groupinfo);
 
   // sort group members by admin and name
   std::sort(groupmembers.begin(), groupmembers.end(),
@@ -133,7 +130,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     "        --poll-filled-in: " << (light ? "#2C58C3;" : "#B6C5FA;") << "\n"
     "        --poll-unfilled-out: " << (light ? "#8198F8;" : "#5279F6;") << "\n"
     "        --poll-filled-out: " << (light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
-    "        --poll-checkmark-in: " << (light ? "brightness(0) invert(1);" : "brightness(0);") << "\n";
+    "        --poll-checkmark-in: " << (light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
+    "        --labelbg-c: " << (light ? "#FBFCFFCC;" : "#1B1C1FAA;") << "\n";
   for (long long int id : recipient_ids)
   {
     file << "        --memc-" << id << ": #";
@@ -191,7 +189,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --poll-filled-in: " << (!light ? "#2C58C3;" : "#B6C5FA;") << "\n"
       "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
       "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
-      "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n";
+      "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
+    "        --labelbg-c: " << (!light ? "#FBFCFFCC;" : "#1B1C1FAA;") << "\n";
     for (long long int id : recipient_ids)
     {
       file << "        --memc-" << id << ": #";
@@ -690,8 +689,42 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         font-weight: bold;
         font-size: smaller;
         margin-bottom: 5px;
-        display: block;
+        display: flex;
+        min-height: calc(1em + 4px);
+        flex-flow: row wrap;
+      }
+
+      .membername {
+        padding-top: 1px;
         width: max-content;
+      }
+
+      .memberlabel-bg {
+        margin-left: 10px;
+        border-radius: 1em;
+        overflow: hidden;
+      }
+
+      .msg-incoming .memberlabel-bg {
+        background-color: currentColor;
+      }
+
+      .msg-outgoing .memberlabel-bg {
+        background-color: #)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).color/*)*/ << R"(;
+      }
+
+      .memberlabel {
+        padding: 1px 7px 0px 7px;
+        font-weight: 550;
+        height: calc(100% - 1px);
+      }
+
+      .msg-incoming .memberlabel {
+        background-color: var(--labelbg-c);
+      }
+
+      .msg-outgoing .memberlabel {
+        background-color: #FBFCFFCC;
       }
 
       .call-link {
@@ -2614,7 +2647,7 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
   }
 }
 
-void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info,
+void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info, GroupInfo const &groupinfo,
                                     std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                                     std::map<long long int, RecipientInfo> *recipient_info,
                                     bool searchpage, bool writereceipts,
@@ -2667,12 +2700,21 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
   // for incoming group (normal) message: Senders name before message content
   if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
-    htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name msg-name-"
-               << msg_info.msg_recipient_id << "\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</span>\n";
+  {
+    htmloutput
+      << std::string(extraindent, ' ') << "            <div class=\"msg-name msg-name-" << msg_info.msg_recipient_id << "\">\n"
+      << std::string(extraindent, ' ') << "              <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</div>\n";
+    auto labelit = groupinfo.labels.find(msg_info.msg_recipient_id);
+    if (labelit != groupinfo.labels.end())
+      htmloutput
+        << std::string(extraindent, ' ') << "              <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << HTMLescapeString(labelit->second.second) << "</div></div>\n";
+    htmloutput
+      << std::string(extraindent, ' ') << "            </div>\n";
+  }
 
   // for incoming story reply message: 'Reacted to your story' before message content
   if (msg_info.story_reply && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
-    htmloutput << std::string(extraindent, ' ') << "            <span class=\"msg-name\">Reacted to your story</span>\n";
+    htmloutput << std::string(extraindent, ' ') << "            <div class=\"msg-name\">Reacted to your story</div>\n";
 
   // insert quote
   if (msg_info.quote_id != 0)
@@ -2690,10 +2732,21 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
 
     // quote message
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">\n";
-    htmloutput << std::string(extraindent, ' ') << "                <span class=\"msg-name\">"
-               << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id).display_name)
-               << (msg_info.story_reply ? " &middot; Story" : "")
-               << "</span>\n";
+    htmloutput
+      << std::string(extraindent, ' ') << "                <div class=\"msg-name\">\n"
+      << std::string(extraindent, ' ') << "                  <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id).display_name)
+      << (msg_info.story_reply ? " &middot; Story" : "") << "</div>\n";
+    auto labelit = groupinfo.labels.find(msg_info.msg_recipient_id);
+    if (labelit != groupinfo.labels.end() && !msg_info.story_reply)
+      htmloutput
+        << std::string(extraindent, ' ') << "                  <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << HTMLescapeString(labelit->second.second) << "</div></div>\n";
+    htmloutput
+      << std::string(extraindent, ' ') << "                </div>\n";
+
+    // htmloutput
+    //   << (msg_info.story_reply ? " &middot; Story" : "")
+    //   << "</span>\n";
+
     if (!msg_info.quote_body.empty())
       htmloutput << std::string(extraindent, ' ') << "                <pre dir=\"auto\">"
                  << ((msg_info.messages->valueAsInt(msg_info.idx, "quote_type", 0) == 2) ? "Poll: " : "")  // quote_type: 0:normal, 1:giftbadge, 2:poll
@@ -2919,7 +2972,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
           htmloutput << "<div class=\"history-header\">Edit history</div>";
 
         // add earlier revision
-        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, quotemap, recipient_info, false, ignoremediatypes);
+        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, groupinfo, quotemap, recipient_info, false, ignoremediatypes);
 
         if (i < msg_info.edit_revisions->rows() - 2)
           htmloutput << "<hr>";

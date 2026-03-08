@@ -481,7 +481,7 @@ class SignalBackup
                                     std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup,
                                     bool create_valid_contacts, bool generatestoragekeys, bool *warn);
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
-                      std::string const &threaddir, bool isgroup, bool isnotetoself, bool isreleasechannel,
+                      std::string const &threaddir, bool isgroup, GroupInfo const &groupinf, bool isnotetoself, bool isreleasechannel,
                       std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo,
                       std::map<long long int, std::string> *written_avatars, bool overwrite, bool append,
                       bool light, bool themeswitching, bool searchpage, bool exportdetails, bool pagemenu) const;
@@ -508,10 +508,11 @@ class SignalBackup
   inline bool HTMLprepMsgBody(std::string *body) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;
-  void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
+  void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, GroupInfo const &groupinfo,
+                        std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                         std::map<long long int, RecipientInfo> *recipientinfo, bool searchpage, bool writereceipts,
                         std::vector<std::string> const &ignoremediatypes) const;
-  void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
+  void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info, GroupInfo const &groupinfo,
                          std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                          std::map<long long int, RecipientInfo> *recipientinfo, bool linkify,
                          std::vector<std::string> const &ignoremediatypes) const;

@@ -525,8 +525,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         return false;
       }
 
+      // gather group info if it is a group...
+      GroupInfo groupinfo;
+      if (isgroup)
+        getGroupInfo(thread_recipient_id, &groupinfo);
+
       // create start of html (css, head, start of body
-      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, is_note_to_self,
+      HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, groupinfo, is_note_to_self,
                      is_releasechannel, all_recipients_ids, &rid_recipientinfo_map, &rid_writtenavatarpath_map, overwrite,
                      append, lighttheme, themeswitching, searchpage, addexportdetails, pagemenu && totalpages > 1);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
@@ -742,7 +747,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         previous_day_change = readable_date_day;
         previous_period_split_string = messages(messagecount, "periodsplit");
 
-        HTMLwriteMessage(htmloutput, msg_info, quoteid_page_and_msgid_map, &rid_recipientinfo_map, searchpage, receipts, ignoremediatypes);
+        HTMLwriteMessage(htmloutput, msg_info, groupinfo, quoteid_page_and_msgid_map, &rid_recipientinfo_map, searchpage, receipts, ignoremediatypes);
 
         if (msg_info.is_quoted)
           quoteid_page_and_msgid_map.emplace(messages.valueAsInt(messagecount, d_mms_date_sent, 0), std::pair(msg_info.filename, msg_info.msg_id));

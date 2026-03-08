@@ -20,7 +20,7 @@
 #include "signalbackup.ih"
 
 void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
-                                     std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
+                                     GroupInfo const &groupinfo, std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                                      std::map<long long int, RecipientInfo> *recipient_info, bool linkify,
                                      std::vector<std::string> const &ignoremediatypes) const
 {
@@ -208,5 +208,5 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             parent_info.append,    // ?
                             parent_info.story_reply});
 
-  HTMLwriteMessage(filt, msg_info, quotemap, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
+  HTMLwriteMessage(filt, msg_info, groupinfo, quotemap, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
 }
