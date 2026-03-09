@@ -21,6 +21,7 @@
 
 #include <openssl/rand.h>
 
+#include "../scopeguard/scopeguard.h"
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
@@ -165,22 +166,28 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     }
 
     d_database.exec("BEGIN TRANSACTION"); // things could still go bad...
+    // note this scopeguard is just for added safety, the transactionState() function
+    // might not work on all machines since it requires SQLITE >= 3.34 (= dec 2020),
+    // this is _very_ old, but has been erported being used in the past.
+    ScopeGuard rollback_transaction_if_not_committed([&]() { if (d_database.transactionState(!d_verbose /*quiet*/) > 0) d_database.exec("ROLLBACK TRANSACTION"); });
 
     std::any new_rid;
     if (!insertRow("recipient",
                    {{"group_id", group_id},
                     {d_recipient_type, 3}, // group type
-                    {"storage_service_id", storageId},
+                    {((storageId.empty() && !create_valid_contacts) ? "" : "storage_service_id"), storageId},
                     {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
                     {"message_expiration_time", res.value(0, "expireTimer")},
                     {d_recipient_avatar_color, res.value(0, "color")}}, "_id", &new_rid))
     {
       Logger::error("Failed to insert new (group) recipient into database.");
+      d_database.exec("ROLLBACK TRANSACTION");
       return -1;
     }
     if (new_rid.type() != typeid(long long int))
     {
       Logger::error("New (group) recipient _id has unexpected type.");
+      d_database.exec("ROLLBACK TRANSACTION");
       return -1;
     }
     long long int new_rec_id = std::any_cast<long long int>(new_rid);
@@ -378,7 +385,6 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     Logger::message("Successfully created new recipient for group (id: ", new_rec_id, ").");
     return new_rec_id; //-1;
   }
-
 
 
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -157,7 +157,7 @@ class SqliteDB
   inline bool getStatement(std::string_view q, sqlite3_stmt **statement) const;
   inline void setCacheSize(unsigned int size = 1);
   static inline void setConfigOptions();
-  inline void transactionState() const;
+  inline int transactionState(bool quiet) const;
 
  private:
   inline bool initFromFile();
@@ -1410,26 +1410,31 @@ inline void SqliteDB::setConfigOptions() //static
   sqlite3_config(SQLITE_CONFIG_URI, 1);
 }
 
-inline void SqliteDB::transactionState() const
+inline int SqliteDB::transactionState(bool quiet) const
 {
 #if SQLITE_VERSION_NUMBER >= 3034000
   int state = sqlite3_txn_state(d_db, nullptr);
   switch (state)
   {
     case SQLITE_TXN_NONE:
-      Logger::message("No pending transactions");
+      if (!quiet)
+        Logger::message("No pending transactions");
       break;
-    case 1:
-      Logger::message("Read transaction in progress");
+    case SQLITE_TXN_READ:
+      if (!quiet)
+        Logger::message("Read transaction in progress");
       break;
-    case 2:
-      Logger::message("Write transaction in progress");
+    case SQLITE_TXN_WRITE:
+      if (!quiet)
+        Logger::message("Write transaction in progress");
       break;
     [[unlikely]] default:
       Logger::message("Invalid transaction state");
   }
+  return state;
 #else
   Logger::message("Transaction state info not available (sqlite version too old)");
+  return -1;
 #endif
 }
 
