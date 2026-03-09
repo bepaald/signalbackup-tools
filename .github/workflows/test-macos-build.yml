@@ -19,8 +19,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  do-build-tests:
+  do-build-tests-arm:
     runs-on: macos-latest
+    steps:
+      - name: Prepare
+        run: |
+          brew update
+          # I've been (intermittently) getting this error:
+          # Error: cmake is already installed from local/pinned!
+          # Please `brew uninstall cmake` first."
+          # so lets try that
+          brew uninstall cmake
+
+      - name: Build
+        run: |
+          echo "Tapping..."
+          brew tap bepaald/signalbackup-tools https://github.com/bepaald/signalbackup-tools
+          echo "Installing..."
+          brew install --HEAD signalbackup-tools
+          echo "Testing..."
+          brew test signalbackup-tools
+          echo "done!"
+
+# note 15 is currently latest (there is no macos-latest-intel)
+  do-build-tests-intel:
+    runs-on: macos-15-intel
     steps:
       - name: Prepare
         run: |
