@@ -190,7 +190,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        --poll-unfilled-out: " << (!light ? "#8198F8;" : "#5279F6;") << "\n"
       "        --poll-filled-out: " << (!light ? "#FFFFFF;" : "#EEF2FE;") << "\n"
       "        --poll-checkmark-in: " << (!light ? "brightness(0) invert(1);" : "brightness(0);") << "\n"
-    "        --labelbg-c: " << (!light ? "#FBFCFFCC;" : "#1B1C1FAA;") << "\n";
+      "        --labelbg-c: " << (!light ? "#FBFCFFCC;" : "#1B1C1FAA;") << "\n";
     for (long long int id : recipient_ids)
     {
       file << "        --memc-" << id << ": #";
@@ -209,8 +209,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   }
 
   file << R"(      body {
-        margin: 0px;
-        padding: 0px;
+        margin: 0;
+        padding: 0;
         width: 100%;
         background-color: var(--body-bgc);
       }
@@ -221,7 +221,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
       #page {
         background-color: var(--body-bgc);
-        margin: 0px;
+        margin: 0;
         display: flex;
         flex-direction: row;
         transition: color .2s, background-color .2s;
@@ -239,7 +239,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       "        margin-right: auto;\n"
       "        margin-bottom: 10px;\n"
       "        margin-top: 10px;\n"
-      "        grid-gap: 0px 15px;\n"
+      "        grid-gap: 0 15px;\n"
       "        width: fit-content;\n"
       "        font-family: Roboto, \"Noto Sans\", \"Liberation Sans\", OpenSans, sans-serif;\n"
       "        break-inside: avoid;\n"
@@ -367,7 +367,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .scheduled-header {
         font-style: italic;
         font-size: smaller;
-        padding: 0px 0px 3px 3px;
+        padding: 0 0 3px 3px;
       }
 
       .avatar {
@@ -404,7 +404,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << R"(
       .convo-avatar {
         font-size: x-large;
-        margin: auto 15px 15px 0px;
+        margin: auto 15px 15px 0;
         height: 37px;
         line-height: 30px;
         display: flex;
@@ -482,7 +482,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg pre {
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
         white-space: pre-wrap;
-        margin-top: 0px;
+        margin-top: 0;
         margin-bottom: 5px;
         overflow-wrap: anywhere;
       }
@@ -537,8 +537,8 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         align-items: center;
         text-align: center;
         font-style: italic;
-        margin-top: 0px;
-        margin-bottom: 0px;
+        margin-top: 0;
+        margin-bottom: 0;
         color: var(--conversationbox-c);
       }
       .history-header::before,
@@ -599,7 +599,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-viewonce .viewonce > pre {
-        margin-bottom: 0px;
+        margin-bottom: 0;
       }
 
       .msg-viewonce .unviewed_viewonce_icon,
@@ -714,7 +714,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .memberlabel {
-        padding: 1px 7px 0px 7px;
+        padding: 1px 7px 0;
         font-weight: 550;
         height: calc(100% - 1px);
       }
@@ -842,7 +842,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       .msg-img-container label {
         display: flex;
         flex-direction: column;
-        margin-bottom: 0px;
+        margin-bottom: 0;
         align-items: flex-start;
       }
 
@@ -893,7 +893,7 @@ R"(
       }
 
       .lp-noimg {
-        padding: 7px 8px 5px 8px;
+        padding: 7px 8px 5px;
         margin-bottom: 5px;
         border-top-left-radius: 0.4em;
         border-top-right-radius: 0.4em;
@@ -1110,7 +1110,7 @@ R"(
 
       .poll-option-details div {
         color: var(--conversationbox-c);
-        padding: 5px 3px 5px 3px;
+        padding: 5px 3px;
       }
 
       .poll-option-details div:not(:last-child) {
@@ -1144,7 +1144,7 @@ R"(
       }
 
       .poll-option-votes-own {
-        margin: 2px 3px 0px 0px;
+        margin: 2px 3px 0 0;
         width: 14px;
         height: 14px;
         border-radius: 50%;
@@ -1218,7 +1218,7 @@ R"(
       .msg-quote {
         display: flex;
         width: 98%;
-        padding: 5px 0px 5px 0px;
+        padding: 5px 0;
         border-radius: .3em;
         margin-bottom: 5px;
         margin-right: 2px;
@@ -1587,8 +1587,8 @@ R"(
       "      }\n"
       "\n"
       "      .expandedmenu .menu-item {\n"
-      "        padding-left: 0px;\n"
-      "        padding-bottom: 0px;\n"
+      "        padding-left: 0;\n"
+      "        padding-bottom: 0;\n"
       "      }\n"
       "\n"
       "      .expandedmenu .currentpage {\n"
@@ -1598,7 +1598,7 @@ R"(
       "      .expandable-menu-item {\n"
       "        display: flex;\n"
       "        flex-direction: column;\n"
-      "        margin-right: 0px;\n"
+      "        margin-right: 0;\n"
       "        cursor: pointer;\n"
       "        align-items: end;\n"
       "      }\n"
@@ -1614,8 +1614,8 @@ R"(
       "        display: flex;\n"
       "        flex-direction: column;\n"
       "        align-items: flex-start;\n"
-      "        width: 0px;\n"
-      "        max-height: 0px;\n"
+      "        width: 0;\n"
+      "        max-height: 0;\n"
       "        overflow: hidden;\n"
       "        opacity: 0%;\n"
       "        border: none;\n"
@@ -1662,11 +1662,8 @@ R"(
         display: inline-block;
         font-size: x-large;
         font-family: Roboto, "Noto Sans", "Liberation Sans", OpenSans, sans-serif;
-        padding: 0px;
-        margin-top: 0px;
-        margin-bottom: 0px;
-        margin-left: auto;
-        margin-right: auto;
+        padding: 0;
+        margin: 0 auto;
         min-width: 100%;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -1677,7 +1674,7 @@ R"(
       }
 
       .menu-icon {
-        margin-right: 0px;
+        margin-right: 0;
         width: 30px;
       }
 
@@ -1794,7 +1791,7 @@ R"(
       height: 40px;
       align-items: center;
       justify-content: center;
-      padding: 0px;
+      padding: 0;
     }
 
     .nav-bottom {
@@ -1846,13 +1843,13 @@ R"(
 
     .groupdetails {
       display: block;
-      max-height: 0px;
+      max-height: 0;
       max-width: 90%;
       margin-left: auto;
       margin-right: auto;
       overflow: hidden;
-      padding-top: 0px;
-      padding-bottom: 0px;
+      padding-top: 0;
+      padding-bottom: 0;
       transition: padding-top 0.05s ease, padding-bottom 0.05s ease, max-height 0.25s ease;
     }
 
@@ -2071,7 +2068,7 @@ R"(
 
       .right-column,
       .left-column {
-        padding: 0px;
+        padding: 0;
         text-align: left;
         flex: 0 0 100%;
       }
@@ -2706,8 +2703,12 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       << std::string(extraindent, ' ') << "              <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</div>\n";
     auto labelit = groupinfo.labels.find(msg_info.msg_recipient_id);
     if (labelit != groupinfo.labels.end())
+    {
+      std::string label = labelit->second.first; // the emoji
+      label += (label.empty() ? "" : " ") + labelit->second.second; // add the string
       htmloutput
-        << std::string(extraindent, ' ') << "              <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << HTMLescapeString(labelit->second.second) << "</div></div>\n";
+        << std::string(extraindent, ' ') << "              <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << HTMLescapeString(label) << "</div></div>\n";
+    }
     htmloutput
       << std::string(extraindent, ' ') << "            </div>\n";
   }

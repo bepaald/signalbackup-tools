@@ -21,6 +21,8 @@
 
 #include <openssl/rand.h>
 
+#include <tuple>
+
 #include "../scopeguard/scopeguard.h"
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
@@ -286,32 +288,47 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     if (d_database.containsTable("group_membership") &&
         d_database.tableContainsColumn("groups", "decrypted_group"))
     {
-      std::map<std::string, long long int> memberroles; // [ uuid -> Role ]
+      std::map<std::string, std::tuple<long long int, std::string, std::string>> memberdata; // [ uuid -> [Role, lebalemoji, labelstring] ]
       for (unsigned int i = 0; i < res.getValueAs<long long int>(0, "nummembers"); ++i)
       {
-      // get member role (0 = unknown, 1 = normal, 2 = admin)
+        // get member role (0 = unknown, 1 = normal, 2 = admin)
         SqliteDB::QueryResults memberrole_results;
-        if (ddb.exec("SELECT json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].role') AS role, "
-                     "COALESCE(json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].aci'), json_extract(json, '$.membersV2[" + bepaald::toString(i) + "].uuid')) AS uuid "
-                     "FROM conversations WHERE groupId = ?", groupidb64, &memberrole_results))
+        if (ddb.exec("SELECT COALESCE(json_extract(json, '$.membersV2[' || ?1 || '].aci'), json_extract(json, '$.membersV2[' || ?1 || '].uuid')) AS uuid, "
+                     "json_extract(json, '$.membersV2[' || ?1 || '].role') AS role, "
+                     "json_extract(json, '$.membersV2[' || ?1 || '].labelEmoji') AS labelemoji, "
+                     "json_extract(json, '$.membersV2[' || ?1 || '].labelString') AS labelstring "
+                     "FROM conversations WHERE groupId = ?2", {i, groupidb64}, &memberrole_results))
         {
-          //memberrole_results.prettyPrint();
+          //memberrole_results.prettyPrint(false);
           for (unsigned int mr = 0; mr < memberrole_results.rows(); ++mr)
           {
-            if (!memberrole_results.valueHasType<long long int>(mr, "role") ||
-                !memberrole_results.valueHasType<std::string>(mr, "uuid"))
+            if (!memberrole_results.valueHasType<std::string>(mr, "uuid")) [[unlikely]]
               continue;
 
+            // get the Android-specific uuid if we have it mapped...
             std::string uuid = bepaald::contains(member_uuids, memberrole_results(mr, "uuid")) ?
               member_uuids[memberrole_results(mr, "uuid")] :
               memberrole_results(mr, "uuid");
 
             // check if uuid is an actual member:
-            long long int uuidpresent = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM group_membership WHERE "
-                                                                                    "recipient_id IS (SELECT _id FROM recipient WHERE " + d_recipient_aci + " = ?) AND "
-                                                                                    "group_id = ?", {uuid, group_id}, 0);
-            if (uuidpresent)
-              memberroles[uuid] = memberrole_results.getValueAs<long long int>(mr, "role");
+            if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM group_membership WHERE "
+                                                            "recipient_id IS (SELECT _id FROM recipient WHERE " + d_recipient_aci + " = ?) AND "
+                                                            "group_id = ?", {uuid, group_id}, 0) == 0)
+              continue;
+
+            std::tuple<long long int, std::string, std::string> mdata{-1, std::string(), std::string()};
+            // set role:
+            if (memberrole_results.valueHasType<long long int>(mr, "role"))
+              std::get<0>(mdata) = memberrole_results.getValueAs<long long int>(mr, "role");
+
+            // set label:
+            std::pair<std::string, std::string> label;
+            if (memberrole_results.valueHasType<std::string>(mr, "labelemoji"))
+              std::get<1>(mdata) = memberrole_results(mr, "labelemoji");
+            if (memberrole_results.valueHasType<std::string>(mr, "labelstring"))
+              std::get<2>(mdata) = memberrole_results(mr, "labelstring");
+            if (std::get<0>(mdata) > -1 || !std::get<1>(mdata).empty() || !std::get<2>(mdata).empty())
+              memberdata.emplace(uuid, std::move(mdata));
           }
         }
       }
@@ -341,9 +358,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       group_info.addField<2>(title);
       //group_info.print();
 
-      for (auto const &m : memberroles)
+      for (auto const &m : memberdata)
       {
-
         /*
           message DecryptedMember {
           bytes       uuid             = 1;
@@ -351,6 +367,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
           bytes       profileKey       = 3;
           uint32      joinedAtRevision = 5;
           bytes       pni              = 6;
+          string      labelEmoji       = 7;
+          string      labelString      = 8;
           }
           enum Role {
           UNKNOWN       = 0;
@@ -359,15 +377,40 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
           }
         */
         DecryptedMember mem;
-
         unsigned char rawuuid[16];
         uint64_t rawuuid_size = 16;
         if (bepaald::hexStringToBytes(m.first, rawuuid, rawuuid_size))
         {
           mem.addField<1>({rawuuid, rawuuid_size});
-          mem.addField<2>(m.second);
-          group_info.addField<7>(mem);
-          //group_info.print();
+
+          long long int role = std::get<0>(m.second);
+          std::string labelemoji(std::get<1>(m.second));
+          std::string labelstring(std::get<2>(m.second));
+          bool add = false;
+
+          if (role > -1)
+          {
+            mem.addField<2>(role);
+            add = true;
+          }
+
+          // if (!labelemoji.empty())
+          // {
+          //   mem.addField<7>(labelemoji);
+          //   add = true;
+          // }
+
+          // if (!labelstring.empty())
+          // {
+          //   mem.addField<8>(labelstring);
+          //   add = true;
+          // }
+
+          if (add)
+          {
+            group_info.addField<7>(mem);
+            //group_info.print();
+          }
         }
       }
       // add it

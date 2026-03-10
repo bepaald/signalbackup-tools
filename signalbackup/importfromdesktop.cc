@@ -572,11 +572,13 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
 
         // NOTE this might fail on messages sent from a desktop app, those may
         // have sourceuuid == NULL (only verified on outgoing though)
+        if ((type == "profile-change" || type == "keychange" || type == "verified-change") && statusmsguuid.rows() == 0)
+          Logger::warning("No results querying source of '", type, "'-message");
         std::string source_uuid = (type == "profile-change" || type == "keychange" || type == "verified-change") ?
-          statusmsguuid.valueAsString(0, "uuid") :
+          (statusmsguuid.rows() ? statusmsguuid.valueAsString(0, "uuid") : std::string()) :
           results_all_messages_from_conversation.valueAsString(j, "sourceUuid");
         std::string source_phone = (type == "profile-change" || type == "keychange" || type == "verified-change") ?
-          statusmsguuid.valueAsString(0, "e164") :
+          (statusmsguuid.rows() ? statusmsguuid.valueAsString(0, "e164") : std::string()) :
           results_all_messages_from_conversation.valueAsString(j, "sourcephone");
 
         if (source_uuid.empty() || (address = getRecipientIdFromUuidMapped(source_uuid, &recipientmap, createmissingcontacts)) == -1) // try with phone number
