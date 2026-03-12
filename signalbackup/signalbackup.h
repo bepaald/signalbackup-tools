@@ -505,6 +505,7 @@ class SignalBackup
                        std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
                        bool linkify, bool isquote) const;
+  bool HTMLemojify(std::string *str, std::set<int> const &excluded_pos = std::set<int>()) const;
   inline bool HTMLprepMsgBody(std::string *body) const;
   std::string HTMLwriteAvatar(long long int recipient_id, std::string const &directory, std::string const &threaddir,
                               bool overwrite, bool append) const;

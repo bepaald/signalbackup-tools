@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -29,7 +29,8 @@ std::string SignalBackup::HTMLescapeString(std::string const &body) const
 void SignalBackup::HTMLescapeString(std::string *body, std::set<int> const *const positions_excluded_from_escape) const
 {
   // escape special html chars second, so the spans added by emojifinder (next) aren't escaped
-  int positions_added = 0;
+  int positions_added = 0; // while we escape chars, the positions (as saved in positions_excluded_from_escape
+                           // need to be adjusted since the escaped inserts characters into the string
   std::string::size_type strlen = body->length();
   for (unsigned int i = 0; i < strlen; ++i)
   {

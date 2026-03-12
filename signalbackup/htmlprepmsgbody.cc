@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -139,8 +139,19 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
 
   HTMLescapeString(body, &positions_excluded_from_escape);
 
+  return HTMLemojify(body, positions_excluded_from_escape);
+
+  // if (changed)
+  // {
+  //   std::cout << "ORIG: " << orig << std::endl;
+  //   std::cout << "NEW : " << *body << std::endl;
+  // }
+}
+
+bool SignalBackup::HTMLemojify(std::string *str, std::set<int> const &positions_excluded_from_escape) const
+{
   // now do the emoji
-  std::vector<std::pair<unsigned int, unsigned int>> emoji_pos = HTMLgetEmojiPos(*body);
+  std::vector<std::pair<unsigned int, unsigned int>> emoji_pos = HTMLgetEmojiPos(*str);
 
   // check if body is only emoji
   bool all_emoji = true;
@@ -148,11 +159,11 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
     all_emoji = false; // could technically still be only emoji, but it gets a bubble in html
   else
   {
-    for (unsigned int i = 0, posidx = 0; i < body->size(); ++i)
+    for (unsigned int i = 0, posidx = 0; i < str->size(); ++i)
     {
       if (posidx >= emoji_pos.size() || i != emoji_pos[posidx].first)
       {
-        if ((*body)[i] == ' ') // spaces dont count
+        if ((*str)[i] == ' ') // spaces dont count
           continue;
         all_emoji = false;
         break;
@@ -170,17 +181,11 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   {
     if (!bepaald::contains(positions_excluded_from_escape, p.first)) [[likely]]
     {
-      body->insert(p.first + moved, pre);
-      body->insert(p.first + p.second + pre.size() + moved, post);
+      str->insert(p.first + moved, pre);
+      str->insert(p.first + p.second + pre.size() + moved, post);
       moved += pre.size() + post.size();
     }
   }
 
   return all_emoji;
-
-  // if (changed)
-  // {
-  //   std::cout << "ORIG: " << orig << std::endl;
-  //   std::cout << "NEW : " << *body << std::endl;
-  // }
 }

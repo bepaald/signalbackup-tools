@@ -394,17 +394,17 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
             add = true;
           }
 
-          // if (!labelemoji.empty())
-          // {
-          //   mem.addField<7>(labelemoji);
-          //   add = true;
-          // }
+          if (!labelemoji.empty())
+          {
+            mem.addField<7>(labelemoji);
+            add = true;
+          }
 
-          // if (!labelstring.empty())
-          // {
-          //   mem.addField<8>(labelstring);
-          //   add = true;
-          // }
+          if (!labelstring.empty())
+          {
+            mem.addField<8>(labelstring);
+            add = true;
+          }
 
           if (add)
           {

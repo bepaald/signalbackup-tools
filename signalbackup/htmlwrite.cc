@@ -2706,8 +2706,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     {
       std::string label = labelit->second.first; // the emoji
       label += (label.empty() ? "" : " ") + labelit->second.second; // add the string
+      HTMLescapeString(&label);
+      HTMLemojify(&label);
       htmloutput
-        << std::string(extraindent, ' ') << "              <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << HTMLescapeString(label) << "</div></div>\n";
+        << std::string(extraindent, ' ') << "              <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << label << "</div></div>\n";
     }
     htmloutput
       << std::string(extraindent, ' ') << "            </div>\n";
@@ -2739,8 +2741,14 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       << (msg_info.story_reply ? " &middot; Story" : "") << "</div>\n";
     auto labelit = groupinfo.labels.find(msg_info.msg_recipient_id);
     if (labelit != groupinfo.labels.end() && !msg_info.story_reply)
+    {
+      std::string label = labelit->second.first; // the emoji
+      label += (label.empty() ? "" : " ") + labelit->second.second; // add the string
+      HTMLescapeString(&label);
+      HTMLemojify(&label);
       htmloutput
-        << std::string(extraindent, ' ') << "                  <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << HTMLescapeString(labelit->second.second) << "</div></div>\n";
+        << std::string(extraindent, ' ') << "                  <div class=\"memberlabel-bg\"><div class=\"memberlabel\">" << label << "</div></div>\n";
+    }
     htmloutput
       << std::string(extraindent, ' ') << "                </div>\n";
 
