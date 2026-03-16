@@ -29,7 +29,7 @@ if [ "$CONFIG" = "default" ] ; then
 fi
 
 CXX="${CXX:-g++}"
-CXXFLAGS="${CXXFLAGS:--Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -O3 -flto $PKG_CONFIG___CFLAGS_DBUS__}"
+CXXFLAGS="${CXXFLAGS:--Wall -Werror=return-type -Wextra -Woverloaded-virtual -Wshadow -pedantic -O3 -flto $PKG_CONFIG___CFLAGS_DBUS__}"
 CXXARCH="${CXXARCH:--march=native}"
 CXXSTD="${CXXSTD:--std=c++2b}"
 CXXFLAGSEXTRA="${CXXFLAGSEXTRA:-}"
@@ -39,7 +39,7 @@ BIN="${BIN:-signalbackup-tools}"
 
 # CONFIG: without_dbus
 if [ "$CONFIG" = "without_dbus" ] ; then
-  CXXFLAGS="-Wall -Wextra -Woverloaded-virtual -Wshadow -pedantic -DWITHOUT_DBUS -O3 -flto"
+  CXXFLAGS="-Wall -Werror=return-type -Wextra -Woverloaded-virtual -Wshadow -pedantic -DWITHOUT_DBUS -O3 -flto"
   LDLIBS="-lcrypto -lsqlite3"
 fi
 
@@ -61,6 +61,7 @@ SRC=("keyvalueframe/statics.cc"
      "signalbackup/datetomsecssinceepoch.cc"
      "signalbackup/getavatarextension.cc"
      "signalbackup/updategroupmembers.cc"
+     "signalbackup/gethostname.cc"
      "signalbackup/dtimportlongtext.cc"
      "signalbackup/dtupdatedatabase.cc"
      "signalbackup/htmlwritepolldiv.cc"
@@ -278,6 +279,7 @@ OBJ=("keyvalueframe/o/statics.o"
      "signalbackup/o/datetomsecssinceepoch.o"
      "signalbackup/o/getavatarextension.o"
      "signalbackup/o/updategroupmembers.o"
+     "signalbackup/o/gethostname.o"
      "signalbackup/o/dtimportlongtext.o"
      "signalbackup/o/dtupdatedatabase.o"
      "signalbackup/o/htmlwritepolldiv.o"

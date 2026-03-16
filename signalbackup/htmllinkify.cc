@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -23,6 +23,11 @@
 #include "msgrange.h"
 
 #include "../common_regex.h"
+
+// this function does a best effort linkify of an input string
+// it does not currently recognize IPv6 addresses as possible
+// urls (http://[1fff:0:a88:85a3::ac1f]:8001/index.html).
+// Neither does Signal Android.
 
 void SignalBackup::HTMLLinkifyToken(std::string_view token, int tokenoffset, std::vector<Range> *ranges) const
 {

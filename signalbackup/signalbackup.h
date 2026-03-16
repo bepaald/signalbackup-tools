@@ -567,6 +567,7 @@ class SignalBackup
   void prepRanges(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string_view line) const;
+  std::string getHostname(std::string_view host) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeProfileChangeMessage(std::string const &body, std::string const &name, IconType *icon) const;
   std::string decodePollTerminateMessage(std::string const &body, long long int type, std::string const &name, IconType *icon) const;

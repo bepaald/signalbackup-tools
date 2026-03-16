@@ -601,6 +601,10 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             append,                                                                           // append
             (d_database.tableContainsColumn(d_mms_table, "parent_story_id") ? messages.valueAsInt(messagecount, "parent_story_id", 0) > 0 : false)}); // story_reply
 
+        if (!msg_info.link_preview_url.empty() &&
+            msg_info.link_preview_description.empty()) [[unlikely]]
+          msg_info.link_preview_description = getHostname(msg_info.link_preview_url);
+
         // get attachments if any...
         if (messages.valueAsInt(messagecount, "attcount", 0) > 0)
         {
