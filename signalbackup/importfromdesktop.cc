@@ -1785,17 +1785,17 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
               std::string qbr_uuid;
               SqliteDB::QueryResults qbrres;
               if (!dtdb->d_database.exec("SELECT "
-                                        "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].start') AS qbr_start,"
-                                        "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].length') AS qbr_length,"
-                                        "json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].style') AS qbr_style,"
-                                        "LOWER(COALESCE(json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionAci'), json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "].mentionUuid'))) AS qbr_uuid "
-                                        "FROM messages WHERE rowid = ?", rowid, &qbrres))
+                                         "json_extract(json, '$.quote.bodyRanges[' || ?1 || '].start') AS qbr_start,"
+                                         "json_extract(json, '$.quote.bodyRanges[' || ?1 || '].length') AS qbr_length,"
+                                         "json_extract(json, '$.quote.bodyRanges[' || ?1 || '].style') AS qbr_style,"
+                                         "LOWER(COALESCE(json_extract(json, '$.quote.bodyRanges[' || ?1 || '].mentionAci'), json_extract(json, '$.quote.bodyRanges[' || ?1 || '].mentionUuid'))) AS qbr_uuid "
+                                         "FROM messages WHERE rowid = ?2", {qbr, rowid}, &qbrres))
               {
                 if (d_verbose) [[unlikely]] Logger::message_end();
                 Logger::error("Retrieving quote bodyranges");
                 continue;
               }
-              //qbrres.prettyPrint();
+              //qbrres.prettyPrint(true);
 
               if (qbrres.isNull(0, "qbr_style"))
               {
@@ -1804,7 +1804,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                   if (d_verbose) [[unlikely]] Logger::message_end();
                   Logger::warning("Quote-bodyrange contains no recipient and no style. Skipping.");
                   dtdb->d_database.prettyPrint(d_truncate,
-                                              "SELECT json_extract(json, '$.quote.bodyRanges[" + bepaald::toString(qbr) + "] FROM messages WHERE rowid = ?", rowid);
+                                               "SELECT json_extract(json, '$.quote.bodyRanges[' || ? || '] FROM messages WHERE rowid = ?", {qbr, rowid});
                   continue;
                 }
 
@@ -1998,15 +1998,15 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           for (unsigned int r = 0; r < hasranges; ++r)
           {
             if (dtdb->d_database.exec("SELECT "
-                                     "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].start') AS range_start,"
-                                     "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].length') AS range_length,"
-                                     "json_extract(json, '$.bodyRanges[" + bepaald::toString(r) + "].style') AS range_style"
-                                     " FROM messages WHERE rowid IS ?", rowid, &ranges_results))
+                                      "json_extract(json, '$.bodyRanges[' || ?1 || '].start') AS range_start,"
+                                      "json_extract(json, '$.bodyRanges[' || ?1 || '].length') AS range_length,"
+                                      "json_extract(json, '$.bodyRanges[' || ?1 || '].style') AS range_style"
+                                      " FROM messages WHERE rowid IS ?2", {r, rowid}, &ranges_results))
             {
               if (ranges_results.isNull(0, "range_style"))
                 continue;
 
-              //ranges_results.prettyPrint();
+              //ranges_results.prettyPrint(true);
 
               BodyRange bodyrange;
               if (ranges_results.getValueAs<long long int>(0, "range_start") != 0)
@@ -2092,10 +2092,10 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         {
           SqliteDB::QueryResults results_mentions;
           if (!dtdb->d_database.exec("SELECT "
-                                    "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].start') AS start,"
-                                    "json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].length') AS length,"
-                                    "LOWER(COALESCE(json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionAci'), json_extract(json, '$.bodyRanges[" + bepaald::toString(k) + "].mentionUuid'))) AS mention_uuid"
-                                    " FROM messages WHERE rowid = ?", rowid, &results_mentions))
+                                    "json_extract(json, '$.bodyRanges[' || ?1 || '].start') AS start,"
+                                    "json_extract(json, '$.bodyRanges[' || ?1 || '].length') AS length,"
+                                    "LOWER(COALESCE(json_extract(json, '$.bodyRanges[' || ?1 || '].mentionAci'), json_extract(json, '$.bodyRanges[' || ?1 || '].mentionUuid'))) AS mention_uuid"
+                                     " FROM messages WHERE rowid = ?2", {k, rowid}, &results_mentions))
           {
             if (d_verbose) [[unlikely]] Logger::message_end();
             Logger::warning("Failed to retrieve mentions. Skipping.");

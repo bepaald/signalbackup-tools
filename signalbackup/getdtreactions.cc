@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -27,31 +27,31 @@ void SignalBackup::getDTReactions(SqliteDB const &ddb, long long int rowid, long
   for (unsigned int k = 0; k < numreactions; ++k)
   {
     if (!ddb.exec("SELECT "
-                  "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].emoji') AS emoji,"
+                  "json_extract(messages.json, '$.reactions[' || ?1 || '].emoji') AS emoji,"
 
                   // not present in android database
-                  //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].remove') AS remove,"
+                  //"json_extract(messages.json, '$.reactions[' || ?1 || '].remove') AS remove,"
 
                   // THIS IS THE AUTHOR OF THE MESSAGE THATS REACTED TO
-                  //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetAuthorUuid') AS target_author_uuid,"
+                  //"json_extract(messages.json, '$.reactions[' || ?1 || '].targetAuthorUuid') AS target_author_uuid,"
 
                   //timestamp of message that reaction belongs to, dont know why this exists
-                  //"JSONLONG(json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].targetTimestamp')) AS target_timestamp,"
+                  //"JSONLONG(json_extract(messages.json, '$.reactions[' || ?1 || '].targetTimestamp')) AS target_timestamp,"
 
-                  "JSONLONG(json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].timestamp')) AS timestamp,"
+                  "JSONLONG(json_extract(messages.json, '$.reactions[' || ?1 || '].timestamp')) AS timestamp,"
 
                   // THE ID OF THE CONVERSATION OF THE REACTION AUTHOR (conversation somewhat doubles android's recipient table)
                   // ON OLDER DATABASES THIS IS PHONE NUMBER OF THE ACTUAL AUTHOR
-                  "json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId') AS from_id,"
+                  "json_extract(messages.json, '$.reactions[' || ?1 || '].fromId') AS from_id,"
 
-                  //"json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].source') AS source" // ???
+                  //"json_extract(messages.json, '$.reactions[' || ?1 || '].source') AS source" // ???
                   "conversations." + d_dt_c_uuid + " AS uuid,"
                   "conversations.e164 AS phone"
                   " FROM messages LEFT JOIN conversations ON"
-                  " (conversations.id IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId')"
+                  " (conversations.id IS json_extract(messages.json, '$.reactions[' || ?1 || '].fromId')"
                   " OR "
-                  "conversations.e164 IS json_extract(messages.json, '$.reactions[" + bepaald::toString(k) + "].fromId'))"
-                  " WHERE rowid = ?", rowid, &results_emoji_reactions))
+                  "conversations.e164 IS json_extract(messages.json, '$.reactions[' || ?1 || '].fromId'))"
+                  " WHERE rowid = ?2", {k, rowid}, &results_emoji_reactions))
     {
       Logger::error("Failed to get reaction data from desktop database. Skipping.");
       continue;

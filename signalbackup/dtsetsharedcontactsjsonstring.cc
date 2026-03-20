@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -129,10 +129,10 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
   {
     SqliteDB::QueryResults dtsc_array;
     ddb.exec("SELECT "
-             "json_extract(json, '$.contact[0].number[" + bepaald::toString(i) + "].value') AS number, "
-             "json_extract(json, '$.contact[0].number[" + bepaald::toString(i) + "].type') AS type, "
-             "json_extract(json, '$.contact[0].number[" + bepaald::toString(i) + "].label') AS label "
-             "FROM messages WHERE rowid = ?", rowid, &dtsc_array);
+             "json_extract(json, '$.contact[0].number[' || ?1 || '].value') AS number, "
+             "json_extract(json, '$.contact[0].number[' || ?1 || '].type') AS type, "
+             "json_extract(json, '$.contact[0].number[' || ?1 || '].label') AS label "
+             "FROM messages WHERE rowid = ?2", {i, rowid}, &dtsc_array);
 
     SharedContactDataPhone tmp;
     if (!dtsc_array.isNull(0, "number"))
@@ -164,10 +164,10 @@ std::string SignalBackup::dtSetSharedContactsJsonString(SqliteDB const &ddb, lon
   {
     SqliteDB::QueryResults dtsc_array;
     ddb.exec("SELECT "
-             "json_extract(json, '$.contact[0].email[" + bepaald::toString(i) + "].value') AS email, "
-             "json_extract(json, '$.contact[0].email[" + bepaald::toString(i) + "].type') AS type, "
-             "json_extract(json, '$.contact[0].email[" + bepaald::toString(i) + "].label') AS label "
-             "FROM messages WHERE rowid = ?", rowid, &dtsc_array);
+             "json_extract(json, '$.contact[0].email[' || ?1 || '].value') AS email, "
+             "json_extract(json, '$.contact[0].email[' || ?1 || '].type') AS type, "
+             "json_extract(json, '$.contact[0].email[' || ?1 || '].label') AS label "
+             "FROM messages WHERE rowid = ?2", {i, rowid}, &dtsc_array);
 
     SharedContactDataEmail tmp;
     if (!dtsc_array.isNull(0, "email"))

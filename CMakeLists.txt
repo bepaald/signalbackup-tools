@@ -11,6 +11,9 @@ project(signalbackup-tools)
 
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
+if(NOT TARGET SQLite3::SQLite3) # CMake < 4.3
+  add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif()
 
 set(CMAKE_CXX_EXTENSIONS off)
 if (CMAKE_VERSION VERSION_LESS "3.30")  # the CMAKE_CXX_STANDARD_LATEST variable was only introduced in 3.30
@@ -48,6 +51,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES ".*BSD"
       list(APPEND DBUS_LIBS_ABSOLUTE ${${tmp}})
     endforeach()
   endif()
+else()
+  add_definitions(-DWITHOUT_DBUS)
 endif()
 
 if (APPLE)
@@ -74,4 +79,4 @@ if (WIN32)
   target_compile_options(signalbackup-tools PUBLIC /utf-8 /wd4244 /wd4267 /wd4996)
 endif()
 
-target_link_libraries(signalbackup-tools PRIVATE OpenSSL::Crypto PRIVATE SQLite::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})
+target_link_libraries(signalbackup-tools PRIVATE OpenSSL::Crypto PRIVATE SQLite3::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})
