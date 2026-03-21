@@ -2742,7 +2742,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       << std::string(extraindent, ' ') << "                <div class=\"msg-name\">\n"
       << std::string(extraindent, ' ') << "                  <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id).display_name)
       << (msg_info.story_reply ? " &middot; Story" : "") << "</div>\n";
-    auto labelit = groupinfo.labels.find(msg_info.msg_recipient_id);
+    auto labelit = groupinfo.labels.find(quote_author_id);
     if (labelit != groupinfo.labels.end() && !msg_info.story_reply)
     {
       std::string label = labelit->second.first; // the emoji
