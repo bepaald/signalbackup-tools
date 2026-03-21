@@ -27,6 +27,7 @@ struct GroupInfo
   std::string access_control_attributes;
   std::string access_control_members;
   std::string access_control_addfromlinkinvite;
+  std::string access_control_member_labels;
   std::map<long long int, std::pair<std::string, std::string>> labels; // recipient_id -> label{emoji, string}
   std::map<long long int, std::pair<std::string, std::string>> colors; // recipient_id -> color{light, dark}
   std::list<long long int> admin_ids;

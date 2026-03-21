@@ -2319,6 +2319,8 @@ file << R"(
         "                  <span class=\"column-left-align\">" << groupinfo.access_control_attributes << "</span>\n"
         "                  <span class=\"column-right-align\">Send messages:</span>\n"
         "                  <span class=\"column-left-align\">" << (groupinfo.isannouncementgroup ? "Only admins" : "All members") << "</span>\n"
+        "                  <span class=\"column-right-align\">Add member labels:</span>\n"
+        "                  <span class=\"column-left-align\">" << groupinfo.access_control_member_labels << "</span>\n"
         "                  <span class=\"column-right-align\">Approve members from invite link:</span>\n"
         "                  <span class=\"column-left-align\">" << groupinfo.access_control_addfromlinkinvite << "</span>\n"
         // column header: option

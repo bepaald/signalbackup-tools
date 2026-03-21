@@ -99,10 +99,11 @@ message AccessControl {
   AccessRequired attributes        = 1;
   AccessRequired members           = 2;
   AccessRequired addFromInviteLink = 3;
+  AccessRequired memberLabel       = 4;
 }
 */
 typedef ProtoBufParser<protobuffer::optional::ENUM, protobuffer::optional::ENUM,
-                       protobuffer::optional::ENUM> AccessControl;
+                       protobuffer::optional::ENUM, protobuffer::optional::ENUM> AccessControl;
 
 /*
 message Member {
@@ -203,6 +204,23 @@ message DecryptedString {
 */
 typedef ProtoBufParser<protobuffer::optional::STRING> DecryptedString;
 
+/*
+message DecryptedModifyMemberLabel {
+  bytes  aciBytes    = 1;
+  string labelEmoji  = 2;
+  string labelString = 3;
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::STRING, protobuffer::optional::STRING> DecryptedModifyMemberLabel;
+
+/*
+message ModifyMemberLabelAction {
+  bytes userId = 1;
+  bytes labelEmoji = 2; // decrypts to a UTF-8 string
+  bytes labelString = 3; // decrypts to a UTF-8 string
+}
+*/
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES, protobuffer::optional::BYTES> ModifyMemberLabelAction;
 
 /*
 message DecryptedTimer {
@@ -214,6 +232,7 @@ typedef ProtoBufParser<protobuffer::optional::UINT32> DecryptedTimer;
 /*
 message DecryptedGroupChange {
            bytes                         editor                      = 1;
+  reserved                                                             25; // groupId used only during verification + decrypt, only provided by server
            uint32                        revision                    = 2;
   repeated DecryptedMember               newMembers                  = 3;
   repeated bytes                         deleteMembers               = 4;
@@ -237,6 +256,8 @@ message DecryptedGroupChange {
   repeated DecryptedBannedMember         newBannedMembers            = 22;
   repeated DecryptedBannedMember         deleteBannedMembers         = 23;
   repeated DecryptedMember               promotePendingPniAciMembers = 24;
+  repeated DecryptedModifyMemberLabel    modifyMemberLabels          = 26;
+           AccessControl.AccessRequired  newMemberLabelAccess        = 27;
 }
 
 enum EnabledState {
@@ -257,7 +278,8 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT
                        protobuffer::repeated::BYTES, std::vector<DecryptedApproveMember>,
                        protobuffer::optional::BYTES, DecryptedString, protobuffer::optional::ENUM,
                        std::vector<DecryptedBannedMember>, std::vector<DecryptedBannedMember>,
-                       std::vector<DecryptedMember>> DecryptedGroupChange;
+                       std::vector<DecryptedMember>, protobuffer::optional::BYTES,
+                       std::vector<DecryptedModifyMemberLabel>, protobuffer::optional::ENUM> DecryptedGroupChange;
 
 /*
 message DecryptedGroup {
@@ -273,6 +295,7 @@ message DecryptedGroup {
            string                    description               = 11;
            EnabledState              isAnnouncementGroup       = 12;
   repeated DecryptedBannedMember     bannedMembers             = 13;
+           bool                      isPlaceholderGroup        = 64;
 }
 
 enum EnabledState {
@@ -288,7 +311,7 @@ typedef ProtoBufParser<protobuffer::DUMMY, protobuffer::optional::STRING,
                        std::vector<DecryptedMember>, std::vector<DecryptedPendingMember>,
                        std::vector<DecryptedRequestingMember>, protobuffer::optional::BYTES,
                        protobuffer::optional::STRING, protobuffer::optional::ENUM,
-                       std::vector<DecryptedBannedMember>> DecryptedGroup;
+                       std::vector<DecryptedBannedMember>, protobuffer::optional::BOOL> DecryptedGroup;
 /* message Member {
      enum Role {
        UNKNOWN       = 0;
@@ -451,19 +474,19 @@ typedef ProtoBufParser<protobuffer::optional::BYTES> ModifyDisappearingMessagesT
     AccessControl.AccessRequired attributesAccess = 1;
   }
 */
-typedef ProtoBufParser<> ModifyAttributesAccessControlAction;
+typedef ProtoBufParser<protobuffer::optional::ENUM> ModifyAttributesAccessControlAction;
 
 /* message ModifyMembersAccessControlAction {
      AccessControl.AccessRequired membersAccess = 1;
    }
 */
-typedef ProtoBufParser<> ModifyMembersAccessControlAction;
+typedef ProtoBufParser<protobuffer::optional::ENUM> ModifyMembersAccessControlAction;
 
 /* message ModifyAddFromInviteLinkAccessControlAction {
      AccessControl.AccessRequired addFromInviteLinkAccess = 1;
    }
 */
-typedef ProtoBufParser<> ModifyAddFromInviteLinkAccessControlAction;
+typedef ProtoBufParser<protobuffer::optional::ENUM> ModifyAddFromInviteLinkAccessControlAction;
 
 /* message ModifyInviteLinkPasswordAction {
      bytes inviteLinkPassword = 1;
@@ -477,6 +500,12 @@ typedef ProtoBufParser<protobuffer::optional::BYTES> ModifyInviteLinkPasswordAct
 */
 typedef ProtoBufParser<protobuffer::optional::BOOL> ModifyAnnouncementsOnlyAction;
 
+
+/* message ModifyMemberLabelAccessControlAction {
+     AccessControl.AccessRequired memberLabelAccess = 1;
+   }
+*/
+typedef ProtoBufParser<protobuffer::optional::ENUM> ModifyMemberLabelAccessControlAction;
 
 /* message Action {
              bytes                                      sourceServiceId                 = 1;
@@ -503,6 +532,13 @@ typedef ProtoBufParser<protobuffer::optional::BOOL> ModifyAnnouncementsOnlyActio
     repeated AddBannedMemberAction                      addBannedMembers                = 22;
     repeated DeleteBannedMemberAction                   deleteBannedMembers             = 23;
     repeated PromotePendingPniAciMemberProfileKeyAction promotePendingPniAciMembers     = 24;
+
+    // clients should not provide this value; the server will provide it in the response buffer to ensure the signature is binding to a particular group
+    // if clients set it during a request the server will respond with 400.
+             bytes                                      group_id                        = 25;
+    repeated ModifyMemberLabelAction                    modifyMemberLabels              = 26;
+             ModifyMemberLabelAccessControlAction       modifyMemberLabelAccess         = 27;
+
 }
 */
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT32,
@@ -516,7 +552,8 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT
                        std::vector<DeleteRequestingMemberAction>, std::vector<PromoteRequestingMemberAction>,
                        ModifyInviteLinkPasswordAction, ModifyDescriptionAction, ModifyAnnouncementsOnlyAction,
                        std::vector<AddBannedMemberAction>, std::vector<DeleteBannedMemberAction>,
-                       std::vector<PromotePendingPniAciMemberProfileKeyAction>> Action;
+                       std::vector<PromotePendingPniAciMemberProfileKeyAction>, protobuffer::optional::BYTES,
+                       std::vector<ModifyMemberLabelAction>, ModifyMemberLabelAccessControlAction> Action;
 
 /*
 message GroupChange {

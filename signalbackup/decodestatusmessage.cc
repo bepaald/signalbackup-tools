@@ -844,6 +844,39 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         }
       }
 
+      // if memberlabels-accesscontrol was changed:
+      if (groupchange.getField<27>().has_value())
+      {
+        if (icon && *icon == IconType::NONE)
+          *icon = IconType::MEGAPHONE;
+
+        // new value: 0 unknown, 1 any, 2 member, 3 admin, 4 unsatisfiable
+        auto accesscontrol = groupchange.getField<27>().value();
+
+        // get editor
+        std::string editoruuid;
+        if (groupchange_editor.has_value())
+        {
+          auto [uuid, uuid_size] = groupchange_editor.value();
+          if (uuid_size == 16) //likely
+          {
+            editoruuid = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
+            editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+          }
+        }
+
+        std::string editorname(editoruuid == d_selfuuid ? "You" : editoruuid.empty() ? editoruuid : getNameFromUuid(editoruuid));
+        if (editorname.empty())
+          editorname = "An admin";
+
+        if (accesscontrol == 3)
+          return editorname + " changed who can add member labels to \"Only admins\".";
+        else if (accesscontrol == 2)
+          return editorname + " changed who can add member labels to \"All members\".";
+        else [[unlikely]]
+          return editorname + " changed who can add member labels."; // cant happen (?)
+      }
+
       // if groupchange has editor, but nothing else : editor added you to the group:
       if (groupchange_editor.has_value() &&
           !(groupchange.getField<2>().has_value() ||        // 2

@@ -46,6 +46,7 @@ message DecryptedGroup {
            string                    description               = 11;
            EnabledState              isAnnouncementGroup       = 12;
   repeated DecryptedBannedMember     bannedMembers             = 13;
+           bool                      isPlaceholderGroup        = 64;
 }
 */
   DecryptedGroup group_info(groupdata);
@@ -113,6 +114,7 @@ message AccessControl {
   AccessRequired attributes        = 1;
   AccessRequired members           = 2;
   AccessRequired addFromInviteLink = 3;
+  AccessRequired memberLabel       = 4;
 }
     */
 
@@ -142,7 +144,6 @@ message AccessControl {
       attributes = accesscontrol_attributes.value();
     groupinfo->access_control_attributes = enumToString(attributes);
 
-
     long long int members = 0;
     auto accesscontrol_members = acdata.getField<2>();
     if (accesscontrol_members.has_value())
@@ -154,6 +155,12 @@ message AccessControl {
     if (accesscontrol_addfrominvitelink.has_value())
       addfrominvitelink = accesscontrol_addfrominvitelink.value();
     groupinfo->access_control_addfromlinkinvite = enumToString(addfrominvitelink);
+
+    long long int labels = 0;
+    auto accesscontrol_labels = acdata.getField<4>();
+    if (accesscontrol_labels.has_value())
+      labels = accesscontrol_labels.value();
+    groupinfo->access_control_member_labels = enumToString(labels);
 
     //std::cout << "Access control: " << attributes << " - " << members << " - " << addfrominvitelink << std::endl;
   }
