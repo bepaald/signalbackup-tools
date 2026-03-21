@@ -43,6 +43,7 @@
 
 #include "../mimetypes/mimetypes.h"
 #include "../common_be.h"
+#include "../autoversion.h"
 
 bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id,
                                   std::string const &directory, std::string const &threaddir, bool isgroup,

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,6 +22,7 @@
 #include <chrono>
 
 #include "../common_filesystem.h"
+#include "../autoversion.h"
 
 bool SignalBackup::HTMLwriteSettings(std::string const &dir, bool overwrite, bool append, bool light [[maybe_unused]],
                                      bool themeswitching [[maybe_unused]], std::string const &exportdetails [[maybe_unused]]) const

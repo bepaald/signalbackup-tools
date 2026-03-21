@@ -21,6 +21,7 @@
 
 #include <chrono>
 #include "../common_filesystem.h"
+#include "../autoversion.h"
 
 bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                       std::string const &basename, std::map<long long int, RecipientInfo> *recipient_info,

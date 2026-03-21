@@ -22,6 +22,7 @@
 #include <chrono>
 
 #include "../common_filesystem.h"
+#include "../autoversion.h"
 
 void SignalBackup::HTMLwriteCallLog(std::vector<long long int> const &threads, std::string const &directory,
                                     std::string const &datewhereclause,

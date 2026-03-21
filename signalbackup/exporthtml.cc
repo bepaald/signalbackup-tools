@@ -27,6 +27,7 @@
 
 #include "../common_filesystem.h"
 #include "../scopeguard/scopeguard.h"
+#include "../autoversion.h"
 #include <cerrno>
 #include <chrono>
 

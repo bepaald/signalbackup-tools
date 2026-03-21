@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,6 +22,7 @@
 #include <chrono>
 
 #include "../common_filesystem.h"
+#include "../autoversion.h"
 #include "../mimetypes/mimetypes.h"
 
 bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool overwrite, bool append,
