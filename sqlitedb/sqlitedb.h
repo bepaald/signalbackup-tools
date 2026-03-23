@@ -94,8 +94,8 @@ class SqliteDB
   };
 
  private:
-  mutable std::map<std::string, bool> d_tables; // cache results of containsTable/tableContainsColumn
-  mutable std::map<std::string, std::map<std::string, bool>> d_columns;
+  mutable std::map<std::string, bool, std::less<>> d_tables; // cache results of containsTable/tableContainsColumn
+  mutable std::map<std::string, std::map<std::string, bool, std::less<>>, std::less<>> d_columns;
   std::string d_name;
   sqlite3 *d_db;
   sqlite3_vfs *d_vfs;
@@ -147,10 +147,10 @@ class SqliteDB
   static bool copyDb(SqliteDB const &source, SqliteDB const &target);
   inline int changed() const;
   inline long long int lastId() const;
-  inline bool containsTable(std::string const &tablename) const;
-  inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname) const;
+  inline bool containsTable(std::string_view tablename) const;
+  inline bool tableContainsColumn(std::string_view tablename, std::string_view columnname) const;
   template <typename... columnnames>
-  inline bool tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames const &... list) const;
+  inline bool tableContainsColumn(std::string_view tablename, std::string_view columnname, columnnames const &... list) const;
   inline void clearTableCache() const;
   inline void freeMemory();
   void checkDatabaseWriteVersion() const;
@@ -866,7 +866,7 @@ inline long long int SqliteDB::lastId() const
   return sqlite3_last_insert_rowid(d_db);
 }
 
-inline bool SqliteDB::containsTable(std::string const &tablename) const
+inline bool SqliteDB::containsTable(std::string_view tablename) const
 {
   if (auto it = d_tables.find(tablename); it != d_tables.end())
     return it->second;
@@ -883,7 +883,7 @@ inline bool SqliteDB::containsTable(std::string const &tablename) const
   return false;
 }
 
-inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname) const
+inline bool SqliteDB::tableContainsColumn(std::string_view tablename, std::string_view columnname) const
 {
   auto it1 = d_columns.find(tablename);
   if (it1 != d_columns.end())
@@ -897,18 +897,18 @@ inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::str
     if (it1 != d_columns.end())
       it1->second.emplace(columnname, true);
     else
-      d_columns[tablename].emplace(columnname, true);
+      d_columns[std::string(tablename)].emplace(columnname, true);
     return true;
   }
   if (it1 != d_columns.end())
     it1->second.emplace(columnname, false);
   else
-    d_columns[tablename].emplace(columnname, false);
+    d_columns[std::string(tablename)].emplace(columnname, false);
   return false;
 }
 
 template <typename... columnnames>
-inline bool SqliteDB::tableContainsColumn(std::string const &tablename, std::string const &columnname, columnnames const &... list) const
+inline bool SqliteDB::tableContainsColumn(std::string_view tablename, std::string_view columnname, columnnames const &... list) const
 {
   return tableContainsColumn(tablename, columnname) && tableContainsColumn(tablename, list...);
 }

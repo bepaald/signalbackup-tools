@@ -41,7 +41,7 @@
 #include <string_view>
 #include <map>
 
-#if !defined __GNUG__ && __cpp_lib_string_resize_and_overwrite >= 202110L // used in concat
+#if __cpp_lib_string_resize_and_overwrite >= 202110L // used in concat
 #include <span>
 #endif
 
@@ -350,15 +350,28 @@ inline std::string bepaald::concat(Args const &... args)
 {
   auto const size = (std::string_view{args}.size() + ...);
   std::string res;
+#if __cpp_lib_string_resize_and_overwrite >= 202110L
+
   // This is slightly faster, but gcc has a bug that
   // erroneously prints an ugly warning for this code
-#if !defined __GNUG__ && __cpp_lib_string_resize_and_overwrite >= 202110L
+#if defined __GNUG__
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
   res.resize_and_overwrite(size, [&](char *buf, size_t n)
   {
     auto pos = std::span(buf, n).begin();
     ((pos = std::copy(std::string_view{args}.begin(), std::string_view{args}.end(), pos)), ...);
     return n;
   });
+
+  // make sure warnings are back as requested
+  // from the command line
+#if defined __GNUG__
+#pragma GCC diagnostic pop
+#endif
+
 #else
   res.reserve(size);
   (res.append(args), ...);

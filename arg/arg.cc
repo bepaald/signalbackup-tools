@@ -110,7 +110,7 @@ Arg::Arg(int argc, char *argv[])
   d_removedoubles(0),
   d_importstickers(false),
   d_autofixfkc(false),
-  d_allowhugeattachments(bool()),
+  d_allowhugeattachments(false),
   d_migratedb(false),
   d_aggressivefilenamesanitizing(false),
   d_htmlpagemenu(true),
