@@ -17,7 +17,7 @@ jobs:
   do-build-tests-windows:
     runs-on: windows-2025
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           vcpkg install sqlite3:x64-windows

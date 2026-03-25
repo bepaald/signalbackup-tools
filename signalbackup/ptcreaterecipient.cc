@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2025  Selwin van Dijk
+  Copyright (C) 2025-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -123,7 +123,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
     // create recipient for group
     std::any group_rid;
     std::string group_id = "__signal_group__fake__" + address;
-    std::string color = s_html_random_colors[random_from_address(address) % s_html_random_colors.size()].first;
+    std::string_view color(s_html_random_colors[random_from_address(address) % s_html_random_colors.size()].first);
     if (!insertRow("recipient",
                    {{"group_id", group_id},
                     {d_recipient_avatar_color, color},
@@ -179,7 +179,7 @@ long long int SignalBackup::ptCreateRecipient(std::unique_ptr<SignalPlaintextBac
 
   std::any new_rid;
   long long int rid = -1;
-  std::string color = s_html_random_colors[random_from_address(contact_name) % s_html_random_colors.size()].first;
+  std::string_view  color(s_html_random_colors[random_from_address(contact_name) % s_html_random_colors.size()].first);
   insertRow("recipient",
             {{d_recipient_profile_given_name, contact_name},
              {"profile_joined_name", contact_name},

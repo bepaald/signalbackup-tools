@@ -92,7 +92,7 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
     if (display_name[0] != '?' && (std::ispunct(display_name[0]) || std::isdigit(display_name[0])))
       initial = "#";
 
-    std::string color = s_html_colormap.at("group_color");
+    std::string color(s_html_colormap.at("group_color"));
     if (results.isNull(0, "group_id") && bepaald::contains(s_html_colormap, results.valueAsString(0, d_recipient_avatar_color)))
       color = s_html_colormap.at(results.valueAsString(0, d_recipient_avatar_color));
 

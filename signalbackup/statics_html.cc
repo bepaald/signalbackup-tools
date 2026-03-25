@@ -89,108 +89,108 @@ private static final Map<String, MaterialColor> COLOR_MATCHES = new HashMap<Stri
     val TAUPE = ChatColors.forColor(ChatColors.Id.BuiltIn, 0xFF8F616A.toInt())
     val STEEL = ChatColors.forColor(ChatColors.Id.BuiltIn, 0xFF71717F.toInt())
 */
-std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red", "CF163E"},
-                                                                          {"deep_orange", "CF163E"},
-                                                                          {"CRIMSON", "CF163E"},
+std::map<std::string_view, std::string_view, std::less<>> const SignalBackup::s_html_colormap = {{"red", "CF163E"},
+                                                                                                 {"deep_orange", "CF163E"},
+                                                                                                 {"CRIMSON", "CF163E"},
 
-                                                                          {"orange", "C73F0A"},
-                                                                          {"amber", "C73F0A"},
-                                                                          {"A170", "C73F0A"},
-                                                                          {"C010", "C73F0A"},
-                                                                          {"C020", "C73F0A"},
-                                                                          {"C030", "C73F0A"},
-                                                                          {"VERMILION", "C73F0A"},
+                                                                                                 {"orange", "C73F0A"},
+                                                                                                 {"amber", "C73F0A"},
+                                                                                                 {"A170", "C73F0A"},
+                                                                                                 {"C010", "C73F0A"},
+                                                                                                 {"C020", "C73F0A"},
+                                                                                                 {"C030", "C73F0A"},
+                                                                                                 {"VERMILION", "C73F0A"},
 
-                                                                          {"brown", "6F6A58"},
-                                                                          {"yellow", "6F6A58"},
-                                                                          {"C000", "6F6A58"},
-                                                                          {"C060", "6F6A58"},
-                                                                          {"C070", "6F6A58"},
-                                                                          {"A190", "6F6A58"}, // OR taupe
-                                                                          {"BURLAP", "6F6A58"},
+                                                                                                 {"brown", "6F6A58"},
+                                                                                                 {"yellow", "6F6A58"},
+                                                                                                 {"C000", "6F6A58"},
+                                                                                                 {"C060", "6F6A58"},
+                                                                                                 {"C070", "6F6A58"},
+                                                                                                 {"A190", "6F6A58"}, // OR taupe
+                                                                                                 {"BURLAP", "6F6A58"},
 
-                                                                          {"pink", "AA377A"},
-                                                                          {"C300", "AA377A"},
-                                                                          {"C310", "AA377A"},
-                                                                          {"C320", "AA377A"},
-                                                                          {"A150", "AA377A"},
-                                                                          {"PLUM", "AA377A"},
+                                                                                                 {"pink", "AA377A"},
+                                                                                                 {"C300", "AA377A"},
+                                                                                                 {"C310", "AA377A"},
+                                                                                                 {"C320", "AA377A"},
+                                                                                                 {"A150", "AA377A"},
+                                                                                                 {"PLUM", "AA377A"},
 
-                                                                          {"purple", "9932CB"},
-                                                                          {"deep_purple", "9932CB"},
-                                                                          {"C270", "9932CB"},
-                                                                          {"C280", "9932CB"},
-                                                                          {"C290", "9932CB"},
-                                                                          {"A140", "9932CB"},
-                                                                          {"VIOLET", "9932CB"},
+                                                                                                 {"purple", "9932CB"},
+                                                                                                 {"deep_purple", "9932CB"},
+                                                                                                 {"C270", "9932CB"},
+                                                                                                 {"C280", "9932CB"},
+                                                                                                 {"C290", "9932CB"},
+                                                                                                 {"A140", "9932CB"},
+                                                                                                 {"VIOLET", "9932CB"},
 
-                                                                          {"indigo", "6058CA"},
-                                                                          {"C230", "6058CA"},
-                                                                          {"C240", "6058CA"},
-                                                                          {"C250", "6058CA"},
-                                                                          {"C260", "6058CA"},
-                                                                          {"A100", "6058CA"}, // OR ultramarine
-                                                                          {"INDIGO", "6058CA"},
+                                                                                                 {"indigo", "6058CA"},
+                                                                                                 {"C230", "6058CA"},
+                                                                                                 {"C240", "6058CA"},
+                                                                                                 {"C250", "6058CA"},
+                                                                                                 {"C260", "6058CA"},
+                                                                                                 {"A100", "6058CA"}, // OR ultramarine
+                                                                                                 {"INDIGO", "6058CA"},
 
-                                                                          {"blue", "336BA3"},
-                                                                          {"light_blue", "336BA3"},
-                                                                          {"C200", "336BA3"},
-                                                                          {"C210", "336BA3"},
-                                                                          {"C220", "336BA3"},
-                                                                          {"A110", "336BA3"},
-                                                                          {"BLUE", "336BA3"},
+                                                                                                 {"blue", "336BA3"},
+                                                                                                 {"light_blue", "336BA3"},
+                                                                                                 {"C200", "336BA3"},
+                                                                                                 {"C210", "336BA3"},
+                                                                                                 {"C220", "336BA3"},
+                                                                                                 {"A110", "336BA3"},
+                                                                                                 {"BLUE", "336BA3"},
 
-                                                                          {"cyan", "077D92"},
-                                                                          {"teal", "077D92"},
-                                                                          {"C170", "077D92"},
-                                                                          {"C180", "077D92"},
-                                                                          {"C190", "077D92"},
-                                                                          {"A120", "077D92"},
-                                                                          {"TEAL", "077D92"},
+                                                                                                 {"cyan", "077D92"},
+                                                                                                 {"teal", "077D92"},
+                                                                                                 {"C170", "077D92"},
+                                                                                                 {"C180", "077D92"},
+                                                                                                 {"C190", "077D92"},
+                                                                                                 {"A120", "077D92"},
+                                                                                                 {"TEAL", "077D92"},
 
-                                                                          {"green", "3B7845"},
-                                                                          {"C080", "3B7845"},
-                                                                          {"C090", "3B7845"},
-                                                                          {"C100", "3B7845"},
-                                                                          {"C110", "3B7845"},
-                                                                          {"C120", "3B7845"},
-                                                                          {"C130", "3B7845"},
-                                                                          {"C140", "3B7845"},
-                                                                          {"C150", "3B7845"},
-                                                                          {"C160", "3B7845"},
-                                                                          {"A130", "3B7845"}, // OR wintergreen
-                                                                          {"FOREST", "3B7845"},
+                                                                                                 {"green", "3B7845"},
+                                                                                                 {"C080", "3B7845"},
+                                                                                                 {"C090", "3B7845"},
+                                                                                                 {"C100", "3B7845"},
+                                                                                                 {"C110", "3B7845"},
+                                                                                                 {"C120", "3B7845"},
+                                                                                                 {"C130", "3B7845"},
+                                                                                                 {"C140", "3B7845"},
+                                                                                                 {"C150", "3B7845"},
+                                                                                                 {"C160", "3B7845"},
+                                                                                                 {"A130", "3B7845"}, // OR wintergreen
+                                                                                                 {"FOREST", "3B7845"},
 
-                                                                          {"light_green", "1D8663"},
-                                                                          {"lime", "1D8663"},
-                                                                          {"WINTERGREEN", "1D8663"},
+                                                                                                 {"light_green", "1D8663"},
+                                                                                                 {"lime", "1D8663"},
+                                                                                                 {"WINTERGREEN", "1D8663"},
 
-                                                                          {"blue_grey", "8F616A"},
-                                                                          {"TAUPE", "8F616A"},
+                                                                                                 {"blue_grey", "8F616A"},
+                                                                                                 {"TAUPE", "8F616A"},
 
-                                                                          {"grey", "71717F"},
-                                                                          {"A210", "71717F"},
-                                                                          {"STEEL", "71717F"},
+                                                                                                 {"grey", "71717F"},
+                                                                                                 {"A210", "71717F"},
+                                                                                                 {"STEEL", "71717F"},
 
-                                                                          {"ultramarine", "315FF4"},
-                                                                          {"ULTRAMARINE", "315FF4"},
-                                                                          {"group_color", "315FF4"}//,
-                                                                          /*
-                                                                          {"GROUP", "315FF4"},
-                                                                          */
+                                                                                                 {"ultramarine", "315FF4"},
+                                                                                                 {"ULTRAMARINE", "315FF4"},
+                                                                                                 {"group_color", "315FF4"}//,
+                                                                                                 /*
+                                                                                                   {"GROUP", "315FF4"},
+                                                                                                 */
 
-                                                                          /*
-                                                                          {"A180", "FEF5D0"},
-                                                                          {"C040", "FEF5D0"},
-                                                                          {"C050", "FEF5D0"},
+                                                                                                 /*
+                                                                                                   {"A180", "FEF5D0"},
+                                                                                                   {"C040", "FEF5D0"},
+                                                                                                   {"C050", "FEF5D0"},
 
-                                                                          {"A160", "F6D8EC"},
-                                                                          {"C330", "F6D8EC"},
-                                                                          {"C340", "F6D8EC"},
-                                                                          {"C350", "F6D8EC"},
+                                                                                                   {"A160", "F6D8EC"},
+                                                                                                   {"C330", "F6D8EC"},
+                                                                                                   {"C340", "F6D8EC"},
+                                                                                                   {"C350", "F6D8EC"},
 
-                                                                          {"A200", "D2D2DC"}
-                                                                          */
+                                                                                                   {"A200", "D2D2DC"}
+                                                                                                 */
 };
 
 /*
@@ -210,63 +210,63 @@ std::map<std::string, std::string> const SignalBackup::s_html_colormap = {{"red"
   UNKNOWN("UNKNOWN", 0x00000000),
   ON_SURFACE_VARIANT("ON_SURFACE_VARIANT", 0x00000000);
 */
-#if __cpp_lib_constexpr_string >= 201907L
-std::array<std::pair<std::string, std::string>, 12> constexpr SignalBackup::s_html_random_colors
+#if __cpp_lib_constexpr_string_view >= 201811L
+std::array<std::pair<std::string_view, std::string_view>, 12> constexpr SignalBackup::s_html_random_colors
 #else
-std::array<std::pair<std::string, std::string>, 12> const SignalBackup::s_html_random_colors
+std::array<std::pair<std::string_view, std::string_view>, 12> const SignalBackup::s_html_random_colors
 #endif
-{std::pair<std::string, std::string>{"A100", "E3E3FE"},
-    std::pair<std::string, std::string>{"A110", "DDE7FC"},
-    std::pair<std::string, std::string>{"A120", "D8E8F0"},
-    std::pair<std::string, std::string>{"A130", "CDE4CD"},
-    std::pair<std::string, std::string>{"A140", "EAE0F8"},
-    std::pair<std::string, std::string>{"A150", "F5E3FE"},
-    std::pair<std::string, std::string>{"A160", "F6D8EC"},
-    std::pair<std::string, std::string>{"A170", "F5D7D7"},
-    std::pair<std::string, std::string>{"A180", "FEF5D0"},
-    std::pair<std::string, std::string>{"A190", "EAE6D5"},
-    std::pair<std::string, std::string>{"A200", "D2D2DC"},
-    std::pair<std::string, std::string>{"A210", "D7D7D9"}};
+{std::pair<std::string_view, std::string_view>{"A100", "E3E3FE"},
+    std::pair<std::string_view, std::string_view>{"A110", "DDE7FC"},
+    std::pair<std::string_view, std::string_view>{"A120", "D8E8F0"},
+    std::pair<std::string_view, std::string_view>{"A130", "CDE4CD"},
+    std::pair<std::string_view, std::string_view>{"A140", "EAE0F8"},
+    std::pair<std::string_view, std::string_view>{"A150", "F5E3FE"},
+    std::pair<std::string_view, std::string_view>{"A160", "F6D8EC"},
+    std::pair<std::string_view, std::string_view>{"A170", "F5D7D7"},
+    std::pair<std::string_view, std::string_view>{"A180", "FEF5D0"},
+    std::pair<std::string_view, std::string_view>{"A190", "EAE6D5"},
+    std::pair<std::string_view, std::string_view>{"A200", "D2D2DC"},
+    std::pair<std::string_view, std::string_view>{"A210", "D7D7D9"}};
 
 // https://github.com/signalapp/Signal-Android/blob/main/app/src/main/java/org/thoughtcrime/securesms/conversation/colors/ChatColorsPalette.kt
 // list of {light, dark}
-#if __cpp_lib_constexpr_string >= 201907L
-std::array<std::pair<std::string, std::string>, 36> constexpr SignalBackup::s_html_random_groupmember_colors
+#if __cpp_lib_constexpr_string_view >= 201811L
+std::array<std::pair<std::string_view, std::string_view>, 36> constexpr SignalBackup::s_html_random_groupmember_colors
 #else
-std::array<std::pair<std::string, std::string>, 36> const SignalBackup::s_html_random_groupmember_colors
+std::array<std::pair<std::string_view, std::string_view>, 36> const SignalBackup::s_html_random_groupmember_colors
 #endif
-{std::pair<std::string, std::string>{"006DA3", "00A7FA"},
-    std::pair<std::string, std::string>{"067906", "0AB80A"},
-    std::pair<std::string, std::string>{"B814B8", "F65AF6"},
-    std::pair<std::string, std::string>{"C13215", "FF6F52"},
-    std::pair<std::string, std::string>{"5B6976", "8BA1B6"},
-    std::pair<std::string, std::string>{"CC0066", "F76EB2"},
-    std::pair<std::string, std::string>{"2E51FF", "8599FF"},
-    std::pair<std::string, std::string>{"007575", "00B2B2"},
-    std::pair<std::string, std::string>{"9C5711", "D5920B"},
-    std::pair<std::string, std::string>{"D00B4D", "FF6B9C"},
-    std::pair<std::string, std::string>{"8F2AF4", "BF80FF"},
-    std::pair<std::string, std::string>{"3D7406", "5EB309"},
-    std::pair<std::string, std::string>{"D00B0B", "FF7070"},
-    std::pair<std::string, std::string>{"007A3D", "00B85C"},
-    std::pair<std::string, std::string>{"5151F6", "9494FF"},
-    std::pair<std::string, std::string>{"866118", "D68F00"},
-    std::pair<std::string, std::string>{"067953", "00B87A"},
-    std::pair<std::string, std::string>{"A20CED", "CF7CF8"},
-    std::pair<std::string, std::string>{"4B7000", "74AD00"},
-    std::pair<std::string, std::string>{"C70A88", "F76EC9"},
-    std::pair<std::string, std::string>{"B34209", "F57A3D"},
-    std::pair<std::string, std::string>{"06792D", "0AB844"},
-    std::pair<std::string, std::string>{"7A3DF5", "AF8AF9"},
-    std::pair<std::string, std::string>{"6B6B24", "A4A437"},
-    std::pair<std::string, std::string>{"D00B2C", "F77389"},
-    std::pair<std::string, std::string>{"2D7906", "42B309"},
-    std::pair<std::string, std::string>{"AF0BD0", "E06EF7"},
-    std::pair<std::string, std::string>{"32763E", "4BAF5C"},
-    std::pair<std::string, std::string>{"2662D9", "7DA1E8"},
-    std::pair<std::string, std::string>{"76681E", "B89B0A"},
-    std::pair<std::string, std::string>{"067462", "09B397"},
-    std::pair<std::string, std::string>{"6447F5", "A18FF9"},
-    std::pair<std::string, std::string>{"5E6E0C", "8FAA09"},
-    std::pair<std::string, std::string>{"077288", "00AED1"},
-    std::pair<std::string, std::string>{"C20AA3", "F75FDD"}};
+{std::pair<std::string_view, std::string_view>{"006DA3", "00A7FA"},
+    std::pair<std::string_view, std::string_view>{"067906", "0AB80A"},
+    std::pair<std::string_view, std::string_view>{"B814B8", "F65AF6"},
+    std::pair<std::string_view, std::string_view>{"C13215", "FF6F52"},
+    std::pair<std::string_view, std::string_view>{"5B6976", "8BA1B6"},
+    std::pair<std::string_view, std::string_view>{"CC0066", "F76EB2"},
+    std::pair<std::string_view, std::string_view>{"2E51FF", "8599FF"},
+    std::pair<std::string_view, std::string_view>{"007575", "00B2B2"},
+    std::pair<std::string_view, std::string_view>{"9C5711", "D5920B"},
+    std::pair<std::string_view, std::string_view>{"D00B4D", "FF6B9C"},
+    std::pair<std::string_view, std::string_view>{"8F2AF4", "BF80FF"},
+    std::pair<std::string_view, std::string_view>{"3D7406", "5EB309"},
+    std::pair<std::string_view, std::string_view>{"D00B0B", "FF7070"},
+    std::pair<std::string_view, std::string_view>{"007A3D", "00B85C"},
+    std::pair<std::string_view, std::string_view>{"5151F6", "9494FF"},
+    std::pair<std::string_view, std::string_view>{"866118", "D68F00"},
+    std::pair<std::string_view, std::string_view>{"067953", "00B87A"},
+    std::pair<std::string_view, std::string_view>{"A20CED", "CF7CF8"},
+    std::pair<std::string_view, std::string_view>{"4B7000", "74AD00"},
+    std::pair<std::string_view, std::string_view>{"C70A88", "F76EC9"},
+    std::pair<std::string_view, std::string_view>{"B34209", "F57A3D"},
+    std::pair<std::string_view, std::string_view>{"06792D", "0AB844"},
+    std::pair<std::string_view, std::string_view>{"7A3DF5", "AF8AF9"},
+    std::pair<std::string_view, std::string_view>{"6B6B24", "A4A437"},
+    std::pair<std::string_view, std::string_view>{"D00B2C", "F77389"},
+    std::pair<std::string_view, std::string_view>{"2D7906", "42B309"},
+    std::pair<std::string_view, std::string_view>{"AF0BD0", "E06EF7"},
+    std::pair<std::string_view, std::string_view>{"32763E", "4BAF5C"},
+    std::pair<std::string_view, std::string_view>{"2662D9", "7DA1E8"},
+    std::pair<std::string_view, std::string_view>{"76681E", "B89B0A"},
+    std::pair<std::string_view, std::string_view>{"067462", "09B397"},
+    std::pair<std::string_view, std::string_view>{"6447F5", "A18FF9"},
+    std::pair<std::string_view, std::string_view>{"5E6E0C", "8FAA09"},
+    std::pair<std::string_view, std::string_view>{"077288", "00AED1"},
+    std::pair<std::string_view, std::string_view>{"C20AA3", "F75FDD"}};

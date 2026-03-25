@@ -22,7 +22,7 @@ jobs:
   do-build-tests-raw:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           set -x
@@ -36,7 +36,7 @@ jobs:
   do-build-tests-parallel-script:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           set -x
@@ -50,7 +50,7 @@ jobs:
   do-build-tests-cmake:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install dependencies
         run: |
           set -x
