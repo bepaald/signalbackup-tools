@@ -1,4 +1,4 @@
-name: Test macOs build
+name: Test macOs 26 build
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  do-build-tests-arm:
+  do-build-tests-arm-26:
     runs-on: macos-26
     steps:
       - name: Prepare
@@ -30,3 +30,8 @@ jobs:
           echo "Testing..."
           brew test signalbackup-tools
           echo "done!"
+
+      - name: Post
+        run: |
+          find /Library/Developer/CommandLineTools/ -name cstring
+          tail -n 20 ~/Library/Logs/Homebrew/signalbackup-tools/02.cmake.log
