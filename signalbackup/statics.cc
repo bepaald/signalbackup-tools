@@ -50,6 +50,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"drafts", "thread_id"},
       {"mention", "thread_id"},
       {"name_collision", "thread_id"},
+      {"name_collision_thread", "thread_id"},
       {"chat_folder_membership", "thread_id"}
     },
     NO_COMPACT
@@ -156,6 +157,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"thread", "snippet_extras", "", "'$.groupAddedBy'"},
       {"thread", "snippet_extras", "", "'$.individualRecipientId'"},
       {"groups", "recipient_id"},
+      {"groups", "terminated_by", "terminated_by != 0"}, // column has default 0, but only refers to a recipient when != 0
       {"remapped_recipients", "old_id"}, // should actually be cleared, but ...
       {"remapped_recipients", "new_id"}, // this can't hurt
       {"mention", "recipient_id"},
@@ -450,12 +452,19 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     "name_collision",
     "_id",
     {
-      {"name_collision_membership", "collision_id"}
+      {"name_collision_membership", "collision_id"},
+      {"name_collision_thread", "collision_id"}
     },
     0
   },
   {
     "name_collision_membership",
+    "_id",
+    {},
+    0
+  },
+  {
+    "name_collision_thread",
     "_id",
     {},
     0

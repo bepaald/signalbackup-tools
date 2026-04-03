@@ -1,22 +1,25 @@
 cmake_minimum_required(VERSION 3.14)
 
-if (APPLE)
-  foreach (HOMEBREW_PKG openssl sqlite)
+if(APPLE)
+  foreach(HOMEBREW_PKG openssl sqlite)
     execute_process(COMMAND brew --prefix ${HOMEBREW_PKG} OUTPUT_VARIABLE HOMEBREW_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
-  endforeach ()
-endif ()
+  endforeach()
+endif()
 
 project(signalbackup-tools)
 
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 if(NOT TARGET SQLite3::SQLite3) # CMake < 4.3
+  if(CMAKE_VERSION VERSION_LESS "3.18") # before 3.18, ALIAS could not target non-global targets
+    set_target_properties(SQLite::SQLite3 PROPERTIES IMPORTED_GLOBAL TRUE)
+  endif()
   add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
 endif()
 
 set(CMAKE_CXX_EXTENSIONS off)
-if (CMAKE_VERSION VERSION_LESS "3.30")  # the CMAKE_CXX_STANDARD_LATEST variable was only introduced in 3.30
+if(CMAKE_VERSION VERSION_LESS "3.30")  # the CMAKE_CXX_STANDARD_LATEST variable was only introduced in 3.30
   set(CMAKE_CXX_STANDARD 20)
 elseif(CMAKE_CXX_STANDARD_LATEST) # if cmake version is ok and the variable is set, use it
   set(CMAKE_CXX_STANDARD ${CMAKE_CXX_STANDARD_LATEST})
@@ -30,15 +33,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 # a non-existing warning on newer compilers
 # For CLANG:
 # This is just based on godbolt testing...
-if ((CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
+if((CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 10)
     OR
     (CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 12))
   add_compile_options(-Wno-attributes)
 endif()
 
 # find and set DBUS include and library paths
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES ".*BSD")
-  if (WITHOUT_DBUS)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES ".*BSD")
+  if(WITHOUT_DBUS)
     add_definitions(-DWITHOUT_DBUS)
   else()
     find_package(PkgConfig REQUIRED)
@@ -55,13 +58,13 @@ else()
   add_definitions(-DWITHOUT_DBUS)
 endif()
 
-if (APPLE)
+if(APPLE)
   find_library(SECLIB Security)
-  if (NOT SECLIB)
+  if(NOT SECLIB)
     message(FATAL_ERROR "Failed to find required framework 'Security'")
   endif()
   find_library(CFLIB CoreFoundation)
-  if (NOT CFLIB)
+  if(NOT CFLIB)
     message(FATAL_ERROR "Failed to find required framework 'CoreFoundation'")
   endif()
 endif()
@@ -69,7 +72,7 @@ endif()
 file(GLOB SOURCES CONFIGURE_DEPENDS */*.cc */*.h *.cc *.h)
 add_executable(signalbackup-tools ${SOURCES})
 
-if (WIN32)
+if(WIN32)
   # add the manifest that makes the app use the UTF8 codepage to the sources
   target_sources(signalbackup-tools PRIVATE ${windows_utf8.manifest})
 

@@ -175,9 +175,18 @@ void SignalBackup::cleanDatabaseByMessages()
   }
 
   // delete name_collision for non existing thread
-  if(d_database.containsTable("name_collision"))
+  if (d_database.containsTable("name_collision"))
   {
-    d_database.exec("DELETE FROM name_collision WHERE thread_id NOT IN (SELECT _id FROM thread)");
+    if (d_database.tableContainsColumn("name_collision", "thread_id"))
+      d_database.exec("DELETE FROM name_collision WHERE thread_id NOT IN (SELECT _id FROM thread)");
+
+    if (d_database.containsTable("name_collision_thread"))
+    {
+      d_database.exec("DELETE FROM name_collision_thread WHERE thread_id NOT IN (SELECT _id FROM thread)");
+
+      // delete name_collision if no name_collision_thread entries refer to it anymore
+      d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT collision_id FROM name_collision)");
+    }
 
     // delete name_collision_membership if name_collision was deleted
     d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
@@ -336,6 +345,8 @@ void SignalBackup::cleanDatabaseByMessages()
                      d_mms_table : ""s) +
                     (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? " UNION SELECT DISTINCT deleted_by FROM " +
                      d_mms_table + " WHERE deleted_by IS NOT NULL AND deleted_by IS NOT 0"s : ""s) +
+                    (d_database.tableContainsColumn("groups", "terminated_by") ? " UNION SELECT DISTINCT terminated_by FROM "
+                     "groups WHERE terminated_by IS NOT NULL AND terminated_by IS NOT 0"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("call") ? " UNION SELECT DISTINCT peer FROM call"s : ""s) +
                     (d_database.containsTable("call") && d_database.tableContainsColumn("call", "ringer") ? " UNION SELECT DISTINCT ringer FROM call WHERE ringer IS NOT NULL"s : ""s) +
@@ -381,6 +392,9 @@ void SignalBackup::cleanDatabaseByMessages()
         d_database.exec("DELETE FROM name_collision_membership WHERE recipient_id NOT IN (SELECT _id FROM recipient)");
         // delete corresponding name_collisions
         d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT collision_id FROM name_collision_membership)");
+        // delete corresponding name_collision_thread
+        if (d_database.containsTable("name_collision_thread"))
+          d_database.exec("DELETE FROM name_collision_thread WHERE collision_id NOT IN (SELECT DISTINCT _id FROM name_collision)");
       }
 
     }

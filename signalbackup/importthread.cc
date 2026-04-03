@@ -26,7 +26,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   Logger::message(__FUNCTION__, " (", thread, ")");
 
   // known incompatibilities. There are almost certainly also unknown ones!
-  if ((d_databaseversion >= 215 && source->d_databaseversion < 215) || // part.unique_id dropped from db
+  if ((d_databaseversion >= 312 && source->d_databaseversion < 312) || // name_collision-table split
+      (d_databaseversion >= 215 && source->d_databaseversion < 215) || // part.unique_id dropped from db
       (d_databaseversion < 215 && source->d_databaseversion >= 215) ||
       (d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
       (d_databaseversion < 185 && source->d_databaseversion >= 185) || //
@@ -980,14 +981,21 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
   }
 
   // delete exisiting name_collisions (only possible if targetthread is an existing thread)
+  // note due to the compatiblitly check at the stat of this function, either both databases
+  // have the `name_collision_thread` table, or neither have
   if (source->d_database.containsTable("name_collision") &&
       d_database.containsTable("name_collision"))
   {
     SqliteDB::QueryResults res;
-    d_database.exec("SELECT thread_id FROM name_collision", &res);
+    std::string nct_table((d_database.containsTable("name_collision_thread") ? "name_collision_thread" : "name_collision"));
+    d_database.exec("SELECT DISTINCT thread_id FROM " + nct_table, &res);
 
     for (unsigned int i = 0; i < res.rows(); ++i)
-      source->d_database.exec("DELETE FROM name_collision WHERE thread_id = ?", res.value(i, 0));
+      source->d_database.exec("DELETE FROM " + nct_table + " WHERE thread_id = ?", res.value(i, 0));
+
+    if (d_database.containsTable("name_collision_thread"))
+      // delete the name_collision records that are no longer referenced by any name_collision_thread
+      source->d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT DISTINCT collision_id FROM name_collision_thread)");
 
     // delete corresponding collision_members
     source->d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");

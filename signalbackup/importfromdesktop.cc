@@ -141,19 +141,19 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   // get all conversations (conversationpartners) from ddb
   SqliteDB::QueryResults results_all_conversations;
   if (!dtdb->d_database.exec("SELECT "
-                            "rowid,"
-                            "id,"
-                            "e164,"
-                            "type,"
-                            "LOWER(" + d_dt_c_uuid + ") AS 'uuid',"
-                            "groupId,"
-                            "IFNULL(json_extract(json,'$.isArchived'), false) AS 'is_archived',"
-                            "IFNULL(json_extract(json,'$.isPinned'), false) AS 'is_pinned',"
-                            "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
-                            "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
-                            "IFNULL(json_extract(json,'$.expireTimer'),0) AS 'expireTimer',"
-                            "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
-                            " FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
+                             "rowid,"
+                             "id,"
+                             "e164,"
+                             "type,"
+                             "LOWER(" + d_dt_c_uuid + ") AS 'uuid',"
+                             "groupId,"
+                             "IFNULL(json_extract(json,'$.isArchived'), false) AS 'is_archived',"
+                             "IFNULL(json_extract(json,'$.isPinned'), false) AS 'is_pinned',"
+                             "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
+                             "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
+                             "IFNULL(json_extract(json,'$.expireTimer'),0) AS 'expireTimer',"
+                             "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
+                             " FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
 
   //std::cout << "Conversations in desktop:" << std::endl;

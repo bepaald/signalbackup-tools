@@ -30,14 +30,11 @@
 #endif
 
 #include <cstddef>
-#include <cstdint>
 #include <iomanip>
-#include <memory>
 #include <sstream>
 #include <cstring>
 #include <algorithm>
 #include <ctime>
-#include <initializer_list>
 #include <string_view>
 #include <map>
 
@@ -55,21 +52,15 @@
 #define DEBUGOUT(...)
 #endif
 
-#ifdef DEBUGISSUE
-#define DEBUGOUT2(...) bepaald::log("[DEBUG] : ", __VA_ARGS__);
-#else
-#define DEBUGOUT2(...)
-#endif
-
 #define STRLEN( STR ) (bepaald::strlitLength(STR))
 
 #if __cpp_lib_starts_ends_with >= 201711L
 #define STRING_STARTS_WITH( STR, SUB ) ( STR.starts_with(SUB) )
 #else
-#define STRING_STARTS_WITH( STR, SUB ) ( STR.substr(0, STRLEN(SUB)) == SUB )
+#define STRING_STARTS_WITH( STR, SUB ) ( std::string_view(STR.data(), std::string_view(SUB).length()) == SUB )
 #endif
 
-#if _cpp_static_call_operator >= 202207L
+#if __cpp_static_call_operator >= 202207L
 #define STATICLAMBDA static
 #else
 #define STATICLAMBDA
@@ -79,7 +70,7 @@ using std::literals::string_literals::operator""s;
 
 namespace bepaald
 {
-#if defined DEBUGMSG || DEBUGISSUE
+#if defined DEBUGMSG
   template<typename ...Args>
   inline void log(Args && ...args);
 #endif
@@ -166,7 +157,7 @@ namespace bepaald
   }
 }
 
-#if defined DEBUGMSG || DEBUGISSUE
+#if defined DEBUGMSG
 template<typename ...Args>
 inline void bepaald::log(Args && ...args)
 {
@@ -354,7 +345,7 @@ inline std::string bepaald::concat(Args const &... args)
 
   // This is slightly faster, but gcc has a bug that
   // erroneously prints an ugly warning for this code
-#if defined __GNUG__
+#if defined(__GNUG__) && !defined(__clang__)
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #pragma GCC diagnostic ignored "-Warray-bounds"
 #endif
@@ -368,7 +359,7 @@ inline std::string bepaald::concat(Args const &... args)
 
   // make sure warnings are back as requested
   // from the command line
-#if defined __GNUG__
+#if defined(__GNUG__) && !defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
 
