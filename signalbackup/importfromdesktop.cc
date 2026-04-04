@@ -418,7 +418,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     {
       if (!dtdb->d_database.exec("SELECT "
                                  "rowid,"
-                                 "id,"
+                                 "messages.id,"
                                  "json_extract(json, '$.quote') AS quote,"
                                  "IFNULL(numattachments, 0) AS numattachments,"
                                  "IFNULL(json_array_length(json, '$.reactions'), 0) AS numreactions,"
@@ -435,7 +435,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
                                  "json_extract(json, '$.source') AS sourcephone,"
                                  "JSONLONG(expireTimer) AS expireTimer,"
-                                 "seenStatus,"
+                                 "seenStatus," +
+                                 (dtdb->d_database.containsTable("pinnedMessages") ? "(pinnedMessages.id IS NOT NULL)" : "0") + " AS isPinned, "
                                  "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
                                  "IFNULL(json_array_length(json, '$.bodyRanges'), 0) AS hasranges,"
                                  "IFNULL(json_array_length(json, '$.contact'), 0) AS hassharedcontact,"
@@ -444,8 +445,10 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "json_extract(json, '$.sticker') IS NOT NULL AS issticker,"
                                  "isStory"
                                  " FROM messages "
-                                 "LEFT JOIN (SELECT messageId, COUNT(*) AS numattachments FROM message_attachments WHERE editHistoryIndex = -1 GROUP BY messageId) AS attmnts ON messages.id = attmnts.messageId "
-                                 "WHERE conversationId = ?" + datewhereclause + " ORDER BY sent_at",
+                                 "LEFT JOIN (SELECT messageId, COUNT(*) AS numattachments FROM message_attachments WHERE editHistoryIndex = -1 GROUP BY messageId) AS attmnts ON messages.id = attmnts.messageId " +
+                                 (dtdb->d_database.containsTable("pinnedMessages") ?
+                                  "LEFT JOIN pinnedMessages ON messages.id = pinnedMessages.messageId " : "") +
+                                 "WHERE messages.conversationId = ?" + datewhereclause + " ORDER BY sent_at",
                                  results_all_conversations.value(i, "id"), &results_all_messages_from_conversation))
       {
         Logger::error("Failed to retrieve message from this conversation.");
@@ -1655,6 +1658,23 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         resizeToNUtf8Chars(msgbody, 2000);
       }
 
+      bool is_pinned = (results_all_messages_from_conversation.valueAsInt(j, "isPinned", 0) != 0);
+      long long int pin_pinned_at = 0;
+      long long int pin_pinned_until = 0;
+      if (is_pinned) [[unlikely]]
+      {
+        SqliteDB::QueryResults pin_results;
+        if (!dtdb->d_database.exec("SELECT pinnedAt, expiresAt FROM pinnedMessages WHERE messageId = ?",
+                                   results_all_messages_from_conversation(j, "id"), &pin_results) ||
+            pin_results.rows() != 1) [[unlikely]]
+          is_pinned = false;
+        else
+        {
+          pin_pinned_at = pin_results.valueAsInt(0, "pinnedAt", 0);
+          pin_pinned_until = pin_results.valueAsInt(0, "expiresAt", std::numeric_limits<long long int>::max());
+        }
+      }
+
       // insert the collected data in the correct tables
       if (!d_database.containsTable("sms") || // starting at dbv168, the sms table is removed altogether
           (numattachments > 0 || nummentions > 0 || hasquote || (isgroupconversation && outgoing))) // this goes in mms table on older database versions
@@ -1966,6 +1986,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                            {"quote_missing", hasquote ? mmsquote_missing : 0},
                                            {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                            {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
+                                           {((is_pinned && d_database.tableContainsColumn(d_mms_table, "pinned_at")) ? "pinned_at" : ""), pin_pinned_at},
+                                           {((is_pinned && d_database.tableContainsColumn(d_mms_table, "pinned_at")) ? "pinned_until" : ""), pin_pinned_until},
                                            {(d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
                                            {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
                                            {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
