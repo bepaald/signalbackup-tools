@@ -500,7 +500,12 @@ int main(int argc, char *argv[])
                                arg.importdesktopcontacts(), arg.generatemissingstoragekeys(),
                                arg.autolimitdates(),  arg.importstickers(), arg.setselfid(),
                                arg.targetisdummy(), arg.migratedesktopdb()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
     MEMINFO("After importfromdesktop");
   }
 #if TIME_FUNCTIONS

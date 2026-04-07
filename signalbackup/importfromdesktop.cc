@@ -607,7 +607,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         }
       }
       else
-        address = recipientid_for_thread; // message is 1-on-1 or outgoing_group
+        address = recipientid_for_thread; // message is 1-on-1, outgoing_group, or group-v1-migration
 
       if (address == -1)
       {
