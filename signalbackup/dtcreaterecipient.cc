@@ -35,7 +35,9 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
 {
   std::string printable_uuid(makePrintable(id));
   std::string printable_phone(makePrintable(phone));
-  Logger::message("Creating new recipient for id: ", printable_uuid, (id.empty() ? " (" + printable_phone + ")" : ""));
+  Logger::message("Creating new recipient for id: ", printable_uuid, " e164: ", printable_phone);
+
+  bool update_existing = false;
 
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
@@ -84,7 +86,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     return -1;
   }
 
-  if (*was_warned == false)
+  if (was_warned && *was_warned == false)
   {
     Logger::warning("Chat partner was not found in recipient-table. Attempting to create.");
     Logger::warning_indent(Logger::Control::BOLD, "NOTE THE RESULTING BACKUP CAN MOST LIKELY NOT BE RESTORED");
@@ -463,13 +465,14 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   {
     long long int existing_recipient_id = existing_recipient.getValueAs<long long int>(0, "_id");
     std::string existing_recipient_uuid = existing_recipient(d_recipient_aci);
+    update_existing = true;
 
     // if the existing recipient already has a uuid and a indentity key, just use it???
     if (!existing_recipient_uuid.empty())
     {
       if (d_database.getSingleResultAs<long long int>("SELECT _id FROM identities WHERE address = ? AND identity_key IS NOT NULL", existing_recipient_uuid, -1) != -1)
       {
-        Logger::message("Found existing valid contact under different uuid [", printable_uuid, " -> ", makePrintable(existing_recipient_uuid), "] "
+        Logger::message("Found existing valid contact under different uuid (1) [", printable_uuid, " -> ", makePrintable(existing_recipient_uuid), "] "
                         "(id: ", existing_recipient_id, ").");
 
         (*recipient_info)[id.empty() ? phone : id] = existing_recipient_id;
@@ -479,6 +482,9 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
       {
         if (!create_valid_contacts) // ...but we don't care
         {
+          Logger::message("Found existing valid contact under different uuid (2) [", printable_uuid, " -> ", makePrintable(existing_recipient_uuid), "] "
+                          "(id: ", existing_recipient_id, ").");
+
           (*recipient_info)[id.empty() ? phone : id] = existing_recipient_id;
           return existing_recipient_id;
         }
@@ -489,8 +495,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         }
       }
     }
-    else // contact uuid == NULL in Android db, lets update it with Desktop data
+    else // contact uuid == NULL in Android db, lets update it with Desktop data if we have it
     {
+      if (id.empty() && res.isNull(0, "uuid")) [[unlikely]]
+        Logger::warning("Updating recipient with no UUID");
+
       if (!d_database.exec("UPDATE recipient SET " +
                            d_recipient_aci  + " = ?, " +
                            d_recipient_e164 + " = COALESCE(" + d_recipient_e164 + ", ?), " +
@@ -498,7 +507,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                            "storage_service_id = COALESCE(storage_service_id, ?), "
                            "registered = ? "
                            "WHERE _id = ?",
-                           {res.value(0, "uuid"), res.value(0, "e164"), res.value(0, "pni"),
+                           {id.empty() ? res(0, "uuid") : id, res.value(0, "e164"), res.value(0, "pni"), // !!!NOTE!!! res.value(0, "uuid") MAY BE NULL HERE!!!
                             res.value(0, "storageID"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
         return -1;
       Logger::message("Found existing contact without uuid, Updating... (id: ", existing_recipient_id, ").");
@@ -549,54 +558,65 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
   }
 
-  std::string identity_key = res(0, "publicKey");
+  std::string uuid_of_new_or_updated_recipient(id.empty() ? res(0, "uuid") : id);
 
-  if (identity_key.empty() && create_valid_contacts)
+  // the keys could already present, since we are not always creating a new recipient here, sometimes we are updating an existing one (even then it's unlikely)...
+  long long int keys_present = 0;
+  keys_present = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM identities WHERE address = (SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?)",
+                                                             uuid_of_new_or_updated_recipient, 0);
+  if (keys_present == 0)
   {
-    Logger::warning("No publicKey found for new recipient, inserting fake key...");
-    identity_key = "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh";
+    std::string identity_key = res(0, "publicKey");
+    if (identity_key.empty() && create_valid_contacts)
+    {
+      Logger::warning("No publicKey found for new recipient, inserting fake key...");
+      identity_key = "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh";
 
-    /// keys always start with 0x05 for some reason...
-    // $ echo "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh" | base64 -d | xxd -g 1 -c 33
-    // 00000000: 05 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 21  .FAKEKEY FAKEKEY FAKEKEY FAKEKEY!
-  }
+      /// keys always start with 0x05 for some reason...
+      // $ echo "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh" | base64 -d | xxd -g 1 -c 33
+      // 00000000: 05 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 21  .FAKEKEY FAKEKEY FAKEKEY FAKEKEY!
+    }
 
-  // set identity info
-  if (!res.isNull(0, "uuid"))
-  {
-    if (!insertRow("identities",
-                   {{"address", res.value(0, "uuid")},
-                    {"identity_key", identity_key},
-                    {"first_use", res("firstUse")},
-                    {"timestamp", res.value(0, "timestamp")},
-                    {"verified", res.value(0, "verified")},
-                    {"nonblocking_approval", res("nonblockingApproval")}}))
+    // set identity info
+    if (!uuid_of_new_or_updated_recipient.empty())
+    {
+      if (!insertRow("identities",
+                     {{"address", uuid_of_new_or_updated_recipient},
+                      {"identity_key", identity_key},
+                      {"first_use", res("firstUse")},
+                      {"timestamp", res.value(0, "timestamp")},
+                      {"verified", res.value(0, "verified")},
+                      {"nonblocking_approval", res("nonblockingApproval")}}))
+      {
+        if (create_valid_contacts)
+        {
+          Logger::error("Failed to insert identity key for newly created recipient entry.");
+          d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id); // this may be problematic
+          return -1;
+        }
+        else
+          Logger::warning("Failed to insert identity key for newly created recipient entry.");
+      }
+      else
+        Logger::message("Successfully updated identity-key for contact (", new_rec_id, ", ", makePrintable(res("uuid")), ")");
+    }
+    else
     {
       if (create_valid_contacts)
       {
-        Logger::error("Failed to insert identity key for newly created recipient entry.");
-        d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
+        Logger::error("Newly created contact has no UUID (1)");
+        d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id); // this may be problematic
         return -1;
       }
       else
-        Logger::warning("Failed to insert identity key for newly created recipient entry.");
+        Logger::warning("Newly created contact has no UUID (2)");
     }
-    else
-      Logger::message("Successfully updated identity-key for contact (", new_rec_id, ", ", makePrintable(res("uuid")), ")");
   }
   else
-  {
-    if (create_valid_contacts)
-    {
-      Logger::error("Newly created contact has no UUID");
-      d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
-      return -1;
-    }
-    else
-      Logger::warning("Newly created contact has no UUID");
-  }
+    if (d_verbose)
+      Logger::message("Identity keys of new recipient appear to already exist in Android database");
 
-  Logger::message("Successfully created new recipient (id: ", new_rec_id, ").");
+  Logger::message("Successfully ", update_existing ? "updated" : "created new", " recipient (id: ", new_rec_id, ").");
   //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);
 
   (*recipient_info)[id.empty() ? phone : id] = new_rec_id;

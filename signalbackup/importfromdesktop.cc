@@ -185,7 +185,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     // get the actual id
     bool isgroupconversation = false;
     std::string person_or_group_id;
-    if (results_all_conversations.valueAsString(i, "type") == "group")
+    if (results_all_conversations(i, "type") == "group")
     {
       if (results_all_conversations.getValueAs<long long int>(i, "groupVersion") > 1)
       {
@@ -211,6 +211,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       {
         // see if it has a 'derivedgroupv2id', and if that can be matched...
         bool found_new_group = false;
+        std::string found_derived_group_v2;
         std::pair<unsigned char *, size_t> groupid_data = Base64::base64StringToBytes(results_all_conversations.valueAsString(i, "derivedGroupV2Id"));
         if (groupid_data.first || groupid_data.second > 0)
         {
@@ -219,6 +220,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           person_or_group_id = "__signal_group__v2__!" + bepaald::bytesToHexString(groupid_data, true);
           if (getRecipientIdFromUuidMapped(person_or_group_id, &recipientmap) != -1)
             found_new_group = true;
+          else // save the derived v2 group, if the v1 group also doesn't work out, we prefer this one
+            found_derived_group_v2 = person_or_group_id;
           bepaald::destroyPtr(&groupid_data.first, &groupid_data.second);
         }
 
@@ -236,8 +239,13 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
           // lets just for fun try to find an old-style group with this id:
           if (results_all_conversations.valueHasType<std::string>(i, "groupId"))
           {
-            std::string groupv1id_str = results_all_conversations.valueAsString(i, "groupId");
+            std::string groupv1id_str = results_all_conversations(i, "groupId");
             person_or_group_id = "__textsecure_group__!" + utf8BytesToHexString(groupv1id_str);
+
+            // restore the group-v2 id if it existed as well, and this one doesnt match either anyway...
+            if (!found_derived_group_v2.empty() && getRecipientIdFromUuidMapped(person_or_group_id, &recipientmap) == -1)
+              person_or_group_id = found_derived_group_v2;
+
             isgroupconversation = true;
             //std::cout << "Possible GroupV1 id from STRING: " << gid << std::endl;
             //d_database.prettyPrint("SELECT _id,group_id FROM groups WHERE LOWER(group_id) == LOWER(?)", gid);
@@ -253,7 +261,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
       }
     }
     else // type != 'group' ( == 'private'?)
-      person_or_group_id = results_all_conversations.valueAsString(i, "uuid"); // single person id, if group, this is empty
+      person_or_group_id = results_all_conversations(i, "uuid"); // single person id, if group, this is empty
 
     // get/create matching thread id from android database
     long long int recipientid_for_thread = -1;
@@ -263,7 +271,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     else
     {
       Logger::warning("Failed to determine uuid. Trying with phone number...");
-      phone = results_all_conversations.valueAsString(i, "e164");
+      phone = results_all_conversations(i, "e164");
       if (!phone.empty())
         recipientid_for_thread = getRecipientIdFromPhoneMapped(phone, &recipientmap, createmissingcontacts);
     }
@@ -271,8 +279,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
     if (recipientid_for_thread == -1 &&
         (createmissingcontacts || createmissingcontacts_valid))
     {
-      recipientid_for_thread = dtCreateRecipient(dtdb->d_database, person_or_group_id, results_all_conversations.valueAsString(i, "e164"),
-                                                 results_all_conversations.valueAsString(i, "groupId"), databasedir, &recipientmap,
+      recipientid_for_thread = dtCreateRecipient(dtdb->d_database, person_or_group_id, results_all_conversations(i, "e164"),
+                                                 results_all_conversations(i, "groupId"), databasedir, &recipientmap,
                                                  createmissingcontacts_valid, generatestoragekeys, &warned_createcontacts);
       if (recipientid_for_thread == -1)
       {
@@ -593,7 +601,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
             if ((address = dtCreateRecipient(dtdb->d_database, source_uuid, source_phone, std::string(), databasedir, &recipientmap,
                                              createmissingcontacts_valid, generatestoragekeys, &warned_createcontacts)) == -1)
             {
-              Logger::error("Failed to create contact for incoming group message. Skipping");
+              Logger::error("Failed to create contact for incoming group message (rowid: ", rowid, "). Skipping");
               continue;
             }
           }
