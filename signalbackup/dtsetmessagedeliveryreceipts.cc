@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -81,7 +81,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         {
           if (createcontacts)
           {
-            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir,
+            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), status_results.valueAsString(i, "e164"), std::string(), databasedir,
                                                savedmap, create_valid_contacts, generatemissingkeys, warn)) == -1)
             {
               Logger::error("Failed to create delivery_receipt member. Skipping");
@@ -116,7 +116,7 @@ void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long i
         {
           if (createcontacts)
           {
-            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), std::string(), std::string(), databasedir,
+            if ((member_id = dtCreateRecipient(ddb, status_results.valueAsString(i, "uuid"), status_results.valueAsString(i, "e164"), std::string(), databasedir,
                                                savedmap, create_valid_contacts, generatemissingkeys, warn)) == -1)
             {
               Logger::error("Failed to create delivery_receipt member. Skipping");

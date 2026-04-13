@@ -42,7 +42,10 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
   SqliteDB::QueryResults res;
   if (!ddb.exec("SELECT "
                 "type, TRIM(name) AS name, profileName, profileFamilyName, "
-                "profileFullName, e164, " + d_dt_c_uuid + " AS uuid, json_extract(conversations.json,'$.color') AS color, "
+                "profileFullName, "
+                "COALESCE(e164, json_extract(conversations.json, '$.e164')) AS e164, "
+                + d_dt_c_uuid + " AS uuid, "
+                "json_extract(conversations.json,'$.color') AS color, "
                 "COALESCE(json_extract(conversations.json, '$.profileAvatar.path'), json_extract(conversations.json, '$.avatar.path')) AS avatar, " // 'profileAvatar' for persons, 'avatar' for groups
                 "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.localKey'), json_extract(conversations.json, '$.avatar.localKey')), '') AS localKey, "
                 "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.size'), json_extract(conversations.json, '$.avatar.size')), 0) AS size, "
@@ -66,24 +69,30 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "IFNULL(json_extract(conversations.json,'$.groupVersion'), 1) AS groupVersion, "
                 "NULLIF(json_extract(conversations.json,'$.nicknameGivenName'), '') AS nick_first, "
                 "NULLIF(json_extract(conversations.json,'$.nicknameFamilyName'), '') AS nick_last, "
-                "TOKENCOUNT(members) AS nummembers, json_extract(conversations.json, '$.masterKey') AS masterKey "
+                "TOKENCOUNT(members) AS nummembers, json_extract(conversations.json, '$.masterKey') AS masterKey, "
+                "IFNULL((" + d_dt_c_uuid + " = ?), 0) AS match_uuid, "
+                "IFNULL((e164 = ?), 0) AS match_e164, "
+                "IFNULL((groupId = ?), 0) AS match_gid "
                 "FROM conversations "
                 "LEFT JOIN identityKeys ON conversations." + d_dt_c_uuid + " = identityKeys.id "
-                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ? OR (SUBSTR(?, 1, 3) == 'pni' AND pni = ?)",
-                {id, phone, groupidb64, id, id}, &res))
+                "WHERE " + d_dt_c_uuid + " = ? OR e164 = ? OR groupId = ? OR (SUBSTR(?, 1, 3) == 'pni' AND pni = ?) "
+                "ORDER BY match_uuid DESC",
+                {id, phone, groupidb64, id, phone, groupidb64, id, id}, &res))
   {
     // std::cout << bepaald::bold_on << "Error" << bepaald::bold_off << ": ." << std::endl;
     return -1;
   }
   //res.prettyPrint(d_truncate);
 
-  if (res.rows() != 1)
+  if (res.rows() == 0)
   {
-    if (res.rows() > 1)
-      Logger::error("Unexpected number of results getting new recipient data.");
-    else // = 0
-      Logger::error("No results trying to get new recipient data.");
+    Logger::error("No results trying to get new recipient data.");
     return -1;
+  }
+
+  if (res.rows() > 1) [[unlikely]]
+  {
+    Logger::warning("Multiple results returned retrieving new recipient data. Using first...");
   }
 
   if (was_warned && *was_warned == false)
@@ -507,7 +516,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                            "storage_service_id = COALESCE(storage_service_id, ?), "
                            "registered = ? "
                            "WHERE _id = ?",
-                           {id.empty() ? res(0, "uuid") : id, res.value(0, "e164"), res.value(0, "pni"), // !!!NOTE!!! res.value(0, "uuid") MAY BE NULL HERE!!!
+                           {id.empty() ? res("uuid") : id, res.value(0, "e164"), res.value(0, "pni"), // !!!NOTE!!! res.value(0, "uuid") MAY BE NULL HERE!!!
                             res.value(0, "storageID"), res.isNull(0, "firstUnregisteredAt") ? 1 : 0, existing_recipient_id}))
         return -1;
       Logger::message("Found existing contact without uuid, Updating... (id: ", existing_recipient_id, ").");
@@ -525,11 +534,11 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                     {"nickname_family_name", res.value(0, "nick_last")},
                     {(!res.isNull(0, "nick_first") || !res.isNull(0, "nick_last")) ?
                      "nickname_joined_name" :
-                     "", (res(0, "nick_first").empty() ? res(0, "nick_last") :
-                          (res(0, "nick_last").empty() ? res(0, "nick_first") :
-                           res(0, "nick_first") + " " + res(0, "nick_last")))},
+                     "", (res("nick_first").empty() ? res("nick_last") :
+                          (res("nick_last").empty() ? res("nick_first") :
+                           res("nick_first") + " " + res("nick_last")))},
                     {d_recipient_e164, res.value(0, "e164")},
-                    {d_recipient_aci, res.value(0, "uuid")},
+                    {d_recipient_aci, id.empty() ? res("uuid") : id},
 
                     {"pni", res.value(0, "pni")},
                     {"message_expiration_time_version", res.value(0, "expireTimerVersion")},
@@ -554,32 +563,36 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
     }
     new_rec_id = std::any_cast<long long int>(new_rid);
 
+    if (res.isNull(0, "uuid") && id.empty()) // phone number-only contact -> mark as unregistered!
+    {
+      d_database.exec("UPDATE recipient SET registered = 2 WHERE _id = ?", new_rec_id);
+      Logger::message("Marking new recipient as unregistered");
+    }
+
     // set avatar
     dtSetAvatar(res("avatar"), res("localKey"), res.valueAsInt(0, "size"), res.valueAsInt(0, "version"), new_rec_id, databasedir);
   }
 
-  std::string uuid_of_new_or_updated_recipient(id.empty() ? res(0, "uuid") : id);
+  std::string uuid_of_new_or_updated_recipient(id.empty() ? res("uuid") : id);
 
-  // the keys could already present, since we are not always creating a new recipient here, sometimes we are updating an existing one (even then it's unlikely)...
-  long long int keys_present = 0;
-  keys_present = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM identities WHERE address = (SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?)",
-                                                             uuid_of_new_or_updated_recipient, 0);
-  if (keys_present == 0)
+  if (!uuid_of_new_or_updated_recipient.empty())
   {
-    std::string identity_key = res(0, "publicKey");
-    if (identity_key.empty() && create_valid_contacts)
+    // the keys could already present, since we are not always creating a new recipient here, sometimes we are updating an existing one (even then it's unlikely)...
+    long long int keys_present = 0;
+    keys_present = d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM identities WHERE address = (SELECT " + d_recipient_aci + " FROM recipient WHERE _id = ?)",
+                                                               uuid_of_new_or_updated_recipient, 0);
+    if (keys_present == 0)
     {
-      Logger::warning("No publicKey found for new recipient, inserting fake key...");
-      identity_key = "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh";
+      std::string identity_key = res("publicKey");
+      if (identity_key.empty() && create_valid_contacts)
+      {
+        Logger::warning("No publicKey found for new recipient, inserting fake key...");
+        identity_key = "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh";
 
-      /// keys always start with 0x05 for some reason...
-      // $ echo "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh" | base64 -d | xxd -g 1 -c 33
-      // 00000000: 05 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 21  .FAKEKEY FAKEKEY FAKEKEY FAKEKEY!
-    }
-
-    // set identity info
-    if (!uuid_of_new_or_updated_recipient.empty())
-    {
+        /// keys always start with 0x05 for some reason...
+        // $ echo "BUZBS0VLRVkgRkFLRUtFWSBGQUtFS0VZIEZBS0VLRVkh" | base64 -d | xxd -g 1 -c 33
+        // 00000000: 05 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 20 46 41 4b 45 4b 45 59 21  .FAKEKEY FAKEKEY FAKEKEY FAKEKEY!
+      }
       if (!insertRow("identities",
                      {{"address", uuid_of_new_or_updated_recipient},
                       {"identity_key", identity_key},
@@ -591,30 +604,22 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         if (create_valid_contacts)
         {
           Logger::error("Failed to insert identity key for newly created recipient entry.");
-          d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id); // this may be problematic
+          // this may be problematic, maybe go all out and delete any messages already inserted
+          // from_/to_ this recipient, and any threads with this rec as rec_id...
+          d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id);
           return -1;
         }
         else
           Logger::warning("Failed to insert identity key for newly created recipient entry.");
       }
       else
-        Logger::message("Successfully updated identity-key for contact (", new_rec_id, ", ", makePrintable(res("uuid")), ")");
+        Logger::message("Successfully updated identity-key for contact (", new_rec_id, ", ", makePrintable(uuid_of_new_or_updated_recipient), ")");
     }
     else
-    {
-      if (create_valid_contacts)
-      {
-        Logger::error("Newly created contact has no UUID (1)");
-        d_database.exec("DELETE FROM recipient WHERE _id = ?", new_rec_id); // this may be problematic
-        return -1;
-      }
-      else
-        Logger::warning("Newly created contact has no UUID (2)");
-    }
+      if (d_verbose)
+        Logger::message("Identity keys of new recipient appear to already exist in Android database");
   }
-  else
-    if (d_verbose)
-      Logger::message("Identity keys of new recipient appear to already exist in Android database");
+
 
   Logger::message("Successfully ", update_existing ? "updated" : "created new", " recipient (id: ", new_rec_id, ").");
   //d_database.printLineMode("SELECT * FROM recipient WHERE _id = ?", new_rec_id);

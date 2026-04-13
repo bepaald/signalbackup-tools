@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -34,23 +34,23 @@ bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int r
     {
       std::string convuuid = results_droppedmembers.valueAsString(dm, "droppedmember");
       SqliteDB::QueryResults dm_id;
-      if (!ddb.exec("SELECT COALESCE(" + d_dt_c_uuid + ",e164) AS rid FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
-          dm_id.rows() != 1)
+      if (!ddb.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 AS phone FROM conversations WHERE id IS ?", convuuid, &dm_id) ||
+          dm_id.rows() < 1)
         continue;
-      long long int recid = getRecipientIdFromUuidMapped(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
+      long long int recid = getRecipientIdFromUuidMapped(dm_id(0, "uuid"), recipientmap, createcontacts);
       if (recid < 0)
-        recid = getRecipientIdFromPhoneMapped(dm_id.valueAsString(0, "rid"), recipientmap, createcontacts);
+        recid = getRecipientIdFromPhoneMapped(dm_id(0, "phone"), recipientmap, createcontacts);
       if (recid < 0)
       {
         // let's just check the uuid's aren't recipient uuid's to make sure
         // this can go when we know it's working
         SqliteDB::QueryResults test_results;
-        if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE " + d_dt_c_uuid + " IS ?", dm_id.valueAsString(0, "rid"), &test_results))
+        if (ddb.exec("SELECT " + d_dt_c_uuid + " FROM conversations WHERE " + d_dt_c_uuid + " IS ?", dm_id.value(0, "uuid"), &test_results))
           if (test_results.rows())
             Logger::message(" *** NOTE FOR DEV: id was not found as conversationId but does appear as recipientUuid (droppedMembers) ***");
 
         if (createcontacts)
-          recid = dtCreateRecipient(ddb, dm_id.valueAsString(0, "rid"), dm_id.valueAsString(0, "rid"), std::string(),
+          recid = dtCreateRecipient(ddb, dm_id(0, "uuid"), dm_id(0, "phone"), std::string(),
                                     databasedir, recipientmap, create_valid_contacts, generatemissingkeys, warned_createcontacts);
         if (recid < 0)
           continue;

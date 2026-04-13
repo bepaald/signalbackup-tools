@@ -441,7 +441,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "IFNULL(isViewOnce, 0) AS isViewOnce,"
                                  "serverGuid,"
                                  "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
-                                 "json_extract(json, '$.source') AS sourcephone,"
+                                 "COALESCE(json_extract(json, '$.source'), source) AS sourcephone,"
                                  "JSONLONG(expireTimer) AS expireTimer,"
                                  "seenStatus," +
                                  (dtdb->d_database.containsTable("pinnedMessages") ? "(pinnedMessages.id IS NOT NULL)" : "0") + " AS isPinned, "
@@ -482,7 +482,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "IFNULL(isViewOnce, 0) AS isViewOnce,"
                                  "serverGuid,"
                                  "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
-                                 "json_extract(json, '$.source') AS sourcephone,"
+                                 "COALESCE(json_extract(json, '$.source'), source) AS sourcephone,"
                                  "JSONLONG(expireTimer) AS expireTimer,"
                                  "seenStatus,"
                                  "IFNULL(json_array_length(json, '$.preview'), 0) AS haspreview,"
@@ -547,9 +547,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         if (type == "profile-change")
         {
           if (!dtdb->d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
-                                    "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1) OR "
-                                    "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1)", // maybe id can be a phone number?
-                                    rowid, &statusmsguuid))
+                                     "id IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1) OR "
+                                     "e164 IS (SELECT json_extract(json, '$.changedId') FROM messages WHERE rowid IS ?1)", // maybe id can be a phone number?
+                                     rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group profile-change.");
             // print some extra info
@@ -559,9 +559,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         else if (type == "keychange")
         {
           if (!dtdb->d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
-                                    + d_dt_c_uuid + " IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1) OR "
-                                    "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1)",     // 'key_changed' can be a phone number (confirmed)
-                                    rowid, &statusmsguuid))
+                                     + d_dt_c_uuid + " IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1) OR "
+                                     "e164 IS (SELECT json_extract(json, '$.key_changed') FROM messages WHERE rowid IS ?1)",     // 'key_changed' can be a phone number (confirmed)
+                                     rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group keychange.");
             // print some extra info
@@ -571,9 +571,9 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         else if (type == "verified-change")
         {
           if (!dtdb->d_database.exec("SELECT " + d_dt_c_uuid + " AS uuid, e164 FROM conversations WHERE "
-                                    "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1) OR "
-                                    "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1)",// maybe id can be a phone number?
-                                    rowid, &statusmsguuid))
+                                     "id IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1) OR "
+                                     "e164 IS (SELECT json_extract(json, '$.verifiedChanged') FROM messages WHERE rowid IS ?1)",// maybe id can be a phone number?
+                                     rowid, &statusmsguuid))
           {
             Logger::warning("Failed to get uuid for incoming group verified-change.");
             // print some extra info

@@ -405,7 +405,6 @@ int main(int argc, char *argv[])
   std::cout << " *** TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms\n";
 #endif
 
-
   MEMINFO("Input opened");
 
   std::vector<long long int> limittothreads = arg.limittothreads();
