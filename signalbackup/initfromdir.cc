@@ -295,8 +295,8 @@ bool SignalBackup::isBackupV2(std::string const &dir) const
     std::filesystem::directory_iterator dirit(dir, ec);
     for (auto const &p : dirit)
       if (STRING_STARTS_WITH(p.path().filename().string(), "signal-backup-") &&
-          bepaald::isDir(dir + "/" + p.path().filename().string()) &&
-          isBackupV2Part(p.path()))
+          bepaald::isDir(p.path().string()) &&
+          isBackupV2Part(p.path().string()))
         return true;
   }
   else
