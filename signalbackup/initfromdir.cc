@@ -30,8 +30,16 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
   Logger::message("Reading database...");
   FileSqliteDB database(inputdir + "/database.sqlite");
-  if (!SqliteDB::copyDb(database, d_database))
+  if (!SqliteDB::copyDb(database, d_database)) [[unlikely]]
+  {
+    if (isBackupV2(inputdir))
+    {
+      Logger::warning("It appears you are trying to open a Backup V2.");
+      Logger::warning_indent("This backup format is not currently supported by this tool.");
+      Logger::warning_indent("See https://github.com/bepaald/signalbackup-tools/issues/382");
+    }
     return;
+  }
 
   Logger::message("Reading HeaderFrame");
   if (!setFrameFromFile(&d_headerframe, inputdir + "/Header.sbf"))
@@ -256,4 +264,43 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
   Logger::message("Done!");
   d_ok = true;
+}
+
+bool SignalBackup::isBackupV2(std::string const &dir) const
+{
+  /*
+    V2 backup:
+
+    inputdir
+    |- files/
+    |  |- XX/ [probably many directories with 2 char hex names]
+    |- signal-backup-YYYY-MM-DD-hh:mm:ss/ [possibly multiple]
+    |  |- files
+    |  |- main
+    |  |- metadata
+
+   */
+
+  auto isBackupV2Part = [](std::string const &d) STATICLAMBDA
+  {
+    return bepaald::fileOrDirExists(d + "/files") && !bepaald::isDir(d + "/files") &&
+      bepaald::fileOrDirExists(d + "/main") && !bepaald::isDir(d + "/main") &&
+      bepaald::fileOrDirExists(d + "/metadata") && !bepaald::isDir(d + "/metadata");
+  };
+
+  if (bepaald::isDir(dir + "/files"))
+  {
+    // find any directory named 'signal-backup-*'
+    std::error_code ec;
+    std::filesystem::directory_iterator dirit(dir, ec);
+    for (auto const &p : dirit)
+      if (STRING_STARTS_WITH(p.path().filename().string(), "signal-backup-") &&
+          bepaald::isDir(dir + "/" + p.path().filename().string()) &&
+          isBackupV2Part(p.path()))
+        return true;
+  }
+  else
+    return isBackupV2Part(dir); // wrong directory was passed, but stil...
+
+  return false;
 }

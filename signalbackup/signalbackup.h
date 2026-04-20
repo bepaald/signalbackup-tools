@@ -625,6 +625,7 @@ class SignalBackup
   bool specialCharsSupported(std::string const &path) const;
   template <typename T>
   inline void oldGroupMemberTokenizer(std::string_view membersstring, std::vector<T> *members) const;
+  bool isBackupV2(std::string const &dir) const;
 };
 
 // ONLY FOR DUMMYBACKUP

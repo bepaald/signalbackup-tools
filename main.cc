@@ -476,9 +476,13 @@ int main(int argc, char *argv[])
       MEMINFO("After reading source: ", i + 1, "/", threads.size(), " before import");
       if (!sb->importThread(&sourcecopy, threads[i]))
       {
-        Logger::error("A fatal error occurred while trying to import thread ", threads[i], ". Aborting");
-        //std::cout << "A fatal error occurred while trying to import thread " << threads[i] << ". Aborting" << std::endl;
-        return 1;
+        if (arg.force())
+          Logger::error("A fatal error occurred while trying to import thread ", threads[i], ". Forcing continue...");
+        else
+        {
+          Logger::error("A fatal error occurred while trying to import thread ", threads[i], ". Aborting");
+          return 1;
+        }
       }
       MEMINFO("After import");
     }
@@ -521,7 +525,12 @@ int main(int argc, char *argv[])
                                        arg.selectxmlchats(), arg.addincompletedataforhtmlexport(),
                                        arg.xmlmarkdelivered(), arg.xmlmarkread(), arg.autolimitdates(), arg.setselfid(),
                                        arg.targetisdummy()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
   }
 
   if (!arg.importadbbackup().empty())
@@ -530,14 +539,24 @@ int main(int argc, char *argv[])
       return 1;
 
     if (!sb->importFromAdbBackup(adbdb, arg.limittodates(), arg.targetisdummy()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
   }
 
   if (!arg.importtelegram().empty())
     if (!sb->importTelegramJson(arg.importtelegram(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
                                 arg.jsonprependforward(), arg.skipmessagereorder(), arg.jsonmarkdelivered(), arg.jsonmarkread(),
                                 arg.setselfid(), false /*onlyshowmapping*/, arg.allowhugeattachments()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
 
   if (!arg.jsonshowcontactmap().empty())
     if (!sb->importTelegramJson(arg.jsonshowcontactmap(), arg.selectjsonchats(), arg.mapjsoncontacts(), arg.preventjsonmapping(),
@@ -574,7 +593,12 @@ int main(int argc, char *argv[])
   {
     Logger::message("Merging recipients...");
     if (!sb->mergeRecipients(arg.mergerecipients()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
   }
 
   if (!arg.mergegroups().empty())
@@ -596,7 +620,12 @@ int main(int argc, char *argv[])
   {
     if (!sb->deleteAttachments(arg.onlyinthreads(), arg.onlyolderthan(), arg.onlynewerthan(), arg.onlylargerthan(), arg.onlytype(),
                                arg.appendbody(), arg.prependbody(), arg.replaceattachments()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
   }
 
   // if (!arg.importwachat().empty())
@@ -605,7 +634,12 @@ int main(int argc, char *argv[])
 
   if (!arg.setchatcolors().empty())
     if (!sb->setChatColors(arg.setchatcolors()))
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
 
   // temporary, to switch sender and recipient in single one-to-one conversation INCOMPLETE
   if (arg.hiperfall() != -1)
@@ -617,7 +651,12 @@ int main(int argc, char *argv[])
 
   if (arg.autofixfkc())
     if (!sb->fixForeignKeyConstraintViolations())
-      return 1;
+    {
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+        return 1;
+    }
 
   if (!arg.runsqlquery().empty())
     for (unsigned int i = 0; i < arg.runsqlquery().size(); ++i)
@@ -695,8 +734,13 @@ int main(int argc, char *argv[])
       !arg.source().empty()) // reorder mms after messing with mms._id
     if (!sb->reorderMmsSmsIds())
     {
-      Logger::error("reordering mms");
-      return 1;
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+      {
+        Logger::error("reordering mms");
+        return 1;
+      }
     }
 
   if (arg.checkdbintegrity())
@@ -726,8 +770,13 @@ int main(int argc, char *argv[])
   if (arg.migrate_to_191())
     if (!sb->migrate_to_191(arg.setselfid()))
     {
-      Logger::error("Migration failed");
-      return 1;
+      if (arg.force())
+        Logger::warning("Operation failed! Forcing continue");
+      else
+      {
+        Logger::error("Migration failed");
+        return 1;
+      }
     }
 
   MEMINFO("Before output");

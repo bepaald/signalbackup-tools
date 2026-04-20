@@ -312,6 +312,10 @@ std::cout << R"*(
                                            now)
 --stoponerror                              Do not try to recover automatically when encountering bad
                                            data while reading the input file.
+--force                                    Normally, after an operation fails with a fatal error, the
+                                           program aborts and no output is written. this option forces
+                                           the program to continue and write the invalid backup to disk.
+                                           This could allow you to fix it.
 -v, --verbose                              Makes the output even more verbose than it already is.
 --mergerecipients <OLDNUMBER,NEWNUMBER>    Can be used to change a contacts number (for example when
                                            they get a new phone). Messages from OLDNUMBER are changed

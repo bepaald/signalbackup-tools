@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -39,24 +39,17 @@ using std::literals::string_literals::operator""s;
 
 namespace bepaald
 {
-  inline bool fileOrDirExists(std::string const &path);
   inline bool fileOrDirExists(std::filesystem::path const &path);
-  inline bool sameFile(std::string const &path1, std::string const &path2);
-  inline bool isDir(std::string const &path);
-  inline bool createDir(std::string const &path);
-  inline bool isEmpty(std::string const &path);
-  inline bool clearDirectory(std::string const &path);
-  inline uint64_t fileSize(std::string const &path);
+  inline bool sameFile(std::string_view path1, std::string_view path2);
+  inline bool isDir(std::string_view path);
+  inline bool createDir(std::string_view path);
+  inline bool isEmpty(std::string_view path);
+  inline bool clearDirectory(std::string_view path);
+  inline uint64_t fileSize(std::string_view path);
 #if defined(_WIN32) || defined(__MINGW64__)
   inline std::string windows_long_file(std::string const &path);
   inline long long int abs_path_length(std::string const &path);
 #endif
-}
-
-inline bool bepaald::fileOrDirExists(std::string const &path)
-{
-  std::error_code ec;
-  return std::filesystem::exists(path, ec);
 }
 
 inline bool bepaald::fileOrDirExists(std::filesystem::path const &path)
@@ -65,25 +58,25 @@ inline bool bepaald::fileOrDirExists(std::filesystem::path const &path)
   return std::filesystem::exists(path, ec);
 }
 
-inline bool bepaald::sameFile(std::string const &path1, std::string const &path2)
+inline bool bepaald::sameFile(std::string_view path1, std::string_view path2)
 {
   std::error_code ec;
   return std::filesystem::equivalent(path1, path2, ec);
 }
 
-inline bool bepaald::isDir(std::string const &path)
+inline bool bepaald::isDir(std::string_view path)
 {
   std::error_code ec;
   return std::filesystem::is_directory(path, ec);
 }
 
-inline bool bepaald::createDir(std::string const &path)
+inline bool bepaald::createDir(std::string_view path)
 {
   std::error_code ec;
   return std::filesystem::create_directory(path, ec);
 }
 
-inline bool bepaald::isEmpty(std::string const &path)
+inline bool bepaald::isEmpty(std::string_view path)
 {
   std::error_code ec;
   for (auto const &p: std::filesystem::directory_iterator(path))
@@ -92,7 +85,7 @@ inline bool bepaald::isEmpty(std::string const &path)
   return true;
 }
 
-inline bool bepaald::clearDirectory(std::string const &path)
+inline bool bepaald::clearDirectory(std::string_view path)
 {
   std::error_code ec;
   for (auto const &p: std::filesystem::directory_iterator(path))
@@ -101,7 +94,7 @@ inline bool bepaald::clearDirectory(std::string const &path)
   return true;
 }
 
-inline uint64_t bepaald::fileSize(std::string const &path)
+inline uint64_t bepaald::fileSize(std::string_view path)
 {
   std::error_code ec;
   return std::filesystem::file_size(std::filesystem::path(path), ec);
