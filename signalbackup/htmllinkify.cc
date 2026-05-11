@@ -104,8 +104,8 @@ void SignalBackup::HTMLLinkifyToken(std::string_view token, int tokenoffset, std
     }
 
     // let's assume the url does not end in some characters
-    while (match_link.back() == ':' ||
-           match_link.back() == '.' ||
+    while (match_link.back() == '.' ||
+           match_link.back() == ':' ||
            match_link.back() == ',')
     {
       match_link.pop_back();
@@ -138,6 +138,16 @@ void SignalBackup::HTMLLinkifyToken(std::string_view token, int tokenoffset, std
         --match_length;
       }
     }
+
+    // because the linkify regex can fail on IPv6 addresses
+    // https://[1fff:0:a88:85a3:ac1f]:8001/index.html
+    // Signal itself also fails on these addresses, but
+    // in our case this results in a <a href="https://">
+    // which is not valid HTML
+    if (match_link.length() == 0 ||
+        match_link == "https://" ||
+        match_link == "http://")
+      return;
 
     if (match_index == URL_WITH_PROTOCOL_MATCH) // -> URL_WITH_PROTOCOL
       ranges->emplace_back(match_start + tokenoffset, //static_cast<long long int>(pos) + url_match_result.position(0),

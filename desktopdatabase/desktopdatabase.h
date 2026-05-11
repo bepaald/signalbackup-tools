@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -148,10 +148,14 @@ inline std::pair<std::string, std::string> DesktopDatabase::getDesktopDir() cons
   else
     return {std::string(), std::string()};
 #else // !windows && !mac
-  if (bepaald::isDir(homedir + "/.config/Signal"))
+  if (bepaald::isDir(homedir + "/.config/Signal")) // default location
     return {homedir + "/.config/Signal", homedir + "/.config/Signal"};
-  if (bepaald::isDir(homedir + "/.config/Signal Beta"))
+  if (bepaald::isDir(homedir + "/.config/Signal Beta")) // default location of Beta version
     return {homedir + "/.config/Signal Beta", homedir + "/.config/Signal Beta"};
+  if (bepaald::isDir(homedir + "/.var/app/org.signal.Signal/config/Signal")) // flatpak
+    return {homedir + "/.var/app/org.signal.Signal/config/Signal", homedir + "/.var/app/org.signal.Signal/config/Signal"};
+  if (bepaald::isDir(homedir + "/snap/signal-desktop/current/.config/Signal")) // snap
+    return {homedir + "/snap/signal-desktop/current/.config/Signal", homedir + "/snap/signal-desktop/current/.config/Signal"};
   else
     return {std::string(), std::string()};
 #endif

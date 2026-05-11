@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2025  Selwin van Dijk
+  Copyright (C) 2025-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -70,7 +70,7 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::
     << std::string(indent, ' ') << "  <div class=\"poll-options\">\n";
 
   // gather data on number of votes per option, totals and max
-  int totalvotes = 0;
+  //int totalvotes = 0;
   int maxvotes = 0;
   std::map<long long int, std::pair<int, std::vector<long long int>>> votes_per_option; // maps option_id -> {num-votes, {voters-list}}
   for (unsigned int j = 0; j < poll_votes.rows(); ++j)
@@ -90,7 +90,7 @@ bool SignalBackup::HTMLwritePollDiv(std::ofstream &htmloutput, int indent, std::
     if (votes_per_option[poll_option_id].first > maxvotes)
       maxvotes = votes_per_option[poll_option_id].first;
 
-    ++totalvotes;
+    //++totalvotes;
   }
 
   for (unsigned int i = 0; i < poll_options.rows(); ++i)
