@@ -1,0 +1,31 @@
+name: Test Windows Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags-ignore:
+      - '[0-9]*'
+    branches:
+      - master
+    paths-ignore:
+      - '**/README.md'
+      - '**/ERRATA.md'
+      - '**/autoversion.h'
+      - '.github/workflows/*.yml'
+
+jobs:
+  do-build-tests-windows:
+    runs-on: windows-2025-vs2026
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install dependencies
+        run: |
+          vcpkg install sqlite3:x64-windows
+          
+      - name: Build cmake
+        run: |
+          set UseMultiToolTask=true
+          set EnforceProcessCountAcrossBuilds=true
+          set MultiProcessorCompilation=true
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_VS_GLOBALS="UseMultiToolTask=true;EnforceProcessCountAcrossBuilds=true;MultiProcessorCompilation=true" -DSQLite3_INCLUDE_DIR="C:/vcpkg/packages/sqlite3_x64-windows/include/" -DSQLite3_LIBRARY="C:/vcpkg/packages/sqlite3_x64-windows/lib/sqlite3.lib"
+          cmake --build build/ -- /m
