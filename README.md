@@ -676,8 +676,8 @@ If you use this option and read this line, I would really appreciate it if you l
 
 **<span id="desktop">Importing conversations from Signal Desktop</span>**
 
-> [!IMPORTANT]
-> This feature is highly experimental, problems may occur. Make sure to always keep a copy of your original backup file. Feedback is appreciated
+> [!NOTE]
+> If your Signal Desktop has your full conversation history, this feature is no longer needed as Signal Desktop can now export a backup that can be restored on your phone (Preferences -> Backups). It is always preferred to use officially supported methods if suitable for your situation. If your conversation history is incomplete on both your phone and your Signal Desktop installation (you need to merge the data), this option may help you.
 
 > [!NOTE]
 > While this program will compile and work with almost any version of SQLite3, this specific feature requires that the SQLite3 version used is not too far behind the one used by the Signal Desktop client. Older versions may not be able to read Signal Desktop's database. For example, as of writing, the version available in Ubuntu is too old to read Signal Desktop's database. For Ubuntu(-like) distributions a PPA exists with a more up-to-date version [here](https://launchpad.net/~linuxgndu/+archive/ubuntu/sqlitebrowser) (disclaimer: I am not affiliated with this PPA, and never used it).

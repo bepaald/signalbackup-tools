@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -35,7 +35,7 @@ bool Logger::supportsAnsi()
       { "ansi",    "color",  "console", "cygwin", "gnome",
         "konsole", "kterm",  "linux",   "msys",   "putty",
         "rxvt",    "screen", "vt100",   "xterm" };
-    const char *env_p = std::getenv("TERM");
+    char const *env_p = std::getenv("TERM");
     if (env_p == nullptr)
       return false;
     return std::any_of(std::begin(Terms), std::end(Terms),

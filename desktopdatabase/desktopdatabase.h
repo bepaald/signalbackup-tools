@@ -119,8 +119,8 @@ inline std::pair<std::string, std::string> DesktopDatabase::getDesktopDir() cons
 #if defined(_WIN32) || defined(__MINGW64__)
   // Windows: concatenate HOMEDRIVE+HOMEPATH
   // probably only works on windows 7 and newer? (if at all)
-  const char *homedrive_cs = std::getenv("HOMEDRIVE");
-  const char *homepath_cs = std::getenv("HOMEPATH");
+  char const *homedrive_cs = std::getenv("HOMEDRIVE");
+  char const *homepath_cs = std::getenv("HOMEPATH");
   if (homedrive_cs == nullptr || homepath_cs == nullptr)
     return {std::string(), std::string()};
   std::string home = std::string(homedrive_cs) + std::string(homepath_cs);

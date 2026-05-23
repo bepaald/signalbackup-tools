@@ -15,7 +15,7 @@ on:
 
 jobs:
   do-build-tests-windows:
-    runs-on: windows-2025
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
       - name: Install dependencies
