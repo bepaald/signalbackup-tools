@@ -666,8 +666,7 @@ template <typename... Spec>
 template <int idx, int idx2, int... rest>
 inline auto constexpr ProtoBufParser<Spec...>::getDeepType() //static
 {
-  if constexpr (!is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
-    static_assert(false, "Trying to recurse into flat type");
+  static_assert(is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}, "Trying to recurse into flat type");
 
   // Wowsers!
   return decltype(std::declval<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>().template getDeepType<idx2, rest...>()){};
@@ -677,8 +676,7 @@ template <typename... Spec>
 template <int idx, int idx2, int... rest>
 inline auto ProtoBufParser<Spec...>::getField() const -> decltype(getDeepType<idx, idx2, rest...>())
 {
-  if constexpr (!is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
-    static_assert(false, "Trying to recurse into flat type");
+  static_assert(is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}, "Trying to recurse into flat type");
 
   auto firstfield = getField<idx>();
   if (firstfield.has_value())

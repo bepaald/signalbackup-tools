@@ -57,6 +57,18 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
     }
   }
 
+  // check if recipients exist
+  if (d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE _id = ?", r_ids[0], -1) == -1) [[unlikely]]
+  {
+    Logger::error("Given recipient id (", r_ids[0], ") not found in database");
+    return 1;
+  }
+  if (d_database.getSingleResultAs<long long int>("SELECT _id FROM recipient WHERE _id = ?", r_ids[1], -1) == -1) [[unlikely]]
+  {
+    Logger::error("Given recipient id (", r_ids[0], ") not found in database");
+    return 1;
+  }
+
   // get phone numbers of recipients passed as ids
   for (unsigned int i = 0; i < phonenumbers.size(); ++i)
     if (!phonenumbers[i].empty() && phonenumbers[i][0] != '+')
