@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -34,7 +34,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   }
 
   std::vector<std::string> r_ids = addresses;
-  std::vector<std::string> const &phonenumbers = addresses;
+  std::vector<std::string> phonenumbers = addresses;
 
   // for database version >= 24, addresses = recipient_ids, for db version < 24 addresses = recipient.phone
   // so convert to recipient._ids
@@ -42,17 +42,25 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
   {
     for (unsigned int i = 0; i < r_ids.size(); ++i)
     {
-      SqliteDB::QueryResults res;
-      d_database.exec("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", r_ids[i], &res);
-      if (res.rows() != 1 || res.columns() != 1 ||
-          !res.valueHasType<long long int>(0, 0))
+      if (!r_ids[0].empty() && r_ids[0][0] == '+') // if the recipient was passed as a phone number, convert to recipient._id
       {
-        Logger::error("Failed to find recipient._id matching phone in target database: '", r_ids[i], "'");
-        return false;
+        SqliteDB::QueryResults res;
+        d_database.exec("SELECT _id FROM recipient WHERE " + d_recipient_e164 + " = ?", r_ids[i], &res);
+        if (res.rows() != 1 || res.columns() != 1 ||
+            !res.valueHasType<long long int>(0, 0))
+        {
+          Logger::error("Failed to find recipient._id matching phone in target database: '", r_ids[i], "'");
+          return false;
+        }
+        r_ids[i] = bepaald::toString(res.getValueAs<long long int>(0, 0));
       }
-      r_ids[i] = bepaald::toString(res.getValueAs<long long int>(0, 0));
     }
   }
+
+  // get phone numbers of recipients passed as ids
+  for (unsigned int i = 0; i < phonenumbers.size(); ++i)
+    if (!phonenumbers[i].empty() && phonenumbers[i][0] != '+')
+      phonenumbers[i] = d_database.getSingleResultAs<std::string>("SELECT " + d_recipient_e164 + " FROM recipient WHERE _id = ?", phonenumbers[i], std::string());
 
   std::string target_rid = r_ids.back();
   std::string const &targetphone = phonenumbers.back();
@@ -85,6 +93,13 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
       if (d_database.containsTable("mention"))
       {
         d_database.exec("UPDATE mention SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
+        Logger::message("Updated ", d_database.changed(), " thread_ids in 'mention'");
+      }
+
+      // update thread_id in drafts
+      if (d_database.containsTable("drafts"))
+      {
+        d_database.exec("UPDATE drafts SET thread_id = ? WHERE thread_id = ?", {tid, oldtid});
         Logger::message("Updated ", d_database.changed(), " thread_ids in 'mention'");
       }
     }
@@ -121,6 +136,13 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
       Logger::message("Updated ", d_database.changed(), " quote_authors");
     }
 
+    // change quote author
+    if (d_database.tableContainsColumn(d_mms_table, "deleted_by"))
+    {
+      d_database.exec("UPDATE " + d_mms_table + " SET deleted_by = ? WHERE deleted_by = ?", {target_rid, r_ids[i]});
+      Logger::message("Updated ", d_database.changed(), " deleted_by-s");
+    }
+
     // change msl_recipient
     if (d_database.containsTable("msl_recipient"))
     {
@@ -138,6 +160,18 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
     {
       d_database.exec("UPDATE reaction SET author_id = ? WHERE author_id = ?", {target_rid, r_ids[i]});
       Logger::message("Updated ", d_database.changed(), " reaction authors table");
+    }
+
+    if (d_database.containsTable("poll"))
+    {
+      d_database.exec("UPDATE poll SET author_id = ? WHERE author_id = ?", {target_rid, r_ids[i]});
+      Logger::message("Updated ", d_database.changed(), " reaction poll table");
+    }
+
+    if (d_database.containsTable("poll_vote"))
+    {
+      d_database.exec("UPDATE poll_vote SET voter_id = ? WHERE voter_id = ?", {target_rid, r_ids[i]});
+      Logger::message("Updated ", d_database.changed(), " reaction poll_vote table");
     }
 
     if (d_database.containsTable("call"))
@@ -158,7 +192,7 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
       Logger::message("Updated ", d_database.changed(), " entries in 'notification_profile_allowed_members' table");
     }
 
-    // delete old thread, lets make sure it has no messages
+    // mark old thread inactive
     if (tid != -1 && oldtid != -1)
     {
       if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM " + d_mms_table + " WHERE thread_id = ?", oldtid, -1) != 0)
@@ -168,8 +202,16 @@ bool SignalBackup::mergeRecipients(std::vector<std::string> const &addresses/*, 
       }
       else
       {
-        d_database.exec("DELETE FROM thread WHERE _id = ?", oldtid);
-        Logger::message("Deleted ", d_database.changed(), " empty thread(s) from database");
+        if (d_database.tableContainsColumn("thread", d_thread_message_count, "active"))
+        {
+          d_database.exec("UPDATE thread SET meaningful_messages = 0, active = 0 WHERE _id = ?", oldtid);
+          Logger::message("Marked old thread inactive and empty");
+        }
+        else
+        {
+          d_database.exec("DELETE FROM thread WHERE _id = ?", oldtid);
+          Logger::message("Deleted ", d_database.changed(), " empty thread(s) from database");
+        }
       }
     }
   }
@@ -354,58 +396,64 @@ Field 4 (optional::protobuf):
       */
 
   // get groupV1 status message updates:
-  SqliteDB::QueryResults results2;
-
-  std::pair<std::string, std::string> smsquery("sms", "SELECT type,body,_id FROM 'sms' "
-                                               "WHERE thread_id = " + bepaald::toString(tid) + " AND "
-                                               "(type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND "
-                                               "(type & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0");
-  std::pair<std::string, std::string> mmsquery(d_mms_table, "SELECT " + d_mms_type + " AS type,body,_id FROM '" + d_mms_table + "' "
-                                               "WHERE thread_id = " + bepaald::toString(tid) + " AND "
-                                               "(" + d_mms_type + " & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND "
-                                               "(" + d_mms_type + " & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0");
-
-  for (auto const &d : {smsquery, mmsquery})
+  // it is quite likely this does not work as intended anymore, since group updates use ACIs to
+  // identify recipients, and no longer phone numbers.
+  if (std::all_of(phonenumbers.begin(), phonenumbers.end(), [](std::string const &p) { return !p.empty() && p[0] == '+'; }))
   {
-    if (d_database.containsTable(d.first))
+
+    SqliteDB::QueryResults results2;
+
+    std::pair<std::string, std::string> smsquery("sms", "SELECT type,body,_id FROM 'sms' "
+                                                 "WHERE thread_id = " + bepaald::toString(tid) + " AND "
+                                                 "(type & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND "
+                                                 "(type & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0");
+    std::pair<std::string, std::string> mmsquery(d_mms_table, "SELECT " + d_mms_type + " AS type,body,_id FROM '" + d_mms_table + "' "
+                                                 "WHERE thread_id = " + bepaald::toString(tid) + " AND "
+                                                 "(" + d_mms_type + " & " + bepaald::toString(Types::GROUP_UPDATE_BIT) + ") IS NOT 0 AND "
+                                                 "(" + d_mms_type + " & " + bepaald::toString(Types::GROUP_V2_BIT) + ") IS 0");
+
+    for (auto const &d : {smsquery, mmsquery})
     {
-      d_database.exec(d.second, &results2);
-      if (d_verbose) [[unlikely]]
-        results2.prettyPrint(d_truncate);
-      for (unsigned int j = 0; j < results2.rows(); ++j)
+      if (d_database.containsTable(d.first))
       {
-        std::string body = std::any_cast<std::string>(results2.value(j, "body"));
-        long long int type = std::any_cast<long long int>(results2.value(j, "type"));
-        long long int msgid = std::any_cast<long long int>(results2.value(j, "_id"));
-
-        GroupContext statusmsg(body);
-
-        if (Types::isGroupUpdate(type))
-          Logger::message("Handling group update ", j + 1);
-
-        bool targetpresent = false;
-        auto field4 = statusmsg.getField<4>();
-        for (unsigned int k = 0; k < field4.size(); ++k)
+        d_database.exec(d.second, &results2);
+        if (d_verbose) [[unlikely]]
+          results2.prettyPrint(d_truncate);
+        for (unsigned int j = 0; j < results2.rows(); ++j)
         {
-          Logger::message("memberlist: ", field4[k]);
-          if (field4[k] == targetphone)
-            targetpresent = true;
-        }
+          std::string body = std::any_cast<std::string>(results2.value(j, "body"));
+          long long int type = std::any_cast<long long int>(results2.value(j, "type"));
+          long long int msgid = std::any_cast<long long int>(results2.value(j, "_id"));
 
-        int removed = 0;
-        for (unsigned int k = 0; k < phonenumbers.size() - 1; ++k)
-        {
-          removed = statusmsg.deleteFields(4, &phonenumbers[k]);
-          Logger::message("deleted ", removed, " members from group update message");
-        }
+          GroupContext statusmsg(body);
 
-        if (removed)
-        {
-          if (!targetpresent) // add target if not present
-            statusmsg.addField<4>(targetphone);
-          // set body
-          d_database.exec("UPDATE " + d.first + " SET body = ? WHERE _id = ?", {statusmsg.getDataString(), msgid});
-          Logger::message("Updated ", d_database.changed(), " group updates in '", d.first, "' table");
+          if (Types::isGroupUpdate(type))
+            Logger::message("Handling group update ", j + 1);
+
+          bool targetpresent = false;
+          auto field4 = statusmsg.getField<4>();
+          for (unsigned int k = 0; k < field4.size(); ++k)
+          {
+            Logger::message("memberlist: ", field4[k]);
+            if (field4[k] == targetphone)
+              targetpresent = true;
+          }
+
+          int removed = 0;
+          for (unsigned int k = 0; k < phonenumbers.size() - 1; ++k)
+          {
+            removed = statusmsg.deleteFields(4, &phonenumbers[k]);
+            Logger::message("deleted ", removed, " members from group update message");
+          }
+
+          if (removed)
+          {
+            if (!targetpresent) // add target if not present
+              statusmsg.addField<4>(targetphone);
+            // set body
+            d_database.exec("UPDATE " + d.first + " SET body = ? WHERE _id = ?", {statusmsg.getDataString(), msgid});
+            Logger::message("Updated ", d_database.changed(), " group updates in '", d.first, "' table");
+          }
         }
       }
     }

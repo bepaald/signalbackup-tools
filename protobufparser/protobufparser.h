@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -239,6 +239,15 @@ class ProtoBufParser
 
   template <int idx>
   inline auto getField() const -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type;
+
+  template <int idx>
+  static inline auto constexpr getDeepType() -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type;
+
+  template <int idx, int idx2, int... rest>
+  static inline auto constexpr getDeepType();
+
+  template <int idx, int idx2, int... rest>
+  inline auto getField() const -> decltype(getDeepType<idx, idx2, rest...>());
 
   template <typename T = std::nullptr_t>
   int deleteFields(int num, T const *value = nullptr);
@@ -642,6 +651,40 @@ inline auto ProtoBufParser<Spec...>::getField() const -> typename ProtoBufParser
     return getFieldAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>(idx);
   else
     return getFieldsAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>(idx);
+}
+
+template <typename... Spec>
+template <int idx>
+inline auto constexpr ProtoBufParser<Spec...>::getDeepType() -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type //static
+{
+  if constexpr (is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
+    return typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type{};
+  return std::optional<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{};
+}
+
+template <typename... Spec>
+template <int idx, int idx2, int... rest>
+inline auto constexpr ProtoBufParser<Spec...>::getDeepType() //static
+{
+  if constexpr (!is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
+    static_assert(false, "Trying to recurse into flat type");
+
+  // Wowsers!
+  return decltype(std::declval<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>().template getDeepType<idx2, rest...>()){};
+}
+
+template <typename... Spec>
+template <int idx, int idx2, int... rest>
+inline auto ProtoBufParser<Spec...>::getField() const -> decltype(getDeepType<idx, idx2, rest...>())
+{
+  if constexpr (!is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
+    static_assert(false, "Trying to recurse into flat type");
+
+  auto firstfield = getField<idx>();
+  if (firstfield.has_value())
+    return firstfield->template getField<idx2, rest...>();
+
+  return getDeepType<idx, idx2, rest...>();
 }
 
 template <typename... Spec>
