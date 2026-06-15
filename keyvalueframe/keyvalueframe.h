@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2021-2025  Selwin van Dijk
+  Copyright (C) 2021-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -26,7 +26,7 @@
 #include "../base64/base64.h"
 #include "../common_be.h"
 
-class KeyValueFrame : public BackupFrame
+class KeyValueFrame final : public BackupFrame
 {
   enum FIELD : std::uint8_t
   {
