@@ -30,6 +30,7 @@ jobs:
           # Please `brew uninstall cmake` first."
           # so lets try that
           brew uninstall cmake
+          brew trust --formula bepaald/signalbackup-tools/signalbackup-tools
 
       - name: Build
         run: |
@@ -53,6 +54,7 @@ jobs:
           # Please `brew uninstall cmake` first."
           # so lets try that
           brew uninstall cmake
+          brew trust --formula bepaald/signalbackup-tools/signalbackup-tools
 
       - name: Build
         run: |
