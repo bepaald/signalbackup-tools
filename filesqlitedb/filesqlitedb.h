@@ -22,7 +22,7 @@
 
 #include "../sqlitedb/sqlitedb.h"
 
-class FileSqliteDB : public SqliteDB
+class FileSqliteDB final : public SqliteDB
 {
  public:
   inline explicit FileSqliteDB(std::string const &filename);

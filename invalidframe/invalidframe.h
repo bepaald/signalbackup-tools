@@ -22,7 +22,7 @@
 
 #include "../backupframe/backupframe.h"
 
-class InvalidFrame : public BackupFrame
+class InvalidFrame final : public BackupFrame
 {
   static Registrar s_registrar;
  public:

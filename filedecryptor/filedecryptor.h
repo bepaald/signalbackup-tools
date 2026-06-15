@@ -29,7 +29,7 @@
 #include "../cryptbase/cryptbase.h"
 #include "../logger/logger.h"
 
-class  FileDecryptor : public CryptBase
+class  FileDecryptor final : public CryptBase
 {
   std::string d_filename;
   std::vector<long long int> d_editattachments;

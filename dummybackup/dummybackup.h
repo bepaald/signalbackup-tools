@@ -27,7 +27,7 @@
 
 #include "../xmldocument/xmldocument.h"
 
-class DummyBackup : public SignalBackup
+class DummyBackup final : public SignalBackup
 {
  public:
   inline DummyBackup(bool verbose, bool truncate, bool showprogress);

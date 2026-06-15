@@ -23,7 +23,7 @@
 #include <memory>
 
 template <typename T, typename U = std::default_delete<T>>
-class DeepCopyingUniquePtr : public std::unique_ptr<T, U>
+class DeepCopyingUniquePtr final : public std::unique_ptr<T, U>
 {
   // determine at compiletime whether T::clone() exists...
   struct HasCloneMethod

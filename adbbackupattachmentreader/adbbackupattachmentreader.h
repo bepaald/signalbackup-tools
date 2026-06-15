@@ -28,7 +28,7 @@
 
 class FrameWithAttachment;
 
-class AdbBackupAttachmentReader : public AttachmentReader<AdbBackupAttachmentReader>
+class AdbBackupAttachmentReader final : public AttachmentReader<AdbBackupAttachmentReader>
 {
   std::string d_path;
   std::unique_ptr<unsigned char[]> d_mackey;

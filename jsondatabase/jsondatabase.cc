@@ -27,31 +27,34 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
   d_verbose(verbose),
   d_truncate(truncate)
 {
-  // open file, get size and read data
-  std::ifstream sourcefile(jsonfile, std::ios_base::binary | std::ios_base::in);
-  if (!sourcefile.is_open())
-  {
-    Logger::error("Failed to open file for reading: ", jsonfile);
-    return;
-  }
+  // // open file, get size and read data
+  // std::ifstream sourcefile(jsonfile, std::ios_base::binary | std::ios_base::in);
+  // if (!sourcefile.is_open())
+  // {
+  //   Logger::error("Failed to open file for reading: ", jsonfile);
+  //   return;
+  // }
 
-  //sourcefile.seekg(0, std::ios_base::end);
-  //long long int datasize = sourcefile.tellg();
-  //sourcefile.seekg(0, std::ios_base::beg);
-  uint64_t datasize = bepaald::fileSize(jsonfile);
-  if (datasize == 0 || datasize == static_cast<std::uintmax_t>(-1)) [[unlikely]]
-  {
-    Logger::error("Bad filesize (", datasize, ")");
-    return;
-  }
+  // //sourcefile.seekg(0, std::ios_base::end);
+  // //long long int datasize = sourcefile.tellg();
+  // //sourcefile.seekg(0, std::ios_base::beg);
+  // uint64_t datasize = bepaald::fileSize(jsonfile);
+  // if (datasize == 0 || datasize == static_cast<std::uintmax_t>(-1)) [[unlikely]]
+  // {
+  //   Logger::error("Bad filesize (", datasize, ")");
+  //   return;
+  // }
 
-  std::unique_ptr<char[]> data(new char[datasize]);
+  // std::unique_ptr<char[]> data(new char[datasize]);
 
-  if (!sourcefile.read(data.get(), datasize))
-  {
-    Logger::error("Failed to read json data");
+  // if (!sourcefile.read(data.get(), datasize))
+  // {
+  //   Logger::error("Failed to read json data");
+  //   return;
+  // }
+  auto [data, datasize] = bepaald::readFileFully(jsonfile);
+  if (!data || datasize == 0) [[unlikely]]
     return;
-  }
 
   // create tables
   if (!d_database.exec("CREATE TABLE chats(idx INT, id TEXT, name TEXT, type TEXT)") ||
@@ -76,7 +79,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                        "json_extract(value, '$.name') AS name, "
                        "json_extract(value, '$.type') AS type "
                        "FROM json_each(?, '$.chats.list')",
-                       std::string_view(data.get(), datasize)))
+                       std::string_view(reinterpret_cast<char *>(data.get()), datasize)))
   {
     Logger::error("Failed to fill sql table");
     return;
@@ -95,7 +98,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
                          "json_extract(?1, '$.id') AS id, "
                          "json_extract(?1, '$.name') AS name, "
                          "json_extract(?1, '$.type') AS type",
-                         std::string_view(data.get(), datasize)))
+                         std::string_view(reinterpret_cast<char *>(data.get()), datasize)))
     {
       Logger::error("Failed to fill sql table");
       return;
@@ -115,7 +118,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
   if (d_verbose) [[unlikely]]
     Logger::message_start("Inserting messages from json...");
   if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, path "
-                       "FROM json_tree(?) WHERE path GLOB '$.chats.list[[][0-9]*].messages'", std::string_view(data.get(), datasize)))
+                       "FROM json_tree(?) WHERE path GLOB '$.chats.list[[][0-9]*].messages'", std::string_view(reinterpret_cast<char *>(data.get()), datasize)))
     return;
   if (d_database.changed() == 0)
   {
@@ -126,7 +129,7 @@ JsonDatabase::JsonDatabase(std::string const &jsonfile, bool verbose, bool trunc
     }
 
     if (!d_database.exec("INSERT INTO tmp_json_tree SELECT value, '$.chats.list[0].messages' AS path "
-                         "FROM json_tree(?) WHERE path = '$.messages'", std::string_view(data.get(), datasize)))
+                         "FROM json_tree(?) WHERE path = '$.messages'", std::string_view(reinterpret_cast<char *>(data.get()), datasize)))
       return;
   }
 

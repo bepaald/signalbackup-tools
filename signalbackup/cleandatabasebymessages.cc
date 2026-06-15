@@ -185,7 +185,7 @@ void SignalBackup::cleanDatabaseByMessages()
       d_database.exec("DELETE FROM name_collision_thread WHERE thread_id NOT IN (SELECT _id FROM thread)");
 
       // delete name_collision if no name_collision_thread entries refer to it anymore
-      d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT collision_id FROM name_collision)");
+      d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT collision_id FROM name_collision_thread)");
     }
 
     // delete name_collision_membership if name_collision was deleted

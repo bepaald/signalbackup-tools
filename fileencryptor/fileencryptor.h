@@ -25,7 +25,7 @@
 
 #include "../cryptbase/cryptbase.h"
 
-class FileEncryptor : public CryptBase
+class FileEncryptor final : public CryptBase
 {
   std::string d_passphrase;
   uint32_t d_backupfileversion;

@@ -111,7 +111,7 @@ inline std::string bepaald::bytesToHexString(unsigned char const *data, unsigned
   if (!unformatted)
     oss << "(hex:) ";
   for (unsigned int i = 0; i < length; ++i)
-    oss << std::hex << std::setfill('0') << std::setw(2)
+    oss << std::hex << std::nouppercase << std::setfill('0') << std::setw(2)
         << (static_cast<int32_t>(data[i]) & 0xFF)
         << ((i == length - 1 || unformatted) ? "" : " ");
   return oss.str();

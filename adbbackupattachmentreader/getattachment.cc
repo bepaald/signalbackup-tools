@@ -31,21 +31,9 @@ BaseAttachmentReader::ReturnCode AdbBackupAttachmentReader::getAttachmentData(un
   if (verbose) [[unlikely]]
     Logger::message("Starting get encrypted AdbBackupAttachment data");
 
-  std::ifstream encryptedfile(d_path, std::ios_base::in | std::ios_base::binary);
-  if (!encryptedfile.is_open()) [[unlikely]]
-  {
-    Logger::error("Failed to open file '", d_path, "'");
+  auto [encryptedfiledata, encryptedfile_size] = bepaald::readFileFully(d_path);
+  if (!encryptedfiledata) [[unlikely]]
     return ReturnCode::ERROR;
-  }
-
-  int encryptedfile_size = bepaald::fileSize(d_path);
-  std::unique_ptr<unsigned char[]> encryptedfiledata(new unsigned char[encryptedfile_size]);
-  if (!encryptedfile.read(reinterpret_cast<char *>(encryptedfiledata.get()), encryptedfile_size) ||
-      encryptedfile.gcount() != encryptedfile_size)
-  {
-    Logger::error("Failed to read data from file '", d_path, "'");
-    return ReturnCode::ERROR;
-  }
 
   auto decrypted_data = AdbBackupDatabase::decrypt(encryptedfiledata.get(), encryptedfile_size,
                                                    d_mackey.get(), d_mackey_length,

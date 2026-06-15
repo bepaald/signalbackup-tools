@@ -25,7 +25,7 @@
 #include "../common_be.h"
 #include "../backupframe/backupframe.h"
 
-class DatabaseVersionFrame : public BackupFrame
+class DatabaseVersionFrame final : public BackupFrame
 {
   enum FIELD : std::uint8_t
   {

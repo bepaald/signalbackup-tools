@@ -577,7 +577,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       {
         for (auto const &c : dbl.connections)
         {
-          if (source->d_database.containsTable(c.table))
+          if (source->d_database.tableContainsColumn(c.table, c.column))
             source->d_database.exec("UPDATE " + c.table + " SET " + c.column + " = ?", targetthread);
         }
         break;
@@ -987,18 +987,21 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       d_database.containsTable("name_collision"))
   {
     SqliteDB::QueryResults res;
-    std::string nct_table((d_database.containsTable("name_collision_thread") ? "name_collision_thread" : "name_collision"));
-    d_database.exec("SELECT DISTINCT thread_id FROM " + nct_table, &res);
+    std::string nct_table((d_database.tableContainsColumn("name_collision", "thread_id") ? "name_collision" : "name_collision_thread"));
+    if (d_database.containsTable(nct_table)) [[likely]]
+    {
+      d_database.exec("SELECT DISTINCT thread_id FROM " + nct_table, &res);
 
-    for (unsigned int i = 0; i < res.rows(); ++i)
-      source->d_database.exec("DELETE FROM " + nct_table + " WHERE thread_id = ?", res.value(i, 0));
+      for (unsigned int i = 0; i < res.rows(); ++i)
+        source->d_database.exec("DELETE FROM " + nct_table + " WHERE thread_id = ?", res.value(i, 0));
 
-    if (d_database.containsTable("name_collision_thread"))
-      // delete the name_collision records that are no longer referenced by any name_collision_thread
-      source->d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT DISTINCT collision_id FROM name_collision_thread)");
+      if (d_database.containsTable("name_collision_thread"))
+        // delete the name_collision records that are no longer referenced by any name_collision_thread
+        source->d_database.exec("DELETE FROM name_collision WHERE _id NOT IN (SELECT DISTINCT collision_id FROM name_collision_thread)");
 
-    // delete corresponding collision_members
-    source->d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
+      // delete corresponding collision_members
+      source->d_database.exec("DELETE FROM name_collision_membership WHERE collision_id NOT IN (SELECT _id FROM name_collision)");
+    }
   }
 
   // do not attempt to import chat_folders...
@@ -1126,10 +1129,10 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
       //   std::cout << std::endl;
       // }
 
-      if (table == "recipient")
-      {
-        results.printLineMode(i);
-      }
+      // if (table == "recipient")
+      // {
+      //   results.printLineMode(i);
+      // }
 
       SqlStatementFrame newframe = buildSqlStatementFrame(table, results.headers(), results.row(i));
       d_database.exec(newframe.bindStatementView(), newframe.parametersView());

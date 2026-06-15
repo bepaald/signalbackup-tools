@@ -38,7 +38,7 @@
     the passed in key ('localKey') is base64 encoded concatenation of 32 bytes AES key + 32 bytes MAC key
 */
 
-class DesktopAttachmentReader : public AttachmentReader<DesktopAttachmentReader>
+class DesktopAttachmentReader final : public AttachmentReader<DesktopAttachmentReader>
 {
   std::string d_path;
   std::string d_key;

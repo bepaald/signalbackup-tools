@@ -29,6 +29,7 @@
 #include <cstring>
 
 #include "logger/logger.h"
+#include "common_bytes.h"
 
 namespace bepaald
 {

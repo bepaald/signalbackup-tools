@@ -26,7 +26,7 @@
 #include "../common_bytes.h"
 #include "../framewithattachment/framewithattachment.h"
 
-class AttachmentFrame : public FrameWithAttachment
+class AttachmentFrame final : public FrameWithAttachment
 {
   enum FIELD : std::uint8_t
   {

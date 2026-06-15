@@ -24,6 +24,7 @@
 #include <version>
 #endif
 
+#include <memory>
 #include <filesystem>
 
 #include "logger/logger.h"
@@ -42,10 +43,12 @@ namespace bepaald
   inline bool fileOrDirExists(std::filesystem::path const &path);
   inline bool sameFile(std::string_view path1, std::string_view path2);
   inline bool isDir(std::string_view path);
+  inline bool isRegularFile(std::string_view path);
   inline bool createDir(std::string_view path);
   inline bool isEmpty(std::string_view path);
   inline bool clearDirectory(std::string_view path);
   inline uint64_t fileSize(std::string_view path);
+  inline std::pair<std::unique_ptr<unsigned char[]>, size_t> readFileFully(std::string const &path);
 #if defined(_WIN32) || defined(__MINGW64__)
   inline std::string windows_long_file(std::string const &path);
   inline long long int abs_path_length(std::string const &path);
@@ -68,6 +71,12 @@ inline bool bepaald::isDir(std::string_view path)
 {
   std::error_code ec;
   return std::filesystem::is_directory(path, ec);
+}
+
+inline bool bepaald::isRegularFile(std::string_view path)
+{
+  std::error_code ec;
+  return std::filesystem::is_regular_file(path, ec);
 }
 
 inline bool bepaald::createDir(std::string_view path)
@@ -98,6 +107,26 @@ inline uint64_t bepaald::fileSize(std::string_view path)
 {
   std::error_code ec;
   return std::filesystem::file_size(std::filesystem::path(path), ec);
+}
+
+inline std::pair<std::unique_ptr<unsigned char[]>, size_t> bepaald::readFileFully(std::string const &path)
+{
+  size_t size = fileSize(path);
+  std::ifstream ifs(path, std::ios_base::in | std::ios_base::binary);
+  if (!ifs.is_open()) [[unlikely]]
+  {
+    Logger::error("Failed to open file at path: '", path, "'");
+    return {nullptr, 0};
+  }
+
+  std::pair<std::unique_ptr<unsigned char[]>, size_t> res(new unsigned char[size], size);
+  if (!ifs.read(reinterpret_cast<char *>(res.first.get()), res.second) ||
+      ifs.gcount() != static_cast<std::streamsize>(res.second)) [[unlikely]]
+  {
+    Logger::error("Failed to read data from path: '", path, "'");
+    return {nullptr, 0};
+  }
+  return res;
 }
 
 #if defined(_WIN32) || defined(__MINGW64__)

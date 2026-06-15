@@ -246,7 +246,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
         if (groupchange_editor.has_value())
         {
           auto [uuid, uuid_size] = groupchange_editor.value();
-          editoruuid = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
+          editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
           editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
         }
 
@@ -353,7 +353,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
       {
         // editor
         auto [uuid, uuid_size] = groupchange_editor.value();
-        std::string uuidstr = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
+        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
         std::vector<std::string> promotedmemberuuids;
@@ -364,7 +364,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           if (promotedmember_uuid.has_value())
           {
             auto [tmpuuid, tmpuuid_size] = promotedmember_uuid.value();
-            std::string pmus = bepaald::toLower(bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true));
+            std::string pmus = bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true);
             pmus.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
             promotedmemberuuids.emplace_back(std::move(pmus));
           }
@@ -376,7 +376,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           if (promotedmember_uuid.has_value())
           {
             auto [tmpuuid, tmpuuid_size] = promotedmember_uuid.value();
-            std::string pmus = bepaald::toLower(bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true));
+            std::string pmus = bepaald::bytesToHexString(tmpuuid, tmpuuid_size, true);
             pmus.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
             promotedmemberuuids.emplace_back(std::move(pmus));
           }
@@ -860,7 +860,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           auto [uuid, uuid_size] = groupchange_editor.value();
           if (uuid_size == 16) //likely
           {
-            editoruuid = bepaald::toLower(bepaald::bytesToHexString(uuid, uuid_size, true));
+            editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
             editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
           }
         }
@@ -946,14 +946,14 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
           if (pm_uuid.has_value())
           {
             auto [inv_uuid, inv_uuid_size] = pm_uuid.value();
-            std::string invited_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true));
+            std::string invited_uuidstr = bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true);
             invited_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
             std::string invited_by_uuidstr;
             auto invitedby_uuid = pm.getField<3>();
             if (invitedby_uuid.has_value())
             {
               auto [inv_by_uuid, inv_by_uuid_size] = invitedby_uuid.value();
-              invited_by_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true));
+              invited_by_uuidstr = bepaald::bytesToHexString(inv_by_uuid, inv_by_uuid_size, true);
               invited_by_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
             }
             all_invitedmembers.emplace_back(std::move(invited_uuidstr), std::move(invited_by_uuidstr));
@@ -974,7 +974,7 @@ std::string SignalBackup::decodeStatusMessage(std::string const &body, long long
               if (pm_uuid.has_value())
               {
                 auto [inv_uuid, inv_uuid_size] = pm_uuid.value();
-                std::string invited_uuidstr = bepaald::toLower(bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true));
+                std::string invited_uuidstr = bepaald::bytesToHexString(inv_uuid, inv_uuid_size, true);
                 invited_uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
                 old_invitedmembers.emplace_back(std::move(invited_uuidstr));
               }

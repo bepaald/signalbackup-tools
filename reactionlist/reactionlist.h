@@ -35,10 +35,10 @@ message ReactionList {
 }
 */
 
-class ReactionList : public ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::STRING,
-                                                                      protobuffer::optional::UINT64,
-                                                                      protobuffer::optional::UINT64,
-                                                                      protobuffer::optional::UINT64>>>
+class ReactionList final : public ProtoBufParser<std::vector<ProtoBufParser<protobuffer::optional::STRING,
+                                                                            protobuffer::optional::UINT64,
+                                                                            protobuffer::optional::UINT64,
+                                                                            protobuffer::optional::UINT64>>>
 {
  public:
   inline explicit ReactionList(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);

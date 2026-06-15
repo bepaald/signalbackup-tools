@@ -22,7 +22,7 @@
 
 #include "../backupframe/backupframe.h"
 
-class EndFrame: public BackupFrame
+class EndFrame final : public BackupFrame
 {
   static Registrar s_registrar;
  public:

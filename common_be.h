@@ -155,6 +155,16 @@ namespace bepaald
       return def;
     return it->second;
   }
+
+  template <auto Start, auto End, auto Inc, class F>
+  void constexpr constexpr_for(F&& f)
+  {
+    if constexpr (Start < End)
+    {
+      f(std::integral_constant<decltype(Start), Start>());
+      constexpr_for<Start + Inc, End, Inc>(f);
+    }
+  }
 }
 
 #if defined DEBUGMSG
@@ -307,13 +317,13 @@ inline std::string bepaald::toDateString(std::time_t epoch, std::string_view for
 
 inline std::string bepaald::toLower(std::string s)
 {
-  std::for_each(s.begin(), s.end(), [](unsigned char c) STATICLAMBDA { return std::tolower(c); });
+  std::for_each(s.begin(), s.end(), [](char &c) STATICLAMBDA { c = std::tolower(c); });
   return s;
 }
 
 inline std::string bepaald::toUpper(std::string s)
 {
-  std::for_each(s.begin(), s.end(), [](unsigned char c) STATICLAMBDA { return std::toupper(c); });
+  std::for_each(s.begin(), s.end(), [](char &c) STATICLAMBDA { c = std::toupper(c); });
   return s;
 }
 

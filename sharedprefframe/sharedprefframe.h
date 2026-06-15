@@ -25,7 +25,7 @@
 #include "../common_bytes.h"
 #include "../backupframe/backupframe.h"
 
-class SharedPrefFrame : public BackupFrame
+class SharedPrefFrame final : public BackupFrame
 {
   enum FIELD : std::uint8_t
   {

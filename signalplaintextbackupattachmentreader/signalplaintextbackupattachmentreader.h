@@ -27,7 +27,7 @@
 #include <tuple>
 #include <filesystem>
 
-class SignalPlainTextBackupAttachmentReader : public AttachmentReader<SignalPlainTextBackupAttachmentReader>
+class SignalPlainTextBackupAttachmentReader final : public AttachmentReader<SignalPlainTextBackupAttachmentReader>
 {
   std::string d_base64data;
   std::string d_filename;

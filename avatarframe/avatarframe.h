@@ -30,7 +30,7 @@
 #include "../common_be.h"
 #include "../common_bytes.h"
 
-class AvatarFrame : public FrameWithAttachment
+class AvatarFrame final : public FrameWithAttachment
 {
   enum FIELD : std::uint8_t
   {

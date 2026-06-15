@@ -29,7 +29,7 @@
 #include "../common_be.h"
 #include "../common_bytes.h"
 
-class StickerFrame : public FrameWithAttachment
+class StickerFrame final : public FrameWithAttachment
 {
   enum FIELD : std::uint8_t
   {

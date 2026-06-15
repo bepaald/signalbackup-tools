@@ -25,7 +25,7 @@
 
 #include "../common_filesystem.h"
 
-class RawFileAttachmentReader : public AttachmentReader<RawFileAttachmentReader>
+class RawFileAttachmentReader final : public AttachmentReader<RawFileAttachmentReader>
 {
   std::string d_filename;
  public:
@@ -48,31 +48,39 @@ inline BaseAttachmentReader::ReturnCode RawFileAttachmentReader::getAttachment(F
 {
   //std::cout << " *** REALLY GETTING ATTACHMENT (RAW) ***" << std::endl;
 
-  std::ifstream file(std::filesystem::path(d_filename), std::ios_base::binary | std::ios_base::in);
-  if (!file.is_open())
-  {
-    Logger::error("Failed to open file '", d_filename, "' for reading attachment");
+  // std::ifstream file(std::filesystem::path(d_filename), std::ios_base::binary | std::ios_base::in);
+  // if (!file.is_open())
+  // {
+  //   Logger::error("Failed to open file '", d_filename, "' for reading attachment");
+  //   return ReturnCode::ERROR;
+  // }
+  // uint64_t attachmentdata_size = bepaald::fileSize(d_filename);
+
+  // if (attachmentdata_size == 0) [[unlikely]]
+  //   Logger::warning("Asked to read 0-byte attachment");
+
+  // if (verbose) [[unlikely]]
+  //   Logger::message("Reading attachment data, length: ", attachmentdata_size);
+
+  // //std::cout << "Getting attachment: " << d_filename << std::endl;
+
+  // std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[attachmentdata_size]); // to hold the data
+  // if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), attachmentdata_size))
+  // {
+  //   Logger::error("Failed to read raw attachment \"", d_filename, "\"");
+  //   return ReturnCode::ERROR;
+  // }
+
+  auto [decryptedattachmentdata, attachmentdata_size] = bepaald::readFileFully(d_filename);
+  if (!decryptedattachmentdata) [[unlikely]]
     return ReturnCode::ERROR;
-  }
-  //file.seekg(0, std::ios_base::end);
-  //int64_t attachmentdata_size = file.tellg();
-  //file.seekg(0, std::ios_base::beg);
-  uint64_t attachmentdata_size = bepaald::fileSize(d_filename);
 
   if (attachmentdata_size == 0) [[unlikely]]
     Logger::warning("Asked to read 0-byte attachment");
 
   if (verbose) [[unlikely]]
-    Logger::message("Reading attachment data, length: ", attachmentdata_size);
+    Logger::message("Read attachment data, length: ", attachmentdata_size);
 
-  //std::cout << "Getting attachment: " << d_filename << std::endl;
-
-  std::unique_ptr<unsigned char[]> decryptedattachmentdata(new unsigned char[attachmentdata_size]); // to hold the data
-  if (!file.read(reinterpret_cast<char *>(decryptedattachmentdata.get()), attachmentdata_size))
-  {
-    Logger::error("Failed to read raw attachment \"", d_filename, "\"");
-    return ReturnCode::ERROR;
-  }
   frame->setAttachmentDataBacked(decryptedattachmentdata.release(), attachmentdata_size);
   return ReturnCode::OK;
 }

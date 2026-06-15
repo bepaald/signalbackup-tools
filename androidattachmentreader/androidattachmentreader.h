@@ -30,7 +30,7 @@
 #include "../framewithattachment/framewithattachment.h"
 #include "../cryptbase/cryptbase.h"
 
-class AndroidAttachmentReader : public AttachmentReader<AndroidAttachmentReader>
+class AndroidAttachmentReader final : public AttachmentReader<AndroidAttachmentReader>
 {
   std::string d_filename;
   uint64_t d_filepos;

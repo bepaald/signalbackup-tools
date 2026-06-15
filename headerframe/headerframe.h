@@ -28,7 +28,7 @@
 #include "../common_be.h"
 #include "../common_bytes.h"
 
-class HeaderFrame : public BackupFrame
+class HeaderFrame final : public BackupFrame
 {
   enum FIELD : std::uint8_t
   {

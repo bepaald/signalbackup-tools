@@ -35,7 +35,7 @@ struct Period final : std::numpunct<char>
   char do_decimal_point() const override { return '.'; } // make sure std::to_string always uses period for
 };                                                       // decimal point, regardless of locale
 
-class SqlStatementFrame : public BackupFrame
+class SqlStatementFrame final : public BackupFrame
 {
  public:
   enum PARAMETER_FIELD : std::uint8_t
