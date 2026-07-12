@@ -17,8 +17,8 @@
   along with signalbackup-tools.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef BACKUP_PROTOBUF_H_
-#define BACKUP_PROTOBUF_H_
+#ifndef BACKUPV2PROTO_TYPEDEF_H_
+#define BACKUPV2PROTO_TYPEDEF_H_
 
 // https://github.com/signalapp/Signal-Android/blob/main/lib/archive/src/main/protowire/Backup.proto
 
@@ -37,10 +37,6 @@ message Metadata {
   EncryptedBackupId backupId = 2; // used to decrypt the backup file knowing only the Account Entropy Pool
 }
 */
-
-namespace BackupV2
-{
-
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::BYTES> EncryptedBackupId;
 typedef ProtoBufParser<protobuffer::optional::UINT32, EncryptedBackupId> Metadata;
 
@@ -627,6 +623,12 @@ typedef ProtoBufParser<protobuffer::optional::STRING, // question
 
 typedef ProtoBufParser<protobuffer::optional::UINT64> AdminDeletedMessage; // adminid
 
+typedef ProtoBufParser<protobuffer::optional::UINT64, // pinned_at
+                       protobuffer::optional::UINT64, //  \.onof    expiresat
+                       protobuffer::optional::BOOL    //  /         neeverexpires
+                       > PinDetails;
+
+
 typedef ProtoBufParser<protobuffer::optional::UINT64, // conv id
                        protobuffer::optional::UINT64, // author id
                        protobuffer::optional::UINT64, // date sent
@@ -651,6 +653,7 @@ typedef ProtoBufParser<protobuffer::optional::UINT64, // conv id
                        ViewOnceMessage,          //     |
                        DirectStoryReplyMessage,  //     |
                        Poll,                     //     |
+                       PinDetails,               //     |   <---- (not part of oneof)
                        AdminDeletedMessage       //    /
                        > ChatItem;
 
@@ -706,7 +709,5 @@ typedef ProtoBufParser<AccountData,
 #define ADHOCCALL_FRAMENUMBER 6
 #define NOTIFICATIONPROFILE_FRAMENUMBER 7
 #define CHATFOLDER_FRAMENUMBER 8
-
-} // namespace BackupV2
 
 #endif

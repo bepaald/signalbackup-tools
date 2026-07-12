@@ -438,6 +438,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                  "type,"
                                  "JSONLONG(COALESCE(sent_at, json_extract(json, '$.sent_at'), json_extract(json, '$.received_at_ms'), received_at, json_extract(json, '$.received_at'))) AS sent_at,"
                                  "IFNULL(isErased, 0) AS isErased,"
+                                 "json_extract(json, '$.deletedForEveryoneByAdminAci') AS admin_deleted_uuid,"
                                  "IFNULL(isViewOnce, 0) AS isViewOnce,"
                                  "serverGuid,"
                                  "LOWER(" + d_dt_m_sourceuuid + ") AS 'sourceUuid',"
@@ -622,6 +623,23 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         Logger::warning("Failed to get recipient id for message partner. Skipping message.");
         continue;
       }
+
+      long long int deleted_by_id = -1;
+      if (!results_all_messages_from_conversation.isNull(j, "admin_deleted_uuid")) [[unlikely]]
+      {
+        if (d_database.tableContainsColumn(d_mms_table, "deleted_by"))
+        {
+          deleted_by_id = getRecipientIdFromUuidMapped(results_all_messages_from_conversation(j, "admin_deleted_uuid"),
+                                                       &recipientmap, createmissingcontacts);
+          if (deleted_by_id == -1)
+          {
+            Logger::warning("Failed to get recipient id for deleting admin. Skipping message.");
+            continue;
+          }
+        }
+      }
+      else if (results_all_messages_from_conversation.valueAsInt(j, "isErased")) // not admin deleted, but deleted anyway
+        deleted_by_id = incoming ? address : d_selfid;
 
       // PROCESS THE MESSAGE
       if (type == "call-history")
@@ -1309,9 +1327,15 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
         //dtdb->d_database.printLineMode("SELECT json FROM messages WHERE rowid = ?", rowid);
 
         SqliteDB::QueryResults poll_terminate_results;
-        if (!dtdb->d_database.exec("SELECT json_extract(json, '$.pollTerminateNotification.question') AS question,"
-                                   "json_extract(json, '$.pollTerminateNotification.pollMessageId') AS pollMessageId "
-                                   "FROM messages WHERE rowid = ?", rowid, &poll_terminate_results) ||
+        if (!dtdb->d_database.exec("SELECT "
+                                   "json_extract(m1.json, '$.pollTerminateNotification.question') AS question,"
+                                   "COALESCE("
+                                   "  json_extract(m1.json, '$.pollTerminateNotification.pollMessageId'),"
+                                   "  m2.id) "
+                                   "AS pollMessageId "
+                                   "FROM messages AS m1 "
+                                   "LEFT JOIN messages AS m2 ON m2.sent_at = json_extract(m1.json, '$.pollTerminateNotification.pollTimestamp') "
+                                   "WHERE m1.rowid = ?", rowid, &poll_terminate_results) ||
             poll_terminate_results.rows() != 1) [[unlikely]]
         {
           Logger::warning("Failed to get poll-terminate-message data");
@@ -1911,7 +1935,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                        {"quote_mentions", hasquote ? std::any(mmsquote_mentions) : std::any(nullptr)},
                                        {"shared_contacts", shared_contacts_json.empty() ? std::any(nullptr) : std::any(shared_contacts_json)},
                                        {(d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
-                                       {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
+                                       {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && deleted_by_id != -1 ? "deleted_by" : ""), deleted_by_id},
                                        {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
                                           results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                                        {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
@@ -1997,7 +2021,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                                            {((is_pinned && d_database.tableContainsColumn(d_mms_table, "pinned_at")) ? "pinned_at" : ""), pin_pinned_at},
                                            {((is_pinned && d_database.tableContainsColumn(d_mms_table, "pinned_at")) ? "pinned_until" : ""), pin_pinned_until},
                                            {(d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
-                                           {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
+                                           {(d_database.tableContainsColumn(d_mms_table, "deleted_by") && deleted_by_id != -1 ? "deleted_by" : ""), deleted_by_id},
                                            {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
                                               results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                                            {"view_once", results_all_messages_from_conversation.value(j, "isViewOnce")}, // if !createrecipient -> this message was already skipped
@@ -2192,7 +2216,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                         //{"delivery_receipt_count", (incoming ? 0 : 0)}, // set later in setMessagedeliveryreceipts()
                         //{"read_receipt_count", (incoming ? 0 : 0)},     //     "" ""
                         {(d_database.tableContainsColumn("sms", "remote_deleted") ? "remote_deleted" : ""), results_all_messages_from_conversation.value(j, "isErased")},
-                        {(d_database.tableContainsColumn("sms", "deleted_by") && results_all_messages_from_conversation.valueAsInt(j, "isErased", 0) ? "deleted_by" : ""), incoming ? address : d_selfid},
+                        {(d_database.tableContainsColumn("sms", "deleted_by") && deleted_by_id != -1 ? "deleted_by" : ""), deleted_by_id},
                         {((!results_all_messages_from_conversation.isNull(j, "expireTimer") &&
                            results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) != 0) ? "expires_in" : ""), results_all_messages_from_conversation.valueAsInt(j, "expireTimer", 0) * 1000},
                         {"server_guid", results_all_messages_from_conversation.value(j, "serverGuid")}},

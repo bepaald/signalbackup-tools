@@ -589,6 +589,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         background-image: url('data:image/svg+xml;,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M22.5 6.5a4.95 4.95 0 0 0-5-5 4.95 4.95 0 0 0-5 5v3h-9c-1.1 0-2 .9-2 2v9c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-9c0-1.1-.9-2-2-2h-1v-3c0-1.7 1.3-3 3-3s3 1.3 3 3v3h2zm-12 10.2V19h-2v-2.3c-.6-.4-1-1-1-1.7 0-1.1.9-2 2-2s2 .9 2 2c0 .7-.4 1.4-1 1.7z"/></svg>');
       }
 
+      .msg-deleted {
+        background-image: url('data:image/svg+xml;,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" stroke="white" stroke-width="1.5" fill="none"><circle cx="9" cy="9" r="8.25"/><path d="M6 6l6 6m-6 0l6 -6" stroke-linecap="round"/></svg>');
+        filter: var(--icon-f);
+      }
+
       .msg-incoming .is-expiring {
         filter: var(--icon-f);
       }
@@ -693,6 +698,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
         display: flex;
         min-height: calc(1em + 4px);
         flex-flow: row wrap;
+      }
+
+      .admin-deleted {
+        font-weight: bold;
       }
 
       .membername {
@@ -1492,11 +1501,12 @@ R"(
       .msg-status .msg-checkmark,
       .msg-status .msg-expiration-timer-disabled,
       .msg-status .msg-expiration-timer-set,
-      .msg-status .msg-phone-icon {
+      .msg-status .msg-phone-icon,
+      .msg-deleted {
         display: inline-block;
         height: 18px;
         aspect-ratio: 1 / 1;
-        margin-right: 8px;
+        margin-right: 6px;
         top: 3px;
         position: relative;
       }
@@ -2952,15 +2962,31 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   else if (msg_info.is_deleted)
   {
     htmloutput << "            <div>\n";
-    if (msg_info.incoming)
+
+    if (msg_info.deleted_by > 0) [[likely]] // we have a name
     {
-      //if deleted_by > 0 && deleted_by != d_selfid
-      htmloutput << "              <pre>This message was deleted.</pre>\n";
-      //else
-      //  htmloutput << "              <pre>Admin " + getNameFromRid + " deleted this message.</pre>\n";
+      htmloutput << "              <pre><span class=\"msg-deleted\"></span>";
+      if (msg_info.deleted_by == d_selfid) // you deleted your own message
+        htmloutput << "You deleted this message.</pre>\n";
+      else if (msg_info.incoming && msg_info.deleted_by == msg_info.msg_recipient_id) // someone else deleted their own
+        htmloutput << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.deleted_by).display_name)
+                   << " deleted this message.</pre>\n";
+      else if (msg_info.deleted_by != msg_info.msg_recipient_id) // someone deleted someone else's message
+        htmloutput << "Admin <span class=\"admin-deleted msg-name-" << msg_info.deleted_by << "\">"
+                   << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.deleted_by).display_name)
+                   << "</span>"
+                   << " deleted this message.</pre>\n";
+      else
+        htmloutput << "This message was deleted.</pre>\n";
+
     }
-    else
-      htmloutput << "              <pre>You deleted this message.</pre>\n";
+    else [[unlikely]]
+    {
+      if (msg_info.incoming)
+        htmloutput << "              <pre>This message was deleted.</pre>\n";
+      else
+        htmloutput << "              <pre>You deleted this message.</pre>\n";
+    }
     htmloutput << "            </div>\n";
   }
 
