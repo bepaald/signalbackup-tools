@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -534,7 +534,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
       else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
         text = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
-                                   expiration, realtype, contact_name);
+                                   realtype, contact_name);
     }
     escapeXmlString(&text);
   }
@@ -544,7 +544,7 @@ void SignalBackup::handleMms(SqliteDB::QueryResults const &results, std::ofstrea
         d_database.tableContainsColumn(d_mms_table, "message_extras") &&
         results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
       text = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
-                                 expiration, realtype, contact_name);
+                                 realtype, contact_name);
     escapeXmlString(&text);
   }
 

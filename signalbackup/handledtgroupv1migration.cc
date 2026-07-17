@@ -21,7 +21,7 @@
 
 bool SignalBackup::handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid,
                                             long long int thread_id, long long int timestamp, long long int address,
-                                            std::map<std::string, long long int> *recipientmap, bool createcontacts,
+                                            std::map<std::string, long long int, std::less<>> *recipientmap, bool createcontacts,
                                             std::string const &databasedir, bool create_valid_contacts,
                                             bool generatemissingkeys, bool *warned_createcontacts)
 {

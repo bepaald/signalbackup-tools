@@ -22,7 +22,8 @@
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
-void SignalBackup::getGroupInfo(long long int rid, GroupInfo *groupinfo) const
+void SignalBackup::getGroupInfo(long long int rid, GroupInfo *groupinfo,
+                                std::map<std::string, long long int, std::less<>> *recipientmap) const
 {
   std::pair<std::shared_ptr<unsigned char []>, size_t> groupdata =
     d_database.tableContainsColumn("groups", "decrypted_group") ?
@@ -54,7 +55,7 @@ message DecryptedGroup {
   //group_info.print();
 
   // get announcementgroup
-  auto group_info_isannouncement_group = group_info.getField<12>();
+  auto group_info_isannouncement_group = group_info.getFieldView<12>();
   if (group_info_isannouncement_group.has_value())
   {
     /*
@@ -76,7 +77,7 @@ message DecryptedGroup {
 
   // get timer value:
   //std::cout << "=== TIMER:" << std::endl;
-  auto group_info_timer = group_info.getField<4>();
+  auto group_info_timer = group_info.getFieldView<4>();
   if (group_info_timer.has_value())
   {
     /*
@@ -98,7 +99,7 @@ message DecryptedGroup {
 
   // get access control:
   //std::cout << "=== ACCESS CONTROL:" << std::endl;
-  auto group_info_accesscontrol = group_info.getField<5>();
+  auto group_info_accesscontrol = group_info.getFieldView<5>();
   if (group_info_accesscontrol.has_value())
   {
     /*
@@ -173,7 +174,7 @@ message AccessControl {
   // get members:
   {
     //std::cout << "=== MEMBERS:" << std::endl;
-    auto members = group_info.getField<7>();
+    auto members = group_info.getFieldView<7>();
     for (unsigned int i = 0; i < members.size(); ++i)
     {
       /*
@@ -193,7 +194,7 @@ message AccessControl {
         }
       */
       // uuid
-      auto [uuid, uuid_size] = members[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      auto [uuid, uuid_size] = members[i].getFieldView<1>().value_or(std::make_pair(nullptr, 0)); // bytes
       if (uuid_size < 16) [[unlikely]]
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
@@ -217,7 +218,7 @@ message AccessControl {
       //std::cout << uuidstr << " (" << role << ")" << std::endl;
       if (role == 2) // ADMIN
       {
-        long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
+        long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap);
         if (id != -1) [[likely]]
           groupinfo->admin_ids.push_back(id);
       }
@@ -234,7 +235,7 @@ message AccessControl {
       //std::cout << uuidstr << " (" << labelemoji << " " << labelstring << ")" << std::endl;
       if (!label.second.empty()) // _only_ emoji seems not possible
       {
-        long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
+        long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap);
         if (id != -1) [[likely]]
           groupinfo->labels.emplace(id, std::move(label));
       }
@@ -250,7 +251,7 @@ message AccessControl {
   for (auto const &m : member_color_id)
 #endif
   {
-    long long int id = getRecipientIdFromUuidMapped(m, nullptr);
+    long long int id = getRecipientIdFromUuidMapped(m, recipientmap);
     if (id == -1) [[unlikely]]
       continue;
     groupinfo->colors.emplace(id, s_html_random_groupmember_colors[midx++ % s_html_random_groupmember_colors.size()]);
@@ -259,7 +260,7 @@ message AccessControl {
   // get pending members:
   {
     //std::cout << "=== PENDING MEMBERS:" << std::endl;
-    auto pendingmembers = group_info.getField<8>();
+    auto pendingmembers = group_info.getFieldView<8>();
     for (unsigned int i = 0; i < pendingmembers.size(); ++i)
     {
       /*
@@ -272,7 +273,7 @@ message AccessControl {
         }
       */
       // uuid
-      auto [uuid, uuid_size] = pendingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      auto [uuid, uuid_size] = pendingmembers[i].getFieldView<1>().value_or(std::make_pair(nullptr, 0)); // bytes
       if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
@@ -283,7 +284,7 @@ message AccessControl {
       // if (pendingmembers[i].getField<2>().has_value())
       //   role = pendingmembers[i].getField<2>().value();
 
-      long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap);
       if (id != -1)
         groupinfo->pending_members.push_back(id);
 
@@ -297,7 +298,7 @@ message AccessControl {
   // get requesting members:
   {
     //std::cout << "=== REQUESTING MEMBERS:" << std::endl;
-    auto requestingmembers = group_info.getField<9>();
+    auto requestingmembers = group_info.getFieldView<9>();
     for (unsigned int i = 0; i < requestingmembers.size(); ++i)
     {
       /*
@@ -308,13 +309,13 @@ message AccessControl {
         }
       */
       // uuid
-      auto [uuid, uuid_size] = requestingmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      auto [uuid, uuid_size] = requestingmembers[i].getFieldView<1>().value_or(std::make_pair(nullptr, 0)); // bytes
       if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-      long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap);
       if (id != -1)
         groupinfo->requesting_members.push_back(id);
 
@@ -329,7 +330,7 @@ message AccessControl {
   // get banned members:
   {
     //std::cout << "=== BANNED MEMBERS:" << std::endl;
-    auto bannedmembers = group_info.getField<13>();
+    auto bannedmembers = group_info.getFieldView<13>();
     for (unsigned int i = 0; i < bannedmembers.size(); ++i)
     {
       /*
@@ -339,13 +340,13 @@ message AccessControl {
         }
       */
       // uuid
-      auto [uuid, uuid_size] = bannedmembers[i].getField<1>().value_or(std::make_pair(nullptr, 0)); // bytes
+      auto [uuid, uuid_size] = bannedmembers[i].getFieldView<1>().value_or(std::make_pair(nullptr, 0)); // bytes
       if (uuid_size < 16)
         continue;
       std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
       uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
-      long long int id = getRecipientIdFromUuidMapped(uuidstr, nullptr);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap);
       if (id != -1)
         groupinfo->banned_members.push_back(id);
 
@@ -359,21 +360,24 @@ message AccessControl {
 
   // get description
   //std::cout << "=== DESCRIPTION:" << std::endl;
-  auto group_info_description = group_info.getField<11>();
+  auto group_info_description = group_info.getFieldView<11>();
   if (group_info_description.has_value())
   {
-    std::string desc = (group_info_description.value());
-    groupinfo->description = desc;
+    groupinfo->description = std::string(group_info_description.value());
     //std::cout << desc << std::endl;
   }
   //std::cout << "===" << std::endl << std::endl;
 
   // get group invite password?
   //std::cout << "=== INVITE PW:" << std::endl;
-  auto group_info_invitepw = group_info.getField<10>();
+  auto group_info_invitepw = group_info.getFieldView<10>();
   if (group_info_invitepw.has_value())
   {
+#if __cpp_placeholder_variables >= 202306L
+    auto [_, pwsize] = group_info_invitepw.value();
+#else
     auto [pw, pwsize] = group_info_invitepw.value();
+#endif
     //std::cout << bepaald::bytesToHexString(pw, pwsize) << std::endl;
     //std::cout << "(base64:) " << Base64::bytesToBase64String(pw, pwsize) << std::endl;
     if (pwsize)

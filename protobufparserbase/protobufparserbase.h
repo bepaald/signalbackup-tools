@@ -171,10 +171,10 @@ namespace ProtoBufParserReturn
   struct item_return<SFixed32, false>{ typedef std::optional<int32_t> type; };
   template <>
   struct item_return<SFixed64, false>{ typedef std::optional<int64_t> type; };
+  // template <>
+  // struct item_return<char *, false>{ typedef std::optional<std::pair<std::unique_ptr<char []>, uint64_t>> type; };
   template <>
-  struct item_return<char *, false>{ typedef std::optional<std::pair<char *, uint64_t>> type; };
-  template <>
-  struct item_return<unsigned char *, false>{ typedef std::optional<std::pair<unsigned char *, uint64_t>> type; };
+  struct item_return<unsigned char *, false>{ typedef std::optional<std::pair<std::unique_ptr<unsigned char []>, uint64_t>> type; };
 
   // for vectors:
   template <typename T>
@@ -191,10 +191,34 @@ namespace ProtoBufParserReturn
   struct item_return<std::vector<SFixed32>, true>{ typedef std::vector<int32_t> type; };
   template <>
   struct item_return<std::vector<SFixed64>, true>{ typedef std::vector<int64_t> type; };
+  // template <>
+  // struct item_return<std::vector<char *>, true>{ typedef std::vector<std::pair<std::unique_ptr<char []>, uint64_t>> type; };
   template <>
-  struct item_return<std::vector<char *>, true>{ typedef std::vector<std::pair<char *, uint64_t>> type; };
+  struct item_return<std::vector<unsigned char *>, true>{ typedef std::vector<std::pair<std::unique_ptr<unsigned char []>, uint64_t>> type; };
+
+  // primary
+  template <typename T, bool vec>
+  struct item_return_view {};
+
+  // for optionals
+  template <typename T>
+  struct item_return_view<T, false> { typedef typename item_return<T, false>::type type; };
   template <>
-  struct item_return<std::vector<unsigned char *>, true>{ typedef std::vector<std::pair<unsigned char *, uint64_t>> type; };
+  struct item_return_view<std::string, false>{ typedef std::optional<std::string_view> type; };
+  // template <>
+  // struct item_return_view<char *, false>{ typedef std::optional<std::pair<char *, uint64_t>> type; };
+  template <>
+  struct item_return_view<unsigned char *, false>{ typedef std::optional<std::pair<unsigned char *, uint64_t>> type; };
+
+  // for vectors:
+  template <typename T>
+  struct item_return_view<T, true> { typedef typename item_return<T, true>::type type;  };
+  template <>
+  struct item_return_view<std::vector<std::string>, true>{ typedef std::vector<std::string_view> type; };
+  // template <>
+  // struct item_return_view<std::vector<char *>, true>{ typedef std::vector<std::pair<char *, uint64_t>> type; };
+  template <>
+  struct item_return_view<std::vector<unsigned char *>, true>{ typedef std::vector<std::pair<unsigned char *, uint64_t>> type; };
 }
 
 class ProtoBufParserBase
@@ -212,15 +236,17 @@ class ProtoBufParserBase
 
   unsigned char *d_data;
   uint64_t d_size;
+  bool d_viewonly;
  public:
   inline ProtoBufParserBase();
   inline explicit ProtoBufParserBase(std::string const &base64);
-  explicit ProtoBufParserBase(unsigned char const *data, int64_t size);
-  inline ProtoBufParserBase(ProtoBufParserBase const &other);
+  inline ProtoBufParserBase(unsigned char const *data, uint64_t size);
+  inline ProtoBufParserBase(unsigned char *data, uint64_t size, bool viewonly);
+  inline explicit ProtoBufParserBase(ProtoBufParserBase const &other);
   inline ProtoBufParserBase &operator=(ProtoBufParserBase const &other);
   inline ProtoBufParserBase(ProtoBufParserBase &&other) noexcept;
   inline ProtoBufParserBase &operator=(ProtoBufParserBase &&other) noexcept;
-  inline ~ProtoBufParserBase();
+  ~ProtoBufParserBase();
 
   inline bool operator==(ProtoBufParserBase const &other) const;
   inline bool operator!=(ProtoBufParserBase const &other) const;
@@ -248,38 +274,53 @@ class ProtoBufParserBase
   inline std::pair<unsigned char *, uint64_t> getFieldData(int num, int32_t *wiretype, unsigned int *pos) const;
   inline void getPosAndLengthForField(int num, int startpos, int64_t *pos, int64_t *fieldlength) const;
   inline bool fieldExists(int num) const;
-  template <typename T>
-  inline typename ProtoBufParserReturn::item_return<T, false>::type getFieldAs(int num) const;
-  template <typename T>
-  inline typename ProtoBufParserReturn::item_return<T, true>::type getFieldsAs(int num) const; // T must be std::vector<Something>
+  template <typename T, bool asview>
+  inline auto getFieldAs(int num) const;
+  template <typename T, bool asview>
+  inline auto getFieldsAs(int num) const; // T must be std::vector<Something>
+  // template <typename T>
+  // inline typename ProtoBufParserReturn::item_return_view<T, false>::type getFieldViewAs(int num) const;
+  // template <typename T>
+  // inline typename ProtoBufParserReturn::item_return_view<T, true>::type getFieldsViewAs(int num) const; // T must be std::vector<Something>
 };
 
 inline ProtoBufParserBase::ProtoBufParserBase()
   :
   d_data(nullptr),
-  d_size(0)
+  d_size(0),
+  d_viewonly(false)
 {}
 
 inline ProtoBufParserBase::ProtoBufParserBase(ProtoBufParserBase const &other)
   :
-  d_data(nullptr),
-  d_size(other.d_size)
+  d_data(other.d_viewonly ? other.d_data : nullptr),
+  d_size(other.d_size),
+  d_viewonly(other.d_viewonly)
 {
-  d_data = new unsigned char[d_size];
-  if (d_size)
-    std::memcpy(d_data, other.d_data, d_size);
+  if (!d_viewonly)
+  {
+    d_data = new unsigned char[d_size];
+    if (d_size)
+      std::memcpy(d_data, other.d_data, d_size);
+  }
 }
 
 inline ProtoBufParserBase &ProtoBufParserBase::operator=(ProtoBufParserBase const &other)
 {
   if (this != &other)
   {
-    bepaald::destroyPtr(&d_data, &d_size);
+    clear();
 
     d_size = other.d_size;
-    d_data = new unsigned char[d_size];
-    if (d_size)
-      std::memcpy(d_data, other.d_data, d_size);
+    d_viewonly = other.d_viewonly;
+    if (d_viewonly)
+    {
+      d_data = new unsigned char[d_size];
+      if (d_size)
+        std::memcpy(d_data, other.d_data, d_size);
+    }
+    else
+      d_data = other.d_data;
   }
   return *this;
 }
@@ -287,7 +328,8 @@ inline ProtoBufParserBase &ProtoBufParserBase::operator=(ProtoBufParserBase cons
 inline ProtoBufParserBase::ProtoBufParserBase(ProtoBufParserBase &&other) noexcept
   :
   d_data(other.d_data),
-  d_size(other.d_size)
+  d_size(other.d_size),
+  d_viewonly(other.d_viewonly)
 {
   other.d_data = nullptr;
   other.d_size = 0;
@@ -297,10 +339,11 @@ inline ProtoBufParserBase &ProtoBufParserBase::operator=(ProtoBufParserBase &&ot
 {
   if (this != &other)
   {
-    bepaald::destroyPtr(&d_data, &d_size);
+    clear();
 
     d_data = other.d_data;
     d_size = other.d_size;
+    d_viewonly = other.d_viewonly;
 
     other.d_data = nullptr;
     other.d_size = 0;
@@ -311,7 +354,8 @@ inline ProtoBufParserBase &ProtoBufParserBase::operator=(ProtoBufParserBase &&ot
 inline ProtoBufParserBase::ProtoBufParserBase(std::string const &base64)
   :
   d_data(nullptr),
-  d_size(0)
+  d_size(0),
+  d_viewonly(false)
 {
   std::pair<unsigned char *, size_t> l_data = Base64::base64StringToBytes(base64);
   d_data = l_data.first;
@@ -320,24 +364,40 @@ inline ProtoBufParserBase::ProtoBufParserBase(std::string const &base64)
   //std::cout << "INPUT: " << bepaald::bytesToHexString(d_data, d_size) << std::endl;
 }
 
-inline ProtoBufParserBase::ProtoBufParserBase(unsigned char const *data, int64_t size)
+inline ProtoBufParserBase::ProtoBufParserBase(unsigned char const *data, uint64_t size)
   :
   d_data(nullptr),
-  d_size(size)
+  d_size(size),
+  d_viewonly(false)
 {
   d_data = new unsigned char[d_size];
   if (d_size)
     std::memcpy(d_data, data, d_size);
 }
 
+inline ProtoBufParserBase::ProtoBufParserBase(unsigned char *data, uint64_t size, bool viewonly)
+  :
+  d_data(viewonly ? data : nullptr),
+  d_size(size),
+  d_viewonly(viewonly)
+{
+  if (!viewonly) [[unlikely]]
+  {
+    d_data = new unsigned char[d_size];
+    if (d_size)
+      std::memcpy(d_data, data, d_size);
+  }
+}
+
 inline ProtoBufParserBase::~ProtoBufParserBase()
 {
-  bepaald::destroyPtr(&d_data, &d_size);
+  clear();
 }
 
 inline void ProtoBufParserBase::clear()
 {
-  bepaald::destroyPtr(&d_data, &d_size);
+  if (!d_viewonly)
+    bepaald::destroyPtr(&d_data, &d_size);
 }
 
 inline bool ProtoBufParserBase::operator==(ProtoBufParserBase const &other) const
@@ -819,23 +879,64 @@ bool ProtoBufParserBase::fieldExists(int num) const
   return false;
 }
 
+// template <typename T>
+// constexpr void printType()
+// {
+//   std::string_view name = __PRETTY_FUNCTION__;
+//   std::string_view prefix = "constexpr auto type_name() [with T = ";
+//   std::string_view suffix = "]";
 
-// for optional?
-template <typename T>
-inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParserBase::getFieldAs(int num) const
+//   name.remove_prefix(prefix.size());
+//   name.remove_suffix(suffix.size());
+//   std::cout << name << std::endl;
+// }
+
+// for optional
+template <typename T, bool asview>
+inline auto ProtoBufParserBase::getFieldAs(int num) const
 {
+
+  typedef typename std::conditional<asview,
+                                    typename ProtoBufParserReturn::item_return_view<T, false>::type,
+                                    typename ProtoBufParserReturn::item_return<T, false>::type>::type ReturnType;
+  typedef typename std::conditional<asview,
+                                    typename ProtoBufParserReturn::item_return_view<T, false>::type::value_type,
+                                    typename ProtoBufParserReturn::item_return<T, false>::type::value_type>::type ReturnType_held;
+
+  // std::cout << "TYPE: " << std::endl;
+  // printType<T>();
+  // printType<ReturnType>();
+
   int32_t wiretype;
-  std::pair<unsigned char *, int64_t> fielddata(getFieldData(num, &wiretype));
+  std::pair<unsigned char *, uint64_t> fielddata(getFieldData(num, &wiretype));
   if (fielddata.first)
   {
-    if constexpr (std::is_constructible<T, char *, int64_t>::value) // this handles std::string and ProtoBufParser<U...> ?
-      return T(reinterpret_cast<char *>(fielddata.first), fielddata.second);
-    else if constexpr (std::is_constructible<T, unsigned char *, int64_t>::value)
-      return T(fielddata.first, fielddata.second);
-    else if constexpr (std::is_same<T, char *>::value) // binary blob
-      return std::pair<char *, int64_t>{reinterpret_cast<char *>(fielddata.first), fielddata.second};
+
+    if constexpr (std::is_base_of<ProtoBufParserBase, T>::value) // this handles std::string and ProtoBufParser<U...> ?
+    {
+      //if constexpr (asview)
+      return ReturnType({fielddata.first, fielddata.second, asview});
+      //else
+      //  return ReturnType({fielddata.first, fielddata.second});
+    }
+    else if constexpr (std::is_same<T, std::string>::value)
+    {
+      //if constexpr (asview)
+      return ReturnType({reinterpret_cast<char *>(fielddata.first), fielddata.second});
+      //else
+      //  return ReturnType({reinterpret_cast<char *>(fielddata.first), fielddata.second});
+    }
     else if constexpr (std::is_same<T, unsigned char *>::value)
-      return fielddata;
+    {
+      if constexpr (asview)
+        return ReturnType({fielddata.first, fielddata.second});
+      else
+      {
+        std::unique_ptr<unsigned char []> tmp(new unsigned char[fielddata.second]);
+        std::memcpy(tmp.get(), fielddata.first, fielddata.second);
+        return ReturnType({std::move(tmp), fielddata.second});
+      }
+    }
     else // some numerical type (double / float / (u)int32/64 / bool / Enum)
     {
       if (wiretype == WIRETYPE::VARINT) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
@@ -843,12 +944,12 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
         if constexpr (std::is_same<T, ZigZag32>::value || std::is_same<T, ZigZag64>::value)
         {
           unsigned int pos = 0;
-          return readVarInt(&pos, fielddata.first, fielddata.second, true);
+          return ReturnType({static_cast<ReturnType_held>(readVarInt(&pos, fielddata.first, fielddata.second, true))});
         }
         else
         {
           unsigned int pos = 0;
-          return readVarInt(&pos, fielddata.first, fielddata.second);
+          return ReturnType({static_cast<ReturnType_held>(readVarInt(&pos, fielddata.first, fielddata.second))});
         }
       }
       else
@@ -856,11 +957,11 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
         if constexpr (std::is_same<T, Fixed32>::value || std::is_same<T, Fixed64>::value ||
                       std::is_same<T, SFixed32>::value || std::is_same<T, SFixed64>::value)
         {
-          if (sizeof(T) == fielddata.second) [[likely]]
+          if (sizeof(ReturnType_held) == fielddata.second) [[likely]]
           {
-            typename ProtoBufParserReturn::item_return<T, false>::type::value_type result; // ie.: uint32_t result; (stripped off std::optional
+            ReturnType_held result; // ie.: uint32_t result; (stripped off std::optional
             std::memcpy(reinterpret_cast<char *>(&result), reinterpret_cast<char *>(fielddata.first), fielddata.second);
-            return result;
+            return std::make_optional<ReturnType_held>(std::move(result));
           }
           else
           {
@@ -868,13 +969,13 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
           }
 
         }
-        else if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value) // float and double...
+        else if constexpr (!std::is_same<T, ZigZag32>::value && !std::is_same<T, ZigZag64>::value) // float and double and bool...
         {
-          if (sizeof(T) == fielddata.second) [[likely]]
+          if (sizeof(ReturnType_held) == fielddata.second) [[likely]]
           {
-            T result;
+            ReturnType_held result; // ie.: uint32_t result; (stripped off std::optional
             std::memcpy(reinterpret_cast<char *>(&result), reinterpret_cast<char *>(fielddata.first), fielddata.second);
-            return result;
+            return std::make_optional<ReturnType_held>(std::move(result));
           }
           else
           {
@@ -884,112 +985,248 @@ inline typename ProtoBufParserReturn::item_return<T, false>::type ProtoBufParser
       }
     }
   }
-  return {};
+  return ReturnType{};
 }
 
 // for repeated
-template <typename T>
-inline typename ProtoBufParserReturn::item_return<T, true>::type ProtoBufParserBase::getFieldsAs(int num) const
+template <typename T, bool asview>
+inline auto ProtoBufParserBase::getFieldsAs(int num) const
 {
-  typename ProtoBufParserReturn::item_return<T, true>::type result; // == for example, for repeated::BYTES -> std::vector<std::pair<unsigned char *, size_t>>
+  typedef typename ProtoBufParserReturn::item_return<T, true>::type::value_type HeldType_valuetype;
+  typedef typename std::conditional<asview,
+                                    typename ProtoBufParserReturn::item_return_view<T, true>::type,          // == for example, for repeated::BYTES -> std::vector<std::pair<unsigned char *, size_t>>
+                                    typename ProtoBufParserReturn::item_return<T, true>::type>::type ReturnType; // == for example, for repeated::BYTES -> std::vector<std::pair<std::unique_ptr<unsined char []>, size_t>>
+  typedef typename std::conditional<asview,
+                                    typename ProtoBufParserReturn::item_return_view<T, true>::type::value_type,
+                                    typename ProtoBufParserReturn::item_return<T, true>::type::value_type>::type ReturnType_held;
+
+  // std::cout << "TYPE: " << std::endl;
+  // printType<T>();
+  // printType<HeldType_valuetype>();
+  // printType<ReturnType>();
+  // printType<ReturnType_held>();
+
   unsigned int pos = 0;
+  ReturnType result;
   while (true)
   {
     int32_t wiretype;
     std::pair<unsigned char *, uint64_t> fielddata(getFieldData(num, &wiretype, &pos));
-    if (fielddata.first)
+    if (!fielddata.first)
+      break;
+
+    if constexpr (std::is_base_of<ProtoBufParserBase, HeldType_valuetype>::value) // this handles std::string and ProtoBufParser<U...> ?
     {
-      if constexpr (std::is_constructible<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, char *, int64_t>::value)
-        result.emplace_back(typename ProtoBufParserReturn::item_return<T, true>::type::value_type(reinterpret_cast<char *>(fielddata.first), fielddata.second));
-      else if constexpr (std::is_constructible<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, unsigned char *, int64_t>::value)
-        result.emplace_back(typename ProtoBufParserReturn::item_return<T, true>::type::value_type(fielddata.first, fielddata.second));
-      else if constexpr (std::is_same<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, char *>::value)
-        result.emplace_back(std::pair<char *, int64_t>{reinterpret_cast<char *>(fielddata.first), fielddata.second});
-      else if constexpr (std::is_same<typename ProtoBufParserReturn::item_return<T, true>::type::value_type, unsigned char *>::value)
-        result.emplace_back(fielddata);
-      else // maybe check return type is numerical? if constexpr (typename ProtoBufParserReturn::item_return<T, true>::type::value_type == numerical type);
+      //if constexpr (asview)
+      result.emplace_back(ReturnType_held{fielddata.first, fielddata.second, asview});
+      //else
+      //  result.emplace_back(ReturnType_held{fielddata.first, fielddata.second});
+    }
+    else if constexpr (std::is_same<HeldType_valuetype, std::string>::value)
+    {
+      //if constexpr (asview)
+      result.emplace_back(ReturnType_held{reinterpret_cast<char *>(fielddata.first), fielddata.second});
+      //else
+      //  result.emplace_back(ReturnType_held{reinterpret_cast<char *>(fielddata.first), fielddata.second});
+    }
+    else if constexpr (std::is_same<T, std::vector<unsigned char *>>::value)
+    {
+      if constexpr (asview)
+        result.emplace_back(std::make_pair(fielddata.first, fielddata.second));
+      else
       {
-        if (wiretype == WIRETYPE::VARINT) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
+        std::unique_ptr<unsigned char []> tmp(new unsigned char[fielddata.second]);
+        std::memcpy(tmp.get(), fielddata.first, fielddata.second);
+        result.emplace_back(std::make_pair(std::move(tmp), fielddata.second));
+      }
+    }
+    else // maybe check return type is numerical? if constexpr (held_type == numerical type);
+    {
+      if (wiretype == WIRETYPE::VARINT) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
+      {
+        if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
+                      std::is_same<typename T::value_type, ZigZag64>::value)
         {
-          if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
-                        std::is_same<typename T::value_type, ZigZag64>::value)
-          {
-            unsigned int pos2 = 0;
-            result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
-          }
-          else
-          {
-            unsigned int pos2 = 0;
-            result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second));
-          }
+          unsigned int pos2 = 0;
+          result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
         }
-        else // wiretype not varint -> [S]FIXED[32|64]
+        else
         {
-          if (sizeof(typename ProtoBufParserReturn::item_return<T, true>::type::value_type) == fielddata.second &&
-              (wiretype == WIRETYPE::FIXED64 || wiretype == WIRETYPE::FIXED32)) [[likely]] // [float/double/fixed32/fixed64]
+          unsigned int pos2 = 0;
+          result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second));
+        }
+      }
+      else // wiretype not varint -> [S]FIXED[32|64]
+      {
+        if (sizeof(ReturnType_held) == fielddata.second &&
+            (wiretype == WIRETYPE::FIXED64 || wiretype == WIRETYPE::FIXED32)) [[likely]] // [float/double/fixed32/fixed64]
+        {
+          ReturnType_held fixednumerical;
+          std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);
+          result.push_back(fixednumerical);
+        }
+        else
+        {
+          // if any type, that is normally VARINT ([U|S]INT[32|64]+BOOL), is in a LENGTH_DELIMITED field
+          // and is a repeated::-type, this indicates a 'packed' field: the wiretype and length are omitted
+          // after the first value, instead the length indicates the total length of the pack, and values
+          // are concatenated one after the other...
+          if (wiretype == WIRETYPE::LENGTH_DELIMITED)
           {
-            typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical;
-            std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);
-            result.push_back(fixednumerical);
+            // Logger::message("Data: ", bepaald::bytesToHexString(fielddata), "(size: ", fielddata.second, ")");
+            unsigned int pos2 = 0;
+            while (pos2 < fielddata.second)
+            {
+              if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
+                            std::is_same<typename T::value_type, ZigZag64>::value)
+                //std::cout << "Readin varint from fielddata... pos: " << pos2 << " total length: " << fielddata.second << std::endl;
+                result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
+              else if constexpr (std::is_same<typename T::value_type, Fixed32>::value ||
+                                 std::is_same<typename T::value_type, SFixed32>::value ||
+                                 std::is_same<typename T::value_type, float>::value)
+              {
+                if (fielddata.second < pos2 + 4) [[unlikely]]
+                  break;
+                ReturnType_held fixednumerical; // could be int32, int64, float or double
+                std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 4);
+                pos2 += 4;
+                result.push_back(fixednumerical);
+              }
+              else if constexpr (std::is_same<typename T::value_type, Fixed64>::value ||
+                                 std::is_same<typename T::value_type, SFixed64>::value ||
+                                 std::is_same<typename T::value_type, double>::value)
+              {
+                if (fielddata.second < pos2 + 8) [[unlikely]]
+                  break;
+                ReturnType_held fixednumerical; // could be int32, int64, float or double
+                std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 8);
+                pos2 += 8;
+                result.push_back(fixednumerical);
+              }
+              else // VARINT ([S|U]INT[32|64]/BOOL)
+                result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, false));
+              //std::cout << "GOT : " << result.back() << std::endl;
+              //std::cout << "Pos now: " << pos2 << std::endl;
+            }
           }
           else
           {
-            // if any type, that is normally VARINT ([U|S]INT[32|64]+BOOL), is in a LENGTH_DELIMITED field
-            // and is a repeated::-type, this indicates a 'packed' field: the wiretype and length are omitted
-            // after the first value, instead the length indicates the total length of the pack, and values
-            // are concatenated one after the other...
-            if (wiretype == WIRETYPE::LENGTH_DELIMITED)
-            {
-              // Logger::message("Data: ", bepaald::bytesToHexString(fielddata), "(size: ", fielddata.second, ")");
-              unsigned int pos2 = 0;
-              while (pos2 < fielddata.second)
-              {
-                if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
-                              std::is_same<typename T::value_type, ZigZag64>::value)
-                  //std::cout << "Readin varint from fielddata... pos: " << pos2 << " total length: " << fielddata.second << std::endl;
-                  result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
-                else if constexpr (std::is_same<typename T::value_type, Fixed32>::value ||
-                                   std::is_same<typename T::value_type, SFixed32>::value ||
-                                   std::is_same<typename T::value_type, float>::value)
-                {
-                  if (fielddata.second < pos2 + 4) [[unlikely]]
-                    break;
-                  typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
-                  std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 4);
-                  pos2 += 4;
-                  result.push_back(fixednumerical);
-                }
-                else if constexpr (std::is_same<typename T::value_type, Fixed64>::value ||
-                                   std::is_same<typename T::value_type, SFixed64>::value ||
-                                   std::is_same<typename T::value_type, double>::value)
-                {
-                  if (fielddata.second < pos2 + 8) [[unlikely]]
-                    break;
-                  typename ProtoBufParserReturn::item_return<T, true>::type::value_type fixednumerical; // could be int32, int64, float or double
-                  std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 8);
-                  pos2 += 8;
-                  result.push_back(fixednumerical);
-                }
-                else // VARINT ([S|U]INT[32|64]/BOOL)
-                  result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, false));
-                //std::cout << "GOT : " << result.back() << std::endl;
-                //std::cout << "Pos now: " << pos2 << std::endl;
-              }
-            }
-            else
-            {
-              Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (3). Field data size: ", fielddata.second);
-              Logger::error_indent("Field data: ", bepaald::bytesToHexString(fielddata));
-            }
+            Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (3). Field data size: ", fielddata.second);
+            Logger::error_indent("Field data: ", bepaald::bytesToHexString(fielddata));
           }
         }
       }
-      pos += fielddata.second;
     }
-    else
-      break;
+    pos += fielddata.second;
   }
   return result;
 }
+
+// // for repeated view
+// template <typename T>
+// inline typename ProtoBufParserReturn::item_return_view<T, true>::type ProtoBufParserBase::getFieldsViewAs(int num) const
+// {
+//   typename ProtoBufParserReturn::item_return_view<T, true>::type result; // == for example, for repeated::BYTES -> std::vector<std::pair<unsigned char *, size_t>>
+//   typedef typename ProtoBufParserReturn::item_return_view<T, true>::type::value_type held_type; //  == for example, for repeated::BYTES -> std::pair<unsigned char *, size_t>
+
+//   unsigned int pos = 0;
+//   while (true)
+//   {
+//     int32_t wiretype;
+//     std::pair<unsigned char *, uint64_t> fielddata(getFieldData(num, &wiretype, &pos));
+//     if (fielddata.first)
+//     {
+//       if constexpr (std::is_base_of<ProtoBufParserBase, held_type>::value) // this handles std::string and ProtoBufParser<U...> ?
+//         result.emplace_back(fielddata.first, fielddata.second, true);
+//       else if constexpr (std::is_same<held_type, ProtoBufParserReturn::item_return_view<protobuffer::repeated::BYTES, true>::type::value_type>::value)
+//         result.emplace_back(fielddata.first, fielddata.second);
+//       else if constexpr (std::is_constructible<held_type, char *, int64_t>::value)
+//         result.emplace_back(held_type(reinterpret_cast<char *>(fielddata.first), fielddata.second));
+//       else if constexpr (std::is_constructible<held_type, unsigned char *, int64_t>::value)
+//          result.emplace_back(held_type(fielddata.first, fielddata.second));
+//       else // maybe check return type is numerical? if constexpr (held_type == numerical type);
+//       {
+//         if (wiretype == WIRETYPE::VARINT) [[likely]] // wiretype was varint -> raw data needs to be decoded into the actual number
+//         {
+//           if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
+//                         std::is_same<typename T::value_type, ZigZag64>::value)
+//           {
+//             unsigned int pos2 = 0;
+//             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
+//           }
+//           else
+//           {
+//             unsigned int pos2 = 0;
+//             result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second));
+//           }
+//         }
+//         else // wiretype not varint -> [S]FIXED[32|64]
+//         {
+//           if (sizeof(held_type) == fielddata.second &&
+//               (wiretype == WIRETYPE::FIXED64 || wiretype == WIRETYPE::FIXED32)) [[likely]] // [float/double/fixed32/fixed64]
+//           {
+//             held_type fixednumerical;
+//             std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first), fielddata.second);
+//             result.push_back(fixednumerical);
+//           }
+//           else
+//           {
+//             // if any type, that is normally VARINT ([U|S]INT[32|64]+BOOL), is in a LENGTH_DELIMITED field
+//             // and is a repeated::-type, this indicates a 'packed' field: the wiretype and length are omitted
+//             // after the first value, instead the length indicates the total length of the pack, and values
+//             // are concatenated one after the other...
+//             if (wiretype == WIRETYPE::LENGTH_DELIMITED)
+//             {
+//               // Logger::message("Data: ", bepaald::bytesToHexString(fielddata), "(size: ", fielddata.second, ")");
+//               unsigned int pos2 = 0;
+//               while (pos2 < fielddata.second)
+//               {
+//                 if constexpr (std::is_same<typename T::value_type, ZigZag32>::value ||
+//                               std::is_same<typename T::value_type, ZigZag64>::value)
+//                   //std::cout << "Readin varint from fielddata... pos: " << pos2 << " total length: " << fielddata.second << std::endl;
+//                   result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, true));
+//                 else if constexpr (std::is_same<typename T::value_type, Fixed32>::value ||
+//                                    std::is_same<typename T::value_type, SFixed32>::value ||
+//                                    std::is_same<typename T::value_type, float>::value)
+//                 {
+//                   if (fielddata.second < pos2 + 4) [[unlikely]]
+//                     break;
+//                   held_type fixednumerical; // could be int32, int64, float or double
+//                   std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 4);
+//                   pos2 += 4;
+//                   result.push_back(fixednumerical);
+//                 }
+//                 else if constexpr (std::is_same<typename T::value_type, Fixed64>::value ||
+//                                    std::is_same<typename T::value_type, SFixed64>::value ||
+//                                    std::is_same<typename T::value_type, double>::value)
+//                 {
+//                   if (fielddata.second < pos2 + 8) [[unlikely]]
+//                     break;
+//                   held_type fixednumerical; // could be int32, int64, float or double
+//                   std::memcpy(reinterpret_cast<char *>(&fixednumerical), reinterpret_cast<char *>(fielddata.first + pos2), 8);
+//                   pos2 += 8;
+//                   result.push_back(fixednumerical);
+//                 }
+//                 else // VARINT ([S|U]INT[32|64]/BOOL)
+//                   result.push_back(readVarInt(&pos2, fielddata.first, fielddata.second, false));
+//                 //std::cout << "GOT : " << result.back() << std::endl;
+//                 //std::cout << "Pos now: " << pos2 << std::endl;
+//               }
+//             }
+//             else
+//             {
+//               Logger::error("ProtoBufParser: REQUESTED TYPE TOO SMALL (3). Field data size: ", fielddata.second);
+//               Logger::error_indent("Field data: ", bepaald::bytesToHexString(fielddata));
+//             }
+//           }
+//         }
+//       }
+//       pos += fielddata.second;
+//     }
+//     else
+//       break;
+//   }
+//   return result;
+// }
 
 #endif

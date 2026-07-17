@@ -38,7 +38,7 @@
 bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid,
                                               long long int thread_id, long long int address, long long int date,
                                               std::map<long long int, long long int> *adjusted_timestamps,
-                                              std::map<std::string, long long int> *savedmap,
+                                              std::map<std::string, long long int, std::less<>> *savedmap,
                                               std::string const &databasedir, bool istimermessage, bool createcontacts,
                                               bool createvalidcontacts, bool generatemissingkeys, bool *warn)
 {

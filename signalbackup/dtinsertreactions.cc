@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -20,7 +20,7 @@
 #include "signalbackup.ih"
 
 void SignalBackup::dtInsertReactions(SqliteDB const &ddb, long long int message_id, std::vector<std::vector<std::string>> const &reactions,
-                                     bool mms, std::map<std::string, long long int> *savedmap, std::string const &databasedir,
+                                     bool mms, std::map<std::string, long long int, std::less<>> *savedmap, std::string const &databasedir,
                                      bool createcontacts, bool createcontacts_valid, bool generatekeys)
 {
   if (d_verbose && reactions.size()) [[unlikely]]

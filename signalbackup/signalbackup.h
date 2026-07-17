@@ -397,7 +397,7 @@ class SignalBackup
   void duplicateQuotes(std::string *s) const;
   std::string decodeStatusMessage(std::string const &body, long long int expiration, long long int type,
                                   std::string const &contactname, IconType *icon = nullptr) const;
-  std::string decodeStatusMessage(std::pair<std::shared_ptr<unsigned char []>, size_t> const &body, long long int expiration,
+  std::string decodeStatusMessage(std::pair<std::shared_ptr<unsigned char []>, size_t> const &body,
                                   long long int type, std::string const &contactname, IconType *icon = nullptr) const;
   void escapeXmlString(std::string *s) const;
   bool unescapeXmlString(std::string *s) const;
@@ -451,7 +451,7 @@ class SignalBackup
                               long long int rowid, SqliteDB const &ddb, std::string const &where,
                               std::string const &databasedir, bool isquote, bool issticker, bool targetisdummy);
   bool handleDTPoll(SqliteDB const &ddb, std::string const &databasedir, long long int mms_id, long long int rid, std::string const &pollmsg_id,
-                    long long int pollmsg_date, std::string const &poll_json, std::map<std::string, long long int> *savedmap,
+                    long long int pollmsg_date, std::string const &poll_json, std::map<std::string, long long int, std::less<>> *savedmap,
                     std::map<std::string, std::pair<long long int, long long int>> *pollmap, bool createcontacts, bool create_valid_contacts,
                     bool generatestoragekeys, bool *warn);
   bool dtSetLinkPreviewData(long long int mms_id, long long int rowid, SqliteDB const &ddb) const;
@@ -460,30 +460,31 @@ class SignalBackup
                                bool insertincompletedataforexport) const;
   bool handleDTGroupChangeMessage(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int address,
                                   long long int date, std::map<long long int, long long int> *adjusted_timestamps,
-                                  std::map<std::string, long long int> *savedmap, std::string const &databasedir, bool istimermessage,
+                                  std::map<std::string, long long int, std::less<>> *savedmap, std::string const &databasedir, bool istimermessage,
                                   bool createcontacts, bool create_valid_contacts, bool generatestoragekeys, bool *warn);
   bool handleDTExpirationChangeMessage(SqliteDB const &ddb, long long int rowid, long long int ttid, long long int sent_at, long long int address) const;
   bool handleDTGroupV1Migration(SqliteDB const &ddb, long long int rowid, long long int thread_id, long long int timestamp,
-                                long long int address, std::map<std::string, long long int> *savedmap, bool createcontacts,
+                                long long int address, std::map<std::string, long long int, std::less<>> *savedmap, bool createcontacts,
                                 std::string const &databasedir, bool create_valid_contacts, bool generatestoragekeys, bool *warn);
   void getDTReactions(SqliteDB const &ddb, long long int rowid, long long int numreactions,
                       std::vector<std::vector<std::string>> *reactions) const;
   void dtInsertReactions(SqliteDB const &ddb, long long int message_id, std::vector<std::vector<std::string>> const &reactions, bool mms,
-                         std::map<std::string, long long int> *savedmap, std::string const &databasedir, bool createcontacts,
+                         std::map<std::string, long long int, std::less<>> *savedmap, std::string const &databasedir, bool createcontacts,
                          bool create_valid_contacts, bool generatestoragekeys);
-  long long int getRecipientIdFromUuidMapped(std::string const &uuid, std::map<std::string, long long int> *savedmap,
+  long long int getRecipientIdFromUuidMapped(std::string_view uuid, std::map<std::string, long long int, std::less<>> *savedmap,
                                              bool suppresswarning = false) const;
-  long long int getRecipientIdFromPhoneMapped(std::string const &phone, std::map<std::string, long long int> *savedmap,
+  long long int getRecipientIdFromPhoneMapped(std::string_view phone, std::map<std::string, long long int, std::less<>> *savedmap,
                                               bool suppresswarning = false) const;
   inline std::string getNameFromUuid(std::string const &uuid) const;
   std::string getNameFromRecipientId(long long int id) const;
-  void dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
+  void dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int, std::less<>> *savedmap,
                                     std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup,
                                     bool create_valid_contacts, bool generatestoragekeys, bool *warn);
   bool HTMLwriteStart(std::ofstream &file, long long int thread_recipient_id, std::string const &directory,
                       std::string const &threaddir, bool isgroup, GroupInfo const &groupinf, bool isnotetoself, bool isreleasechannel,
                       std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo,
-                      std::map<long long int, std::string> *written_avatars, bool overwrite, bool append,
+                      std::map<long long int, std::string> *written_avatars,
+                      std::map<std::string, long long int, std::less<>> *recipientmap, bool overwrite, bool append,
                       bool light, bool themeswitching, bool searchpage, bool exportdetails, bool pagemenu) const;
   void HTMLwriteAttachmentDiv(std::ofstream &htmloutput, SqliteDB::QueryResults const &attachment_results, int indent,
                               std::string const &directory, std::string const &threaddir, bool use_original_filenames,
@@ -502,7 +503,8 @@ class SignalBackup
                            long long int uniqueid, std::string const &attachment_filename, long long int timestamp,
                            bool overwrite, bool append) const;
   bool HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
-                       std::map<long long int, RecipientInfo> *recipients_info, bool incoming,
+                       std::map<long long int, RecipientInfo> *recipients_info,
+                       std::map<std::string, long long int, std::less<>> *recipientmap, bool incoming,
                        std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
                        bool linkify, bool isquote) const;
   bool HTMLemojify(std::string *str, std::set<int> const &excluded_pos = std::set<int>()) const;
@@ -511,31 +513,36 @@ class SignalBackup
                               bool overwrite, bool append) const;
   void HTMLwriteMessage(std::ofstream &filt, HTMLMessageInfo const &msginfo, GroupInfo const &groupinfo,
                         std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
-                        std::map<long long int, RecipientInfo> *recipientinfo, bool searchpage, bool writereceipts,
-                        std::vector<std::string> const &ignoremediatypes) const;
+                        std::map<long long int, RecipientInfo> *recipient_info,
+                        std::map<std::string, long long int, std::less<>> *recipientmap,
+                        bool searchpage, bool writereceipts, std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info, GroupInfo const &groupinfo,
                          std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
-                         std::map<long long int, RecipientInfo> *recipientinfo, bool linkify,
+                         std::map<long long int, RecipientInfo> *recipientinfo,
+                         std::map<std::string, long long int, std::less<>> *recipientmap, bool linkify,
                          std::vector<std::string> const &ignoremediatypes) const;
   void HTMLwriteMsgReceiptInfo(std::ofstream &htmloutput, std::map<long long int, RecipientInfo> *recipientinfo,
                                long long int message_id, bool isgroup, long long int read_count,
                                long long int delivered_count, long long int timestamp, int indent) const;
 
   inline bool HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                             std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid, bool calllog,
+                             std::map<long long int, RecipientInfo> *recipient_info,
+                             std::map<std::string, long long int, std::less<>> *recipientmap, long long int note_to_self_tid, bool calllog,
                              bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                              bool append, bool light, bool themeswitching, std::string const &exportdetails,
                              std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders,
                              bool excludeexpiring, std::map<int, int> const &tid_pagecount_map, bool compact) const;
   inline bool HTMLwriteChatFolder(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                                  std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
+                                  std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info,
+                                  std::map<std::string, long long int, std::less<>> *recipientmap, long long int note_to_self_tid,
                                   bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                                   bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx,
                                   std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders, bool excludeexpiring,
                                   std::map<int, int> const &tid_pagecount_map, bool compact) const;
 
   bool HTMLwriteIndexImpl(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                          std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
+                          std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info,
+                          std::map<std::string, long long int, std::less<>> *recipientmap, long long int note_to_self_tid,
                           bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                           bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx,
                           std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders, bool excludeexpiring,
@@ -550,7 +557,8 @@ class SignalBackup
                              std::string const &exportdetails) const;
   bool HTMLwriteBlockedlist(std::string const &dir, std::map<long long int, RecipientInfo> *recipientinfo, bool overwrite,
                             bool append, bool light, bool themeswitching, std::string const &exportdetails, bool compact) const;
-  bool HTMLwriteFullContacts(std::string const &dir, std::map<long long int, RecipientInfo> *recipientinfo, bool overwrite,
+  bool HTMLwriteFullContacts(std::string const &dir, std::map<long long int, RecipientInfo> *recipientinfo,
+                             std::map<std::string, long long int, std::less<>> *recipientmap, bool overwrite,
                              bool append, bool light, bool themeswitching, std::string const &exportdetails, bool compact) const;
   bool HTMLwriteSettings(std::string const &dir, bool overwrite, bool append, bool light,
                          bool themeswitching, std::string const &exportdetails) const;
@@ -562,15 +570,17 @@ class SignalBackup
   void HTMLLinkifyToken(std::string_view token, int tokenoffset, std::vector<Range> *ranges) const;
   void HTMLLinkify(std::string const &body, std::vector<Range> *ranges) const;
   std::set<long long int> getAllThreadRecipients(long long int t) const;
-  void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo) const;
+  void setRecipientInfo(std::set<long long int> const &recipients, std::map<long long int, RecipientInfo> *recipientinfo,
+                        std::map<std::string, long long int, std::less<>> *recipientmap) const;
   std::string getAvatarExtension(long long int recipient_id) const;
   void prepRanges(std::vector<Range> *ranges) const;
   void applyRanges(std::string *body, std::vector<Range> *ranges, std::set<int> *positions_excluded_from_escape) const;
   std::vector<std::pair<unsigned int, unsigned int>> HTMLgetEmojiPos(std::string_view line) const;
   std::string getHostname(std::string_view host) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
-  std::string decodeProfileChangeMessage(std::string const &body, std::string const &name, IconType *icon) const;
-  std::string decodePollTerminateMessage(std::string const &body, long long int type, std::string const &name, IconType *icon) const;
+  std::string decodeGroupV2UpdateMessage(DecryptedGroupV2Context const &groupv2ctx, long long int type, std::string const &name, IconType *icon) const;
+  std::string decodeProfileChangeMessage(ProfileChangeDetails const &pcd, std::string const &name, IconType *icon) const;
+  std::string decodePollTerminateMessage(PollTerminate const &body, long long int type, std::string const &name, IconType *icon) const;
   inline constexpr int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
   inline int utf16CharSize(std::string_view body, unsigned int idx) const;
   inline int utf8Chars(std::string const &body) const;
@@ -579,16 +589,17 @@ class SignalBackup
   std::string utf8BytesToHexString(unsigned char const *const data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::shared_ptr<unsigned char[]> const &data, size_t data_size) const;
   inline std::string utf8BytesToHexString(std::string const &data) const;
-  inline RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid) const;
+  inline RecipientInfo const &getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info, long long int rid,
+                                                      std::map<std::string, long long int, std::less<>> *recipientmap = nullptr) const;
   bool migrateDatabase(int from, int to) const;
   long long int dtCreateRecipient(SqliteDB const &ddb, std::string const &id, std::string const &phone, std::string const &gidb64,
-                                  std::string const &databasedir, std::map<std::string, long long int> *recipient_info,
+                                  std::string const &databasedir, std::map<std::string, long long int, std::less<>> *recipient_info,
                                   bool create_valid_contacts, bool generatestoragekeys, bool *warn);
   bool dtUpdateProfile(SqliteDB const &ddb, std::string const &dtid, long long int aid, std::string const &databasedir);
   bool dtSetAvatar(std::string const &avatarpath, std::string const &key, int64_t size, int version,
                    long long int rid, std::string const &databasedir);
   std::string dtSetSharedContactsJsonString(SqliteDB const &ddb, long long int rowid) const;
-  void getGroupInfo(long long int rid, GroupInfo *groupinfo) const;
+  void getGroupInfo(long long int rid, GroupInfo *groupinfo, std::map<std::string, long long int, std::less<>> *recipient_info) const;
   std::pair<std::string, std::string> getCustomColor(std::pair<std::shared_ptr<unsigned char []>, size_t> const &colorproto) const;
   std::string HTMLprepLinkPreviewDescription(std::string const &in) const;
   long long int getFreeDateForMessage(long long int targetdate, long long int thread_id, long long int from_recipient_id) const;
@@ -621,7 +632,7 @@ class SignalBackup
   long long int getRecipientIdFromField(std::string const &field, std::string const &value, bool withthread) const;
   std::string unicodeToUtf8(uint32_t unicode) const;
   int utf16ToUnicodeCodepoint(uint16_t utf16, uint32_t *codepoint) const;
-  std::string makePrintable(std::string const &in) const;
+  std::string makePrintable(std::string_view in) const;
   bool specialCharsSupported(std::string const &path) const;
   template <typename T>
   inline void oldGroupMemberTokenizer(std::string_view membersstring, std::vector<T> *members) const;
@@ -940,10 +951,11 @@ inline long long int SignalBackup::getIntOr(SqliteDB::QueryResults const &result
 inline bool SignalBackup::HTMLprepMsgBody(std::string *body) const
 {
   return HTMLprepMsgBody(body,
-                         std::vector<std::tuple<long long int, long long int, long long int>>(), // mentions
+                         std::vector<std::tuple<long long int, long long int, long long int>>(), // mentions = EMPTY!
                          nullptr, // recipient_info* ?? NOTE! if mentions or rangedata would not be empty, this pointer could be dereferenced
+                         nullptr, // recipientmap
                          false, //incoming
-                         std::pair<std::shared_ptr<unsigned char []>, size_t>(), //rangedata
+                         std::pair<std::shared_ptr<unsigned char []>, size_t>(), // rangedata = EMPTY!
                          false, // linkify
                          false); //isquote
 }
@@ -954,26 +966,28 @@ inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
 }
 
 inline bool SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                                         std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
+                                         std::map<long long int, RecipientInfo> *recipient_info,
+                                         std::map<std::string, long long int, std::less<>> *recipientmap, long long int note_to_self_tid,
                                          bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                                          bool append, bool light, bool themeswitching, std::string const &exportdetails,
                                          std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders,
                                          bool excludeexpiring, std::map<int, int> const &tid_pagecount_map, bool compact) const
 {
-  return HTMLwriteIndexImpl(threads, maxtimestamp, directory, "index", recipient_info, note_to_self_tid, calllog, searchpage, stickerpacks, blocked,
-                            fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, -1, chatfolders, excludeexpiring,
+  return HTMLwriteIndexImpl(threads, maxtimestamp, directory, "index", recipient_info, recipientmap, note_to_self_tid, calllog, searchpage, stickerpacks,
+                            blocked, fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, -1, chatfolders, excludeexpiring,
                             tid_pagecount_map, compact);
 }
 
 inline bool SignalBackup::HTMLwriteChatFolder(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
-                                              std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info, long long int note_to_self_tid,
+                                              std::string const &basename,  std::map<long long int, RecipientInfo> *recipient_info,
+                                              std::map<std::string, long long int, std::less<>> *recipientmap, long long int note_to_self_tid,
                                               bool calllog, bool searchpage, bool stickerpacks, bool blocked, bool fullcontacts, bool settings,  bool overwrite,
                                               bool append, bool light, bool themeswitching, std::string const &exportdetails, long long int chatfolderidx,
                                               std::vector<std::tuple<long long int, std::string, std::string>> const &chatfolders, bool excludeexpiring,
                                               std::map<int, int> const &tid_pagecount_map, bool compact) const
 {
-  return HTMLwriteIndexImpl(threads, maxtimestamp, directory, basename, recipient_info, note_to_self_tid, calllog, searchpage, stickerpacks, blocked,
-                            fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, chatfolderidx, chatfolders, excludeexpiring,
+  return HTMLwriteIndexImpl(threads, maxtimestamp, directory, basename, recipient_info, recipientmap, note_to_self_tid, calllog, searchpage, stickerpacks,
+                            blocked, fullcontacts, settings, overwrite, append, light, themeswitching, exportdetails, chatfolderidx, chatfolders, excludeexpiring,
                             tid_pagecount_map, compact);
 }
 
@@ -1092,7 +1106,8 @@ inline std::string SignalBackup::utf8BytesToHexString(std::string const &data) c
 }
 
 inline SignalBackup::RecipientInfo const &SignalBackup::getRecipientInfoFromMap(std::map<long long int, RecipientInfo> *recipient_info,
-                                                                                long long int rid) const
+                                                                                long long int rid,
+                                                                                std::map<std::string, long long int, std::less<>> *recipientmap) const
 {
   if (auto found = recipient_info->find(rid); found != recipient_info->end()) [[likely]]
     return found->second;
@@ -1100,7 +1115,7 @@ inline SignalBackup::RecipientInfo const &SignalBackup::getRecipientInfoFromMap(
   // if (bepaald::contains(recipient_info, rid))
   //   return (*recipient_info)[rid];
 
-  setRecipientInfo({rid}, recipient_info);
+  setRecipientInfo({rid}, recipient_info, recipientmap);
   return (*recipient_info)[rid];
 }
 

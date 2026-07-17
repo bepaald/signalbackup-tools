@@ -20,7 +20,8 @@
 #include "signalbackup.ih"
 
 void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
-                                    std::map<long long int, RecipientInfo> *recipientinfo) const
+                                    std::map<long long int, RecipientInfo> *recipientinfo,
+                                    std::map<std::string, long long int, std::less<>> *recipientmap) const
 {
   // get info from all recipients:
   for (long long int rid : recipients)
@@ -147,6 +148,10 @@ void SignalBackup::setRecipientInfo(std::set<long long int> const &recipients,
                                    [rid](auto const &p) { return p.first == bepaald::toString(rid); }) != d_avatars.end());
 
     bool verified = (results.valueAsInt(0, "verified") == 1);
+
+
+    if (recipientmap)
+      recipientmap->insert({results.valueAsString(0, d_recipient_aci), rid});
 
     recipientinfo->emplace(rid, RecipientInfo{display_name,
                                               initial,

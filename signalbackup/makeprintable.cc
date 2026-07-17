@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-std::string SignalBackup::makePrintable(std::string const &in) const
+std::string SignalBackup::makePrintable(std::string_view in) const
 {
   std::string printable_uuid(in);
 

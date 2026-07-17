@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int> *savedmap,
+void SignalBackup::dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int, std::less<>> *savedmap,
                                                 std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms,
                                                 bool isgroup, bool create_valid_contacts, bool generatemissingkeys, bool *warn)
 {

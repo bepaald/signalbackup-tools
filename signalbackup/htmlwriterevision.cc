@@ -21,7 +21,8 @@
 
 void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, HTMLMessageInfo const &parent_info,
                                      GroupInfo const &groupinfo, std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
-                                     std::map<long long int, RecipientInfo> *recipient_info, bool linkify,
+                                     std::map<long long int, RecipientInfo> *recipient_info,
+                                     std::map<std::string, long long int, std::less<>> *recipientmap, bool linkify,
                                      std::vector<std::string> const &ignoremediatypes) const
 {
   SqliteDB::QueryResults revision;
@@ -131,7 +132,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
     else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
              revision.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"))
       body = decodeStatusMessage(revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"),
-                                 revision.getValueAs<long long int>(0, "expires_in"), type, getRecipientInfoFromMap(recipient_info, target_rid).display_name, &icon);
+                                 type, getRecipientInfoFromMap(recipient_info, target_rid).display_name, &icon);
   }
 
   // prep body (scan emoji? -> in <span>) and handle mentions...
@@ -145,7 +146,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   if (!revision.isNull(0, d_mms_ranges))
     brdata = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, d_mms_ranges);
 
-  bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, incoming, brdata, linkify, false /*isquote*/);
+  bool only_emoji = HTMLprepMsgBody(&body, mentions, recipient_info, recipientmap, incoming, brdata, linkify, false /*isquote*/);
 
   bool nobackground = false;
   if ((only_emoji && quote_id == 0 && !attachment_results.rows()) ||  // if no quote etc
@@ -157,7 +158,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
   std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
   if (!revision.isNull(0, "quote_mentions"))
     quote_mentions = revision.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "quote_mentions");
-  HTMLprepMsgBody(&quote_body, mentions, recipient_info, incoming, quote_mentions, linkify, true /*isquote*/);
+  HTMLprepMsgBody(&quote_body, mentions, recipient_info, recipientmap, incoming, quote_mentions, linkify, true /*isquote*/);
 
   SqliteDB::QueryResults poll; // it is currently not possible to edit polls
   SqliteDB::QueryResults poll_options;
@@ -208,5 +209,5 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             parent_info.append,    // ?
                             parent_info.story_reply});
 
-  HTMLwriteMessage(filt, msg_info, groupinfo, quotemap, recipient_info, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
+  HTMLwriteMessage(filt, msg_info, groupinfo, quotemap, recipient_info, recipientmap, false /*searchpage*/, false /*writereceipts*/, ignoremediatypes);
 }

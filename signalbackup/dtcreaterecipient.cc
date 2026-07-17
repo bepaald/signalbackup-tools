@@ -30,7 +30,7 @@
 long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                                               std::string const &id, std::string const &phone, std::string const &groupidb64,
                                               std::string const &databasedir,
-                                              std::map<std::string, long long int> *recipient_info,
+                                              std::map<std::string, long long int, std::less<>> *recipient_info,
                                               bool create_valid_contacts, bool generatestoragekeys, bool *was_warned)
 {
   std::string printable_uuid(makePrintable(id));

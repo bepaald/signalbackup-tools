@@ -36,26 +36,31 @@ class ProtoBufParser : public ProtoBufParserBase
 {
   template <typename... Spec2> friend class ProtoBufParser;
  private:
-  template <int idx>
-  static inline auto constexpr getDeepType() -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type;
-  template <int idx, int idx2, int... rest>
+  template <bool viewonly, int idx>
+  static inline auto constexpr getDeepType();
+  template <bool viewonly, int idx, int idx2, int... rest>
   static inline auto constexpr getDeepType();
 
  public:
   inline ProtoBufParser() = default;
   inline explicit ProtoBufParser(std::string const &base64);
-  explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
-  explicit ProtoBufParser(unsigned char const *data, int64_t size);
+  inline explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
+  inline ProtoBufParser(unsigned char const *data, uint64_t size);
+  inline ProtoBufParser(unsigned char *data, uint64_t size, bool viewonly) : ProtoBufParserBase(data, size, viewonly) {};
   inline ProtoBufParser(ProtoBufParser const &other) = default;
   inline ProtoBufParser &operator=(ProtoBufParser const &other) = default;
-  inline ProtoBufParser(ProtoBufParser &&other) noexcept = default;
+  inline explicit ProtoBufParser(ProtoBufParser &&other) noexcept = default;
   inline ProtoBufParser &operator=(ProtoBufParser &&other) noexcept = default;
-  ~ProtoBufParser() = default;
+  inline ~ProtoBufParser() = default;
 
   template <int idx>
   inline auto getField() const -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type;
+  template <int idx>
+  inline auto getFieldView() const -> typename ProtoBufParserReturn::item_return_view<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type;
   template <int idx, int idx2, int... rest>
   inline auto getField() const;// -> decltype(getDeepType<idx, idx2, rest...>());
+  template <int idx, int idx2, int... rest>
+  inline auto getFieldView() const;// -> decltype(getDeepType<idx, idx2, rest...>());
 
   // add repeated things
   template <unsigned int idx>
@@ -102,19 +107,19 @@ class ProtoBufParser : public ProtoBufParserBase
 };
 
 template <typename... Spec>
-ProtoBufParser<Spec...>::ProtoBufParser(std::string const &base64)
+inline ProtoBufParser<Spec...>::ProtoBufParser(std::string const &base64)
   :
   ProtoBufParserBase(base64)
 {}
 
 template <typename... Spec>
-ProtoBufParser<Spec...>::ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data)
+inline ProtoBufParser<Spec...>::ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data)
   :
   ProtoBufParserBase(data.first.get(), data.second)
 {}
 
 template <typename... Spec>
-ProtoBufParser<Spec...>::ProtoBufParser(unsigned char const *data, int64_t size)
+inline ProtoBufParser<Spec...>::ProtoBufParser(unsigned char const *data, uint64_t size)
   :
   ProtoBufParserBase(data, size)
 {}
@@ -124,9 +129,20 @@ template <int idx>
 inline auto ProtoBufParser<Spec...>::getField() const -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type
 {
   if constexpr (!is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
-    return getFieldAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>(idx);
+    return getFieldAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, false>(idx);
   else
-    return getFieldsAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>(idx);
+    return getFieldsAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, false>(idx);
+}
+
+template <typename... Spec>
+template <int idx>
+inline auto ProtoBufParser<Spec...>::getFieldView() const -> typename ProtoBufParserReturn::item_return_view<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type
+{
+  if constexpr (!is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
+    return getFieldAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, true>(idx);
+  else
+    return getFieldsAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, true>(idx);
+  //return getFieldsViewAs<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>(idx);
 }
 
 template <typename... Spec>
@@ -135,30 +151,47 @@ inline auto ProtoBufParser<Spec...>::getField() const// -> decltype(getDeepType<
 {
   static_assert(is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}, "Trying to recurse into flat type");
 
-  auto firstfield = getField<idx>();
+  auto firstfield = getFieldView<idx>();
   if (firstfield.has_value())
     return firstfield->template getField<idx2, rest...>();
 
-  return getDeepType<idx, idx2, rest...>();
-}
-
-template <typename... Spec>
-template <int idx>
-inline auto constexpr ProtoBufParser<Spec...>::getDeepType() -> typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type //static
-{
-  if constexpr (is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
-    return typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type{};
-  return std::optional<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{};
+  return getDeepType<false, idx, idx2, rest...>();
 }
 
 template <typename... Spec>
 template <int idx, int idx2, int... rest>
+inline auto ProtoBufParser<Spec...>::getFieldView() const// -> decltype(getDeepType<idx, idx2, rest...>())
+{
+  static_assert(is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}, "Trying to recurse into flat type");
+
+  auto firstfield = getFieldView<idx>();
+  if (firstfield.has_value())
+    return firstfield->template getFieldView<idx2, rest...>();
+
+  return getDeepType<true, idx, idx2, rest...>();
+}
+
+template <typename... Spec>
+template <bool viewonly, int idx>
+inline auto constexpr ProtoBufParser<Spec...>::getDeepType()
+{
+  if constexpr (viewonly)
+    return typename ProtoBufParserReturn::item_return_view<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type{};
+  else
+    return typename ProtoBufParserReturn::item_return<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type, is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}>::type{};
+  // if constexpr (is_vector<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{})
+  //   return typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type{};
+  // return std::optional<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{};
+}
+
+template <typename... Spec>
+template <bool viewonly, int idx, int idx2, int... rest>
 inline auto constexpr ProtoBufParser<Spec...>::getDeepType() //static
 {
   static_assert(is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>{}, "Trying to recurse into flat type");
 
   // Wowsers!
-  return decltype(std::declval<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>().template getDeepType<idx2, rest...>()){};
+  return decltype(std::declval<typename std::remove_reference<decltype(std::get<idx - 1>(std::tuple<Spec...>()))>::type>().template getDeepType<viewonly, idx2, rest...>()){};
 }
 
 template <typename... Spec>
@@ -317,7 +350,7 @@ inline bool ProtoBufParser<Spec...>::addFieldInternal(T const &value)
   {
     if constexpr (is_specialization_of<std::pair, T>{}) // bytes
       std::memcpy(mem + mempos, value.first, fielddatasize);
-    else // string
+    else // string(_view)
       std::memcpy(mem + mempos, value.data(), fielddatasize);
   }
   else if constexpr (type == WIRETYPE::FIXED32 || type == WIRETYPE::FIXED64)
@@ -449,7 +482,7 @@ inline void ProtoBufParser<Spec...>::checkBufferFields(std::string_view pb_messa
     }
   }
 
-  // iterate know fields,
+  // iterate known fields,
   // if vector of ProtobufParser -> recurse all...
   // if ProtobufParser -> recurse
   // if dummy -> check present
@@ -459,7 +492,7 @@ inline void ProtoBufParser<Spec...>::checkBufferFields(std::string_view pb_messa
     {
       if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type::value_type>{})
       {
-        auto rec = getField<idx + 1>();
+        auto rec = getFieldView<idx + 1>();
         fields.push_back(idx + 1);
         for (unsigned int i = 0; i < rec.size(); ++i)
           rec[i].checkBufferFields(pb_messagename, fields);
@@ -469,7 +502,7 @@ inline void ProtoBufParser<Spec...>::checkBufferFields(std::string_view pb_messa
     else if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type>{})
     {
       //std::cout << "YES PROTOBUFFER" << std::endl;
-      auto rec = getField<idx + 1>();
+      auto rec = getFieldView<idx + 1>();
       if (rec.has_value())
       {
         //std::cout << "With value!" << std::endl;
@@ -497,7 +530,7 @@ template <typename... Spec>
 template<std::size_t idx>
 inline void ProtoBufParser<Spec...>::printSingle(int indent, std::string const &typestring) const
 {
-  auto tmp = getField<idx + 1>();
+  auto tmp = getFieldView<idx + 1>();
   if (tmp.has_value())
     Logger::message(std::string(indent, ' '), "Field ", idx + 1, " ", typestring, ": ", tmp.value());
 }
@@ -506,7 +539,7 @@ template <typename... Spec>
 template <std::size_t idx, typename T>
 inline void ProtoBufParser<Spec...>::printRepeated(int indent, std::string const &typestring) const
 {
-  std::vector<T> tmp = getField<idx + 1>();
+  std::vector<T> tmp = getFieldView<idx + 1>();
   for (unsigned int i = 0; i < tmp.size(); ++i)
     Logger::message(std::string(indent, ' '), "Field ", idx + 1, " ", typestring, " (", i + 1 , "/", tmp.size(), "): ", tmp[i]);
   return;
@@ -530,7 +563,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::STRING>::value)
     return printSingle<idx>(indent, "(optional::string)");
   // {
-  //   auto tmp = getField<idx + 1>();
+  //   auto tmp = getFieldView<idx + 1>();
   //   if (tmp.has_value())
   //     std::cout << std::string(indent, ' ') << "Field " << idx + 1 << " (optional::STRING): " << tmp.value() << std::endl;
   //   return;
@@ -577,7 +610,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::BOOL>::value)
   {
-    auto tmp = getField<idx + 1>();
+    auto tmp = getFieldView<idx + 1>();
     if (tmp.has_value())
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::bool): ", std::boolalpha, tmp.value());
     return;
@@ -586,7 +619,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   // bytes
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::optional::BYTES>::value)
   {
-    std::optional<std::pair<unsigned char *, size_t>> tmp = getField<idx + 1>();
+    std::optional<std::pair<unsigned char *, size_t>> tmp = getFieldView<idx + 1>();
     if (tmp.has_value())
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::bytes[", tmp.value().second, "]): ", bepaald::bytesToHexString(tmp.value().first, tmp.value().second));
     return;
@@ -595,17 +628,17 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   // single protobuffer
   if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type>{})
   {
-    if (getField<idx + 1>().has_value())
+    if (getFieldView<idx + 1>().has_value())
     {
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (optional::protobuf):");
-      return getField<idx + 1>().value().print(indent + 2);
+      return getFieldView<idx + 1>().value().print(indent + 2);
     }
   }
 
   // REPEATED
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::STRING>::value)
-    return printRepeated<idx, std::string>(indent, "(repeated::string)");
+    return printRepeated<idx, std::string_view>(indent, "(repeated::string)");
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::INT32>::value)
     return printRepeated<idx, int32_t>(indent, "(repeated::int32)");
@@ -648,7 +681,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
 
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BOOL>::value)
   {
-    std::vector<bool> tmp = getField<idx + 1>();
+    std::vector<bool> tmp = getFieldView<idx + 1>();
     for (unsigned int i = 0; i < tmp.size(); ++i)
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bool) (", i + 1 , "/", tmp.size(), "): ", std::boolalpha, tmp[i]);
     return;
@@ -657,7 +690,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   // bytes
   if constexpr (std::is_same<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type, protobuffer::repeated::BYTES>::value)
   {
-    std::vector<std::pair<unsigned char *, uint64_t>> tmp = getField<idx + 1>();
+    std::vector<std::pair<unsigned char *, uint64_t>> tmp = getFieldView<idx + 1>();
     for (unsigned int i = 0; i < tmp.size(); ++i)
       Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::bytes[", tmp[i].second, "]) (", i + 1 , "/", tmp.size(), "): ",
                       bepaald::bytesToHexString(tmp[i].first, tmp[i].second));
@@ -668,7 +701,7 @@ inline void ProtoBufParser<Spec...>::printHelper4(int indent) const
   if constexpr (is_vector<typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type>{})
     if constexpr (is_specialization_of<ProtoBufParser, typename std::remove_reference<decltype(std::get<idx>(std::tuple<Spec...>()))>::type::value_type>{})
     {
-      auto tmp = getField<idx + 1>();
+      auto tmp = getFieldView<idx + 1>();
       for (unsigned int i = 0; i < tmp.size(); ++i)
       {
         Logger::message(std::string(indent, ' '), "Field ", idx + 1, " (repeated::protobuf) (", i + 1 , "/", tmp.size(), "):");

@@ -316,6 +316,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
   }
 
   std::map<int, int> thread_pagecount_map; // maps the number of pages for each thread.
+  std::map<std::string, long long int, std::less<>> recipientmap; // save a mapping from uuid -> recipient_id
 
   for (unsigned int t_idx = 0; t_idx < threads.size(); ++t_idx)
   {
@@ -413,7 +414,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
     std::set<long long int> all_recipients_ids = getAllThreadRecipients(t);
 
     //try to set any missing info on recipients
-    setRecipientInfo(all_recipients_ids, &rid_recipientinfo_map);
+    setRecipientInfo(all_recipients_ids, &rid_recipientinfo_map, &recipientmap);
 
     //for (auto const &ri : rid_recipientinfo_map)
     //  std::cout << ri.first << ": " << ri.second.display_name << std::endl;
@@ -529,12 +530,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
       // gather group info if it is a group...
       GroupInfo groupinfo;
       if (isgroup)
-        getGroupInfo(thread_recipient_id, &groupinfo);
+        getGroupInfo(thread_recipient_id, &groupinfo, &recipientmap);
 
       // create start of html (css, head, start of body
       HTMLwriteStart(htmloutput, thread_recipient_id, directory, threaddir, isgroup, groupinfo, is_note_to_self,
-                     is_releasechannel, all_recipients_ids, &rid_recipientinfo_map, &rid_writtenavatarpath_map, overwrite,
-                     append, lighttheme, themeswitching, searchpage, addexportdetails, pagemenu && totalpages > 1);
+                     is_releasechannel, all_recipients_ids, &rid_recipientinfo_map, &rid_writtenavatarpath_map,
+                     &recipientmap, overwrite, append, lighttheme, themeswitching, searchpage, addexportdetails,
+                     pagemenu && totalpages > 1);
       while (messagecount < (max_msg_per_page * (pagenumber + 1)) &&
              messages(messagecount, "periodsplit") == previous_period_split_string)
       {
@@ -676,12 +678,12 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
               !((d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                  messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))))
             msg_info.body = decodeStatusMessage(msg_info.body, msg_info.expires_in,  msg_info.type,
-                                                getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &msg_info.icon);
+                                                getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid, &recipientmap).display_name, &msg_info.icon);
           else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                    messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"))
             msg_info.body = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "message_extras"),
-                                                msg_info.expires_in, msg_info.type,
-                                                getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid).display_name, &msg_info.icon);
+                                                msg_info.type, getRecipientInfoFromMap(&rid_recipientinfo_map, target_rid, &recipientmap).display_name,
+                                                &msg_info.icon);
         }
 
         // collect mentions if any...
@@ -719,7 +721,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         }
 
         // prep body: scan emoji, linkify, and handle mentions and message ranges...
-        msg_info.only_emoji = HTMLprepMsgBody(&msg_info.body, mentions, &rid_recipientinfo_map, msg_info.incoming, brdata, linkify, false /*isquote*/);
+        msg_info.only_emoji = HTMLprepMsgBody(&msg_info.body, mentions, &rid_recipientinfo_map, &recipientmap, msg_info.incoming, brdata, linkify, false /*isquote*/);
 
         // set no background on msg bubble
         bool issticker = (attachment_results.rows() == 1 && !attachment_results.isNull(0, "sticker_pack_id"));
@@ -735,7 +737,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
           std::pair<std::shared_ptr<unsigned char []>, size_t> quote_mentions{nullptr, 0};
           if (!messages.isNull(messagecount, "quote_mentions"))
             quote_mentions = messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(messagecount, "quote_mentions");
-          HTMLprepMsgBody(&msg_info.quote_body, mentions, &rid_recipientinfo_map, msg_info.incoming, quote_mentions, false /*linkify*/, true);
+          HTMLprepMsgBody(&msg_info.quote_body, mentions, &rid_recipientinfo_map, &recipientmap, msg_info.incoming, quote_mentions, false /*linkify*/, true);
         }
 
         // insert date-change message
@@ -752,7 +754,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
         previous_day_change = readable_date_day;
         previous_period_split_string = messages(messagecount, "periodsplit");
 
-        HTMLwriteMessage(htmloutput, msg_info, groupinfo, quoteid_page_and_msgid_map, &rid_recipientinfo_map, searchpage, receipts, ignoremediatypes);
+        HTMLwriteMessage(htmloutput, msg_info, groupinfo, quoteid_page_and_msgid_map, &rid_recipientinfo_map, &recipientmap, searchpage, receipts, ignoremediatypes);
 
         if (msg_info.is_quoted)
           quoteid_page_and_msgid_map.emplace(messages.valueAsInt(messagecount, d_mms_date_sent, 0), std::pair(msg_info.filename, msg_info.msg_id));
@@ -1152,17 +1154,16 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
 #endif
 
         std::string filename = "chatfolder_" + cf_results(i, "_id") + "_" + cf_results(i, "name");
-        HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &rid_recipientinfo_map, note_to_self_thread_id,
-                            calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                            append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"),
+        HTMLwriteChatFolder(chatfolder_threads, maxdate, directory, filename, &rid_recipientinfo_map, &recipientmap,
+                            note_to_self_thread_id, calllog, searchpage, stickerpacks, blocked, fullcontacts, settings,
+                            overwrite, append, lighttheme, themeswitching, exportdetails_html, cf_results.valueAsInt(i, "_id"),
                             chatfolders_list, excludeexpiring, thread_pagecount_map, compact);
       }
     }
   }
-  HTMLwriteIndex(indexedthreads, maxdate, directory, &rid_recipientinfo_map, note_to_self_thread_id,
-                 calllog, searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite,
-                 append, lighttheme, themeswitching, exportdetails_html, chatfolders_list,
-                 excludeexpiring, thread_pagecount_map, compact);
+  HTMLwriteIndex(indexedthreads, maxdate, directory, &rid_recipientinfo_map, &recipientmap, note_to_self_thread_id, calllog,
+                 searchpage, stickerpacks, blocked, fullcontacts, settings, overwrite, append, lighttheme, themeswitching,
+                 exportdetails_html, chatfolders_list, excludeexpiring, thread_pagecount_map, compact);
 
   if (calllog)
     HTMLwriteCallLog(threads, directory, datewhereclausecalllog, &rid_recipientinfo_map, note_to_self_thread_id,
@@ -1179,7 +1180,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                          exportdetails_html, compact);
 
   if (fullcontacts)
-    HTMLwriteFullContacts(directory, &rid_recipientinfo_map, overwrite, append, lighttheme, themeswitching,
+    HTMLwriteFullContacts(directory, &rid_recipientinfo_map, &recipientmap, overwrite, append, lighttheme, themeswitching,
                           exportdetails_html, compact);
 
   if (settings)

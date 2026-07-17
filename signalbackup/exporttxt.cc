@@ -201,7 +201,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
     std::set<long long int> all_recipients_ids = getAllThreadRecipients(t);
 
     //try to set any missing info on recipients
-    setRecipientInfo(all_recipients_ids, &recipient_info);
+    setRecipientInfo(all_recipients_ids, &recipient_info, nullptr);
 
     // get conversation name, sanitize it and set outputfilename
     if (recipient_info.find(thread_recipient_id) == recipient_info.end())
@@ -305,8 +305,7 @@ bool SignalBackup::exportTxt(std::string const &directory, std::vector<long long
         else if (d_database.tableContainsColumn(d_mms_table, "message_extras") &&
                  messages.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"))
           statusmsg = decodeStatusMessage(messages.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "message_extras"),
-                                          messages.getValueAs<long long int>(i, "expires_in"), type,
-                                          getRecipientInfoFromMap(&recipient_info, target_rid).display_name);
+                                          type, getRecipientInfoFromMap(&recipient_info, target_rid).display_name);
 
         txtoutput << "[" << readable_date << "] " << "***" << " " << statusmsg <<  '\n';
       }

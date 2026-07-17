@@ -59,27 +59,27 @@ inline ReactionList::ReactionList(std::pair<std::shared_ptr<unsigned char []>, s
 
 inline unsigned int ReactionList::numReactions() const
 {
-  return getField<1>().size();
+  return getFieldView<1>().size();
 }
 
 inline std::string ReactionList::getEmoji(int idx) const
 {
-  return getField<1>()[idx].getField<1>().value_or("");
+  return getFieldView<1>()[idx].getField<1>().value_or(std::string());
 }
 
 inline uint64_t ReactionList::getAuthor(int idx) const
 {
-  return getField<1>()[idx].getField<2>().value_or(0);
+  return getFieldView<1>()[idx].getField<2>().value_or(0);
 }
 
 inline uint64_t ReactionList::getSentTime(int idx) const
 {
-  return getField<1>()[idx].getField<3>().value_or(0);
+  return getFieldView<1>()[idx].getField<3>().value_or(0);
 }
 
 inline uint64_t ReactionList::getReceivedTime(int idx) const
 {
-  return getField<1>()[idx].getField<4>().value_or(0);
+  return getFieldView<1>()[idx].getField<4>().value_or(0);
 }
 
 #endif

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2022-2025  Selwin van Dijk
+  Copyright (C) 2022-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -19,7 +19,7 @@
 
 #include "signalbackup.ih"
 
-long long int SignalBackup::getRecipientIdFromUuidMapped(std::string const &uuid, std::map<std::string, long long int> *savedmap,
+long long int SignalBackup::getRecipientIdFromUuidMapped(std::string_view uuid, std::map<std::string, long long int, std::less<>> *savedmap,
                                                          bool suppresswarning) const
 {
   if (uuid.empty())
@@ -33,24 +33,26 @@ long long int SignalBackup::getRecipientIdFromUuidMapped(std::string const &uuid
       return found->second;
 
   // either savedmap does not exist, or uuid is not in there:
-  std::string printable_uuid(makePrintable(uuid));
   SqliteDB::QueryResults res;
   if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_aci + " = ?1 COLLATE NOCASE OR group_id = ?1 COLLATE NOCASE", uuid, &res) ||
       res.rows() != 1 ||
       !res.valueHasType<long long int>(0, 0))
   {
     if (!suppresswarning) // we can suppress this warning, if we are creating the contact after not finding it...
+    {
+      std::string printable_uuid(makePrintable(uuid));
       Logger::warning("Failed to find recipient for uuid: ", printable_uuid);
+    }
     return -1;
   }
   //res.prettyPrint();
   if (savedmap)
-    (*savedmap)[uuid] = res.getValueAs<long long int>(0, 0);
+    savedmap->insert({std::string(uuid), res.getValueAs<long long int>(0, 0)});
 
   return res.getValueAs<long long int>(0, 0);
 }
 
-long long int SignalBackup::getRecipientIdFromPhoneMapped(std::string const &phone, std::map<std::string, long long int> *savedmap,
+long long int SignalBackup::getRecipientIdFromPhoneMapped(std::string_view phone, std::map<std::string, long long int, std::less<>> *savedmap,
                                                           bool suppresswarning) const
 {
   if (phone.empty())
@@ -64,25 +66,26 @@ long long int SignalBackup::getRecipientIdFromPhoneMapped(std::string const &pho
       return found->second;
 
   // either savedmap does not exist, or phone is not in there:
-  std::string printable_phone(phone);
-  unsigned int offset = 3;
-  if (offset < phone.size()) [[likely]]
-    std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c) STATICLAMBDA { return std::isdigit(c); }, 'x');
-  else
-    printable_phone = "xxx";
-
   SqliteDB::QueryResults res;
   if (!d_database.exec("SELECT recipient._id FROM recipient WHERE " + d_recipient_e164 + " = ? COLLATE NOCASE", phone, &res) ||
       res.rows() != 1 ||
       !res.valueHasType<long long int>(0, 0))
   {
     if (!suppresswarning)
+    {
+      std::string printable_phone(phone);
+      unsigned int offset = 3;
+      if (offset < phone.size()) [[likely]]
+        std::replace_if(printable_phone.begin() + offset, printable_phone.end(), [](char c) STATICLAMBDA { return std::isdigit(c); }, 'x');
+      else
+        printable_phone = "xxx";
       Logger::warning("Failed to find recipient for phone: ", printable_phone);
+    }
     return -1;
   }
   //res.prettyPrint();
   if (savedmap)
-    (*savedmap)[phone] = res.getValueAs<long long int>(0, 0);
+    savedmap->insert({std::string(phone), res.getValueAs<long long int>(0, 0)});
 
   return res.getValueAs<long long int>(0, 0);
 }

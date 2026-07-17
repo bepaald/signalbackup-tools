@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -64,7 +64,7 @@ std::pair<std::string, std::string> SignalBackup::getCustomColor(std::pair<std::
 
   std::pair<std::string, std::string> custom_colors;
 
-  auto color_proto_singlecolor = color_proto.getField<1>();
+  auto color_proto_singlecolor = color_proto.getFieldView<1>();
   if (color_proto_singlecolor.has_value())
   {
     auto color_proto_color = color_proto_singlecolor.value().getField<1>();

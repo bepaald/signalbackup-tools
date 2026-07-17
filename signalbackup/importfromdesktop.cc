@@ -160,7 +160,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
   //results_all_conversations.prettyPrint(true);
 
   // this map will map desktop-recipient-uuid's to android recipient._id's
-  std::map<std::string, long long int> recipientmap;
+  std::map<std::string, long long int, std::less<>> recipientmap;
 
   // for each conversation
   for (unsigned int i = 0; i < results_all_conversations.rows(); ++i)
@@ -384,7 +384,7 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
               //group_info.print();
 
               // get current timer if any
-              auto group_info_timer = group_info.getField<4>();
+              auto group_info_timer = group_info.getFieldView<4>();
               bool addtimer = true;
               if (group_info_timer.has_value())
               {

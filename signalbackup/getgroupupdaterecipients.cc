@@ -49,13 +49,10 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
         MessageExtras me(res.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "groupctx"));
         //me.print();
         //std::cout << "---" << std::endl;
-        auto field1 = me.getField<1>();
-        if (field1.has_value())
-        {
-          auto field1_1 = field1->getField<1>();
-          if (field1_1.has_value())
-            getGroupUpdateRecipientsFromGV2Context(*field1_1, &uuids);
-        }
+        auto field1_1 = me.getFieldView<1, 1>();
+        if (field1_1.has_value())
+          getGroupUpdateRecipientsFromGV2Context(*field1_1, &uuids);
+
         // std::cout << "FROM BLOB 2" << std::endl;
         // sts2.print();
       }
@@ -110,58 +107,20 @@ std::vector<long long int> SignalBackup::getGroupUpdateRecipients(int thread) co
 void SignalBackup::getGroupUpdateRecipientsFromGV2Context(DecryptedGroupV2Context const &sts2, std::set<std::string> *uuids) const
 {
   // NEW DATA
-  auto field3 = sts2.getField<3>();
-  if (field3.has_value())
+  auto field3_7 = sts2.getFieldView<3, 7>();
+  for (unsigned int j = 0; j < field3_7.size(); ++j)
   {
-    auto field3_7 = field3->getField<7>();
-    for (unsigned int j = 0; j < field3_7.size(); ++j)
-    {
-      auto field3_7_1 = field3_7[j].getField<1>();
-      if (field3_7_1.has_value())
-        uuids->insert(bepaald::bytesToHexString(*field3_7_1, true));
-      // else
-      // {
-      //   std::cout << "No members found in field 3" << std::endl;
-      //   sts2.print();
-      // }
-    }
-    // if (field3_7.size() == 0)
-    // {
-    //   std::cout << "No members found in field 3" << std::endl;
-    //   sts2.print();
-    // }
+    auto field3_7_1 = field3_7[j].getFieldView<1>();
+    if (field3_7_1.has_value())
+      uuids->insert(bepaald::bytesToHexString(*field3_7_1, true));
   }
-  // else
-  // {
-  //   std::cout << "No members found in field 3" << std::endl;
-  //   sts2.print();
-  // }
 
   // OLD DATA?
-  auto field4 = sts2.getField<4>();
-  if (field4.has_value())
+  auto field4_7 = sts2.getFieldView<4, 7>();
+  for (unsigned int j = 0; j < field4_7.size(); ++j)
   {
-    auto field4_7 = field4->getField<7>();
-    for (unsigned int j = 0; j < field4_7.size(); ++j)
-    {
-      auto field4_7_1 = field4_7[j].getField<1>();
-      if (field4_7_1.has_value())
-        uuids->insert(bepaald::bytesToHexString(*field4_7_1, true));
-      // else
-      // {
-      //   std::cout << "No members found in field 4" << std::endl;
-      //   sts2.print();
-      // }
-    }
-    // if (field4_7.size() == 0)
-    // {
-    //   std::cout << "No members found in field 4" << std::endl;
-    //   sts2.print();
-    // }
+    auto field4_7_1 = field4_7[j].getFieldView<1>();
+    if (field4_7_1.has_value())
+      uuids->insert(bepaald::bytesToHexString(*field4_7_1, true));
   }
-  // else
-  // {
-  //   std::cout << "No members found in field 4" << std::endl;
-  //   sts2.print();
-  // }
 }

@@ -24,6 +24,7 @@
 #include "../autoversion.h"
 
 bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long long int, RecipientInfo> *recipient_info,
+                                         std::map<std::string, long long int, std::less<>> *recipientmap,
                                          bool overwrite, bool append, bool light, bool themeswitching,
                                          std::string const &exportdetails, bool compact) const
 {
@@ -576,7 +577,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
     if (isgroup)
     {
       GroupInfo groupinfo;
-      getGroupInfo(rec_id, &groupinfo);
+      getGroupInfo(rec_id, &groupinfo, recipientmap);
 
       if (!groupinfo.description.empty())
         outputfile << "            <div class=\"extrainfo\"><span class=\"key\">Description:</span> " << groupinfo.description << "</div>\n";

@@ -25,6 +25,7 @@
 
 bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,
                                       std::string const &basename, std::map<long long int, RecipientInfo> *recipient_info,
+                                      std::map<std::string, long long int, std::less<>> *recipientmap,
                                       long long int note_to_self_tid, bool calllog, bool searchpage, bool stickerpacks, bool blocked,
                                       bool fullcontacts, bool settings,  bool overwrite, bool append, bool light, bool themeswitching,
                                       std::string const &exportdetails, long long int chatfolder_idx,
@@ -1030,13 +1031,13 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
         auto [data, length] = Base64::base64StringToBytes(snippet_ranges);
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata(data, length);
         HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info,
-                        !Types::isOutgoing(snippet_type), brdata, false /*linkify*/, false);
+                        recipientmap, !Types::isOutgoing(snippet_type), brdata, false /*linkify*/, false);
       }
       else // range from message, here range is in binary format
       {
         std::pair<std::shared_ptr<unsigned char []>, size_t> brdata = results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_ranges");
         HTMLprepMsgBody(&snippet, std::vector<std::tuple<long long int, long long int, long long int>>(), recipient_info,
-                        !Types::isOutgoing(snippet_type), brdata, false /*linkify*/, false);
+                        recipientmap, !Types::isOutgoing(snippet_type), brdata, false /*linkify*/, false);
       }
     }
 
@@ -1088,7 +1089,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                       getRecipientInfoFromMap(recipient_info, rec_id).display_name,
                                       nullptr);
       else if (results.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_message_extras"))
-        snippet = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_message_extras"), results.valueAsInt(i, "recipient_expires_in", 0), snippet_type,
+        snippet = decodeStatusMessage(results.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(i, "snippet_message_extras"), snippet_type,
                                       isgroup ?
                                       (groupsender > 0 ? getRecipientInfoFromMap(recipient_info, groupsender).display_name : "") :
                                       getRecipientInfoFromMap(recipient_info, rec_id).display_name,
@@ -1188,7 +1189,7 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
                                     nullptr);
             else if (newsnippet_info.valueHasType<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"))
               snippet =
-                decodeStatusMessage(newsnippet_info.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"), newsnippet_info.valueAsInt(0, "expires_in", 0), newsnippet_type,
+                decodeStatusMessage(newsnippet_info.getValueAs<std::pair<std::shared_ptr<unsigned char []>, size_t>>(0, "message_extras"), newsnippet_type,
                                     isgroup ?
                                     (groupsender > 0 ? getRecipientInfoFromMap(recipient_info, groupsender).display_name : "") :
                                     getRecipientInfoFromMap(recipient_info, rec_id).display_name,

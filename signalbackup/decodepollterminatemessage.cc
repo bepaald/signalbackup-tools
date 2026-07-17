@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,7 +22,7 @@
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
-std::string SignalBackup::decodePollTerminateMessage(std::string const &body, long long int type, std::string const &name, IconType *icon) const
+std::string SignalBackup::decodePollTerminateMessage(PollTerminate const &pollterminate, long long int type, std::string const &name, IconType *icon) const
 {
   /*
     // from app/src/main/protowire/Database.proto
@@ -34,15 +34,15 @@ std::string SignalBackup::decodePollTerminateMessage(std::string const &body, lo
     }
   */
 
-  PollTerminate pollterminate(body);
+  //PollTerminate pollterminate(body);
   //std::cout << body << std::endl;
   //pollterminate.print();
 
   std::string status_message((Types::isOutgoing(type) ? "You" : name) + " ended the poll");
 
-  auto title = pollterminate.getField<1>();
+  auto title = pollterminate.getFieldView<1>();
   if (title.has_value())
-    status_message.append(": \"" + title.value() + "\"");
+    status_message.append(": \"").append(title.value()).append("\"");
 
   if (icon)
     *icon = IconType::POLL_TERMINATE;

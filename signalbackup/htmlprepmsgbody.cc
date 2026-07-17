@@ -25,7 +25,8 @@
 
 // returns (body == all_emoji)
 bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<long long int, long long int, long long int>> const &mentions,
-                                   std::map<long long int, RecipientInfo> *recipient_info, bool incoming,
+                                   std::map<long long int, RecipientInfo> *recipient_info,
+                                   std::map<std::string, long long int, std::less<>> *recipientmap, bool incoming,
                                    std::pair<std::shared_ptr<unsigned char []>, size_t> const &brdata,
                                    bool linkify, bool isquote) const
 {
@@ -38,7 +39,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
   for (auto const &m : mentions)
   {
     // m0 : recipient_id, m1: start, m2: length
-    std::string author = getRecipientInfoFromMap(recipient_info, std::get<0>(m)).display_name;
+    std::string author = getRecipientInfoFromMap(recipient_info, std::get<0>(m), recipientmap).display_name;
     if (!author.empty())
     {
       ranges.emplace_back(std::get<1>(m), std::get<2>(m),
@@ -56,7 +57,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
     BodyRanges brsproto(brdata);
     //brsproto.print();
 
-    auto brs = brsproto.getField<1>();
+    auto brs = brsproto.getFieldView<1>();
     for (auto const &br : brs)
     {
       int start = br.getField<1>().value_or(0);
@@ -65,11 +66,11 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
         continue;
 
       // get mention
-      std::string mentionuuid = br.getField<3>().value_or(std::string());
+      std::string_view mentionuuid = br.getFieldView<3>().value_or(std::string_view());
       if (!mentionuuid.empty())
       {
-        long long int authorid = getRecipientIdFromUuidMapped(mentionuuid, nullptr);
-        std::string author = getRecipientInfoFromMap(recipient_info, authorid).display_name;
+        long long int authorid = getRecipientIdFromUuidMapped(mentionuuid, recipientmap);
+        std::string author = getRecipientInfoFromMap(recipient_info, authorid, recipientmap).display_name;
         if (!author.empty())
           ranges.emplace_back(start, length,
                               (isquote ? "" : "<span class=\"mention-"s + (incoming ? "in" : "out") + "\">"),
@@ -82,7 +83,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       int style = br.getField<4>().value_or(-1);
 
       // get link
-      std::string link = br.getField<5>().value_or(std::string());
+      std::string_view link = br.getFieldView<5>().value_or(std::string_view());
 
       if (style > -1)
       {
@@ -123,7 +124,7 @@ bool SignalBackup::HTMLprepMsgBody(std::string *body, std::vector<std::tuple<lon
       if (!link.empty())
       {
         //std::cout << "Adding link to range [" << start << "-" << start+length << "] '" << link << "'" << std::endl;
-        ranges.emplace_back(start, length, "<a class=\"styled-link\" href=\"" + link + "\">", "", "</a>", true);
+        ranges.emplace_back(start, length, bepaald::concat("<a class=\"styled-link\" href=\"", link, "\">"), "", "</a>", true);
         hasstyledlinks = true;
       }
     }

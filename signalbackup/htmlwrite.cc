@@ -51,6 +51,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
                                   std::set<long long int> const &recipient_ids,
                                   std::map<long long int, RecipientInfo> *recipient_info,
                                   std::map<long long int, std::string> *written_avatars,
+                                  std::map<std::string, long long int, std::less<>> *recipientmap,
                                   bool overwrite, bool append, bool light, bool themeswitch,
                                   bool searchpage, bool exportdetails, bool pagemenu) const
 {
@@ -65,10 +66,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
 
   // sort group members by admin and name
   std::sort(groupmembers.begin(), groupmembers.end(),
-            [this, &groupinfo, &recipient_info](auto left, auto right) {
+            [this, &groupinfo, &recipient_info, &recipientmap](auto left, auto right) {
               return (bepaald::contains(groupinfo.admin_ids, left) && !bepaald::contains(groupinfo.admin_ids, right)) ||
                 ((bepaald::contains(groupinfo.admin_ids, left) == bepaald::contains(groupinfo.admin_ids, right)) &&
-                 (getRecipientInfoFromMap(recipient_info, left).display_name < getRecipientInfoFromMap(recipient_info, right).display_name));});
+                 (getRecipientInfoFromMap(recipient_info, left, recipientmap).display_name < getRecipientInfoFromMap(recipient_info, right, recipientmap).display_name));});
 
   std::string thread_avatar = bepaald::contains(written_avatars, thread_recipient_id) ?
     (*written_avatars)[thread_recipient_id] :
@@ -81,11 +82,11 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     " by signalbackup-tools (" << VERSIONDATE << "). "
     "Input database version: " << d_databaseversion << ". -->\n";
 
-  std::string title = (isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name);
+  std::string title = (isnotetoself ? "Note to Self" : getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).display_name);
   HTMLescapeString(&title);
 
-  bool ismuted = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until == 0x7FFFFFFFFFFFFFFF;
-  bool isblocked = getRecipientInfoFromMap(recipient_info, thread_recipient_id).blocked;
+  bool ismuted = getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).mute_until == 0x7FFFFFFFFFFFFFFF;
+  bool isblocked = getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).blocked;
 
   file <<
     "<!DOCTYPE html>\n"
@@ -139,10 +140,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
     if (isgroup)
     {
       auto it = groupinfo.colors.find(id);
-      file << (it != groupinfo.colors.end() ? (light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id).color);
+      file << (it != groupinfo.colors.end() ? (light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id, recipientmap).color);
     }
     else
-      file << getRecipientInfoFromMap(recipient_info, id).color;
+      file << getRecipientInfoFromMap(recipient_info, id, recipientmap).color;
     file << ";\n";
   }
   file <<
@@ -198,10 +199,10 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       if (isgroup)
       {
         auto it = groupinfo.colors.find(id);
-        file << (it != groupinfo.colors.end() ? (!light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id).color);
+        file << (it != groupinfo.colors.end() ? (!light ? it->second.first : it->second.second) : getRecipientInfoFromMap(recipient_info, id, recipientmap).color);
       }
       else
-        file << getRecipientInfoFromMap(recipient_info, id).color;
+        file << getRecipientInfoFromMap(recipient_info, id, recipientmap).color;
       file << ";\n";
     }
     file <<
@@ -355,7 +356,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
   file << R"(
       .msg-outgoing {
         align-self: flex-end;
-        background: #)" << /*(isgroup ? s_html_colormap.at("ULTRAMARINE") : */getRecipientInfoFromMap(recipient_info, thread_recipient_id).color/*)*/ << R"(;
+        background: #)" << /*(isgroup ? s_html_colormap.at("ULTRAMARINE") : */getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).color/*)*/ << R"(;
         color: var(--msgoutgoing-c);
       }
 
@@ -720,7 +721,7 @@ bool SignalBackup::HTMLwriteStart(std::ofstream &file, long long int thread_reci
       }
 
       .msg-outgoing .memberlabel-bg {
-        background-color: #)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).color/*)*/ << R"(;
+        background-color: #)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).color/*)*/ << R"(;
       }
 
       .memberlabel {
@@ -2155,7 +2156,7 @@ R"(
   // set expiration timer string
   std::string exptimer = "Off";
   std::string exptimer_short;
-  long long int expiration_timer = isgroup ? groupinfo.expiration_timer : getRecipientInfoFromMap(recipient_info, thread_recipient_id).message_expiration_time;
+  long long int expiration_timer = isgroup ? groupinfo.expiration_timer : getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).message_expiration_time;
   if (expiration_timer)
   {
     if (expiration_timer < 60) // less than full minute
@@ -2217,7 +2218,7 @@ file << R"(
     if (!isgroup && !isnotetoself)
     {
       file << R"(
-          <div class="avatar header-avatar)" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial_is_emoji ? " avatar-emoji-initial" : "") << R"( msg-sender-)" << thread_recipient_id << R"(">)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial << R"(</div>)";
+          <div class="avatar header-avatar)" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).initial_is_emoji ? " avatar-emoji-initial" : "") << R"( msg-sender-)" << thread_recipient_id << R"(">)" << getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).initial << R"(</div>)";
     }
   }
   else
@@ -2225,7 +2226,7 @@ file << R"(
     file << R"(
           <input type="checkbox" id="zoomCheck-avatar">
           <label for="zoomCheck-avatar">
-            <img class="avatar avatar-)" << thread_recipient_id << " header-avatar msg-sender-" << thread_recipient_id << "\" src=\"" << thread_avatar << R"(" alt=")" + getRecipientInfoFromMap(recipient_info, thread_recipient_id).initial + R"(">
+            <img class="avatar avatar-)" << thread_recipient_id << " header-avatar msg-sender-" << thread_recipient_id << "\" src=\"" << thread_avatar << R"(" alt=")" + getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).initial + R"(">
           </label>)";
   }
 
@@ -2248,7 +2249,7 @@ file << R"(
   file <<
     "</pre></div>\n";
 
-  if (!isnotetoself && getRecipientInfoFromMap(recipient_info, thread_recipient_id).verified)
+  if (!isnotetoself && getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).verified)
     file <<
       "          <div class=\"thread-subtitle\">\n"
       "            <span class=\"msg-security-icon\"></span>verified\n"
@@ -2278,7 +2279,7 @@ file << R"(
       "                  <span class=\"column-right-align\">Members:</span>\n"
       "                  <span class=\"column-left-align\">";
     for (unsigned int gm = 0; gm < groupmembers.size(); ++gm)
-      file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm]).display_name)
+      file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupmembers[gm], recipientmap).display_name)
            << (bepaald::contains(groupinfo.admin_ids, groupmembers[gm]) ? " <i>(admin)</i>" : "") << ((gm < groupmembers.size() - 1) ? ", " : "");
     file << "</span>\n";
 
@@ -2292,7 +2293,7 @@ file << R"(
         file << "(none)";
       else
         for (unsigned int pm = 0; pm < groupinfo.pending_members.size(); ++pm)
-          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm]).display_name)
+          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm], recipientmap).display_name)
                << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
       file << "</span>\n";
 
@@ -2304,7 +2305,7 @@ file << R"(
         file << "(none)";
       else
         for (unsigned int rm = 0; rm < groupinfo.requesting_members.size(); ++rm)
-          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm]).display_name)
+          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.requesting_members[rm], recipientmap).display_name)
                << ((rm < groupinfo.requesting_members.size() - 1) ? ", " : "");
       file << "</span>\n";
 
@@ -2316,7 +2317,7 @@ file << R"(
         file << "(none)";
       else
         for (unsigned int bm = 0; bm < groupinfo.banned_members.size(); ++bm)
-          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm]).display_name)
+          file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.banned_members[bm], recipientmap).display_name)
                << ((bm < groupinfo.banned_members.size() - 1) ? ", " : "");
       file << "</span>\n";
 
@@ -2342,31 +2343,31 @@ file << R"(
         "                  <span class=\"column-right-align\">Group link:</span>\n"
         "                  <span class=\"column-left-align\">" << (groupinfo.link_invite_enabled ? "Enabled" : "Off") <<  "</span>\n";
         // muted
-        if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until != -1)
+        if (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).mute_until != -1)
         {
-          long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id).mute_until;
+          long long int mute = getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).mute_until;
           file <<
             "                  <span class=\"column-right-align\">Muted:</span>\n"
             "                  <span class=\"column-left-align\">" << (mute == 0 ? "No" : (mute == std::numeric_limits<int64_t>::max() ? "Always" : "Could not be determined"))  <<  "</span>\n";
         }
 
       // notify-on-mention
-      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting != -1)
+      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).mention_setting != -1)
       {
         file <<
           "                  <span class=\"column-right-align\">Mentions:</span>\n"
-          "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
+          "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).mention_setting ? "Do not notify" : "Always notify") <<  "</span>\n";
       }
 
       // custom notifications
-      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications != -1)
+      if (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).custom_notifications != -1)
       {
         file <<
           "                  <span class=\"column-right-align\">Custom notifications:</span>\n"
-          "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
+          "                  <span class=\"column-left-align\">" << (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).custom_notifications ? "Enabled" : "Disabled") <<  "</span>\n";
 
         // custom notifications were enabled, let's print them
-        if (getRecipientInfoFromMap(recipient_info, thread_recipient_id).custom_notifications)
+        if (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).custom_notifications)
         {
           SqliteDB::QueryResults notification_res;
           if (d_database.exec("SELECT message_ringtone, message_vibrate, call_ringtone, call_vibrate FROM recipient WHERE _id = ?", thread_recipient_id, &notification_res) &&
@@ -2399,8 +2400,8 @@ file << R"(
       "            </label>\n";
   }
   else // !isgroup
-    file << (getRecipientInfoFromMap(recipient_info, thread_recipient_id).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone ? "" :
-             getRecipientInfoFromMap(recipient_info, thread_recipient_id).phone) << '\n';
+    file << (getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).display_name == getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).phone ? "" :
+             getRecipientInfoFromMap(recipient_info, thread_recipient_id, recipientmap).phone) << '\n';
   file << R"(          </div>
         </div>
         <div class="conversation-box">
@@ -2660,8 +2661,8 @@ void SignalBackup::HTMLwriteSharedContactDiv(std::ofstream &htmloutput, std::str
 void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo const &msg_info, GroupInfo const &groupinfo,
                                     std::map<int64_t, std::pair<std::string, int64_t>> const &quotemap,
                                     std::map<long long int, RecipientInfo> *recipient_info,
-                                    bool searchpage, bool writereceipts,
-                                    std::vector<std::string> const &ignoremediatypes) const
+                                    std::map<std::string, long long int, std::less<>> *recipientmap,
+                                    bool searchpage, bool writereceipts, std::vector<std::string> const &ignoremediatypes) const
 {
   int extraindent = 0;
   // insert message
@@ -2679,10 +2680,10 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "          <div class=\"incoming-group-msg\">\n";
     htmloutput << "            <div class=\"avatar avatar-" << msg_info.msg_recipient_id
                << " convo-avatar msg-sender-" << msg_info.msg_recipient_id << "\">";
-    if (!getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).hasavatar)
+    if (!getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id, recipientmap).hasavatar)
     {
       htmloutput << '\n';
-      htmloutput << "              <span>" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).initial << "</span>\n";
+      htmloutput << "              <span>" << getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id, recipientmap).initial << "</span>\n";
       htmloutput << "            ";
     }
     htmloutput << "</div>\n";
@@ -2713,7 +2714,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   {
     htmloutput
       << std::string(extraindent, ' ') << "            <div class=\"msg-name msg-name-" << msg_info.msg_recipient_id << "\">\n"
-      << std::string(extraindent, ' ') << "              <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id).display_name) << "</div>\n";
+      << std::string(extraindent, ' ') << "              <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.msg_recipient_id, recipientmap).display_name) << "</div>\n";
     auto labelit = groupinfo.labels.find(msg_info.msg_recipient_id);
     if (labelit != groupinfo.labels.end())
     {
@@ -2750,7 +2751,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << std::string(extraindent, ' ') << "              <div class=\"msg-quote-message\">\n";
     htmloutput
       << std::string(extraindent, ' ') << "                <div class=\"msg-name\">\n"
-      << std::string(extraindent, ' ') << "                  <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id).display_name)
+      << std::string(extraindent, ' ') << "                  <div class=\"membername\">" << HTMLescapeString(getRecipientInfoFromMap(recipient_info, quote_author_id, recipientmap).display_name)
       << (msg_info.story_reply ? " &middot; Story" : "") << "</div>\n";
     auto labelit = groupinfo.labels.find(quote_author_id);
     if (labelit != groupinfo.labels.end() && !msg_info.story_reply)
@@ -2969,11 +2970,11 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       if (msg_info.deleted_by == d_selfid) // you deleted your own message
         htmloutput << "You deleted this message.</pre>\n";
       else if (msg_info.incoming && msg_info.deleted_by == msg_info.msg_recipient_id) // someone else deleted their own
-        htmloutput << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.deleted_by).display_name)
+        htmloutput << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.deleted_by, recipientmap).display_name)
                    << " deleted this message.</pre>\n";
       else if (msg_info.deleted_by != msg_info.msg_recipient_id) // someone deleted someone else's message
         htmloutput << "Admin <span class=\"admin-deleted msg-name-" << msg_info.deleted_by << "\">"
-                   << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.deleted_by).display_name)
+                   << HTMLescapeString(getRecipientInfoFromMap(recipient_info, msg_info.deleted_by, recipientmap).display_name)
                    << "</span>"
                    << " deleted this message.</pre>\n";
       else
@@ -3010,7 +3011,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
           htmloutput << "<div class=\"history-header\">Edit history</div>";
 
         // add earlier revision
-        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, groupinfo, quotemap, recipient_info, false, ignoremediatypes);
+        HTMLwriteRevision(msg_info.edit_revisions->valueAsInt(i, "_id"), htmloutput, msg_info, groupinfo, quotemap,
+                          recipient_info, recipientmap, false, ignoremediatypes);
 
         if (i < msg_info.edit_revisions->rows() - 2)
           htmloutput << "<hr>";
@@ -3091,7 +3093,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
         if (emojireaction == msg_info.reaction_results->valueAsString(r2, "emoji"))
         {
           ++count;
-          reaction_info += (reaction_info.empty() ? "" : "<hr>") + "From: "s + getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r2, "author_id")).display_name +
+          reaction_info += (reaction_info.empty() ? "" : "<hr>") + "From: "s + getRecipientInfoFromMap(recipient_info, msg_info.reaction_results->getValueAs<long long int>(r2, "author_id"), recipientmap).display_name +
             "<br>Sent: " + msg_info.reaction_results->valueAsString(r2, "date_sent") +
             "<br>Received: " + msg_info.reaction_results->valueAsString(r2, "date_received");
         }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2023-2025  Selwin van Dijk
+  Copyright (C) 2023-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,7 +22,7 @@
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
-std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, std::string const &name, IconType *icon) const
+std::string SignalBackup::decodeProfileChangeMessage(ProfileChangeDetails const &profchangefull, std::string const &name, IconType *icon) const
 {
   /*
     // from app/src/main/protowire/Database.proto
@@ -45,45 +45,45 @@ std::string SignalBackup::decodeProfileChangeMessage(std::string const &body, st
     }
   */
 
-  ProfileChangeDetails profchangefull(body);
+  //ProfileChangeDetails profchangefull(body);
 
   //std::cout << body << std::endl;
   //profchangefull.print();
 
-  auto profilenamechange = profchangefull.getField<1>();
+  auto profilenamechange = profchangefull.getFieldView<1>();
   if (profilenamechange.has_value())
   {
-    auto oldname_protobuf = profilenamechange.value().getField<1>();
+    auto oldname_protobuf = profilenamechange.value().getFieldView<1>();
     if (!oldname_protobuf.has_value() || oldname_protobuf.value().empty())
-      return name + " has changed their profile name.";
-    auto newname_protobuf = profilenamechange.value().getField<2>();
+      return bepaald::concat(name, " has changed their profile name.");
+    auto newname_protobuf = profilenamechange.value().getFieldView<2>();
     if (!newname_protobuf.has_value() || newname_protobuf.value().empty())
-      return name + " has changed their profile name.";
-    return oldname_protobuf.value() + " changed their profile name to " + newname_protobuf.value() + ".";
+      return bepaald::concat(name, " has changed their profile name.");
+    return bepaald::concat(oldname_protobuf.value(), " changed their profile name to ", newname_protobuf.value(), ".");
   }
 
   // no StringChange (field 1), maybe field 3?
-  auto learnedprofile = profchangefull.getField<3>();
+  auto learnedprofile = profchangefull.getFieldView<3>();
   if (learnedprofile.has_value())
   {
     if (icon && *icon == IconType::NONE)
       *icon = IconType::THREAD;
 
-    auto learned_e164 = learnedprofile.value().getField<1>();
+    auto learned_e164 = learnedprofile.value().getFieldView<1>();
     if (learned_e164.has_value())
-      return "You started this chat with " + learned_e164.value();
+      return bepaald::concat("You started this chat with ", learned_e164.value());
 
-    auto learned_username = learnedprofile.value().getField<2>();
+    auto learned_username = learnedprofile.value().getFieldView<2>();
     if (learned_username.has_value())
-      return "You started this chat with " + learned_username.value();
+      return bepaald::concat("You started this chat with ", learned_username.value());
   }
 
-  if (profchangefull.getField<2>().has_value())
+  if (profchangefull.getFieldView<2>().has_value())
   {
     Logger::warning("Encountered 'deprecatedLearnedProfileName' in profileChange message. This format is not (yet) supported.");
     return "";
   }
 
-  return name + " has changed their profile name.";
+  return bepaald::concat(name, " has changed their profile name.");
 
 }

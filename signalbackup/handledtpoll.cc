@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2025  Selwin van Dijk
+  Copyright (C) 2025-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -21,7 +21,7 @@
 
 bool SignalBackup::handleDTPoll(SqliteDB const &ddb, std::string const &databasedir, long long int mms_id, long long int rid,
                                 std::string const &pollmsg_id, long long int pollmsg_date, std::string const &poll_json,
-                                std::map<std::string, long long int> *recipientmap,
+                                std::map<std::string, long long int, std::less<>> *recipientmap,
                                 std::map<std::string, std::pair<long long int, long long int>> *pollmap,
                                 bool createcontacts, bool create_valid_contacts, bool generatestoragekeys,
                                 bool *warn)
