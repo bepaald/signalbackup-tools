@@ -38,6 +38,7 @@ enum class IconType : std::uint8_t
   POLL_TERMINATE,
   PINNED_MESSAGE,
   GROUP_QUIT,
+  GROUP_TERMINATE,
 };
 
 #endif

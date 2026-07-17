@@ -346,7 +346,7 @@ void SignalBackup::cleanDatabaseByMessages()
                     (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? " UNION SELECT DISTINCT deleted_by FROM " +
                      d_mms_table + " WHERE deleted_by IS NOT NULL AND deleted_by IS NOT 0"s : ""s) +
                     (d_database.tableContainsColumn("groups", "terminated_by") ? " UNION SELECT DISTINCT terminated_by FROM "
-                     "groups WHERE terminated_by IS NOT NULL AND terminated_by IS NOT 0"s : ""s) +
+                     "groups WHERE terminated_by IS NOT NULL AND terminated_by > 0"s : ""s) +
                     (d_database.containsTable("mention") ? " UNION SELECT DISTINCT recipient_id FROM mention"s : ""s) +
                     (d_database.containsTable("call") ? " UNION SELECT DISTINCT peer FROM call"s : ""s) +
                     (d_database.containsTable("call") && d_database.tableContainsColumn("call", "ringer") ? " UNION SELECT DISTINCT ringer FROM call WHERE ringer IS NOT NULL"s : ""s) +

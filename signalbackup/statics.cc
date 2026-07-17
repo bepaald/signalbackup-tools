@@ -157,7 +157,7 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
       {"thread", "snippet_extras", "", "'$.groupAddedBy'"},
       {"thread", "snippet_extras", "", "'$.individualRecipientId'"},
       {"groups", "recipient_id"},
-      {"groups", "terminated_by", "terminated_by != 0"}, // column has default 0, but only refers to a recipient when != 0
+      {"groups", "terminated_by", "terminated_by > 0"}, // column has default 0, but only refers to a recipient when > 0 (-1 = unknown recipient)
       {"remapped_recipients", "old_id"}, // should actually be cleared, but ...
       {"remapped_recipients", "new_id"}, // this can't hurt
       {"mention", "recipient_id"},

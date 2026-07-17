@@ -258,6 +258,7 @@ message DecryptedGroupChange {
   repeated DecryptedMember               promotePendingPniAciMembers = 24;
   repeated DecryptedModifyMemberLabel    modifyMemberLabels          = 26;
            AccessControl.AccessRequired  newMemberLabelAccess        = 27;
+           bool                          terminateGroup              = 28;
 }
 
 enum EnabledState {
@@ -279,7 +280,8 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT
                        protobuffer::optional::BYTES, DecryptedString, protobuffer::optional::ENUM,
                        std::vector<DecryptedBannedMember>, std::vector<DecryptedBannedMember>,
                        std::vector<DecryptedMember>, protobuffer::optional::BYTES,
-                       std::vector<DecryptedModifyMemberLabel>, protobuffer::optional::ENUM> DecryptedGroupChange;
+                       std::vector<DecryptedModifyMemberLabel>, protobuffer::optional::ENUM,
+                       protobuffer::optional::BOOL> DecryptedGroupChange;
 
 /*
 message DecryptedGroup {
@@ -295,6 +297,7 @@ message DecryptedGroup {
            string                    description               = 11;
            EnabledState              isAnnouncementGroup       = 12;
   repeated DecryptedBannedMember     bannedMembers             = 13;
+           bool                      terminated                = 14;
            bool                      isPlaceholderGroup        = 64;
 }
 
@@ -311,7 +314,8 @@ typedef ProtoBufParser<protobuffer::DUMMY, protobuffer::optional::STRING,
                        std::vector<DecryptedMember>, std::vector<DecryptedPendingMember>,
                        std::vector<DecryptedRequestingMember>, protobuffer::optional::BYTES,
                        protobuffer::optional::STRING, protobuffer::optional::ENUM,
-                       std::vector<DecryptedBannedMember>, protobuffer::optional::BOOL> DecryptedGroup;
+                       std::vector<DecryptedBannedMember>, protobuffer::optional::BOOL,
+                       protobuffer::optional::BOOL> DecryptedGroup;
 /* message Member {
      enum Role {
        UNKNOWN       = 0;
