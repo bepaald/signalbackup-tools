@@ -1416,22 +1416,23 @@ R"(
         width: 16px;
       }
 
+      .msg-status .msg-avatar-update-icon {
+        background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M17.5,2L6.5,2A4.5,4.5 0,0 0,2 6.5v11A4.5,4.5 0,0 0,6.5 22h11A4.5,4.5 0,0 0,22 17.5L22,6.5A4.5,4.5 0,0 0,17.5 2ZM6.5,3.5h11a3,3 0,0 1,3 3v6.75l-0.621,-0.932L16,8.439l-3,3 -4,-4L4.121,12.318 3.5,13.25L3.5,6.5A3,3 0,0 1,6.5 3.5ZM17.5,20.5L6.5,20.5a3,3 0,0 1,-3 -3L3.5,15.061L9,9.561l5.97,5.969 1.06,-1.06L14.061,12.5 16,10.561l4.5,4.5L20.5,17.5A3,3 0,0 1,17.5 20.5Z"/></svg>');
+        filter: var(--icon-f);
+      }
+)";
+  if (isgroup)
+    file << R"(
       .msg-status .msg-member-add-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-103.68 -1799.68 2519.36 2343.36" fill="white" stroke="none"><path d="M1565-750c-109 0-208-131-208-289 0-157 96-267 208-267s208 110 208 267c0 158-99 289-208 289zm0 144c200 0 352-205 352-433 0-231-154-411-352-411s-352 180-352 411c0 228 152 433 352 433zm-524 800h1049c91 0 154-65 140-156-42-310-326-548-665-548S944-271 901 38c-14 91 49 156 140 156zM132-616h308v308c0 40 32 72 72 72s72-32 72-72v-308h308c40 0 72-32 72-72s-32-72-72-72H584v-308c0-40-32-72-72-72s-72 32-72 72v308H132c-40 0-72 32-72 72s32 72 72 72zm912 666c37-234 255-416 521-416s486 183 522 416z"/></svg>');
         filter: var(--icon-f);
         width: 19px;
       }
-)"
-R"(
+
       .msg-status .msg-member-remove-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-103.68 -1799.68 2498.36 2343.36" fill="white" stroke="none"><path d="M1544-750c-109 0-208-131-208-289 0-157 96-267 208-267s208 110 208 267c0 158-99 289-208 289zm0 144c200 0 352-205 352-433 0-231-154-411-352-411s-352 180-352 411c0 228 152 433 352 433zm-524 800h1049c91 0 154-65 140-156-42-310-326-548-665-548S923-271 880 38c-14 91 49 156 140 156zM132-616h720c40 0 72-32 72-72s-32-72-72-72H132c-40 0-72 32-72 72s32 72 72 72zm891 666c37-234 255-416 521-416s486 183 522 416z"/></svg>');
         filter: var(--icon-f);
         width: 19px;
-      }
-
-      .msg-status .msg-avatar-update-icon {
-        background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none"><path d="M17.5,2L6.5,2A4.5,4.5 0,0 0,2 6.5v11A4.5,4.5 0,0 0,6.5 22h11A4.5,4.5 0,0 0,22 17.5L22,6.5A4.5,4.5 0,0 0,17.5 2ZM6.5,3.5h11a3,3 0,0 1,3 3v6.75l-0.621,-0.932L16,8.439l-3,3 -4,-4L4.121,12.318 3.5,13.25L3.5,6.5A3,3 0,0 1,6.5 3.5ZM17.5,20.5L6.5,20.5a3,3 0,0 1,-3 -3L3.5,15.061L9,9.561l5.97,5.969 1.06,-1.06L14.061,12.5 16,10.561l4.5,4.5L20.5,17.5A3,3 0,0 1,17.5 20.5Z"/></svg>');
-        filter: var(--icon-f);
       }
 
       .msg-status .msg-group-quit-icon {
@@ -1457,12 +1458,20 @@ R"(
         width: 19px;
       }
 
-      .msg-status .msg-group-terminated-icon {
+      .msg-group-terminated-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-103.68 -1799.68 3129.36 2343.36" fill="white" stroke="none"><path d="M200 84h570c-3-24-4-48-4-72s1-48 4-72H229c38-210 237-376 481-376 69 0 135 14 195 38 31-41 66-78 105-111-90-45-192-71-300-71-328 0-598 234-629 536-7 72 46 128 119 128zm802 0h1017c73 0 126-53 119-128-29-302-302-536-628-536-327 0-597 235-627 536-7 75 46 128 119 128zM710-820c-87 0-168-107-168-238 0-129 78-218 168-218s168 89 168 218c0 131-81 238-168 238zm0 144c178 0 312-182 312-382 0-203-136-362-312-362s-312 159-312 362c0 200 134 382 312 382zm800-144c-87 0-168-107-168-238 0-129 78-218 168-218s168 89 168 218c0 131-81 238-168 238zm0 144c178 0 312-182 312-382 0-203-136-362-312-362s-312 159-312 362c0 200 134 382 312 382zm731 339l249-249 249 249c12 12 31 21 51 21 40 0 72-32 72-72 0-20-9-39-21-51l-249-249 249-249c12-12 21-31 21-51 0-40-32-72-72-72-20 0-39 9-51 21l-249 249-249-249c-12-12-31-21-51-21-40 0-72 32-72 72 0 20 9 39 21 51l249 249-249 249c-12 12-21 31-21 51 0 40 32 72 72 72 20 0 39-9 51-21zM1031-60c37-212 235-376 479-376 243 0 444 166 480 376z"/></svg>');
         filter: var(--icon-f);
         width: 24px;
       }
 
+      .columnview-header .msg-group-terminated-icon {
+         height: 20px;
+         width: 27px;
+         margin-right: 3px;
+         top: 4px;
+       }
+)";
+  file << R"(
       .msg-status .msg-profile-icon {
         background-image: url('data:image/svg+xml;,<svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="-103.68 -1799.68 1858.36 2343.36" fill="white" stroke="none"><path d="M826-740c-114 0-218-135-218-299 0-162 101-277 218-277s218 115 218 277c0 164-104 299-218 299zm0 144c205 0 362-209 362-443 0-236-159-421-362-421s-362 185-362 421c0 234 157 443 362 443zM222 204h1206c92 0 155-65 141-157-48-312-367-547-744-547-378 0-694 235-743 546-15 90 47 158 140 158zm4-144c42-230 291-416 599-416 307 0 560 187 601 416z"/></svg>');
         filter: var(--icon-f);
@@ -1505,7 +1514,7 @@ R"(
       .msg-status .msg-megaphone-icon,
       .msg-status .msg-member-add-icon,
       .msg-status .msg-member-remove-icon,
-      .msg-status .msg-group-terminated-icon,
+      .msg-group-terminated-icon,
       .msg-status .msg-avatar-update-icon,
       .msg-status .msg-group-quit-icon,
       .msg-status .msg-members-icon,
@@ -2288,6 +2297,10 @@ file << R"(
         "                  <span class=\"column-right-align\">Description:</span>\n"
         "                  <span class=\"column-left-align\">" << HTMLescapeString(groupinfo.description) << "</span>\n";
     }
+
+    // terminated status:
+    if (groupinfo.isterminated)
+      file << "                  <span class=\"columnview-header\"><span class=\"msg-group-terminated-icon\"></span>This group has ended.</span>\n";
 
     // group members
     file <<

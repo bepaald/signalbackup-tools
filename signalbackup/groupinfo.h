@@ -37,4 +37,5 @@ struct GroupInfo
   long long int expiration_timer = 0;
   bool link_invite_enabled = false;
   bool isannouncementgroup = false;
+  bool isterminated = false;
 };

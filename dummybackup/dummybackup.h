@@ -79,7 +79,7 @@ inline DummyBackup::DummyBackup(bool verbose, bool truncate, bool showprogress)
     return;
 
   // GROUPS
-  if (!d_database.exec("CREATE TABLE IF NOT EXISTS groups ( _id INTEGER PRIMARY KEY, group_id TEXT NOT NULL UNIQUE, recipient_id INTEGER NOT NULL UNIQUE REFERENCES recipient (_id) ON DELETE CASCADE, title TEXT DEFAULT NULL, avatar_id INTEGER DEFAULT 0, avatar_key BLOB DEFAULT NULL, avatar_content_type TEXT DEFAULT NULL, avatar_digest BLOB DEFAULT NULL, timestamp INTEGER DEFAULT 0, active INTEGER DEFAULT 1, mms INTEGER DEFAULT 0, master_key BLOB DEFAULT NULL, revision BLOB DEFAULT NULL, decrypted_group BLOB DEFAULT NULL, expected_v2_id TEXT UNIQUE DEFAULT NULL, unmigrated_v1_members TEXT DEFAULT NULL, distribution_id TEXT UNIQUE DEFAULT NULL, show_as_story_state INTEGER DEFAULT 0, last_force_update_timestamp INTEGER DEFAULT 0)"))
+  if (!d_database.exec("CREATE TABLE IF NOT EXISTS groups ( _id INTEGER PRIMARY KEY, group_id TEXT NOT NULL UNIQUE, recipient_id INTEGER NOT NULL UNIQUE REFERENCES recipient (_id) ON DELETE CASCADE, title TEXT DEFAULT NULL, avatar_id INTEGER DEFAULT 0, avatar_key BLOB DEFAULT NULL, avatar_content_type TEXT DEFAULT NULL, avatar_digest BLOB DEFAULT NULL, timestamp INTEGER DEFAULT 0, active INTEGER DEFAULT 1, mms INTEGER DEFAULT 0, master_key BLOB DEFAULT NULL, revision BLOB DEFAULT NULL, decrypted_group BLOB DEFAULT NULL, expected_v2_id TEXT UNIQUE DEFAULT NULL, unmigrated_v1_members TEXT DEFAULT NULL, distribution_id TEXT UNIQUE DEFAULT NULL, show_as_story_state INTEGER DEFAULT 0, last_force_update_timestamp INTEGER DEFAULT 0, terminated_by INTEGER DEFAULT 0)"))
     return;
 
   // GROUP MEMBERSHIP

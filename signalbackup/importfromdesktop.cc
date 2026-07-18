@@ -152,7 +152,8 @@ bool SignalBackup::importFromDesktop(std::unique_ptr<DesktopDatabase> const &dtd
                              "IFNULL(json_extract(json,'$.groupId'),'') AS 'json_groupId',"
                              "IFNULL(json_extract(json,'$.derivedGroupV2Id'),'') AS 'derivedGroupV2Id',"
                              "IFNULL(json_extract(json,'$.expireTimer'),0) AS 'expireTimer',"
-                             "IFNULL(json_extract(json,'$.groupVersion'), 1) AS groupVersion"
+                             "IFNULL(json_extract(json,'$.groupVersion'), 1) AS 'groupVersion'"
+                             //"IFNULL(json_extract(json,'$.terminated'), false) AS 'terminated'"
                              " FROM conversations WHERE json_extract(json, '$.messageCount') > 0", &results_all_conversations))
     return false;
 

@@ -47,6 +47,7 @@ message DecryptedGroup {
            string                    description               = 11;
            EnabledState              isAnnouncementGroup       = 12;
   repeated DecryptedBannedMember     bannedMembers             = 13;
+           bool                      isTerminated              = 14;
            bool                      isPlaceholderGroup        = 64;
 }
 */
@@ -74,6 +75,11 @@ message DecryptedGroup {
 
     // 0 = unknown => false?
   }
+
+  // check is terminated
+  auto is_terminated = group_info.getFieldView<14>();
+  if (is_terminated.has_value())
+    groupinfo->isterminated = is_terminated.value();
 
   // get timer value:
   //std::cout << "=== TIMER:" << std::endl;

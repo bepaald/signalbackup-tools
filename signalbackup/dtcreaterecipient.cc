@@ -51,6 +51,8 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                 "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.size'), json_extract(conversations.json, '$.avatar.size')), 0) AS size, "
                 "IFNULL(COALESCE(json_extract(conversations.json, '$.profileAvatar.version'), json_extract(conversations.json, '$.avatar.version')), 0) AS version, "
                 "groupId, IFNULL(json_extract(conversations.json,'$.groupId'),'') AS 'json_groupId', "
+                "IFNULL(json_extract(conversations.json,'$.terminated'),false) AS 'group_terminated', "
+                "IFNULL(json_extract(conversations.json,'$.description'),'') AS 'description', "
 
                 "IFNULL(json_extract(conversations.json, '$.expireTimer'), 0) AS 'expireTimer', "
                 "IFNULL(json_extract(conversations.json, '$.expireTimerVersion'), 1) AS 'expireTimerVersion', "
@@ -164,7 +166,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
             break;
           }
 
-          if (count >= 10)
+          if (count >= 10) [[unlikely]]
           {
             Logger::error("Failed to generate random storage key for group contact (3)");
             return -1;
@@ -214,6 +216,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
                     {"master_key", masterkey},
                     // {"decrypted_group",},
                     // {"distribution_id",},
+                    {res.valueAsInt(0, "group_terminated", 0) ? "terminated_by" : "", -1}, // Note, -1 is a valid value for 'terminated_by' if terminator is unknown.
                     {"revision", 0}}))
     {
       Logger::error("Failed to insert new group into database.");
@@ -359,14 +362,21 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
         string                    description               = 11;
         EnabledState              isAnnouncementGroup       = 12;
         repeated DecryptedBannedMember     bannedMembers             = 13;
+        bool                      terminated                = 14;
         }
       */
       std::string title = res("name");
-      // if available
-        // std::string description = res("description");
+      std::string description = res("description");
 
       DecryptedGroup group_info;
       group_info.addField<2>(title);
+
+      if (!description.empty())
+        group_info.addField<11>(description);
+
+      if (res.valueAsInt(0, "group_terminated", 0))
+        group_info.addField<14>(true);
+
       //group_info.print();
 
       for (auto const &m : memberdata)

@@ -305,20 +305,35 @@ bool SignalBackup::handleDTGroupChangeMessage(SqliteDB const &ddb, long long int
         continue;
 
       // set source = source_uuid
-      unsigned int uuid_bytes_size = (STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx") - STRLEN("----")) / 2;
-      std::unique_ptr<unsigned char[]> uuid_bytes(new unsigned char[uuid_bytes_size]);
-      bepaald::hexStringToBytes(source_uuid, uuid_bytes.get(), uuid_bytes_size);
-      groupchange.addField<1>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
+      [[indeterminate]] unsigned char rawuuid[16]; // here
+      bepaald::hexStringToBytes(source_uuid, rawuuid, 16); // here
+      groupchange.addField<1>(std::make_pair(rawuuid, 16));
 
       // set new member = also source_uuid
       DecryptedMember newmember;
-      newmember.addField<1>(std::make_pair(uuid_bytes.get(), uuid_bytes_size));
+      newmember.addField<1>(std::make_pair(rawuuid, 16));
       groupchange.addField<3>(newmember);
 
       // explicitly set revision 0
       GroupContextV2 groupctx;
       groupctx.addField<2>(0);
       groupv2ctx.addField<1>(groupctx);
+
+      addchange = true;
+      //Logger::message("member add: ", uuid);
+    }
+    else if (changetype == "terminated")
+    {
+
+      // json: {"groupV2Change":{"from":"39754337-xxxx-xxxx-xxxx-xxxxxxxxxxxx","details":[{"type":"terminated"}]}}
+
+      if (static_cast<int>(source_uuid.size()) != STRLEN("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"))
+        continue;
+
+      [[indeterminate]] unsigned char rawuuid[16]; // here
+      bepaald::hexStringToBytes(source_uuid, rawuuid, 16); // here
+      groupchange.addField<1>(std::make_pair(rawuuid, 16));
+      groupchange.addField<28>(true);
 
       addchange = true;
       //Logger::message("member add: ", uuid);
