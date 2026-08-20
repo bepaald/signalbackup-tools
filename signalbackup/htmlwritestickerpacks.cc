@@ -36,13 +36,24 @@ bool SignalBackup::HTMLwriteStickerpacks(std::string const &directory, bool over
     return false;
   }
 
+  std::string q_installed("SELECT sticker._id, sticker_id, sticker.pack_id, pack_title, pack_author, emoji "
+                          "FROM sticker LEFT JOIN sticker_pack ON sticker_pack.pack_id = sticker.pack_id "
+                          "WHERE installed IS 1 AND cover IS 0 ORDER BY pack_title, sticker.pack_id, sticker_id");
+  if (!d_database.containsTable("sticker_pack"))
+    q_installed = "SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
+      "FROM sticker WHERE installed IS 1 AND cover IS 0 ORDER BY pack_title, pack_id, sticker_id";
   SqliteDB::QueryResults res_installed;
-  if (!d_database.exec("SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
-                       "FROM sticker WHERE installed IS 1 AND cover IS 0 ORDER BY pack_title, pack_id, sticker_id", &res_installed))
+  if (!d_database.exec(q_installed, &res_installed))
     return false;
+
+  std::string q_known("SELECT sticker._id, sticker_id, sticker.pack_id, pack_title, pack_author, emoji "
+                      "FROM sticker LEFT JOIN sticker_pack ON sticker_pack.pack_id = sticker.pack_id "
+                      "WHERE installed IS 0 AND cover IS 1 ORDER BY pack_title, sticker.pack_id, sticker_id");
+  if (!d_database.containsTable("sticker_pack"))
+    q_known = "SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
+      "FROM sticker WHERE installed IS 0 AND cover IS 1 ORDER BY pack_title, pack_id, sticker_id";
   SqliteDB::QueryResults res_known;
-  if (!d_database.exec("SELECT _id, sticker_id, pack_id, pack_title, pack_author, emoji "
-                       "FROM sticker WHERE installed IS 0 AND cover IS 1 ORDER BY pack_title, pack_id, sticker_id", &res_known))
+  if (!d_database.exec(q_known, &res_known))
     return false;
 
   if (res_installed.rows() == 0 && res_known.rows() == 0)

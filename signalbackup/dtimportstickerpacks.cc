@@ -34,14 +34,16 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
 
   // get all stickerpacks
   SqliteDB::QueryResults dtstickerpacks;
-  ddb.exec("SELECT id, key, author, coverStickerId, title, status FROM sticker_packs", &dtstickerpacks);
+  ddb.exec("SELECT id, key, author, coverStickerId, title, status, storageID FROM sticker_packs", &dtstickerpacks);
 
   for (unsigned int i = 0; i < dtstickerpacks.rows(); ++i)
   {
+    std::string pack_table(d_database.containsTable("sticker_pack") ? "sticker_pack" : "sticker");
 
     // check if this pack is already installed in the backup...
     std::string dtpackid = dtstickerpacks(i, "id");
-    if (d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM sticker WHERE installed = 1 AND pack_id IS ?", dtpackid, -1) > 0)
+    if (d_database.getSingleResultAs<long long int>(bepaald::concat("SELECT COUNT(*) FROM ", pack_table, " WHERE installed = 1 AND pack_id IS ?"),
+                                                    dtpackid, -1) > 0)
     {
       if (d_verbose) [[unlikely]]
         Logger::message("Skipping stickerpack '", dtpackid, "': Already installed");
@@ -51,7 +53,7 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     // if it is not installed (but 'known'), check if it is known to Android (and skip if so)
     long long int dt_installed = dtstickerpacks(i, "status") == "installed";
     if (dt_installed == 0 &&
-        d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM sticker WHERE pack_id IS ?", dtpackid, -1) > 0)
+        d_database.getSingleResultAs<long long int>(bepaald::concat("SELECT COUNT(*) FROM ", pack_table, " WHERE pack_id IS ?"), dtpackid, -1) > 0)
     {
       if (d_verbose) [[unlikely]]
         Logger::message("Skipping stickerpack '", dtpackid, "': Already installed");
@@ -61,7 +63,8 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     // the pack may not be installed, but may be known, in which case, the cover already exists...
     // when this is the case, the cover can be skipped on import (it's already there) and the 'installed'
     // status must be updated instead.
-    long long int known_backup_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM sticker WHERE installed = 0 AND pack_id IS ?", dtpackid, -1);
+    long long int known_backup_id = d_database.getSingleResultAs<long long int>("SELECT _id FROM " + pack_table + " WHERE installed = 0 AND pack_id IS ?",
+                                                                                dtpackid, -1);
 
     std::string dtkey = dtstickerpacks(i, "key");
     std::pair<unsigned char *, size_t> dtkey_data = Base64::base64StringToBytes(dtkey);
@@ -70,6 +73,7 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
     std::string dtauthor = dtstickerpacks(i, "author");
     std::string dttitle = dtstickerpacks(i, "title");
     long long int dtcoversticker = dtstickerpacks.valueAsInt(i, "coverStickerId");
+    std::string dtstorageid = dtstickerpacks(i, "storageID");
 
     SqliteDB::QueryResults dtstickers;
     std::string stickerquery = "SELECT id, emoji, isCoverOnly, path";
@@ -85,6 +89,25 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
 
     if (d_verbose) [[unlikely]]
       Logger::message("Importing ", dtstickers.rows(), " stickers from stickerpack ", dtpackid, " (key: ", dtkey, ")");
+
+    // insert the pack
+    //long long int new_pack_id = -1;
+    if (d_database.containsTable("sticker_pack"))
+    {
+      std::any ret;
+      if (!insertRow("sticker_pack", {{"pack_id", dtpackid},
+                                      {"pack_key", dtkey},
+                                      {"pack_title", dttitle},
+                                      {"pack_author", dtauthor},
+                                      {"installed", dt_installed},
+                                      {"storage_service_id", dtstorageid}},
+          "_id", &ret))
+      {
+        Logger::error("Failed to insert new entry in 'sticker_pak' table");
+        continue;
+      }
+      //new_pack_id = std::any_cast<long long int>(ret);
+    }
 
     for (unsigned int j = 0; j < dtstickers.rows(); ++j)
     {
@@ -138,13 +161,13 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       {                                    // -> add it!
         std::any retval;
         if (!insertRow("sticker", {{"pack_id", dtpackid},
-                                   {"pack_key", dtkey},
-                                   {"pack_title", dttitle},
-                                   {"pack_author", dtauthor},
+                                   {d_database.containsTable("sticker_pack") ? "" : "pack_key", dtkey},
+                                   {d_database.containsTable("sticker_pack") ? "" : "pack_title", dttitle},
+                                   {d_database.containsTable("sticker_pack") ? "" : "pack_author", dtauthor},
                                    {"sticker_id", dtstickerid},
                                    {"cover", dtstickerid == dtcoversticker ? 1 : 0},
                                    {"emoji", dtstickerid == dtcoversticker ? "" : dtemoji},
-                                   {"installed", dt_installed},
+                                   {d_database.containsTable("sticker_pack") ? "" : "installed", dt_installed},
                                    {"file_path", "[has_non_null_constraint_but_is_recreated_on_backup_restore]"},
                                    {"file_length", filelength}}, "_id", &retval))
         {
@@ -180,13 +203,13 @@ bool SignalBackup::dtImportStickerPacks(SqliteDB const &ddb, std::string const &
       {
         std::any retval;
         if (!insertRow("sticker", {{"pack_id", dtpackid},
-                                   {"pack_key", dtkey},
-                                   {"pack_title", dttitle},
-                                   {"pack_author", dtauthor},
+                                   {d_database.containsTable("sticker_pack") ? "" : "pack_key", dtkey},
+                                   {d_database.containsTable("sticker_pack") ? "" : "pack_title", dttitle},
+                                   {d_database.containsTable("sticker_pack") ? "" : "pack_author", dtauthor},
                                    {"sticker_id", dtstickerid},
                                    {"cover", 0},
                                    {"emoji", dtemoji},
-                                   {"installed", 1},
+                                   {d_database.containsTable("sticker_pack") ? "" : "installed", 1},
                                    {"file_path", "[has_non_null_constraint_but_is_recreated_on_backup_restore]"},
                                    {"file_length", filelength}}, "_id", &retval))
         {

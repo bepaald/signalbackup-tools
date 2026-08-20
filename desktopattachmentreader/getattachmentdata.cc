@@ -20,6 +20,7 @@
 #include "desktopattachmentreader.h"
 
 #include "../common_filesystem.h"
+#include "../common_crypto.h"
 
 BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsigned char **rawdata, bool verbose)
 {
@@ -146,40 +147,43 @@ BaseAttachmentReader::ReturnCode DesktopAttachmentReader::getAttachmentData(unsi
     Logger::message("MAC check OK!");
 
   // DECRYPT DATA:
+  // // init decryption context
+  // std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
+  // if (!ctx) [[unlikely]]
+  // {
+  //   Logger::error("Failed to create decryption context");
+  //   return ReturnCode::ERROR;
+  // }
 
-  // init decryption context
-  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-  if (!ctx) [[unlikely]]
-  {
-    Logger::error("Failed to create decryption context");
-    return ReturnCode::ERROR;
-  }
+  // // init decrypt
+  // if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_cbc(), nullptr, aeskey, iv.get())) [[unlikely]]
+  // {
+  //   Logger::error("Failed to initialize decryption operation");
+  //   return ReturnCode::ERROR;
+  // }
 
-  // init decrypt
-  if (!EVP_DecryptInit_ex(ctx.get(), EVP_aes_256_cbc(), nullptr, aeskey, iv.get())) [[unlikely]]
-  {
-    Logger::error("Failed to initialize decryption operation");
-    return ReturnCode::ERROR;
-  }
+  // // decrypt update
+  // int out_len = 0;
+  // int output_length = data_length;
+  // std::unique_ptr<unsigned char[]> output(new unsigned char[output_length]);
+  // if (EVP_DecryptUpdate(ctx.get(), output.get(), &out_len, data.get(), output_length) != 1) [[unlikely]]
+  // {
+  //   Logger::error("Failed to update decryption");
+  //   return ReturnCode::ERROR;
+  // }
 
-  // decrypt update
-  int out_len = 0;
-  int output_length = data_length;
-  std::unique_ptr<unsigned char[]> output(new unsigned char[output_length]);
-  if (EVP_DecryptUpdate(ctx.get(), output.get(), &out_len, data.get(), output_length) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to update decryption");
+  // // decrypt final
+  // int tail_len = 0;
+  // if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1) [[unlikely]]
+  // {
+  //   Logger::error("Failed to finalize decryption");
+  //   return ReturnCode::ERROR;
+  // }
+  // out_len += tail_len;
+  auto [output, out_len] = bepaald::decrypt_aes_256_cbc(aeskey, iv.get(), data.get(), data_length);
+  if (!output || out_len == 0) [[unlikely]]
     return ReturnCode::ERROR;
-  }
 
-  // decrypt final
-  int tail_len = 0;
-  if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to finalize decryption");
-    return ReturnCode::ERROR;
-  }
-  out_len += tail_len;
   //std::cout << out_len << std::endl;
 
   // if (data_length - out_len > 16) // data_length is the actual attachment data + 0-padding added by Signal + padded to first multiple of 16 by aes

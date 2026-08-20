@@ -22,24 +22,58 @@
 #include "../filesqlitedb/filesqlitedb.h"
 #include "../rawfileattachmentreader/rawfileattachmentreader.h"
 #include "../attachmentmetadata/attachmentmetadata.h"
+#ifdef BEPAALD_BV2_ENABLED
+#include "../backupv2proto_typedef/backupv2proto_typedef.h"
+#include "../protobufparser/protobufparser.h"
+#include "../backupv2reader/backupv2reader.h"
+#endif
 
 void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments, bool inserthugeattachments)
 {
 
   Logger::message("Opening from dir!");
 
+  if (isBackupV2(inputdir))
+  {
+    Logger::warning("It appears you are trying to open a Backup V2.");
+    Logger::warning_indent("This backup format is not currently supported by this tool.");
+    Logger::warning_indent("See https://github.com/bepaald/signalbackup-tools/issues/382");
+
+#ifdef BEPAALD_BV2_ENABLED
+    BackupV2Reader bv2reader(inputdir, d_passphrase, d_verbose);
+    if (!bv2reader.ok())
+      return;
+
+    // initialize SQLite database to insert backup data into...
+    if (!initEmptyDatabase(/*version?*/))
+      return;
+
+    // read the backup, frame by frame, and process frames as they come in
+    while (true)
+    {
+      auto [framedata, framesize] = bv2reader.getFrame();
+      if (d_showprogress) [[likely]]
+        Logger::message("Progress: ", bv2reader.progress());
+
+      // done
+      if (!framedata || framesize == 0)
+        break;
+
+      if (!handleFrame(framedata, framesize)) [[unlikely]]
+      {
+        Logger::error("Failed to handle frame");
+        return;
+      }
+    }
+#endif
+    return;
+  }
+
+  // dir is decrypted backup v1
   Logger::message("Reading database...");
   FileSqliteDB database(inputdir + "/database.sqlite");
   if (!SqliteDB::copyDb(database, d_database)) [[unlikely]]
-  {
-    if (isBackupV2(inputdir))
-    {
-      Logger::warning("It appears you are trying to open a Backup V2.");
-      Logger::warning_indent("This backup format is not currently supported by this tool.");
-      Logger::warning_indent("See https://github.com/bepaald/signalbackup-tools/issues/382");
-    }
     return;
-  }
 
   Logger::message("Reading HeaderFrame");
   if (!setFrameFromFile(&d_headerframe, inputdir + "/Header.sbf"))

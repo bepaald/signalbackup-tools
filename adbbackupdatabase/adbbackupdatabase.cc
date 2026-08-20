@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2025  Selwin van Dijk
+  Copyright (C) 2025-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -24,6 +24,7 @@
 #include <openssl/pkcs12.h>
 #include <cstring>
 
+#include "../common_crypto.h"
 #include "../common_bytes.h"
 #include "../logger/logger.h"
 #include "../xmldocument/xmldocument.h"
@@ -247,32 +248,38 @@ AdbBackupDatabase::AdbBackupDatabase(std::string const &backupdir, std::string c
 
 
   // decrypt master_secret into the (combined) mac_secret and encryption_secret
-  // create context
-  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, cipherkey.get(), iv.get()) != 1) [[unlikely]]
-  {
-    Logger::error("CTX INIT FAILED");
-    return;
-  }
+  // // create context
+  // std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
+  // if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, cipherkey.get(), iv.get()) != 1) [[unlikely]]
+  // {
+  //   Logger::error("CTX INIT FAILED");
+  //   return;
+  // }
 
-  // decrypt master_secret (without MAC)
-  int combined_secret_length = master_secret.second - SHA_DIGEST_LENGTH;
-  d_combined_secret.reset(new unsigned char[combined_secret_length]);
-  if (EVP_DecryptUpdate(ctx.get(), d_combined_secret.get(), &combined_secret_length,
-                        master_secret.first, master_secret.second - SHA_DIGEST_LENGTH) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to decrypt master_secret");
-    return;
-  }
+  // // decrypt master_secret (without MAC)
+  // int combined_secret_length = master_secret.second - SHA_DIGEST_LENGTH;
+  // d_combined_secret.reset(new unsigned char[combined_secret_length]);
+  // if (EVP_DecryptUpdate(ctx.get(), d_combined_secret.get(), &combined_secret_length,
+  //                       master_secret.first, master_secret.second - SHA_DIGEST_LENGTH) != 1) [[unlikely]]
+  // {
+  //   Logger::error("Failed to decrypt master_secret");
+  //   return;
+  // }
 
-  // finalize (check and discard the padding)
-  int lastbit = 0;
-  if (EVP_DecryptFinal_ex(ctx.get(), d_combined_secret.get() + combined_secret_length, &lastbit) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to finalize decryption of master_secret");
+  // // finalize (check and discard the padding)
+  // int lastbit = 0;
+  // if (EVP_DecryptFinal_ex(ctx.get(), d_combined_secret.get() + combined_secret_length, &lastbit) != 1) [[unlikely]]
+  // {
+  //   Logger::error("Failed to finalize decryption of master_secret");
+  //   return;
+  // }
+  // combined_secret_length += lastbit;
+
+  int combined_secret_length;
+  std::tie(d_combined_secret, combined_secret_length) = bepaald::decrypt_aes_128_cbc(cipherkey.get(), iv.get(), master_secret.first,
+                                                                                     master_secret.second - SHA_DIGEST_LENGTH);
+  if (!d_combined_secret || combined_secret_length == 0) [[unlikely]]
     return;
-  }
-  combined_secret_length += lastbit;
 
   d_mac_secret_length = SHA_DIGEST_LENGTH; // (= 20)
   d_encryption_secret_length = 16;

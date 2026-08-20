@@ -20,9 +20,67 @@
 #ifndef BACKUPV2PROTO_TYPEDEF_H_
 #define BACKUPV2PROTO_TYPEDEF_H_
 
+#include <vector>
+
+// forward declare protobufparser
+struct ZigZag32;
+struct ZigZag64;
+struct Fixed32;
+struct Fixed64;
+struct SFixed32;
+struct SFixed64;
+struct Enum;
+struct Dummy;
+namespace protobuffer
+{
+  typedef Dummy DUMMY;
+  namespace optional
+  {
+    typedef double DOUBLE;
+    typedef float FLOAT;
+    typedef int32_t INT32;
+    typedef Enum ENUM;
+    typedef int64_t INT64;
+    typedef uint32_t UINT32;
+    typedef uint64_t UINT64;
+    typedef ZigZag32 SINT32;
+    typedef ZigZag64 SINT64;
+    typedef Fixed32 FIXED32;
+    typedef Fixed64 FIXED64;
+    typedef SFixed32 SFIXED32;
+    typedef SFixed64 SFIXED64;
+    typedef bool BOOL;
+    typedef std::string STRING;
+    typedef unsigned char *BYTES;
+  }
+  namespace repeated
+  {
+    typedef std::vector<double> DOUBLE;
+    typedef std::vector<float> FLOAT;
+    typedef std::vector<int32_t> INT32;
+    typedef std::vector<Enum> ENUM;
+    typedef std::vector<int64_t> INT64;
+    typedef std::vector<uint32_t> UINT32;
+    typedef std::vector<uint64_t> UINT64;
+    typedef std::vector<ZigZag32> SINT32;
+    typedef std::vector<ZigZag64> SINT64;
+    typedef std::vector<Fixed32> FIXED32;
+    typedef std::vector<Fixed64> FIXED64;
+    typedef std::vector<SFixed32> SFIXED32;
+    typedef std::vector<SFixed64> SFIXED64;
+    typedef std::vector<bool> BOOL;
+    typedef std::vector<std::string> STRING;
+    typedef std::vector<unsigned char *> BYTES;
+  }
+}
+template <typename... Spec>
+class ProtoBufParser;
+//#include "../protobufparser/protobufparser.h"
+
 // https://github.com/signalapp/Signal-Android/blob/main/lib/archive/src/main/protowire/Backup.proto
 
-#include "../protobufparser/protobufparser.h"
+namespace BackupV2
+{
 
 /*
 message Metadata {
@@ -700,6 +758,8 @@ typedef ProtoBufParser<AccountData,
                        AdHocCall,
                        NotificationProfile,
                        ChatFolder> Frame;
+
+} // namespace
 
 #define ACCOUNTDATA_FRAMENUMBER 1
 #define RECIPIENT_FRAMENUMBER 2

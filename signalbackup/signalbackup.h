@@ -35,6 +35,9 @@
 #include "../logger/logger.h"
 #include "../deepcopyinguniqueptr/deepcopyinguniqueptr.h"
 #include "../groupv2statusmessageproto_typedef/groupv2statusmessageproto_typedef.h"
+#ifdef BEPAALD_BV2_ENABLED
+#include "../backupv2proto_typedef/backupv2proto_typedef.h"
+#endif
 
 #include "../common_bytes.h"
 
@@ -637,6 +640,18 @@ class SignalBackup
   template <typename T>
   inline void oldGroupMemberTokenizer(std::string_view membersstring, std::vector<T> *members) const;
   bool isBackupV2(std::string const &dir) const;
+#ifdef BEPAALD_BV2_ENABLED
+  bool initEmptyDatabase() const;
+  bool handleFrame(unsigned char *const data, size_t size) const;
+  bool handleChatItemFrame(BackupV2::Frame const &f) const;
+  bool handleRecipientFrame(BackupV2::Frame const &f) const;
+  bool handleChatFrame(BackupV2::Frame const &f) const;
+  bool handleStickerPackFrame(BackupV2::Frame const &f) const;
+  bool handleAccountDataFrame(BackupV2::Frame const &f) const;
+  bool handleAdHocCallFrame(BackupV2::Frame const &f) const;
+  bool handleNotifcationProfileFrame(BackupV2::Frame const &f) const;
+  bool handleChatFolderFrame(BackupV2::Frame const &f) const;
+#endif
 };
 
 // ONLY FOR DUMMYBACKUP

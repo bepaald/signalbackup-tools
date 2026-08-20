@@ -43,14 +43,13 @@ namespace bepaald
 
   inline std::pair<std::unique_ptr<unsigned char []>, size_t> decrypt(EVP_CIPHER const *ciphertype,
                                                                       void const *key, void const *iv,
-                                                                      void const *ciphertext, size_t ciphertext_size);
-
+                                                                      void const *ciphertext, size_t ciphertext_size, bool silent = false);
   inline std::pair<std::unique_ptr<unsigned char []>, size_t> decrypt_aes_256_ctr(void const *key, void const *iv,
-                                                                                  void const *ciphertext, size_t ciphertext_size);
-
+                                                                                  void const *ciphertext, size_t ciphertext_size, bool silent = false);
   inline std::pair<std::unique_ptr<unsigned char []>, size_t> decrypt_aes_256_cbc(void const *key, void const *iv,
-                                                                                  void const *ciphertext, size_t ciphertext_size);
-
+                                                                                  void const *ciphertext, size_t ciphertext_size, bool silent = false);
+  inline std::pair<std::unique_ptr<unsigned char []>, size_t> decrypt_aes_128_cbc(void const *key, void const *iv,
+                                                                                  void const *ciphertext, size_t ciphertext_size, bool silent = false);
 }
 
 inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::hkdf_sha256(void const *key, size_t key_size,
@@ -107,12 +106,12 @@ inline bool bepaald::checkHmac_sha256(void const *mackey, size_t mackey_size,
 // for aes 256, the key and iv have set sizes (32 and 16 resp)
 inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::decrypt(EVP_CIPHER const *ciphertype,
                                                                              void const *key, void const *iv,
-                                                                             void const *ciphertext, size_t ciphertext_size)
+                                                                             void const *ciphertext, size_t ciphertext_size, bool silent)
 {
   std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
   if (EVP_DecryptInit_ex(ctx.get(), ciphertype, nullptr, reinterpret_cast<unsigned char const *>(key), reinterpret_cast<unsigned char const *>(iv)) != 1) [[unlikely]]
   {
-    Logger::error("CTX INIT FAILED");
+    if (!silent) Logger::error("CTX INIT FAILED");
     return {nullptr, 0};
   }
 
@@ -122,14 +121,14 @@ inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::decrypt(EVP
                         plaintext.first.get(), &written,
                         reinterpret_cast<unsigned char const *>(ciphertext), ciphertext_size) != 1) [[unlikely]]
   {
-    Logger::error("Failed to decrypt data");
+    if (!silent) Logger::error("Failed to decrypt data");
     return {nullptr, 0};
   }
 
   int lastbits = 0;
   if (EVP_DecryptFinal_ex(ctx.get(), plaintext.first.get() + written, &lastbits) != 1) [[unlikely]]
   {
-    Logger::error("Failed to finalize decrypt");
+    if (!silent) Logger::error("Failed to finalize decrypt");
     return {nullptr, 0};
   }
   plaintext.second = written + lastbits;
@@ -138,15 +137,21 @@ inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::decrypt(EVP
 }
 
 inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::decrypt_aes_256_ctr(void const *key, void const *iv,
-                                                                                         void const *ciphertext, size_t ciphertext_size)
+                                                                                         void const *ciphertext, size_t ciphertext_size, bool silent)
 {
-  return decrypt(EVP_aes_256_ctr(), key, iv, ciphertext, ciphertext_size);
+  return decrypt(EVP_aes_256_ctr(), key, iv, ciphertext, ciphertext_size, silent);
 }
 
 inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::decrypt_aes_256_cbc(void const *key, void const *iv,
-                                                                                         void const *ciphertext, size_t ciphertext_size)
+                                                                                         void const *ciphertext, size_t ciphertext_size, bool silent)
 {
-  return decrypt(EVP_aes_256_cbc(), key, iv, ciphertext, ciphertext_size);
+  return decrypt(EVP_aes_256_cbc(), key, iv, ciphertext, ciphertext_size, silent);
+}
+
+inline std::pair<std::unique_ptr<unsigned char []>, size_t> bepaald::decrypt_aes_128_cbc(void const *key, void const *iv,
+                                                                                         void const *ciphertext, size_t ciphertext_size, bool silent)
+{
+  return decrypt(EVP_aes_128_cbc(), key, iv, ciphertext, ciphertext_size, silent);
 }
 
 #endif

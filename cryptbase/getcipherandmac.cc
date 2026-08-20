@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2024  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,35 +18,16 @@
 */
 
 #include "cryptbase.ih"
+#include "../common_crypto.h"
 
 bool CryptBase::getCipherAndMac(unsigned int hashoutputsize, size_t outputsize)
 {
-  std::unique_ptr<EVP_PKEY_CTX, decltype(&::EVP_PKEY_CTX_free)> pctx(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr), &::EVP_PKEY_CTX_free);
-
-  if (EVP_PKEY_derive_init(pctx.get()) != 1 ||
-      EVP_PKEY_CTX_set_hkdf_md(pctx.get(), EVP_sha256()) != 1)
-  {
-    Logger::error("Failed to init HKDF");
-    return false;
-  }
-
   unsigned int const info_size = 13;
   unsigned char info[info_size] = {'B','a','c','k','u','p',' ','E','x','p','o','r','t'};
-  //std::unique_ptr<unsigned char[]> localsalt(new unsigned char[hashoutputsize]);
-  if (EVP_PKEY_CTX_set1_hkdf_key(pctx.get(), d_backupkey, d_backupkey_size) != 1 ||
-      // EVP_PKEY_CTX_set1_hkdf_salt(pctx.get(), localsalt, hashoutputsize) != 1 ||
-      EVP_PKEY_CTX_add1_hkdf_info(pctx.get(), info, info_size) != 1)
-  {
-    Logger::error("Failed to set data for HKDF");
-    return false;
-  }
 
-  std::unique_ptr<unsigned char[]> derived(new unsigned char[outputsize]);
-  if (EVP_PKEY_derive(pctx.get(), derived.get(), &outputsize) != 1)
-  {
-    Logger::error("Error deriving HKDF");
+  auto [derived, size] = bepaald::hkdf_sha256(d_backupkey, d_backupkey_size, info, info_size, outputsize);
+  if (!derived || size == 0) [[unlikely]]
     return false;
-  }
 
   d_cipherkey_size = hashoutputsize;
   d_cipherkey = new unsigned char[d_cipherkey_size];

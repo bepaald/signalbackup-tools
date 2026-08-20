@@ -148,7 +148,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
           while (true)
           {
             ++count;
-            unsigned char sid[16];
+            [[indeterminate]] unsigned char sid[16];
             if (RAND_bytes(sid, 16) != 1)
             {
               Logger::error("Failed to generate random storage key for group contact (1)");
@@ -398,7 +398,7 @@ long long int SignalBackup::dtCreateRecipient(SqliteDB const &ddb,
           }
         */
         DecryptedMember mem;
-        unsigned char rawuuid[16];
+        [[indeterminate]] unsigned char rawuuid[16];
         uint64_t rawuuid_size = 16;
         if (bepaald::hexStringToBytes(m.first, rawuuid, rawuuid_size))
         {

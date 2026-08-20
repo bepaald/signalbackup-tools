@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2019-2025  Selwin van Dijk
+  Copyright (C) 2019-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -108,7 +108,7 @@ class BackupFrame
   inline constexpr int64_t bytesToInt64(unsigned char const *data, size_t len) const;
   bool init(unsigned char const *data, size_t length, std::vector<FrameData> *framedata);
   template <typename T>
-  inline constexpr void intTypeToBytes(T val, unsigned char *b);
+  inline constexpr void intTypeToBytes(T val, unsigned char *b) const;
   inline constexpr uint64_t putVarInt(uint64_t val, unsigned char *mem) const;
   inline constexpr uint64_t varIntSize(uint64_t val) const;
   inline constexpr uint64_t setFieldAndWire(unsigned int field, unsigned int type, unsigned char *mem) const;
@@ -446,7 +446,7 @@ inline uint64_t BackupFrame::frameNumber() const
 }
 
 template <typename T>
-inline constexpr void BackupFrame::intTypeToBytes(T val, unsigned char *b)
+inline constexpr void BackupFrame::intTypeToBytes(T val, unsigned char *b) const
 {
   for (size_t i = 0; i < sizeof(T); ++i)
     b[i] = (val >> ((sizeof(T) - (i + 1)) * 8)); // this may have a swap_endian builtin?

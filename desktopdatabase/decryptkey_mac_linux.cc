@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2024-2025  Selwin van Dijk
+  Copyright (C) 2024-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -22,6 +22,7 @@
 #include "desktopdatabase.ih"
 
 #include "../common_bytes.h"
+#include "../common_crypto.h"
 
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -73,51 +74,61 @@ std::string DesktopDatabase::decryptKey_linux_mac(std::string const &secret, std
   // set iv
   uint64_t const iv_length = 16;
   unsigned char const iv[iv_length] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '}; // 16 spaces
-  // init cipher and context
-  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-  if (!ctx)
-  {
-    if (last)
-      Logger::error("Failed to create decryption context. No more secrets to try.");
-    else
-      Logger::warning("Failed to create decryption context. Trying next secret...");
-    return decryptedkey;
-  }
 
-  // init decrypt
-  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, key.get(), iv) != 1) [[unlikely]]
-  {
-    if (last)
-      Logger::error("Failed to initialize decryption operation. No more secrets to try.");
-    else
-      Logger::warning("Failed to initialize decryption operation. Trying next secret...");
-    return decryptedkey;
-  }
+  // // init cipher and context
+  // std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
+  // if (!ctx)
+  // {
+  //   if (last)
+  //     Logger::error("Failed to create decryption context. No more secrets to try.");
+  //   else
+  //     Logger::warning("Failed to create decryption context. Trying next secret...");
+  //   return decryptedkey;
+  // }
 
-  // decrypt update
-  int out_len = 0;
-  int output_length = data_length - version_header_length;
-  std::unique_ptr<unsigned char[]> output(new unsigned char[output_length]);
-  if (EVP_DecryptUpdate(ctx.get(), output.get(), &out_len, data.get() + version_header_length, output_length) != 1)
-  {
-    if (last)
-      Logger::error("Decrypt update");
-    else
-      Logger::error("Decrypt update. Trying next secret...");
-    return decryptedkey;
-  }
+  // // init decrypt
+  // if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, key.get(), iv) != 1) [[unlikely]]
+  // {
+  //   if (last)
+  //     Logger::error("Failed to initialize decryption operation. No more secrets to try.");
+  //   else
+  //     Logger::warning("Failed to initialize decryption operation. Trying next secret...");
+  //   return decryptedkey;
+  // }
 
-  // decrypt final
-  int tail_len = 0;
-  if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1)
+  // // decrypt update
+  // int out_len = 0;
+  // int output_length = data_length - version_header_length;
+  // std::unique_ptr<unsigned char[]> output(new unsigned char[output_length]);
+  // if (EVP_DecryptUpdate(ctx.get(), output.get(), &out_len, data.get() + version_header_length, output_length) != 1)
+  // {
+  //   if (last)
+  //     Logger::error("Decrypt update");
+  //   else
+  //     Logger::error("Decrypt update. Trying next secret...");
+  //   return decryptedkey;
+  // }
+
+  // // decrypt final
+  // int tail_len = 0;
+  // if (EVP_DecryptFinal_ex(ctx.get(), output.get() + out_len, &tail_len) != 1)
+  // {
+  //   if (last)
+  //     Logger::error("Finalizing desktop key decryption. No more secrets to try.");
+  //   else if (d_verbose) [[unlikely]]
+  //     Logger::warning("Finalizing desktop key decryption. Trying next secret...");
+  //   return decryptedkey;
+  // }
+  // out_len += tail_len;
+  auto [output, out_len] = bepaald::decrypt_aes_128_cbc(key.get(), iv, data.get() + version_header_length, data_length - version_header_length, !last);
+  if (!output || out_len == 0)
   {
     if (last)
-      Logger::error("Finalizing desktop key decryption. No more secrets to try.");
+      Logger::error("Failed to decrypt desktop key. No more secrets to try.");
     else if (d_verbose) [[unlikely]]
-      Logger::warning("Finalizing desktop key decryption. Trying next secret...");
+      Logger::warning("Failed to decrypt desktop key with current secret, trying next...");
     return decryptedkey;
   }
-  out_len += tail_len;
 
   decryptedkey = bepaald::bytesToPrintableString(output.get(), out_len);
 

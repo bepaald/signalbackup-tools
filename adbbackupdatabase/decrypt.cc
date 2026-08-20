@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2025  Selwin van Dijk
+  Copyright (C) 2025-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -18,6 +18,8 @@
 */
 
 #include "adbbackupdatabase.ih"
+
+#include "../common_crypto.h"
 
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
@@ -39,32 +41,8 @@ std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> AdbBackupDatabas
     return std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>>();
   }
 
-  // create context
-  std::unique_ptr<EVP_CIPHER_CTX, decltype(&::EVP_CIPHER_CTX_free)> ctx(EVP_CIPHER_CTX_new(), &::EVP_CIPHER_CTX_free);
-  if (EVP_DecryptInit_ex(ctx.get(), EVP_aes_128_cbc(), nullptr, key, encdata /* beginning of encdata is IV */) != 1) [[unlikely]]
-  {
-    Logger::error("CTX INIT FAILED");
-    return std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>>();
-  }
-
-  // decrypt data
-  std::pair<std::unique_ptr<unsigned char[]>, int> decrypted{new unsigned char[enclength], enclength};
-  if (EVP_DecryptUpdate(ctx.get(),
-                        decrypted.first.get(), &decrypted.second,
-                        encdata + 16, enclength - (16 + SHA_DIGEST_LENGTH)) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to decrypt data");
-    return std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>>();
-  }
-
-  // check the padding, and discard if ok
-  int tail_len = 0;
-  if (EVP_DecryptFinal_ex(ctx.get(), decrypted.first.get() + decrypted.second, &tail_len) != 1) [[unlikely]]
-  {
-    Logger::error("Failed to finalize decryption");
-    return std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>>();
-  }
-  decrypted.second += tail_len;
-
+  auto decrypted = bepaald::decrypt_aes_128_cbc(key, encdata, encdata + 16, enclength - (16 + SHA_DIGEST_LENGTH));
+  if (!decrypted.first || decrypted.second == 0) [[unlikely]]
+    return std::nullopt;
   return decrypted;
 }

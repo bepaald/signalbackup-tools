@@ -26,6 +26,8 @@
 
 #include <memory>
 #include <filesystem>
+#include <string_view>
+#include <string>
 
 #include "logger/logger.h"
 
@@ -48,7 +50,7 @@ namespace bepaald
   inline bool isEmpty(std::string_view path);
   inline bool clearDirectory(std::string_view path);
   inline uint64_t fileSize(std::string_view path);
-  inline std::pair<std::unique_ptr<unsigned char[]>, size_t> readFileFully(std::string const &path);
+  inline std::pair<std::unique_ptr<unsigned char[]>, size_t> readFileFully(std::string_view path);
 #if defined(_WIN32) || defined(__MINGW64__)
   inline std::string windows_long_file(std::string const &path);
   inline long long int abs_path_length(std::string const &path);
@@ -88,7 +90,7 @@ inline bool bepaald::createDir(std::string_view path)
 inline bool bepaald::isEmpty(std::string_view path)
 {
   std::error_code ec;
-  for (auto const &p: std::filesystem::directory_iterator(path))
+  for (auto const &p : std::filesystem::directory_iterator(path))
     if (p.exists(ec))
       return false;
   return true;
@@ -97,7 +99,7 @@ inline bool bepaald::isEmpty(std::string_view path)
 inline bool bepaald::clearDirectory(std::string_view path)
 {
   std::error_code ec;
-  for (auto const &p: std::filesystem::directory_iterator(path))
+  for (auto const &p : std::filesystem::directory_iterator(path))
     if (std::filesystem::remove_all(p.path(), ec) == static_cast<std::uintmax_t>(-1))
       return false;
   return true;
@@ -109,10 +111,10 @@ inline uint64_t bepaald::fileSize(std::string_view path)
   return std::filesystem::file_size(std::filesystem::path(path), ec);
 }
 
-inline std::pair<std::unique_ptr<unsigned char[]>, size_t> bepaald::readFileFully(std::string const &path)
+inline std::pair<std::unique_ptr<unsigned char[]>, size_t> bepaald::readFileFully(std::string_view path)
 {
   size_t size = fileSize(path);
-  std::ifstream ifs(path, std::ios_base::in | std::ios_base::binary);
+  std::ifstream ifs(path.data(), std::ios_base::in | std::ios_base::binary);
   if (!ifs.is_open()) [[unlikely]]
   {
     Logger::error("Failed to open file at path: '", path, "'");
