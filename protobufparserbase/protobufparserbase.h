@@ -224,10 +224,10 @@ namespace ProtoBufParserReturn
 class ProtoBufParserBase
 {
  public:
-  enum class VIEWONLY : bool
+  enum class MEMTYPE : bool
   {
-    TRUE = true,
-    FALSE = false
+    VIEWONLY = true,
+    OWNING = false
   };
 
  protected:
@@ -243,12 +243,12 @@ class ProtoBufParserBase
 
   unsigned char *d_data;
   uint64_t d_size;
-  VIEWONLY d_viewonly;
+  MEMTYPE d_viewonly;
  public:
   inline ProtoBufParserBase();
   inline explicit ProtoBufParserBase(std::string const &base64);
   inline ProtoBufParserBase(unsigned char const *data, uint64_t size);
-  inline ProtoBufParserBase(unsigned char *data, uint64_t size, VIEWONLY viewonly);
+  inline ProtoBufParserBase(unsigned char *data, uint64_t size, MEMTYPE viewonly);
   inline explicit ProtoBufParserBase(ProtoBufParserBase const &other);
   inline ProtoBufParserBase &operator=(ProtoBufParserBase const &other);
   inline ProtoBufParserBase(ProtoBufParserBase &&other) noexcept;
@@ -295,16 +295,16 @@ inline ProtoBufParserBase::ProtoBufParserBase()
   :
   d_data(nullptr),
   d_size(0),
-  d_viewonly(VIEWONLY::FALSE)
+  d_viewonly(MEMTYPE::OWNING)
 {}
 
 inline ProtoBufParserBase::ProtoBufParserBase(ProtoBufParserBase const &other)
   :
-  d_data(other.d_viewonly == VIEWONLY::TRUE ? other.d_data : nullptr),
+  d_data(other.d_viewonly == MEMTYPE::VIEWONLY ? other.d_data : nullptr),
   d_size(other.d_size),
   d_viewonly(other.d_viewonly)
 {
-  if (d_viewonly == VIEWONLY::FALSE)
+  if (d_viewonly == MEMTYPE::OWNING)
   {
     d_data = new unsigned char[d_size];
     if (d_size)
@@ -320,7 +320,7 @@ inline ProtoBufParserBase &ProtoBufParserBase::operator=(ProtoBufParserBase cons
 
     d_size = other.d_size;
     d_viewonly = other.d_viewonly;
-    if (d_viewonly == VIEWONLY::TRUE)
+    if (d_viewonly == MEMTYPE::VIEWONLY)
     {
       d_data = new unsigned char[d_size];
       if (d_size)
@@ -362,7 +362,7 @@ inline ProtoBufParserBase::ProtoBufParserBase(std::string const &base64)
   :
   d_data(nullptr),
   d_size(0),
-  d_viewonly(VIEWONLY::FALSE)
+  d_viewonly(MEMTYPE::OWNING)
 {
   std::pair<unsigned char *, size_t> l_data = Base64::base64StringToBytes(base64);
   d_data = l_data.first;
@@ -375,20 +375,20 @@ inline ProtoBufParserBase::ProtoBufParserBase(unsigned char const *data, uint64_
   :
   d_data(nullptr),
   d_size(size),
-  d_viewonly(VIEWONLY::FALSE)
+  d_viewonly(MEMTYPE::OWNING)
 {
   d_data = new unsigned char[d_size];
   if (d_size)
     std::memcpy(d_data, data, d_size);
 }
 
-inline ProtoBufParserBase::ProtoBufParserBase(unsigned char *data, uint64_t size, VIEWONLY viewonly)
+inline ProtoBufParserBase::ProtoBufParserBase(unsigned char *data, uint64_t size, MEMTYPE viewonly)
   :
-  d_data(viewonly == VIEWONLY::TRUE ? data : nullptr),
+  d_data(viewonly == MEMTYPE::VIEWONLY ? data : nullptr),
   d_size(size),
   d_viewonly(viewonly)
 {
-  if (d_viewonly == VIEWONLY::FALSE) [[unlikely]]
+  if (d_viewonly == MEMTYPE::OWNING) [[unlikely]]
   {
     d_data = new unsigned char[d_size];
     if (d_size)
@@ -403,7 +403,7 @@ inline ProtoBufParserBase::~ProtoBufParserBase()
 
 inline void ProtoBufParserBase::clear()
 {
-  if (d_viewonly == VIEWONLY::FALSE)
+  if (d_viewonly == MEMTYPE::OWNING)
     bepaald::destroyPtr(&d_data, &d_size);
 }
 
@@ -922,7 +922,7 @@ inline auto ProtoBufParserBase::getFieldAs(int num) const
     if constexpr (std::is_base_of<ProtoBufParserBase, T>::value) // this handles std::string and ProtoBufParser<U...> ?
     {
       //if constexpr (asview)
-      return ReturnType({fielddata.first, fielddata.second, asview ? VIEWONLY::TRUE : VIEWONLY::FALSE});
+      return ReturnType({fielddata.first, fielddata.second, asview ? MEMTYPE::VIEWONLY : MEMTYPE::OWNING});
       //else
       //  return ReturnType({fielddata.first, fielddata.second});
     }
@@ -1025,7 +1025,7 @@ inline auto ProtoBufParserBase::getFieldsAs(int num) const
     if constexpr (std::is_base_of<ProtoBufParserBase, HeldType_valuetype>::value) // this handles std::string and ProtoBufParser<U...> ?
     {
       //if constexpr (asview)
-      result.emplace_back(ReturnType_held{fielddata.first, fielddata.second, asview ? VIEWONLY::TRUE : VIEWONLY::FALSE});
+      result.emplace_back(ReturnType_held{fielddata.first, fielddata.second, asview ? MEMTYPE::VIEWONLY : MEMTYPE::OWNING});
       //else
       //  result.emplace_back(ReturnType_held{fielddata.first, fielddata.second});
     }

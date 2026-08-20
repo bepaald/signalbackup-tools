@@ -46,7 +46,7 @@ class ProtoBufParser : public ProtoBufParserBase
   inline explicit ProtoBufParser(std::string const &base64);
   inline explicit ProtoBufParser(std::pair<std::shared_ptr<unsigned char []>, size_t> const &data);
   inline ProtoBufParser(unsigned char const *data, uint64_t size);
-  inline ProtoBufParser(unsigned char *data, uint64_t size, ProtoBufParserBase::VIEWONLY viewonly) : ProtoBufParserBase(data, size, viewonly) {};
+  inline ProtoBufParser(unsigned char *data, uint64_t size, ProtoBufParserBase::MEMTYPE viewonly) : ProtoBufParserBase(data, size, viewonly) {};
   inline ProtoBufParser(ProtoBufParser const &other) = default;
   inline ProtoBufParser &operator=(ProtoBufParser const &other) = default;
   inline explicit ProtoBufParser(ProtoBufParser &&other) noexcept = default;
