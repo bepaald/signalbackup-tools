@@ -216,6 +216,12 @@ std::vector<SignalBackup::DatabaseLink> const SignalBackup::s_databaselinks // s
     0
   },
   {
+    "sticker_pack",
+    "_id",
+    {},
+    0
+  },
+  {
     "msl_payload",
     "_id",
     {

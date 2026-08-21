@@ -26,7 +26,8 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
   Logger::message(__FUNCTION__, " (", thread, ")");
 
   // known incompatibilities. There are almost certainly also unknown ones!
-  if ((d_databaseversion >= 312 && source->d_databaseversion < 312) || // name_collision-table split
+  if ((d_databaseversion >= 322 && source->d_databaseversion < 322) || // sticker -> sticker/sticker_pack table split
+      (d_databaseversion >= 312 && source->d_databaseversion < 312) || // name_collision-table split
       (d_databaseversion >= 215 && source->d_databaseversion < 215) || // part.unique_id dropped from db
       (d_databaseversion < 215 && source->d_databaseversion >= 215) ||
       (d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
@@ -899,8 +900,67 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                               call_results.value(i, "call_id"));
   }
 
-  // delete double stickers
-  if (d_database.containsTable("sticker") && source->d_database.containsTable("sticker"))
+
+  // UNTESTED...
+  if (d_database.containsTable("sticker_pack") && source->d_database.containsTable("sticker_pack"))
+  {
+    SqliteDB::QueryResults installed_stickers;
+    d_database.exec("SELECT pack_id, installed FROM sticker_pack", &installed_stickers);
+    int count_source = 0;
+    int count_target = 0;
+    for (unsigned int i = 0; i < installed_stickers.rows(); ++i)
+    {
+      if (installed_stickers.valueAsInt(i, "installed") == 1)
+      {
+        source->d_database.exec("DELETE FROM sticker_pack WHERE pack_id = ?", installed_stickers.value(i, "pack_id"));
+        count_source += source->d_database.changed();
+      }
+      else // pack is not installed in target, check if it is in source...
+      {    // in that case, delete from _target_ instead...
+        long long int present_in_source = source->d_database.getSingleResultAs<long long int>("SELECT installed FROM sticker_pack WHERE pack_id = ?",
+                                                                                              installed_stickers.value(i, "pack_id"), 0);
+        if (present_in_source == 1)
+        {
+          d_database.exec("DELETE FROM sticker_pack WHERE pack_id = ?", installed_stickers.value(i, "pack_id"));
+          count_target += 1;
+        }
+        else // installed on neither database -> delete from source
+        {
+          source->d_database.exec("DELETE FROM sticker_pack WHERE pack_id = ?", installed_stickers.value(i, "pack_id"));
+          count_source += source->d_database.changed();
+        }
+      }
+    }
+
+    auto clean_up_sticker_table = [](SignalBackup *sb) STATICLAMBDA
+    {
+      SqliteDB::QueryResults deleted_sticker_ids;
+      sb->d_database.exec("DELETE FROM sticker WHERE pack_id NOT IN (SELECT pack_id FROM sticker_pack) RETURNING _id", &deleted_sticker_ids);
+
+      // and delete the actual sticker imagedata
+      for (unsigned int j = 0; j < deleted_sticker_ids.rows(); ++j)
+      {
+        long long int erased = deleted_sticker_ids.valueAsInt(j, "_id");
+        if (erased == -1)
+          continue;
+        auto it = std::find_if(sb->d_stickers.begin(), sb->d_stickers.end(), [erased](auto const &s) { return s.first == static_cast<uint64_t>(erased); });
+        if (it != sb->d_stickers.end())
+          sb->d_stickers.erase(it);
+      }
+    };
+
+    // delete the corresponding stickers from source...
+    if (count_source)
+      clean_up_sticker_table(source);
+
+    // delete the corresponding stickers from target
+    if (count_target)
+      clean_up_sticker_table(this);
+
+    if (count_target || count_source)
+      Logger::message("  Deleted ", count_target + count_source, " existing sticker_packs (", count_target, ", ", count_source, ")");
+  }
+  else if (d_database.containsTable("sticker") && source->d_database.containsTable("sticker")) // delete double stickers
   {
     SqliteDB::QueryResults installed_stickers;
     d_database.exec("SELECT pack_id, sticker_id, cover FROM sticker", &installed_stickers);
@@ -913,7 +973,7 @@ table|sender_keys|sender_keys|71|CREATE TABLE sender_keys (_id INTEGER PRIMARY K
                               &deleted_sticker_ids);
       count += source->d_database.changed();
 
-      // delete actual sticker image
+      // delete actual sticker imagedata
       for (unsigned int j = 0; j < deleted_sticker_ids.rows(); ++j)
       {
         long long int erased = deleted_sticker_ids.valueAsInt(j, "_id");
