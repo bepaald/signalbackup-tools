@@ -200,6 +200,7 @@ void SignalBackup::HTMLwriteRevision(long long int msg_id, std::ofstream &filt, 
                             false, //is_quoted,
                             false, //is_deleted,
                             false, //is_viewonce,
+                            false, // is_viewed
                             parent_info.isgroup,
                             incoming,
                             nobackground,

@@ -2703,7 +2703,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "          <a id=\"" << msg_info.msg_id << "\"></a>\n";
 
   // for incoming group (normal) message: insert avatar with initial
-  if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
+  if (msg_info.isgroup && msg_info.incoming && !Types::isStatusMessage(msg_info.type))
   {
     htmloutput << "          <div class=\"incoming-group-msg\">\n";
     htmloutput << "            <div class=\"avatar avatar-" << msg_info.msg_recipient_id
@@ -2726,8 +2726,8 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << "msg-" << (msg_info.incoming ? "incoming" : "outgoing")
                << (!msg_info.incoming ? " msg-sender-" + bepaald::toString(msg_info.msg_recipient_id) : "")
                << (msg_info.nobackground ? " no-bg-bubble" : "")
-               << (msg_info.is_viewonce ? " msg-viewonce" : "")
-               << ((msg_info.is_deleted && !msg_info.is_viewonce) ? " deleted-msg" : "")
+               << ((!msg_info.is_deleted && msg_info.is_viewonce) ? " msg-viewonce" : "")
+               << (msg_info.is_deleted ? " deleted-msg" : "")
                << (msg_info.reaction_results->rows() ? " msg-with-reaction" : "")<< "\">\n";
 
   // scheduled messages
@@ -2978,18 +2978,6 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
     htmloutput << msg_info.body << "</pre>\n";
     htmloutput << std::string(extraindent, ' ') << "            </div>\n";
   }
-  else if (msg_info.is_viewonce)
-  {
-    htmloutput << "            <div class=\"viewonce\">\n";
-    if (msg_info.incoming)
-      htmloutput << "              <div class=\""
-                 << (msg_info.is_deleted ? "viewonce_icon" : "unviewed_viewonce_icon") << "\"></div><pre>"
-                 << (msg_info.is_deleted ? "Viewed" : "View-once media")
-                 << "</pre>\n";
-    else
-      htmloutput << "              <div class=\"viewonce_icon\"></div><pre>Media</pre>\n";
-    htmloutput << "            </div>\n";
-  }
   else if (msg_info.is_deleted)
   {
     htmloutput << "            <div>\n";
@@ -3018,6 +3006,18 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
       else
         htmloutput << "              <pre>You deleted this message.</pre>\n";
     }
+    htmloutput << "            </div>\n";
+  }
+  else if (msg_info.is_viewonce)
+  {
+    htmloutput << "            <div class=\"viewonce\">\n";
+    if (msg_info.incoming)
+      htmloutput << "              <div class=\""
+                 << (msg_info.is_viewed ? "viewonce_icon" : "unviewed_viewonce_icon") << "\"></div><pre>"
+                 << (msg_info.is_viewed ? "Viewed" : "View-once media")
+                 << "</pre>\n";
+    else
+      htmloutput << "              <div class=\"viewonce_icon\"></div><pre>Media</pre>\n";
     htmloutput << "            </div>\n";
   }
 
@@ -3136,7 +3136,7 @@ void SignalBackup::HTMLwriteMessage(std::ofstream &htmloutput, HTMLMessageInfo c
   }
   // end message
   htmloutput << std::string(extraindent, ' ') << "          </div>\n";
-  if (msg_info.isgroup && msg_info.incoming && !msg_info.is_deleted && !Types::isStatusMessage(msg_info.type))
+  if (msg_info.isgroup && msg_info.incoming && !Types::isStatusMessage(msg_info.type))
     htmloutput << "          </div>\n";
   htmloutput << '\n';
 

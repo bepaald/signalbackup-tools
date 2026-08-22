@@ -59,6 +59,7 @@ struct HTMLMessageInfo
   bool is_quoted;
   bool is_deleted;
   bool is_viewonce;
+  bool is_viewed;
   bool isgroup;
   bool incoming;
   bool nobackground;

@@ -369,11 +369,13 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
                                     (!periodsplitformat.empty() ? bepaald::concat("strftime('", periodsplitformat, "', IFNULL(date_received, 0) / 1000, 'unixepoch', 'localtime')") : "''"), " AS periodsplit, "
                                     "quote_id, quote_author, quote_body, quote_mentions, quote_missing, ",
                                     (d_database.tableContainsColumn(d_mms_table, "quote_type") ? "quote_type, " : "0 AS quote_type, "),
-                                    "attcount, reactioncount, mentioncount, "
+                                    "attcount, reactioncount, mentioncount,"
                                     "IFNULL(", d_mms_date_sent, " IN (SELECT DISTINCT quote_id FROM ", d_mms_table, " WHERE thread_id = ?1), 0) AS is_quoted, ",
                                     d_mms_delivery_receipts, ", ", d_mms_read_receipts, ", ",
                                     (d_database.tableContainsColumn(d_mms_table, "remote_deleted") ? "IFNULL(remote_deleted, 0)" : "0"), " AS remote_deleted, ",
                                     (d_database.tableContainsColumn(d_mms_table, "deleted_by") ? "IFNULL(deleted_by, -1)" : "-1"), " AS deleted_by, ",
+                                    (d_database.tableContainsColumn(d_mms_table, "viewed") ? "IFNULL(viewed, 0)" : "0"), " AS viewed, ",
+                                    //(d_database.tableContainsColumn(
                                     "IFNULL(view_once, 0) AS view_once, expires_in, ", d_mms_ranges, ", shared_contacts, ",
                                     (d_database.tableContainsColumn(d_mms_table, "original_message_id") ? "original_message_id, " : ""),
                                     (d_database.tableContainsColumn(d_mms_table, "revision_number") ? "revision_number, " : ""),
@@ -595,6 +597,7 @@ bool SignalBackup::exportHtml(std::string const &directory, std::vector<long lon
             (messages.getValueAs<long long int>(messagecount, "remote_deleted") > 0 ||
              messages.getValueAs<long long int>(messagecount, "deleted_by") > 0),             // is_deleted
             messages.getValueAs<long long int>(messagecount, "view_once") == 1,               // is_viewonce,
+            messages.getValueAs<long long int>(messagecount, "viewed") == 1,                  // is_viewed
             isgroup,
             !Types::isOutgoing(messages.getValueAs<long long int>(messagecount, d_mms_type)), // incoming
             false,                                                                            // nobackground,
