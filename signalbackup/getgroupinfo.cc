@@ -33,6 +33,9 @@ void SignalBackup::getGroupInfo(long long int rid, GroupInfo *groupinfo,
   if (!groupdata.first || !groupdata.second)
     return;
 
+  //std::cout << bepaald::bytesToHexString(groupdata) << std::endl;
+  //std::cout << Base64::bytesToBase64String(groupdata.first.get(), groupdata.second) << std::endl;
+
 /*
 message DecryptedGroup {
            string                    title                     = 2;
@@ -267,6 +270,7 @@ message AccessControl {
   {
     //std::cout << "=== PENDING MEMBERS:" << std::endl;
     auto pendingmembers = group_info.getFieldView<8>();
+
     for (unsigned int i = 0; i < pendingmembers.size(); ++i)
     {
       /*
@@ -290,11 +294,13 @@ message AccessControl {
       // if (pendingmembers[i].getField<2>().has_value())
       //   role = pendingmembers[i].getField<2>().value();
 
-      long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap);
-      if (id != -1)
-        groupinfo->pending_members.push_back(id);
+      long long int id = getRecipientIdFromUuidMapped(uuidstr, recipientmap, true); // we suppress the warning as invited members are often unknown
+                                                                                    // ofter even the first field is not an actual uuid (17 bytes)
+                                                                                    // maybe the only exception is if _you_ are the inviter.
+      //if (id != -1)
+      groupinfo->pending_members.push_back(id);
 
-      //std::cout << uuidstr << " (" << role << ")" << std::endl;
+      //std::cout << uuidstr /* << " (" << role << ")"*/ << std::endl;
     }
     //std::cout << "===" << std::endl << std::endl;
   }

@@ -2320,9 +2320,25 @@ file << R"(
       if (groupinfo.pending_members.size() == 0)
         file << "(none)";
       else
+      {
+        int namedmembers = 0;
         for (unsigned int pm = 0; pm < groupinfo.pending_members.size(); ++pm)
+        {
+          if (groupinfo.pending_members[pm] == -1)
+            continue;
           file << HTMLescapeString(getRecipientInfoFromMap(recipient_info, groupinfo.pending_members[pm], recipientmap).display_name)
                << ((pm < groupinfo.pending_members.size() - 1) ? ", " : "");
+          ++namedmembers;
+        }
+        if (groupinfo.pending_members.size() - namedmembers > 0)
+        {
+          if (namedmembers > 0)
+            file << ", and " << (groupinfo.pending_members.size() - namedmembers) << " more"
+                 << (groupinfo.pending_members.size() - namedmembers > 0 ? " people" : " person");
+          else
+            file << (groupinfo.pending_members.size() - namedmembers) << (groupinfo.pending_members.size() - namedmembers > 0 ? " people" : " person");
+        }
+      }
       file << "</span>\n";
 
       // 'requesting' members

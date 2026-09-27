@@ -478,7 +478,7 @@ class SignalBackup
                                              bool suppresswarning = false) const;
   long long int getRecipientIdFromPhoneMapped(std::string_view phone, std::map<std::string, long long int, std::less<>> *savedmap,
                                               bool suppresswarning = false) const;
-  inline std::string getNameFromUuid(std::string const &uuid) const;
+  inline std::string getNameFromUuid(std::string const &uuid, bool suppresswarning = false) const;
   std::string getNameFromRecipientId(long long int id) const;
   void dtSetMessageDeliveryReceipts(SqliteDB const &ddb, long long int rowid, std::map<std::string, long long int, std::less<>> *savedmap,
                                     std::string const &databasedir, bool createcontacts, long long int msg_id, bool is_mms, bool isgroup,
@@ -975,9 +975,9 @@ inline bool SignalBackup::HTMLprepMsgBody(std::string *body) const
                          false); //isquote
 }
 
-inline std::string SignalBackup::getNameFromUuid(std::string const &uuid) const
+inline std::string SignalBackup::getNameFromUuid(std::string const &uuid, bool suppresswarning) const
 {
-  return getNameFromRecipientId(getRecipientIdFromUuidMapped(uuid, nullptr));
+  return getNameFromRecipientId(getRecipientIdFromUuidMapped(uuid, nullptr, suppresswarning));
 }
 
 inline bool SignalBackup::HTMLwriteIndex(std::vector<long long int> const &threads, long long int maxtimestamp, std::string const &directory,

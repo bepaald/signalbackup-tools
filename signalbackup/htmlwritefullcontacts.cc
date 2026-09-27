@@ -301,6 +301,7 @@ bool SignalBackup::HTMLwriteFullContacts(std::string const &dir, std::map<long l
   for (unsigned int i = 0; i < results.rows(); ++i)
   {
     long long int rec_id = results.valueAsInt(i, "recipient_id");
+
     if (getRecipientInfoFromMap(recipient_info, rec_id).hasavatar)
     {
       std::string avatarpath;

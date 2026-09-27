@@ -25,7 +25,6 @@
 
 std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context const &groupv2ctx, long long int type, std::string const &contactname, IconType *icon) const
 {
-
   if (Types::isGroupQuit(type)) // special case, otherwise the gv2ctx protobuf gets parsed leading to things like 'Joe removed Joe'
   {
     if (Types::isOutgoing(type))
@@ -36,7 +35,7 @@ std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context con
   //groupv2ctx.print();
   std::string statusmsg;
 
-  auto context_groupchange = groupv2ctx.getFieldView<2>();
+ auto context_groupchange = groupv2ctx.getFieldView<2>();
   if (context_groupchange.has_value())
   {
     DecryptedGroupChange groupchange = context_groupchange.value();
@@ -430,6 +429,90 @@ std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context con
         if (icon && *icon == IconType::NONE)
           *icon = IconType::MEMBER_REMOVE;
       }
+    }
+
+    // check members declined invitation
+    auto const &deletedpendingmembers = groupchange.getFieldView<8>();
+    if (deletedpendingmembers.size())
+    {
+      // get editor
+      std::string editoruuid;
+      if (groupchange_editor.has_value())
+      {
+        auto [uuid, uuid_size] = groupchange_editor.value();
+        editoruuid = bepaald::bytesToHexString(uuid, uuid_size, true);
+        editoruuid.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+      }
+
+      if (deletedpendingmembers.size() == 1) // only 1 invite was deleted, we need to check if its the editor to see if its a revoke or a decline
+      {
+        DecryptedPendingMemberRemoval dpm = deletedpendingmembers[0];
+        auto [uuid, uuid_size] = dpm.getFieldView<1>().value_or({nullptr, 0}); // bytes
+        std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+        uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+        if (uuidstr == editoruuid) // invitiation revoked by invited themselves -> declined,
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + (uuidstr == d_selfuuid ? "You declined the"s : "Someone declined an"s) + " invitation to the group.";
+        else
+        {
+          std::string editorname(editoruuid.empty() ? std::string() : getNameFromUuid(editoruuid));
+
+          if (editoruuid == d_selfuuid)
+            statusmsg += (!statusmsg.empty() ? "\n" : "") + "You revoked an invitation to the group."s;
+
+          if (!editorname.empty())
+            statusmsg += (!statusmsg.empty() ? "\n" : "") + editorname + " revoked " + (uuidstr == d_selfuuid ? "your" : "an") + " invitation to the group.";
+          else
+          {
+            if (uuidstr == d_selfuuid)
+              statusmsg += (!statusmsg.empty() ? "\n" : "") + "An admin revoked your invitation to the group."s;
+            else
+              statusmsg += (!statusmsg.empty() ? "\n" : "") + "An invitation to the group was revoked."s;
+          }
+        }
+      }
+      else // multiple deleted invites
+      {
+        if (editoruuid == d_selfuuid)
+          statusmsg += (!statusmsg.empty() ? "\n" : "") + "You revoked "s + bepaald::toString(deletedpendingmembers.size()) + " invitations to the group.";
+        else
+        {
+          std::string editorname(editoruuid.empty() ? std::string() : getNameFromUuid(editoruuid));
+          bool selfincluded = false;
+          for (unsigned int i = 0; i < deletedpendingmembers.size(); ++i)
+          {
+            DecryptedPendingMemberRemoval dpm = deletedpendingmembers[i];
+            auto [uuid, uuid_size] = dpm.getFieldView<1>().value_or({nullptr, 0}); // bytes
+            std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
+            uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
+
+            if (uuidstr == d_selfuuid)
+            {
+              selfincluded = true;
+              break;
+            }
+          }
+
+          if (selfincluded)
+          {
+            if (!editorname.empty())
+              statusmsg += (!statusmsg.empty() ? "\n" : "") + editorname + " revoked your invitation to the group.";
+            else
+              statusmsg += (!statusmsg.empty() ? "\n" : "") + "An admin revoked your invitation to the group."s;
+          }
+
+          int count = deletedpendingmembers.size() - (selfincluded ? 1 : 0);
+
+          if (!editorname.empty())
+            statusmsg += (!statusmsg.empty() ? "\n" : "") + editorname + " revoked " + (count > 1 ? bepaald::toString(count) : "an") + " invitation" + (count > 1 ? "s" : "") + " to the group.";
+          else
+            statusmsg += (!statusmsg.empty() ? "\n" : "") + (count > 1 ? bepaald::toString(count) + " invitations" : "An invitation") + " to the group were revoked.";
+
+        }
+      }
+
+      if (icon && *icon == IconType::NONE)
+        *icon = IconType::MEMBER_REJECTED;
     }
 
     // // check members left:
@@ -846,8 +929,8 @@ std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context con
           if (others_invited == 1)
           {
             auto invited_it = std::find_if(invitedmembers.begin(), invitedmembers.end(), [&](auto const &p){ return p.first != d_selfuuid; });
-            std::string invited_name = getNameFromUuid(invited_it->first);
-
+            std::string invited_name = getNameFromUuid(invited_it->first, true); // suppress warning for not finding name. this is often true for
+                                                                                 // invited members.
             if (!inviter_name.empty())
             {
               if (!invited_name.empty())
@@ -886,8 +969,10 @@ std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context con
   {
     // std::cout << "" << std::endl;
     // std::cout << "  ********" << std::endl;
-    // std::cout << body << std::endl;
-    // //groupv2ctx.print();
+    // //std::cout << body << std::endl;
+    // std::cout << " - Group state:" << std::endl;
+    // groupv2ctx.print();
+    // std::cout << " - Group change (state, field 2):" << std::endl;
     // groupv2ctx.getField<2>().value().print();
     // std::cout << "  ********" << std::endl;
     // std::cout << "" << std::endl;

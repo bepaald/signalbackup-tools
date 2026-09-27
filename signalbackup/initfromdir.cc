@@ -45,8 +45,11 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
       return;
 
     // initialize SQLite database to insert backup data into...
-    if (!initEmptyDatabase(/*version?*/))
+    if (!initEmptyDatabase(/*version?*/)) [[unlikely]]
+    {
+      Logger::error("Failed to set up database");
       return;
+    }
 
     // read the backup, frame by frame, and process frames as they come in
     while (true)

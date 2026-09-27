@@ -38,10 +38,6 @@
 #include <string_view>
 #include <map>
 
-#if __cpp_lib_string_resize_and_overwrite >= 202110L // used in concat
-#include <span>
-#endif
-
 #if __cpp_lib_format >= 201907L
 #include <format>
 #endif
@@ -362,7 +358,7 @@ inline std::string bepaald::concat(Args const &... args)
 
   res.resize_and_overwrite(size, [&](char *buf, size_t n)
   {
-    auto pos = std::span(buf, n).begin();
+    auto pos = buf;
     ((pos = std::copy(std::string_view{args}.begin(), std::string_view{args}.end(), pos)), ...);
     return n;
   });

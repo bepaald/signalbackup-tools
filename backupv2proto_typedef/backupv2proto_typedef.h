@@ -190,9 +190,17 @@ typedef ProtoBufParser<protobuffer::optional::BOOL, // read receipts
                        protobuffer::optional::BOOL, // pin reminders
                        protobuffer::optional::ENUM, // app theme
                        protobuffer::optional::ENUM, // calls use less data
-                       protobuffer::optional::BOOL, // allow sealed sender from anyone
+                       protobuffer::optional::BOOL, // 30, allow sealed sender from anyone
                        protobuffer::optional::BOOL, // allow automatic key verification
-                       protobuffer::optional::BOOL // has seen admin delete education dialog
+                       protobuffer::optional::BOOL, // has seen admin delete education dialog
+                       protobuffer::optional::ENUM, // unread badge type
+                       protobuffer::optional::BOOL, // includemutedchatsinbadge (only ios/desktop)
+                       protobuffer::optional::BOOL, // 35, reaction notifications
+                       protobuffer::optional::BOOL, // notify calls when muted
+                       protobuffer::optional::BOOL, // notify mention when muted
+                       protobuffer::optional::BOOL, // notify replies when muted
+                       protobuffer::optional::BOOL, // show unread reminders
+                       protobuffer::optional::BOOL //40, notifywhencontactjoins
                        > AccountSettings;
 
 typedef ProtoBufParser<protobuffer::optional::BYTES, // entropy
@@ -218,26 +226,26 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, // profile key
                        protobuffer::DUMMY // dummy
                        > AndroidSpecificSettings;
 
-typedef ProtoBufParser<protobuffer::optional::BYTES,
-                       protobuffer::optional::STRING,
-                       UsernameLink,
-                       protobuffer::optional::STRING,
-                       protobuffer::optional::STRING,
-                       protobuffer::optional::STRING,
-                       SubscriberData,
-                       protobuffer::DUMMY, // actual dummy
-                       AccountSettings,
-                       IAPSubscriberData,
-                       protobuffer::optional::STRING,
-                       AndroidSpecificSettings,
-                       protobuffer::optional::STRING,
-                       protobuffer::optional::STRING,
-                       protobuffer::DUMMY // actual dummy
-                       > AccountData;
+  typedef ProtoBufParser<protobuffer::optional::BYTES, // profilekey
+                         protobuffer::optional::STRING,  //username
+                         UsernameLink,
+                         protobuffer::optional::STRING, // givenname
+                         protobuffer::optional::STRING, // familyname
+                         protobuffer::optional::STRING, // avatarurlpath
+                         SubscriberData,
+                         protobuffer::DUMMY, // actual dummy
+                         AccountSettings,
+                         IAPSubscriberData,
+                         protobuffer::optional::STRING,  // svrPin
+                         AndroidSpecificSettings,
+                         protobuffer::optional::STRING, // bio text
+                         protobuffer::optional::STRING, // bio emoji
+                         protobuffer::DUMMY // actual dummy
+                         > AccountData;
 
 typedef ProtoBufParser<protobuffer::optional::ENUM> Self; // avatarcolor
 
-typedef ProtoBufParser<protobuffer::optional::BYTES, // aci
+typedef ProtoBufParser<protobuffer::optional::BYTES, // 1, aci
                        protobuffer::optional::BYTES, // pni
                        protobuffer::optional::STRING, // username
                        protobuffer::optional::UINT64, // e164
@@ -246,7 +254,7 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, // aci
                        ProtoBufParser<>, // registered                                               \ oneof
                        ProtoBufParser<protobuffer::optional::UINT64>, // not registered (timestamp)  /
                        protobuffer::optional::BYTES, // profilekey
-                       protobuffer::optional::BOOL, // profilesharing
+                       protobuffer::optional::BOOL, // 10, profilesharing
                        protobuffer::optional::STRING, // profile given name
                        protobuffer::optional::STRING, // profile family name
                        protobuffer::optional::BOOL, // hide story
@@ -256,9 +264,10 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, // aci
                        protobuffer::optional::STRING, // note
                        protobuffer::optional::STRING, // system given name
                        protobuffer::optional::STRING, // system family name
-                       protobuffer::optional::STRING, // system nickname
+                       protobuffer::optional::STRING, // 20, system nickname
                        protobuffer::optional::ENUM, // AvatarColor
-                       protobuffer::optional::BYTES // key transparency data
+                       protobuffer::optional::BYTES, // key transparency data
+                       protobuffer::optional::UINT64 // 23, blocked_at
                        > Contact;
 
 typedef ProtoBufParser<protobuffer::optional::BYTES, // id
@@ -319,7 +328,8 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, // masterkey
                        protobuffer::optional::ENUM, // storysendmode
                        GroupSnapShot,
                        protobuffer::optional::BOOL, // blocked
-                       protobuffer::optional::ENUM // AvatarColor
+                       protobuffer::optional::ENUM, // AvatarColor
+                       protobuffer::optional::UINT64 // blocked_at
                        > Group;
 
 typedef ProtoBufParser<protobuffer::optional::STRING, // name
@@ -378,9 +388,13 @@ typedef ProtoBufParser<protobuffer::optional::UINT64, // id
                        protobuffer::optional::UINT64, // exp timerms
                        protobuffer::optional::UINT64, // mute until
                        protobuffer::optional::BOOL, // markedunread
-                       protobuffer::optional::BOOL, // no notify mention if muted
+                       protobuffer::optional::BOOL, // no notify mention if muted // to be deprecated for [12]
                        ChatStyle,
-                       protobuffer::optional::UINT32 // exp timer version
+                       protobuffer::optional::UINT32, // 10, exp timer version
+                       protobuffer::optional::BOOL, // notify calls when muted
+                       protobuffer::optional::BOOL, // notify mentions when muted, groupsonly
+                       protobuffer::optional::BOOL, // notify rplies when muted, groupsonly
+                       protobuffer::optional::BOOL // 14,
                        > Chat;
 
 typedef ProtoBufParser<protobuffer::optional::UINT64, // date received

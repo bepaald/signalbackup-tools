@@ -31,7 +31,71 @@ bool SignalBackup::handleChatItemFrame(BackupV2::Frame const &f) const
 
 bool SignalBackup::handleRecipientFrame(BackupV2::Frame const &f) const
 {
-  return true;
+  // recipientframe = oneof(contact, group, distributionlistitem, self, releasenotes, calllink);
+
+  auto contact = f.getFieldView<RECIPIENT_FRAMENUMBER, 2>();
+  if (contact.has_value())
+  {
+    std::cout << "(contact)" << std::endl;
+    f.print();
+    return true;
+
+
+    auto aci = contact->getFieldView<1>();
+    if (aci.has_value())
+      std::cout << "Aci: " << bepaald::bytesToHexString(aci.value()) << std::endl;
+
+    auto profilekey = contact->getFieldView<9>();
+    if (profilekey.has_value())
+      std::cout << "profilekey: " << Base64::bytesToBase64String(profilekey.value()) << std::endl;
+
+    auto e164 = contact->getFieldView<4>();
+    if (e164.has_value())
+      std::cout << "e164: " << e164.value() << std::endl;
+
+    return true;
+  }
+
+  auto group = f.getFieldView<RECIPIENT_FRAMENUMBER, 3>();
+  if (group.has_value())
+  {
+    std::cout << "(group)" << std::endl;
+    auto masterkey = group->getFieldView<1>();
+    if (masterkey.has_value())
+      std::cout << "Masterkey: " << Base64::bytesToBase64String(masterkey.value()) << std::endl;
+
+    return true;
+  }
+
+  auto distributionlistitem = f.getFieldView<RECIPIENT_FRAMENUMBER, 4>();
+  if (distributionlistitem.has_value())
+  {
+    std::cout << "(distributionlistitem)" << std::endl;
+    return true;
+  }
+
+  auto self = f.getFieldView<RECIPIENT_FRAMENUMBER, 5>();
+  if (self.has_value())
+  {
+    std::cout << "(self)" << std::endl;
+    return true;
+  }
+
+  auto releasenotes = f.getFieldView<RECIPIENT_FRAMENUMBER, 6>();
+  if (releasenotes.has_value())
+  {
+    std::cout << "(releasenotes)" << std::endl;
+    return true;
+  }
+
+  auto calllink = f.getFieldView<RECIPIENT_FRAMENUMBER, 7>();
+  if (calllink.has_value())
+  {
+    std::cout << "(calllink)" << std::endl;
+    return true;
+  }
+
+  return false;
 }
 
 bool SignalBackup::handleChatFrame(BackupV2::Frame const &f) const
@@ -46,6 +110,55 @@ bool SignalBackup::handleStickerPackFrame(BackupV2::Frame const &f) const
 
 bool SignalBackup::handleAccountDataFrame(BackupV2::Frame const &f) const
 {
+  auto accountdata_frame = f.getFieldView<ACCOUNTDATA_FRAMENUMBER>();
+  if (!accountdata_frame.has_value()) [[unlikely]]
+    return false;
+
+  f.print();
+  return true;
+
+  auto profile_given_name = accountdata_frame->getFieldView<4>();
+
+  auto profile_family_name = accountdata_frame->getFieldView<5>();
+
+  std::optional<std::string> profile_joined_name;
+  if (profile_given_name && profile_family_name)
+    profile_joined_name->append(profile_given_name.value()).append(" ").append(profile_family_name.value());
+  else if (profile_family_name)
+    profile_joined_name->append(profile_family_name.value());
+  else if (profile_given_name)
+    profile_joined_name->append(profile_given_name.value());
+
+  auto profile_avatar = accountdata_frame->getFieldView<6>();
+
+  int registered{1};
+
+  bool profile_sharing{true};
+
+  int unregistered_timestamp{0};
+
+  /*
+  // recipientExtras:
+
+  message RecipientExtras {
+  bool  manuallyShownAvatar = 1;
+  bool  hideStory           = 2;
+  int64 lastStoryView       = 3;
+  }
+  */
+
+  auto profile_key_raw = accountdata_frame->getFieldView<1>();
+  if (!profile_key_raw)
+  {
+    Logger::error("Missing porfile key for self!");
+    return false;
+  }
+  std::string profile_key_b64(Base64::bytesToBase64String(profile_key_raw.value()));
+
+  std::cout << "Got profile_key_b64: " << profile_key_b64 << std::endl;
+
+  auto username = accountdata_frame->getFieldView<2>();
+
   return true;
 }
 
@@ -66,7 +179,7 @@ bool SignalBackup::handleChatFolderFrame(BackupV2::Frame const &f) const
 
 bool SignalBackup::handleFrame(unsigned char *const data, size_t size) const
 {
-  BackupV2::Frame f(data, size, ProtoBufParserBase::VIEWONLY::TRUE);
+  BackupV2::Frame f(data, size, ProtoBufParserBase::MEMTYPE::VIEWONLY);
   f.checkBufferFields();
 
 
