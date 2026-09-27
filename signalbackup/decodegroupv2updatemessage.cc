@@ -447,7 +447,7 @@ std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context con
       if (deletedpendingmembers.size() == 1) // only 1 invite was deleted, we need to check if its the editor to see if its a revoke or a decline
       {
         DecryptedPendingMemberRemoval dpm = deletedpendingmembers[0];
-        auto [uuid, uuid_size] = dpm.getFieldView<1>().value_or({nullptr, 0}); // bytes
+        auto [uuid, uuid_size] = dpm.getFieldView<1>().value_or(std::pair<unsigned char *, uint64_t>{nullptr, 0}); // bytes
         std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
         uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
