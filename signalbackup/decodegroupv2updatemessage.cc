@@ -482,7 +482,7 @@ std::string SignalBackup::decodeGroupV2UpdateMessage(DecryptedGroupV2Context con
           for (unsigned int i = 0; i < deletedpendingmembers.size(); ++i)
           {
             DecryptedPendingMemberRemoval dpm = deletedpendingmembers[i];
-            auto [uuid, uuid_size] = dpm.getFieldView<1>().value_or({nullptr, 0}); // bytes
+            auto [uuid, uuid_size] = dpm.getFieldView<1>().value_or((std::pair<unsigned char *, uint64_t>{nullptr, 0}); // bytes
             std::string uuidstr = bepaald::bytesToHexString(uuid, uuid_size, true);
             uuidstr.insert(8, 1, '-').insert(13, 1, '-').insert(18, 1, '-').insert(23, 1, '-');
 
