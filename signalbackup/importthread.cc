@@ -27,7 +27,9 @@ bool SignalBackup::importThread(SignalBackup *source, long long int thread)
 
   // known incompatibilities. There are almost certainly also unknown ones!
   if ((d_databaseversion >= 322 && source->d_databaseversion < 322) || // sticker -> sticker/sticker_pack table split
+      (d_databaseversion < 322 && source->d_databaseversion >= 322) ||
       (d_databaseversion >= 312 && source->d_databaseversion < 312) || // name_collision-table split
+      (d_databaseversion < 312 && source->d_databaseversion >= 312) ||
       (d_databaseversion >= 215 && source->d_databaseversion < 215) || // part.unique_id dropped from db
       (d_databaseversion < 215 && source->d_databaseversion >= 215) ||
       (d_databaseversion >= 185 && source->d_databaseversion < 185) || // from/to_recipient_id
