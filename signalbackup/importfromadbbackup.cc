@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2025  Selwin van Dijk
+  Copyright (C) 2025-2026  Selwin van Dijk
 
   This file is part of signalbackup-tools.
 
@@ -111,7 +111,12 @@ bool SignalBackup::importFromAdbBackup(std::unique_ptr<AdbBackupDatabase> const 
       // THIS IS UNTESTED
       if (!isdummy)
       {
-        std::string identity_key = adbdb->d_db.getSingleResultAs<std::string>("SELECT key FROM identities WHERE address = ?",
+        std::string rec_column = "address";
+        if (!adbdb->d_db.tableContainsColumn("identities", "address") &&
+            adbdb->d_db.tableContainsColumn("identities", "recipient"))
+          rec_column = "recipient";
+
+        std::string identity_key = adbdb->d_db.getSingleResultAs<std::string>("SELECT key FROM identities WHERE " + rec_column + " = ?",
                                                                               thread_results.value(it, "recipient_ids"),
                                                                               std::string());
         if (identity_key.empty()) // no key found in source data, insert fake one:

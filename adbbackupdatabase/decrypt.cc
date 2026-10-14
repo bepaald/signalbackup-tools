@@ -42,7 +42,7 @@ std::optional<std::pair<std::unique_ptr<unsigned char[]>, int>> AdbBackupDatabas
   }
 
   auto decrypted = bepaald::decrypt_aes_128_cbc(key, encdata, encdata + 16, enclength - (16 + SHA_DIGEST_LENGTH));
-  if (!decrypted.first || decrypted.second == 0) [[unlikely]]
+  if (!decrypted.first) [[unlikely]]
     return std::nullopt;
   return decrypted;
 }
