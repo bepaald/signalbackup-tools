@@ -314,7 +314,8 @@ int main(int argc, char *argv[])
 
   bool ipw_interactive = false;
   if ((arg.passphrase().empty() || arg.interactive()) && // prompt for input passphrase
-      !bepaald::isDir(arg.input()))
+      (!bepaald::isDir(arg.input()) ||
+       !bepaald::fileOrDirExists(arg.input() + "/database.sqlite"))) // a directory that is not a decrypted backup -> backup v2
   {
     std::string pw;
     Logger::message_start("Please provide passphrase for input file '", arg.input(), "': ");

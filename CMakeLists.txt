@@ -83,3 +83,15 @@ if(WIN32)
 endif()
 
 target_link_libraries(signalbackup-tools PRIVATE OpenSSL::Crypto PRIVATE SQLite3::SQLite3 ${SECLIB} ${CFLIB} ${DBUS_LIBS_ABSOLUTE})
+
+# Backup V2 support (the new folder-style backups) requires zlib
+option(BACKUPV2 "Enable support for reading Backup V2 (requires zlib)" ON)
+if(BACKUPV2)
+  find_package(ZLIB)
+  if(ZLIB_FOUND)
+    target_compile_definitions(signalbackup-tools PRIVATE BEPAALD_BV2_ENABLED)
+    target_link_libraries(signalbackup-tools PRIVATE ZLIB::ZLIB)
+  else()
+    message(WARNING "zlib not found, building without Backup V2 support")
+  endif()
+endif()

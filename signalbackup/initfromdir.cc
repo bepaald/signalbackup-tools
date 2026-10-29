@@ -26,6 +26,8 @@
 #include "../backupv2proto_typedef/backupv2proto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 #include "../backupv2reader/backupv2reader.h"
+#include <chrono>
+#include <iomanip>
 #endif
 
 void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachments, bool inserthugeattachments)
@@ -35,39 +37,88 @@ void SignalBackup::initFromDir(std::string const &inputdir, bool replaceattachme
 
   if (isBackupV2(inputdir))
   {
-    Logger::warning("It appears you are trying to open a Backup V2.");
-    Logger::warning_indent("This backup format is not currently supported by this tool.");
-    Logger::warning_indent("See https://github.com/bepaald/signalbackup-tools/issues/382");
-
 #ifdef BEPAALD_BV2_ENABLED
+    using std::literals::chrono_literals::operator""ms;
+
+    Logger::message("Opening Backup V2...");
     BackupV2Reader bv2reader(inputdir, d_passphrase, d_verbose);
     if (!bv2reader.ok())
       return;
 
     // initialize SQLite database to insert backup data into...
-    if (!initEmptyDatabase(/*version?*/)) [[unlikely]]
+    if (!initEmptyDatabase()) [[unlikely]]
     {
       Logger::error("Failed to set up database");
       return;
     }
 
+    BackupV2ImportState state;
+    state.filesdir = bv2reader.filesDir();
+    state.now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    auto old_time = std::chrono::steady_clock::now();
+    if (d_showprogress)
+      Logger::message_overwrite("Reading backup: 0.00%...");
+
+    d_database.exec("BEGIN TRANSACTION");
+
     // read the backup, frame by frame, and process frames as they come in
     while (true)
     {
       auto [framedata, framesize] = bv2reader.getFrame();
-      if (d_showprogress) [[likely]]
-        Logger::message("Progress: ", bv2reader.progress());
 
       // done
       if (!framedata || framesize == 0)
         break;
 
-      if (!handleFrame(framedata, framesize)) [[unlikely]]
+      if (!handleFrame(framedata, framesize, &state)) [[unlikely]]
       {
+        Logger::message_end();
         Logger::error("Failed to handle frame");
+        d_database.exec("ROLLBACK TRANSACTION");
         return;
       }
+
+      auto new_time = std::chrono::steady_clock::now();
+      if (d_showprogress && new_time - old_time > 250ms)
+      {
+        Logger::message_overwrite("Reading backup: ", std::fixed, std::setprecision(2), std::setw(5), std::setfill('0'),
+                                  bv2reader.progress(), std::defaultfloat, "%...");
+        old_time = new_time;
+      }
     }
+    if (d_showprogress)
+      Logger::message_overwrite("Reading backup: 100.0%... done!", Logger::Control::ENDOVERWRITE);
+
+    // a backup without any chats
+    if (!state.recipientsfinalized && !bv2FinalizeRecipients(&state)) [[unlikely]]
+    {
+      d_database.exec("ROLLBACK TRANSACTION");
+      return;
+    }
+
+    d_database.exec("COMMIT TRANSACTION");
+
+    Logger::message("Read ", d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM recipient", 0), " recipients, ",
+                    d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM thread", 0), " chats, ",
+                    d_database.getSingleResultAs<long long int>("SELECT COUNT(*) FROM message", 0), " messages and ",
+                    state.attachments, " attachments");
+    if (state.skippedrecipients || state.skippedchatitems)
+      Logger::warning("Skipped ", state.skippedrecipients, " recipients and ", state.skippedchatitems, " messages");
+    if (state.expiredchatitems)
+      Logger::message("Skipped ", state.expiredchatitems, " expired (disappearing) messages");
+    if (state.missingattachments)
+      Logger::warning(state.missingattachments, " attachments were not available in the backup");
+
+    updateThreadsEntries();
+
+    Logger::message("Done!");
+    d_isbackupv2 = true;
+    d_ok = true;
+#else
+    Logger::warning("It appears you are trying to open a Backup V2.");
+    Logger::warning_indent("This backup format is not supported by this build of the tool.");
+    Logger::warning_indent("See https://github.com/bepaald/signalbackup-tools/issues/382");
 #endif
     return;
   }

@@ -163,6 +163,9 @@ class SignalBackup
   // only used in testing
   bool d_found_sqlite_sequence_in_backup;
 
+  // database was converted from a backup V2, and is not complete enough to write as backup
+  bool d_isbackupv2;
+
   enum DBLinkFlag : std::uint8_t
   {
     NO_COMPACT = 0b01, // don't run compactids on this table
@@ -582,6 +585,7 @@ class SignalBackup
   std::string getHostname(std::string_view host) const;
   bool makeFilenameUnique(std::string const &path, std::string *file_or_dir) const;
   std::string decodeGroupV2UpdateMessage(DecryptedGroupV2Context const &groupv2ctx, long long int type, std::string const &name, IconType *icon) const;
+  std::string decodeGroupChangeChatUpdate(GroupChangeChatUpdate const &groupchange, IconType *icon) const;
   std::string decodeProfileChangeMessage(ProfileChangeDetails const &pcd, std::string const &name, IconType *icon) const;
   std::string decodePollTerminateMessage(PollTerminate const &body, long long int type, std::string const &name, IconType *icon) const;
   inline constexpr int numBytesInUtf16Substring(std::string const &text, unsigned int idx, int length) const;
@@ -641,16 +645,41 @@ class SignalBackup
   inline void oldGroupMemberTokenizer(std::string_view membersstring, std::vector<T> *members) const;
   bool isBackupV2(std::string const &dir) const;
 #ifdef BEPAALD_BV2_ENABLED
-  bool initEmptyDatabase() const;
-  bool handleFrame(unsigned char *const data, size_t size) const;
-  bool handleChatItemFrame(BackupV2::Frame const &f) const;
-  bool handleRecipientFrame(BackupV2::Frame const &f) const;
-  bool handleChatFrame(BackupV2::Frame const &f) const;
+  struct BackupV2ImportState
+  {
+    std::string filesdir;
+    std::map<uint64_t, long long int> recipients;                  // backup recipient id -> recipient._id
+    std::map<uint64_t, std::pair<long long int, uint64_t>> chats;  // backup chat id -> [thread._id, backup recipient id]
+    std::vector<std::pair<std::string, std::vector<std::pair<std::string, long long int>>>> groupmembers; // [group_id, [aci, role]]
+    uint64_t selfbackupid = 0;
+    bool recipientsfinalized = false;
+    long long int now = 0;
+    unsigned int skippedrecipients = 0;
+    unsigned int skippedchatitems = 0;
+    unsigned int expiredchatitems = 0;
+    unsigned int attachments = 0;
+    unsigned int missingattachments = 0;
+  };
+  bool initEmptyDatabase();
+  bool handleFrame(unsigned char *const data, size_t size, BackupV2ImportState *state);
+  bool handleChatItemFrame(BackupV2::Frame const &f, BackupV2ImportState *state);
+  bool handleRecipientFrame(BackupV2::Frame const &f, BackupV2ImportState *state);
+  bool handleChatFrame(BackupV2::Frame const &f, BackupV2ImportState *state);
   bool handleStickerPackFrame(BackupV2::Frame const &f) const;
-  bool handleAccountDataFrame(BackupV2::Frame const &f) const;
+  bool handleAccountDataFrame(BackupV2::Frame const &f);
   bool handleAdHocCallFrame(BackupV2::Frame const &f) const;
   bool handleNotifcationProfileFrame(BackupV2::Frame const &f) const;
   bool handleChatFolderFrame(BackupV2::Frame const &f) const;
+  bool bv2FinalizeRecipients(BackupV2ImportState *state);
+  bool bv2InsertChatItem(BackupV2::ChatItem const &ci, long long int thread_id, long long int chat_rid, uint64_t chat_backup_rid,
+                         long long int author_rid, BackupV2ImportState *state, long long int *new_mid);
+  long long int bv2InsertAttachment(BackupV2::FilePointer const &fp, long long int mid, int display_order, int flag, bool quote,
+                                    std::string const &contenttype_override, BackupV2ImportState *state);
+  long long int bv2GetRecipientIdForAci(std::string const &aci, bool create) const;
+  bool bv2BodyRangesToMessageRanges(std::vector<BackupV2::BodyRange> const &ranges, bool includementions,
+                                    std::pair<std::unique_ptr<unsigned char []>, size_t> *out) const;
+  static std::string bv2UuidFromBytes(std::pair<unsigned char *, uint64_t> const &bytes);
+  static std::string bv2GroupIdFromMasterKey(std::pair<unsigned char *, uint64_t> const &masterkey);
 #endif
 };
 
@@ -667,7 +696,8 @@ inline SignalBackup::SignalBackup(bool verbose, bool truncate, bool showprogress
   d_truncate(truncate),
   d_fulldecode(false),
   d_ok(false),
-  d_found_sqlite_sequence_in_backup(false)
+  d_found_sqlite_sequence_in_backup(false),
+  d_isbackupv2(false)
 {}
 
 inline SignalBackup::SignalBackup(std::string const &filename, std::string const &passphrase, bool verbose,

@@ -19,218 +19,116 @@
 
 #ifdef BEPAALD_BV2_ENABLED
 
-#include "signalbackup.h"
+#include "signalbackup.ih"
 
 #include "../backupv2proto_typedef/backupv2proto_typedef.h"
 #include "../protobufparser/protobufparser.h"
 
-bool SignalBackup::handleChatItemFrame(BackupV2::Frame const &f) const
+bool SignalBackup::handleStickerPackFrame(BackupV2::Frame const &) const
 {
+  // only pack id and key are in the backup, the sticker data itself
+  // would need to be downloaded. Stickers used in messages are stored
+  // as attachments of those messages.
   return true;
 }
 
-bool SignalBackup::handleRecipientFrame(BackupV2::Frame const &f) const
-{
-  // recipientframe = oneof(contact, group, distributionlistitem, self, releasenotes, calllink);
-
-  auto contact = f.getFieldView<RECIPIENT_FRAMENUMBER, 2>();
-  if (contact.has_value())
-  {
-    std::cout << "(contact)" << std::endl;
-    f.print();
-    return true;
-
-
-    auto aci = contact->getFieldView<1>();
-    if (aci.has_value())
-      std::cout << "Aci: " << bepaald::bytesToHexString(aci.value()) << std::endl;
-
-    auto profilekey = contact->getFieldView<9>();
-    if (profilekey.has_value())
-      std::cout << "profilekey: " << Base64::bytesToBase64String(profilekey.value()) << std::endl;
-
-    auto e164 = contact->getFieldView<4>();
-    if (e164.has_value())
-      std::cout << "e164: " << e164.value() << std::endl;
-
-    return true;
-  }
-
-  auto group = f.getFieldView<RECIPIENT_FRAMENUMBER, 3>();
-  if (group.has_value())
-  {
-    std::cout << "(group)" << std::endl;
-    auto masterkey = group->getFieldView<1>();
-    if (masterkey.has_value())
-      std::cout << "Masterkey: " << Base64::bytesToBase64String(masterkey.value()) << std::endl;
-
-    return true;
-  }
-
-  auto distributionlistitem = f.getFieldView<RECIPIENT_FRAMENUMBER, 4>();
-  if (distributionlistitem.has_value())
-  {
-    std::cout << "(distributionlistitem)" << std::endl;
-    return true;
-  }
-
-  auto self = f.getFieldView<RECIPIENT_FRAMENUMBER, 5>();
-  if (self.has_value())
-  {
-    std::cout << "(self)" << std::endl;
-    return true;
-  }
-
-  auto releasenotes = f.getFieldView<RECIPIENT_FRAMENUMBER, 6>();
-  if (releasenotes.has_value())
-  {
-    std::cout << "(releasenotes)" << std::endl;
-    return true;
-  }
-
-  auto calllink = f.getFieldView<RECIPIENT_FRAMENUMBER, 7>();
-  if (calllink.has_value())
-  {
-    std::cout << "(calllink)" << std::endl;
-    return true;
-  }
-
-  return false;
-}
-
-bool SignalBackup::handleChatFrame(BackupV2::Frame const &f) const
-{
-  return true;
-}
-
-bool SignalBackup::handleStickerPackFrame(BackupV2::Frame const &f) const
-{
-  return true;
-}
-
-bool SignalBackup::handleAccountDataFrame(BackupV2::Frame const &f) const
+bool SignalBackup::handleAccountDataFrame(BackupV2::Frame const &f)
 {
   auto accountdata_frame = f.getFieldView<ACCOUNTDATA_FRAMENUMBER>();
   if (!accountdata_frame.has_value()) [[unlikely]]
     return false;
 
-  f.print();
-  return true;
+  // The account data is the only place the profile of 'self' is stored. There is
+  // also a 'Self'-recipient frame, but that only contains an id (and avatar color).
+  // AccountData is always the first frame, so we create the self recipient now,
+  // the Self-recipientframe will map to it later.
+  auto profile_key = accountdata_frame->getFieldView<1>();
+  auto username = accountdata_frame->getFieldView<2>();
+  auto given_name = accountdata_frame->getFieldView<4>();
+  auto family_name = accountdata_frame->getFieldView<5>();
+  auto bio_text = accountdata_frame->getFieldView<13>();
+  auto bio_emoji = accountdata_frame->getFieldView<14>();
 
-  auto profile_given_name = accountdata_frame->getFieldView<4>();
+  std::string joined_name(given_name.value_or(std::string_view()));
+  if (family_name.has_value() && !family_name->empty())
+    joined_name += (joined_name.empty() ? "" : " ") + std::string(family_name.value());
 
-  auto profile_family_name = accountdata_frame->getFieldView<5>();
-
-  std::optional<std::string> profile_joined_name;
-  if (profile_given_name && profile_family_name)
-    profile_joined_name->append(profile_given_name.value()).append(" ").append(profile_family_name.value());
-  else if (profile_family_name)
-    profile_joined_name->append(profile_family_name.value());
-  else if (profile_given_name)
-    profile_joined_name->append(profile_given_name.value());
-
-  auto profile_avatar = accountdata_frame->getFieldView<6>();
-
-  int registered{1};
-
-  bool profile_sharing{true};
-
-  int unregistered_timestamp{0};
-
-  /*
-  // recipientExtras:
-
-  message RecipientExtras {
-  bool  manuallyShownAvatar = 1;
-  bool  hideStory           = 2;
-  int64 lastStoryView       = 3;
-  }
-  */
-
-  auto profile_key_raw = accountdata_frame->getFieldView<1>();
-  if (!profile_key_raw)
+  std::any new_rid;
+  if (!insertRow("recipient",
+                 {{"type", 0},
+                  {"registered", 1},
+                  {"profile_sharing", 1},
+                  {"profile_key", profile_key.has_value() ? Base64::bytesToBase64String(profile_key.value()) : std::any(nullptr)},
+                  {"username", username.has_value() && !username->empty() ? std::string(username.value()) : std::any(nullptr)},
+                  {"profile_given_name", std::string(given_name.value_or(std::string_view()))},
+                  {"profile_family_name", std::string(family_name.value_or(std::string_view()))},
+                  {"profile_joined_name", joined_name},
+                  {"about", bio_text.has_value() ? std::string(bio_text.value()) : std::any(nullptr)},
+                  {"about_emoji", bio_emoji.has_value() ? std::string(bio_emoji.value()) : std::any(nullptr)}},
+                 "_id", &new_rid)) [[unlikely]]
   {
-    Logger::error("Missing porfile key for self!");
+    Logger::error("Failed to insert recipient for self");
     return false;
   }
-  std::string profile_key_b64(Base64::bytesToBase64String(profile_key_raw.value()));
-
-  std::cout << "Got profile_key_b64: " << profile_key_b64 << std::endl;
-
-  auto username = accountdata_frame->getFieldView<2>();
-
+  d_selfid = std::any_cast<long long int>(new_rid);
   return true;
 }
 
-bool SignalBackup::handleAdHocCallFrame(BackupV2::Frame const &f) const
+bool SignalBackup::handleAdHocCallFrame(BackupV2::Frame const &) const
 {
+  // call log entries for call links, not (yet) supported
   return true;
 }
 
-bool SignalBackup::handleNotifcationProfileFrame(BackupV2::Frame const &f) const
+bool SignalBackup::handleNotifcationProfileFrame(BackupV2::Frame const &) const
 {
+  // settings, not relevant for this tool
   return true;
 }
 
-bool SignalBackup::handleChatFolderFrame(BackupV2::Frame const &f) const
+bool SignalBackup::handleChatFolderFrame(BackupV2::Frame const &) const
 {
+  // settings, not relevant for this tool
   return true;
 }
 
-bool SignalBackup::handleFrame(unsigned char *const data, size_t size) const
+bool SignalBackup::handleFrame(unsigned char *const data, size_t size, BackupV2ImportState *state)
 {
   BackupV2::Frame f(data, size, ProtoBufParserBase::MEMTYPE::VIEWONLY);
-  f.checkBufferFields();
-
+  if (d_verbose) [[unlikely]]
+    f.checkBufferFields();
 
   int32_t frame_type = f.getFirstFieldNumber();
+
+  // all recipients come before the first chat, finish setting up the recipients
+  // (that need information from all recipient frames) before handling anything else
+  if (frame_type != RECIPIENT_FRAMENUMBER && frame_type != ACCOUNTDATA_FRAMENUMBER &&
+      !state->recipientsfinalized)
+    if (!bv2FinalizeRecipients(state)) [[unlikely]]
+      return false;
 
   switch (frame_type)
   {
     case CHATITEM_FRAMENUMBER:
-    {
-      std::cout << "Got ChatItem frame" << std::endl;
-      return handleChatItemFrame(f);
-    }
+      return handleChatItemFrame(f, state);
     case RECIPIENT_FRAMENUMBER:
-    {
-      std::cout << "Got Recipient frame" << std::endl;
-      return handleRecipientFrame(f);
-    }
+      return handleRecipientFrame(f, state);
     case CHAT_FRAMENUMBER:
-    {
-      std::cout << "Got Chat frame" << std::endl;
-      return handleChatFrame(f);
-    }
+      return handleChatFrame(f, state);
     case STICKERPACK_FRAMENUMBER:
-    {
-      std::cout << "Got StickerPack frame" << std::endl;
       return handleStickerPackFrame(f);
-    }
     case ACCOUNTDATA_FRAMENUMBER:
-    {
-      std::cout << "Got AccountData frame" << std::endl;
       return handleAccountDataFrame(f);
-    }
     case ADHOCCALL_FRAMENUMBER:
-    {
-      std::cout << "Got AdHocCall frame" << std::endl;
       return handleAdHocCallFrame(f);
-    }
     case NOTIFICATIONPROFILE_FRAMENUMBER:
-    {
-      std::cout << "Got NotificationProfile frame" << std::endl;
       return handleNotifcationProfileFrame(f);
-    }
     case CHATFOLDER_FRAMENUMBER:
-    {
-      std::cout << "Got ChatFolder frame" << std::endl;
       return handleChatFolderFrame(f);
-    }
     default:
     {
-      Logger::error("Unhandled frame type: ", frame_type);
-      return false;
+      Logger::warning("Unhandled frame type: ", frame_type, ". Skipping...");
+      return true;
     }
   }
 
