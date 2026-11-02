@@ -48,8 +48,8 @@ void SignalBackup::listThreads() const
                     "COALESCE(" + (d_database.tableContainsColumn("recipient", "nickname_joined_name") ? "NULLIF(recipient.nickname_joined_name, ''), " : "") +
                     "NULLIF(recipient." + d_recipient_system_joined_name + ", ''), " +
                     (profile_joined_name ? "NULLIF(recipient.profile_joined_name, ''),"s : ""s) +
-                    "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), groups.title, " +
-                    (d_database.containsTable("distribution_list") ? "NULLIF(distribution_list.name, '')" : "") + ") AS 'Conversation partner' "
+                    "NULLIF(recipient." + d_recipient_profile_given_name + ", ''), groups.title" +
+                    (d_database.containsTable("distribution_list") ? ", NULLIF(distribution_list.name, '')" : "") + ") AS 'Conversation partner' "
                     "FROM thread "
                     "LEFT JOIN recipient ON thread." + d_thread_recipient_id + " = recipient._id "
                     "LEFT JOIN groups ON recipient.group_id = groups.group_id " +

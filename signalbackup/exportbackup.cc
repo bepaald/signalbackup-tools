@@ -31,5 +31,11 @@ bool SignalBackup::exportBackup(std::string const &filename, std::string const &
     return exportBackupToDir(filename, overwrite, keepattachmentdatainmemory, onlydb);
 
   // export to file
+  if (d_isbackupv2) [[unlikely]]
+  {
+    Logger::error("Writing a backup file from a Backup V2 is not (yet) supported. The result would not be a complete,");
+    Logger::error_indent("restorable backup. Exporting (HTML/TXT/...) or writing to a directory does work.");
+    return false;
+  }
   return exportBackupToFile(filename, passphrase, overwrite, keepattachmentdatainmemory);
 }

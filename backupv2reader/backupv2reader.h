@@ -63,6 +63,7 @@ class BackupV2Reader
   inline bool ok() const;
   std::pair<unsigned char *, size_t> getFrame();
   inline float progress() const;
+  inline std::string const &filesDir() const;
 
  private:
   std::string readPassphrase(std::string_view passphrase) const;
@@ -83,6 +84,11 @@ inline BackupV2Reader::~BackupV2Reader()
 inline bool BackupV2Reader::ok() const
 {
   return d_ok;
+}
+
+inline std::string const &BackupV2Reader::filesDir() const
+{
+  return d_filesdir;
 }
 
 inline float BackupV2Reader::progress() const

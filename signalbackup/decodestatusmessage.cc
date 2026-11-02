@@ -1184,6 +1184,10 @@ std::string SignalBackup::decodeStatusMessage(std::pair<std::shared_ptr<unsigned
     auto field1_1 = field1->getFieldView<1>(); // DecryptedGroupV2Context
     if (field1_1.has_value())
       return decodeGroupV2UpdateMessage(field1_1.value()/*->getDataString()*/, type, contactname, icon);
+
+    auto field1_2 = field1->getFieldView<2>(); // GroupChangeChatUpdate (restored from backup V2)
+    if (field1_2.has_value())
+      return decodeGroupChangeChatUpdate(field1_2.value(), icon);
   }
 
   auto field3 = me.getFieldView<3>(); // ProfileChangeDetails

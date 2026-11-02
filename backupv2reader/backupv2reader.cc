@@ -97,6 +97,17 @@ BackupV2Reader::BackupV2Reader(std::string const &inputdir, std::string_view pas
   d_filesdir = d_rootdir + "/files";
 
   d_passphrase = readPassphrase(passphrase);
+  if (d_passphrase.size() != 64) [[unlikely]]
+  {
+    Logger::error("Invalid passphrase. A Backup V2 needs the 64 character backup key ('recovery key'), or a file containing it");
+    return;
+  }
+
+  if (d_snapshotdir.empty()) [[unlikely]]
+  {
+    Logger::error("Failed to find backup snapshot (signal-backup-*/) in '", inputdir, "'");
+    return;
+  }
 
   d_ok = (d_passphrase.size() == 64 &&
           bepaald::isDir(d_snapshotdir) &&

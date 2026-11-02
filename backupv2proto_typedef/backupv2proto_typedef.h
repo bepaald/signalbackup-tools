@@ -139,7 +139,9 @@ typedef ProtoBufParser<protobuffer::DUMMY, // dummy
                        protobuffer::optional::STRING, // caption
                        protobuffer::optional::STRING, // blurhash
                        protobuffer::DUMMY, // dummy
-                       LocatorInfo
+                       LocatorInfo,
+                       protobuffer::optional::BYTES, // audio waveform
+                       protobuffer::optional::FLOAT // audio duration (seconds)
                        > FilePointer;
 
 typedef ProtoBufParser<protobuffer::optional::UINT32, // angle
@@ -447,7 +449,7 @@ typedef ProtoBufParser<protobuffer::optional::STRING, // body
 typedef ProtoBufParser<protobuffer::optional::UINT64, // target sent timestamp
                        protobuffer::optional::UINT64, // author id
                        Text,
-                       ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING, MessageAttachment>, // QuotedAttachment: ct, filename, messageattachment
+                       std::vector<ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING, MessageAttachment>>, // QuotedAttachment: ct, filename, thumbnail
                        protobuffer::optional::ENUM // type
                        > Quote;
 typedef ProtoBufParser<Quote,
@@ -482,11 +484,15 @@ typedef ProtoBufParser<protobuffer::optional::ENUM, // type
                        protobuffer::optional::STRING // country
                        > PostalAddress;
 typedef ProtoBufParser<Name,
-                       Phone,
-                       Email,
-                       PostalAddress,
-                       FilePointer,
-                       protobuffer::optional::STRING // orginization
+                       protobuffer::DUMMY, // reserved
+                       std::vector<Phone>,
+                       std::vector<Email>,
+                       std::vector<PostalAddress>,
+                       FilePointer, // avatar
+                       protobuffer::optional::STRING, // organization
+                       protobuffer::optional::BYTES, // aci
+                       ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING>, // signal nickname (given, family)
+                       protobuffer::optional::STRING // note
                        > ContactAttachment;
 typedef ProtoBufParser<ContactAttachment, // option
                        std::vector<Reaction>

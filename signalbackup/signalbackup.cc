@@ -38,7 +38,8 @@ SignalBackup::SignalBackup(std::string const &filename, std::string const &passp
   d_truncate(truncate),
   d_fulldecode(fulldecode),
   d_ok(false),
-  d_found_sqlite_sequence_in_backup(false)
+  d_found_sqlite_sequence_in_backup(false),
+  d_isbackupv2(false)
 {
   if (bepaald::isDir(filename))
     initFromDir(filename, replaceattachments, inserthugeattachments);

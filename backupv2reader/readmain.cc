@@ -48,7 +48,7 @@ bool BackupV2Reader::readMain()
                                  main_iv, main_file_size - 32,
                                  main_mac, SHA256_DIGEST_LENGTH)) [[unlikely]]
   {
-    Logger::error("Message authentication checksum failed for '", d_snapshotdir, "/main'. Your file may be corrupted");
+    Logger::error("Message authentication checksum failed for '", d_snapshotdir, "/main'. Wrong backup key, or the file is corrupted");
     return false;
   }
 
