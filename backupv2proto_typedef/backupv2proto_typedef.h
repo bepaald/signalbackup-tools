@@ -139,7 +139,9 @@ typedef ProtoBufParser<protobuffer::DUMMY, // dummy
                        protobuffer::optional::STRING, // caption
                        protobuffer::optional::STRING, // blurhash
                        protobuffer::DUMMY, // dummy
-                       LocatorInfo
+                       LocatorInfo,
+                       protobuffer::optional::BYTES, // audio waveform
+                       protobuffer::optional::FLOAT  // audio duration
                        > FilePointer;
 
 typedef ProtoBufParser<protobuffer::optional::UINT32, // angle
@@ -200,7 +202,7 @@ typedef ProtoBufParser<protobuffer::optional::BOOL, // read receipts
                        protobuffer::optional::BOOL, // notify mention when muted
                        protobuffer::optional::BOOL, // notify replies when muted
                        protobuffer::optional::BOOL, // show unread reminders
-                       protobuffer::optional::BOOL //40, notifywhencontactjoins
+                       protobuffer::optional::BOOL  // 40, notifywhencontactjoins
                        > AccountSettings;
 
 typedef ProtoBufParser<protobuffer::optional::BYTES, // entropy
@@ -226,22 +228,33 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, // profile key
                        protobuffer::DUMMY // dummy
                        > AndroidSpecificSettings;
 
-  typedef ProtoBufParser<protobuffer::optional::BYTES, // profilekey
-                         protobuffer::optional::STRING,  //username
-                         UsernameLink,
-                         protobuffer::optional::STRING, // givenname
-                         protobuffer::optional::STRING, // familyname
-                         protobuffer::optional::STRING, // avatarurlpath
-                         SubscriberData,
-                         protobuffer::DUMMY, // actual dummy
-                         AccountSettings,
-                         IAPSubscriberData,
-                         protobuffer::optional::STRING,  // svrPin
-                         AndroidSpecificSettings,
-                         protobuffer::optional::STRING, // bio text
-                         protobuffer::optional::STRING, // bio emoji
-                         protobuffer::DUMMY // actual dummy
-                         > AccountData;
+typedef ProtoBufParser<protobuffer::optional::BOOL> IOSSpecificSettings; // systemcalllog enabled
+
+typedef ProtoBufParser<protobuffer::optional::BYTES, // profilekey
+                       protobuffer::optional::STRING,  //username
+                       UsernameLink,
+                       protobuffer::optional::STRING, // givenname
+                       protobuffer::optional::STRING, // familyname
+                       protobuffer::optional::STRING, // avatarurlpath
+                       SubscriberData,
+                       protobuffer::DUMMY, // actual dummy
+                       AccountSettings,
+                       IAPSubscriberData, // 10
+                       protobuffer::optional::STRING,  // svrPin
+                       AndroidSpecificSettings,
+                       protobuffer::optional::STRING, // bio text
+                       protobuffer::optional::STRING, // bio emoji
+                       protobuffer::DUMMY, // 15, actual dummy
+                       IOSSpecificSettings
+                       > AccountData;
+
+typedef ProtoBufParser<protobuffer::optional::STRING, // givenname
+                       protobuffer::optional::STRING, // familyname
+                       protobuffer::optional::STRING, // prefix
+                       protobuffer::optional::STRING, // suffix
+                       protobuffer::optional::STRING, // middlename
+                       protobuffer::optional::STRING //nickname
+                       > Name;
 
 typedef ProtoBufParser<protobuffer::optional::ENUM> Self; // avatarcolor
 
@@ -267,7 +280,8 @@ typedef ProtoBufParser<protobuffer::optional::BYTES, // 1, aci
                        protobuffer::optional::STRING, // 20, system nickname
                        protobuffer::optional::ENUM, // AvatarColor
                        protobuffer::optional::BYTES, // key transparency data
-                       protobuffer::optional::UINT64 // 23, blocked_at
+                       protobuffer::optional::UINT64, // blocked_at
+                       Name // 24, shared name
                        > Contact;
 
 typedef ProtoBufParser<protobuffer::optional::BYTES, // id
@@ -444,10 +458,15 @@ typedef ProtoBufParser<protobuffer::optional::UINT32, // start
 typedef ProtoBufParser<protobuffer::optional::STRING, // body
                        std::vector<BodyRange>> Text;
 
+typedef ProtoBufParser<protobuffer::optional::STRING, // ct
+                       protobuffer::optional::STRING, // filename
+                       MessageAttachment
+                       > QuotedAttachment;
+
 typedef ProtoBufParser<protobuffer::optional::UINT64, // target sent timestamp
                        protobuffer::optional::UINT64, // author id
                        Text,
-                       ProtoBufParser<protobuffer::optional::STRING, protobuffer::optional::STRING, MessageAttachment>, // QuotedAttachment: ct, filename, messageattachment
+                       std::vector<QuotedAttachment>, // QuotedAttachment
                        protobuffer::optional::ENUM // type
                        > Quote;
 typedef ProtoBufParser<Quote,
@@ -458,18 +477,14 @@ typedef ProtoBufParser<Quote,
                        std::vector<Reaction>
                        > StandardMessage;
 
-typedef ProtoBufParser<protobuffer::optional::STRING, // givenname
-                       protobuffer::optional::STRING, // familyname
-                       protobuffer::optional::STRING, // prefix
-                       protobuffer::optional::STRING, // suffix
-                       protobuffer::optional::STRING, // middlename
-                       protobuffer::optional::STRING //nickname
-                       > Name;
 typedef ProtoBufParser<protobuffer::optional::STRING, // value
                        protobuffer::optional::ENUM, // type
                        protobuffer::optional::STRING // label
                        > Phone;
 typedef Phone Email;
+typedef ProtoBufParser<protobuffer::optional::STRING, // given
+                       protobuffer::optional::STRING // family
+                       > SignalNickname;
 
 typedef ProtoBufParser<protobuffer::optional::ENUM, // type
                        protobuffer::optional::STRING, // label
@@ -482,11 +497,15 @@ typedef ProtoBufParser<protobuffer::optional::ENUM, // type
                        protobuffer::optional::STRING // country
                        > PostalAddress;
 typedef ProtoBufParser<Name,
-                       Phone,
-                       Email,
-                       PostalAddress,
-                       FilePointer,
-                       protobuffer::optional::STRING // orginization
+                       protobuffer::DUMMY, // dummy
+                       std::vector<Phone>,
+                       std::vector<Email>,
+                       std::vector<PostalAddress>,
+                       FilePointer, // avatar
+                       protobuffer::optional::STRING, // orginization
+                       protobuffer::optional::BYTES, // aci
+                       SignalNickname,
+                       protobuffer::optional::STRING // 10, note
                        > ContactAttachment;
 typedef ProtoBufParser<ContactAttachment, // option
                        std::vector<Reaction>
@@ -635,7 +654,7 @@ typedef ProtoBufParser<GenericGroupUpdate,
                        GroupTerminateChangeUpdate
                        > Update;
 typedef ProtoBufParser<std::vector<Update>> GroupChangeChatUpdate;
-typedef ProtoBufParser<protobuffer::optional::UINT64, protobuffer::optional::STRING> LearnedProfileChatUpdate; // oneof(previous e164, previous username)
+typedef ProtoBufParser<protobuffer::optional::UINT64, protobuffer::optional::STRING, protobuffer::optional::STRING> LearnedProfileChatUpdate; // oneof(previous e164, previous username, sharedname)
 typedef ProtoBufParser<protobuffer::optional::UINT64, protobuffer::optional::STRING> PollterminateUpdate; // target sent timestamp, question
 typedef ProtoBufParser<protobuffer::optional::UINT64, protobuffer::optional::UINT64> PinMessageUpdate; // target sent timesatmp, author id
 
@@ -764,14 +783,24 @@ typedef ProtoBufParser<protobuffer::optional::STRING, // name
                        protobuffer::optional::BYTES // id
                        > ChatFolder;
 
+typedef ProtoBufParser<protobuffer::optional::BYTES,  // packid
+                       protobuffer::optional::BYTES,  // packkey
+                       protobuffer::repeated::UINT32, // sticker id
+                       protobuffer::repeated::UINT64  // favorited at
+                       > FavoriteSticker;
+typedef ProtoBufParser<std::vector<FavoriteSticker>> FavoriteStickerList;
+
 typedef ProtoBufParser<AccountData,
                        Recipient,
                        Chat,
                        ChatItem,
-                       StickerPack,
+                       StickerPack, // installed stickerpack
                        AdHocCall,
                        NotificationProfile,
-                       ChatFolder> Frame;
+                       ChatFolder,
+                       StickerPack, // hidden stickerpack
+                       FavoriteStickerList // 10
+                       > Frame;
 
 } // namespace
 
@@ -783,5 +812,7 @@ typedef ProtoBufParser<AccountData,
 #define ADHOCCALL_FRAMENUMBER 6
 #define NOTIFICATIONPROFILE_FRAMENUMBER 7
 #define CHATFOLDER_FRAMENUMBER 8
+#define HIDDENSTICKERPACK_FRAMENUMBER 9
+#define FAVORITESTICKERLIST_FRAMENUMBER 10
 
 #endif

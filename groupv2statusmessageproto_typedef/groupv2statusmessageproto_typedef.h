@@ -665,13 +665,16 @@ typedef ProtoBufParser<protobuffer::optional::UINT32> GroupV2MigrationInvitedMem
 typedef ProtoBufParser<protobuffer::optional::UINT32> GroupV2MigrationDroppedMembersUpdate;
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT32> GroupSequenceOfRequestsAndCancelsUpdate;
 typedef ProtoBufParser<protobuffer::optional::UINT32, protobuffer::optional::BYTES> GroupExpirationTimerUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM> GroupMemberLabelAccessLevelChangeUpdate;
+typedef ProtoBufParser<protobuffer::optional::BYTES> GroupTerminateChangeUpdate;
 
 typedef ProtoBufParser<GenericGroupUpdate, GroupCreationUpdate, GroupNameUpdate, GroupAvatarUpdate, GroupDescriptionUpdate,
   GroupMembershipAccessLevelChangeUpdate, GroupAttributesAccessLevelChangeUpdate, GroupAnnouncementOnlyChangeUpdate, GroupAdminStatusUpdate, GroupMemberLeftUpdate,
   GroupMemberRemovedUpdate, SelfInvitedToGroupUpdate, SelfInvitedOtherUserToGroupUpdate, GroupUnknownInviteeUpdate, GroupInvitationAcceptedUpdate,
   GroupInvitationDeclinedUpdate, GroupMemberJoinedUpdate, GroupMemberAddedUpdate, GroupSelfInvitationRevokedUpdate, GroupInvitationRevokedUpdate, GroupJoinRequestUpdate, GroupJoinRequestApprovalUpdate, GroupJoinRequestCanceledUpdate, GroupInviteLinkResetUpdate, GroupInviteLinkEnabledUpdate,
   GroupInviteLinkAdminApprovalUpdate, GroupInviteLinkDisabledUpdate, GroupMemberJoinedByLinkUpdate, GroupV2MigrationUpdate, GroupV2MigrationSelfInvitedUpdate,
-  GroupV2MigrationInvitedMembersUpdate, GroupV2MigrationDroppedMembersUpdate, GroupSequenceOfRequestsAndCancelsUpdate, GroupExpirationTimerUpdate> Update;
+  GroupV2MigrationInvitedMembersUpdate, GroupV2MigrationDroppedMembersUpdate, GroupSequenceOfRequestsAndCancelsUpdate, GroupExpirationTimerUpdate,
+  GroupMemberLabelAccessLevelChangeUpdate, GroupTerminateChangeUpdate> Update;
 typedef ProtoBufParser<std::vector<Update>> GroupChangeChatUpdate;
 
 /*
