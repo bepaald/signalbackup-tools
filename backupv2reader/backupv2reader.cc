@@ -65,7 +65,7 @@ BackupV2Reader::BackupV2Reader(std::string const &inputdir, std::string_view pas
   d_ok(false)
 {
   if (d_verbose) [[unlikely]]
-    Logger::message("Creating Backupv2Reader with input='", inputdir, "' and passphrase = '", passphrase, "'");
+    Logger::message("Creating Backupv2Reader with input='", inputdir, "' and passphrase='", passphrase, "'");
 
   if (!bepaald::isDir(inputdir)) [[unlikely]]
   {
@@ -73,8 +73,10 @@ BackupV2Reader::BackupV2Reader(std::string const &inputdir, std::string_view pas
     return;
   }
 
-  auto isSnapshot = [](std::string const &dir) STATICLAMBDA { return
-      bepaald::isRegularFile(dir + "/main") && bepaald::isRegularFile(dir + "/metadata"); };
+  auto isSnapshot = [](std::string const &dir) STATICLAMBDA
+  {
+    return bepaald::isRegularFile(dir + "/main") && bepaald::isRegularFile(dir + "/metadata");
+  };
 
   // if dir is specific snapshot
   if (isSnapshot(inputdir))
