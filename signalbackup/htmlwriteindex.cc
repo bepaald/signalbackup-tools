@@ -1156,9 +1156,10 @@ bool SignalBackup::HTMLwriteIndexImpl(std::vector<long long int> const &threads,
             groupsender = newsnippet_info.valueAsInt(0, "from_recipient_id", groupsender);
 
           long long int newsnippet_type = newsnippet_info.valueAsInt(0, "type");
-          deleted_by_rid = newsnippet_info.valueAsInt(i, "deleted_by", -1);
+          deleted_by_rid = newsnippet_info.valueAsInt(0, "deleted_by", -1);
+
           if (deleted_by_rid > 0 ||
-              newsnippet_info.valueAsInt(i, "remote_deleted", 0) > 0)
+              newsnippet_info.valueAsInt(0, "remote_deleted", 0) > 0)
           {
             if (Types::isOutgoing(snippet_type))
               snippet = "<i>You deleted this message.</i>";
