@@ -626,8 +626,6 @@ typedef ProtoBufParser<GroupContextV2, DecryptedGroupChange,
       GroupV2MigrationDroppedMembersUpdate groupV2MigrationDroppedMembersUpdate = 32;
       GroupSequenceOfRequestsAndCancelsUpdate groupSequenceOfRequestsAndCancelsUpdate = 33;
       GroupExpirationTimerUpdate groupExpirationTimerUpdate = 34;
-      GroupMemberLabelAccessLevelChangeUpdate groupMemberLabelAccessLevelChangeUpdate = 35;
-      GroupTerminateChangeUpdate groupTerminateChangeUpdate = 36;
     }
     repeated Update updates = 1;
     }
@@ -666,17 +664,14 @@ typedef ProtoBufParser<> GroupV2MigrationSelfInvitedUpdate;
 typedef ProtoBufParser<protobuffer::optional::UINT32> GroupV2MigrationInvitedMembersUpdate;
 typedef ProtoBufParser<protobuffer::optional::UINT32> GroupV2MigrationDroppedMembersUpdate;
 typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::UINT32> GroupSequenceOfRequestsAndCancelsUpdate;
-typedef ProtoBufParser<protobuffer::optional::UINT64, protobuffer::optional::BYTES> GroupExpirationTimerUpdate;
-typedef ProtoBufParser<protobuffer::optional::BYTES, protobuffer::optional::ENUM> GroupMemberLabelAccessLevelChangeUpdate;
-typedef ProtoBufParser<protobuffer::optional::BYTES> GroupTerminateChangeUpdate;
+typedef ProtoBufParser<protobuffer::optional::UINT32, protobuffer::optional::BYTES> GroupExpirationTimerUpdate;
 
 typedef ProtoBufParser<GenericGroupUpdate, GroupCreationUpdate, GroupNameUpdate, GroupAvatarUpdate, GroupDescriptionUpdate,
   GroupMembershipAccessLevelChangeUpdate, GroupAttributesAccessLevelChangeUpdate, GroupAnnouncementOnlyChangeUpdate, GroupAdminStatusUpdate, GroupMemberLeftUpdate,
   GroupMemberRemovedUpdate, SelfInvitedToGroupUpdate, SelfInvitedOtherUserToGroupUpdate, GroupUnknownInviteeUpdate, GroupInvitationAcceptedUpdate,
   GroupInvitationDeclinedUpdate, GroupMemberJoinedUpdate, GroupMemberAddedUpdate, GroupSelfInvitationRevokedUpdate, GroupInvitationRevokedUpdate, GroupJoinRequestUpdate, GroupJoinRequestApprovalUpdate, GroupJoinRequestCanceledUpdate, GroupInviteLinkResetUpdate, GroupInviteLinkEnabledUpdate,
   GroupInviteLinkAdminApprovalUpdate, GroupInviteLinkDisabledUpdate, GroupMemberJoinedByLinkUpdate, GroupV2MigrationUpdate, GroupV2MigrationSelfInvitedUpdate,
-  GroupV2MigrationInvitedMembersUpdate, GroupV2MigrationDroppedMembersUpdate, GroupSequenceOfRequestsAndCancelsUpdate, GroupExpirationTimerUpdate,
-  GroupMemberLabelAccessLevelChangeUpdate, GroupTerminateChangeUpdate> Update;
+  GroupV2MigrationInvitedMembersUpdate, GroupV2MigrationDroppedMembersUpdate, GroupSequenceOfRequestsAndCancelsUpdate, GroupExpirationTimerUpdate> Update;
 typedef ProtoBufParser<std::vector<Update>> GroupChangeChatUpdate;
 
 /*
